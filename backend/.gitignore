@@ -1,0 +1,6 @@
+node_modules/
+db/fixperto.sqlite
+db/fixperto.sqlite-journal
+db/fixperto.sqlite-wal
+db/fixperto.sqlite-shm
+.env
