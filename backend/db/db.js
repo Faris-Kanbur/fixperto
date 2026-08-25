@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS owners (
   vehicleCount INTEGER DEFAULT 0,
   apptCount INTEGER DEFAULT 0,
   password TEXT NOT NULL,
-  favoriteIds TEXT DEFAULT '[]'
+  favoriteIds TEXT DEFAULT '[]',
+  lang TEXT DEFAULT 'tr'
 );
 
 CREATE TABLE IF NOT EXISTS vehicles (
@@ -216,6 +217,30 @@ CREATE TABLE IF NOT EXISTS profile_views (
   converted INTEGER DEFAULT 0,
   createdAt TEXT DEFAULT (datetime('now'))
 );
+
+-- Admin panelden gönderilen platform duyurularının kalıcı kaydı (bkz. sendBroadcast,
+-- AppLogicProvider.tsx) — daha önce sadece local state'te tutuluyordu ve sayfa yenilenince
+-- kayboluyordu.
+CREATE TABLE IF NOT EXISTS broadcasts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  audience TEXT NOT NULL,
+  message TEXT NOT NULL,
+  recipientCount INTEGER DEFAULT 0,
+  createdAt TEXT DEFAULT (datetime('now'))
+);
+
+-- Sohbet mesajı çevirilerinin sunucu tarafı önbelleği: aynı metin/dil çifti için gerçek çeviri
+-- servisine (bkz. backend/routes/translate.js) sadece bir kez gidilir — hem hız hem de ücretsiz
+-- servisin nadir istek sınırlarını aşmamak için önemli (bkz. "yavaşlatmasın" isteği).
+CREATE TABLE IF NOT EXISTS translation_cache (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  fromLang TEXT NOT NULL,
+  toLang TEXT NOT NULL,
+  sourceText TEXT NOT NULL,
+  translatedText TEXT NOT NULL,
+  createdAt TEXT DEFAULT (datetime('now')),
+  UNIQUE(fromLang, toLang, sourceText)
+);
 `);
 
 // ---------------------------------------------------------------------------
@@ -244,6 +269,7 @@ function ensureColumn(table, columnDef) {
   ["support_tickets", "resolvedDate TEXT"],
   ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
   ["owners", "favoriteIds TEXT DEFAULT '[]'"],
+  ["owners", "lang TEXT DEFAULT 'tr'"],
   ["admin_change_log", "reverted INTEGER DEFAULT 0"],
   ["mechanics", "shareCount INTEGER DEFAULT 0"],
   ["listings", "shareCount INTEGER DEFAULT 0"],

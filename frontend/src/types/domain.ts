@@ -75,6 +75,8 @@ export interface Owner {
   /** Demo amaçlı düz metin — gerçek bir üretim sisteminde ASLA client'a dönmemeli (bkz. güvenlik notları). */
   password?: string;
   favoriteIds?: number[];
+  /** Sohbet mesajlarının hangi dile otomatik çevrileceğini belirler — bkz. ChatBubble. */
+  lang?: "tr" | "en" | "de";
 }
 
 export interface MaintenanceRecord {
@@ -315,6 +317,20 @@ export interface ProfileViewAggregateStats {
   byTargetType: { targetType: string; views: number; conversions: number }[];
   topMechanics: { targetId: number; views: number; conversions: number }[];
   topListings: { targetId: number; views: number; conversions: number }[];
+}
+
+export interface Broadcast {
+  id: number;
+  audience: "all" | "owner" | "mechanic" | string;
+  message: string;
+  recipientCount: number;
+  createdAt?: string;
+}
+
+export interface TranslateResult {
+  translatedText: string;
+  cached?: boolean;
+  fallback?: boolean;
 }
 
 export type UserRole = "owner" | "mechanic" | "admin" | null;

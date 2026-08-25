@@ -47,7 +47,6 @@ function useAppLogic() {
   const [authError, setAuthError] = useState("");
   const [ownerTab, setOwnerTab] = useState("search");
   const [ownerMode, setOwnerMode] = useState("mechanics");
-  const [ownerLang, setOwnerLang] = useState("tr");
   const [ownerSettings, setOwnerSettings] = useState({ smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true });
   // Tamirci tarafının kendi bildirim tercihleri — hepsi varsayılan olarak açık.
   const [mechSettings, setMechSettings] = useState({ notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyJobApplications: true });
@@ -266,6 +265,12 @@ function useAppLogic() {
   const ownerProfile = ownersDirectory.find(o => o.id === MY_OWNER_ID) || { name: "", photo: "", email: "", phone: "", address: "" };
   const updateMyOwnerField = (field, value) => setOwnersDirectory(list => list.map(o => o.id === MY_OWNER_ID ? { ...o, [field]: value } : o));
   const updateMyOwnerFields = (patch) => setOwnersDirectory(list => list.map(o => o.id === MY_OWNER_ID ? { ...o, ...patch } : o));
+  // Araç sahibinin sohbet mesajlarının hangi dilde etiketleneceği (karşı taraf otomatik çeviri
+  // görecek — bkz. ChatBubble). Önceden ayrı, hiçbir yerden ayarlanamayan bir useState'ti (her
+  // zaman "tr"de kalıp sıfırlanıyordu) — artık ownerProfile.lang'tan türetiliyor ve
+  // updateMyOwnerField ile diğer profil alanları gibi gerçekten kalıcı.
+  const ownerLang = ownerProfile.lang || "tr";
+  const setOwnerLang = (value) => { updateMyOwnerField("lang", value); persist(api.owners.update(MY_OWNER_ID, { lang: value }), "Dil tercihi kaydedilemedi"); };
   const [supportTickets, setSupportTickets] = useState([]);
   // --- Backend bootstrap: hydrate the core entities from the Express + SQLite API on mount ---
   // (replaces the single-file demo's hardcoded MECHANICS_INITIAL / INITIAL_* mock arrays).
@@ -275,7 +280,7 @@ function useAppLogic() {
     let cancelled = false;
     (async () => {
       try {
-        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes, conversationsRes, changeLogRes] = await Promise.all([
+        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes, conversationsRes, changeLogRes, broadcastsRes] = await Promise.all([
           api.mechanics.list(),
           api.vehicles.list(),
           api.appointments.list(),
@@ -287,6 +292,7 @@ function useAppLogic() {
           api.quoteOffers.list(),
           api.conversations.list(),
           api.admin.changeLog(),
+          api.broadcasts.list(),
         ]);
         if (cancelled) return;
         setMechanicsList(mechanicsRes);
@@ -301,6 +307,15 @@ function useAppLogic() {
         setQuoteRequests(quoteRequestsRes);
         setQuoteOffers(quoteOffersRes);
         setConversations(conversationsRes);
+        // Admin duyuruları — önceden sadece local state'te tutuluyor, sayfa yenilenince
+        // kayboluyordu (bkz. sendBroadcast); artık backend'den gelen gerçek kayıtlarla dolduruluyor.
+        setBroadcastLog((broadcastsRes || []).map((b: any) => ({
+          id: b.id,
+          audience: b.audience,
+          message: b.message,
+          recipientCount: b.recipientCount,
+          date: b.createdAt ? new Date(`${b.createdAt.replace(" ", "T")}Z`).toLocaleDateString("tr-TR") : "",
+        })));
         // admin_change_log backend'de genel bir "action/entityType/entityId/before/after/reverted"
         // audit şemasıyla saklanıyor (bkz. logAdminChange, backend/routes/admin.js); burada admin
         // panelin "Geçmiş" ekranının beklediği zengin şekle (targetType/targetId/field/oldValue/
@@ -470,9 +485,10 @@ function useAppLogic() {
   const [adminReplyDraft, setAdminReplyDraft] = useState("");
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [broadcastForm, setBroadcastForm] = useState({ audience: "all", message: "" });
-  const [broadcastLog, setBroadcastLog] = useState([
-    { id: 1, audience: "all", message: "Fixperto'ya hoş geldiniz! Yeni İş İlanları özelliğimizi keşfedin.", date: "2026-07-28", recipientCount: 12 },
-  ]);
+  // Bootstrap effect'i backend'den gerçek kayıtları yükleyip dolduruyor (bkz. yukarıdaki
+  // Promise.all + setBroadcastLog) — burada boş başlıyor ki yüklenmeden önce sahte bir kayıt
+  // görünmesin.
+  const [broadcastLog, setBroadcastLog] = useState([]);
   // ---- Admin değişiklik geçmişi (audit trail): panelden yapılan HER yazma işlemi burada
   // kaydedilir (eski değer / yeni değer) ve "Geri Al" ile tek tıkla eski haline döndürülebilir. ----
   const [adminChangeLog, setAdminChangeLog] = useState([]);
@@ -1520,9 +1536,19 @@ function useAppLogic() {
   // ---- Toplu duyuru (broadcast) ----
   const sendBroadcast = () => {
     if (!broadcastForm.message.trim()) return;
-    const count = broadcastForm.audience === "all" ? adminAllUsers.length : broadcastForm.audience === "owner" ? adminStats.totalOwners : adminStats.totalMechanics;
-    setBroadcastLog(log => [{ id: Date.now(), audience: broadcastForm.audience, message: broadcastForm.message.trim(), date: TODAY.toLocaleDateString("tr-TR"), recipientCount: count }, ...log]);
-    setToast({ type: "info", text: `📢 Duyuru ${count} kullanıcıya gönderildi (demo).` });
+    const message = broadcastForm.message.trim();
+    const audience = broadcastForm.audience;
+    const count = audience === "all" ? adminAllUsers.length : audience === "owner" ? adminStats.totalOwners : adminStats.totalMechanics;
+    const entry = { audience, message, recipientCount: count };
+    setBroadcastLog(log => [{ id: Date.now(), ...entry, date: TODAY.toLocaleDateString("tr-TR") }, ...log]);
+    // Önceden bu sadece admin'in kendi kayıt defterine yazılıyordu — gerçekte KİMSEYE
+    // ulaşmıyordu. Bu demo'da gerçekten etkileşimli tek bir owner ve tek bir mechanic hesabı
+    // olduğu için, duyuruyu o hesapların bildirim ziline (notifLog) de düşürüyoruz ki "gönderildi"
+    // demek gerçekten bir şey ifade etsin.
+    if (audience === "all" || audience === "owner") fireNotification("📢 Fixperto Duyurusu", message, true, "owner", { type: "broadcast" });
+    if (audience === "all" || audience === "mechanic") fireNotification("📢 Fixperto Duyurusu", message, true, "mechanic", { type: "broadcast" });
+    persist(api.broadcasts.create(entry), "Duyuru kaydedilemedi");
+    setToast({ type: "info", text: `📢 Duyuru ${count} kullanıcıya gönderildi.` });
     setBroadcastForm({ audience: "all", message: "" });
     setShowBroadcastModal(false);
   };
@@ -1632,7 +1658,7 @@ function useAppLogic() {
   const markNoShow = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Gelmedi", noShow: true } : a)); persist(api.appointments.update(id, { status: "Gelmedi", noShow: true }), "Randevu güncellenemedi"); setToast({ type: "info", text: "🚫 Müşteri gelmedi olarak işaretlendi." }); };
   const advanceStatus = (id) => {
     let nextStatus = null;
-    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; const idx = TRACK_STATUSES_AUTO.indexOf(a.status); const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)]; nextStatus = next; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse("Tamir tamamlandı 🎉"); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments); } return { ...a, status: next }; }));
+    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; const idx = TRACK_STATUSES_AUTO.indexOf(a.status); const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)]; nextStatus = next; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse("Tamir tamamlandı 🎉"); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } return { ...a, status: next }; }));
     if (nextStatus) persist(api.appointments.update(id, { status: nextStatus }), "Randevu güncellenemedi");
   };
   // Tamiri "Tamamlandı" olarak işaretlerken, değişen parça varsa opsiyonel garanti süresi eklenebilir.
@@ -1879,15 +1905,43 @@ function useAppLogic() {
   };
   const handleFileSelect = (e) => { const file = e.target.files?.[0]; if (!file) return; sendOwnerMessage("📎 Fotoğraf gönderildi", URL.createObjectURL(file)); };
   const sendOwnerMessageWithReply = (text, image = undefined) => { const convoId = activeConvoId; const wasEmpty = activeConvo && activeConvo.messages.length === 0; sendOwnerMessage(text, image); if (wasEmpty) { setTimeout(() => { let replyMsgs = null; setConversations(cs => cs.map(c => { if (c.id !== convoId) return c; const replyText = c.mechanicLang === "en" ? "Thanks for reaching out!" : "Merhaba, mesajınız için teşekkürler!"; replyMsgs = [...c.messages, { id: msgId++, sender: "mechanic", text: replyText, lang: c.mechanicLang }]; return { ...c, messages: replyMsgs }; })); if (replyMsgs) persist(api.conversations.update(convoId, { messages: replyMsgs }), "Mesaj kaydedilemedi"); fireNotification("Yeni mesaj 💬", `${activeConvo.mechanicName}: Merhaba, mesajınız için teşekkürler!`, ownerSettings.notifyMessages, "owner", { type: "chat", id: convoId }); }, 900); } };
-  const toggleTranslate = (id) => setShowTranslated(s => ({ ...s, [id]: !s[id] }));
+  // Mesaj çevirisi: varsayılan olarak (kullanıcı elle değiştirmediği sürece) karşı taraf mesajı
+  // HER ZAMAN kendi diline otomatik çevrilmiş görür — showTranslated[msgId] burada "true" ise
+  // çeviriyi, "false" ise bilerek orijinali gösteriyor demektir; "undefined" (hiç dokunulmamış)
+  // otomatik-çeviri-göster anlamına gelir (bkz. ChatBubble).
+  const toggleTranslate = (id) => setShowTranslated(s => { const current = s[id] === undefined ? true : s[id]; return { ...s, [id]: !current }; });
+  // Gerçek zamanlı sohbet çevirisi: backend/routes/translate.js'e gidip gelen sonucu mesaj id'si +
+  // hedef dile göre önbelleğe alıyoruz (bir mesaj bir dile SADECE BİR KEZ çevrilir — sekme
+  // değiştirme/yeniden render'da tekrar istek atılmaz). Ayrıca aynı mesaj+dil için aynı anda birden
+  // fazla istek gitmesini de translationInFlightRef ile engelliyoruz. Uygulamayı yavaşlatmaması için
+  // TAMAMEN arka planda, mesaj her zaman önce orijinaliyle görünür, çeviri gelince yerine geçer.
+  const [translationCache, setTranslationCache] = useState({});
+  const translationInFlightRef = useRef(new Set());
+  const translateMessage = (msg, toLang) => {
+    if (!msg?.text || !toLang) return;
+    const fromLang = msg.lang || "tr";
+    if (fromLang === toLang) return;
+    const key = `${msg.id}:${toLang}`;
+    if (translationCache[key] !== undefined || translationInFlightRef.current.has(key)) return;
+    translationInFlightRef.current.add(key);
+    api.translate(msg.text, fromLang, toLang)
+      .then((res) => setTranslationCache((c) => ({ ...c, [key]: res?.translatedText || msg.text })))
+      .catch(() => setTranslationCache((c) => ({ ...c, [key]: msg.text })))
+      .finally(() => translationInFlightRef.current.delete(key));
+  };
   const mechConvo = conversations.find(c => c.id === mechActiveConvoId);
   const sendMechMessage = (text) => {
     if (!text) return;
     const convo = conversations.find(c => c.id === mechActiveConvoId);
     if (!convo) return;
+    // Bu sohbet dizisi başka bir (demo) tamirciye ait olsa bile mesajı GERÇEKTE yazan her zaman
+    // giriş yapmış tek tamirci hesabıdır (myProfile) — bu yüzden gönderenin dili artık dondurulmuş
+    // convo.mechanicLang yerine myProfile'ın GÜNCEL dil ayarından okunuyor (bkz. Ayarlar'daki dil
+    // seçici). Böylece tamirci dilini değiştirdiğinde yeni mesajları doğru dille etiketlenir.
+    const senderLang = myProfile.lang || "tr";
     const newMsgs = [...convo.messages];
-    if (convo.pendingContextNote) newMsgs.push({ id: msgId++, sender: "mechanic", text: convo.pendingContextNote, lang: convo.mechanicLang });
-    newMsgs.push({ id: msgId++, sender: "mechanic", text, lang: convo.mechanicLang });
+    if (convo.pendingContextNote) newMsgs.push({ id: msgId++, sender: "mechanic", text: convo.pendingContextNote, lang: senderLang });
+    newMsgs.push({ id: msgId++, sender: "mechanic", text, lang: senderLang });
     setConversations(cs => cs.map(c => c.id === mechActiveConvoId ? { ...c, messages: newMsgs, pendingContextNote: null } : c));
     persist(api.conversations.update(mechActiveConvoId, { messages: newMsgs, pendingContextNote: null }), "Mesaj kaydedilemedi");
     fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${text}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId });
@@ -2098,9 +2152,9 @@ function useAppLogic() {
     const notifyAllowed = buyerIsMechanic ? mechSettings.notifyOffers : ownerSettings.notifyOffers;
     if (status === "accepted") {
       fireSuccessPulse("Teklif kabul edildi 🎉 · Araç satıldı olarak işaretlendi");
-      fireNotification("Teklifiniz kabul edildi! 🎉", listing ? `"${listing.brand} ${listing.model}" ilanına verdiğiniz teklif kabul edildi, araç satıldı olarak işaretlendi.` : "Verdiğiniz teklif kabul edildi.", notifyAllowed, buyerIsMechanic ? "mechanic" : "owner", { type: "listing", id: listingIdx });
+      fireNotification("Teklifiniz kabul edildi! 🎉", listing ? `"${listing.brand} ${listing.model}" ilanına verdiğiniz teklif kabul edildi, araç satıldı olarak işaretlendi.` : "Verdiğiniz teklif kabul edildi.", notifyAllowed, buyerIsMechanic ? "mechanic" : "owner", { type: "myOffers" });
     } else if (status === "rejected") {
-      fireNotification("Teklifiniz reddedildi", listing ? `"${listing.brand} ${listing.model}" ilanına verdiğiniz teklif satıcı tarafından reddedildi.` : "Verdiğiniz teklif reddedildi.", notifyAllowed, buyerIsMechanic ? "mechanic" : "owner", { type: "listing", id: listingIdx });
+      fireNotification("Teklifiniz reddedildi", listing ? `"${listing.brand} ${listing.model}" ilanına verdiğiniz teklif satıcı tarafından reddedildi.` : "Verdiğiniz teklif reddedildi.", notifyAllowed, buyerIsMechanic ? "mechanic" : "owner", { type: "myOffers" });
     }
   };
   const markOffersSeen = (listingId) => {
@@ -2311,7 +2365,7 @@ function useAppLogic() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
-    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats, viewStats, listingFavoriteCount, myProfileViewStats, listingViewStats,
+    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats, viewStats, listingFavoriteCount, myProfileViewStats, listingViewStats, translationCache, translateMessage,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,

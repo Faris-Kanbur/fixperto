@@ -1,4 +1,4 @@
-import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats, ProfileViewStats, ProfileViewAggregateStats } from "../../types/domain";
+import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats, ProfileViewStats, ProfileViewAggregateStats, Broadcast, TranslateResult } from "../../types/domain";
 
 // Thin fetch wrapper around the Fixperto Express + SQLite backend. Set
 // VITE_API_URL in frontend/.env if the backend doesn't run on the default
@@ -177,5 +177,10 @@ export const api = {
     stats: (targetType?: string, targetId?: number | string): Promise<ProfileViewStats | ProfileViewAggregateStats> =>
       request(targetType && targetId ? `/api/profile-views/stats?targetType=${targetType}&targetId=${targetId}` : "/api/profile-views/stats"),
   },
+  broadcasts: crud<Broadcast>("broadcasts"),
+  // Sohbet mesajı çevirisi — bkz. backend/routes/translate.js. Sunucu tarafında SQLite önbelleği
+  // var, bu yüzden aynı metin/dil çifti ikinci kez asla dış servise gitmiyor.
+  translate: (text: string, from: string, to: string): Promise<TranslateResult> =>
+    request("/api/translate", { method: "POST", body: JSON.stringify({ text, from, to }) }),
   health: (): Promise<{ ok: boolean; service: string }> => request("/api/health"),
 };

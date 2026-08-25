@@ -5,6 +5,7 @@ import { makeCrudRouter } from "./routes/makeCrudRouter.js";
 import adminRouter from "./routes/admin.js";
 import shareEventsRouter from "./routes/shareEvents.js";
 import profileViewsRouter from "./routes/profileViews.js";
+import translateRouter from "./routes/translate.js";
 
 seedIfEmpty();
 
@@ -27,6 +28,8 @@ app.use("/api/quote-offers", makeCrudRouter("quote_offers"));
 app.use("/api/admin", adminRouter);
 app.use("/api/share-events", shareEventsRouter);
 app.use("/api/profile-views", profileViewsRouter);
+app.use("/api/translate", translateRouter);
+app.use("/api/broadcasts", makeCrudRouter("broadcasts"));
 
 app.use((req, res) => res.status(404).json({ error: "Not found" }));
 // eslint-disable-next-line no-unused-vars

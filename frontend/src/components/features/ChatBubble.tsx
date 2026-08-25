@@ -1,6 +1,6 @@
-import { Globe } from "lucide-react";
+import { useEffect } from "react";
+import { Globe, Loader2 } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
-import { mockTranslate } from "../../utils/helpers";
 
 export function ChatBubble({ msg, viewerLang, mine }) {
   const {
@@ -98,7 +98,8 @@ export function ChatBubble({ msg, viewerLang, mine }) {
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, 
     openHelpInfo, mySupportTickets, submitSupportTicket, openReportForm, renderSupportView, openChatWithMechanic, 
     openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply, 
-    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, 
+    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed,
+    translationCache, translateMessage,
     finalizeAddService, findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, 
     cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff, updateStaffField, removeStaff, 
     staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm, 
@@ -110,7 +111,20 @@ export function ChatBubble({ msg, viewerLang, mine }) {
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
 
-    const needsTranslation = msg.lang !== viewerLang; const showTr = showTranslated[msg.id];
-    const displayText = needsTranslation && showTr ? mockTranslate(msg.text, msg.lang, viewerLang) : msg.text;
-    return (<div className={`flex ${mine ? "justify-end" : "justify-start"} mb-3`}><div className={`max-w-[75%] rounded-2xl px-3 py-2 ${mine ? "bg-rose-600 text-white rounded-br-sm" : "bg-gray-100 text-gray-800 rounded-bl-sm"}`}>{msg.image && <img src={msg.image} alt="upload" className="rounded-xl mb-1 max-h-40 object-cover" />}{msg.text && <p className="text-sm whitespace-pre-line">{displayText}</p>}{needsTranslation && msg.text && (<button onClick={() => toggleTranslate(msg.id)} className={`flex items-center gap-1 text-[10px] mt-1 ${mine ? "text-rose-100" : "text-gray-400"} hover:underline`}><Globe size={10} /> {showTr ? "Orijinali gör" : "Çeviriyi gör"}</button>)}</div></div>);
+    // Gerçek zamanlı otomatik çeviri: mesajın dili, görüntüleyenin Ayarlar'dan seçtiği dilden
+    // farklıysa mesaj OTOMATİK olarak çevrilmiş gösterilir (kullanıcı hiçbir şey tıklamak zorunda
+    // değil — bu özelliğin tüm amacı bu). showTranslated[msg.id] === false ise kullanıcı bilerek
+    // orijinali görmeyi seçmiştir; undefined/true ise varsayılan (çeviri) gösterilir.
+    const needsTranslation = !!msg.text && msg.lang && viewerLang && msg.lang !== viewerLang;
+    const manuallySet = showTranslated[msg.id];
+    const showTr = needsTranslation ? (manuallySet === undefined ? true : manuallySet) : false;
+    const cacheKey = `${msg.id}:${viewerLang}`;
+    const translated = translationCache[cacheKey];
+    const isTranslating = needsTranslation && showTr && translated === undefined;
+    useEffect(() => {
+      if (needsTranslation && translated === undefined) translateMessage(msg, viewerLang);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [needsTranslation, msg.id, viewerLang, translated]);
+    const displayText = needsTranslation && showTr && translated ? translated : msg.text;
+    return (<div className={`flex ${mine ? "justify-end" : "justify-start"} mb-3`}><div className={`max-w-[75%] rounded-2xl px-3 py-2 ${mine ? "bg-rose-600 text-white rounded-br-sm" : "bg-gray-100 text-gray-800 rounded-bl-sm"}`}>{msg.image && <img src={msg.image} alt="upload" className="rounded-xl mb-1 max-h-40 object-cover" />}{msg.text && <p className="text-sm whitespace-pre-line">{displayText}</p>}{needsTranslation && msg.text && (<button onClick={() => toggleTranslate(msg.id)} className={`flex items-center gap-1 text-[10px] mt-1 ${mine ? "text-rose-100" : "text-gray-400"} hover:underline`}>{isTranslating ? <Loader2 size={10} className="animate-spin" /> : <Globe size={10} />} {isTranslating ? "Çevriliyor…" : showTr ? "Orijinali gör" : "Çeviriyi gör"}</button>)}</div></div>);
   }
