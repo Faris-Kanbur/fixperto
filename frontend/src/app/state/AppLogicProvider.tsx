@@ -367,6 +367,12 @@ function useAppLogic() {
   // ziyaretçi sohbet başlatma/randevu alma/teklif verme/iş başvurusu gibi bir eyleme geçtiğinde
   // recordConversion ile aynı satıra dönüşüm olarak yazılabilsin (tek seferlik atıf).
   const [incomingShareRef, setIncomingShareRef] = useState(null);
+  // Paylaşılan link tıklanınca ilgili kayda otomatik gitsin diye (bkz. ShareButton'daki path
+  // yorumu): ?listing=/?mechanic=/?job= parametrelerini bir kez okuyup bir ref'te saklıyoruz.
+  // Hemen tüketmiyoruz çünkü bu noktada kullanıcı henüz rol seçip giriş yapmamış olabilir
+  // (uygulama her zaman "home" ekranıyla başlar) — aşağıdaki ayrı efekt, kullanıcı kendi ana
+  // ekranına (owner/mechanicDashboard) ulaştığında bunu tüketip ilgili kaydı açıyor.
+  const pendingDeepLinkRef = useRef(null);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -375,7 +381,24 @@ function useAppLogic() {
       setIncomingShareRef(refFromUrl);
       api.shareEvents.click(refFromUrl).catch(() => { /* sessizce geç — bu sadece analitik */ });
     }
+    const listingIdFromUrl = params.get("listing");
+    const mechanicIdFromUrl = params.get("mechanic");
+    const jobIdFromUrl = params.get("job");
+    if (listingIdFromUrl) pendingDeepLinkRef.current = { type: "listing", id: Number(listingIdFromUrl) };
+    else if (mechanicIdFromUrl) pendingDeepLinkRef.current = { type: "mechanic", id: Number(mechanicIdFromUrl) };
+    else if (jobIdFromUrl) pendingDeepLinkRef.current = { type: "job", id: Number(jobIdFromUrl) };
   }, []);
+  useEffect(() => {
+    if (!pendingDeepLinkRef.current) return;
+    if (screen !== "owner" && screen !== "mechanicDashboard") return;
+    const { type, id } = pendingDeepLinkRef.current;
+    if (Number.isFinite(id)) {
+      if (type === "listing") setSelectedListingId(id);
+      else if (type === "job") setSelectedJobId(id);
+      else if (type === "mechanic") { setSelectedMechanicId(id); setDetailReturnScreen(null); setScreen("detail"); }
+    }
+    pendingDeepLinkRef.current = null;
+  }, [screen]);
   const recordConversion = (action) => {
     if (!incomingShareRef) return;
     persist(api.shareEvents.convert(incomingShareRef), `Dönüşüm kaydedilemedi (${action})`);
@@ -397,7 +420,18 @@ function useAppLogic() {
   }, [selectedMechanicId]);
   useEffect(() => {
     if (selectedListingId == null) return;
+    // İlan sahibi kendi ilanını açtığında bu gerçek bir ziyaret değil — tamirci profili için
+    // yukarıda uygulanan self-view korumasıyla (activeMechanicViewIdRef efekti) aynı mantık.
+    // listings/ownerProfile/myProfile bilerek deps'e eklenmiyor (isMine hesaplayan efektteki
+    // yerleşik desenle aynı, bkz. yukarıdaki "selectedListing" efekti) — aksi halde app içinde
+    // HERHANGİ bir ilan güncellendiğinde (listings referansı değiştiğinde) bu efekt gereksiz yere
+    // yeniden tetiklenip aynı görüntülemeyi tekrar tekrar kaydederdi. Sadece selectedListingId
+    // değiştiğinde, o anki en güncel closure değerleriyle bir kez çalışır.
+    const listing = listings.find((l) => l.id === selectedListingId);
+    const isMine = listing && listing.sellerName === (role === "owner" ? ownerProfile.name : myProfile?.name);
+    if (isMine) return;
     api.profileViews.create("listing", selectedListingId).catch(() => { /* sessizce geç — sadece analitik */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedListingId]);
   // Kleinanzeigen tarzı "kaç görüntülenme" rozeti için — ilan sahibi kendi ilanını açtığında kullanılır.
   const [listingViewStats, setListingViewStats] = useState(null);
