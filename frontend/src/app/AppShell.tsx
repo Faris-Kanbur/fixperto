@@ -22,7 +22,7 @@ import {
   ONBOARDING_SLIDES, ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
   ADMIN_SLA_DAYS, ADMIN_TREND_DATA, PLATFORM_COMMISSION_RATE, DE_CITIES, TODAY_STR,
   REMINDER_KIND_LABELS, TRANSMISSIONS, FUEL_TYPES, EMPLOYMENT_TYPES, EXPERIENCE_LEVELS,
-  MY_MECHANIC_ID, MY_OWNER_ID, DAY_KEYS, DAY_LABELS_FULL,
+  MY_MECHANIC_ID, MY_OWNER_ID, DAY_KEYS, DAY_LABELS_FULL, SHARE_CHANNEL_LABELS,
 } from "../data/constants";
 import {
   ticketSlaBreached, ticketDaysOpen, initials, isValidEmail, validatePhone,
@@ -89,7 +89,7 @@ export function AppShell() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
-    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare,
+    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,
@@ -793,6 +793,48 @@ export function AppShell() {
                         </div>
                       ); })}
                     </div>
+                    <h2 className="text-sm font-semibold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Share2 size={15} className="text-rose-500" /> Paylaşım Performansı</h2>
+                    {!shareStats ? (
+                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Yükleniyor…</div>
+                    ) : shareStats.totals.shares === 0 ? (
+                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Henüz kayıtlı bir paylaşım yok.</div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{shareStats.totals.shares}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Paylaşım</p></div>
+                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{shareStats.totals.clicks}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Tıklama</p></div>
+                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{shareStats.totals.conversions}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Dönüşüm (sohbet/randevu/teklif/başvuru)</p></div>
+                        </div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">Kanala Göre Kırılım</p>
+                        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
+                          <table className="w-full text-sm">
+                            <thead><tr className="border-b border-gray-100 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400"><th className="px-4 py-2.5">Kanal</th><th className="px-4 py-2.5 text-right">Paylaşım</th><th className="px-4 py-2.5 text-right">Tıklama</th><th className="px-4 py-2.5 text-right">Dönüşüm</th><th className="px-4 py-2.5 text-right">Dönüşüm Oranı</th></tr></thead>
+                            <tbody>
+                              {shareStats.byChannel.map((row) => (
+                                <tr key={row.channel} className="border-b border-gray-50 last:border-0">
+                                  <td className="px-4 py-2.5 font-medium text-gray-800">{SHARE_CHANNEL_LABELS[row.channel] || row.channel}</td>
+                                  <td className="px-4 py-2.5 text-right text-gray-600">{row.shares}</td>
+                                  <td className="px-4 py-2.5 text-right text-gray-600">{row.clicks}</td>
+                                  <td className="px-4 py-2.5 text-right text-gray-600">{row.conversions}</td>
+                                  <td className="px-4 py-2.5 text-right font-semibold text-gray-800">{row.clicks > 0 ? `%${Math.round((row.conversions / row.clicks) * 100)}` : "—"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">En Çok Paylaşılan İçerikler</p>
+                        <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2.5">
+                          {shareStats.byTarget.map((row) => (
+                            <div key={`${row.targetType}:${row.targetId}`} className="flex items-center gap-3">
+                              <span className="text-xs text-gray-600 flex-1 truncate">{adminChangeTargetLabel(row.targetType, row.targetId)}</span>
+                              <span className="text-[10px] text-gray-400">{row.shares} paylaşım</span>
+                              <span className="text-[10px] text-gray-400">{row.clicks} tıklama</span>
+                              <span className="text-[10px] font-semibold text-gray-700">{row.conversions} dönüşüm</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
                 {adminTab === "history" && (
@@ -1484,7 +1526,7 @@ export function AppShell() {
             <div className="relative">
               <button onClick={() => setSelectedListingId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white"><ChevronLeft size={18} /></button>
               <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-                <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} onShare={() => recordShare("listing", selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition" />
+                <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} onShare={(channel, refCode) => recordShare("listing", selectedListing.id, channel, refCode)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition" />
                 <button onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
               </div>
               <div className="h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden">{isImgUrl(selectedListing.photo) ? <img src={selectedListing.photo} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : selectedListing.photo}</div>
@@ -1560,7 +1602,7 @@ export function AppShell() {
             <div className="bg-white text-gray-900 px-5 pt-6 pb-6 relative flex-shrink-0 border-b border-gray-200 shadow-sm">
               <button onClick={() => setSelectedJobId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"><ChevronLeft size={18} /></button>
               <div className="absolute top-4 right-4 z-10">
-                <ShareButton title={selectedJob.title} text={`${selectedJob.title} — ${selectedJob.mechanicName}`} path={`?job=${selectedJob.id}`} onShare={() => recordShare("job", selectedJob.id)} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" />
+                <ShareButton title={selectedJob.title} text={`${selectedJob.title} — ${selectedJob.mechanicName}`} path={`?job=${selectedJob.id}`} onShare={(channel, refCode) => recordShare("job", selectedJob.id, channel, refCode)} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" />
               </div>
               <div className="flex items-center gap-3 mt-8">
                 <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">{selectedJob.mechanicImg}</div>

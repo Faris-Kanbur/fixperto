@@ -3,6 +3,7 @@ import cors from "cors";
 import { seedIfEmpty } from "./db/seed.js";
 import { makeCrudRouter } from "./routes/makeCrudRouter.js";
 import adminRouter from "./routes/admin.js";
+import shareEventsRouter from "./routes/shareEvents.js";
 
 seedIfEmpty();
 
@@ -23,6 +24,7 @@ app.use("/api/tickets", makeCrudRouter("support_tickets"));
 app.use("/api/quote-requests", makeCrudRouter("quote_requests"));
 app.use("/api/quote-offers", makeCrudRouter("quote_offers"));
 app.use("/api/admin", adminRouter);
+app.use("/api/share-events", shareEventsRouter);
 
 app.use((req, res) => res.status(404).json({ error: "Not found" }));
 // eslint-disable-next-line no-unused-vars

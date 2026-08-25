@@ -284,4 +284,22 @@ export interface AdminStats {
   totalReviews: number;
 }
 
+export interface ShareEvent {
+  id: number;
+  targetType: string;
+  targetId: number;
+  channel: string;
+  refCode: string;
+  sharedBy?: string | null;
+  clickCount: number;
+  conversionCount: number;
+  createdAt?: string;
+}
+
+export interface ShareStats {
+  totals: { shares: number; clicks: number; conversions: number };
+  byChannel: { channel: string; shares: number; clicks: number; conversions: number }[];
+  byTarget: { targetType: string; targetId: number; shares: number; clicks: number; conversions: number }[];
+}
+
 export type UserRole = "owner" | "mechanic" | "admin" | null;

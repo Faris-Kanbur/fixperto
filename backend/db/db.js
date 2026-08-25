@@ -185,6 +185,23 @@ CREATE TABLE IF NOT EXISTS quote_offers (
   etaDays INTEGER,
   note TEXT DEFAULT ''
 );
+
+-- Her ShareButton eylemi (WhatsApp/Facebook/X/e-posta/link kopyalama/native paylaşım) burada ayrı
+-- bir satır olarak, kendine özgü bir refCode ile kaydedilir. Paylaşılan link o refCode'u taşıdığı
+-- için, linke tıklayan biri geldiğinde (clickCount) ve sonrasında sohbet/randevu/teklif/başvuru
+-- gibi bir "dönüşüm" eylemi yaptığında (conversionCount) aynı satıra atfedilebiliyor — bu sayede
+-- ham "kaç kez paylaşıldı" sayısının ötesinde, hangi kanalın gerçekten iş getirdiği görülebiliyor.
+CREATE TABLE IF NOT EXISTS share_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  targetType TEXT NOT NULL,
+  targetId INTEGER NOT NULL,
+  channel TEXT NOT NULL,
+  refCode TEXT UNIQUE NOT NULL,
+  sharedBy TEXT,
+  clickCount INTEGER DEFAULT 0,
+  conversionCount INTEGER DEFAULT 0,
+  createdAt TEXT DEFAULT (datetime('now'))
+);
 `);
 
 // ---------------------------------------------------------------------------

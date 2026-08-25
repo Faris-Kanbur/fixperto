@@ -125,6 +125,7 @@ export const ADMIN_TICKET_PRIORITY_LABELS = { high: "Yüksek", medium: "Orta", l
 export const ADMIN_TICKET_PRIORITY_WEIGHT = { high: 0, medium: 1, low: 2 };
 export const ADMIN_TICKET_TYPE_DEFAULT_PRIORITY = { payment: "high", listing: "high", quality: "medium", verification: "low", no_show: "medium", review: "low", bug: "medium", customer: "medium" };
 export const TR_ASCII_MAP = { "ı": "i", "İ": "i", "ğ": "g", "ü": "u", "ş": "s", "ö": "o", "ç": "c" };
+export const SHARE_CHANNEL_LABELS = { whatsapp: "WhatsApp", facebook: "Facebook", x: "X", mail: "E-posta", copy: "Link Kopyalama", native: "Native Paylaşım" };
 export const PLATFORM_COMMISSION_RATE = 0.08;
 export const ADMIN_TREND_DATA = {
   months: ["Mar", "Nis", "May", "Haz", "Tem", "Ağu"],

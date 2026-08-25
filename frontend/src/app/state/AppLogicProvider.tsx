@@ -236,6 +236,14 @@ function useAppLogic() {
   // Girişin backend'e giderken tekrar tekrar tıklanmasını (duplicate submit) önlemek için.
   const [adminLoginLoading, setAdminLoginLoading] = useState(false);
   const [adminTab, setAdminTab] = useState("dashboard");
+  // Paylaşım analitiği (kanal bazında paylaşım/tıklama/dönüşüm) sadece admin Analitik sekmesi
+  // açıldığında çekilir — her uygulama açılışında tüm kullanıcılar için gereksiz yere yüklenmesin.
+  const [shareStats, setShareStats] = useState(null);
+  useEffect(() => {
+    if (adminAuthed && adminTab === "analytics") {
+      api.shareEvents.stats().then(setShareStats).catch(() => { /* sessizce geç — sadece analitik */ });
+    }
+  }, [adminAuthed, adminTab]);
   const [adminUserTypeFilter, setAdminUserTypeFilter] = useState("all");
   const [adminUserSearch, setAdminUserSearch] = useState("");
   const [selectedAdminUser, setSelectedAdminUser] = useState(null);
@@ -339,11 +347,37 @@ function useAppLogic() {
   // (WhatsApp/Facebook/X/e-posta linkine tıklama, link kopyalama ya da native paylaşım sayfasının
   // başarıyla açılması) çağrılır — hem yerel state'te anında görünsün hem backend'de kalıcı olsun
   // diye sunucudaki atomik POST /:id/share uç noktasını kullanır (bkz. makeCrudRouter.js).
-  const recordShare = (targetType, targetId) => {
+  // Ayrıca ShareButton'ın ürettiği refCode + hangi kanaldan (WhatsApp/Facebook/X/e-posta/kopyalama/
+  // native) paylaşıldığı bilgisiyle bir share_events satırı açar — linke tıklama (click) ve sonraki
+  // dönüşüm (conversion) bu satıra atfedilecek (bkz. recordConversion, incomingShareRef efekti).
+  const recordShare = (targetType, targetId, channel, refCode) => {
     const bump = (list) => list.map((x) => (x.id === targetId ? { ...x, shareCount: (x.shareCount || 0) + 1 } : x));
     if (targetType === "listing") { setListings((ls) => bump(ls)); persist(api.listings.share(targetId), "Paylaşım sayısı kaydedilemedi"); }
     else if (targetType === "job") { setJobListings((js) => bump(js)); persist(api.jobs.share(targetId), "Paylaşım sayısı kaydedilemedi"); }
     else if (targetType === "mechanic") { setMechanicsList((ms) => bump(ms)); persist(api.mechanics.share(targetId), "Paylaşım sayısı kaydedilemedi"); }
+    if (channel && refCode) {
+      const sharedBy = role === "mechanic" ? myProfile?.name : ownerProfile?.name;
+      persist(api.shareEvents.create({ targetType, targetId, channel, refCode, sharedBy }), "Paylaşım kaydı oluşturulamadı");
+    }
+  };
+  // Bir ziyaretçi, ?ref=<kod> parametresi taşıyan paylaşılmış bir linkle uygulamaya geldiğinde bu
+  // efekt bir kez çalışır: tıklamayı backend'e bildirir (clickCount) ve refCode'u state'te tutar ki
+  // ziyaretçi sohbet başlatma/randevu alma/teklif verme/iş başvurusu gibi bir eyleme geçtiğinde
+  // recordConversion ile aynı satıra dönüşüm olarak yazılabilsin (tek seferlik atıf).
+  const [incomingShareRef, setIncomingShareRef] = useState(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const refFromUrl = params.get("ref");
+    if (refFromUrl) {
+      setIncomingShareRef(refFromUrl);
+      api.shareEvents.click(refFromUrl).catch(() => { /* sessizce geç — bu sadece analitik */ });
+    }
+  }, []);
+  const recordConversion = (action) => {
+    if (!incomingShareRef) return;
+    persist(api.shareEvents.convert(incomingShareRef), `Dönüşüm kaydedilemedi (${action})`);
+    setIncomingShareRef(null);
   };
 
   const [adminTicketStatusFilter, setAdminTicketStatusFilter] = useState("all");
@@ -785,6 +819,7 @@ function useAppLogic() {
     try {
       const created = await api.appointments.create(draft);
       setAppointments(apps => [created, ...apps]);
+      recordConversion("appointment");
       // Sadece gerçekten etkileşimli tamirci hesabına (MY_MECHANIC_ID) yapılan randevularda gerçek
       // bildirim gönderilir — demo/örnek tamircilere randevu alınırken bildirim ateşlenmez, çünkü o
       // tamirci panelinde bu randevu zaten hiç görünmeyecek.
@@ -1718,6 +1753,7 @@ function useAppLogic() {
       convo = { id: Date.now(), mechanicId: m.id, mechanicName: m.name, mechanicImg: m.img, mechanicLang: m.lang, messages: [], pendingContextNote: contextNote || null };
       setConversations([convo, ...conversations]);
       persist(api.conversations.create(convo), "Sohbet başlatılamadı");
+      recordConversion("chat");
     } else if (contextNote) {
       const alreadySent = convo.messages.some(msg => msg.text === contextNote);
       if (!alreadySent && convo.pendingContextNote !== contextNote) {
@@ -1738,6 +1774,7 @@ function useAppLogic() {
       convo = { id: Date.now(), mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang, messages: [], pendingContextNote: contextNote || null };
       setConversations([convo, ...conversations]);
       persist(api.conversations.create(convo), "Sohbet başlatılamadı");
+      recordConversion("chat");
     } else if (contextNote) {
       const alreadySent = convo.messages.some(msg => msg.text === contextNote);
       if (!alreadySent && convo.pendingContextNote !== contextNote) {
@@ -1941,6 +1978,7 @@ function useAppLogic() {
       : [{ id: Date.now(), amount: offerAmount, currency, from: buyerName, status: "pending", seen: false }, ...(existing ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, status: "replaced" } : o) : selectedListing.offers)];
     setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, offers: newOffers } : x));
     persist(api.listings.update(selectedListing.id, { offers: newOffers }), "Teklif kaydedilemedi");
+    if (!existing) recordConversion("offer");
     setOfferAmount("");
     setShowOfferForm(false);
     setToast({ type: "info", text: existing && !existing.seen ? "💰 Teklifiniz güncellendi." : "💰 Teklifiniz iletildi." });
@@ -2054,6 +2092,7 @@ function useAppLogic() {
     setJobListings(js => js.map(j => j.id === selectedJob.id ? { ...j, applicants } : j));
     persist(api.jobs.update(selectedJob.id, { applicants }), "Başvuru kaydedilemedi");
     setMyApplications(list => [{ id: applicant.id, jobId: selectedJob.id, applicantId: applicant.id, role, date: "az önce" }, ...list]);
+    recordConversion("jobApplication");
     setJobApplyMsg("");
     setJobApplyCv(null);
     setShowJobApplyForm(false);
@@ -2194,7 +2233,7 @@ function useAppLogic() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
-    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare,
+    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,
