@@ -73,6 +73,7 @@ export interface Owner {
   apptCount: number;
   /** Demo amaçlı düz metin — gerçek bir üretim sisteminde ASLA client'a dönmemeli (bkz. güvenlik notları). */
   password?: string;
+  favoriteIds?: number[];
 }
 
 export interface MaintenanceRecord {
@@ -165,6 +166,24 @@ export interface Listing {
   color: string;
   vehicleId: number | null;
   adminRemoved?: boolean;
+}
+
+export interface ChatMessage {
+  id: number;
+  sender: "owner" | "mechanic";
+  text: string;
+  lang?: string;
+  image?: string;
+}
+
+export interface Conversation {
+  id: number;
+  mechanicId: number;
+  mechanicName: string;
+  mechanicImg: string;
+  mechanicLang?: string;
+  messages: ChatMessage[];
+  pendingContextNote?: string | null;
 }
 
 export interface JobApplicant {

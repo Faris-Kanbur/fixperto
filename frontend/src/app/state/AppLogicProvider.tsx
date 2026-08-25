@@ -75,7 +75,13 @@ function useAppLogic() {
   const [locationStatus, setLocationStatus] = useState("idle");
   const [notifPermission, setNotifPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "unsupported");
   const [favoriteIds, setFavoriteIds] = useState([]);
-  const toggleFavorite = (id) => setFavoriteIds(f => f.includes(id) ? f.filter(x => x !== id) : [...f, id]);
+  const toggleFavorite = (id) => {
+    setFavoriteIds(f => {
+      const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
+      persist(api.owners.update(MY_OWNER_ID, { favoriteIds: next }), "Favori kaydedilemedi");
+      return next;
+    });
+  };
   const [mechanicsList, setMechanicsList] = useState([]);
   const [mechanicHours, setMechanicHours] = useState(DEFAULT_HOURS);
   const [query, setQuery] = useState("");
@@ -259,7 +265,7 @@ function useAppLogic() {
     let cancelled = false;
     (async () => {
       try {
-        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes] = await Promise.all([
+        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes, conversationsRes] = await Promise.all([
           api.mechanics.list(),
           api.vehicles.list(),
           api.appointments.list(),
@@ -269,6 +275,7 @@ function useAppLogic() {
           api.tickets.list(),
           api.quoteRequests.list(),
           api.quoteOffers.list(),
+          api.conversations.list(),
         ]);
         if (cancelled) return;
         setMechanicsList(mechanicsRes);
@@ -277,9 +284,12 @@ function useAppLogic() {
         setListings(listingsRes);
         setJobListings(jobsRes);
         setOwnersDirectory(ownersRes);
+        const myOwnerRow = ownersRes.find((o) => o.id === MY_OWNER_ID);
+        if (myOwnerRow?.favoriteIds) setFavoriteIds(myOwnerRow.favoriteIds);
         setSupportTickets(ticketsRes);
         setQuoteRequests(quoteRequestsRes);
         setQuoteOffers(quoteOffersRes);
+        setConversations(conversationsRes);
         // Not: admin_change_log backend'de kalıcı hale getiriliyor (bkz. logAdminChange) ama burada
         // geri okunmuyor — backend'in genel "action/entityType/before/after" şeması, admin panelin
         // "Geçmiş" ekranının beklediği zengin şekilden (targetType/field/oldValue/newValue/reverted)
@@ -489,11 +499,23 @@ function useAppLogic() {
   const activeJobFilterCount = (jobFilters.employmentType !== "all" ? 1 : 0) + (jobFilters.experienceLevel !== "all" ? 1 : 0);
   const selectedJob = jobListings.find(j => j.id === selectedJobId) || null;
   const myReviews = useMemo(() => mechanicsList.flatMap(m => (m.reviewList || []).filter(r => r.mine).map(r => ({ ...r, mechanicId: m.id, mechanicName: m.name, mechanicImg: m.img }))), [mechanicsList]);
-  const myApplicationRefs = useMemo(() => myApplications.map(ma => {
-    const job = jobListings.find(j => j.id === ma.jobId);
-    const applicant = job?.applicants.find(a => a.id === ma.applicantId);
-    return job ? { ...ma, job, applicant } : null;
-  }).filter(Boolean), [myApplications, jobListings]);
+  // Not: bu liste eskiden yalnızca oturum-içi (sayfa yenilenince kaybolan) `myApplications`
+  // dizisinden türetiliyordu; başvuru backend'e kaydedilse bile "Başvurularım" sayfa
+  // yenilendiğinde boş görünüyordu. Artık kalıcı `jobListings[].applicants` verisinden,
+  // e-posta eşleşmesiyle (kendi e-postam) doğrudan türetiliyor — tek doğruluk kaynağı budur.
+  const myApplicationRefs = useMemo(() => {
+    const refs = [];
+    for (const job of jobListings) {
+      for (const applicant of job.applicants || []) {
+        const isOwnerMatch = !!ownerProfile.email && applicant.email === ownerProfile.email;
+        const isMechMatch = !!myProfile?.email && applicant.email === myProfile.email;
+        if (isOwnerMatch || isMechMatch) {
+          refs.push({ id: applicant.id, jobId: job.id, applicantId: applicant.id, role: isOwnerMatch ? "owner" : "mechanic", date: applicant.date, job, applicant });
+        }
+      }
+    }
+    return refs;
+  }, [jobListings, ownerProfile.email, myProfile?.email]);
   const activeFilterCount = (filters.priceTier !== "all" ? 1 : 0) + (filters.minRating > 0 ? 1 : 0) + (filters.maxDistance < 999 ? 1 : 0);
   const nextDays = useMemo(() => { const days = []; const today = new Date(); for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); days.push(d); } return days; }, []);
   const isSameMechanicAppt = (a) => a.mechanicId === MY_MECHANIC_ID || (!a.mechanicId && a.mechanicName === myProfile?.name);
@@ -1647,10 +1669,12 @@ function useAppLogic() {
     if (!convo) {
       convo = { id: Date.now(), mechanicId: m.id, mechanicName: m.name, mechanicImg: m.img, mechanicLang: m.lang, messages: [], pendingContextNote: contextNote || null };
       setConversations([convo, ...conversations]);
+      persist(api.conversations.create(convo), "Sohbet başlatılamadı");
     } else if (contextNote) {
       const alreadySent = convo.messages.some(msg => msg.text === contextNote);
       if (!alreadySent && convo.pendingContextNote !== contextNote) {
         setConversations(cs => cs.map(c => c.id === convo.id ? { ...c, pendingContextNote: contextNote } : c));
+        persist(api.conversations.update(convo.id, { pendingContextNote: contextNote }), "Sohbet kaydedilemedi");
       }
     }
     setActiveConvoId(convo.id);
@@ -1665,10 +1689,12 @@ function useAppLogic() {
     if (!convo) {
       convo = { id: Date.now(), mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang, messages: [], pendingContextNote: contextNote || null };
       setConversations([convo, ...conversations]);
+      persist(api.conversations.create(convo), "Sohbet başlatılamadı");
     } else if (contextNote) {
       const alreadySent = convo.messages.some(msg => msg.text === contextNote);
       if (!alreadySent && convo.pendingContextNote !== contextNote) {
         setConversations(cs => cs.map(c => c.id === convo.id ? { ...c, pendingContextNote: contextNote } : c));
+        persist(api.conversations.update(convo.id, { pendingContextNote: contextNote }), "Sohbet kaydedilemedi");
       }
     }
     setMechActiveConvoId(convo.id);
@@ -1678,21 +1704,32 @@ function useAppLogic() {
   const activeConvo = conversations.find(c => c.id === activeConvoId);
   const sendOwnerMessage = (text, image) => {
     if (!text && !image) return;
-    setConversations(cs => cs.map(c => {
-      if (c.id !== activeConvoId) return c;
-      const newMsgs = [...c.messages];
-      if (c.pendingContextNote) newMsgs.push({ id: msgId++, sender: "owner", text: c.pendingContextNote, lang: ownerLang });
-      newMsgs.push({ id: msgId++, sender: "owner", text, lang: ownerLang, image });
-      return { ...c, messages: newMsgs, pendingContextNote: null };
-    }));
+    const convo = conversations.find(c => c.id === activeConvoId);
+    if (!convo) return;
+    const newMsgs = [...convo.messages];
+    if (convo.pendingContextNote) newMsgs.push({ id: msgId++, sender: "owner", text: convo.pendingContextNote, lang: ownerLang });
+    newMsgs.push({ id: msgId++, sender: "owner", text, lang: ownerLang, image });
+    setConversations(cs => cs.map(c => c.id === activeConvoId ? { ...c, messages: newMsgs, pendingContextNote: null } : c));
+    persist(api.conversations.update(activeConvoId, { messages: newMsgs, pendingContextNote: null }), "Mesaj kaydedilemedi");
     fireNotification("Yeni mesaj 💬", `${ownerProfile.name || "Araç sahibi"}: ${text || "📷 Fotoğraf gönderdi"}`, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId });
     setChatInput("");
   };
   const handleFileSelect = (e) => { const file = e.target.files?.[0]; if (!file) return; sendOwnerMessage("📎 Fotoğraf gönderildi", URL.createObjectURL(file)); };
-  const sendOwnerMessageWithReply = (text, image = undefined) => { sendOwnerMessage(text, image); if (activeConvo && activeConvo.messages.length === 0) { setTimeout(() => { setConversations(cs => cs.map(c => { if (c.id !== activeConvoId) return c; const replyText = c.mechanicLang === "en" ? "Thanks for reaching out!" : "Merhaba, mesajınız için teşekkürler!"; return { ...c, messages: [...c.messages, { id: msgId++, sender: "mechanic", text: replyText, lang: c.mechanicLang }] }; })); fireNotification("Yeni mesaj 💬", `${activeConvo.mechanicName}: Merhaba, mesajınız için teşekkürler!`, ownerSettings.notifyMessages, "owner", { type: "chat", id: activeConvoId }); }, 900); } };
+  const sendOwnerMessageWithReply = (text, image = undefined) => { const convoId = activeConvoId; const wasEmpty = activeConvo && activeConvo.messages.length === 0; sendOwnerMessage(text, image); if (wasEmpty) { setTimeout(() => { let replyMsgs = null; setConversations(cs => cs.map(c => { if (c.id !== convoId) return c; const replyText = c.mechanicLang === "en" ? "Thanks for reaching out!" : "Merhaba, mesajınız için teşekkürler!"; replyMsgs = [...c.messages, { id: msgId++, sender: "mechanic", text: replyText, lang: c.mechanicLang }]; return { ...c, messages: replyMsgs }; })); if (replyMsgs) persist(api.conversations.update(convoId, { messages: replyMsgs }), "Mesaj kaydedilemedi"); fireNotification("Yeni mesaj 💬", `${activeConvo.mechanicName}: Merhaba, mesajınız için teşekkürler!`, ownerSettings.notifyMessages, "owner", { type: "chat", id: convoId }); }, 900); } };
   const toggleTranslate = (id) => setShowTranslated(s => ({ ...s, [id]: !s[id] }));
   const mechConvo = conversations.find(c => c.id === mechActiveConvoId);
-  const sendMechMessage = (text) => { if (!text) return; setConversations(cs => cs.map(c => { if (c.id !== mechActiveConvoId) return c; const newMsgs = [...c.messages]; if (c.pendingContextNote) newMsgs.push({ id: msgId++, sender: "mechanic", text: c.pendingContextNote, lang: c.mechanicLang }); newMsgs.push({ id: msgId++, sender: "mechanic", text, lang: c.mechanicLang }); return { ...c, messages: newMsgs, pendingContextNote: null }; })); fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${text}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId }); setMechChatInput(""); };
+  const sendMechMessage = (text) => {
+    if (!text) return;
+    const convo = conversations.find(c => c.id === mechActiveConvoId);
+    if (!convo) return;
+    const newMsgs = [...convo.messages];
+    if (convo.pendingContextNote) newMsgs.push({ id: msgId++, sender: "mechanic", text: convo.pendingContextNote, lang: convo.mechanicLang });
+    newMsgs.push({ id: msgId++, sender: "mechanic", text, lang: convo.mechanicLang });
+    setConversations(cs => cs.map(c => c.id === mechActiveConvoId ? { ...c, messages: newMsgs, pendingContextNote: null } : c));
+    persist(api.conversations.update(mechActiveConvoId, { messages: newMsgs, pendingContextNote: null }), "Mesaj kaydedilemedi");
+    fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${text}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId });
+    setMechChatInput("");
+  };
   const updateMyField = (field, value) => { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m)); persist(api.mechanics.update(MY_MECHANIC_ID, { [field]: value }), "Profil bilgisi kaydedilemedi"); };
   const updateService = (idx, field, value) => {
     const services = myProfile.services.map((s, i) => i === idx ? { ...s, [field]: value } : s);

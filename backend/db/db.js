@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS owners (
   status TEXT DEFAULT 'active',
   vehicleCount INTEGER DEFAULT 0,
   apptCount INTEGER DEFAULT 0,
-  password TEXT NOT NULL
+  password TEXT NOT NULL,
+  favoriteIds TEXT DEFAULT '[]'
 );
 
 CREATE TABLE IF NOT EXISTS vehicles (
@@ -94,6 +95,16 @@ CREATE TABLE IF NOT EXISTS appointments (
   historyShareConsent INTEGER DEFAULT 1,
   warrantyEndDate TEXT,
   createdAt TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS conversations (
+  id INTEGER PRIMARY KEY,
+  mechanicId INTEGER,
+  mechanicName TEXT,
+  mechanicImg TEXT,
+  mechanicLang TEXT DEFAULT 'tr',
+  messages TEXT DEFAULT '[]',
+  pendingContextNote TEXT
 );
 
 CREATE TABLE IF NOT EXISTS listings (
@@ -197,6 +208,7 @@ function ensureColumn(table, columnDef) {
   ["appointments", "warrantyEndDate TEXT"],
   ["support_tickets", "resolvedDate TEXT"],
   ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
+  ["owners", "favoriteIds TEXT DEFAULT '[]'"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 export function isEmpty(table) {

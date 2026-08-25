@@ -17,6 +17,7 @@ app.use("/api/owners", makeCrudRouter("owners"));
 app.use("/api/vehicles", makeCrudRouter("vehicles"));
 app.use("/api/appointments", makeCrudRouter("appointments"));
 app.use("/api/listings", makeCrudRouter("listings"));
+app.use("/api/conversations", makeCrudRouter("conversations"));
 app.use("/api/jobs", makeCrudRouter("job_listings"));
 app.use("/api/tickets", makeCrudRouter("support_tickets"));
 app.use("/api/quote-requests", makeCrudRouter("quote_requests"));

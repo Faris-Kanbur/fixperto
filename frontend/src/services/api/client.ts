@@ -1,4 +1,4 @@
-import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer } from "../../types/domain";
+import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation } from "../../types/domain";
 
 // Thin fetch wrapper around the Fixperto Express + SQLite backend. Set
 // VITE_API_URL in frontend/.env if the backend doesn't run on the default
@@ -143,6 +143,7 @@ export const api = {
   vehicles: crud<Vehicle>("vehicles"),
   appointments: crud<Appointment>("appointments"),
   listings: crud<Listing>("listings"),
+  conversations: crud<Conversation>("conversations"),
   jobs: crud<JobListing>("jobs"),
   tickets: crud<SupportTicket>("tickets"),
   quoteRequests: crud<QuoteRequest>("quote-requests"),
