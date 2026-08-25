@@ -1,4 +1,4 @@
-import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats } from "../../types/domain";
+import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats, ProfileViewStats, ProfileViewAggregateStats } from "../../types/domain";
 
 // Thin fetch wrapper around the Fixperto Express + SQLite backend. Set
 // VITE_API_URL in frontend/.env if the backend doesn't run on the default
@@ -166,6 +166,16 @@ export const api = {
     click: (refCode: string): Promise<ShareEvent> => request(`/api/share-events/${refCode}/click`, { method: "POST" }),
     convert: (refCode: string): Promise<ShareEvent> => request(`/api/share-events/${refCode}/convert`, { method: "POST" }),
     stats: (): Promise<ShareStats> => request("/api/share-events/stats"),
+  },
+  // Tamirci profili / araç ilanı görüntülenme takibi — bkz. backend/routes/profileViews.js.
+  // stats() parametresiz çağrılırsa platform geneli (admin), targetType+targetId verilirse tek bir
+  // hedef için (tamircinin/ilan sahibinin kendi sayfası) sonuç döner.
+  profileViews: {
+    create: (targetType: string, targetId: number | string): Promise<{ id: number }> =>
+      request("/api/profile-views", { method: "POST", body: JSON.stringify({ targetType, targetId }) }),
+    convert: (id: number | string): Promise<unknown> => request(`/api/profile-views/${id}/convert`, { method: "POST" }),
+    stats: (targetType?: string, targetId?: number | string): Promise<ProfileViewStats | ProfileViewAggregateStats> =>
+      request(targetType && targetId ? `/api/profile-views/stats?targetType=${targetType}&targetId=${targetId}` : "/api/profile-views/stats"),
   },
   health: (): Promise<{ ok: boolean; service: string }> => request("/api/health"),
 };

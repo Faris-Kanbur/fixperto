@@ -239,9 +239,11 @@ function useAppLogic() {
   // Paylaşım analitiği (kanal bazında paylaşım/tıklama/dönüşüm) sadece admin Analitik sekmesi
   // açıldığında çekilir — her uygulama açılışında tüm kullanıcılar için gereksiz yere yüklenmesin.
   const [shareStats, setShareStats] = useState(null);
+  const [viewStats, setViewStats] = useState(null);
   useEffect(() => {
     if (adminAuthed && adminTab === "analytics") {
       api.shareEvents.stats().then(setShareStats).catch(() => { /* sessizce geç — sadece analitik */ });
+      api.profileViews.stats().then(setViewStats).catch(() => { /* sessizce geç — sadece analitik */ });
     }
   }, [adminAuthed, adminTab]);
   const [adminUserTypeFilter, setAdminUserTypeFilter] = useState("all");
@@ -379,6 +381,47 @@ function useAppLogic() {
     persist(api.shareEvents.convert(incomingShareRef), `Dönüşüm kaydedilemedi (${action})`);
     setIncomingShareRef(null);
   };
+
+  // ---- Sayfa görüntülenme (view) takibi: tamirci profili ve araç ilanı her açıldığında bir
+  // profile_views satırı açılır. Hangi görüntülemenin şu an "aktif" olduğunu (yani bir sonraki
+  // randevu/teklif bu görüntülemeye mi atfedilecek) bir ref'te tutuyoruz — state değil, çünkü her
+  // render'da yeniden oluşmasına gerek yok ve gereksiz re-render'a yol açmasın istiyoruz. ----
+  const activeMechanicViewIdRef = useRef(null);
+  useEffect(() => {
+    // Tamirci kendi profiline yönlendirildiğinde (ör. "Yorumlarım") bu bir gerçek ziyaret değil,
+    // sayaç şişmesin diye saymıyoruz.
+    if (selectedMechanicId == null || selectedMechanicId === MY_MECHANIC_ID) { activeMechanicViewIdRef.current = null; return; }
+    api.profileViews.create("mechanic", selectedMechanicId)
+      .then((v) => { activeMechanicViewIdRef.current = v.id; })
+      .catch(() => { activeMechanicViewIdRef.current = null; });
+  }, [selectedMechanicId]);
+  useEffect(() => {
+    if (selectedListingId == null) return;
+    api.profileViews.create("listing", selectedListingId).catch(() => { /* sessizce geç — sadece analitik */ });
+  }, [selectedListingId]);
+  // Kleinanzeigen tarzı "kaç görüntülenme" rozeti için — ilan sahibi kendi ilanını açtığında kullanılır.
+  const [listingViewStats, setListingViewStats] = useState(null);
+  useEffect(() => {
+    if (selectedListingId == null) { setListingViewStats(null); return; }
+    api.profileViews.stats("listing", selectedListingId).then(setListingViewStats).catch(() => setListingViewStats(null));
+  }, [selectedListingId]);
+  const recordProfileViewConversion = () => {
+    if (!activeMechanicViewIdRef.current) return;
+    persist(api.profileViews.convert(activeMechanicViewIdRef.current), "Ziyaret dönüşümü kaydedilemedi");
+    activeMechanicViewIdRef.current = null;
+  };
+  // Kleinanzeigen tarzı: bir ilanın kaç farklı kullanıcının favorilerinde olduğu, owners.favoriteIds
+  // dizilerinin tamamı taranarak anlık hesaplanıyor — ayrı bir sayaç sütunu tutmaya gerek yok, zaten
+  // favoriler backend'de kalıcı (bkz. toggleFavorite).
+  const listingFavoriteCount = (listingId) => ownersDirectory.filter((o) => (o.favoriteIds || []).includes(listingId)).length;
+  // Tamircinin kendi "Analiz" sekmesindeki "Profil Ziyaretleri" ve "Yıllık Özet Raporu" bölümleri
+  // için — sadece o sekme açıldığında çekilir (her uygulama açılışında değil).
+  const [myProfileViewStats, setMyProfileViewStats] = useState(null);
+  useEffect(() => {
+    if (mechTab === "analytics") {
+      api.profileViews.stats("mechanic", MY_MECHANIC_ID).then(setMyProfileViewStats).catch(() => { /* sessizce geç — sadece analitik */ });
+    }
+  }, [mechTab]);
 
   const [adminTicketStatusFilter, setAdminTicketStatusFilter] = useState("all");
   const [adminTicketTypeFilter, setAdminTicketTypeFilter] = useState("all");
@@ -820,6 +863,7 @@ function useAppLogic() {
       const created = await api.appointments.create(draft);
       setAppointments(apps => [created, ...apps]);
       recordConversion("appointment");
+      recordProfileViewConversion();
       // Sadece gerçekten etkileşimli tamirci hesabına (MY_MECHANIC_ID) yapılan randevularda gerçek
       // bildirim gönderilir — demo/örnek tamircilere randevu alınırken bildirim ateşlenmez, çünkü o
       // tamirci panelinde bu randevu zaten hiç görünmeyecek.
@@ -2233,7 +2277,7 @@ function useAppLogic() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
-    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats,
+    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats, viewStats, listingFavoriteCount, myProfileViewStats, listingViewStats,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,

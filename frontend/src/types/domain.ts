@@ -302,4 +302,19 @@ export interface ShareStats {
   byTarget: { targetType: string; targetId: number; shares: number; clicks: number; conversions: number }[];
 }
 
+export interface ProfileViewStats {
+  totalViews: number;
+  viewsThisYear: number;
+  conversions: number;
+  conversionsThisYear: number;
+  monthly: { month: string; views: number; conversions: number }[];
+}
+
+export interface ProfileViewAggregateStats {
+  totals: { views: number; conversions: number };
+  byTargetType: { targetType: string; views: number; conversions: number }[];
+  topMechanics: { targetId: number; views: number; conversions: number }[];
+  topListings: { targetId: number; views: number; conversions: number }[];
+}
+
 export type UserRole = "owner" | "mechanic" | "admin" | null;

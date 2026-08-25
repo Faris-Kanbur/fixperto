@@ -89,7 +89,7 @@ export function AppShell() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
-    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats,
+    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats, viewStats, myProfileViewStats, listingViewStats, listingFavoriteCount,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,
@@ -835,6 +835,45 @@ export function AppShell() {
                         </div>
                       </>
                     )}
+                    <h2 className="text-sm font-semibold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Eye size={15} className="text-rose-500" /> Sayfa Ziyaretleri</h2>
+                    {!viewStats ? (
+                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Yükleniyor…</div>
+                    ) : viewStats.totals.views === 0 ? (
+                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Henüz kayıtlı bir ziyaret yok.</div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{viewStats.totals.views}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Sayfa Görüntülemesi</p></div>
+                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{viewStats.totals.conversions}</p><p className="text-xs text-gray-500 mt-0.5">Randevuya Dönüşen Ziyaret</p></div>
+                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">%{viewStats.totals.views > 0 ? Math.round((viewStats.totals.conversions / viewStats.totals.views) * 100) : 0}</p><p className="text-xs text-gray-500 mt-0.5">Genel Dönüşüm Oranı</p></div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">En Çok Ziyaret Edilen Tamirciler</p>
+                            <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2.5">
+                              {viewStats.topMechanics.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">Henüz veri yok.</p> : viewStats.topMechanics.map((row) => (
+                                <div key={row.targetId} className="flex items-center gap-3">
+                                  <span className="text-xs text-gray-600 flex-1 truncate">{adminChangeTargetLabel("mechanic", row.targetId)}</span>
+                                  <span className="text-[10px] text-gray-400">{row.views} ziyaret</span>
+                                  <span className="text-[10px] font-semibold text-gray-700">{row.conversions} randevu</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">En Çok Görüntülenen İlanlar</p>
+                            <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2.5">
+                              {viewStats.topListings.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">Henüz veri yok.</p> : viewStats.topListings.map((row) => (
+                                <div key={row.targetId} className="flex items-center gap-3">
+                                  <span className="text-xs text-gray-600 flex-1 truncate">{adminChangeTargetLabel("listing", row.targetId)}</span>
+                                  <span className="text-[10px] font-semibold text-gray-700">{row.views} görüntülenme</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
                 {adminTab === "history" && (
@@ -1551,6 +1590,11 @@ export function AppShell() {
                 if (isOwnListing) return (
                   <>
                     <div className="mt-5 bg-rose-50 rounded-2xl p-3 text-xs text-rose-700 flex items-center gap-2"><Tag size={14} className="flex-shrink-0" /> Bu sizin ilanınız. Gelen teklif ve mesajları aşağıda görebilirsiniz.</div>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Eye size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingViewStats?.totalViews ?? "—"}</p><p className="text-[9px] text-gray-400">Görüntülenme</p></div>
+                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Share2 size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{selectedListing.shareCount || 0}</p><p className="text-[9px] text-gray-400">Paylaşım</p></div>
+                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Heart size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingFavoriteCount(selectedListing.id)}</p><p className="text-[9px] text-gray-400">Favori</p></div>
+                    </div>
                     <div className="mt-3 bg-white border border-gray-200 rounded-2xl p-3"><div className="flex items-center justify-between mb-2"><h4 className="text-xs font-semibold text-gray-500">{t("listingStatus")}</h4><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span></div><div className="flex gap-2">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(selectedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${selectedListing.status === st ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div></div>
                     <div className="flex gap-2 mt-3">
                       <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Pencil size={14} /> İlanı Düzenle</button>
@@ -1973,6 +2017,7 @@ export function AppShell() {
                   <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
                     <button onClick={() => setMechAnalyticsView("overview")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "overview" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><TrendingUp size={12} /> Genel Analiz</button>
                     <button onClick={() => setMechAnalyticsView("earnings")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "earnings" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Banknote size={12} /> Kazanç</button>
+                    <button onClick={() => setMechAnalyticsView("traffic")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "traffic" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Compass size={12} /> Ziyaret & Rapor</button>
                   </div>
                   {mechAnalyticsView === "overview" && (<>
                     <div className="grid grid-cols-2 gap-2 mb-3">
@@ -2021,6 +2066,51 @@ export function AppShell() {
                     )}
                     <p className="text-[10px] text-gray-300 mt-4 text-center">Toplam {completed.length} tamamlanan iş üzerinden hesaplanmıştır.</p>
                   </>)}
+                  {mechAnalyticsView === "traffic" && (() => {
+                    const myOwnListings = listings.filter(l => l.sellerType === "mechanic" && l.sellerName === myProfile?.name);
+                    const myOwnJobs = jobListings.filter(j => j.mechanicId === myProfile?.id);
+                    const myTotalShares = (myProfile?.shareCount || 0) + myOwnListings.reduce((s, l) => s + (l.shareCount || 0), 0) + myOwnJobs.reduce((s, j) => s + (j.shareCount || 0), 0);
+                    const myTotalApplicants = myOwnJobs.reduce((s, j) => s + (j.applicants || []).length, 0);
+                    const TR_MONTH_ABBR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+                    const formatMonth = (m) => { const parts = String(m).split("-"); return TR_MONTH_ABBR[parseInt(parts[1], 10) - 1] || m; };
+                    const stats = myProfileViewStats;
+                    const viewConvRate = stats && stats.viewsThisYear > 0 ? Math.round((stats.conversionsThisYear / stats.viewsThisYear) * 100) : 0;
+                    return (
+                      <>
+                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><Compass size={14} className="text-rose-500" /> Profil Ziyaretleri</h3>
+                        {!stats ? (
+                          <div className="text-center py-10 text-xs text-gray-400">Yükleniyor…</div>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-3 gap-2 mb-4">
+                              <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{stats.viewsThisYear}</p><p className="text-[9px] text-gray-500 mt-0.5">Bu yıl ziyaret</p></div>
+                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{stats.conversionsThisYear}</p><p className="text-[9px] text-gray-500 mt-0.5">Randevuya dönüşen</p></div>
+                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">%{viewConvRate}</p><p className="text-[9px] text-gray-500 mt-0.5">Dönüşüm oranı</p></div>
+                            </div>
+                            {stats.monthly.length > 0 && (
+                              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-5">
+                                <h4 className="text-xs font-semibold text-gray-700 mb-3">Aylık Ziyaret Trendi</h4>
+                                <MiniBarChart labels={stats.monthly.map(m => formatMonth(m.month))} values={stats.monthly.map(m => m.views)} colorClass="bg-rose-500" />
+                              </div>
+                            )}
+                            <p className="text-[10px] text-gray-300 mb-5">Toplam (tüm zamanlar): {stats.totalViews} ziyaret, {stats.conversions} dönüşüm.</p>
+                          </>
+                        )}
+                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><History size={14} className="text-rose-500" /> Yıllık Özet Raporu</h3>
+                        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-2">
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Toplam Randevu</span><span className="font-semibold text-gray-800">{totalBooked}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Tamamlanan Randevu</span><span className="font-semibold text-gray-800">{completedAll.length} (%{completionRate})</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Toplam Kazanç</span><span className="font-semibold text-gray-800">{total.toLocaleString("tr-TR")}₺</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Ortalama Puan</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="fill-gray-900" /> {avgRating.toFixed(1)} ({reviewList.length} değerlendirme)</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Profil + İlan Paylaşımı</span><span className="font-semibold text-gray-800">{myTotalShares}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Bu Yıl Profil Ziyareti</span><span className="font-semibold text-gray-800">{stats?.viewsThisYear ?? "—"}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Aktif Araç İlanı</span><span className="font-semibold text-gray-800">{myOwnListings.filter(l => !l.adminRemoved).length}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">İş İlanlarına Toplam Başvuru</span><span className="font-semibold text-gray-800">{myTotalApplicants}</span></div>
+                        </div>
+                        <p className="text-[10px] text-gray-300 mt-3 text-center">Bu rapor, hesabınızın açıldığı tarihten bugüne kadar biriken verilere dayanır.</p>
+                      </>
+                    );
+                  })()}
                 </div>
               );
             })()}

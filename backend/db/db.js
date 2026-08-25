@@ -202,6 +202,20 @@ CREATE TABLE IF NOT EXISTS share_events (
   conversionCount INTEGER DEFAULT 0,
   createdAt TEXT DEFAULT (datetime('now'))
 );
+
+-- Tamirci profili ve araç ilanı sayfa görüntülemeleri: her açılışta tek bir satır eklenir (basit bir
+-- olay günlüğü). "converted" alanı, bu görüntülemenin ardından (aynı oturumda) bir randevuya
+-- dönüşüp dönüşmediğini işaretler — bkz. AppLogicProvider.tsx: activeMechanicViewIdRef,
+-- confirmBooking. Toplam/yıllık görüntülenme ve dönüşüm oranı buradan hesaplanıyor (COUNT/SUM
+-- yerine tek tek satır tutmak, "bu yıl" gibi zaman pencereli sorguları ve aylık trend grafiğini de
+-- mümkün kılıyor — bkz. backend/routes/profileViews.js GET /stats).
+CREATE TABLE IF NOT EXISTS profile_views (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  targetType TEXT NOT NULL,
+  targetId INTEGER NOT NULL,
+  converted INTEGER DEFAULT 0,
+  createdAt TEXT DEFAULT (datetime('now'))
+);
 `);
 
 // ---------------------------------------------------------------------------
