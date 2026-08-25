@@ -14,7 +14,7 @@ export function BrowseHome({ theme = undefined }) {
     setOwnerNotifSeenAt, mechNotifSeenAt, setMechNotifSeenAt, showNotifPanel, setShowNotifPanel, darkMode, 
     setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile, 
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, 
-    filters, setFilters, listingFilters, setListingFilters, listingSort, setListingSort, userLocation, 
+    filters, setFilters, listingFilters, setListingFilters, listingSort, setListingSort, listingSortDir, handleListingSortClick, userLocation,
     setUserLocation, locationStatus, setLocationStatus, notifPermission, setNotifPermission, favoriteIds, 
     setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query, 
     setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir, setSortDir, showLocationPrompt, 
@@ -149,7 +149,8 @@ export function BrowseHome({ theme = undefined }) {
           <button onClick={startSellFlow} className="w-full md:max-w-xs mb-4 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {[{ key: "default", label: "Önerilen" }, { key: "priceAsc", label: "💰 Fiyat ↑" }, { key: "priceDesc", label: "💰 Fiyat ↓" }, { key: "kmAsc", label: "🛞 KM ↑" }, { key: "yearDesc", label: "📅 Yıl ↓" }].map(opt => (<button key={opt.key} onClick={() => setListingSort(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}</button>))}
+              <button onClick={() => setListingSort("default")} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === "default" ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>Önerilen</button>
+              {[{ key: "price", label: "💰 Fiyat" }, { key: "km", label: "🛞 KM" }, { key: "year", label: "📅 Yıl" }].map(opt => (<button key={opt.key} onClick={() => handleListingSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{listingSort === opt.key ? (listingSortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
               <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeListingFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeListingFilterCount}</span>}</button>
             </div>
             <p className="text-xs text-gray-400 whitespace-nowrap">{filteredListings.length} ilan bulundu</p>

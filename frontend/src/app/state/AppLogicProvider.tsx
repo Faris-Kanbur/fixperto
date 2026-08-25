@@ -70,6 +70,7 @@ function useAppLogic() {
   const [filters, setFilters] = useState({ priceTier: "all", minRating: 0, maxDistance: 999 });
   const [listingFilters, setListingFilters] = useState({ transmission: "all", fuelType: "all", minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "" });
   const [listingSort, setListingSort] = useState("default");
+  const [listingSortDir, setListingSortDir] = useState("asc");
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState("idle");
   const [notifPermission, setNotifPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "unsupported");
@@ -353,6 +354,10 @@ function useAppLogic() {
     else { setSortBy(key); setSortDir(key === "rating" ? "desc" : "asc"); }
     if (key === "distance" && !userLocation) setShowLocationPrompt(true);
   };
+  const handleListingSortClick = (key) => {
+    if (listingSort === key) { setListingSortDir(d => (d === "asc" ? "desc" : "asc")); }
+    else { setListingSort(key); setListingSortDir(key === "year" ? "desc" : "asc"); }
+  };
   const confirmUseLocation = () => { setShowLocationPrompt(false); requestLocation(); };
   const stopUsingLocation = () => { setUserLocation(null); setLocationStatus("idle"); setToast({ type: "info", text: "📍 Konum kullanımı kapatıldı, tahmini mesafeler gösteriliyor." }); };
   const requestNotifPermission = () => {
@@ -467,12 +472,11 @@ function useAppLogic() {
     if (listingFilters.maxKm) list = list.filter(l => Number(l.km) <= Number(listingFilters.maxKm));
     if (listingFilters.minYear) list = list.filter(l => Number(l.year) >= Number(listingFilters.minYear));
     if (listingFilters.maxYear) list = list.filter(l => Number(l.year) <= Number(listingFilters.maxYear));
-    if (listingSort === "priceAsc") list = [...list].sort((a, b) => parseListingPrice(a.price) - parseListingPrice(b.price));
-    if (listingSort === "priceDesc") list = [...list].sort((a, b) => parseListingPrice(b.price) - parseListingPrice(a.price));
-    if (listingSort === "kmAsc") list = [...list].sort((a, b) => Number(a.km) - Number(b.km));
-    if (listingSort === "yearDesc") list = [...list].sort((a, b) => Number(b.year) - Number(a.year));
+    if (listingSort === "price") list = [...list].sort((a, b) => listingSortDir === "asc" ? parseListingPrice(a.price) - parseListingPrice(b.price) : parseListingPrice(b.price) - parseListingPrice(a.price));
+    if (listingSort === "km") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.km) - Number(b.km) : Number(b.km) - Number(a.km));
+    if (listingSort === "year") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.year) - Number(b.year) : Number(b.year) - Number(a.year));
     return list;
-  }, [listings, query, listingFilters, listingSort]);
+  }, [listings, query, listingFilters, listingSort, listingSortDir]);
   const activeListingFilterCount = (listingFilters.transmission !== "all" ? 1 : 0) + (listingFilters.fuelType !== "all" ? 1 : 0) + (listingFilters.minPrice ? 1 : 0) + (listingFilters.maxPrice ? 1 : 0) + (listingFilters.minKm ? 1 : 0) + (listingFilters.maxKm ? 1 : 0) + (listingFilters.minYear ? 1 : 0) + (listingFilters.maxYear ? 1 : 0);
   const filteredJobs = useMemo(() => {
     let list = jobListings.filter(j => j.status === "active");
@@ -2056,7 +2060,7 @@ function useAppLogic() {
     setMechSettings, notifLog, setNotifLog, ownerNotifSeenAt, setOwnerNotifSeenAt, mechNotifSeenAt, setMechNotifSeenAt, showNotifPanel,
     setShowNotifPanel, darkMode, setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters,
-    listingFilters, setListingFilters, listingSort, setListingSort, userLocation, setUserLocation, locationStatus, setLocationStatus,
+    listingFilters, setListingFilters, listingSort, setListingSort, listingSortDir, setListingSortDir, handleListingSortClick, userLocation, setUserLocation, locationStatus, setLocationStatus,
     notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours,
     setMechanicHours, query, setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir,
     setSortDir, showLocationPrompt, setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, openMapDetail,

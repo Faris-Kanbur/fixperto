@@ -1,6 +1,7 @@
 import { PriceLevelDots } from "../ui/PriceLevelDots";
 import { Compass, Navigation, Star, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { priceLevel, isImgUrl } from "../../utils/helpers";
 
@@ -117,8 +118,24 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
     const previewItem = isControlled ? previewItemProp : localPreviewItem;
     const setPreviewItem = isControlled ? onPreviewChange : setLocalPreviewItem;
     const isListing = (it) => it && it.brand !== undefined;
+    const mapBoxRef = useRef(null);
+    const [popupRect, setPopupRect] = useState(null);
+    const updatePopupRect = () => { if (mapBoxRef.current) setPopupRect(mapBoxRef.current.getBoundingClientRect()); };
+    const handlePinClick = (m) => { setPreviewItem(m); updatePopupRect(); };
+    useEffect(() => {
+      if (!previewItem) return;
+      updatePopupRect();
+      const onReposition = () => updatePopupRect();
+      window.addEventListener("scroll", onReposition, true);
+      window.addEventListener("resize", onReposition);
+      return () => {
+        window.removeEventListener("scroll", onReposition, true);
+        window.removeEventListener("resize", onReposition);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [previewItem]);
     return (
-    <div className={`rounded-2xl border border-gray-200 relative ${className}`}>
+    <div ref={mapBoxRef} className={`rounded-2xl border border-gray-200 relative ${className}`}>
       <div className="absolute inset-0 rounded-2xl overflow-hidden" style={{ backgroundColor: "#eaf0e4" }}>
         <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
           <ellipse cx="88%" cy="12%" rx="70" ry="55" fill="#aee1f7" opacity="0.9" />
@@ -136,7 +153,7 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
         <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: "linear-gradient(#c9cfc1 1px, transparent 1px), linear-gradient(90deg, #c9cfc1 1px, transparent 1px)", backgroundSize: "26px 26px" }} />
         <div style={{ left: "50%", top: "50%" }} className="absolute -translate-x-1/2 -translate-y-1/2 z-10"><div className="w-4 h-4 bg-rose-600 rounded-full ring-4 ring-rose-200 border-2 border-white shadow" /><div className="absolute inset-0 w-4 h-4 bg-rose-500 rounded-full animate-ping opacity-40" /></div>
         {items.map(m => { const active = hoveredId === m.id || previewItem?.id === m.id; return (
-          <button key={m.id} type="button" onClick={() => setPreviewItem(m)} onMouseEnter={() => onHoverItem && onHoverItem(m.id)} onMouseLeave={() => onHoverItem && onHoverItem(null)} style={{ left: `${m.px}%`, top: `${m.py}%` }} className={`absolute -translate-x-1/2 -translate-y-full flex flex-col items-center transition-transform cursor-pointer ${active ? "z-30 scale-125" : "z-10"}`}>
+          <button key={m.id} type="button" onClick={() => handlePinClick(m)} onMouseEnter={() => onHoverItem && onHoverItem(m.id)} onMouseLeave={() => onHoverItem && onHoverItem(null)} style={{ left: `${m.px}%`, top: `${m.py}%` }} className={`absolute -translate-x-1/2 -translate-y-full flex flex-col items-center transition-transform cursor-pointer ${active ? "z-30 scale-125" : "z-10"}`}>
             <div className={`shadow-lg rounded-full px-2.5 py-1 text-[11px] font-bold border transition whitespace-nowrap mb-0.5 flex items-center gap-1 ${active ? "bg-red-500 text-white border-red-500" : "bg-white text-gray-700 border-gray-100"}`}>{isListing(m) ? m.price : (<>{m.reviews > 100 && (<><span>{"€".repeat(priceLevel(m.price))}</span><span className={active ? "text-white/60" : "text-gray-300"}>·</span></>)}<span className="flex items-center gap-0.5"><Star size={9} className={active ? "fill-white text-white" : "fill-gray-900 text-gray-900"} />{m.rating}</span></>)}</div>
             <svg width="26" height="32" viewBox="0 0 24 30" className="drop-shadow-md">
               <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18c0-6.6-5.4-12-12-12z" fill={active ? "#c0281c" : "#ea4335"} />
@@ -154,8 +171,11 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
         </div>
         <div className="absolute bottom-1 left-2 text-[9px] text-gray-400/80 z-20">Örnek harita verisi</div>
       </div>
-      {previewItem && (
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 w-[88%] max-w-[280px]">
+      {previewItem && popupRect && createPortal(
+        <div
+          style={{ position: "fixed", left: popupRect.left + popupRect.width / 2, bottom: Math.max(12, window.innerHeight - popupRect.bottom + 12), transform: "translateX(-50%)", width: `min(88%, 280px)`, maxWidth: Math.max(200, popupRect.width - 16) }}
+          className="z-[9999]"
+        >
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex items-center gap-3">
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">{isImgUrl(previewItem.photo) ? <img src={previewItem.photo} className="w-full h-full object-cover" /> : (previewItem.photo || previewItem.img)}</div>
             <div className="flex-1 min-w-0">
@@ -166,7 +186,8 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
             </div>
             <button onClick={() => setPreviewItem(null)} aria-label="Kapat" className="text-gray-300 hover:text-gray-500 flex-shrink-0 self-start p-2 -m-2"><X size={14} /></button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
     );
