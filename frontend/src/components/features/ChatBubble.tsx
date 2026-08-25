@@ -1,5 +1,6 @@
 import { Globe } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
+import { mockTranslate } from "../../utils/helpers";
 
 export function ChatBubble({ msg, viewerLang, mine }) {
   const {

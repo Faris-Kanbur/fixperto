@@ -1,5 +1,5 @@
 // Basit, bağımlılıksız (kütüphanesiz) çubuk grafik — admin panelindeki büyüme trendlerini göstermek için.
-export function MiniBarChart({ labels, values, colorClass, valueFormat }) {
+export function MiniBarChart({ labels, values, colorClass, valueFormat = undefined }) {
   const max = Math.max(...values, 1);
   return (
     <div className="flex items-stretch gap-2 h-28">

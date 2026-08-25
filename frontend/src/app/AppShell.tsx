@@ -17,6 +17,18 @@ import { JobCard } from "../components/features/JobCard";
 import { MechDetailBody } from "../components/features/MechDetailBody";
 import { AppointmentCard } from "../components/features/AppointmentCard";
 import { BrowseHome } from "../components/features/BrowseHome";
+import {
+  LEGAL_CONTENT, FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, BANNER_PRESETS,
+  ONBOARDING_SLIDES, ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
+  ADMIN_SLA_DAYS, ADMIN_TREND_DATA, PLATFORM_COMMISSION_RATE, DE_CITIES, TODAY_STR,
+  REMINDER_KIND_LABELS, TRANSMISSIONS, FUEL_TYPES, EMPLOYMENT_TYPES, EXPERIENCE_LEVELS,
+  MY_MECHANIC_ID, MY_OWNER_ID, DAY_KEYS, DAY_LABELS_FULL,
+} from "../data/constants";
+import {
+  ticketSlaBreached, ticketDaysOpen, initials, isValidEmail, validatePhone,
+  computeReminders, isImgUrl, listingStatusMeta, isValidDateStr, listingCurrency,
+  jobStatusMeta, parsePriceNumber, isFixedPriceService, statusColor, getDaySlots,
+} from "../utils/helpers";
 
 // AppShell: eskiden App.jsx'in return(...) bloğuydu. Tüm state/handler'lar
 // artık useApp() üzerinden context'ten geliyor; JSX ve görünüm AYNI.
@@ -1033,7 +1045,7 @@ export function AppShell() {
                       </div>
                       <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Genel</p>
                       <div className="bg-gray-50 rounded-2xl p-4 mb-5 space-y-1.5">
-                        <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Puan</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="text-gray-900 fill-gray-900" /> {analyzingUser.rating || mechanicsList.find(m => m.id === analyzingUser.id)?.rating} ({mechanicsList.find(m => m.id === analyzingUser.id)?.reviews} değerlendirme)</span></div>
+                        <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Puan</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="text-gray-900 fill-gray-900" /> {(analyzingUser as any).rating || mechanicsList.find(m => m.id === analyzingUser.id)?.rating} ({mechanicsList.find(m => m.id === analyzingUser.id)?.reviews} değerlendirme)</span></div>
                         <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Ort. Yanıt Süresi</span><span className="font-semibold text-gray-800">{mechanicsList.find(m => m.id === analyzingUser.id)?.avgResponseMinutes} dk</span></div>
                         <div className="flex items-center justify-between text-sm"><span className="text-gray-500">İş İlanlarına Toplam Başvuru</span><span className="font-semibold text-gray-800">{adminUserAnalytics.totalApplicants}</span></div>
                       </div>
@@ -1336,7 +1348,7 @@ export function AppShell() {
                   {linkedListing ? (<div className="mb-5 bg-white border border-gray-100 rounded-2xl p-4"><div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Tag size={15} className="text-rose-500" /> {t("listingStatus")}</h3><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(linkedListing.status, t).color}`}>{listingStatusMeta(linkedListing.status, t).label}</span></div><div className="flex gap-2 mb-3">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(linkedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${linkedListing.status === st ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div><p className="text-[11px] text-gray-400 mb-3">{(() => { const oc = linkedListing.offers.filter(o => o.status !== "replaced").length; return oc > 0 ? `${oc} teklif geldi` : "Henüz teklif gelmedi"; })()}</p><div className="flex gap-2"><button onClick={() => openSellForm({ ...linkedListing, _vehicleId: selectedVehicle.id, _editingId: linkedListing.id })} className="flex-1 bg-gray-50 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-100 transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListing")}</button><button onClick={() => setSelectedListingId(linkedListing.id)} className="flex-1 bg-rose-50 text-rose-600 py-2 rounded-xl text-sm font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><MessageCircle size={14} /> Teklifleri Gör</button></div></div>) : (<button onClick={() => openSellForm({ brand: selectedVehicle.brand, model: selectedVehicle.model, year: selectedVehicle.year, km: "", price: "", desc: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: selectedVehicle.id, _editingId: null })} className="w-full mb-5 bg-white border border-rose-200 text-rose-600 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-50 transition flex items-center justify-center gap-2"><Tag size={15} /> {t("sellThisCar")}</button>)}
                   {ownerSettings.smartReminders && (() => {
                     const vReminders = computeReminders(selectedVehicle);
-                    const disabledKinds = Object.entries(selectedVehicle.reminderOverrides || {}).filter(([, ov]) => ov && ov.enabled === false).map(([k]) => k);
+                    const disabledKinds = Object.entries(selectedVehicle.reminderOverrides || {}).filter(([, ov]: [string, any]) => ov && ov.enabled === false).map(([k]) => k);
                     return (
                     <>
                       <div className="flex items-center justify-between mb-3">
@@ -1905,7 +1917,7 @@ export function AppShell() {
             {mechTab === "analytics" && (() => {
               const myAppts = appointments.filter(isSameMechanicAppt);
               const now = new Date();
-              const withinDays = (a, days) => { if (!a.dateISO) return false; const d = new Date(a.dateISO); return (now - d) / 86400000 <= days && (now - d) >= 0; };
+              const withinDays = (a, days) => { if (!a.dateISO) return false; const d = new Date(a.dateISO); return (now.getTime() - d.getTime()) / 86400000 <= days && (now.getTime() - d.getTime()) >= 0; };
               const totalBooked = myAppts.length;
               const monthBooked = myAppts.filter(a => withinDays(a, 30)).length;
               const completedAll = myAppts.filter(a => a.status === "Tamir Tamamlandı");
@@ -1920,7 +1932,7 @@ export function AppShell() {
               const total = completed.reduce((s, a) => s + (a.servicePrice || 0), 0);
               const weekTotal = completed.filter(a => withinDays(a, 7)).reduce((s, a) => s + (a.servicePrice || 0), 0);
               const monthTotal = completed.filter(a => withinDays(a, 30)).reduce((s, a) => s + (a.servicePrice || 0), 0);
-              const serviceMap = {};
+              const serviceMap: Record<string, { count: number; total: number }> = {};
               completed.forEach(a => { const name = (a.issue || "Diğer").split(" — ")[0]; if (!serviceMap[name]) serviceMap[name] = { count: 0, total: 0 }; serviceMap[name].count += 1; serviceMap[name].total += (a.servicePrice || 0); });
               const topServices = Object.entries(serviceMap).sort((a, b) => b[1].total - a[1].total).slice(0, 5);
               return (

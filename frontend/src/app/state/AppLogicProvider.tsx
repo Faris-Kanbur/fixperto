@@ -504,7 +504,7 @@ function useAppLogic() {
     return list.filter(role === "mechanic" ? isSameMechanicAppt : isMyOwnerAppt);
   }, [appointments, role, ownerProfile.name, myProfile?.name]);
   const historyByDate = useMemo(() => {
-    const map = {};
+    const map: Record<string, any[]> = {};
     const list = appointments.filter(a => ["Tamir Tamamlandı", "İptal Edildi", "Reddedildi", "Gelmedi"].includes(a.status)).filter(role === "mechanic" ? isSameMechanicAppt : isMyOwnerAppt);
     list.forEach(a => { if (!map[a.date]) map[a.date] = []; map[a.date].push(a); });
     return Object.entries(map);
@@ -547,7 +547,7 @@ function useAppLogic() {
     setMechProfileTab("settings");
     setExpandedDay(JS_DAY_TO_KEY[new Date().getDay()]);
   };
-  const openDetail = (m, returnTo) => { setSelectedMechanicId(m.id); setDetailReturnScreen(returnTo || null); setScreen("detail"); };
+  const openDetail = (m, returnTo = undefined) => { setSelectedMechanicId(m.id); setDetailReturnScreen(returnTo || null); setScreen("detail"); };
   const rebookAppt = (a) => {
     const mech = mechanicsList.find(m => m.id === a.mechanicId) || mechanicsList.find(m => m.name === a.mechanicName);
     if (!mech) { setToast({ type: "info", text: "⚠️ Bu tamirci artık listede bulunamadı." }); return; }
@@ -835,7 +835,7 @@ function useAppLogic() {
   // kaydına uygular. `applyAdminFieldChange` hem doğrudan düzenlemelerde hem "Geri Al" akışında
   // (revertAdminChange/-Group) kullanıldığı için, buraya eklenen persist tek noktadan TÜM admin
   // panel yazma işlemlerini kalıcı hale getiriyor.
-  const applyAdminFieldChange = (targetType, targetId, field, value, extra) => {
+  const applyAdminFieldChange = (targetType, targetId, field, value, extra = undefined) => {
     if (targetType === "owner") { setOwnersDirectory(list => list.map(o => o.id === targetId ? { ...o, [field]: value } : o)); persist(api.owners.update(targetId, { [field]: value }), "Kullanıcı bilgisi kaydedilemedi"); }
     else if (targetType === "mechanic") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, [field]: value } : m)); persist(api.mechanics.update(targetId, { [field]: value }), "Tamirci bilgisi kaydedilemedi"); }
     else if (targetType === "mechanicOverride") setMechanicAdminOverrides(ov => ({ ...ov, [targetId]: { ...ov[targetId], [field]: value } }));
@@ -920,11 +920,11 @@ function useAppLogic() {
     return { totalOwners, totalMechanics, activeCarListings, activeJobListings, totalAppointments, completedThisMonth, openTickets, pendingVerification, avgRating, suspendedOwners, suspendedMechanics, slaBreached, totalUsers: totalOwners + totalMechanics, totalReviews, totalCities };
   }, [ownersDirectory, mechanicsList, listings, jobListings, appointments, supportTickets, mechanicAdminOverrides]);
   const adminAllUsers = useMemo(() => {
-    const owners = ownersDirectory.map(o => ({ type: "owner", id: o.id, name: o.name, email: o.email, phone: o.phone, status: o.status, joinDate: o.joinDate, city: o.city, password: o.password || "demo1234", extra: `${o.vehicleCount} araç · ${o.apptCount} randevu · ${o.city}` }));
+    const owners = ownersDirectory.map(o => ({ type: "owner" as const, id: o.id, name: o.name, email: o.email, phone: o.phone, status: o.status, joinDate: o.joinDate, city: o.city, password: o.password || "demo1234", extra: `${o.vehicleCount} araç · ${o.apptCount} randevu · ${o.city}` }));
     const mechs = mechanicsList.map(m => {
       const ov = mechanicAdminOverrides[m.id] || {};
       const city = (m.address || "").split("/").pop().trim();
-      return { type: "mechanic", id: m.id, name: m.name, email: ov.email || `${slugifyForEmail(m.name)}@fixperto.com`, phone: ov.phone || "+90 5xx xxx xx xx", status: ov.status || "active", joinDate: ov.joinDate || "2026-01-01", password: ov.password || "demo1234", city, specialty: m.specialty, address: m.address, price: m.price, verified: m.verified, verificationDocs: m.verificationDocs || [], extra: `${m.specialty} · ${m.rating}★ (${m.reviews})${m.verified ? "" : " · Doğrulanmamış"}` };
+      return { type: "mechanic" as const, id: m.id, name: m.name, email: ov.email || `${slugifyForEmail(m.name)}@fixperto.com`, phone: ov.phone || "+90 5xx xxx xx xx", status: ov.status || "active", joinDate: ov.joinDate || "2026-01-01", password: ov.password || "demo1234", city, specialty: m.specialty, address: m.address, price: m.price, verified: m.verified, verificationDocs: m.verificationDocs || [], extra: `${m.specialty} · ${m.rating}★ (${m.reviews})${m.verified ? "" : " · Doğrulanmamış"}` };
     });
     return [...owners, ...mechs];
   }, [ownersDirectory, mechanicsList, mechanicAdminOverrides]);
@@ -996,7 +996,7 @@ function useAppLogic() {
   const cancelEditProfileField = () => { setEditingProfileField(null); setProfileFieldDraft(""); };
   const ADMIN_NUMERIC_PROFILE_FIELDS = ["vehicleCount", "apptCount", "price", "rating", "reviews", "avgResponseMinutes"];
   const saveProfileField = (user, key) => {
-    let value = profileFieldDraft;
+    let value: any = profileFieldDraft;
     if (ADMIN_NUMERIC_PROFILE_FIELDS.includes(key)) value = Number(value) || 0;
     if (key === "verified") value = value === "true";
     const oldValue = profileFieldOldValueRef.current;
@@ -1017,7 +1017,7 @@ function useAppLogic() {
     setEditingProfileField(null); setProfileFieldDraft("");
     setToast({ type: "info", text: "✅ Güncellendi." });
   };
-  const renderAdminProfileRow = (user, key, label, value, opts = {}) => {
+  const renderAdminProfileRow = (user, key, label, value, opts: any = {}) => {
     const editing = editingProfileField === key;
     return (
       <div key={key} className="flex items-center justify-between gap-3 py-3 border-b border-gray-100 last:border-0">
@@ -1156,7 +1156,7 @@ function useAppLogic() {
     if (!analyzingUser) return null;
     if (analyzingUser.type === "owner") {
       const myAppts = appointments.filter(a => a.customer === analyzingUser.name);
-      const byStatus = {};
+      const byStatus: Record<string, number> = {};
       myAppts.forEach(a => { byStatus[a.status] = (byStatus[a.status] || 0) + 1; });
       const myListings = listings.filter(l => l.sellerName === analyzingUser.name);
       const myTickets = supportTickets.filter(tk => tk.fromName === analyzingUser.name);
@@ -1168,13 +1168,13 @@ function useAppLogic() {
     }
     const myAppts = appointments.filter(a => a.mechanicName === analyzingUser.name);
     const completed = myAppts.filter(a => a.status === "Tamir Tamamlandı").length;
-    const byStatus = {};
+    const byStatus: Record<string, number> = {};
     myAppts.forEach(a => { byStatus[a.status] = (byStatus[a.status] || 0) + 1; });
     const myListings = listings.filter(l => l.sellerType === "mechanic" && l.sellerName === analyzingUser.name);
     const myJobs = jobListings.filter(j => j.mechanicId === analyzingUser.id);
     const totalApplicants = myJobs.reduce((s, j) => s + (j.applicants || []).length, 0);
     const myTickets = supportTickets.filter(tk => tk.fromName === analyzingUser.name);
-    const estRevenue = completed * (analyzingUser.price || 0);
+    const estRevenue = completed * ((analyzingUser as any).price || 0);
     return {
       apptCount: myAppts.length, completed, byStatus, estRevenue,
       listingCount: myListings.length, activeListings: myListings.filter(l => !l.adminRemoved).length,
@@ -1200,20 +1200,20 @@ function useAppLogic() {
       if (aBreach !== bBreach) return aBreach ? -1 : 1;
       const pw = (ADMIN_TICKET_PRIORITY_WEIGHT[a.priority] ?? 3) - (ADMIN_TICKET_PRIORITY_WEIGHT[b.priority] ?? 3);
       if (pw !== 0) return pw;
-      return new Date(b.createdDate) - new Date(a.createdDate);
+      return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
     });
   }, [supportTickets, adminTicketStatusFilter, adminTicketTypeFilter, adminTicketPriorityFilter, adminTicketSearch]);
   const adminTicketAnalytics = useMemo(() => {
     const byStatus = { open: 0, in_review: 0, resolved: 0 };
     const byPriority = { high: 0, medium: 0, low: 0 };
-    const byType = {};
+    const byType: Record<string, number> = {};
     let resolvedWithDate = 0, totalResolutionDays = 0;
     supportTickets.forEach(tk => {
       byStatus[tk.status] = (byStatus[tk.status] || 0) + 1;
       byPriority[tk.priority] = (byPriority[tk.priority] || 0) + 1;
       byType[tk.type] = (byType[tk.type] || 0) + 1;
       if (tk.status === "resolved" && tk.resolvedDate) {
-        const days = Math.max(0, Math.round((new Date(tk.resolvedDate) - new Date(tk.createdDate)) / 86400000));
+        const days = Math.max(0, Math.round((new Date(tk.resolvedDate).getTime() - new Date(tk.createdDate).getTime()) / 86400000));
         totalResolutionDays += days; resolvedWithDate++;
       }
     });
@@ -1341,7 +1341,7 @@ function useAppLogic() {
   };
   // ---- Analitik: bölge dağılımı + gelir/komisyon tahmini ----
   const adminRegionBreakdown = useMemo(() => {
-    const counts = {};
+    const counts: Record<string, number> = {};
     ownersDirectory.forEach(o => { counts[o.city] = (counts[o.city] || 0) + 1; });
     mechanicsList.forEach(m => { const city = (m.address || "").split("/").pop().trim(); if (city) counts[city] = (counts[city] || 0) + 1; });
     return Object.entries(counts).sort((a, b) => b[1] - a[1]);
@@ -1565,7 +1565,7 @@ function useAppLogic() {
   const mySupportTickets = () => {
     const myName = role === "owner" ? ownerProfile.name : myProfile?.name;
     if (!myName) return [];
-    return supportTickets.filter(tk => tk.fromName === myName).sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+    return supportTickets.filter(tk => tk.fromName === myName).sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
   };
   const submitSupportTicket = async () => {
     if (!newTicketForm.subject.trim() || !newTicketForm.description.trim()) { setToast({ type: "info", text: "⚠️ Lütfen konu ve açıklama girin." }); return; }
@@ -1638,7 +1638,7 @@ function useAppLogic() {
       </>
     );
   };
-  const openChatWithMechanic = (m, contextNote) => {
+  const openChatWithMechanic = (m, contextNote = undefined) => {
     let convo = conversations.find(c => c.mechanicId === m.id);
     if (!convo) {
       convo = { id: Date.now(), mechanicId: m.id, mechanicName: m.name, mechanicImg: m.img, mechanicLang: m.lang, messages: [], pendingContextNote: contextNote || null };
@@ -1685,7 +1685,7 @@ function useAppLogic() {
     setChatInput("");
   };
   const handleFileSelect = (e) => { const file = e.target.files?.[0]; if (!file) return; sendOwnerMessage("📎 Fotoğraf gönderildi", URL.createObjectURL(file)); };
-  const sendOwnerMessageWithReply = (text, image) => { sendOwnerMessage(text, image); if (activeConvo && activeConvo.messages.length === 0) { setTimeout(() => { setConversations(cs => cs.map(c => { if (c.id !== activeConvoId) return c; const replyText = c.mechanicLang === "en" ? "Thanks for reaching out!" : "Merhaba, mesajınız için teşekkürler!"; return { ...c, messages: [...c.messages, { id: msgId++, sender: "mechanic", text: replyText, lang: c.mechanicLang }] }; })); fireNotification("Yeni mesaj 💬", `${activeConvo.mechanicName}: Merhaba, mesajınız için teşekkürler!`, ownerSettings.notifyMessages, "owner", { type: "chat", id: activeConvoId }); }, 900); } };
+  const sendOwnerMessageWithReply = (text, image = undefined) => { sendOwnerMessage(text, image); if (activeConvo && activeConvo.messages.length === 0) { setTimeout(() => { setConversations(cs => cs.map(c => { if (c.id !== activeConvoId) return c; const replyText = c.mechanicLang === "en" ? "Thanks for reaching out!" : "Merhaba, mesajınız için teşekkürler!"; return { ...c, messages: [...c.messages, { id: msgId++, sender: "mechanic", text: replyText, lang: c.mechanicLang }] }; })); fireNotification("Yeni mesaj 💬", `${activeConvo.mechanicName}: Merhaba, mesajınız için teşekkürler!`, ownerSettings.notifyMessages, "owner", { type: "chat", id: activeConvoId }); }, 900); } };
   const toggleTranslate = (id) => setShowTranslated(s => ({ ...s, [id]: !s[id] }));
   const mechConvo = conversations.find(c => c.id === mechActiveConvoId);
   const sendMechMessage = (text) => { if (!text) return; setConversations(cs => cs.map(c => { if (c.id !== mechActiveConvoId) return c; const newMsgs = [...c.messages]; if (c.pendingContextNote) newMsgs.push({ id: msgId++, sender: "mechanic", text: c.pendingContextNote, lang: c.mechanicLang }); newMsgs.push({ id: msgId++, sender: "mechanic", text, lang: c.mechanicLang }); return { ...c, messages: newMsgs, pendingContextNote: null }; })); fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${text}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId }); setMechChatInput(""); };
@@ -2128,7 +2128,7 @@ function useAppLogic() {
   };
 }
 
-const AppLogicContext = createContext(null);
+const AppLogicContext = createContext<ReturnType<typeof useAppLogic> | null>(null);
 
 export function AppProvider({ children }) {
   const value = useAppLogic();

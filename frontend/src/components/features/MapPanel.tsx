@@ -2,8 +2,9 @@ import { PriceLevelDots } from "../ui/PriceLevelDots";
 import { Compass, Navigation, Star, X } from "lucide-react";
 import { useState } from "react";
 import { useApp } from "../../app/state/AppLogicProvider";
+import { priceLevel, isImgUrl } from "../../utils/helpers";
 
-export function MapPanel({ className, items, onPick, hoveredId, onHoverItem, previewItem: previewItemProp, onPreviewChange }) {
+export function MapPanel({ className, items, onPick, hoveredId = null, onHoverItem = undefined, previewItem: previewItemProp = undefined, onPreviewChange = undefined }) {
   const {
     lang, setLang, t, screen, setScreen, role, setRole, showPass, setShowPass, forgotEmail, setForgotEmail, form, 
     setForm, authError, setAuthError, ownerTab, setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, 

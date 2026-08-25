@@ -1,4 +1,5 @@
 import { useApp } from "../../app/state/AppLogicProvider";
+import { Search, Tag, Heart, MessageCircle, ClipboardList } from "lucide-react";
 
 export function OwnerDesktopNav() {
   const {

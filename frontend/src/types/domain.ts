@@ -87,7 +87,7 @@ export interface Vehicle {
   ownerId: number;
   brand: string;
   model: string;
-  year: number;
+  year: number | string;
   plate: string;
   country: string;
   city: string;
@@ -140,7 +140,7 @@ export interface ListingMessage {
   ts?: string;
 }
 
-export type ListingStatus = "active" | "reserved" | "sold";
+export type ListingStatus = "active" | "reserved" | "sold" | string;
 
 export interface Listing {
   id: number;
@@ -148,8 +148,8 @@ export interface Listing {
   sellerType: "mechanic" | "owner";
   brand: string;
   model: string;
-  year: number;
-  km: number;
+  year: number | string;
+  km: number | string;
   price: string;
   description: string;
   photo: string;
@@ -164,6 +164,7 @@ export interface Listing {
   firstReg: string;
   color: string;
   vehicleId: number | null;
+  adminRemoved?: boolean;
 }
 
 export interface JobApplicant {
@@ -189,20 +190,20 @@ export interface JobListing {
   requirements: string[];
   skills: string[];
   postedDate: string;
-  status: "active" | "closed";
+  status: "active" | "closed" | string;
   applicants: JobApplicant[];
 }
 
-export type TicketType = "payment" | "listing" | "quality" | "verification" | "no_show" | "review" | "bug" | "customer";
+export type TicketType = "payment" | "listing" | "quality" | "verification" | "no_show" | "review" | "bug" | "customer" | string;
 export type TicketPriority = "high" | "medium" | "low";
-export type TicketStatus = "open" | "in_review" | "resolved";
+export type TicketStatus = "open" | "in_review" | "resolved" | string;
 
 export interface SupportTicket {
   id: number;
   type: TicketType;
   priority: TicketPriority;
   status: TicketStatus;
-  fromType: "owner" | "mechanic";
+  fromType: "owner" | "mechanic" | string;
   fromName: string;
   subject: string;
   description: string;
@@ -223,7 +224,7 @@ export interface QuoteRequest {
   issue: string;
   photos: string[];
   mechanicIds: number[];
-  status: "open" | "closed";
+  status: "open" | "closed" | string;
   createdAt?: string;
 }
 
@@ -233,7 +234,7 @@ export interface QuoteOffer {
   mechanicId: number;
   mechanicName: string;
   mechanicImg: string;
-  status: "pending" | "submitted" | "accepted" | "lost";
+  status: "pending" | "submitted" | "accepted" | "lost" | string;
   price: number | null;
   etaDays: number | null;
   note: string;

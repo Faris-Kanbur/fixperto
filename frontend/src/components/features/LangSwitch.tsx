@@ -1,6 +1,6 @@
 import { useApp } from "../../app/state/AppLogicProvider";
 
-export function LangSwitch({ dark }) {
+export function LangSwitch({ dark = false }) {
   const {
     lang, setLang, t, screen, setScreen, role, setRole, showPass, setShowPass, forgotEmail, setForgotEmail, form, 
     setForm, authError, setAuthError, ownerTab, setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, 

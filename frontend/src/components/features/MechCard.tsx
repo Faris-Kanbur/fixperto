@@ -1,6 +1,7 @@
 import { PriceLevelDots } from "../ui/PriceLevelDots";
 import { BadgeCheck, CheckCircle2, MapPin, Star, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
+import { BANNER_PRESETS } from "../../data/constants";
 
 export function MechCard({ m, onHover }) {
   const {
@@ -119,7 +120,7 @@ export function MechCard({ m, onHover }) {
       <div className="p-3">
         <div className="flex justify-between items-start gap-2"><h3 className="font-semibold text-gray-800 text-sm truncate">{m.name}</h3><PriceLevelDots price={m.price} /></div>
         <p className="text-xs text-gray-400 mt-0.5 truncate">{m.specialty}</p>
-        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500"><span className="flex items-center gap-1"><MapPin size={12} />{(m.effectiveDistance ?? m.distance).toFixed(1)} km{userLocation && m.effectiveDistance != null && <CheckCircle2 size={11} className="text-green-500" title="Gerçek konum" />}</span><span className="flex items-center gap-1"><Star size={12} className="text-gray-900 fill-gray-900" />{m.rating} ({m.reviews})</span></div>
+        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500"><span className="flex items-center gap-1"><MapPin size={12} />{(m.effectiveDistance ?? m.distance).toFixed(1)} km{userLocation && m.effectiveDistance != null && <span title="Gerçek konum"><CheckCircle2 size={11} className="text-green-500" /></span>}</span><span className="flex items-center gap-1"><Star size={12} className="text-gray-900 fill-gray-900" />{m.rating} ({m.reviews})</span></div>
         <div className="flex items-center gap-2 mt-2 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? "Şu an açık" : "Şu an kapalı"}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Zap size={10} className="text-gray-900" /> Ort. {m.avgResponseMinutes} dk yanıt</span>}</div>
       </div>
     </button>

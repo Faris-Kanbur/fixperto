@@ -6,7 +6,7 @@ import { MapPanel } from "./MapPanel";
 import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
 
-export function BrowseHome({ theme }) {
+export function BrowseHome({ theme = undefined }) {
   const {
     lang, setLang, t, screen, setScreen, role, setRole, showPass, setShowPass, forgotEmail, setForgotEmail, form, 
     setForm, authError, setAuthError, ownerTab, setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, 

@@ -1,5 +1,6 @@
 import { Check, CircleDot } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
+import { TRACK_STATUSES_AUTO, TRACK_STATUSES_MANUAL, TRACK_LABELS_AUTO, TRACK_LABELS_MANUAL } from "../../data/constants";
 
 export function StatusTracker({ status, autoAccepted }) {
   const {

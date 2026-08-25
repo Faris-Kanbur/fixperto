@@ -1,7 +1,8 @@
 import { Banknote, CalendarDays, Cog, Fuel, Gauge, Heart, MessageCircle } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
+import { listingStatusMeta, isImgUrl } from "../../utils/helpers";
 
-export function ListingCard({ l, onHover }) {
+export function ListingCard({ l, onHover = undefined }) {
   const {
     lang, setLang, t, screen, setScreen, role, setRole, showPass, setShowPass, forgotEmail, setForgotEmail, form, 
     setForm, authError, setAuthError, ownerTab, setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, 

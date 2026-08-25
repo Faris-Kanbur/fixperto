@@ -158,7 +158,7 @@ export function computeReminders(v) {
     const effectiveDue = (ov && ov.customDate) ? new Date(ov.customDate) : c.dueDate;
     const customized = !!(ov && (ov.customDate || hasCustomLead));
     if (!effectiveDue) { reminders.push({ kind: c.kind, icon: c.icon, title: c.label, detail: c.staticDetail || "", urgent: false, dueDate: null, leadDays, customized, legalNote: c.legalNote }); continue; }
-    const daysLeft = Math.round((effectiveDue - TODAY) / 86400000);
+    const daysLeft = Math.round((effectiveDue.getTime() - TODAY.getTime()) / 86400000);
     const overdue = daysLeft < 0;
     const title = overdue ? `${c.label} Süresi Geçti!` : `${c.label} Zamanı Yaklaşıyor`;
     const dateInfo = overdue ? `${effectiveDue.toLocaleDateString("tr-TR")} tarihinde sona erdi.` : `${effectiveDue.toLocaleDateString("tr-TR")} tarihine ${daysLeft} gün kaldı.`;
@@ -170,7 +170,7 @@ export function computeReminders(v) {
     const due = new Date(cr.date);
     if (isNaN(due.getTime())) continue;
     const leadDays = Number(cr.leadDays) || 7;
-    const daysLeft = Math.round((due - TODAY) / 86400000);
+    const daysLeft = Math.round((due.getTime() - TODAY.getTime()) / 86400000);
     const overdue = daysLeft < 0;
     const title = overdue ? `${cr.title} Süresi Geçti!` : `${cr.title} Yaklaşıyor`;
     const detail = overdue ? `${due.toLocaleDateString("tr-TR")} tarihinde sona erdi.` : `${due.toLocaleDateString("tr-TR")} tarihine ${daysLeft} gün kaldı.`;
@@ -220,7 +220,7 @@ export function slugifyForEmail(name) {
 }
 
 export function ticketDaysOpen(tk) {
-  return Math.max(0, Math.round((TODAY - new Date(tk.createdDate)) / 86400000));
+  return Math.max(0, Math.round((TODAY.getTime() - new Date(tk.createdDate).getTime()) / 86400000));
 }
 
 export function ticketSlaBreached(tk) {

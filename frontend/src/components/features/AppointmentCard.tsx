@@ -1,6 +1,7 @@
 import { Banknote, Calendar, CalendarDays, CheckCircle2, Clock, FileText, Navigation, Shield, Star } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { StatusTracker } from "./StatusTracker";
+import { statusColor } from "../../utils/helpers";
 
 export function AppointmentCard({ a }) {
   const {

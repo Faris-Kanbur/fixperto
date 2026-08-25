@@ -4,6 +4,8 @@ import { useApp } from "../../app/state/AppLogicProvider";
 import { MapPanel } from "./MapPanel";
 import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
+import { BANNER_PRESETS, MY_MECHANIC_ID } from "../../data/constants";
+import { formatHoursText, isImgUrl } from "../../utils/helpers";
 
 export function MechDetailBody() {
   const {
