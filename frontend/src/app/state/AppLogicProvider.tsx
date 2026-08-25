@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, createContext, useContext } from "react";
-import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, Menu, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag } from "lucide-react";
+import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, Menu, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2 } from "lucide-react";
 import { api } from "../../services/api/client";
 import { T, useT } from "../../data/i18n";
 import {
@@ -333,6 +333,17 @@ function useAppLogic() {
       if (typeof window !== "undefined" && (import.meta as any)?.env?.DEV) console.error("[persist]", failMessage, err);
       setToast({ type: "info", text: `⚠️ ${failMessage}: ${err?.message || "Sunucuya kaydedilemedi."}` });
     });
+  };
+
+  // ShareButton'da (mekanik profili, araç ilanı, iş ilanı) gerçek bir paylaşım eylemi olduğunda
+  // (WhatsApp/Facebook/X/e-posta linkine tıklama, link kopyalama ya da native paylaşım sayfasının
+  // başarıyla açılması) çağrılır — hem yerel state'te anında görünsün hem backend'de kalıcı olsun
+  // diye sunucudaki atomik POST /:id/share uç noktasını kullanır (bkz. makeCrudRouter.js).
+  const recordShare = (targetType, targetId) => {
+    const bump = (list) => list.map((x) => (x.id === targetId ? { ...x, shareCount: (x.shareCount || 0) + 1 } : x));
+    if (targetType === "listing") { setListings((ls) => bump(ls)); persist(api.listings.share(targetId), "Paylaşım sayısı kaydedilemedi"); }
+    else if (targetType === "job") { setJobListings((js) => bump(js)); persist(api.jobs.share(targetId), "Paylaşım sayısı kaydedilemedi"); }
+    else if (targetType === "mechanic") { setMechanicsList((ms) => bump(ms)); persist(api.mechanics.share(targetId), "Paylaşım sayısı kaydedilemedi"); }
   };
 
   const [adminTicketStatusFilter, setAdminTicketStatusFilter] = useState("all");
@@ -1146,7 +1157,10 @@ function useAppLogic() {
       <div key={l.id} className="bg-gray-50 rounded-xl p-3">
         <div className="flex items-center justify-between gap-2 mb-1.5">
           <p className="text-xs font-semibold text-gray-800 truncate">{l.brand} {l.model} <span className="text-gray-300 font-normal">#{l.id}</span></p>
-          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${l.adminRemoved ? "bg-gray-800 text-white" : l.status === "sold" ? "bg-red-50 text-red-500" : l.status === "reserved" ? "bg-gray-200 text-gray-700" : "bg-green-50 text-green-600"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="text-[10px] text-gray-400 flex items-center gap-0.5" title="Kaç kez paylaşıldı"><Share2 size={10} /> {l.shareCount || 0}</span>
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-gray-800 text-white" : l.status === "sold" ? "bg-red-50 text-red-500" : l.status === "reserved" ? "bg-gray-200 text-gray-700" : "bg-green-50 text-green-600"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <input value={l.price} onChange={(e) => updateListingField(l.id, "price", e.target.value)} {...trackInputProps("listing", l.id, "price", l.price)} className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" />
@@ -1182,7 +1196,7 @@ function useAppLogic() {
     return (
       <div key={j.id} className="bg-gray-50 rounded-xl p-3">
         <div className="flex items-center justify-between gap-2 mb-1.5">
-          <div className="min-w-0 flex-1"><p className="text-xs font-semibold text-gray-800 truncate">{j.title}</p><p className="text-[10px] text-gray-400">{j.location} · {j.applicants.length} başvuru</p></div>
+          <div className="min-w-0 flex-1"><p className="text-xs font-semibold text-gray-800 truncate">{j.title}</p><p className="text-[10px] text-gray-400 flex items-center gap-1">{j.location} · {j.applicants.length} başvuru · <Share2 size={10} className="inline" /> {j.shareCount || 0} paylaşım</p></div>
           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${j.status === "active" ? "bg-green-50 text-green-600" : "bg-gray-200 text-gray-600"}`}>{j.status === "active" ? "Açık" : "Kapalı"}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -1220,6 +1234,7 @@ function useAppLogic() {
         apptCount: myAppts.length, byStatus,
         listingCount: myListings.length, activeListings: myListings.filter(l => l.status !== "sold" && !l.adminRemoved).length, soldListings: myListings.filter(l => l.status === "sold").length,
         ticketCount: myTickets.length, openTickets: myTickets.filter(tk => tk.status !== "resolved").length,
+        totalShares: myListings.reduce((s, l) => s + (l.shareCount || 0), 0),
       };
     }
     const myAppts = appointments.filter(a => a.mechanicName === analyzingUser.name);
@@ -1231,13 +1246,16 @@ function useAppLogic() {
     const totalApplicants = myJobs.reduce((s, j) => s + (j.applicants || []).length, 0);
     const myTickets = supportTickets.filter(tk => tk.fromName === analyzingUser.name);
     const estRevenue = completed * ((analyzingUser as any).price || 0);
+    const ownShareCount = mechanicsList.find(m => m.id === analyzingUser.id)?.shareCount || 0;
+    const totalShares = ownShareCount + myListings.reduce((s, l) => s + (l.shareCount || 0), 0) + myJobs.reduce((s, j) => s + (j.shareCount || 0), 0);
     return {
       apptCount: myAppts.length, completed, byStatus, estRevenue,
       listingCount: myListings.length, activeListings: myListings.filter(l => !l.adminRemoved).length,
       jobCount: myJobs.length, activeJobs: myJobs.filter(j => j.status === "active").length, totalApplicants,
       ticketCount: myTickets.length, openTickets: myTickets.filter(tk => tk.status !== "resolved").length,
+      ownShareCount, totalShares,
     };
-  }, [analyzingUser, appointments, listings, jobListings, supportTickets]);
+  }, [analyzingUser, appointments, listings, jobListings, supportTickets, mechanicsList]);
   // Binlerce talep birikse bile en acil olanlar hep üstte: önce açık/inceleniyor, sonra çözülenler;
   // aynı grup içinde SLA'yı aşanlar ve yüksek öncelikliler öne alınıyor, en son tarihe göre sıralanıyor.
   const adminFilteredTickets = useMemo(() => {
@@ -2176,7 +2194,7 @@ function useAppLogic() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
-    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups,
+    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,

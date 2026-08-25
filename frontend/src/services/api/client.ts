@@ -134,6 +134,9 @@ function crud<T extends { id: number | string }>(resource: string) {
     create: (data: Partial<T>, opts?: RequestOptions): Promise<T> => request(`/api/${resource}`, { method: "POST", body: JSON.stringify(data), ...opts }),
     update: (id: number | string, data: Partial<T>, opts?: RequestOptions): Promise<T> => request(`/api/${resource}/${id}`, { method: "PATCH", body: JSON.stringify(data), ...opts }),
     remove: (id: number | string, opts?: RequestOptions): Promise<null> => request(`/api/${resource}/${id}`, { method: "DELETE", ...opts }),
+    // Sadece shareCount sütunu olan kaynaklarda (mechanics/listings/jobs) gerçek bir uç nokta var —
+    // diğerlerinde çağrılmaz, bu yüzden generic factory'de koşulsuz tanımlamak zararsız.
+    share: (id: number | string, opts?: RequestOptions): Promise<T> => request(`/api/${resource}/${id}/share`, { method: "POST", ...opts }),
   };
 }
 

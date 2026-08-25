@@ -12,13 +12,13 @@ app.use(express.json({ limit: "5mb" }));
 
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "fixperto-backend" }));
 
-app.use("/api/mechanics", makeCrudRouter("mechanics"));
+app.use("/api/mechanics", makeCrudRouter("mechanics", { shareCountColumn: "shareCount" }));
 app.use("/api/owners", makeCrudRouter("owners"));
 app.use("/api/vehicles", makeCrudRouter("vehicles"));
 app.use("/api/appointments", makeCrudRouter("appointments"));
-app.use("/api/listings", makeCrudRouter("listings"));
+app.use("/api/listings", makeCrudRouter("listings", { shareCountColumn: "shareCount" }));
 app.use("/api/conversations", makeCrudRouter("conversations"));
-app.use("/api/jobs", makeCrudRouter("job_listings"));
+app.use("/api/jobs", makeCrudRouter("job_listings", { shareCountColumn: "shareCount" }));
 app.use("/api/tickets", makeCrudRouter("support_tickets"));
 app.use("/api/quote-requests", makeCrudRouter("quote_requests"));
 app.use("/api/quote-offers", makeCrudRouter("quote_offers"));

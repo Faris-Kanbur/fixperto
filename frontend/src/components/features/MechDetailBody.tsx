@@ -88,7 +88,7 @@ export function MechDetailBody() {
     acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD, confirmBooking, goHome, chooseRole, submitAdminLogin, 
     adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue, adminChangeTargetLabel, 
     logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, 
-    expandedHistoryGroups, setExpandedHistoryGroups, toggleHistoryGroup, revertAdminChangeGroup, 
+    expandedHistoryGroups, setExpandedHistoryGroups, toggleHistoryGroup, revertAdminChangeGroup, recordShare,
     fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers, 
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, 
     sendPasswordResetLink, openAdminProfileView, viewingUser, profileFieldOldValueRef, startEditProfileField, 
@@ -122,7 +122,7 @@ export function MechDetailBody() {
         <button onClick={() => { if (mapDetailOpen) { setMapDetailOpen(false); } else { setScreen(detailReturnScreen || (role === "mechanic" ? "mechBrowse" : "owner")); setDetailReturnScreen(null); } }} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={18} /></button>
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
           {selectedMechanic.rating >= 4.7 && <span className="bg-white/95 text-gray-700 text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1"><BadgeCheck size={12} /> Öne Çıkan</span>}
-          <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — Fixperto'da keşfet`} path={`?mechanic=${selectedMechanic.id}`} />
+          <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — Fixperto'da keşfet`} path={`?mechanic=${selectedMechanic.id}`} onShare={() => recordShare("mechanic", selectedMechanic.id)} />
         </div>
         <div className={`h-36 bg-gradient-to-br ${BANNER_PRESETS[selectedMechanic.bannerPreset] || BANNER_PRESETS.blue} relative overflow-hidden`} style={selectedMechanic.coverPhoto ? { backgroundImage: `url(${selectedMechanic.coverPhoto})`, backgroundSize: "cover", backgroundPosition: "center" } : {}} />
         <div className="absolute -bottom-8 left-5 w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center text-4xl border-4 border-white overflow-hidden">{selectedMechanic.img}</div>

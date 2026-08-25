@@ -7,7 +7,7 @@ import { Share2, MessageCircle, Facebook, X as XIcon, Mail, Link2, Check } from 
 // sayfasını (Instagram, Mesajlar, AirDrop vb. dahil) açar; desteklenmiyorsa bu özel menüye düşer.
 // `path`, geçerli sayfanın query string'idir (örn. "?mechanic=12") — paylaşılan link tıklanınca
 // ilgili kayıt otomatik açılsın diye (bkz. AppLogicProvider'daki deep-link okuma efekti).
-export function ShareButton({ title, text, path, className = "", iconSize = 16 }) {
+export function ShareButton({ title, text, path, className = "", iconSize = 16, onShare }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const ref = useRef(null);
@@ -40,6 +40,7 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16 }
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
+    onShare?.();
   };
 
   const openShare = async (e) => {
@@ -47,6 +48,7 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16 }
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title, text, url: shareUrl });
+        onShare?.();
         return;
       } catch {
         // Kullanıcı iptal etti ya da native paylaşım başarısız oldu — özel menüye düş.
@@ -78,7 +80,7 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16 }
           <p className="text-xs font-semibold text-gray-500 px-1 mb-2">Paylaş</p>
           <div className="grid grid-cols-4 gap-2 mb-2">
             {platforms.map(({ key, label, Icon, bg, href }) => (
-              <a key={key} href={href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="flex flex-col items-center gap-1">
+              <a key={key} href={href} target="_blank" rel="noopener noreferrer" onClick={() => { setOpen(false); onShare?.(); }} className="flex flex-col items-center gap-1">
                 <span className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center text-white hover:opacity-90 transition`}>
                   <Icon size={18} />
                 </span>

@@ -1,5 +1,5 @@
 import { useApp } from "./state/AppLogicProvider";
-import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag } from "lucide-react";
+import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2 } from "lucide-react";
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
 import { LangSwitch } from "../components/features/LangSwitch";
@@ -89,7 +89,7 @@ export function AppShell() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
-    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups,
+    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,
@@ -1021,6 +1021,7 @@ export function AppShell() {
                         <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.listingCount}</p><p className="text-xs text-gray-500 mt-0.5">Toplam İlan</p></div>
                         <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.activeListings}</p><p className="text-xs text-gray-500 mt-0.5">Aktif İlan</p></div>
                         <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.soldListings}</p><p className="text-xs text-gray-500 mt-0.5">Satılan İlan</p></div>
+                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900 flex items-center gap-1.5"><Share2 size={16} className="text-gray-400" /> {adminUserAnalytics.totalShares}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Paylaşım</p></div>
                       </div>
                       {Object.keys(adminUserAnalytics.byStatus).length > 0 && (
                         <>
@@ -1042,12 +1043,14 @@ export function AppShell() {
                         <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.completed}/{adminUserAnalytics.apptCount}</p><p className="text-xs text-gray-500 mt-0.5">Tamamlanan Randevu</p></div>
                         <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.activeListings}/{adminUserAnalytics.listingCount}</p><p className="text-xs text-gray-500 mt-0.5">Aktif Araç İlanı</p></div>
                         <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.activeJobs}/{adminUserAnalytics.jobCount}</p><p className="text-xs text-gray-500 mt-0.5">Aktif İş İlanı</p></div>
+                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900 flex items-center gap-1.5"><Share2 size={16} className="text-gray-400" /> {adminUserAnalytics.totalShares}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Paylaşım</p></div>
                       </div>
                       <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Genel</p>
                       <div className="bg-gray-50 rounded-2xl p-4 mb-5 space-y-1.5">
                         <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Puan</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="text-gray-900 fill-gray-900" /> {(analyzingUser as any).rating || mechanicsList.find(m => m.id === analyzingUser.id)?.rating} ({mechanicsList.find(m => m.id === analyzingUser.id)?.reviews} değerlendirme)</span></div>
                         <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Ort. Yanıt Süresi</span><span className="font-semibold text-gray-800">{mechanicsList.find(m => m.id === analyzingUser.id)?.avgResponseMinutes} dk</span></div>
                         <div className="flex items-center justify-between text-sm"><span className="text-gray-500">İş İlanlarına Toplam Başvuru</span><span className="font-semibold text-gray-800">{adminUserAnalytics.totalApplicants}</span></div>
+                        <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Profil Paylaşılma Sayısı</span><span className="font-semibold text-gray-800">{adminUserAnalytics.ownShareCount}</span></div>
                       </div>
                       {Object.keys(adminUserAnalytics.byStatus).length > 0 && (
                         <>
@@ -1481,7 +1484,7 @@ export function AppShell() {
             <div className="relative">
               <button onClick={() => setSelectedListingId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white"><ChevronLeft size={18} /></button>
               <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-                <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition" />
+                <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} onShare={() => recordShare("listing", selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition" />
                 <button onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
               </div>
               <div className="h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden">{isImgUrl(selectedListing.photo) ? <img src={selectedListing.photo} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : selectedListing.photo}</div>
@@ -1557,7 +1560,7 @@ export function AppShell() {
             <div className="bg-white text-gray-900 px-5 pt-6 pb-6 relative flex-shrink-0 border-b border-gray-200 shadow-sm">
               <button onClick={() => setSelectedJobId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"><ChevronLeft size={18} /></button>
               <div className="absolute top-4 right-4 z-10">
-                <ShareButton title={selectedJob.title} text={`${selectedJob.title} — ${selectedJob.mechanicName}`} path={`?job=${selectedJob.id}`} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" />
+                <ShareButton title={selectedJob.title} text={`${selectedJob.title} — ${selectedJob.mechanicName}`} path={`?job=${selectedJob.id}`} onShare={() => recordShare("job", selectedJob.id)} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" />
               </div>
               <div className="flex items-center gap-3 mt-8">
                 <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">{selectedJob.mechanicImg}</div>

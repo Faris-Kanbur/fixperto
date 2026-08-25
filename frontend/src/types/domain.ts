@@ -57,6 +57,7 @@ export interface Mechanic {
   staff: StaffMember[];
   reviewList: Review[];
   verificationDocs: string[];
+  shareCount?: number;
 }
 
 export interface Owner {
@@ -166,6 +167,7 @@ export interface Listing {
   color: string;
   vehicleId: number | null;
   adminRemoved?: boolean;
+  shareCount?: number;
 }
 
 export interface ChatMessage {
@@ -211,6 +213,7 @@ export interface JobListing {
   postedDate: string;
   status: "active" | "closed" | string;
   applicants: JobApplicant[];
+  shareCount?: number;
 }
 
 export type TicketType = "payment" | "listing" | "quality" | "verification" | "no_show" | "review" | "bug" | "customer" | string;

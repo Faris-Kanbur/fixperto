@@ -6,7 +6,7 @@ import { hydrate, hydrateAll, dehydrate } from "../db/hydrate.js";
 // Every Fixperto entity table (mechanics, listings, appointments, ...) follows the
 // same simple id-keyed shape, so one factory covers all of them instead of hand
 // writing near-identical Express handlers six times over.
-export function makeCrudRouter(table, { idColumn = "id" } = {}) {
+export function makeCrudRouter(table, { idColumn = "id", shareCountColumn = null } = {}) {
   const router = Router();
 
   router.get("/", (req, res) => {
@@ -46,6 +46,20 @@ export function makeCrudRouter(table, { idColumn = "id" } = {}) {
     if (info.changes === 0) return res.status(404).json({ error: `${table} not found` });
     res.status(204).end();
   });
+
+  // Paylaşım sayacı: ShareButton'a tıklanıp gerçek bir paylaşım eylemi (platforma gitme, link
+  // kopyalama, native paylaşım) gerçekleştiğinde atomik olarak +1 yapar — read-then-write PATCH'e
+  // göre eşzamanlı paylaşımlarda veri kaybını önler. Sadece bu sütunu opt-in eden kaynaklarda
+  // (mechanics/listings/job_listings) etkin.
+  if (shareCountColumn) {
+    router.post("/:id/share", (req, res) => {
+      const existing = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
+      if (!existing) return res.status(404).json({ error: `${table} not found` });
+      db.prepare(`UPDATE ${table} SET ${shareCountColumn} = COALESCE(${shareCountColumn}, 0) + 1 WHERE ${idColumn} = ?`).run(req.params.id);
+      const updated = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
+      res.json(hydrate(table, updated));
+    });
+  }
 
   return router;
 }

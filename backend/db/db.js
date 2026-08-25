@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS mechanics (
   services TEXT DEFAULT '[]',
   staff TEXT DEFAULT '[]',
   reviewList TEXT DEFAULT '[]',
-  verificationDocs TEXT DEFAULT '[]'
+  verificationDocs TEXT DEFAULT '[]',
+  shareCount INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS owners (
@@ -117,7 +118,8 @@ CREATE TABLE IF NOT EXISTS listings (
   offers TEXT DEFAULT '[]',
   messages TEXT DEFAULT '[]',
   fuelType TEXT, transmission TEXT, power TEXT, firstReg TEXT, color TEXT,
-  vehicleId INTEGER
+  vehicleId INTEGER,
+  shareCount INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS job_listings (
@@ -130,7 +132,8 @@ CREATE TABLE IF NOT EXISTS job_listings (
   requirements TEXT DEFAULT '[]',
   skills TEXT DEFAULT '[]',
   postedDate TEXT, status TEXT DEFAULT 'active',
-  applicants TEXT DEFAULT '[]'
+  applicants TEXT DEFAULT '[]',
+  shareCount INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS support_tickets (
@@ -211,6 +214,9 @@ function ensureColumn(table, columnDef) {
   ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
   ["owners", "favoriteIds TEXT DEFAULT '[]'"],
   ["admin_change_log", "reverted INTEGER DEFAULT 0"],
+  ["mechanics", "shareCount INTEGER DEFAULT 0"],
+  ["listings", "shareCount INTEGER DEFAULT 0"],
+  ["job_listings", "shareCount INTEGER DEFAULT 0"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 export function isEmpty(table) {
