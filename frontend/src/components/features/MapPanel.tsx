@@ -118,38 +118,41 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
     const setPreviewItem = isControlled ? onPreviewChange : setLocalPreviewItem;
     const isListing = (it) => it && it.brand !== undefined;
     return (
-    <div className={`rounded-2xl overflow-hidden border border-gray-200 relative ${className}`} style={{ backgroundColor: "#eaf0e4" }}>
-      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-        <ellipse cx="88%" cy="12%" rx="70" ry="55" fill="#aee1f7" opacity="0.9" />
-        <ellipse cx="8%" cy="85%" rx="60" ry="45" fill="#c8e6c9" opacity="0.7" />
-        <ellipse cx="70%" cy="80%" rx="45" ry="30" fill="#c8e6c9" opacity="0.5" />
-      </svg>
-      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-        <line x1="0" y1="28%" x2="100%" y2="24%" stroke="#ffffff" strokeWidth="7" />
-        <line x1="0" y1="62%" x2="100%" y2="68%" stroke="#ffffff" strokeWidth="6" />
-        <line x1="22%" y1="0" x2="18%" y2="100%" stroke="#ffffff" strokeWidth="5" />
-        <line x1="66%" y1="0" x2="72%" y2="100%" stroke="#ffffff" strokeWidth="8" />
-        <line x1="66%" y1="0" x2="72%" y2="100%" stroke="#ffd580" strokeWidth="3" strokeDasharray="10 6" />
-        <line x1="0" y1="45%" x2="45%" y2="100%" stroke="#ffffff" strokeWidth="4" />
-      </svg>
-      <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: "linear-gradient(#c9cfc1 1px, transparent 1px), linear-gradient(90deg, #c9cfc1 1px, transparent 1px)", backgroundSize: "26px 26px" }} />
-      <div style={{ left: "50%", top: "50%" }} className="absolute -translate-x-1/2 -translate-y-1/2 z-10"><div className="w-4 h-4 bg-rose-600 rounded-full ring-4 ring-rose-200 border-2 border-white shadow" /><div className="absolute inset-0 w-4 h-4 bg-rose-500 rounded-full animate-ping opacity-40" /></div>
-      {items.map(m => { const active = hoveredId === m.id || previewItem?.id === m.id; return (
-        <button key={m.id} onClick={() => setPreviewItem(m)} onMouseEnter={() => onHoverItem && onHoverItem(m.id)} onMouseLeave={() => onHoverItem && onHoverItem(null)} style={{ left: `${m.px}%`, top: `${m.py}%` }} className={`absolute -translate-x-1/2 -translate-y-full flex flex-col items-center transition-transform ${active ? "z-30 scale-125" : "z-10"}`}>
-          <div className={`shadow-lg rounded-full px-2.5 py-1 text-[11px] font-bold border transition whitespace-nowrap mb-0.5 flex items-center gap-1 ${active ? "bg-red-500 text-white border-red-500" : "bg-white text-gray-700 border-gray-100"}`}>{isListing(m) ? m.price : (<>{m.reviews > 100 && (<><span>{"€".repeat(priceLevel(m.price))}</span><span className={active ? "text-white/60" : "text-gray-300"}>·</span></>)}<span className="flex items-center gap-0.5"><Star size={9} className={active ? "fill-white text-white" : "fill-gray-900 text-gray-900"} />{m.rating}</span></>)}</div>
-          <svg width="26" height="32" viewBox="0 0 24 30" className="drop-shadow-md">
-            <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18c0-6.6-5.4-12-12-12z" fill={active ? "#c0281c" : "#ea4335"} />
-            <circle cx="12" cy="12" r="6.5" fill="white" />
-          </svg>
-        </button>
-      ); })}
-      <div className="absolute right-2 bottom-2 flex flex-col bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 z-20">
-        <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-lg font-bold border-b border-gray-100">+</button>
-        <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-lg font-bold">−</button>
-      </div>
-      <div className="absolute right-2 top-2 flex flex-col gap-1.5 z-20">
-        <div className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100"><Compass size={14} className="text-gray-500" /></div>
-        <div className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100"><Navigation size={13} className="text-rose-600" /></div>
+    <div className={`rounded-2xl border border-gray-200 relative ${className}`}>
+      <div className="absolute inset-0 rounded-2xl overflow-hidden" style={{ backgroundColor: "#eaf0e4" }}>
+        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+          <ellipse cx="88%" cy="12%" rx="70" ry="55" fill="#aee1f7" opacity="0.9" />
+          <ellipse cx="8%" cy="85%" rx="60" ry="45" fill="#c8e6c9" opacity="0.7" />
+          <ellipse cx="70%" cy="80%" rx="45" ry="30" fill="#c8e6c9" opacity="0.5" />
+        </svg>
+        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+          <line x1="0" y1="28%" x2="100%" y2="24%" stroke="#ffffff" strokeWidth="7" />
+          <line x1="0" y1="62%" x2="100%" y2="68%" stroke="#ffffff" strokeWidth="6" />
+          <line x1="22%" y1="0" x2="18%" y2="100%" stroke="#ffffff" strokeWidth="5" />
+          <line x1="66%" y1="0" x2="72%" y2="100%" stroke="#ffffff" strokeWidth="8" />
+          <line x1="66%" y1="0" x2="72%" y2="100%" stroke="#ffd580" strokeWidth="3" strokeDasharray="10 6" />
+          <line x1="0" y1="45%" x2="45%" y2="100%" stroke="#ffffff" strokeWidth="4" />
+        </svg>
+        <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: "linear-gradient(#c9cfc1 1px, transparent 1px), linear-gradient(90deg, #c9cfc1 1px, transparent 1px)", backgroundSize: "26px 26px" }} />
+        <div style={{ left: "50%", top: "50%" }} className="absolute -translate-x-1/2 -translate-y-1/2 z-10"><div className="w-4 h-4 bg-rose-600 rounded-full ring-4 ring-rose-200 border-2 border-white shadow" /><div className="absolute inset-0 w-4 h-4 bg-rose-500 rounded-full animate-ping opacity-40" /></div>
+        {items.map(m => { const active = hoveredId === m.id || previewItem?.id === m.id; return (
+          <button key={m.id} type="button" onClick={() => setPreviewItem(m)} onMouseEnter={() => onHoverItem && onHoverItem(m.id)} onMouseLeave={() => onHoverItem && onHoverItem(null)} style={{ left: `${m.px}%`, top: `${m.py}%` }} className={`absolute -translate-x-1/2 -translate-y-full flex flex-col items-center transition-transform cursor-pointer ${active ? "z-30 scale-125" : "z-10"}`}>
+            <div className={`shadow-lg rounded-full px-2.5 py-1 text-[11px] font-bold border transition whitespace-nowrap mb-0.5 flex items-center gap-1 ${active ? "bg-red-500 text-white border-red-500" : "bg-white text-gray-700 border-gray-100"}`}>{isListing(m) ? m.price : (<>{m.reviews > 100 && (<><span>{"€".repeat(priceLevel(m.price))}</span><span className={active ? "text-white/60" : "text-gray-300"}>·</span></>)}<span className="flex items-center gap-0.5"><Star size={9} className={active ? "fill-white text-white" : "fill-gray-900 text-gray-900"} />{m.rating}</span></>)}</div>
+            <svg width="26" height="32" viewBox="0 0 24 30" className="drop-shadow-md">
+              <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18c0-6.6-5.4-12-12-12z" fill={active ? "#c0281c" : "#ea4335"} />
+              <circle cx="12" cy="12" r="6.5" fill="white" />
+            </svg>
+          </button>
+        ); })}
+        <div className="absolute right-2 bottom-2 flex flex-col bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 z-20">
+          <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-lg font-bold border-b border-gray-100">+</button>
+          <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-lg font-bold">−</button>
+        </div>
+        <div className="absolute right-2 top-2 flex flex-col gap-1.5 z-20">
+          <div className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100"><Compass size={14} className="text-gray-500" /></div>
+          <div className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100"><Navigation size={13} className="text-rose-600" /></div>
+        </div>
+        <div className="absolute bottom-1 left-2 text-[9px] text-gray-400/80 z-20">Örnek harita verisi</div>
       </div>
       {previewItem && (
         <div className="absolute left-1/2 -translate-x-1/2 bottom-3 z-40 w-[88%] max-w-[280px]">
@@ -165,7 +168,6 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
           </div>
         </div>
       )}
-      <div className="absolute bottom-1 left-2 text-[9px] text-gray-400/80 z-20">Örnek harita verisi</div>
     </div>
     );
   }

@@ -1084,11 +1084,10 @@ export function AppShell() {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
                     return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
                   })}
+                  <button onClick={() => setShowQuoteModal(true)} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> Çoklu Teklif Al</button>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <button onClick={() => setShowQuoteModal(true)} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> Çoklu Teklif Al</button>
                   <NotifBell />
-                  <button onClick={goHome} className="text-sm font-semibold text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-full transition whitespace-nowrap">Tamirci misin? Katıl</button>
                   <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title="Profil ve Ayarlar" className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || "Profil fotoğrafı"} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
                 </div>
               </div>
@@ -1115,24 +1114,6 @@ export function AppShell() {
                     <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">Konum</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder="Şehir veya semt" className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
                     <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label="Ara" className="w-11 h-11 rounded-full bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
                   </div>
-                  {ownerMode === "mechanics" && (
-                    <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 md:justify-center">
-                      {[{ key: "distance", label: "📍 Mesafe" }, { key: "price", label: "💰 Fiyat" }, { key: "rating", label: "⭐ Puan" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
-                      <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeFilterCount}</span>}</button>
-                      <button onClick={() => setShowMapMobile(true)} className="md:hidden px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 ml-auto"><MapIcon size={12} /> {t("showMap")}</button>
-                    </div>
-                  )}
-                  {ownerMode === "cars" && (
-                    <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 md:justify-center">
-                      {[{ key: "default", label: "Önerilen" }, { key: "priceAsc", label: "💰 Fiyat ↑" }, { key: "priceDesc", label: "💰 Fiyat ↓" }, { key: "kmAsc", label: "🛞 KM ↑" }, { key: "yearDesc", label: "📅 Yıl ↓" }].map(opt => (<button key={opt.key} onClick={() => setListingSort(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}</button>))}
-                      <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative ml-auto"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeListingFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeListingFilterCount}</span>}</button>
-                    </div>
-                  )}
-                  {ownerMode === "jobs" && (
-                    <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1">
-                      <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeJobFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeJobFilterCount}</span>}</button>
-                    </div>
-                  )}
                 </>)}
                 {ownerTab !== "search" && (<button onClick={() => setOwnerTab("search")} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 text-sm mb-3 transition"><ChevronLeft size={16} /> {t("back")}</button>)}
                 {ownerTab === "market" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">🏷️ {t("navMarket")}</h1><p className="text-gray-500 text-sm">{t("myListingsSub")}</p></>)}
@@ -1757,24 +1738,6 @@ export function AppShell() {
                   <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">Konum</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder="Şehir veya semt" className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
                   <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label="Ara" className="w-11 h-11 rounded-full bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
                 </div>
-                {ownerMode === "mechanics" && (
-                  <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 md:justify-center">
-                    {[{ key: "distance", label: "📍 Mesafe" }, { key: "price", label: "💰 Fiyat" }, { key: "rating", label: "⭐ Puan" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
-                    <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeFilterCount}</span>}</button>
-                    <button onClick={() => setShowMapMobile(true)} className="md:hidden px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 ml-auto"><MapIcon size={12} /> {t("showMap")}</button>
-                  </div>
-                )}
-                {ownerMode === "cars" && (
-                  <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 md:justify-center">
-                    {[{ key: "default", label: "Önerilen" }, { key: "priceAsc", label: "💰 Fiyat ↑" }, { key: "priceDesc", label: "💰 Fiyat ↓" }, { key: "kmAsc", label: "🛞 KM ↑" }, { key: "yearDesc", label: "📅 Yıl ↓" }].map(opt => (<button key={opt.key} onClick={() => setListingSort(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}</button>))}
-                    <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative ml-auto"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeListingFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeListingFilterCount}</span>}</button>
-                  </div>
-                )}
-                {ownerMode === "jobs" && (
-                  <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1">
-                    <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeJobFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeJobFilterCount}</span>}</button>
-                  </div>
-                )}
               </div>
             </div>
             <BrowseHome />
