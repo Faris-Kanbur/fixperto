@@ -258,7 +258,7 @@ function useAppLogic() {
     let cancelled = false;
     (async () => {
       try {
-        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes] = await Promise.all([
+        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes] = await Promise.all([
           api.mechanics.list(),
           api.vehicles.list(),
           api.appointments.list(),
@@ -266,6 +266,8 @@ function useAppLogic() {
           api.jobs.list(),
           api.owners.list(),
           api.tickets.list(),
+          api.quoteRequests.list(),
+          api.quoteOffers.list(),
         ]);
         if (cancelled) return;
         setMechanicsList(mechanicsRes);
@@ -275,6 +277,14 @@ function useAppLogic() {
         setJobListings(jobsRes);
         setOwnersDirectory(ownersRes);
         setSupportTickets(ticketsRes);
+        setQuoteRequests(quoteRequestsRes);
+        setQuoteOffers(quoteOffersRes);
+        // Not: admin_change_log backend'de kalıcı hale getiriliyor (bkz. logAdminChange) ama burada
+        // geri okunmuyor — backend'in genel "action/entityType/before/after" şeması, admin panelin
+        // "Geçmiş" ekranının beklediği zengin şekilden (targetType/field/oldValue/newValue/reverted)
+        // farklı. Bu oturumdaki değişiklik geçmişi UI'si hâlâ oturum-içi state'ten besleniyor;
+        // backend'deki kayıt gerçek bir denetim (audit) izi olarak duruyor. Bir sonraki adım için
+        // bkz. REFACTOR_REPORT.md.
         setApiReady(true);
       } catch (err) {
         if (!cancelled) setApiError(err.message || "Backend'e bağlanılamadı.");
@@ -282,6 +292,16 @@ function useAppLogic() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Arka planda backend'e kalıcı hale getirme yardımcı fonksiyonu: yerel state güncellemesi
+  // senkron/anında kalsın diye (mevcut UX bozulmasın), API çağrısı ARKA PLANDA yapılır.
+  // Başarısız olursa kullanıcıya toast ile haber verilir (veri sessizce kaybolmasın).
+  const persist = (promise, failMessage) => {
+    promise.catch((err) => {
+      if (typeof window !== "undefined" && (import.meta as any)?.env?.DEV) console.error("[persist]", failMessage, err);
+      setToast({ type: "info", text: `⚠️ ${failMessage}: ${err?.message || "Sunucuya kaydedilemedi."}` });
+    });
+  };
 
   const [adminTicketStatusFilter, setAdminTicketStatusFilter] = useState("all");
   const [adminTicketTypeFilter, setAdminTicketTypeFilter] = useState("all");
@@ -619,34 +639,44 @@ function useAppLogic() {
   };
   const unlockQuotePremium = () => { setQuotePremiumUnlocked(true); setShowQuotePremiumUpsell(false); setToast({ type: "info", text: "⭐ Premium açıldı (demo) — artık 10 tamirciye kadar teklif isteyebilirsiniz." }); };
   const closeQuoteModal = () => { setShowQuoteModal(false); setShowAddVehicle(false); setShowQuotePremiumUpsell(false); setQuoteVehicleId(null); setQuoteIssue(""); setQuotePhotos([]); setQuoteSelectedMechIds([]); setQuoteMechSearch(""); };
-  const submitQuoteRequest = () => {
+  const submitQuoteRequest = async () => {
     if (!quoteVehicleId || !quoteIssue.trim() || quoteSelectedMechIds.length === 0) return;
     const vehicle = vehicles.find(v => v.id === quoteVehicleId);
-    const id = quoteReqId++;
     const customerName = ownerProfile.name || form.name || "Siz";
     const issueText = quoteIssue.trim();
     const photos = quotePhotos;
-    const newReq = { id, customer: customerName, vehicle: vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.plate})` : "Araç seçilmedi", issue: issueText, photos, mechanicIds: [...quoteSelectedMechIds], status: "open", createdAt: new Date().toISOString() };
-    setQuoteRequests(qs => [newReq, ...qs]);
-    const newOffers = quoteSelectedMechIds.map(mid => {
-      const mech = mechanicsList.find(m => m.id === mid);
-      const isMe = mid === MY_MECHANIC_ID;
-      const basePrice = mech?.price || 400;
-      const variance = Math.round((basePrice * (0.85 + Math.random() * 0.3)) / 10) * 10;
-      return { id: quoteOfferId++, requestId: id, mechanicId: mid, mechanicName: mech?.name || "Tamirci", mechanicImg: mech?.img || "🔧", status: isMe ? "pending" : "submitted", price: isMe ? null : variance, etaDays: isMe ? null : (1 + Math.floor(Math.random() * 3)), note: "" };
-    });
-    setQuoteOffers(os => [...newOffers, ...os]);
-    if (quoteSelectedMechIds.includes(MY_MECHANIC_ID)) {
-      fireNotification("Yeni teklif isteği 📋", `${customerName} sizden "${issueText.slice(0, 50)}" için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" });
-    }
+    const selectedMechIds = [...quoteSelectedMechIds];
+    const draft = { ownerId: MY_OWNER_ID, vehicleId: quoteVehicleId, customer: customerName, vehicle: vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.plate})` : "Araç seçilmedi", issue: issueText, photos, mechanicIds: selectedMechIds, status: "open" };
     setShowQuoteModal(false);
     setQuoteVehicleId(null); setQuoteIssue(""); setQuotePhotos([]); setQuoteSelectedMechIds([]); setQuoteMechSearch("");
-    setToast({ type: "info", text: `📋 ${quoteSelectedMechIds.length} tamirciye teklif isteği gönderildi.` });
+    setToast({ type: "info", text: `📋 ${selectedMechIds.length} tamirciye teklif isteği gönderildi.` });
+    try {
+      const createdReq = await api.quoteRequests.create(draft);
+      setQuoteRequests(qs => [createdReq, ...qs]);
+      // Demo amaçlı: gerçek bir tamirci (MY_MECHANIC_ID) hariç diğerleri için otomatik örnek
+      // teklifler üretiliyor (backend'de gerçek bir tamirci tarafında yanıt akışı yok — demo).
+      const offerDrafts = selectedMechIds.map(mid => {
+        const mech = mechanicsList.find(m => m.id === mid);
+        const isMe = mid === MY_MECHANIC_ID;
+        const basePrice = mech?.price || 400;
+        const variance = Math.round((basePrice * (0.85 + Math.random() * 0.3)) / 10) * 10;
+        return { requestId: createdReq.id, mechanicId: mid, mechanicName: mech?.name || "Tamirci", mechanicImg: mech?.img || "🔧", status: isMe ? "pending" : "submitted", price: isMe ? null : variance, etaDays: isMe ? null : (1 + Math.floor(Math.random() * 3)), note: "" };
+      });
+      const createdOffers = await Promise.all(offerDrafts.map(o => api.quoteOffers.create(o)));
+      setQuoteOffers(os => [...createdOffers, ...os]);
+      if (selectedMechIds.includes(MY_MECHANIC_ID)) {
+        fireNotification("Yeni teklif isteği 📋", `${customerName} sizden "${issueText.slice(0, 50)}" için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" });
+      }
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ Teklif isteği kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+    }
   };
   const submitQuoteOffer = (offerId) => {
     const price = parsePriceNumber(quoteOfferForm.price);
     if (!price) return;
-    setQuoteOffers(os => os.map(o => o.id === offerId ? { ...o, status: "submitted", price, etaDays: quoteOfferForm.etaDays ? parseInt(quoteOfferForm.etaDays, 10) : null, note: quoteOfferForm.note.trim() } : o));
+    const patch = { status: "submitted", price, etaDays: quoteOfferForm.etaDays ? parseInt(quoteOfferForm.etaDays, 10) : null, note: quoteOfferForm.note.trim() };
+    setQuoteOffers(os => os.map(o => o.id === offerId ? { ...o, ...patch } : o));
+    persist(api.quoteOffers.update(offerId, patch), "Teklif kaydedilemedi");
     setRespondingQuoteOfferId(null);
     setQuoteOfferForm({ price: "", etaDays: "", note: "" });
     setToast({ type: "info", text: "💬 Teklifiniz gönderildi." });
@@ -663,6 +693,12 @@ function useAppLogic() {
     setSelectedMechanicId(mech.id);
     setSelectedDate(null); setSelectedTime(null);
     setQuoteRequests(qs => qs.map(r => r.id === requestId ? { ...r, status: "closed" } : r));
+    persist(api.quoteRequests.update(requestId, { status: "closed" }), "Teklif isteği kaydedilemedi");
+    const relatedOffers = quoteOffers.filter(o => o.requestId === requestId);
+    relatedOffers.forEach(o => {
+      const nextStatus = o.id === offerId ? "accepted" : (o.status === "submitted" ? "lost" : o.status);
+      if (nextStatus !== o.status) persist(api.quoteOffers.update(o.id, { status: nextStatus }), "Teklif kaydedilemedi");
+    });
     setQuoteOffers(os => os.map(o => o.requestId === requestId ? { ...o, status: o.id === offerId ? "accepted" : (o.status === "submitted" ? "lost" : o.status) } : o));
     setScreen("booking");
     setToast({ type: "info", text: `✅ ${mech.name} teklifini kabul ettiniz, randevu saatinizi seçin.` });
@@ -671,7 +707,7 @@ function useAppLogic() {
     }
   };
   const EXPENSIVE_SERVICE_THRESHOLD = 1500;
-  const confirmBooking = () => {
+  const confirmBooking = async () => {
     const status = autoAccept ? "Sırada" : "Onay Bekliyor";
     const bookingVehicle = vehicles.find(v => v.id === selectedBookingVehicleId) || vehicles[0];
     const isPayableNow = bookingService && bookingService.fixed && !bookingService.other;
@@ -679,8 +715,7 @@ function useAppLogic() {
     const paymentMethod = isPayableNow ? paymentForm.method : "onsite";
     if (servicePrice > EXPENSIVE_SERVICE_THRESHOLD && !approveExpensiveService) { setToast({ type: "info", text: "⚠️ Lütfen devam etmeden önce tutarı onayladığınızı işaretleyin." }); return; }
     const issueText = bookingService ? `${bookingService.name}${problemDesc ? " — " + problemDesc : ""}` : (problemDesc || "Belirtilmedi");
-    const newAppt = { id: apptId++, customer: ownerProfile.name || form.name || "Siz", mechanicName: selectedMechanic.name, mechanicImg: selectedMechanic.img, mechanicId: selectedMechanic.id, vehicle: bookingVehicle ? `${bookingVehicle.brand} ${bookingVehicle.model} (${bookingVehicle.plate})` : "Araç seçilmedi", date: selectedDate?.toLocaleDateString("tr-TR", { day: "numeric", month: "long" }), dateISO: selectedDate ? selectedDate.toISOString() : null, time: selectedTime, status, autoAccepted: autoAccept, issue: issueText, issuePhotos: problemPhotos, paymentMethod, depositPaid: paymentMethod === "card" ? servicePrice : 0, servicePrice, reviewed: false, noShow: false, historyShareConsent: shareHistoryConsent };
-    setAppointments([newAppt, ...appointments]);
+    const draft = { ownerId: MY_OWNER_ID, customer: ownerProfile.name || form.name || "Siz", mechanicName: selectedMechanic.name, mechanicImg: selectedMechanic.img, mechanicId: selectedMechanic.id, vehicle: bookingVehicle ? `${bookingVehicle.brand} ${bookingVehicle.model} (${bookingVehicle.plate})` : "Araç seçilmedi", date: selectedDate?.toLocaleDateString("tr-TR", { day: "numeric", month: "long" }), dateISO: selectedDate ? selectedDate.toISOString() : null, time: selectedTime, status, autoAccepted: autoAccept, issue: issueText, issuePhotos: problemPhotos, paymentMethod, depositPaid: paymentMethod === "card" ? servicePrice : 0, servicePrice, reviewed: false, noShow: false, historyShareConsent: shareHistoryConsent };
     setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" });
     setSelectedBookingVehicleId(null);
     setBookingService(null);
@@ -688,13 +723,19 @@ function useAppLogic() {
     setProblemPhotos([]);
     setApproveExpensiveService(false);
     setShareHistoryConsent(true);
-    // Sadece gerçekten etkileşimli tamirci hesabına (MY_MECHANIC_ID) yapılan randevularda gerçek
-    // bildirim gönderilir — demo/örnek tamircilere randevu alınırken bildirim ateşlenmez, çünkü o
-    // tamirci panelinde bu randevu zaten hiç görünmeyecek.
-    if (selectedMechanic.id === MY_MECHANIC_ID) {
-      fireNotification(autoAccept ? "Yeni randevu 📅" : "Yeni randevu talebi 📅", `${newAppt.customer} — ${newAppt.vehicle}${autoAccept ? " için randevu oluşturuldu." : " için onayınızı bekliyor."}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: newAppt.id });
-    }
     setScreen("confirmed");
+    try {
+      const created = await api.appointments.create(draft);
+      setAppointments(apps => [created, ...apps]);
+      // Sadece gerçekten etkileşimli tamirci hesabına (MY_MECHANIC_ID) yapılan randevularda gerçek
+      // bildirim gönderilir — demo/örnek tamircilere randevu alınırken bildirim ateşlenmez, çünkü o
+      // tamirci panelinde bu randevu zaten hiç görünmeyecek.
+      if (selectedMechanic.id === MY_MECHANIC_ID) {
+        fireNotification(autoAccept ? "Yeni randevu 📅" : "Yeni randevu talebi 📅", `${created.customer} — ${created.vehicle}${autoAccept ? " için randevu oluşturuldu." : " için onayınızı bekliyor."}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: created.id });
+      }
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ Randevu kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+    }
   };
   const goHome = () => { setScreen("home"); setRole(null); setSelectedMechanicId(null); setSelectedDate(null); setSelectedTime(null); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); setSelectedBookingVehicleId(null); setBookingService(null); setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" }); setForm({ name: "", email: "", phone: "", password: "" }); setOwnerTab("search"); setOwnerMode("mechanics"); setActiveConvoId(null); setMechActiveConvoId(null); setMechTab("requests"); setSelectedJobId(null); setSelectedListingId(null); setMapDetailOpen(false); setShowMapMobile(false); };
   const chooseRole = (r) => { setRole(r); setScreen("login"); };
@@ -770,25 +811,41 @@ function useAppLogic() {
     return `#${targetId}`;
   };
   const logAdminChange = (entry) => {
-    setAdminChangeLog(log => [{
+    const logEntry = {
       id: adminChangeLogId++,
       date: TODAY.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       reverted: false,
       targetLabel: adminChangeTargetLabel(entry.targetType, entry.targetId),
       ...entry,
-    }, ...log]);
+    };
+    setAdminChangeLog(log => [logEntry, ...log]);
+    // Backend admin_change_log şeması genel bir "action/entityType/entityId/before/after" audit
+    // kaydı bekliyor (bkz. backend/routes/admin.js) — istemcideki daha zengin alan adlarını
+    // (targetType/targetId/field/oldValue/newValue) buna eşliyoruz.
+    persist(api.admin.logChange({
+      action: `${entry.field} güncellendi`,
+      entityType: entry.targetType,
+      entityId: entry.targetId,
+      before: { field: entry.field, value: entry.oldValue },
+      after: { field: entry.field, value: entry.newValue },
+    }), "Değişiklik geçmişi kaydedilemedi");
   };
+  // Admin panelinden yapılan bir alan değişikliğini hem yerel state'e hem (mechanicOverride hariç —
+  // bu alanlar backend şemasında yok, sadece demo amaçlı istemci tarafı bir katman) gerçek backend
+  // kaydına uygular. `applyAdminFieldChange` hem doğrudan düzenlemelerde hem "Geri Al" akışında
+  // (revertAdminChange/-Group) kullanıldığı için, buraya eklenen persist tek noktadan TÜM admin
+  // panel yazma işlemlerini kalıcı hale getiriyor.
   const applyAdminFieldChange = (targetType, targetId, field, value, extra) => {
-    if (targetType === "owner") setOwnersDirectory(list => list.map(o => o.id === targetId ? { ...o, [field]: value } : o));
-    else if (targetType === "mechanic") setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, [field]: value } : m));
+    if (targetType === "owner") { setOwnersDirectory(list => list.map(o => o.id === targetId ? { ...o, [field]: value } : o)); persist(api.owners.update(targetId, { [field]: value }), "Kullanıcı bilgisi kaydedilemedi"); }
+    else if (targetType === "mechanic") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, [field]: value } : m)); persist(api.mechanics.update(targetId, { [field]: value }), "Tamirci bilgisi kaydedilemedi"); }
     else if (targetType === "mechanicOverride") setMechanicAdminOverrides(ov => ({ ...ov, [targetId]: { ...ov[targetId], [field]: value } }));
-    else if (targetType === "mechanicServicesArray") setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, services: value } : m));
-    else if (targetType === "mechanicReviewList") setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, reviewList: value, reviews: extra?.reviews ?? m.reviews } : m));
-    else if (targetType === "service") setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, services: m.services.map((s, i) => i === extra?.serviceIdx ? { ...s, [field]: value } : s) } : m));
-    else if (targetType === "listing") setListings(ls => ls.map(l => l.id === targetId ? { ...l, [field]: value } : l));
-    else if (targetType === "job") setJobListings(js => js.map(j => j.id === targetId ? { ...j, [field]: value } : j));
-    else if (targetType === "ticket") setSupportTickets(list => list.map(tk => tk.id === targetId ? { ...tk, [field]: value } : tk));
-    else if (targetType === "appointment") setAppointments(apps => apps.map(a => a.id === targetId ? { ...a, [field]: value } : a));
+    else if (targetType === "mechanicServicesArray") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, services: value } : m)); persist(api.mechanics.update(targetId, { services: value }), "Hizmetler kaydedilemedi"); }
+    else if (targetType === "mechanicReviewList") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, reviewList: value, reviews: extra?.reviews ?? m.reviews } : m)); persist(api.mechanics.update(targetId, { reviewList: value, ...(extra?.reviews !== undefined ? { reviews: extra.reviews } : {}) }), "Yorumlar kaydedilemedi"); }
+    else if (targetType === "service") { const mech = mechanicsList.find(m => m.id === targetId); const services = mech ? mech.services.map((s, i) => i === extra?.serviceIdx ? { ...s, [field]: value } : s) : []; setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, services } : m)); persist(api.mechanics.update(targetId, { services }), "Hizmet kaydedilemedi"); }
+    else if (targetType === "listing") { setListings(ls => ls.map(l => l.id === targetId ? { ...l, [field]: value } : l)); persist(api.listings.update(targetId, { [field]: value }), "İlan kaydedilemedi"); }
+    else if (targetType === "job") { setJobListings(js => js.map(j => j.id === targetId ? { ...j, [field]: value } : j)); persist(api.jobs.update(targetId, { [field]: value }), "İş ilanı kaydedilemedi"); }
+    else if (targetType === "ticket") { setSupportTickets(list => list.map(tk => tk.id === targetId ? { ...tk, [field]: value } : tk)); persist(api.tickets.update(targetId, { [field]: value }), "Destek talebi kaydedilemedi"); }
+    else if (targetType === "appointment") { setAppointments(apps => apps.map(a => a.id === targetId ? { ...a, [field]: value } : a)); persist(api.appointments.update(targetId, { [field]: value }), "Randevu kaydedilemedi"); }
   };
   const revertAdminChange = (entry) => {
     if (entry.reverted) return;
@@ -893,10 +950,15 @@ function useAppLogic() {
       const patch = { name: adminEditForm.name, email: adminEditForm.email, phone: adminEditForm.phone, status: adminEditForm.status, city: adminEditForm.city };
       Object.entries(patch).forEach(([field, newValue]) => { const oldValue = selectedAdminUser[field]; if (String(oldValue ?? "") !== String(newValue ?? "")) logAdminChange({ targetType: "owner", targetId: selectedAdminUser.id, field, oldValue, newValue }); });
       setOwnersDirectory(list => list.map(o => o.id === selectedAdminUser.id ? { ...o, ...patch } : o));
+      persist(api.owners.update(selectedAdminUser.id, patch), "Kullanıcı bilgisi kaydedilemedi");
     } else {
       const corePatch = { name: adminEditForm.name, specialty: adminEditForm.specialty, address: adminEditForm.address, price: Number(adminEditForm.price) || selectedAdminUser.price, verified: adminEditForm.verified };
       Object.entries(corePatch).forEach(([field, newValue]) => { const oldValue = selectedAdminUser[field]; if (String(oldValue ?? "") !== String(newValue ?? "")) logAdminChange({ targetType: "mechanic", targetId: selectedAdminUser.id, field, oldValue, newValue }); });
       setMechanicsList(list => list.map(m => m.id === selectedAdminUser.id ? { ...m, ...corePatch } : m));
+      persist(api.mechanics.update(selectedAdminUser.id, corePatch), "Tamirci bilgisi kaydedilemedi");
+      // Not: email/phone/status alanları mechanicOverride olarak yalnızca istemci tarafında tutuluyor —
+      // backend mechanics şemasında bu alanlar yok (demo amaçlı, gerçek bir üretim sisteminde
+      // mechanics tablosuna eklenmesi gerekir; bkz. REFACTOR_REPORT.md).
       const overridePatch = { email: adminEditForm.email, phone: adminEditForm.phone, status: adminEditForm.status };
       Object.entries(overridePatch).forEach(([field, newValue]) => { const oldValue = selectedAdminUser[field]; if (String(oldValue ?? "") !== String(newValue ?? "")) logAdminChange({ targetType: "mechanicOverride", targetId: selectedAdminUser.id, field, oldValue, newValue }); });
       setMechanicAdminOverrides(ov => ({ ...ov, [selectedAdminUser.id]: { ...ov[selectedAdminUser.id], ...overridePatch } }));
@@ -906,7 +968,7 @@ function useAppLogic() {
   };
   const toggleAdminUserStatus = (u) => {
     const nextStatus = u.status === "active" ? "suspended" : "active";
-    if (u.type === "owner") setOwnersDirectory(list => list.map(o => o.id === u.id ? { ...o, status: nextStatus } : o));
+    if (u.type === "owner") { setOwnersDirectory(list => list.map(o => o.id === u.id ? { ...o, status: nextStatus } : o)); persist(api.owners.update(u.id, { status: nextStatus }), "Kullanıcı durumu kaydedilemedi"); }
     else setMechanicAdminOverrides(ov => ({ ...ov, [u.id]: { ...ov[u.id], status: nextStatus } }));
     logAdminChange({ targetType: u.type === "owner" ? "owner" : "mechanicOverride", targetId: u.id, field: "status", oldValue: u.status, newValue: nextStatus });
     setToast({ type: "info", text: nextStatus === "suspended" ? "🚫 Kullanıcı askıya alındı." : "✅ Kullanıcı yeniden etkinleştirildi." });
@@ -917,7 +979,7 @@ function useAppLogic() {
     const pwd = adminEditForm.newPassword.trim();
     const pwdTargetType = selectedAdminUser.type === "owner" ? "owner" : "mechanicOverride";
     logAdminChange({ targetType: pwdTargetType, targetId: selectedAdminUser.id, field: "password", oldValue: selectedAdminUser.password, newValue: pwd });
-    if (selectedAdminUser.type === "owner") setOwnersDirectory(list => list.map(o => o.id === selectedAdminUser.id ? { ...o, password: pwd } : o));
+    if (selectedAdminUser.type === "owner") { setOwnersDirectory(list => list.map(o => o.id === selectedAdminUser.id ? { ...o, password: pwd } : o)); persist(api.owners.update(selectedAdminUser.id, { password: pwd }), "Şifre kaydedilemedi"); }
     else setMechanicAdminOverrides(ov => ({ ...ov, [selectedAdminUser.id]: { ...ov[selectedAdminUser.id], password: pwd } }));
     setAdminEditForm(f => ({ ...f, newPassword: "" }));
     setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." });
@@ -944,10 +1006,13 @@ function useAppLogic() {
     }
     if (user.type === "owner") {
       setOwnersDirectory(list => list.map(o => o.id === user.id ? { ...o, [key]: value } : o));
+      persist(api.owners.update(user.id, { [key]: value }), "Profil bilgisi kaydedilemedi");
     } else if (["email", "phone", "status"].includes(key)) {
+      // Bu alanlar mechanics şemasında yok — sadece istemci tarafı demo katmanı (bkz. saveAdminUserEdit notu).
       setMechanicAdminOverrides(ov => ({ ...ov, [user.id]: { ...ov[user.id], [key]: value } }));
     } else {
       setMechanicsList(list => list.map(m => m.id === user.id ? { ...m, [key]: value } : m));
+      persist(api.mechanics.update(user.id, { [key]: value }), "Profil bilgisi kaydedilemedi");
     }
     setEditingProfileField(null); setProfileFieldDraft("");
     setToast({ type: "info", text: "✅ Güncellendi." });
@@ -984,17 +1049,21 @@ function useAppLogic() {
   // ---- Profil sayfasındaki ilan/hizmet/iş ilanı yönetimi (admin doğrudan görebilir ve düzenleyebilir) ----
   const toggleListingRemoved = (id) => {
     const l = listings.find(x => x.id === id);
-    setListings(ls => ls.map(x => x.id === id ? { ...x, adminRemoved: !x.adminRemoved } : x));
-    if (l) logAdminChange({ targetType: "listing", targetId: id, field: "adminRemoved", oldValue: l.adminRemoved, newValue: !l.adminRemoved });
+    if (l) { applyAdminFieldChange("listing", id, "adminRemoved", !l.adminRemoved); logAdminChange({ targetType: "listing", targetId: id, field: "adminRemoved", oldValue: l.adminRemoved, newValue: !l.adminRemoved }); }
     setToast({ type: "info", text: "✅ İlan durumu güncellendi." });
   };
-  const updateListingField = (id, field, value) => setListings(ls => ls.map(l => l.id === id ? { ...l, [field]: value } : l));
-  const updateMechService = (mechId, idx, field, value) => setMechanicsList(list => list.map(m => m.id === mechId ? { ...m, services: m.services.map((s, i) => i === idx ? { ...s, [field]: value } : s) } : m));
+  const updateListingField = (id, field, value) => { setListings(ls => ls.map(l => l.id === id ? { ...l, [field]: value } : l)); persist(api.listings.update(id, { [field]: value }), "İlan kaydedilemedi"); };
+  const updateMechService = (mechId, idx, field, value) => {
+    const mech = mechanicsList.find(m => m.id === mechId);
+    const services = mech ? mech.services.map((s, i) => i === idx ? { ...s, [field]: value } : s) : [];
+    setMechanicsList(list => list.map(m => m.id === mechId ? { ...m, services } : m));
+    persist(api.mechanics.update(mechId, { services }), "Hizmet kaydedilemedi");
+  };
   const removeMechService = (mechId, idx) => {
     const mech = mechanicsList.find(m => m.id === mechId);
     const oldServices = mech ? mech.services : [];
     const newServices = oldServices.filter((_, i) => i !== idx);
-    setMechanicsList(list => list.map(m => m.id === mechId ? { ...m, services: newServices } : m));
+    applyAdminFieldChange("mechanicServicesArray", mechId, "services", newServices);
     logAdminChange({ targetType: "mechanicServicesArray", targetId: mechId, field: "services", oldValue: oldServices, newValue: newServices });
     setToast({ type: "info", text: "🗑️ Hizmet kaldırıldı." });
   };
@@ -1002,17 +1071,16 @@ function useAppLogic() {
     const mech = mechanicsList.find(m => m.id === mechId);
     const oldServices = mech ? mech.services : [];
     const newServices = [...oldServices, { name: "Yeni Hizmet", price: "0₺", fixed: false }];
-    setMechanicsList(list => list.map(m => m.id === mechId ? { ...m, services: newServices } : m));
+    applyAdminFieldChange("mechanicServicesArray", mechId, "services", newServices);
     logAdminChange({ targetType: "mechanicServicesArray", targetId: mechId, field: "services", oldValue: oldServices, newValue: newServices });
   };
   const toggleJobListingStatus = (jobId) => {
     const j = jobListings.find(x => x.id === jobId);
     const nextStatus = j && j.status === "active" ? "closed" : "active";
-    setJobListings(js => js.map(x => x.id === jobId ? { ...x, status: nextStatus } : x));
-    if (j) logAdminChange({ targetType: "job", targetId: jobId, field: "status", oldValue: j.status, newValue: nextStatus });
+    if (j) { applyAdminFieldChange("job", jobId, "status", nextStatus); logAdminChange({ targetType: "job", targetId: jobId, field: "status", oldValue: j.status, newValue: nextStatus }); }
     setToast({ type: "info", text: "✅ İş ilanı durumu güncellendi." });
   };
-  const updateJobField = (id, field, value) => setJobListings(js => js.map(j => j.id === id ? { ...j, [field]: value } : j));
+  const updateJobField = (id, field, value) => { setJobListings(js => js.map(j => j.id === id ? { ...j, [field]: value } : j)); persist(api.jobs.update(id, { [field]: value }), "İş ilanı kaydedilemedi"); };
   // ---- Paylaşılan araç/iş ilanı kartı — hem araç sahibi hem tamirci profilinde kullanılıyor.
   // "Detaylar" ile açılan bölümde ilanın tüm alanları (marka, model, yıl, km, yakıt, vites,
   // güç, renk, ilk tescil, açıklama, durum) tek tek düzenlenebiliyor. ----
@@ -1161,6 +1229,7 @@ function useAppLogic() {
     const tk = supportTickets.find(t => t.id === id);
     const resolvedDate = status === "resolved" ? TODAY.toISOString().slice(0, 10) : null;
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, status, resolvedDate } : t));
+    persist(api.tickets.update(id, { status, resolvedDate }), "Talep durumu kaydedilemedi");
     if (tk) logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: status });
     setToast({ type: "info", text: `📋 Talep durumu güncellendi: ${ADMIN_TICKET_STATUS_LABELS[status]}` });
     if (tk && status === "resolved") fireNotification("Destek talebiniz çözüldü ✅", `"${tk.subject}" talebiniz çözüldü olarak işaretlendi.`, tk.fromType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, tk.fromType === "mechanic" ? "mechanic" : "owner", { type: "supportTicket" });
@@ -1169,6 +1238,7 @@ function useAppLogic() {
     if (!selectedTicketId) return;
     const tk = supportTickets.find(t => t.id === selectedTicketId);
     setSupportTickets(list => list.map(t => t.id === selectedTicketId ? { ...t, adminNote: adminTicketNote } : t));
+    persist(api.tickets.update(selectedTicketId, { adminNote: adminTicketNote }), "Not kaydedilemedi");
     if (tk && (tk.adminNote || "") !== adminTicketNote) logAdminChange({ targetType: "ticket", targetId: selectedTicketId, field: "adminNote", oldValue: tk.adminNote, newValue: adminTicketNote });
     setToast({ type: "info", text: "📝 Not kaydedildi." });
   };
@@ -1189,12 +1259,14 @@ function useAppLogic() {
         logAdminChange({ targetType: "appointment", targetId: aid, field: "depositRefunded", oldValue: appt.depositRefunded, newValue: true });
       }
       setAppointments(apps => apps.map(a => a.id === aid ? { ...a, status: "İptal Edildi", depositRefunded: true } : a));
+      persist(api.appointments.update(aid, { status: "İptal Edildi", depositRefunded: true }), "Randevu güncellenemedi");
     }
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `${amount}₺ iade edildi, randevu iptal edildi (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "refunded", oldValue: tk.refunded, newValue: true });
     logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: "resolved" });
     logAdminChange({ targetType: "ticket", targetId: id, field: "adminNote", oldValue: tk.adminNote, newValue: newNote });
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, refunded: true, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) } : t));
+    persist(api.tickets.update(id, { refunded: true, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }), "Talep güncellenemedi");
     setToast({ type: "info", text: `💳 ${amount}₺ iade işlemi onaylandı ve randevu iptal edildi (demo).` });
   };
   const removeReportedListing = (id) => {
@@ -1206,10 +1278,12 @@ function useAppLogic() {
     const l = listings.find(x => x.id === lid);
     if (l) logAdminChange({ targetType: "listing", targetId: lid, field: "adminRemoved", oldValue: l.adminRemoved, newValue: true });
     setListings(ls => ls.map(x => x.id === lid ? { ...x, adminRemoved: true } : x));
+    persist(api.listings.update(lid, { adminRemoved: true }), "İlan güncellenemedi");
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `İlan #${lid} kaldırıldı (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: "resolved" });
     logAdminChange({ targetType: "ticket", targetId: id, field: "adminNote", oldValue: tk.adminNote, newValue: newNote });
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) } : t));
+    persist(api.tickets.update(id, { status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }), "Talep güncellenemedi");
     setToast({ type: "info", text: `🚫 İlan #${lid} platformdan kaldırıldı.` });
   };
   const removeFlaggedReview = (id) => {
@@ -1224,29 +1298,34 @@ function useAppLogic() {
     const newReviewsCount = Math.max(0, mech.reviews - removedCount);
     logAdminChange({ targetType: "mechanicReviewList", targetId: mech.id, field: "reviewList", oldValue: oldReviewList, newValue: newReviewList, extra: { reviews: mech.reviews } });
     setMechanicsList(list => list.map(m => m.id === mech.id ? { ...m, reviewList: newReviewList, reviews: newReviewsCount } : m));
+    persist(api.mechanics.update(mech.id, { reviewList: newReviewList, reviews: newReviewsCount }), "Yorum güncellenemedi");
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `Uygunsuz yorum kaldırıldı (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: "resolved" });
     logAdminChange({ targetType: "ticket", targetId: id, field: "adminNote", oldValue: tk.adminNote, newValue: newNote });
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) } : t));
+    persist(api.tickets.update(id, { status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }), "Talep güncellenemedi");
     setToast({ type: "info", text: "🗑️ Şikayet edilen yorum kaldırıldı." });
   };
   const grantVerification = (id) => {
     const tk = supportTickets.find(t => t.id === id);
     if (!tk) return;
     const mech = mechanicsList.find(m => m.name === tk.fromName);
-    if (mech) logAdminChange({ targetType: "mechanic", targetId: mech.id, field: "verified", oldValue: mech.verified, newValue: true });
+    if (mech) { logAdminChange({ targetType: "mechanic", targetId: mech.id, field: "verified", oldValue: mech.verified, newValue: true }); persist(api.mechanics.update(mech.id, { verified: true }), "Doğrulama kaydedilemedi"); }
     setMechanicsList(list => list.map(m => m.name === tk.fromName ? { ...m, verified: true } : m));
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `Doğrulama rozeti verildi (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: "resolved" });
     logAdminChange({ targetType: "ticket", targetId: id, field: "adminNote", oldValue: tk.adminNote, newValue: newNote });
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) } : t));
+    persist(api.tickets.update(id, { status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }), "Talep güncellenemedi");
     setToast({ type: "info", text: "✅ Tamirciye doğrulama rozeti verildi." });
   };
   // ---- Ticket sahibine doğrudan mesaj (dahili nottan ayrı, kullanıcıya "gönderilen" mesaj kaydı) ----
   const sendAdminReply = (id) => {
     if (!adminReplyDraft.trim()) return;
     const tk = supportTickets.find(t => t.id === id);
-    setSupportTickets(list => list.map(t => t.id === id ? { ...t, adminReplies: [...(t.adminReplies || []), { text: adminReplyDraft.trim(), date: TODAY.toLocaleDateString("tr-TR") }] } : t));
+    const adminReplies = [...(tk?.adminReplies || []), { text: adminReplyDraft.trim(), date: TODAY.toLocaleDateString("tr-TR") }];
+    setSupportTickets(list => list.map(t => t.id === id ? { ...t, adminReplies } : t));
+    persist(api.tickets.update(id, { adminReplies }), "Yanıt kaydedilemedi");
     setAdminReplyDraft("");
     setToast({ type: "info", text: "✉️ Kullanıcıya mesaj gönderildi (demo)." });
     if (tk) fireNotification("Destek talebinize yanıt geldi 📩", `"${tk.subject}" talebiniz için yeni bir mesaj var.`, tk.fromType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, tk.fromType === "mechanic" ? "mechanic" : "owner", { type: "supportTicket" });
@@ -1282,50 +1361,93 @@ function useAppLogic() {
     }
     setAuthError("");
     const isFirstSignup = screen === "signup";
-    if (role === "owner") { updateMyOwnerFields({ name: form.name || "Araç Sahibi", email: form.email, phone: form.phone }); setScreen("owner"); setOwnerTab("search"); } else setScreen("mechanicDashboard");
+    if (role === "owner") {
+      const ownerPatch = { name: form.name || "Araç Sahibi", email: form.email, phone: form.phone };
+      updateMyOwnerFields(ownerPatch);
+      persist(api.owners.update(MY_OWNER_ID, ownerPatch), "Kayıt bilgileri kaydedilemedi");
+      setScreen("owner"); setOwnerTab("search");
+    } else setScreen("mechanicDashboard");
     if (isFirstSignup) { setOnboardStep(0); setShowOnboarding(true); }
     // Bildirimler varsayılan olarak açık sayılsın diye: tarayıcı henüz sorulmadıysa girişte hemen soruyoruz.
     if (typeof Notification !== "undefined" && Notification.permission === "default") { requestNotifPermission(); }
   };
-  const addVehicle = () => {
+  const addVehicle = async () => {
     if (!newVehicle.brand || !newVehicle.model) return;
     if (newVehicle.lastInspection && !isValidDateStr(newVehicle.lastInspection)) { setToast({ type: "info", text: "⚠️ Geçersiz Son Muayene tarihi." }); return; }
     if (newVehicle.lastMaintenance && !isValidDateStr(newVehicle.lastMaintenance)) { setToast({ type: "info", text: "⚠️ Geçersiz Son Bakım tarihi." }); return; }
     if (newVehicle.insuranceEnd && !isValidDateStr(newVehicle.insuranceEnd)) { setToast({ type: "info", text: "⚠️ Geçersiz Sigorta Bitiş tarihi." }); return; }
-    const newVehicleId = Date.now();
-    setVehicles([...vehicles, { id: newVehicleId, ...newVehicle, year: newVehicle.year || "—", listingId: null, reminderOverrides: {}, customReminders: [], history: [] }]); setNewVehicle({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "" }); setShowAddVehicle(false); if (screen === "booking") setSelectedBookingVehicleId(newVehicleId); if (showQuoteModal) setQuoteVehicleId(newVehicleId); setToast({ type: "info", text: "🚘 Araç eklendi." });
+    const draft = { ownerId: MY_OWNER_ID, ...newVehicle, year: newVehicle.year || "—", listingId: null, reminderOverrides: {}, customReminders: [], history: [] };
+    // Önce iyimser (optimistic) bir yerel kayıt gösteriyoruz ki UI anında tepki versin; backend
+    // gerçek id'yi döndürünce yerel geçici id'yi onunla değiştiriyoruz.
+    const tempId = Date.now();
+    setVehicles(vs => [...vs, { id: tempId, ...draft }]);
+    setNewVehicle({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "" }); setShowAddVehicle(false);
+    if (screen === "booking") setSelectedBookingVehicleId(tempId); if (showQuoteModal) setQuoteVehicleId(tempId);
+    setToast({ type: "info", text: "🚘 Araç eklendi." });
+    try {
+      const created = await api.vehicles.create(draft);
+      setVehicles(vs => vs.map(v => v.id === tempId ? created : v));
+      if (screen === "booking" && selectedBookingVehicleId === tempId) setSelectedBookingVehicleId(created.id);
+      if (showQuoteModal && quoteVehicleId === tempId) setQuoteVehicleId(created.id);
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ Araç kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+    }
   };
-  const updateVehicleFields = (id, updates) => setVehicles(vs => vs.map(v => v.id === id ? { ...v, ...updates } : v));
+  const updateVehicleFields = (id, updates) => { setVehicles(vs => vs.map(v => v.id === id ? { ...v, ...updates } : v)); persist(api.vehicles.update(id, updates), "Araç güncellenemedi"); };
   const saveReminderOverride = (vehicleId, kind, override) => {
     if (override.customDate) {
       if (!isValidDateStr(override.customDate)) { setToast({ type: "info", text: "⚠️ Geçersiz tarih. Lütfen geçerli bir tarih seçin (YYYY-AA-GG)." }); return; }
       if (new Date(override.customDate) < TODAY) { setToast({ type: "info", text: "⚠️ Hatırlatma tarihi bugünden önce olamaz." }); return; }
     }
-    setVehicles(vs => vs.map(v => v.id === vehicleId ? { ...v, reminderOverrides: { ...(v.reminderOverrides || {}), [kind]: override } } : v)); setEditingReminderKind(null); setToast({ type: "info", text: "🔔 Hatırlatma güncellendi." });
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    const reminderOverrides = { ...(vehicle?.reminderOverrides || {}), [kind]: override };
+    setVehicles(vs => vs.map(v => v.id === vehicleId ? { ...v, reminderOverrides } : v)); setEditingReminderKind(null); setToast({ type: "info", text: "🔔 Hatırlatma güncellendi." });
+    persist(api.vehicles.update(vehicleId, { reminderOverrides }), "Hatırlatma kaydedilemedi");
   };
-  const resetReminderOverride = (vehicleId, kind) => { setVehicles(vs => vs.map(v => { if (v.id !== vehicleId) return v; const rest = { ...(v.reminderOverrides || {}) }; delete rest[kind]; return { ...v, reminderOverrides: rest }; })); setEditingReminderKind(null); setToast({ type: "info", text: "↩️ Varsayılan hatırlatmaya dönüldü." }); };
+  const resetReminderOverride = (vehicleId, kind) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    const reminderOverrides = { ...(vehicle?.reminderOverrides || {}) };
+    delete reminderOverrides[kind];
+    setVehicles(vs => vs.map(v => v.id !== vehicleId ? v : { ...v, reminderOverrides })); setEditingReminderKind(null); setToast({ type: "info", text: "↩️ Varsayılan hatırlatmaya dönüldü." });
+    persist(api.vehicles.update(vehicleId, { reminderOverrides }), "Hatırlatma kaydedilemedi");
+  };
   const submitNewReminder = (vehicleId) => {
     if (!newReminderForm.title.trim() || !newReminderForm.date) return;
     if (!isValidDateStr(newReminderForm.date)) { setToast({ type: "info", text: "⚠️ Geçersiz tarih. Lütfen geçerli bir tarih seçin (YYYY-AA-GG)." }); return; }
     if (new Date(newReminderForm.date) < TODAY) { setToast({ type: "info", text: "⚠️ Hatırlatma tarihi bugünden önce olamaz." }); return; }
     const reminder = { id: Date.now(), title: newReminderForm.title.trim(), date: newReminderForm.date, leadDays: newReminderForm.leadDays || "7" };
-    setVehicles(vs => vs.map(v => v.id === vehicleId ? { ...v, customReminders: [...(v.customReminders || []), reminder] } : v));
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    const customReminders = [...(vehicle?.customReminders || []), reminder];
+    setVehicles(vs => vs.map(v => v.id === vehicleId ? { ...v, customReminders } : v));
     setNewReminderForm({ title: "", date: "", leadDays: "7" });
     setShowAddReminderForm(false);
     setToast({ type: "info", text: "🔔 Yeni hatırlatma eklendi." });
+    persist(api.vehicles.update(vehicleId, { customReminders }), "Hatırlatma kaydedilemedi");
   };
   const updateCustomReminder = (vehicleId, reminderId, updates) => {
     if (updates.date) {
       if (!isValidDateStr(updates.date)) { setToast({ type: "info", text: "⚠️ Geçersiz tarih. Lütfen geçerli bir tarih seçin (YYYY-AA-GG)." }); return; }
       if (new Date(updates.date) < TODAY) { setToast({ type: "info", text: "⚠️ Hatırlatma tarihi bugünden önce olamaz." }); return; }
     }
-    setVehicles(vs => vs.map(v => v.id !== vehicleId ? v : { ...v, customReminders: (v.customReminders || []).map(cr => cr.id === reminderId ? { ...cr, ...updates } : cr) })); setEditingReminderKind(null); setToast({ type: "info", text: "🔔 Hatırlatma güncellendi." });
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    const customReminders = (vehicle?.customReminders || []).map(cr => cr.id === reminderId ? { ...cr, ...updates } : cr);
+    setVehicles(vs => vs.map(v => v.id !== vehicleId ? v : { ...v, customReminders })); setEditingReminderKind(null); setToast({ type: "info", text: "🔔 Hatırlatma güncellendi." });
+    persist(api.vehicles.update(vehicleId, { customReminders }), "Hatırlatma kaydedilemedi");
   };
-  const removeCustomReminder = (vehicleId, reminderId) => { setVehicles(vs => vs.map(v => v.id !== vehicleId ? v : { ...v, customReminders: (v.customReminders || []).filter(cr => cr.id !== reminderId) })); setEditingReminderKind(null); setToast({ type: "info", text: "🗑️ Hatırlatma silindi." }); };
-  const acceptAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Sırada" } : a)); fireSuccessPulse("Randevu kabul edildi ✅"); fireNotification("Randevunuz kabul edildi ✅", "Tamirci randevu talebinizi onayladı.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
-  const rejectAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Reddedildi" } : a)); setToast({ type: "info", text: "❌ Randevu reddedildi." }); fireNotification("Randevunuz reddedildi", "Tamirci bu randevu talebini kabul edemedi.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
-  const markNoShow = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Gelmedi", noShow: true } : a)); setToast({ type: "info", text: "🚫 Müşteri gelmedi olarak işaretlendi." }); };
-  const advanceStatus = (id) => { setAppointments(apps => apps.map(a => { if (a.id !== id) return a; const idx = TRACK_STATUSES_AUTO.indexOf(a.status); const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)]; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse("Tamir tamamlandı 🎉"); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments); } return { ...a, status: next }; })); };
+  const removeCustomReminder = (vehicleId, reminderId) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    const customReminders = (vehicle?.customReminders || []).filter(cr => cr.id !== reminderId);
+    setVehicles(vs => vs.map(v => v.id !== vehicleId ? v : { ...v, customReminders })); setEditingReminderKind(null); setToast({ type: "info", text: "🗑️ Hatırlatma silindi." });
+    persist(api.vehicles.update(vehicleId, { customReminders }), "Hatırlatma kaydedilemedi");
+  };
+  const acceptAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Sırada" } : a)); persist(api.appointments.update(id, { status: "Sırada" }), "Randevu güncellenemedi"); fireSuccessPulse("Randevu kabul edildi ✅"); fireNotification("Randevunuz kabul edildi ✅", "Tamirci randevu talebinizi onayladı.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
+  const rejectAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Reddedildi" } : a)); persist(api.appointments.update(id, { status: "Reddedildi" }), "Randevu güncellenemedi"); setToast({ type: "info", text: "❌ Randevu reddedildi." }); fireNotification("Randevunuz reddedildi", "Tamirci bu randevu talebini kabul edemedi.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
+  const markNoShow = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Gelmedi", noShow: true } : a)); persist(api.appointments.update(id, { status: "Gelmedi", noShow: true }), "Randevu güncellenemedi"); setToast({ type: "info", text: "🚫 Müşteri gelmedi olarak işaretlendi." }); };
+  const advanceStatus = (id) => {
+    let nextStatus = null;
+    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; const idx = TRACK_STATUSES_AUTO.indexOf(a.status); const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)]; nextStatus = next; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse("Tamir tamamlandı 🎉"); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments); } return { ...a, status: next }; }));
+    if (nextStatus) persist(api.appointments.update(id, { status: nextStatus }), "Randevu güncellenemedi");
+  };
   // Tamiri "Tamamlandı" olarak işaretlerken, değişen parça varsa opsiyonel garanti süresi eklenebilir.
   // Garanti bitiş tarihi hem randevu kartında gösterilir hem de (plaka eşleşirse) aracın hatırlatmalarına eklenir.
   const completeApptWithWarranty = (warrantyDays) => {
@@ -1338,11 +1460,14 @@ function useAppLogic() {
       const end = new Date(TODAY); end.setDate(end.getDate() + days);
       const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
       setAppointments(apps => apps.map(a => a.id === id ? { ...a, warrantyEndDate: endStr } : a));
+      persist(api.appointments.update(id, { warrantyEndDate: endStr }), "Garanti bilgisi kaydedilemedi");
       if (appt) {
         const vehicle = vehicles.find(v => v.plate && appt.vehicle.includes(v.plate));
         if (vehicle) {
           const reminder = { id: Date.now(), title: "Parça Garantisi Bitiyor", date: endStr, leadDays: "7" };
-          setVehicles(vs => vs.map(v => v.id === vehicle.id ? { ...v, customReminders: [...(v.customReminders || []), reminder] } : v));
+          const customReminders = [...(vehicle.customReminders || []), reminder];
+          setVehicles(vs => vs.map(v => v.id === vehicle.id ? { ...v, customReminders } : v));
+          persist(api.vehicles.update(vehicle.id, { customReminders }), "Hatırlatma kaydedilemedi");
         }
       }
     }
@@ -1352,6 +1477,7 @@ function useAppLogic() {
   const cancelOwnAppt = (id) => {
     const appt = appointments.find(a => a.id === id);
     setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "İptal Edildi" } : a));
+    persist(api.appointments.update(id, { status: "İptal Edildi" }), "Randevu güncellenemedi");
     if (appt && appt.mechanicId === MY_MECHANIC_ID) {
       fireNotification("Randevu iptal edildi ❌", `${appt.customer} — ${appt.vehicle} randevusunu iptal etti.`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: appt.id });
     }
@@ -1361,7 +1487,9 @@ function useAppLogic() {
     if (!rescheduleDate || !rescheduleTime) return;
     const appt = appointments.find(a => a.id === reschedulingApptId);
     const newDate = rescheduleDate.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
-    setAppointments(apps => apps.map(a => a.id === reschedulingApptId ? { ...a, date: newDate, time: rescheduleTime, status: autoAccept ? "Sırada" : "Onay Bekliyor", autoAccepted: autoAccept } : a));
+    const patch = { date: newDate, time: rescheduleTime, status: autoAccept ? "Sırada" : "Onay Bekliyor", autoAccepted: autoAccept };
+    setAppointments(apps => apps.map(a => a.id === reschedulingApptId ? { ...a, ...patch } : a));
+    persist(api.appointments.update(reschedulingApptId, patch), "Randevu güncellenemedi");
     setReschedulingApptId(null);
     setToast({ type: "info", text: "🔄 Randevunuz güncellendi." });
     if (appt && appt.mechanicId === MY_MECHANIC_ID) {
@@ -1374,15 +1502,15 @@ function useAppLogic() {
     if (!appt) return;
     const mech = mechanicsList.find(m => m.name === appt.mechanicName);
     if (mech) {
-      setMechanicsList(list => list.map(m => {
-        if (m.id !== mech.id) return m;
-        const newReview = { id: Date.now(), mine: true, date: "az önce", name: ownerProfile.name || "Araç Sahibi", avatar: "🙂", rating: reviewForm.rating, comment: reviewForm.comment.trim() || "Hizmetten memnun kaldım.", photo: false };
-        const newReviewsCount = m.reviews + 1;
-        const newAvg = Math.round((((m.rating * m.reviews) + reviewForm.rating) / newReviewsCount) * 10) / 10;
-        return { ...m, reviewList: [newReview, ...m.reviewList], reviews: newReviewsCount, rating: newAvg };
-      }));
+      const newReview = { id: Date.now(), mine: true, date: "az önce", name: ownerProfile.name || "Araç Sahibi", avatar: "🙂", rating: reviewForm.rating, comment: reviewForm.comment.trim() || "Hizmetten memnun kaldım.", photo: false };
+      const newReviewsCount = mech.reviews + 1;
+      const newAvg = Math.round((((mech.rating * mech.reviews) + reviewForm.rating) / newReviewsCount) * 10) / 10;
+      const reviewList = [newReview, ...mech.reviewList];
+      setMechanicsList(list => list.map(m => m.id !== mech.id ? m : { ...m, reviewList, reviews: newReviewsCount, rating: newAvg }));
+      persist(api.mechanics.update(mech.id, { reviewList, reviews: newReviewsCount, rating: newAvg }), "Değerlendirme kaydedilemedi");
     }
     setAppointments(apps => apps.map(a => a.id === reviewingApptId ? { ...a, reviewed: true } : a));
+    persist(api.appointments.update(reviewingApptId, { reviewed: true }), "Randevu güncellenemedi");
     setReviewingApptId(null);
     setReviewForm({ rating: 5, comment: "" });
     setToast({ type: "info", text: "⭐ Değerlendirmeniz için teşekkürler!" });
@@ -1394,7 +1522,9 @@ function useAppLogic() {
     if (!replyDraft.trim()) return;
     const mech = mechanicsList.find(m => m.id === mechanicId);
     const review = mech?.reviewList.find(r => r.id === reviewId);
-    setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList: m.reviewList.map(r => r.id === reviewId ? { ...r, reply: replyDraft.trim() } : r) }));
+    const reviewList = mech ? mech.reviewList.map(r => r.id === reviewId ? { ...r, reply: replyDraft.trim() } : r) : [];
+    setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList }));
+    if (mech) persist(api.mechanics.update(mechanicId, { reviewList }), "Yanıt kaydedilemedi");
     setReplyingReviewId(null);
     setReplyDraft("");
     setToast({ type: "info", text: "💬 Yanıtınız yayınlandı." });
@@ -1403,14 +1533,15 @@ function useAppLogic() {
     }
   };
   const deleteMyReview = (mechanicId, reviewId) => {
-    setMechanicsList(list => list.map(m => {
-      if (m.id !== mechanicId) return m;
-      const review = m.reviewList.find(r => r.id === reviewId);
-      if (!review) return m;
-      const newReviewsCount = Math.max(0, m.reviews - 1);
-      const newAvg = newReviewsCount > 0 ? Math.round((((m.rating * m.reviews) - review.rating) / newReviewsCount) * 10) / 10 : 0;
-      return { ...m, reviewList: m.reviewList.filter(r => r.id !== reviewId), reviews: newReviewsCount, rating: newAvg };
-    }));
+    const mech = mechanicsList.find(m => m.id === mechanicId);
+    const review = mech?.reviewList.find(r => r.id === reviewId);
+    if (mech && review) {
+      const newReviewsCount = Math.max(0, mech.reviews - 1);
+      const newAvg = newReviewsCount > 0 ? Math.round((((mech.rating * mech.reviews) - review.rating) / newReviewsCount) * 10) / 10 : 0;
+      const reviewList = mech.reviewList.filter(r => r.id !== reviewId);
+      setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList, reviews: newReviewsCount, rating: newAvg }));
+      persist(api.mechanics.update(mechanicId, { reviewList, reviews: newReviewsCount, rating: newAvg }), "Yorum silinemedi");
+    }
     setToast({ type: "info", text: "🗑️ Yorumunuz silindi." });
   };
   const closePasswordModal = () => { setShowPasswordModal(false); setPasswordForm({ current: "", next: "", confirm: "" }); };
@@ -1436,12 +1567,11 @@ function useAppLogic() {
     if (!myName) return [];
     return supportTickets.filter(tk => tk.fromName === myName).sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
   };
-  const submitSupportTicket = () => {
+  const submitSupportTicket = async () => {
     if (!newTicketForm.subject.trim() || !newTicketForm.description.trim()) { setToast({ type: "info", text: "⚠️ Lütfen konu ve açıklama girin." }); return; }
     const fromType = role === "owner" ? "owner" : "mechanic";
     const fromName = (role === "owner" ? ownerProfile.name : myProfile?.name) || (role === "owner" ? "Araç Sahibi" : "Tamirci");
-    const newTicket = {
-      id: supportTicketId++,
+    const draft = {
       type: newTicketForm.type,
       priority: ADMIN_TICKET_TYPE_DEFAULT_PRIORITY[newTicketForm.type] || "medium",
       status: "open",
@@ -1453,10 +1583,15 @@ function useAppLogic() {
       adminNote: "",
       adminReplies: [],
     };
-    setSupportTickets(list => [newTicket, ...list]);
     setNewTicketForm({ type: "quality", subject: "", description: "", relatedNote: "" });
     setShowNewTicketForm(false);
     setToast({ type: "info", text: "✅ Destek talebiniz alındı. En kısa sürede dönüş yapılacaktır." });
+    try {
+      const created = await api.tickets.create(draft);
+      setSupportTickets(list => [created, ...list]);
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ Destek talebi kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+    }
   };
   // Belirli bir ilanı, tamirciyi ya da müşteriyi bağlamsal olarak bildirmek için: formu önceden
   // doldurup direkt "Yeni Destek Talebi" modalını açar — kullanıcı sadece açıklamayı yazıp gönderir.
@@ -1554,16 +1689,29 @@ function useAppLogic() {
   const toggleTranslate = (id) => setShowTranslated(s => ({ ...s, [id]: !s[id] }));
   const mechConvo = conversations.find(c => c.id === mechActiveConvoId);
   const sendMechMessage = (text) => { if (!text) return; setConversations(cs => cs.map(c => { if (c.id !== mechActiveConvoId) return c; const newMsgs = [...c.messages]; if (c.pendingContextNote) newMsgs.push({ id: msgId++, sender: "mechanic", text: c.pendingContextNote, lang: c.mechanicLang }); newMsgs.push({ id: msgId++, sender: "mechanic", text, lang: c.mechanicLang }); return { ...c, messages: newMsgs, pendingContextNote: null }; })); fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${text}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId }); setMechChatInput(""); };
-  const updateMyField = (field, value) => setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m));
-  const updateService = (idx, field, value) => setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services: m.services.map((s, i) => i === idx ? { ...s, [field]: value } : s) }));
-  const removeService = (idx) => setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services: m.services.filter((_, i) => i !== idx) }));
+  const updateMyField = (field, value) => { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m)); persist(api.mechanics.update(MY_MECHANIC_ID, { [field]: value }), "Profil bilgisi kaydedilemedi"); };
+  const updateService = (idx, field, value) => {
+    const services = myProfile.services.map((s, i) => i === idx ? { ...s, [field]: value } : s);
+    setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services }));
+    persist(api.mechanics.update(MY_MECHANIC_ID, { services }), "Hizmet kaydedilemedi");
+  };
+  const removeService = (idx) => {
+    const services = myProfile.services.filter((_, i) => i !== idx);
+    setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services }));
+    persist(api.mechanics.update(MY_MECHANIC_ID, { services }), "Hizmet kaydedilemedi");
+  };
   const toggleServiceFixed = (idx) => {
     const svc = myProfile?.services?.[idx];
     if (!svc) return;
     if (!svc.fixed && !String(svc.price || "").trim()) { setToast({ type: "info", text: "⚠️ Sabit fiyat işaretlemeden önce bu hizmete bir fiyat girin." }); return; }
     updateService(idx, "fixed", !svc.fixed);
   };
-  const finalizeAddService = (name, price, fixed) => { setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services: [...m.services, { name, price, fixed }] })); setNewServiceForm({ name: "", price: "", fixed: false, fixedTouched: false }); setShowAddServiceForm(false); setDuplicateServiceWarning(null); };
+  const finalizeAddService = (name, price, fixed) => {
+    const services = [...myProfile.services, { name, price, fixed }];
+    setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services }));
+    persist(api.mechanics.update(MY_MECHANIC_ID, { services }), "Hizmet kaydedilemedi");
+    setNewServiceForm({ name: "", price: "", fixed: false, fixedTouched: false }); setShowAddServiceForm(false); setDuplicateServiceWarning(null);
+  };
   const findMissingFixedPriceService = () => (myProfile?.services || []).find(s => s.fixed && !String(s.price || "").trim()) || null;
   const saveMyProfile = () => {
     const missing = findMissingFixedPriceService();
@@ -1588,14 +1736,30 @@ function useAppLogic() {
   const cancelAddService = () => { setShowAddServiceForm(false); setNewServiceForm({ name: "", price: "", fixed: false, fixedTouched: false }); setDuplicateServiceWarning(null); };
   const uploadCoverPhoto = (e) => { const file = e.target.files?.[0]; if (!file) return; updateMyField("coverPhoto", URL.createObjectURL(file)); };
   const removeCoverPhoto = () => updateMyField("coverPhoto", null);
-  const addStaff = () => setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, staff: [...m.staff, { name: "Yeni Çalışan", role: "Görev", emoji: "🧑‍🔧" }] }));
-  const updateStaffField = (idx, field, value) => setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, staff: m.staff.map((s, i) => i === idx ? { ...s, [field]: value } : s) }));
-  const removeStaff = (idx) => setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, staff: m.staff.filter((_, i) => i !== idx) }));
+  const addStaff = () => {
+    const staff = [...myProfile.staff, { name: "Yeni Çalışan", role: "Görev", emoji: "🧑‍🔧" }];
+    setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, staff }));
+    persist(api.mechanics.update(MY_MECHANIC_ID, { staff }), "Çalışan kaydedilemedi");
+  };
+  const updateStaffField = (idx, field, value) => {
+    const staff = myProfile.staff.map((s, i) => i === idx ? { ...s, [field]: value } : s);
+    setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, staff }));
+    persist(api.mechanics.update(MY_MECHANIC_ID, { staff }), "Çalışan kaydedilemedi");
+  };
+  const removeStaff = (idx) => {
+    const staff = myProfile.staff.filter((_, i) => i !== idx);
+    setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, staff }));
+    persist(api.mechanics.update(MY_MECHANIC_ID, { staff }), "Çalışan kaydedilemedi");
+  };
   const staffAvatarUpload = (idx, e) => { const file = e.target.files?.[0]; if (!file) return; updateStaffField(idx, "emoji", URL.createObjectURL(file)); };
-  const ownerPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; updateMyOwnerField("photo", URL.createObjectURL(file)); };
-  const toggleDayOpen = (key) => setMechanicHours(h => ({ ...h, [key]: { ...h[key], open: !h[key].open } }));
-  const toggleSlotClosed = (key, slot) => setMechanicHours(h => { const closed = h[key].closedSlots.includes(slot); return { ...h, [key]: { ...h[key], closedSlots: closed ? h[key].closedSlots.filter(s => s !== slot) : [...h[key].closedSlots, slot] } }; });
-  const addExtraSlot = (key, time) => { if (!time) return; setMechanicHours(h => { if (h[key].extraSlots.includes(time) || genSlots(h[key].start, h[key].end).includes(time)) return h; return { ...h, [key]: { ...h[key], extraSlots: [...h[key].extraSlots, time].sort() } }; }); };
+  const ownerPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; const url = URL.createObjectURL(file); updateMyOwnerField("photo", url); persist(api.owners.update(MY_OWNER_ID, { photo: url }), "Fotoğraf kaydedilemedi"); };
+  // Çalışma saatleri (mechanicHours) ayrı bir istemci-taraflı yapı; backend'deki mechanics.hoursText
+  // alanına insan-okur biçimde yansıtılır (bkz. formatHoursText) — böylece diğer kullanıcılar
+  // gerçek zamanlı çalışma saatlerini görebilir.
+  const persistMechanicHours = (nextHours) => persist(api.mechanics.update(MY_MECHANIC_ID, { hoursText: formatHoursText(nextHours) }), "Çalışma saatleri kaydedilemedi");
+  const toggleDayOpen = (key) => setMechanicHours(h => { const next = { ...h, [key]: { ...h[key], open: !h[key].open } }; persistMechanicHours(next); return next; });
+  const toggleSlotClosed = (key, slot) => setMechanicHours(h => { const closed = h[key].closedSlots.includes(slot); const next = { ...h, [key]: { ...h[key], closedSlots: closed ? h[key].closedSlots.filter(s => s !== slot) : [...h[key].closedSlots, slot] } }; persistMechanicHours(next); return next; });
+  const addExtraSlot = (key, time) => { if (!time) return; setMechanicHours(h => { if (h[key].extraSlots.includes(time) || genSlots(h[key].start, h[key].end).includes(time)) return h; const next = { ...h, [key]: { ...h[key], extraSlots: [...h[key].extraSlots, time].sort() } }; persistMechanicHours(next); return next; }); };
   const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", desc: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: null, _editingId: null }); setShowSellForm(true); };
   // "Aracımı Satışa Çıkar" tıklanınca: kayıtlı araç(lar)ı varsa hangisini satacağını sorar ve
   // seçilen aracın bilgilerini forma otomatik doldurur; kayıtlı aracı yoksa direkt boş form açar.
@@ -1618,7 +1782,7 @@ function useAppLogic() {
     fireNotification(title, body, ownerSettings.notifyOffers, "owner", { type: "listing", id: listingId });
     fireNotification(title, body, mechSettings.notifyOffers, "mechanic", { type: "listing", id: listingId });
   };
-  const submitListing = (sellerType) => {
+  const submitListing = async (sellerType) => {
     const missingFields = [];
     if (!sellForm.brand?.trim()) missingFields.push("Marka");
     if (!sellForm.model?.trim()) missingFields.push("Model");
@@ -1628,26 +1792,43 @@ function useAppLogic() {
     if (missingFields.length > 0) { setToast({ type: "info", text: `⚠️ Eksik bilgiler var: ${missingFields.join(", ")}. Lütfen doldurun.` }); return; }
     if (sellForm._editingId) {
       const before = listings.find(x => x.id === sellForm._editingId);
+      const { _editingId, _vehicleId, ...patch } = sellForm;
       setListings(l => l.map(x => x.id === sellForm._editingId ? { ...x, ...sellForm } : x));
+      persist(api.listings.update(sellForm._editingId, patch), "İlan kaydedilemedi");
       setToast({ type: "info", text: "✅ İlan güncellendi." });
       if (before) {
         const label = `${sellForm.brand} ${sellForm.model}`;
         if (String(before.price) !== String(sellForm.price)) notifyFavoriteWatchers(sellForm._editingId, label, `fiyat ${before.price} → ${sellForm.price} olarak güncellendi.`);
         else notifyFavoriteWatchers(sellForm._editingId, label, "ilan bilgileri güncellendi.");
       }
+      setShowSellForm(false);
     }
-    else { const sellerName = sellerType === "mechanic" ? (myProfile?.name || "Tamirci") : (ownerProfile.name || "Araç Sahibi"); const newId = listingId++; setListings(l => [{ id: newId, sellerName, sellerType, ...sellForm, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [] }, ...l]); if (sellForm._vehicleId) setVehicles(vs => vs.map(v => v.id === sellForm._vehicleId ? { ...v, listingId: newId } : v)); setToast({ type: "info", text: "🚗 İlanınız yayınlandı." }); }
-    setShowSellForm(false);
+    else {
+      const sellerName = sellerType === "mechanic" ? (myProfile?.name || "Tamirci") : (ownerProfile.name || "Araç Sahibi");
+      const { _editingId, _vehicleId, ...formFields } = sellForm;
+      const draft = { sellerName, sellerType, ...formFields, vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [] };
+      setShowSellForm(false);
+      setToast({ type: "info", text: "🚗 İlanınız yayınlandı." });
+      try {
+        const created = await api.listings.create(draft);
+        setListings(l => [created, ...l]);
+        if (_vehicleId) { setVehicles(vs => vs.map(v => v.id === _vehicleId ? { ...v, listingId: created.id } : v)); persist(api.vehicles.update(_vehicleId, { listingId: created.id }), "Araç kaydedilemedi"); }
+      } catch (err) {
+        setToast({ type: "info", text: `⚠️ İlan kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+      }
+    }
   };
   const setListingStatus = (id, status) => {
     const listing = listings.find(x => x.id === id);
     setListings(l => l.map(x => x.id === id ? { ...x, status } : x));
+    persist(api.listings.update(id, { status }), "İlan durumu kaydedilemedi");
     if (listing) notifyFavoriteWatchers(id, `${listing.brand} ${listing.model}`, `durumu "${listingStatusMeta(status, t).label}" olarak değişti.`);
   };
   const removeListing = (id) => {
     const listing = listings.find(l => l.id === id);
     setListings(l => l.filter(x => x.id !== id));
-    if (listing?._vehicleId) setVehicles(vs => vs.map(v => v.id === listing._vehicleId ? { ...v, listingId: null } : v));
+    persist(api.listings.remove(id), "İlan silinemedi");
+    if (listing?._vehicleId) { setVehicles(vs => vs.map(v => v.id === listing._vehicleId ? { ...v, listingId: null } : v)); persist(api.vehicles.update(listing._vehicleId, { listingId: null }), "Araç kaydedilemedi"); }
     setToast({ type: "info", text: "🗑️ İlan silindi." });
   };
   // Şu an aktif olan role göre "ben kimim" — bunu rolden bağımsız (sadece ownerProfile.name doluysa
@@ -1666,16 +1847,11 @@ function useAppLogic() {
     const currency = listingCurrency(selectedListing.price);
     const buyerName = myBuyerName();
     const existing = myPendingOfferOn(selectedListing);
-    setListings(l => l.map(x => {
-      if (x.id !== selectedListing.id) return x;
-      if (existing && !existing.seen) {
-        // Seller hasn't seen the previous offer yet — update it in place.
-        return { ...x, offers: x.offers.map(o => o.id === existing.id ? { ...o, amount: offerAmount, currency } : o) };
-      }
-      // Previous offer already seen (or none) — supersede it with a fresh one.
-      const offers = existing ? x.offers.map(o => o.id === existing.id ? { ...o, status: "replaced" } : o) : x.offers;
-      return { ...x, offers: [{ id: Date.now(), amount: offerAmount, currency, from: buyerName, status: "pending", seen: false }, ...offers] };
-    }));
+    const newOffers = existing && !existing.seen
+      ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, amount: offerAmount, currency } : o)
+      : [{ id: Date.now(), amount: offerAmount, currency, from: buyerName, status: "pending", seen: false }, ...(existing ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, status: "replaced" } : o) : selectedListing.offers)];
+    setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, offers: newOffers } : x));
+    persist(api.listings.update(selectedListing.id, { offers: newOffers }), "Teklif kaydedilemedi");
     setOfferAmount("");
     setShowOfferForm(false);
     setToast({ type: "info", text: existing && !existing.seen ? "💰 Teklifiniz güncellendi." : "💰 Teklifiniz iletildi." });
@@ -1692,7 +1868,9 @@ function useAppLogic() {
   const submitListingMsg = () => {
     if (!listingMsg || !selectedListing) return;
     const senderName = ownerProfile.name || myProfile?.name || "Kullanıcı";
-    setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, messages: [{ id: Date.now(), text: listingMsg, from: senderName }, ...x.messages] } : x));
+    const messages = [{ id: Date.now(), text: listingMsg, from: senderName }, ...selectedListing.messages];
+    setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, messages } : x));
+    persist(api.listings.update(selectedListing.id, { messages }), "Mesaj kaydedilemedi");
     setListingMsg("");
     setShowListingMsgForm(false);
     setToast({ type: "info", text: "💬 Mesaj gönderildi." });
@@ -1706,7 +1884,10 @@ function useAppLogic() {
   const respondOffer = (listingIdx, offerId, status) => {
     const listing = listings.find(l => l.id === listingIdx);
     const offer = listing?.offers.find(o => o.id === offerId);
-    setListings(l => l.map(x => x.id === listingIdx ? { ...x, offers: x.offers.map(o => o.id === offerId ? { ...o, status } : o), status: status === "accepted" ? "sold" : x.status } : x));
+    const offers = listing ? listing.offers.map(o => o.id === offerId ? { ...o, status } : o) : [];
+    const listingPatch = { offers, ...(status === "accepted" ? { status: "sold" } : {}) };
+    setListings(l => l.map(x => x.id === listingIdx ? { ...x, ...listingPatch } : x));
+    persist(api.listings.update(listingIdx, listingPatch), "Teklif kaydedilemedi");
     // Teklifi veren araç sahibi mi tamirci mi — bildirim tercihini ona göre kontrol ediyoruz.
     const buyerIsMechanic = offer && myProfile && offer.from === myProfile.name;
     const notifyAllowed = buyerIsMechanic ? mechSettings.notifyOffers : ownerSettings.notifyOffers;
@@ -1717,26 +1898,42 @@ function useAppLogic() {
       fireNotification("Teklifiniz reddedildi", listing ? `"${listing.brand} ${listing.model}" ilanına verdiğiniz teklif satıcı tarafından reddedildi.` : "Verdiğiniz teklif reddedildi.", notifyAllowed, buyerIsMechanic ? "mechanic" : "owner", { type: "listing", id: listingIdx });
     }
   };
-  const markOffersSeen = (listingId) => setListings(l => l.map(x => x.id === listingId ? { ...x, offers: x.offers.map(o => o.seen ? o : { ...o, seen: true }) } : x));
+  const markOffersSeen = (listingId) => {
+    const listing = listings.find(l => l.id === listingId);
+    if (!listing || !listing.offers.some(o => !o.seen)) return;
+    const offers = listing.offers.map(o => o.seen ? o : { ...o, seen: true });
+    setListings(l => l.map(x => x.id === listingId ? { ...x, offers } : x));
+    persist(api.listings.update(listingId, { offers }), "Teklif kaydedilemedi");
+  };
   const clearListingFilters = () => setListingFilters({ transmission: "all", fuelType: "all", minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "" });
   const clearJobFilters = () => setJobFilters({ employmentType: "all", experienceLevel: "all" });
   const openJobForm = (prefill) => { setJobForm(prefill || EMPTY_JOB_FORM); setShowJobForm(true); };
-  const submitJobListing = () => {
+  const submitJobListing = async () => {
     if (!jobForm.title.trim()) return;
     const requirements = jobForm.requirements.split("\n").map(s => s.trim()).filter(Boolean);
     const skills = jobForm.skills.split(",").map(s => s.trim()).filter(Boolean);
     if (jobForm._editingId) {
-      setJobListings(js => js.map(j => j.id === jobForm._editingId ? { ...j, ...jobForm, requirements, skills } : j));
+      const { _editingId, ...formFields } = jobForm;
+      const patch = { ...formFields, requirements, skills };
+      setJobListings(js => js.map(j => j.id === jobForm._editingId ? { ...j, ...patch } : j));
+      persist(api.jobs.update(jobForm._editingId, patch), "İş ilanı kaydedilemedi");
       setToast({ type: "info", text: "✅ İş ilanı güncellendi." });
+      setShowJobForm(false);
     } else {
-      const newJob = { id: jobListingId++, mechanicId: MY_MECHANIC_ID, mechanicName: myProfile?.name || "Tamirci", mechanicImg: myProfile?.img || "🔧", ...jobForm, requirements, skills, postedDate: "az önce", status: "active", applicants: [] };
-      setJobListings(js => [newJob, ...js]);
+      const { _editingId, ...formFields } = jobForm;
+      const draft = { mechanicId: MY_MECHANIC_ID, mechanicName: myProfile?.name || "Tamirci", mechanicImg: myProfile?.img || "🔧", ...formFields, requirements, skills, postedDate: "az önce", status: "active", applicants: [] };
+      setShowJobForm(false);
       setToast({ type: "info", text: "💼 İş ilanınız yayınlandı." });
+      try {
+        const created = await api.jobs.create(draft);
+        setJobListings(js => [created, ...js]);
+      } catch (err) {
+        setToast({ type: "info", text: `⚠️ İş ilanı kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+      }
     }
-    setShowJobForm(false);
   };
-  const setJobListingStatus = (id, status) => setJobListings(js => js.map(j => j.id === id ? { ...j, status } : j));
-  const removeJobListing = (id) => { setJobListings(js => js.filter(j => j.id !== id)); setToast({ type: "info", text: "🗑️ İş ilanı silindi." }); };
+  const setJobListingStatus = (id, status) => { setJobListings(js => js.map(j => j.id === id ? { ...j, status } : j)); persist(api.jobs.update(id, { status }), "İş ilanı durumu kaydedilemedi"); };
+  const removeJobListing = (id) => { setJobListings(js => js.filter(j => j.id !== id)); persist(api.jobs.remove(id), "İş ilanı silinemedi"); setToast({ type: "info", text: "🗑️ İş ilanı silindi." }); };
   const handleCvSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1764,7 +1961,9 @@ function useAppLogic() {
   const submitJobApplication = () => {
     if (!jobApplyReady || !selectedJob) return;
     const applicant = { id: Date.now(), name: jobApplyInfo.name.trim(), phone: jobApplyInfo.phone.trim(), email: jobApplyInfo.email.trim(), address: jobApplyInfo.address.trim(), message: jobApplyMsg, date: "az önce", status: "pending", cvName: jobApplyCv?.name || null, cvUrl: jobApplyCv?.url || null };
-    setJobListings(js => js.map(j => j.id === selectedJob.id ? { ...j, applicants: [applicant, ...j.applicants] } : j));
+    const applicants = [applicant, ...selectedJob.applicants];
+    setJobListings(js => js.map(j => j.id === selectedJob.id ? { ...j, applicants } : j));
+    persist(api.jobs.update(selectedJob.id, { applicants }), "Başvuru kaydedilemedi");
     setMyApplications(list => [{ id: applicant.id, jobId: selectedJob.id, applicantId: applicant.id, role, date: "az önce" }, ...list]);
     setJobApplyMsg("");
     setJobApplyCv(null);
@@ -1776,7 +1975,9 @@ function useAppLogic() {
     const job = jobListings.find(j => j.id === jobId);
     const applicant = job?.applicants.find(a => a.id === applicantId);
     if (!job || !applicant || !myProfile) return;
-    setJobListings(js => js.map(j => j.id === jobId ? { ...j, applicants: j.applicants.map(a => a.id === applicantId ? { ...a, status: "rejected" } : a) } : j));
+    const applicants = job.applicants.map(a => a.id === applicantId ? { ...a, status: "rejected" } : a);
+    setJobListings(js => js.map(j => j.id === jobId ? { ...j, applicants } : j));
+    persist(api.jobs.update(jobId, { applicants }), "Başvuru kaydedilemedi");
     const firstName = applicant.name.trim().split(" ")[0] || applicant.name;
     const rejectionText = `Merhaba ${firstName},\n\n"${job.title}" pozisyonuna gösterdiğiniz ilgi için teşekkür ederiz. Başvurunuzu özenle değerlendirdik, ancak bu pozisyon için şu anda sizinle ilerleyemeyeceğimizi üzülerek bildiririz.\n\nBu karar yeteneklerinizle değil, mevcut ihtiyaçlarımızla ilgilidir. İş arayışınızda size başarılar diler, ileride tekrar bir araya gelebilmeyi umarız.\n\nSaygılarımızla,\n${myProfile.name}`;
     setConversations(cs => {

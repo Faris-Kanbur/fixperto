@@ -33,7 +33,7 @@ Bu proje, önceden tek dosyalık (`App.jsx`, ~5000 satır) bir React prototipind
 
 - **Backend**: Express + `better-sqlite3`. Her varlık (mechanics, owners, vehicles, appointments, listings, jobs, tickets) için standart REST uç noktaları (`GET/POST/PATCH/DELETE`) var, bkz. `backend/README.md`.
 - **Frontend**: Sabit veriler (`data/constants.js`, `data/i18n.js`), saf yardımcı fonksiyonlar (`utils/helpers.js`) ve tekrar kullanılabilir küçük bileşenler (`components/`) ayrı dosyalara çıkarıldı. Ana `App.jsx` uygulama açılışında bu 7 çekirdek varlığı backend'den çekiyor (`useEffect` + `src/api/client.js`).
-- Uygulamanın geri kalan (çok sayıda) etkileşim mantığı — randevu kabul/red, teklif pazarlığı, çoklu teklif isteme, bildirimler, admin panel değişiklik günlüğü vb. — hâlâ `App.jsx` içinde, istemci tarafında çalışıyor; bunlar orijinal demoda da aynı şekildeydi. Bunların tamamını sunucu tarafında kalıcı hale getirmek doğal bir sonraki adım.
+- Tüm yazma işlemleri (kayıt/giriş, araç ekleme, randevu alma/durum değiştirme, ilan/iş ilanı verme, teklif verme/kabul etme, yorum yazma/silme, destek talebi açma, admin panel düzenlemeleri) artık gerçekten backend'e (SQLite) kalıcı hale getiriliyor — bkz. `frontend/src/app/state/AppLogicProvider.tsx` içindeki `persist()` yardımcı fonksiyonu ve her ilgili handler. Çoklu tamirci fiyat teklifi (quote request/offer) özelliği için de `quote_requests`/`quote_offers` tabloları eklendi. Bildirimler (`notifLog`) ve sohbet mesajları (`conversations`) hâlâ yalnızca istemci tarafında — bunlar için ayrı tablo/route yok (bilinçli kapsam dışı, bkz. REFACTOR_REPORT.md).
 
 ## GitHub'a Push
 

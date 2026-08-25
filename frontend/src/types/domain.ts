@@ -113,10 +113,19 @@ export interface Appointment {
   vehicle: string;
   date: string;
   time: string;
+  dateISO?: string | null;
   status: AppointmentStatus;
   autoAccepted: boolean;
   issue: string;
+  issuePhotos?: string[];
+  paymentMethod?: string;
+  servicePrice?: number;
   depositPaid: number | null;
+  depositRefunded?: boolean;
+  reviewed?: boolean;
+  noShow?: boolean;
+  historyShareConsent?: boolean;
+  warrantyEndDate?: string;
 }
 
 export interface ListingOffer {
@@ -199,8 +208,35 @@ export interface SupportTicket {
   description: string;
   relatedNote: string;
   createdDate: string;
+  resolvedDate?: string | null;
   adminNote: string;
+  adminReplies?: { text: string; date: string }[];
   refunded: boolean;
+}
+
+export interface QuoteRequest {
+  id: number;
+  ownerId?: number;
+  vehicleId?: number | null;
+  customer: string;
+  vehicle: string;
+  issue: string;
+  photos: string[];
+  mechanicIds: number[];
+  status: "open" | "closed";
+  createdAt?: string;
+}
+
+export interface QuoteOffer {
+  id: number;
+  requestId: number;
+  mechanicId: number;
+  mechanicName: string;
+  mechanicImg: string;
+  status: "pending" | "submitted" | "accepted" | "lost";
+  price: number | null;
+  etaDays: number | null;
+  note: string;
 }
 
 export interface AdminChangeLogEntry {

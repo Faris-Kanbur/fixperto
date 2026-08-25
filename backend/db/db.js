@@ -80,11 +80,19 @@ CREATE TABLE IF NOT EXISTS appointments (
   mechanicName TEXT,
   mechanicImg TEXT,
   vehicle TEXT,
-  date TEXT, time TEXT,
+  date TEXT, time TEXT, dateISO TEXT,
   status TEXT DEFAULT 'Onay Bekliyor',
   autoAccepted INTEGER DEFAULT 0,
   issue TEXT,
+  issuePhotos TEXT DEFAULT '[]',
+  paymentMethod TEXT,
+  servicePrice INTEGER,
   depositPaid INTEGER,
+  depositRefunded INTEGER DEFAULT 0,
+  reviewed INTEGER DEFAULT 0,
+  noShow INTEGER DEFAULT 0,
+  historyShareConsent INTEGER DEFAULT 1,
+  warrantyEndDate TEXT,
   createdAt TEXT DEFAULT (datetime('now'))
 );
 
@@ -119,7 +127,8 @@ CREATE TABLE IF NOT EXISTS support_tickets (
   type TEXT, priority TEXT, status TEXT DEFAULT 'open',
   fromType TEXT, fromName TEXT,
   subject TEXT, description TEXT, relatedNote TEXT,
-  createdDate TEXT, adminNote TEXT DEFAULT '',
+  createdDate TEXT, resolvedDate TEXT, adminNote TEXT DEFAULT '',
+  adminReplies TEXT DEFAULT '[]',
   refunded INTEGER DEFAULT 0
 );
 
@@ -133,7 +142,62 @@ CREATE TABLE IF NOT EXISTS admin_change_log (
   after TEXT,
   createdAt TEXT DEFAULT (datetime('now'))
 );
+
+-- Çoklu tamirci fiyat teklifi isteği (quote request) ve buna gelen tekliflerin (quote offer)
+-- kalıcı hâli — bu özellik daha önce sadece istemci tarafı state'te tutuluyordu (bkz.
+-- REFACTOR_REPORT.md "kalan teknik borç"), şimdi diğer 8 varlık gibi gerçek tablolara taşındı.
+CREATE TABLE IF NOT EXISTS quote_requests (
+  id INTEGER PRIMARY KEY,
+  ownerId INTEGER REFERENCES owners(id),
+  vehicleId INTEGER REFERENCES vehicles(id),
+  customer TEXT,
+  vehicle TEXT,
+  issue TEXT,
+  photos TEXT DEFAULT '[]',
+  mechanicIds TEXT DEFAULT '[]',
+  status TEXT DEFAULT 'open',
+  createdAt TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS quote_offers (
+  id INTEGER PRIMARY KEY,
+  requestId INTEGER REFERENCES quote_requests(id),
+  mechanicId INTEGER REFERENCES mechanics(id),
+  mechanicName TEXT,
+  mechanicImg TEXT,
+  status TEXT DEFAULT 'pending',
+  price INTEGER,
+  etaDays INTEGER,
+  note TEXT DEFAULT ''
+);
 `);
+
+// ---------------------------------------------------------------------------
+// Küçük, sıfır bağımlılıklı migrasyon: "CREATE TABLE IF NOT EXISTS" zaten var olan bir
+// tabloya yeni sütun eklemez. Bu backend daha önce çalıştırılmış ve diskte eski şemalı bir
+// fixperto.sqlite dosyası varsa, aşağıdaki ALTER TABLE'lar eksik sütunları ekler. Sütun zaten
+// varsa SQLite hata fırlatır — bunu sessizce yutuyoruz (idempotent migrasyon).
+function ensureColumn(table, columnDef) {
+  const columnName = columnDef.trim().split(/\s+/)[0];
+  try {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${columnDef}`);
+  } catch (err) {
+    if (!/duplicate column name/i.test(err.message)) throw err;
+  }
+}
+[
+  ["appointments", "dateISO TEXT"],
+  ["appointments", "issuePhotos TEXT DEFAULT '[]'"],
+  ["appointments", "paymentMethod TEXT"],
+  ["appointments", "servicePrice INTEGER"],
+  ["appointments", "depositRefunded INTEGER DEFAULT 0"],
+  ["appointments", "reviewed INTEGER DEFAULT 0"],
+  ["appointments", "noShow INTEGER DEFAULT 0"],
+  ["appointments", "historyShareConsent INTEGER DEFAULT 1"],
+  ["appointments", "warrantyEndDate TEXT"],
+  ["support_tickets", "resolvedDate TEXT"],
+  ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
+].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 export function isEmpty(table) {
   return db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n === 0;

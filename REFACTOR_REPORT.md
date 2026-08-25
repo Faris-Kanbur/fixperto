@@ -241,6 +241,23 @@ JSX doğrulaması içerir, ama TypeScript TİP kontrolü içermez):
    daha küçük gerçek geliştirme deneyimi, prod bundle boyutuna etkisi sınırlı).
 8. **Component/entegrasyon testleri yok** — sadece saf yardımcı fonksiyonlar test edildi.
 9. **Backend'de kimlik doğrulama middleware'i yok** — bkz. bölüm 9, madde 2.
+10. **Tüm CRUD yazma işlemleri artık backend'e kalıcı hale getiriliyor** (bu turda tamamlandı):
+    `AppLogicProvider.tsx` içine eklenen `persist(promise, failMessage)` yardımcı fonksiyonu,
+    mevcut senkron/optimistic UI davranışını DEĞİŞTİRMEDEN (state güncellemesi anında kalır),
+    arka planda gerçek bir `api.X.create/update/remove` çağrısı yapıp başarısız olursa toast ile
+    uyarıyor. Create akışları (araç, randevu, ilan, iş ilanı, destek talebi, teklif isteği/teklifi)
+    `async`'e çevrildi ve backend'in döndürdüğü gerçek `id` kullanılıyor (istemci tarafı geçici
+    `Date.now()`/sayaç id'leri yalnızca backend yanıtı gelene kadar iyimser görüntüleme için
+    kullanılıyor). Çoklu tamirci fiyat teklifi özelliği için `quote_requests`/`quote_offers`
+    tabloları + route'ları sıfırdan eklendi (`backend/db/db.js`, `backend/server.js`).
+    **Bilinçli olarak kapsam dışı bırakılanlar:** bildirim kaydı (`notifLog`) ve sohbet mesajları
+    (`conversations`) hâlâ yalnızca istemci tarafında — bunlar için backend'de tablo/route yok;
+    admin değişiklik geçmişi (`admin_change_log`) YAZILIYOR (audit amaçlı) ama sayfa açılışında
+    geri OKUNMUYOR, çünkü backend'in genel `action/entityType/before/after` şeması, admin panelin
+    "Geçmiş" ekranının beklediği zengin şekilden (`targetType/field/oldValue/newValue/reverted`)
+    farklı — bunları uzlaştırmak (reconcile) ayrı, canlı QA gerektiren bir sonraki adım;
+    `mechanicOverride` alanları (admin panelinden tamirciye atanan email/phone/status) da
+    `mechanics` şemasında karşılığı olmadığından demo amaçlı istemci-tarafı katman olarak kaldı.
 
 ## 15) Prodüksiyon öncesi kontrol listesi
 

@@ -19,6 +19,8 @@ app.use("/api/appointments", makeCrudRouter("appointments"));
 app.use("/api/listings", makeCrudRouter("listings"));
 app.use("/api/jobs", makeCrudRouter("job_listings"));
 app.use("/api/tickets", makeCrudRouter("support_tickets"));
+app.use("/api/quote-requests", makeCrudRouter("quote_requests"));
+app.use("/api/quote-offers", makeCrudRouter("quote_offers"));
 app.use("/api/admin", adminRouter);
 
 app.use((req, res) => res.status(404).json({ error: "Not found" }));

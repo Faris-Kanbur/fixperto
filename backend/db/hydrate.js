@@ -6,10 +6,13 @@ const JSON_FIELDS = {
   vehicles: ["reminderOverrides", "customReminders", "history"],
   listings: ["offers", "messages"],
   job_listings: ["requirements", "skills", "applicants"],
+  appointments: ["issuePhotos"],
+  support_tickets: ["adminReplies"],
+  quote_requests: ["photos", "mechanicIds"],
 };
 const BOOL_FIELDS = {
   mechanics: ["verified"],
-  appointments: ["autoAccepted"],
+  appointments: ["autoAccepted", "reviewed", "noShow", "historyShareConsent", "depositRefunded"],
   support_tickets: ["refunded"],
 };
 
