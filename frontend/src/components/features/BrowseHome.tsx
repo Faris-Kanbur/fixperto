@@ -115,7 +115,7 @@ export function BrowseHome({ theme = undefined }) {
   } = useApp();
   return (
     <div ref={browseScrollRef} onScroll={() => setHeroCollapsed(c => { const collapsed = browseScrollRef.current.scrollTop > 36; return c === collapsed ? c : collapsed; })} className="flex-1 overflow-y-auto">
-      {topReminder && (
+      {topReminder && role === "owner" && (
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 pt-4">
           <div className={`rounded-2xl p-4 mb-1 flex items-center gap-3 shadow-sm border ${topReminder.urgent ? "bg-red-50 border-red-100" : "bg-rose-50 border-rose-100"}`}>
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${topReminder.urgent ? "bg-red-100" : "bg-rose-100"}`}>{topReminder.icon}</div>

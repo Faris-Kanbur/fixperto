@@ -203,7 +203,7 @@ function useAppLogic() {
   const [listings, setListings] = useState([]);
   const [showSellForm, setShowSellForm] = useState(false);
   const [showSellVehiclePicker, setShowSellVehiclePicker] = useState(false);
-  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", desc: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: null, _editingId: null });
+  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: null, _editingId: null });
   const sellPhotoRef = useRef(null);
   const [selectedListingId, setSelectedListingId] = useState(null);
   const [showOfferForm, setShowOfferForm] = useState(false);
@@ -773,7 +773,7 @@ function useAppLogic() {
     avgResponseMinutes: "Ort. Yanıt Süresi (dk)", vehicleCount: "Araç Sayısı", apptCount: "Randevu Sayısı",
     password: "Şifre", newPassword: "Şifre", photo: "Fotoğraf",
     brand: "Marka", model: "Model", year: "Yıl", km: "Kilometre", fuelType: "Yakıt Tipi", transmission: "Vites",
-    power: "Güç", color: "Renk", firstReg: "İlk Tescil", desc: "Açıklama", adminRemoved: "Yayın Durumu",
+    power: "Güç", color: "Renk", firstReg: "İlk Tescil", adminRemoved: "Yayın Durumu",
     title: "Pozisyon", employmentType: "Çalışma Şekli", experienceLevel: "Deneyim Seviyesi", location: "Konum",
     salaryMin: "Min. Maaş", salaryMax: "Maks. Maaş", description: "Açıklama", requirements: "Aranan Nitelikler", skills: "Beceriler",
     adminNote: "Dahili Not", refunded: "İade Durumu", depositRefunded: "Kapora İadesi", services: "Sunulan Hizmetler",
@@ -1108,7 +1108,7 @@ function useAppLogic() {
             <div><label className="text-[10px] text-gray-400 mb-0.5 block">Güç (hp)</label><input value={l.power} onChange={(e) => updateListingField(l.id, "power", e.target.value)} {...trackInputProps("listing", l.id, "power", l.power)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
             <div><label className="text-[10px] text-gray-400 mb-0.5 block">Renk</label><input value={l.color} onChange={(e) => updateListingField(l.id, "color", e.target.value)} {...trackInputProps("listing", l.id, "color", l.color)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
             <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">İlk Tescil</label><input value={l.firstReg} onChange={(e) => updateListingField(l.id, "firstReg", e.target.value)} {...trackInputProps("listing", l.id, "firstReg", l.firstReg)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Açıklama</label><textarea value={l.desc} onChange={(e) => updateListingField(l.id, "desc", e.target.value)} {...trackInputProps("listing", l.id, "desc", l.desc)} rows={2} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs resize-none" /></div>
+            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Açıklama</label><textarea value={l.description} onChange={(e) => updateListingField(l.id, "description", e.target.value)} {...trackInputProps("listing", l.id, "description", l.description)} rows={2} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs resize-none" /></div>
             <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-1 block">Durum</label>
               <div className="flex gap-1.5">
                 {[{ value: "active", label: "Aktif" }, { value: "reserved", label: "Rezerve" }, { value: "sold", label: "Satıldı" }].map(o => (<button key={o.value} onClick={() => { if (l.status !== o.value) logAdminChange({ targetType: "listing", targetId: l.id, field: "status", oldValue: l.status, newValue: o.value }); updateListingField(l.id, "status", o.value); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold border transition ${l.status === o.value ? "bg-gray-900 border-gray-900 text-white" : "border-gray-200 text-gray-500"}`}>{o.label}</button>))}
@@ -1760,7 +1760,7 @@ function useAppLogic() {
   const toggleDayOpen = (key) => setMechanicHours(h => { const next = { ...h, [key]: { ...h[key], open: !h[key].open } }; persistMechanicHours(next); return next; });
   const toggleSlotClosed = (key, slot) => setMechanicHours(h => { const closed = h[key].closedSlots.includes(slot); const next = { ...h, [key]: { ...h[key], closedSlots: closed ? h[key].closedSlots.filter(s => s !== slot) : [...h[key].closedSlots, slot] } }; persistMechanicHours(next); return next; });
   const addExtraSlot = (key, time) => { if (!time) return; setMechanicHours(h => { if (h[key].extraSlots.includes(time) || genSlots(h[key].start, h[key].end).includes(time)) return h; const next = { ...h, [key]: { ...h[key], extraSlots: [...h[key].extraSlots, time].sort() } }; persistMechanicHours(next); return next; }); };
-  const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", desc: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: null, _editingId: null }); setShowSellForm(true); };
+  const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: null, _editingId: null }); setShowSellForm(true); };
   // "Aracımı Satışa Çıkar" tıklanınca: kayıtlı araç(lar)ı varsa hangisini satacağını sorar ve
   // seçilen aracın bilgilerini forma otomatik doldurur; kayıtlı aracı yoksa direkt boş form açar.
   const startSellFlow = () => { if (vehicles.length === 0) { openSellForm(null); return; } setShowSellVehiclePicker(true); };
@@ -1768,7 +1768,7 @@ function useAppLogic() {
     setShowSellVehiclePicker(false);
     const existingListing = listings.find(l => l.id === v.listingId);
     if (existingListing) { openSellForm({ ...existingListing, _vehicleId: v.id, _editingId: existingListing.id }); return; }
-    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", desc: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: v.id, _editingId: null });
+    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: v.id, _editingId: null });
   };
   const pickOtherCarToSell = () => { setShowSellVehiclePicker(false); openSellForm(null); };
   const sellPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; setSellForm(f => ({ ...f, photo: URL.createObjectURL(file) })); };
