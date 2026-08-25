@@ -1,5 +1,5 @@
 import { useApp } from "./state/AppLogicProvider";
-import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, Menu, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag } from "lucide-react";
+import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag } from "lucide-react";
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
 import { LangSwitch } from "../components/features/LangSwitch";
@@ -1091,8 +1091,7 @@ export function AppShell() {
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <NotifBell />
                   <button onClick={goHome} className="text-sm font-semibold text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-full transition whitespace-nowrap">Tamirci misin? Katıl</button>
-                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || "Profil fotoğrafı"} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
-                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"><Menu size={16} /></button>
+                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title="Profil ve Ayarlar" className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || "Profil fotoğrafı"} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
                 </div>
               </div>
               <div className="max-w-7xl mx-auto w-full relative">
@@ -1736,8 +1735,7 @@ export function AppShell() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <button onClick={() => setScreen("mechanicDashboard")} className="text-sm font-semibold text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-full transition whitespace-nowrap">Panele Dön</button>
-                  <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("profile"); }} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-lg">{myProfile?.img || "🔧"}</button>
-                  <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("profile"); }} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"><Menu size={16} /></button>
+                  <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("profile"); }} title="Profil ve Ayarlar" className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-lg">{myProfile?.img || "🔧"}</button>
                 </div>
               </div>
               <div className="max-w-7xl mx-auto w-full relative">
