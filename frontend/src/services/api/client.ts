@@ -153,6 +153,7 @@ export const api = {
     stats: (): Promise<AdminStats> => request("/api/admin/stats"),
     changeLog: (): Promise<AdminChangeLogEntry[]> => request("/api/admin/change-log"),
     logChange: (entry: Partial<AdminChangeLogEntry>): Promise<{ id: number }> => request("/api/admin/change-log", { method: "POST", body: JSON.stringify(entry) }),
+    revertChange: (id: number | string): Promise<AdminChangeLogEntry> => request(`/api/admin/change-log/${id}`, { method: "PATCH" }),
   },
   health: (): Promise<{ ok: boolean; service: string }> => request("/api/health"),
 };

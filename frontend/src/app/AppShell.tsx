@@ -16,6 +16,7 @@ import { JobCard } from "../components/features/JobCard";
 import { MechDetailBody } from "../components/features/MechDetailBody";
 import { AppointmentCard } from "../components/features/AppointmentCard";
 import { BrowseHome } from "../components/features/BrowseHome";
+import { ShareButton } from "../components/features/ShareButton";
 import {
   LEGAL_CONTENT, FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, BANNER_PRESETS,
   ONBOARDING_SLIDES, ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
@@ -1479,7 +1480,10 @@ export function AppShell() {
           <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md md:max-w-2xl mx-auto md:my-6 md:rounded-3xl md:shadow-2xl overflow-hidden">
             <div className="relative">
               <button onClick={() => setSelectedListingId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white"><ChevronLeft size={18} /></button>
-              <button onClick={() => toggleFavorite(selectedListing.id)} className="absolute top-4 right-4 z-10 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
+              <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+                <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition" />
+                <button onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
+              </div>
               <div className="h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden">{isImgUrl(selectedListing.photo) ? <img src={selectedListing.photo} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : selectedListing.photo}</div>
               <span className={`absolute bottom-3 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span>
             </div>
@@ -1552,6 +1556,9 @@ export function AppShell() {
           <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md md:max-w-2xl mx-auto md:my-6 md:rounded-3xl md:shadow-2xl overflow-hidden">
             <div className="bg-white text-gray-900 px-5 pt-6 pb-6 relative flex-shrink-0 border-b border-gray-200 shadow-sm">
               <button onClick={() => setSelectedJobId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"><ChevronLeft size={18} /></button>
+              <div className="absolute top-4 right-4 z-10">
+                <ShareButton title={selectedJob.title} text={`${selectedJob.title} — ${selectedJob.mechanicName}`} path={`?job=${selectedJob.id}`} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" />
+              </div>
               <div className="flex items-center gap-3 mt-8">
                 <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">{selectedJob.mechanicImg}</div>
                 <div className="min-w-0">

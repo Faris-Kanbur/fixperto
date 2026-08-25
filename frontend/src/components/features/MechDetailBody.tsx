@@ -2,6 +2,7 @@ import { PriceLevelDots } from "../ui/PriceLevelDots";
 import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, Flag, Image as ImageIcon, MapPin, MessageCircle, Navigation, Star, ThumbsUp, Users, Wrench as ToolIcon, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { MapPanel } from "./MapPanel";
+import { ShareButton } from "./ShareButton";
 import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
 import { BANNER_PRESETS, MY_MECHANIC_ID } from "../../data/constants";
@@ -119,7 +120,10 @@ export function MechDetailBody() {
       <style>{`@keyframes reviewScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } } .review-track { animation: reviewScroll 28s linear infinite; } .review-track:hover { animation-play-state: paused; }`}</style>
       <div className="relative">
         <button onClick={() => { if (mapDetailOpen) { setMapDetailOpen(false); } else { setScreen(detailReturnScreen || (role === "mechanic" ? "mechBrowse" : "owner")); setDetailReturnScreen(null); } }} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={18} /></button>
-        {selectedMechanic.rating >= 4.7 && <span className="absolute top-4 right-4 z-10 bg-white/95 text-gray-700 text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1"><BadgeCheck size={12} /> Öne Çıkan</span>}
+        <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+          {selectedMechanic.rating >= 4.7 && <span className="bg-white/95 text-gray-700 text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1"><BadgeCheck size={12} /> Öne Çıkan</span>}
+          <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — Fixperto'da keşfet`} path={`?mechanic=${selectedMechanic.id}`} />
+        </div>
         <div className={`h-36 bg-gradient-to-br ${BANNER_PRESETS[selectedMechanic.bannerPreset] || BANNER_PRESETS.blue} relative overflow-hidden`} style={selectedMechanic.coverPhoto ? { backgroundImage: `url(${selectedMechanic.coverPhoto})`, backgroundSize: "cover", backgroundPosition: "center" } : {}} />
         <div className="absolute -bottom-8 left-5 w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center text-4xl border-4 border-white overflow-hidden">{selectedMechanic.img}</div>
       </div>

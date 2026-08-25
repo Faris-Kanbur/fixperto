@@ -267,6 +267,8 @@ export interface AdminChangeLogEntry {
   entityId: string;
   before: unknown;
   after: unknown;
+  reverted?: boolean;
+  createdAt?: string;
 }
 
 export interface AdminStats {

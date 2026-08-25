@@ -21,7 +21,7 @@ router.post("/login", (req, res) => {
 
 router.get("/change-log", (req, res) => {
   const rows = db.prepare(`SELECT * FROM admin_change_log ORDER BY id DESC LIMIT 200`).all();
-  res.json(rows.map((r) => ({ ...r, before: r.before ? JSON.parse(r.before) : null, after: r.after ? JSON.parse(r.after) : null })));
+  res.json(rows.map((r) => ({ ...r, reverted: !!r.reverted, before: r.before ? JSON.parse(r.before) : null, after: r.after ? JSON.parse(r.after) : null })));
 });
 
 router.post("/change-log", (req, res) => {
@@ -29,6 +29,19 @@ router.post("/change-log", (req, res) => {
   const stmt = db.prepare(`INSERT INTO admin_change_log (actor, action, entityType, entityId, before, after) VALUES (@actor,@action,@entityType,@entityId,@before,@after)`);
   const info = stmt.run({ actor, action, entityType, entityId: String(entityId ?? ""), before: before ? JSON.stringify(before) : null, after: after ? JSON.stringify(after) : null });
   res.status(201).json({ id: info.lastInsertRowid });
+});
+
+// "Geri Al" (undo) bir değişiklik geçmişi satırını kalıcı olarak "reverted" işaretler — bu sayede
+// sayfa yenilendiğinde (ya da admin başka bir cihazdan girdiğinde) hangi değişikliklerin zaten
+// geri alındığı kaybolmaz (bkz. AppLogicProvider.tsx revertAdminChange/-Group).
+router.patch("/change-log/:id", (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return res.status(400).json({ error: "Geçersiz kayıt id'si." });
+  const existing = db.prepare(`SELECT id FROM admin_change_log WHERE id = ?`).get(id);
+  if (!existing) return res.status(404).json({ error: "Değişiklik geçmişi kaydı bulunamadı." });
+  db.prepare(`UPDATE admin_change_log SET reverted = 1 WHERE id = ?`).run(id);
+  const row = db.prepare(`SELECT * FROM admin_change_log WHERE id = ?`).get(id);
+  res.json({ ...row, reverted: !!row.reverted, before: row.before ? JSON.parse(row.before) : null, after: row.after ? JSON.parse(row.after) : null });
 });
 
 router.get("/stats", (req, res) => {

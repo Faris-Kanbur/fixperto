@@ -265,7 +265,7 @@ function useAppLogic() {
     let cancelled = false;
     (async () => {
       try {
-        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes, conversationsRes] = await Promise.all([
+        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes, conversationsRes, changeLogRes] = await Promise.all([
           api.mechanics.list(),
           api.vehicles.list(),
           api.appointments.list(),
@@ -276,6 +276,7 @@ function useAppLogic() {
           api.quoteRequests.list(),
           api.quoteOffers.list(),
           api.conversations.list(),
+          api.admin.changeLog(),
         ]);
         if (cancelled) return;
         setMechanicsList(mechanicsRes);
@@ -290,12 +291,32 @@ function useAppLogic() {
         setQuoteRequests(quoteRequestsRes);
         setQuoteOffers(quoteOffersRes);
         setConversations(conversationsRes);
-        // Not: admin_change_log backend'de kalıcı hale getiriliyor (bkz. logAdminChange) ama burada
-        // geri okunmuyor — backend'in genel "action/entityType/before/after" şeması, admin panelin
-        // "Geçmiş" ekranının beklediği zengin şekilden (targetType/field/oldValue/newValue/reverted)
-        // farklı. Bu oturumdaki değişiklik geçmişi UI'si hâlâ oturum-içi state'ten besleniyor;
-        // backend'deki kayıt gerçek bir denetim (audit) izi olarak duruyor. Bir sonraki adım için
-        // bkz. REFACTOR_REPORT.md.
+        // admin_change_log backend'de genel bir "action/entityType/entityId/before/after/reverted"
+        // audit şemasıyla saklanıyor (bkz. logAdminChange, backend/routes/admin.js); burada admin
+        // panelin "Geçmiş" ekranının beklediği zengin şekle (targetType/targetId/field/oldValue/
+        // newValue/extra/reverted) geri eşliyoruz ki sayfa yenilenince geçmiş kaybolmasın.
+        const mappedChangeLog = (changeLogRes || []).map((r: any) => {
+          const rawId = r.entityId;
+          const targetId = rawId !== undefined && rawId !== null && rawId !== "" && !Number.isNaN(Number(rawId)) ? Number(rawId) : rawId;
+          const createdAt = r.createdAt ? new Date(`${r.createdAt.replace(" ", "T")}Z`) : null;
+          return {
+            id: r.id,
+            date: createdAt && !Number.isNaN(createdAt.getTime())
+              ? createdAt.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+              : "",
+            reverted: !!r.reverted,
+            targetType: r.entityType,
+            targetId,
+            field: r.before?.field ?? r.after?.field,
+            oldValue: r.before?.value,
+            newValue: r.after?.value,
+            extra: r.before?.extra ?? r.after?.extra,
+          };
+        });
+        setAdminChangeLog(mappedChangeLog);
+        // Yeni yerel (iyimser) kayıtların, sunucudan gelen gerçek id'lerle çakışmaması için sayaç,
+        // hâlihazırda yüklenen en büyük id'nin üstüne konumlanıyor.
+        if (mappedChangeLog.length) adminChangeLogId = Math.max(adminChangeLogId, ...mappedChangeLog.map((e) => (typeof e.id === "number" ? e.id : 0)) ) + 1;
         setApiReady(true);
       } catch (err) {
         if (!cancelled) setApiError(err.message || "Backend'e bağlanılamadı.");
@@ -841,20 +862,25 @@ function useAppLogic() {
       id: adminChangeLogId++,
       date: TODAY.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
       reverted: false,
-      targetLabel: adminChangeTargetLabel(entry.targetType, entry.targetId),
       ...entry,
     };
     setAdminChangeLog(log => [logEntry, ...log]);
     // Backend admin_change_log şeması genel bir "action/entityType/entityId/before/after" audit
     // kaydı bekliyor (bkz. backend/routes/admin.js) — istemcideki daha zengin alan adlarını
-    // (targetType/targetId/field/oldValue/newValue) buna eşliyoruz.
-    persist(api.admin.logChange({
+    // (targetType/targetId/field/oldValue/newValue/extra) buna eşliyoruz. Sunucudaki gerçek id ile
+    // yerel iyimser id'yi eşitliyoruz ki "Geri Al" sonradan doğru satırı bulup PATCH edebilsin.
+    api.admin.logChange({
       action: `${entry.field} güncellendi`,
       entityType: entry.targetType,
       entityId: entry.targetId,
-      before: { field: entry.field, value: entry.oldValue },
-      after: { field: entry.field, value: entry.newValue },
-    }), "Değişiklik geçmişi kaydedilemedi");
+      before: { field: entry.field, value: entry.oldValue, extra: entry.extra },
+      after: { field: entry.field, value: entry.newValue, extra: entry.extra },
+    }).then((created) => {
+      if (created?.id != null) setAdminChangeLog(log => log.map(e => e.id === logEntry.id ? { ...e, id: created.id } : e));
+    }).catch((err) => {
+      if (typeof window !== "undefined" && (import.meta as any)?.env?.DEV) console.error("[persist]", "Değişiklik geçmişi kaydedilemedi", err);
+      setToast({ type: "info", text: `⚠️ Değişiklik geçmişi kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+    });
   };
   // Admin panelinden yapılan bir alan değişikliğini hem yerel state'e hem (mechanicOverride hariç —
   // bu alanlar backend şemasında yok, sadece demo amaçlı istemci tarafı bir katman) gerçek backend
@@ -877,7 +903,8 @@ function useAppLogic() {
     if (entry.reverted) return;
     applyAdminFieldChange(entry.targetType, entry.targetId, entry.field, entry.oldValue, entry.extra);
     setAdminChangeLog(log => log.map(e => e.id === entry.id ? { ...e, reverted: true } : e));
-    setToast({ type: "info", text: `↩️ Geri alındı: ${entry.targetLabel} — ${adminFieldLabel(entry.field)}` });
+    persist(api.admin.revertChange(entry.id), "Geri alma işlemi kaydedilemedi");
+    setToast({ type: "info", text: `↩️ Geri alındı: ${adminChangeTargetLabel(entry.targetType, entry.targetId)} — ${adminFieldLabel(entry.field)}` });
   };
   // ---- Geçmiş, kalabalıklaşmasın diye tek tek satır yerine hesap/kayıt bazında gruplanıyor:
   // 10 kullanıcıda 4 değişiklik = 40 satır yerine, her hesap için tek bir kart (içinde 4 satır,
@@ -898,17 +925,20 @@ function useAppLogic() {
     const groups = new Map();
     adminChangeLog.forEach(entry => {
       const key = `${entry.targetType === "mechanicOverride" || entry.targetType === "mechanicServicesArray" || entry.targetType === "mechanicReviewList" || entry.targetType === "service" ? "mechanic" : entry.targetType}:${entry.targetId}`;
-      if (!groups.has(key)) groups.set(key, { key, targetLabel: entry.targetLabel, typeMeta: ADMIN_TARGET_TYPE_META[entry.targetType] || { label: "Kayıt", icon: History }, entries: [] });
+      if (!groups.has(key)) groups.set(key, { key, targetType: entry.targetType, targetId: entry.targetId, targetLabel: adminChangeTargetLabel(entry.targetType, entry.targetId), typeMeta: ADMIN_TARGET_TYPE_META[entry.targetType] || { label: "Kayıt", icon: History }, entries: [] });
       groups.get(key).entries.push(entry);
     });
     return Array.from(groups.values());
-  }, [adminChangeLog]);
+  }, [adminChangeLog, ownersDirectory, mechanicsList, listings, jobListings]);
   const [expandedHistoryGroups, setExpandedHistoryGroups] = useState({});
   const toggleHistoryGroup = (key) => setExpandedHistoryGroups(g => ({ ...g, [key]: !g[key] }));
   const revertAdminChangeGroup = (group) => {
     const toRevert = group.entries.filter(e => !e.reverted);
     if (toRevert.length === 0) return;
-    toRevert.forEach(entry => applyAdminFieldChange(entry.targetType, entry.targetId, entry.field, entry.oldValue, entry.extra));
+    toRevert.forEach(entry => {
+      applyAdminFieldChange(entry.targetType, entry.targetId, entry.field, entry.oldValue, entry.extra);
+      persist(api.admin.revertChange(entry.id), "Geri alma işlemi kaydedilemedi");
+    });
     const ids = new Set(toRevert.map(e => e.id));
     setAdminChangeLog(log => log.map(e => ids.has(e.id) ? { ...e, reverted: true } : e));
     setToast({ type: "info", text: `↩️ ${group.targetLabel} için ${toRevert.length} değişiklik geri alındı.` });

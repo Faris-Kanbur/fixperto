@@ -151,6 +151,7 @@ CREATE TABLE IF NOT EXISTS admin_change_log (
   entityId TEXT,
   before TEXT,
   after TEXT,
+  reverted INTEGER DEFAULT 0,
   createdAt TEXT DEFAULT (datetime('now'))
 );
 
@@ -209,6 +210,7 @@ function ensureColumn(table, columnDef) {
   ["support_tickets", "resolvedDate TEXT"],
   ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
   ["owners", "favoriteIds TEXT DEFAULT '[]'"],
+  ["admin_change_log", "reverted INTEGER DEFAULT 0"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 export function isEmpty(table) {

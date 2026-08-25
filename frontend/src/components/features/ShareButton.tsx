@@ -1,0 +1,97 @@
+import { useEffect, useRef, useState } from "react";
+import { Share2, MessageCircle, Facebook, X as XIcon, Mail, Link2, Check } from "lucide-react";
+
+// Instagram/Airbnb tarzı paylaşım butonu: tıklanınca WhatsApp/Facebook/X/E-posta seçenekleri ve
+// "Linki Kopyala" içeren küçük bir menü açılır. Cihaz destekliyorsa (çoğunlukla mobil) önce
+// native paylaşım sayfasını (navigator.share) dener — bu, işletim sisteminin kendi paylaşım
+// sayfasını (Instagram, Mesajlar, AirDrop vb. dahil) açar; desteklenmiyorsa bu özel menüye düşer.
+// `path`, geçerli sayfanın query string'idir (örn. "?mechanic=12") — paylaşılan link tıklanınca
+// ilgili kayıt otomatik açılsın diye (bkz. AppLogicProvider'daki deep-link okuma efekti).
+export function ShareButton({ title, text, path, className = "", iconSize = 16 }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onEsc = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onEsc);
+    return () => { document.removeEventListener("mousedown", onDocClick); document.removeEventListener("keydown", onEsc); };
+  }, [open]);
+
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}${window.location.pathname}${path || ""}` : "";
+  const encodedUrl = encodeURIComponent(shareUrl);
+  const encodedText = encodeURIComponent(text || title || "");
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = shareUrl;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch { /* yoksay */ }
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+
+  const openShare = async (e) => {
+    e.stopPropagation();
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title, text, url: shareUrl });
+        return;
+      } catch {
+        // Kullanıcı iptal etti ya da native paylaşım başarısız oldu — özel menüye düş.
+      }
+    }
+    setOpen((o) => !o);
+  };
+
+  const platforms = [
+    { key: "whatsapp", label: "WhatsApp", Icon: MessageCircle, bg: "bg-green-500", href: `https://wa.me/?text=${encodedText}%20${encodedUrl}` },
+    { key: "facebook", label: "Facebook", Icon: Facebook, bg: "bg-blue-600", href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
+    { key: "x", label: "X", Icon: XIcon, bg: "bg-gray-900", href: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}` },
+    { key: "mail", label: "E-posta", Icon: Mail, bg: "bg-gray-500", href: `mailto:?subject=${encodeURIComponent(title || "")}&body=${encodedText}%20${encodedUrl}` },
+  ];
+
+  return (
+    <div className="relative inline-block" ref={ref}>
+      <button
+        type="button"
+        onClick={openShare}
+        aria-label="Paylaş"
+        title="Paylaş"
+        className={className || "w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"}
+      >
+        <Share2 size={iconSize} />
+      </button>
+      {open && (
+        <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-2 z-[60] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 w-64">
+          <p className="text-xs font-semibold text-gray-500 px-1 mb-2">Paylaş</p>
+          <div className="grid grid-cols-4 gap-2 mb-2">
+            {platforms.map(({ key, label, Icon, bg, href }) => (
+              <a key={key} href={href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="flex flex-col items-center gap-1">
+                <span className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center text-white hover:opacity-90 transition`}>
+                  <Icon size={18} />
+                </span>
+                <span className="text-[10px] text-gray-500">{label}</span>
+              </a>
+            ))}
+          </div>
+          <button type="button" onClick={copyLink} className="w-full flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-50 transition text-sm text-gray-700">
+            {copied ? <Check size={16} className="text-green-600" /> : <Link2 size={16} className="text-gray-400" />}
+            {copied ? "Kopyalandı!" : "Linki Kopyala"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
