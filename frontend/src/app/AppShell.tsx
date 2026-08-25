@@ -1079,16 +1079,14 @@ export function AppShell() {
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
                 <div className="flex items-center gap-2 flex-shrink-0"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></div>
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="flex items-center gap-8">
-                    {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: "İş İlanları", icon: Briefcase }].map(tab => {
-                      const Icon = tab.icon; const active = ownerMode === tab.key;
-                      return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
-                    })}
-                  </div>
-                  <button onClick={() => setShowQuoteModal(true)} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition"><Users size={13} /> Çoklu Teklif Al</button>
+                <div className="flex items-center gap-8">
+                  {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: "İş İlanları", icon: Briefcase }].map(tab => {
+                    const Icon = tab.icon; const active = ownerMode === tab.key;
+                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
+                  })}
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
+                  <button onClick={() => setShowQuoteModal(true)} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> Çoklu Teklif Al</button>
                   <NotifBell />
                   <button onClick={goHome} className="text-sm font-semibold text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-full transition whitespace-nowrap">Tamirci misin? Katıl</button>
                   <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title="Profil ve Ayarlar" className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || "Profil fotoğrafı"} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
