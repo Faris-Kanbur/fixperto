@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS owners (
   apptCount INTEGER DEFAULT 0,
   password TEXT NOT NULL,
   favoriteIds TEXT DEFAULT '[]',
+  likedReviewIds TEXT DEFAULT '[]',
   lang TEXT DEFAULT 'tr'
 );
 
@@ -290,6 +291,7 @@ function ensureColumn(table, columnDef) {
   ["support_tickets", "resolvedDate TEXT"],
   ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
   ["owners", "favoriteIds TEXT DEFAULT '[]'"],
+  ["owners", "likedReviewIds TEXT DEFAULT '[]'"],
   ["owners", "lang TEXT DEFAULT 'tr'"],
   ["admin_change_log", "reverted INTEGER DEFAULT 0"],
   ["mechanics", "shareCount INTEGER DEFAULT 0"],
@@ -353,6 +355,39 @@ try {
   });
 } catch (err) {
   console.error("Tamirci marka/ödeme yöntemi backfill hatası:", err.message);
+}
+
+// "Tüm Yorumlar" modalindeki foto/fotosuz yorum karışıklığını düzeltmek için (bkz. AppShell/
+// MechDetailBody), photo:true olan demo yorumlarına gerçek bir photoUrl ekliyoruz. reviewList
+// bir JSON blob olduğu için yukarıdaki gibi düz bir SQL CASE ile yamanamıyor — satırı okuyup
+// JS tarafında ismiyle eşleşen yorumu yamalayıp geri yazıyoruz; photoUrl'i zaten olan (kullanıcı
+// tarafından değiştirilmiş) satırlara dokunmuyoruz.
+const REVIEW_PHOTO_BACKFILL = {
+  1: [{ name: "Ahmet K.", photoUrl: wc(201) }, { name: "Burak T.", photoUrl: wc(202) }],
+  2: [{ name: "Kerem A.", photoUrl: wc(203) }],
+  3: [{ name: "Tolga E.", photoUrl: wc(204) }],
+  5: [{ name: "David R.", photoUrl: wc(205) }],
+  7: [{ name: "Selin A.", photoUrl: wc(206) }],
+  9: [{ name: "Gökhan B.", photoUrl: wc(207) }],
+};
+try {
+  const reviewRowStmt = db.prepare(`SELECT id, reviewList FROM mechanics WHERE id = ?`);
+  const reviewUpdateStmt = db.prepare(`UPDATE mechanics SET reviewList = @reviewList WHERE id = @id`);
+  Object.entries(REVIEW_PHOTO_BACKFILL).forEach(([id, patches]) => {
+    const row = reviewRowStmt.get(Number(id));
+    if (!row) return;
+    let reviewList;
+    try { reviewList = JSON.parse(row.reviewList || "[]"); } catch { return; }
+    let changed = false;
+    const nextList = reviewList.map((r) => {
+      const patch = patches.find((p) => p.name === r.name);
+      if (patch && r.photo && !r.photoUrl) { changed = true; return { ...r, photoUrl: patch.photoUrl }; }
+      return r;
+    });
+    if (changed) reviewUpdateStmt.run({ id: Number(id), reviewList: JSON.stringify(nextList) });
+  });
+} catch (err) {
+  console.error("Yorum fotoğrafı backfill hatası:", err.message);
 }
 
 // Aynı gerekçeyle (bkz. MECHANIC_BACKFILL yukarıda): listings tablosu bu alanlar eklenmeden ÖNCE

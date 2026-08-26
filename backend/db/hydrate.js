@@ -4,7 +4,7 @@
 const JSON_FIELDS = {
   mechanics: ["hoursText", "services", "staff", "reviewList", "verificationDocs", "brandsServiced", "paymentMethods"],
   vehicles: ["reminderOverrides", "customReminders", "history"],
-  owners: ["favoriteIds"],
+  owners: ["favoriteIds", "likedReviewIds"],
   listings: ["offers", "messages", "features", "photos"],
   conversations: ["messages"],
   job_listings: ["requirements", "skills", "applicants"],

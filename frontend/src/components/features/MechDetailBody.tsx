@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PriceLevelDots } from "../ui/PriceLevelDots";
-import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, CreditCard, Flag, Globe, Image as ImageIcon, MapPin, MessageCircle, Navigation, Star, Tag, ThumbsUp, Users, Wrench as ToolIcon, Zap } from "lucide-react";
+import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, CreditCard, Flag, Globe, MapPin, MessageCircle, Navigation, Star, Tag, ThumbsUp, Users, Wrench as ToolIcon, X, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { MapPanel } from "./MapPanel";
 import { ShareButton } from "./ShareButton";
@@ -8,10 +8,14 @@ import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
 import { TranslatedText } from "./TranslatedText";
 import { BANNER_PRESETS, MY_MECHANIC_ID, LANG_LABELS } from "../../data/constants";
-import { formatHoursText, isImgUrl, imgThumb } from "../../utils/helpers";
+import { formatHoursText, isImgUrl, imgThumb, imgFallbackHandler } from "../../utils/helpers";
 
 export function MechDetailBody() {
   const [coverBroken, setCoverBroken] = useState(false);
+  // "Tümünü Gör" — çoklu teklif modaline benzer, tam ekran yorum listesi. Sadece bu bileşene
+  // özel bir UI durumu olduğu için (başka hiçbir yerden tetiklenmiyor) global context'e eklemek
+  // yerine yerel state olarak tutuyoruz — bkz. coverBroken için de aynı yaklaşım.
+  const [showAllReviews, setShowAllReviews] = useState(false);
   const {
     lang, setLang, t, screen, setScreen, role, setRole, showPass, setShowPass, forgotEmail, setForgotEmail, form, 
     setForm, authError, setAuthError, ownerTab, setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, 
@@ -21,7 +25,7 @@ export function MechDetailBody() {
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, 
     filters, setFilters, listingFilters, setListingFilters, listingSort, setListingSort, userLocation, 
     setUserLocation, locationStatus, setLocationStatus, notifPermission, setNotifPermission, favoriteIds, 
-    setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query, 
+    setFavoriteIds, toggleFavorite, likedReviewIds, toggleReviewHelpful, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query,
     setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir, setSortDir, showLocationPrompt, 
     setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, 
     openMapDetail, selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, 
@@ -216,12 +220,24 @@ export function MechDetailBody() {
           {role !== "mechanic" && (<><div className="bg-gray-100 border border-gray-200 rounded-2xl p-4 mb-4"><p className="text-xs text-gray-700 mb-3 flex items-center gap-2"><Banknote size={14} /> Randevu almadan önce fiyat teklifi isteyebilirsiniz.</p><button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); openChatWithMechanic(selectedMechanic); }} className="w-full bg-white border border-gray-300 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-100 transition flex items-center justify-center gap-2"><MessageCircle size={16} /> {t("sendMessage")}</button></div><button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); setScreen("booking"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-3">{t("bookDirect")}</button><button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); openReportForm("quality", `Tamirci #${selectedMechanic.id} · ${selectedMechanic.name}`, `"${selectedMechanic.name}" hakkında şikayetim var`); }} className="w-full flex items-center justify-center gap-1.5 text-[11px] text-gray-400 hover:text-red-500 transition py-1 mb-6"><Flag size={11} /> Bu tamirciyi şikayet et</button></>)}
         </div>
         <div className="border-t border-gray-100 pt-4 pb-6 bg-gray-50/50">
-          <div className="flex items-center justify-between px-5 md:px-8 mb-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Star size={16} className="text-gray-900 fill-gray-900" /> {t("reviews")}</h3><span className={`text-xs flex items-center gap-1 font-medium ${darkMode ? "text-white" : "text-gray-400"}`}>{selectedMechanic.rating} <Star size={11} className="text-gray-900 fill-gray-900" /> · {selectedMechanic.reviews} değerlendirme</span></div>
-          <div className="overflow-hidden"><div className="flex gap-3 w-max review-track px-5 md:px-8">{[...selectedMechanic.reviewList, ...selectedMechanic.reviewList].map((r, i) => { const grads = ["from-rose-400 to-rose-500", "from-gray-700 to-gray-900", "from-rose-500 to-rose-600", "from-gray-500 to-gray-700"]; const times = ["2 gün önce", "1 hafta önce", "3 hafta önce", "1 ay önce", "2 ay önce"]; return (
+          <div className="flex items-center justify-between px-5 md:px-8 mb-3">
+            <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Star size={16} className="text-gray-900 fill-gray-900" /> {t("reviews")}</h3>
+            <div className="flex items-center gap-2.5">
+              <span className={`text-xs flex items-center gap-1 font-medium ${darkMode ? "text-white" : "text-gray-400"}`}>{selectedMechanic.rating} <Star size={11} className="text-gray-900 fill-gray-900" /> · {selectedMechanic.reviews} değerlendirme</span>
+              {selectedMechanic.reviewList.length > 0 && (
+                <button onClick={() => setShowAllReviews(true)} className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-0.5 flex-shrink-0">Tümünü Gör <ChevronRight size={12} /></button>
+              )}
+            </div>
+          </div>
+          <div className="overflow-hidden"><div className="flex gap-3 w-max review-track px-5 md:px-8">{[...selectedMechanic.reviewList, ...selectedMechanic.reviewList].map((r, i) => {
+            const grads = ["from-rose-400 to-rose-500", "from-gray-700 to-gray-900", "from-rose-500 to-rose-600", "from-gray-500 to-gray-700"];
+            const times = ["2 gün önce", "1 hafta önce", "3 hafta önce", "1 ay önce", "2 ay önce"];
+            const liked = likedReviewIds.includes(`${selectedMechanic.id}:${r.id}`);
+            return (
             <div key={i} className="w-60 flex-shrink-0 bg-white border border-gray-100 rounded-2xl p-3.5 shadow-sm">
               <div className="flex items-center gap-2.5 mb-2"><div className={`w-10 h-10 rounded-full bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-lg flex-shrink-0 shadow-sm`}>{r.avatar}</div><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-gray-800 truncate">{r.name}</p><p className="text-[10px] text-gray-400">{times[i % times.length]}</p></div><BadgeCheck size={14} className="text-rose-400 flex-shrink-0" /></div>
               <div className="flex items-center gap-0.5 mb-2">{[...Array(5)].map((_, j) => (<Star key={j} size={12} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div>
-              {r.photo && <div className="w-full h-20 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-2xl mb-2"><ImageIcon size={22} className="text-gray-400" /></div>}
+              {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 400)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt="Yorum fotoğrafı" className="w-full h-28 rounded-xl object-cover mb-2" />}
               <p className="text-[11px] text-gray-500 leading-snug"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p>
               {r.reply && (<div className="mt-2 pt-2 border-t border-gray-50 bg-gray-50 rounded-lg p-2"><p className="text-[9px] font-bold text-gray-500 mb-0.5">İşletme yanıtı</p><p className="text-[10px] text-gray-500 leading-snug"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p></div>)}
               {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
@@ -232,11 +248,55 @@ export function MechDetailBody() {
                   </div>
                 ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2 text-[9px] text-rose-600 font-semibold">Yanıtla</button>)
               )}
-              <div className="flex items-center gap-1 mt-2.5 pt-2 border-t border-gray-50"><ThumbsUp size={11} className="text-gray-300" /><span className="text-[10px] text-gray-300">Faydalı</span></div>
+              <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={role !== "owner"} className={`flex items-center gap-1 mt-2.5 pt-2 border-t border-gray-50 w-full ${role === "owner" ? "cursor-pointer" : "cursor-default"}`}>
+                <ThumbsUp size={11} className={liked ? "text-rose-600 fill-rose-600" : "text-gray-300"} />
+                <span className={`text-[10px] ${liked ? "text-rose-600 font-semibold" : "text-gray-300"}`}>Faydalı{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
+              </button>
             </div>
           ); })}</div></div>
         </div>
       </div>
+      {showAllReviews && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" style={{ zIndex: 9000 }} onClick={() => setShowAllReviews(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg my-auto max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="px-5 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Star size={18} className="text-gray-900 fill-gray-900" /> Tüm Yorumlar</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{selectedMechanic.rating} <Star size={10} className="inline text-gray-900 fill-gray-900" /> · {selectedMechanic.reviews} değerlendirme</p>
+              </div>
+              <button onClick={() => setShowAllReviews(false)} aria-label="Kapat" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0 ml-3"><X size={15} /></button>
+            </div>
+            <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
+              {selectedMechanic.reviewList.map((r) => {
+                const liked = likedReviewIds.includes(`${selectedMechanic.id}:${r.id}`);
+                return (
+                  <div key={r.id} className="p-5">
+                    <div className="flex items-center gap-2.5 mb-2.5">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{r.avatar}</div>
+                      <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate flex items-center gap-1">{r.name}<BadgeCheck size={12} className="text-rose-400 flex-shrink-0" /></p><div className="flex items-center gap-1">{[...Array(5)].map((_, j) => (<Star key={j} size={11} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div></div>
+                    </div>
+                    {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 700)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt="Yorum fotoğrafı" className="w-full aspect-square rounded-2xl object-cover mb-2.5" />}
+                    <p className="text-sm text-gray-600 leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
+                    {r.reply && (<div className="mt-2.5 pt-2.5 border-t border-gray-50 bg-gray-50 rounded-xl p-3"><p className="text-[10px] font-bold text-gray-500 mb-1">İşletme yanıtı</p><p className="text-xs text-gray-500 leading-relaxed"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p></div>)}
+                    {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
+                      replyingReviewId === r.id ? (
+                        <div className="mt-2.5 pt-2.5 border-t border-gray-50">
+                          <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder="Yanıtınızı yazın..." className="w-full text-xs border border-gray-200 rounded-lg p-2 mb-1.5 resize-none" />
+                          <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-gray-200 text-gray-500">Vazgeç</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-rose-600 text-white font-medium">Gönder</button></div>
+                        </div>
+                      ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-rose-600 font-semibold">Yanıtla</button>)
+                    )}
+                    <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={role !== "owner"} className={`flex items-center gap-1.5 mt-3 ${role === "owner" ? "cursor-pointer" : "cursor-default"}`}>
+                      <ThumbsUp size={14} className={liked ? "text-rose-600 fill-rose-600" : "text-gray-300"} />
+                      <span className={`text-xs ${liked ? "text-rose-600 font-semibold" : "text-gray-400"}`}>Faydalı{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

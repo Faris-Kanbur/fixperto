@@ -83,6 +83,23 @@ function useAppLogic() {
   };
   const [mechanicsList, setMechanicsList] = useState([]);
   const [mechanicHours, setMechanicHours] = useState(DEFAULT_HOURS);
+  // Yorumlardaki "Faydalı" (helpful/like) sayacı — Instagram beğenisi gibi tek tıkla aç/kapa.
+  // Anahtar "mechanicId:reviewId" formatında, çünkü review.id her tamircinin kendi
+  // reviewList'i içinde ayrı bir sayaç (Date.now()), global olarak benzersiz değil.
+  const [likedReviewIds, setLikedReviewIds] = useState([]);
+  const toggleReviewHelpful = (mechanicId, reviewId) => {
+    if (role !== "owner") return;
+    const key = `${mechanicId}:${reviewId}`;
+    const alreadyLiked = likedReviewIds.includes(key);
+    const mech = mechanicsList.find(m => m.id === mechanicId);
+    if (!mech) return;
+    const reviewList = mech.reviewList.map(r => r.id === reviewId ? { ...r, helpfulCount: Math.max(0, (r.helpfulCount || 0) + (alreadyLiked ? -1 : 1)) } : r);
+    setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList }));
+    persist(api.mechanics.update(mechanicId, { reviewList }), "Beğeni kaydedilemedi");
+    const nextLiked = alreadyLiked ? likedReviewIds.filter(k => k !== key) : [...likedReviewIds, key];
+    setLikedReviewIds(nextLiked);
+    persist(api.owners.update(MY_OWNER_ID, { likedReviewIds: nextLiked }), "Beğeni kaydedilemedi");
+  };
   const [query, setQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
   const [sortBy, setSortBy] = useState("distance");
@@ -318,6 +335,7 @@ function useAppLogic() {
         setOwnersDirectory(ownersRes);
         const myOwnerRow = ownersRes.find((o) => o.id === MY_OWNER_ID);
         if (myOwnerRow?.favoriteIds) setFavoriteIds(myOwnerRow.favoriteIds);
+        if (myOwnerRow?.likedReviewIds) setLikedReviewIds(myOwnerRow.likedReviewIds);
         setSupportTickets(ticketsRes);
         setQuoteRequests(quoteRequestsRes);
         setQuoteOffers(quoteOffersRes);
@@ -2379,7 +2397,7 @@ function useAppLogic() {
     setShowNotifPanel, darkMode, setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters,
     listingFilters, setListingFilters, listingSort, setListingSort, listingSortDir, setListingSortDir, handleListingSortClick, userLocation, setUserLocation, locationStatus, setLocationStatus,
-    notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours,
+    notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, likedReviewIds, setLikedReviewIds, toggleReviewHelpful, mechanicsList, setMechanicsList, mechanicHours,
     setMechanicHours, query, setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir,
     setSortDir, showLocationPrompt, setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, openMapDetail,
     selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, problemPhotos, setProblemPhotos,

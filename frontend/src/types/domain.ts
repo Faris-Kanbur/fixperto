@@ -26,8 +26,12 @@ export interface Review {
   rating: number;
   comment: string;
   photo: boolean;
+  /** photo=true olduğunda gösterilecek gerçek fotoğraf URL'i — bkz. backend/db/seed.js wc() helper. */
+  photoUrl?: string;
   flagged?: boolean;
   mechanicReply?: string;
+  /** "Faydalı" (helpful) tıklama sayısı — bkz. toggleReviewHelpful, owners.likedReviewIds. */
+  helpfulCount?: number;
 }
 
 export interface Mechanic {
@@ -79,6 +83,8 @@ export interface Owner {
   /** Demo amaçlı düz metin — gerçek bir üretim sisteminde ASLA client'a dönmemeli (bkz. güvenlik notları). */
   password?: string;
   favoriteIds?: number[];
+  /** "Faydalı" işaretlediği yorumlar — "mechanicId:reviewId" formatında bileşik anahtarlar. */
+  likedReviewIds?: string[];
   /** Sohbet mesajlarının hangi dile otomatik çevrileceğini belirler — bkz. ChatBubble. */
   lang?: "tr" | "en" | "de";
 }
