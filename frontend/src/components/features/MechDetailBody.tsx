@@ -275,8 +275,9 @@ export function MechDetailBody() {
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{r.avatar}</div>
                       <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate flex items-center gap-1">{r.name}<BadgeCheck size={12} className="text-rose-400 flex-shrink-0" /></p><div className="flex items-center gap-1">{[...Array(5)].map((_, j) => (<Star key={j} size={11} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div></div>
                     </div>
-                    {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 700)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt="Yorum fotoğrafı" className="w-full aspect-square rounded-2xl object-cover mb-2.5" />}
+                    {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 300)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt="Yorum fotoğrafı" className="w-1/3 max-w-[110px] aspect-square rounded-xl object-cover mb-2.5 float-left mr-3" />}
                     <p className="text-sm text-gray-600 leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
+                    <div className="clear-left" />
                     {r.reply && (<div className="mt-2.5 pt-2.5 border-t border-gray-50 bg-gray-50 rounded-xl p-3"><p className="text-[10px] font-bold text-gray-500 mb-1">İşletme yanıtı</p><p className="text-xs text-gray-500 leading-relaxed"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p></div>)}
                     {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                       replyingReviewId === r.id ? (

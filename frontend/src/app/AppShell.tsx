@@ -1222,7 +1222,7 @@ export function AppShell() {
                     {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
                       <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz favori eklemediniz.</p><p className="text-gray-300 text-xs mt-1">İlan kartlarındaki kalp ikonuna dokunarak favorilere ekleyebilirsiniz.</p></div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                     )}
                   </div>
                 )}
@@ -1365,7 +1365,7 @@ export function AppShell() {
                   {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
                     <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz favori eklemediniz.</p><p className="text-gray-300 text-xs mt-1">İlan kartlarındaki kalp ikonuna dokunarak favorilere ekleyebilirsiniz.</p></div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   )}
                 </>
               )}
@@ -2079,7 +2079,7 @@ export function AppShell() {
                 {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
                   <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz favori eklemediniz.</p><p className="text-gray-300 text-xs mt-1">Pazar'daki veya keşfetteki ilan kartlarında kalp ikonuna dokunarak favorilere ekleyebilirsiniz.</p></div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                 )}
               </div>
             )}
