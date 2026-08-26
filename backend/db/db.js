@@ -340,7 +340,7 @@ try {
   const backfillStmt = db.prepare(`UPDATE mechanics SET
     brandsServiced = CASE WHEN brandsServiced IS NULL OR brandsServiced = '[]' THEN @brandsServiced ELSE brandsServiced END,
     paymentMethods = CASE WHEN paymentMethods IS NULL OR paymentMethods = '[]' THEN @paymentMethods ELSE paymentMethods END,
-    coverPhoto = CASE WHEN coverPhoto IS NULL OR coverPhoto = '' THEN @coverPhoto ELSE coverPhoto END
+    coverPhoto = CASE WHEN coverPhoto IS NULL OR coverPhoto = '' OR coverPhoto LIKE '%wikimedia%' THEN @coverPhoto ELSE coverPhoto END
     WHERE id = @id`);
   Object.entries(MECHANIC_BACKFILL).forEach(([id, data]) => {
     backfillStmt.run({ id: Number(id), brandsServiced: JSON.stringify(data.brandsServiced), paymentMethods: JSON.stringify(data.paymentMethods), coverPhoto: data.coverPhoto });
@@ -375,8 +375,8 @@ try {
     fuelConsumption = CASE WHEN fuelConsumption IS NULL OR fuelConsumption = '' THEN @fuelConsumption ELSE fuelConsumption END,
     co2Emission = CASE WHEN co2Emission IS NULL THEN @co2Emission ELSE co2Emission END,
     emissionClass = CASE WHEN emissionClass IS NULL OR emissionClass = '' THEN @emissionClass ELSE emissionClass END,
-    photo = CASE WHEN photo IS NULL OR photo = '' OR length(photo) <= 4 THEN @photo ELSE photo END,
-    photos = CASE WHEN photos IS NULL OR photos = '[]' THEN @photos ELSE photos END
+    photo = CASE WHEN photo IS NULL OR photo = '' OR length(photo) <= 4 OR photo LIKE '%wikimedia%' THEN @photo ELSE photo END,
+    photos = CASE WHEN photos IS NULL OR photos = '[]' OR photos LIKE '%wikimedia%' THEN @photos ELSE photos END
     WHERE id = @id`);
   Object.entries(LISTING_BACKFILL).forEach(([id, data]) => {
     listingBackfillStmt.run({ id: Number(id), bodyType: data.bodyType, engineSize: data.engineSize, drivetrain: data.drivetrain, ownerCount: data.ownerCount, doorCount: data.doorCount, features: JSON.stringify(data.features), seatCount: data.seatCount, fuelConsumption: data.fuelConsumption, co2Emission: data.co2Emission, emissionClass: data.emissionClass, photo: data.photo, photos: JSON.stringify(data.photos || []) });
