@@ -1173,8 +1173,11 @@ export function AppShell() {
                 <div className="flex items-center gap-2 flex-shrink-0"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></div>
                 <div className="flex items-center gap-8">
                   {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: "İş İlanları", icon: Briefcase }].map(tab => {
-                    const Icon = tab.icon; const active = ownerMode === tab.key;
-                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
+                    // "Aktif" durumu sadece ownerMode'a değil, ownerTab === "search" olmasına da bakmalı —
+                    // yoksa Randevularım/Favoriler/Sohbetler gibi başka bir sekmedeyken bile bu nav hep
+                    // "Tamirci Ara" seçiliymiş gibi kalın/altı çizili görünüyordu (kullanıcı geri bildirimi).
+                    const Icon = tab.icon; const active = ownerTab === "search" && ownerMode === tab.key;
+                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
                   })}
                   <button onClick={() => setShowQuoteModal(true)} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> Çoklu Teklif Al</button>
                 </div>

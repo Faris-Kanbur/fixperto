@@ -358,22 +358,31 @@ try {
 }
 
 // "Tüm Yorumlar" modalindeki foto/fotosuz yorum karışıklığını düzeltmek için (bkz. AppShell/
-// MechDetailBody), photo:true olan demo yorumlarına gerçek bir photoUrl ekliyoruz. reviewList
-// bir JSON blob olduğu için yukarıdaki gibi düz bir SQL CASE ile yamanamıyor — satırı okuyup
-// JS tarafında ismiyle eşleşen yorumu yamalayıp geri yazıyoruz; photoUrl'i zaten olan (kullanıcı
-// tarafından değiştirilmiş) satırlara dokunmuyoruz.
-const REVIEW_PHOTO_BACKFILL = {
-  1: [{ name: "Ahmet K.", photoUrl: wc(201) }, { name: "Burak T.", photoUrl: wc(202) }],
-  2: [{ name: "Kerem A.", photoUrl: wc(203) }],
-  3: [{ name: "Tolga E.", photoUrl: wc(204) }],
-  5: [{ name: "David R.", photoUrl: wc(205) }],
-  7: [{ name: "Selin A.", photoUrl: wc(206) }],
-  9: [{ name: "Gökhan B.", photoUrl: wc(207) }],
+// MechDetailBody), photo:true olan demo yorumlarına gerçek bir photoUrl ekliyoruz. Ayrıca —
+// daha kritik bir düzeltme — seed.js'deki demo yorumların ilk sürümünde `id` alanı YOKTU; bu
+// yüzden "Faydalı" (helpful) beğenisi ve tamirci yanıtı gibi id'ye göre eşleşen her işlem, aynı
+// tamirciye ait TÜM yorumlarda birden etkili oluyordu (hepsinin id'si undefined olduğu için tek
+// bir yorumu beğenince tamirciye ait tüm yorumlar "beğenilmiş" görünüyordu — kullanıcı geri
+// bildirimi). Burada isme göre eşleştirip eksik id/photoUrl'i tamamlıyoruz; zaten id'si olan
+// (yani kullanıcının sonradan eklediği gerçek) yorumlara dokunmuyoruz.
+// reviewList bir JSON blob olduğu için yukarıdaki gibi düz bir SQL CASE ile yamanamıyor — satırı
+// okuyup JS tarafında ismiyle eşleşen yorumu yamalayıp geri yazıyoruz.
+const REVIEW_BACKFILL = {
+  1: [{ name: "Ahmet K.", id: 6001, photoUrl: wc(201) }, { name: "Elif S.", id: 6002 }, { name: "Burak T.", id: 6003, photoUrl: wc(202) }],
+  2: [{ name: "Fatma Y.", id: 6004 }, { name: "Kerem A.", id: 6005, photoUrl: wc(203) }],
+  3: [{ name: "Tolga E.", id: 6006, photoUrl: wc(204) }],
+  4: [{ name: "Nihal K.", id: 6007 }, { name: "Kullanıcı8823", id: 6008 }],
+  5: [{ name: "David R.", id: 6009, photoUrl: wc(205) }],
+  6: [{ name: "Cem S.", id: 6010 }],
+  7: [{ name: "Selin A.", id: 6011, photoUrl: wc(206) }, { name: "Murat D.", id: 6012 }],
+  8: [{ name: "Emre T.", id: 6013 }],
+  9: [{ name: "Gökhan B.", id: 6014, photoUrl: wc(207) }],
+  10: [{ name: "Pınar E.", id: 6015 }],
 };
 try {
   const reviewRowStmt = db.prepare(`SELECT id, reviewList FROM mechanics WHERE id = ?`);
   const reviewUpdateStmt = db.prepare(`UPDATE mechanics SET reviewList = @reviewList WHERE id = @id`);
-  Object.entries(REVIEW_PHOTO_BACKFILL).forEach(([id, patches]) => {
+  Object.entries(REVIEW_BACKFILL).forEach(([id, patches]) => {
     const row = reviewRowStmt.get(Number(id));
     if (!row) return;
     let reviewList;
@@ -381,13 +390,16 @@ try {
     let changed = false;
     const nextList = reviewList.map((r) => {
       const patch = patches.find((p) => p.name === r.name);
-      if (patch && r.photo && !r.photoUrl) { changed = true; return { ...r, photoUrl: patch.photoUrl }; }
-      return r;
+      if (!patch) return r;
+      const next = { ...r };
+      if (r.id === undefined || r.id === null) { next.id = patch.id; changed = true; }
+      if (patch.photoUrl && r.photo && !r.photoUrl) { next.photoUrl = patch.photoUrl; changed = true; }
+      return next;
     });
     if (changed) reviewUpdateStmt.run({ id: Number(id), reviewList: JSON.stringify(nextList) });
   });
 } catch (err) {
-  console.error("Yorum fotoğrafı backfill hatası:", err.message);
+  console.error("Yorum id/fotoğrafı backfill hatası:", err.message);
 }
 
 // Aynı gerekçeyle (bkz. MECHANIC_BACKFILL yukarıda): listings tablosu bu alanlar eklenmeden ÖNCE
