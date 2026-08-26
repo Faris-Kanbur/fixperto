@@ -321,25 +321,28 @@ function ensureColumn(table, columnDef) {
 // satırları geriye dönük doldurmaz. Bu yüzden burada, hâlâ boş dizi ('[]') olan bilinen demo
 // tamirci satırlarını seed.js ile birebir aynı verilerle dolduruyoruz — kullanıcının kendi
 // profilinden zaten seçim yapmış olduğu satırlara (yani artık '[]' olmayanlara) DOKUNMUYORUZ.
+const wc = (file) => `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=1200`;
+
 const MECHANIC_BACKFILL = {
-  1: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Hyundai"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"] },
-  2: { brandsServiced: ["Renault", "Fiat", "Ford", "Opel", "Hyundai", "Peugeot"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"] },
-  3: { brandsServiced: ["Volkswagen", "BMW", "Mercedes-Benz", "Audi"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"] },
-  4: { brandsServiced: ["Renault", "Fiat", "Dacia", "Tofaş", "Hyundai"], paymentMethods: ["Nakit"] },
-  5: { brandsServiced: ["BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Mini"], paymentMethods: ["Kredi/Banka Kartı", "Havale/EFT"] },
-  6: { brandsServiced: ["Fiat", "Renault", "Tofaş", "Dacia"], paymentMethods: ["Nakit"] },
-  7: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Opel"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"] },
-  8: { brandsServiced: ["Renault", "Fiat", "Hyundai", "Toyota"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"] },
-  9: { brandsServiced: ["Renault", "Ford", "Opel", "Volkswagen"], paymentMethods: ["Nakit", "Havale/EFT"] },
-  10: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Honda"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT", "Kapıda Ödeme"] },
+  1: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Hyundai"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc("Car_mechanic.jpg") },
+  2: { brandsServiced: ["Renault", "Fiat", "Ford", "Opel", "Hyundai", "Peugeot"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"], coverPhoto: wc("Tire_shop.jpg") },
+  3: { brandsServiced: ["Volkswagen", "BMW", "Mercedes-Benz", "Audi"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc("Auto_electrician.jpg") },
+  4: { brandsServiced: ["Renault", "Fiat", "Dacia", "Tofaş", "Hyundai"], paymentMethods: ["Nakit"], coverPhoto: wc("Oil_change_garage.jpg") },
+  5: { brandsServiced: ["BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Mini"], paymentMethods: ["Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc("Auto_body_shop.jpg") },
+  6: { brandsServiced: ["Fiat", "Renault", "Tofaş", "Dacia"], paymentMethods: ["Nakit"], coverPhoto: wc("Car_repair_garage.jpg") },
+  7: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Opel"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc("Car_service_center.jpg") },
+  8: { brandsServiced: ["Renault", "Fiat", "Hyundai", "Toyota"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"], coverPhoto: wc("Mechanic_workshop.jpg") },
+  9: { brandsServiced: ["Renault", "Ford", "Opel", "Volkswagen"], paymentMethods: ["Nakit", "Havale/EFT"], coverPhoto: wc("Automobile_mechanic.jpg") },
+  10: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Honda"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT", "Kapıda Ödeme"], coverPhoto: wc("Auto_mechanic_garage.jpg") },
 };
 try {
   const backfillStmt = db.prepare(`UPDATE mechanics SET
     brandsServiced = CASE WHEN brandsServiced IS NULL OR brandsServiced = '[]' THEN @brandsServiced ELSE brandsServiced END,
-    paymentMethods = CASE WHEN paymentMethods IS NULL OR paymentMethods = '[]' THEN @paymentMethods ELSE paymentMethods END
+    paymentMethods = CASE WHEN paymentMethods IS NULL OR paymentMethods = '[]' THEN @paymentMethods ELSE paymentMethods END,
+    coverPhoto = CASE WHEN coverPhoto IS NULL OR coverPhoto = '' THEN @coverPhoto ELSE coverPhoto END
     WHERE id = @id`);
   Object.entries(MECHANIC_BACKFILL).forEach(([id, data]) => {
-    backfillStmt.run({ id: Number(id), brandsServiced: JSON.stringify(data.brandsServiced), paymentMethods: JSON.stringify(data.paymentMethods) });
+    backfillStmt.run({ id: Number(id), brandsServiced: JSON.stringify(data.brandsServiced), paymentMethods: JSON.stringify(data.paymentMethods), coverPhoto: data.coverPhoto });
   });
 } catch (err) {
   console.error("Tamirci marka/ödeme yöntemi backfill hatası:", err.message);
@@ -350,14 +353,14 @@ try {
 // olan bilinen demo ilan satırlarına (id 1-8) geriye dönük yazılıyor — kullanıcının kendi girdiği
 // veya düzenlediği ilanlara dokunulmuyor.
 const LISTING_BACKFILL = {
-  1: { bodyType: "Sedan", engineSize: "1.6", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "ABS", "Bluetooth"], seatCount: 5, fuelConsumption: "6.5", co2Emission: 148, emissionClass: "Euro 6" },
-  2: { bodyType: "Hatchback/5 Kapı", engineSize: "1.5 dCi", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Hız Sabitleyici (Cruise Control)", "Bluetooth"], seatCount: 5, fuelConsumption: "4.2", co2Emission: 110, emissionClass: "Euro 6" },
-  3: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Sunroof/Cam Tavan", "Geri Görüş Kamerası", "Park Sensörü (Ön)", "Park Sensörü (Arka)", "Xenon/LED Far", "Navigasyon", "Alaşım Jant"], seatCount: 5, fuelConsumption: "6.8", co2Emission: 155, emissionClass: "Euro 6" },
-  4: { bodyType: "Hatchback/5 Kapı", engineSize: "1.6 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Bluetooth", "ABS"], seatCount: 5, fuelConsumption: "4.5", co2Emission: 118, emissionClass: "Euro 6" },
-  5: { bodyType: "Sedan", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Park Sensörü (Arka)"], seatCount: 5, fuelConsumption: "5.9", co2Emission: 135, emissionClass: "Euro 6" },
-  6: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 3, paintedParts: 2, changedParts: 1, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Isıtmalı Koltuk", "Sunroof/Cam Tavan", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"], seatCount: 5, fuelConsumption: "5.1", co2Emission: 134, emissionClass: "Euro 6" },
-  7: { bodyType: "Hatchback/5 Kapı", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Geri Görüş Kamerası"], seatCount: 5, fuelConsumption: "5.6", co2Emission: 128, emissionClass: "Euro 6" },
-  8: { bodyType: "Hatchback/5 Kapı", engineSize: "2.0 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Deri Döşeme", "Xenon/LED Far", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"], seatCount: 5, fuelConsumption: "4.3", co2Emission: 113, emissionClass: "Euro 6" },
+  1: { bodyType: "Sedan", engineSize: "1.6", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "ABS", "Bluetooth"], seatCount: 5, fuelConsumption: "6.5", co2Emission: 148, emissionClass: "Euro 6", photo: wc("Toyota_Corolla_(E170).jpg") },
+  2: { bodyType: "Hatchback/5 Kapı", engineSize: "1.5 dCi", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Hız Sabitleyici (Cruise Control)", "Bluetooth"], seatCount: 5, fuelConsumption: "4.2", co2Emission: 110, emissionClass: "Euro 6", photo: wc("Renault_Clio_V.jpg") },
+  3: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Sunroof/Cam Tavan", "Geri Görüş Kamerası", "Park Sensörü (Ön)", "Park Sensörü (Arka)", "Xenon/LED Far", "Navigasyon", "Alaşım Jant"], seatCount: 5, fuelConsumption: "6.8", co2Emission: 155, emissionClass: "Euro 6", photo: wc("BMW_320i_(G20).jpg") },
+  4: { bodyType: "Hatchback/5 Kapı", engineSize: "1.6 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Bluetooth", "ABS"], seatCount: 5, fuelConsumption: "4.5", co2Emission: 118, emissionClass: "Euro 6", photo: wc("Volkswagen_Golf_Mk7.jpg") },
+  5: { bodyType: "Sedan", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Park Sensörü (Arka)"], seatCount: 5, fuelConsumption: "5.9", co2Emission: 135, emissionClass: "Euro 6", photo: wc("Fiat_Tipo_(2020).jpg") },
+  6: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 3, paintedParts: 2, changedParts: 1, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Isıtmalı Koltuk", "Sunroof/Cam Tavan", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"], seatCount: 5, fuelConsumption: "5.1", co2Emission: 134, emissionClass: "Euro 6", photo: wc("Mercedes-Benz_C-Class_(W205).jpg") },
+  7: { bodyType: "Hatchback/5 Kapı", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Geri Görüş Kamerası"], seatCount: 5, fuelConsumption: "5.6", co2Emission: 128, emissionClass: "Euro 6", photo: wc("Hyundai_i20_(2020).jpg") },
+  8: { bodyType: "Hatchback/5 Kapı", engineSize: "2.0 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Deri Döşeme", "Xenon/LED Far", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"], seatCount: 5, fuelConsumption: "4.3", co2Emission: 113, emissionClass: "Euro 6", photo: wc("Audi_A3_Sportback_(8V).jpg") },
 };
 try {
   const listingBackfillStmt = db.prepare(`UPDATE listings SET
@@ -370,10 +373,11 @@ try {
     seatCount = CASE WHEN seatCount IS NULL THEN @seatCount ELSE seatCount END,
     fuelConsumption = CASE WHEN fuelConsumption IS NULL OR fuelConsumption = '' THEN @fuelConsumption ELSE fuelConsumption END,
     co2Emission = CASE WHEN co2Emission IS NULL THEN @co2Emission ELSE co2Emission END,
-    emissionClass = CASE WHEN emissionClass IS NULL OR emissionClass = '' THEN @emissionClass ELSE emissionClass END
+    emissionClass = CASE WHEN emissionClass IS NULL OR emissionClass = '' THEN @emissionClass ELSE emissionClass END,
+    photo = CASE WHEN photo IS NULL OR photo = '' OR length(photo) <= 4 THEN @photo ELSE photo END
     WHERE id = @id`);
   Object.entries(LISTING_BACKFILL).forEach(([id, data]) => {
-    listingBackfillStmt.run({ id: Number(id), bodyType: data.bodyType, engineSize: data.engineSize, drivetrain: data.drivetrain, ownerCount: data.ownerCount, doorCount: data.doorCount, features: JSON.stringify(data.features), seatCount: data.seatCount, fuelConsumption: data.fuelConsumption, co2Emission: data.co2Emission, emissionClass: data.emissionClass });
+    listingBackfillStmt.run({ id: Number(id), bodyType: data.bodyType, engineSize: data.engineSize, drivetrain: data.drivetrain, ownerCount: data.ownerCount, doorCount: data.doorCount, features: JSON.stringify(data.features), seatCount: data.seatCount, fuelConsumption: data.fuelConsumption, co2Emission: data.co2Emission, emissionClass: data.emissionClass, photo: data.photo });
   });
 } catch (err) {
   console.error("İlan araç bilgisi backfill hatası:", err.message);

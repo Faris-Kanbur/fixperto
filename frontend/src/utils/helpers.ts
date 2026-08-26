@@ -196,7 +196,24 @@ export function statusColor(status) {
 }
 
 export function isImgUrl(s) {
-  return typeof s === "string" && s.startsWith("blob:");
+  return typeof s === "string" && (s.startsWith("blob:") || s.startsWith("http://") || s.startsWith("https://") || s.startsWith("data:"));
+}
+
+// Basit gri kutu — gerçek fotoğraf linki (ör. Wikimedia Commons) yüklenemezse
+// kırık resim ikonu yerine bunu gösteriyoruz, sayfa hiç bozuk görünmüyor.
+export const IMG_FALLBACK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23e5e7eb'/%3E%3C/svg%3E";
+
+export function imgFallbackHandler(e) {
+  e.currentTarget.onerror = null;
+  e.currentTarget.src = IMG_FALLBACK;
+}
+
+// Wikimedia Commons Special:FilePath linkleri ?width=N parametresiyle otomatik
+// olarak küçültülmüş bir görsele yönlendiriliyor — kart/liste gibi küçük alanlarda
+// gereksiz yere büyük orijinal dosyayı indirmemek için genişliği bağlama göre ayarlıyoruz.
+export function imgThumb(url, width) {
+  if (typeof url !== "string" || !url.includes("width=")) return url;
+  return url.replace(/width=\d+/, `width=${width}`);
 }
 
 export function monthsBetween(d1, d2) {

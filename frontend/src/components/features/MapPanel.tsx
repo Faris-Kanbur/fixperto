@@ -3,7 +3,7 @@ import { Compass, Navigation, Star, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../../app/state/AppLogicProvider";
-import { priceLevel, isImgUrl } from "../../utils/helpers";
+import { priceLevel, isImgUrl, imgFallbackHandler, imgThumb } from "../../utils/helpers";
 
 export function MapPanel({ className, items, onPick, hoveredId = null, onHoverItem = undefined, previewItem: previewItemProp = undefined, onPreviewChange = undefined }) {
   const {
@@ -177,7 +177,7 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
           className="z-[9999]"
         >
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex items-center gap-3">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">{isImgUrl(previewItem.photo) ? <img src={previewItem.photo} className="w-full h-full object-cover" /> : (previewItem.photo || previewItem.img)}</div>
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">{isImgUrl(previewItem.photo) ? <img src={imgThumb(previewItem.photo, 120)} loading="lazy" onError={imgFallbackHandler} alt="" className="w-full h-full object-cover" /> : (previewItem.photo || previewItem.img)}</div>
             <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-gray-800 text-xs truncate">{isListing(previewItem) ? `${previewItem.brand} ${previewItem.model}` : previewItem.name}</h4>
               <p className="text-rose-700 font-bold text-xs">{isListing(previewItem) ? previewItem.price : <PriceLevelDots price={previewItem.price} />}</p>

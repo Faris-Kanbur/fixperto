@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { PriceLevelDots } from "../ui/PriceLevelDots";
 import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, CreditCard, Flag, Globe, Image as ImageIcon, MapPin, MessageCircle, Navigation, Star, Tag, ThumbsUp, Users, Wrench as ToolIcon, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
@@ -6,9 +7,10 @@ import { ShareButton } from "./ShareButton";
 import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
 import { BANNER_PRESETS, MY_MECHANIC_ID, LANG_LABELS } from "../../data/constants";
-import { formatHoursText, isImgUrl } from "../../utils/helpers";
+import { formatHoursText, isImgUrl, imgThumb } from "../../utils/helpers";
 
 export function MechDetailBody() {
+  const [coverBroken, setCoverBroken] = useState(false);
   const {
     lang, setLang, t, screen, setScreen, role, setRole, showPass, setShowPass, forgotEmail, setForgotEmail, form, 
     setForm, authError, setAuthError, ownerTab, setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, 
@@ -124,7 +126,9 @@ export function MechDetailBody() {
           {selectedMechanic.rating >= 4.7 && <span className="bg-white/95 text-gray-700 text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1"><BadgeCheck size={12} /> Öne Çıkan</span>}
           <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — Fixperto'da keşfet`} path={`?mechanic=${selectedMechanic.id}`} onShare={(channel, refCode) => recordShare("mechanic", selectedMechanic.id, channel, refCode)} />
         </div>
-        <div className={`h-36 bg-gradient-to-br ${BANNER_PRESETS[selectedMechanic.bannerPreset] || BANNER_PRESETS.blue} relative overflow-hidden`} style={selectedMechanic.coverPhoto ? { backgroundImage: `url(${selectedMechanic.coverPhoto})`, backgroundSize: "cover", backgroundPosition: "center" } : {}} />
+        <div className={`h-36 bg-gradient-to-br ${BANNER_PRESETS[selectedMechanic.bannerPreset] || BANNER_PRESETS.blue} relative overflow-hidden`}>
+          {selectedMechanic.coverPhoto && !coverBroken && <img src={imgThumb(selectedMechanic.coverPhoto, 900)} loading="lazy" decoding="async" onError={() => setCoverBroken(true)} alt={selectedMechanic.name} className="absolute inset-0 w-full h-full object-cover" />}
+        </div>
         <div className="absolute -bottom-8 left-5 w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center text-4xl border-4 border-white overflow-hidden">{selectedMechanic.img}</div>
       </div>
       <div className="pt-10 px-5 md:px-8">

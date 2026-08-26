@@ -18,6 +18,7 @@ import { AppointmentCard } from "../components/features/AppointmentCard";
 import { BrowseHome } from "../components/features/BrowseHome";
 import { ShareButton } from "../components/features/ShareButton";
 import { TranslatedText } from "../components/features/TranslatedText";
+import { PhotoLightbox } from "../components/features/PhotoLightbox";
 import {
   LEGAL_CONTENT, FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, BANNER_PRESETS,
   ONBOARDING_SLIDES, ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
@@ -32,6 +33,7 @@ import {
   ticketSlaBreached, ticketDaysOpen, initials, isValidEmail, validatePhone,
   computeReminders, isImgUrl, listingStatusMeta, isValidDateStr, listingCurrency,
   jobStatusMeta, parsePriceNumber, isFixedPriceService, statusColor, getDaySlots,
+  imgFallbackHandler, imgThumb,
 } from "../utils/helpers";
 
 // AppShell: eskiden App.jsx'in return(...) bloğuydu. Tüm state/handler'lar
@@ -72,7 +74,7 @@ export function AppShell() {
     setQuoteMechSearch, quotePremiumUnlocked, setQuotePremiumUnlocked, showQuotePremiumUpsell, setShowQuotePremiumUpsell, respondingQuoteOfferId, setRespondingQuoteOfferId, quoteOfferForm,
     setQuoteOfferForm, expandedQuoteReqId, setExpandedQuoteReqId, pendingQuoteAccept, setPendingQuoteAccept, coverFileRef, staffFileRefs, expandedDay,
     setExpandedDay, newSlotTime, setNewSlotTime, listings, setListings, showSellForm, setShowSellForm, showSellVehiclePicker,
-    setShowSellVehiclePicker, sellForm, setSellForm, sellPhotoRef, selectedListingId, setSelectedListingId, selectedListingPhotoIndex, setSelectedListingPhotoIndex, showOfferForm, setShowOfferForm,
+    setShowSellVehiclePicker, sellForm, setSellForm, sellPhotoRef, selectedListingId, setSelectedListingId, selectedListingPhotoIndex, setSelectedListingPhotoIndex, listingLightboxOpen, setListingLightboxOpen, showOfferForm, setShowOfferForm,
     offerAmount, setOfferAmount, showListingMsgForm, setShowListingMsgForm, listingMsg, setListingMsg, jobListings, setJobListings,
     jobFilters, setJobFilters, selectedJobId, setSelectedJobId, showJobForm, setShowJobForm, jobForm, setJobForm,
     showJobApplyForm, setShowJobApplyForm, jobApplyMsg, setJobApplyMsg, jobApplyCv, setJobApplyCv, jobApplyInfo, setJobApplyInfo,
@@ -1397,7 +1399,7 @@ export function AppShell() {
                         return (
                           <div key={l.id} className="bg-white border border-gray-200 rounded-2xl p-4">
                             <button onClick={() => setSelectedListingId(l.id)} className="w-full text-left flex items-center gap-3 mb-3">
-                              <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={l.photo} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : l.photo}</div>
+                              <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 100)} loading="lazy" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : l.photo}</div>
                               <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{l.brand} {l.model} ({l.year})</p><p className="text-xs text-gray-400">{l.price} · İlan #{l.id}</p></div>
                               <span className={`text-[10px] font-bold text-white px-2 py-1 rounded-full flex-shrink-0 ${l.adminRemoved ? "bg-gray-900" : listingStatusMeta(l.status, t).color}`}>{l.adminRemoved ? "Kaldırıldı" : listingStatusMeta(l.status, t).label}</span>
                             </button>
@@ -1582,23 +1584,32 @@ export function AppShell() {
                 const activePhoto = galleryPhotos[activeIdx];
                 return (
                   <>
-                    <div className="h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden relative">
-                      {isImgUrl(activePhoto) ? <img src={activePhoto} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : activePhoto}
+                    <button onClick={() => setListingLightboxOpen(true)} aria-label="Fotoğrafı büyüt" className="w-full h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden relative cursor-zoom-in">
+                      {isImgUrl(activePhoto) ? <img src={imgThumb(activePhoto, 900)} onError={imgFallbackHandler} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : activePhoto}
                       {galleryPhotos.length > 1 && (<>
-                        <button onClick={() => setSelectedListingPhotoIndex((activeIdx - 1 + galleryPhotos.length) % galleryPhotos.length)} aria-label="Önceki fotoğraf" className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={16} /></button>
-                        <button onClick={() => setSelectedListingPhotoIndex((activeIdx + 1) % galleryPhotos.length)} aria-label="Sonraki fotoğraf" className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronRight size={16} /></button>
+                        <span onClick={(e) => { e.stopPropagation(); setSelectedListingPhotoIndex((activeIdx - 1 + galleryPhotos.length) % galleryPhotos.length); }} role="button" aria-label="Önceki fotoğraf" className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={16} /></span>
+                        <span onClick={(e) => { e.stopPropagation(); setSelectedListingPhotoIndex((activeIdx + 1) % galleryPhotos.length); }} role="button" aria-label="Sonraki fotoğraf" className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronRight size={16} /></span>
                         <span className="absolute bottom-3 right-4 text-[10px] font-bold text-white bg-black/40 backdrop-blur px-2 py-1 rounded-full">{activeIdx + 1}/{galleryPhotos.length}</span>
                       </>)}
-                    </div>
+                    </button>
                     <span className={`absolute bottom-3 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span>
                     {galleryPhotos.length > 1 && (
                       <div className="flex gap-1.5 px-4 py-2 bg-gray-50 overflow-x-auto">
                         {galleryPhotos.map((p, i) => (
-                          <button key={i} onClick={() => setSelectedListingPhotoIndex(i)} className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 flex items-center justify-center text-xl bg-white ${i === activeIdx ? "border-rose-600" : "border-transparent opacity-70"}`}>
-                            {isImgUrl(p) ? <img src={p} alt={`Fotoğraf ${i + 1}`} className="w-full h-full object-cover" /> : p}
+                          <button key={i} onClick={() => { setSelectedListingPhotoIndex(i); setListingLightboxOpen(true); }} className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 flex items-center justify-center text-xl bg-white ${i === activeIdx ? "border-rose-600" : "border-transparent opacity-70"}`}>
+                            {isImgUrl(p) ? <img src={imgThumb(p, 160)} loading="lazy" onError={imgFallbackHandler} alt={`Fotoğraf ${i + 1}`} className="w-full h-full object-cover" /> : p}
                           </button>
                         ))}
                       </div>
+                    )}
+                    {listingLightboxOpen && (
+                      <PhotoLightbox
+                        photos={galleryPhotos}
+                        index={activeIdx}
+                        onIndexChange={setSelectedListingPhotoIndex}
+                        onClose={() => setListingLightboxOpen(false)}
+                        title={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim()}
+                      />
                     )}
                   </>
                 );
@@ -2250,7 +2261,7 @@ export function AppShell() {
                   </div>
                 )}
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">Kapak Fotoğrafı</h3>
-                {myProfile.coverPhoto ? (<div className="relative w-full h-28 rounded-2xl overflow-hidden mb-5"><img src={myProfile.coverPhoto} alt="Kapak fotoğrafı" className="w-full h-full object-cover" /><button onClick={removeCoverPhoto} aria-label="Kapak fotoğrafını kaldır" className="absolute top-2 right-2 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><X size={14} /></button></div>) : (<div className="mb-5"><div className="flex gap-2 mb-2">{Object.entries(BANNER_PRESETS).map(([key, grad]) => (<button key={key} onClick={() => updateMyField("bannerPreset", key)} className={`flex-1 h-14 rounded-xl bg-gradient-to-br ${grad} ${myProfile.bannerPreset === key ? "ring-2 ring-offset-2 ring-rose-600" : ""}`} />))}</div><input ref={coverFileRef} type="file" accept="image/*" onChange={uploadCoverPhoto} className="hidden" /><button onClick={() => coverFileRef.current?.click()} className="w-full border-2 border-dashed border-rose-300 rounded-xl py-2.5 text-rose-600 text-xs font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><Camera size={14} /> Kendi Fotoğrafını Yükle</button></div>)}
+                {myProfile.coverPhoto ? (<div className="relative w-full h-28 rounded-2xl overflow-hidden mb-5"><img src={imgThumb(myProfile.coverPhoto, 700)} onError={imgFallbackHandler} alt="Kapak fotoğrafı" className="w-full h-full object-cover" /><button onClick={removeCoverPhoto} aria-label="Kapak fotoğrafını kaldır" className="absolute top-2 right-2 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><X size={14} /></button></div>) : (<div className="mb-5"><div className="flex gap-2 mb-2">{Object.entries(BANNER_PRESETS).map(([key, grad]) => (<button key={key} onClick={() => updateMyField("bannerPreset", key)} className={`flex-1 h-14 rounded-xl bg-gradient-to-br ${grad} ${myProfile.bannerPreset === key ? "ring-2 ring-offset-2 ring-rose-600" : ""}`} />))}</div><input ref={coverFileRef} type="file" accept="image/*" onChange={uploadCoverPhoto} className="hidden" /><button onClick={() => coverFileRef.current?.click()} className="w-full border-2 border-dashed border-rose-300 rounded-xl py-2.5 text-rose-600 text-xs font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><Camera size={14} /> Kendi Fotoğrafını Yükle</button></div>)}
                 <div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("team")}</h3><button onClick={addStaff} className="text-xs text-rose-700 font-medium flex items-center gap-1"><Plus size={14} /> Ekle</button></div>
                 <div className="space-y-3 mb-6">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-rose-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img src={s.emoji} alt={s.name || "Personel fotoğrafı"} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder="Ad Soyad" className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder="Görev" className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /></div><button onClick={() => removeStaff(i)} aria-label="Personeli sil" className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
                 <button onClick={saveMyProfile} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2 mb-2"><Save size={16} /> {t("save")}</button>
@@ -2435,7 +2446,7 @@ export function AppShell() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" onClick={() => setShowSellForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Tag size={18} className="text-rose-600" /> {sellForm._editingId ? t("editListing") : "Araç Satış İlanı"}</h3><button onClick={() => setShowSellForm(false)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
-            <div className="flex justify-center mb-4"><div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-4xl overflow-hidden">{isImgUrl(sellForm.photo) ? <img src={sellForm.photo} alt="Araç fotoğrafı" className="w-full h-full object-cover" /> : sellForm.photo}<input ref={sellPhotoRef} type="file" accept="image/*" onChange={sellPhotoUpload} className="hidden" /><button onClick={() => sellPhotoRef.current?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={20} /></button></div></div>
+            <div className="flex justify-center mb-4"><div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-4xl overflow-hidden">{isImgUrl(sellForm.photo) ? <img src={imgThumb(sellForm.photo, 200)} onError={imgFallbackHandler} alt="Araç fotoğrafı" className="w-full h-full object-cover" /> : sellForm.photo}<input ref={sellPhotoRef} type="file" accept="image/*" onChange={sellPhotoUpload} className="hidden" /><button onClick={() => sellPhotoRef.current?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={20} /></button></div></div>
             <div className="space-y-2">
               <div className="flex gap-2"><input value={sellForm.brand} onChange={(e) => setSellForm({ ...sellForm, brand: e.target.value })} placeholder="Marka *" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.model} onChange={(e) => setSellForm({ ...sellForm, model: e.target.value })} placeholder="Model *" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
               <div className="flex gap-2"><input value={sellForm.year} onChange={(e) => setSellForm({ ...sellForm, year: e.target.value })} placeholder="Yıl *" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.km} onChange={(e) => setSellForm({ ...sellForm, km: e.target.value })} placeholder="Kilometre *" type="number" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
@@ -2461,7 +2472,7 @@ export function AppShell() {
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">Ek Fotoğraflar</p>
               <div className="flex flex-wrap gap-2">
                 {(sellForm.photos || []).map((p, i) => (
-                  <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200"><img src={p} alt={`Ek fotoğraf ${i + 1}`} className="w-full h-full object-cover" /><button type="button" onClick={() => removeSellPhoto(i)} aria-label="Fotoğrafı kaldır" className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center text-white"><X size={9} /></button></div>
+                  <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200"><img src={imgThumb(p, 120)} loading="lazy" onError={imgFallbackHandler} alt={`Ek fotoğraf ${i + 1}`} className="w-full h-full object-cover" /><button type="button" onClick={() => removeSellPhoto(i)} aria-label="Fotoğrafı kaldır" className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center text-white"><X size={9} /></button></div>
                 ))}
                 <label className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:text-rose-500 hover:border-rose-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
               </div>

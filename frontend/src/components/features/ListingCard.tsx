@@ -1,6 +1,6 @@
 import { Banknote, CalendarDays, Cog, Fuel, Gauge, Heart, MessageCircle } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
-import { listingStatusMeta, isImgUrl } from "../../utils/helpers";
+import { listingStatusMeta, isImgUrl, imgFallbackHandler, imgThumb } from "../../utils/helpers";
 
 export function ListingCard({ l, onHover = undefined }) {
   const {
@@ -121,7 +121,7 @@ export function ListingCard({ l, onHover = undefined }) {
         <div className="relative m-2 mb-0 rounded-2xl overflow-hidden">
           <div className="aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
             <button onClick={() => setSelectedListingId(l.id)} className="w-full h-full flex items-center justify-center text-6xl">
-              {isImgUrl(l.photo) ? <img src={l.photo} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" /> : l.photo}
+              {isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 500)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" /> : l.photo}
             </button>
           </div>
           <span className={`absolute top-3 left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full pointer-events-none shadow-sm ${meta.color}`}>{meta.label}</span>

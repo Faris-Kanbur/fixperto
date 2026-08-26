@@ -217,6 +217,11 @@ function useAppLogic() {
   // açıkken yeni ilana geçilince aynı indeks kalır ve dizi sınırını aşabilir.
   const [selectedListingPhotoIndex, setSelectedListingPhotoIndex] = useState(0);
   useEffect(() => { setSelectedListingPhotoIndex(0); }, [selectedListingId]);
+  // Tam ekran fotoğraf galerisi (lightbox) — ilan detayındaki ana fotoğrafa
+  // tıklanınca açılır, aynı selectedListingPhotoIndex'i kullanarak küçük
+  // galeriyle senkron kalır.
+  const [listingLightboxOpen, setListingLightboxOpen] = useState(false);
+  useEffect(() => { setListingLightboxOpen(false); }, [selectedListingId]);
   const [showOfferForm, setShowOfferForm] = useState(false);
   const [offerAmount, setOfferAmount] = useState("");
   const [showListingMsgForm, setShowListingMsgForm] = useState(false);
@@ -2368,7 +2373,7 @@ function useAppLogic() {
     setQuoteMechSearch, quotePremiumUnlocked, setQuotePremiumUnlocked, showQuotePremiumUpsell, setShowQuotePremiumUpsell, respondingQuoteOfferId, setRespondingQuoteOfferId, quoteOfferForm,
     setQuoteOfferForm, expandedQuoteReqId, setExpandedQuoteReqId, pendingQuoteAccept, setPendingQuoteAccept, coverFileRef, staffFileRefs, expandedDay,
     setExpandedDay, newSlotTime, setNewSlotTime, listings, setListings, showSellForm, setShowSellForm, showSellVehiclePicker,
-    setShowSellVehiclePicker, sellForm, setSellForm, sellPhotoRef, selectedListingId, setSelectedListingId, selectedListingPhotoIndex, setSelectedListingPhotoIndex, showOfferForm, setShowOfferForm,
+    setShowSellVehiclePicker, sellForm, setSellForm, sellPhotoRef, selectedListingId, setSelectedListingId, selectedListingPhotoIndex, setSelectedListingPhotoIndex, listingLightboxOpen, setListingLightboxOpen, showOfferForm, setShowOfferForm,
     offerAmount, setOfferAmount, showListingMsgForm, setShowListingMsgForm, listingMsg, setListingMsg, jobListings, setJobListings,
     jobFilters, setJobFilters, selectedJobId, setSelectedJobId, showJobForm, setShowJobForm, jobForm, setJobForm,
     showJobApplyForm, setShowJobApplyForm, jobApplyMsg, setJobApplyMsg, jobApplyCv, setJobApplyCv, jobApplyInfo, setJobApplyInfo,

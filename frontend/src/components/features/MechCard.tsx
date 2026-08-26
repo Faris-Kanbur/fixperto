@@ -2,6 +2,8 @@ import { PriceLevelDots } from "../ui/PriceLevelDots";
 import { BadgeCheck, CheckCircle2, MapPin, Star, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { BANNER_PRESETS } from "../../data/constants";
+import { useState } from "react";
+import { imgThumb } from "../../utils/helpers";
 
 export function MechCard({ m, onHover }) {
   const {
@@ -110,11 +112,14 @@ export function MechCard({ m, onHover }) {
     jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, 
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
+  const [coverBroken, setCoverBroken] = useState(false);
+  const showCover = m.coverPhoto && !coverBroken;
   return (
     <button onClick={() => openDetail(m)} onMouseEnter={() => onHover && onHover(m.id)} onMouseLeave={() => onHover && onHover(null)} className={`group w-full text-left bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === m.id ? "ring-2 ring-rose-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
       <div className="relative m-2 mb-0 rounded-2xl overflow-hidden">
-        <div className={`aspect-[16/10] bg-gradient-to-br ${BANNER_PRESETS[m.bannerPreset] || BANNER_PRESETS.blue} flex items-center justify-center relative overflow-hidden`} style={m.coverPhoto ? { backgroundImage: `url(${m.coverPhoto})`, backgroundSize: "cover", backgroundPosition: "center" } : {}}>
-          {!m.coverPhoto && <span className="relative text-4xl w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm transition-transform duration-500 ease-out group-hover:scale-105">{m.img}</span>}
+        <div className={`aspect-[16/10] bg-gradient-to-br ${BANNER_PRESETS[m.bannerPreset] || BANNER_PRESETS.blue} flex items-center justify-center relative overflow-hidden`}>
+          {showCover && <img src={imgThumb(m.coverPhoto, 500)} loading="lazy" decoding="async" onError={() => setCoverBroken(true)} alt={m.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />}
+          {!showCover && <span className="relative text-4xl w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm transition-transform duration-500 ease-out group-hover:scale-105">{m.img}</span>}
         </div>
         {m.rating >= 4.7 && <span className="absolute top-3 right-3 bg-white text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><Star size={10} className="fill-gray-800" /> Öne Çıkan</span>}
         {m.verified && <span className="absolute top-3 left-3 bg-white text-rose-600 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><BadgeCheck size={11} /> Doğrulandı</span>}
