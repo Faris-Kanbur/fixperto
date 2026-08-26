@@ -209,9 +209,14 @@ function useAppLogic() {
   const [listings, setListings] = useState([]);
   const [showSellForm, setShowSellForm] = useState(false);
   const [showSellVehiclePicker, setShowSellVehiclePicker] = useState(false);
-  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: null, _editingId: null });
+  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], _vehicleId: null, _editingId: null });
   const sellPhotoRef = useRef(null);
   const [selectedListingId, setSelectedListingId] = useState(null);
+  // İlan detay modalındaki fotoğraf galerisi için seçili küçük resim indeksi — yeni bir ilan
+  // açıldığında sıfırlanır (bkz. aşağıdaki useEffect), aksi halde bir önceki ilanın 3. fotoğrafı
+  // açıkken yeni ilana geçilince aynı indeks kalır ve dizi sınırını aşabilir.
+  const [selectedListingPhotoIndex, setSelectedListingPhotoIndex] = useState(0);
+  useEffect(() => { setSelectedListingPhotoIndex(0); }, [selectedListingId]);
   const [showOfferForm, setShowOfferForm] = useState(false);
   const [offerAmount, setOfferAmount] = useState("");
   const [showListingMsgForm, setShowListingMsgForm] = useState(false);
@@ -2026,7 +2031,7 @@ function useAppLogic() {
   const toggleDayOpen = (key) => setMechanicHours(h => { const next = { ...h, [key]: { ...h[key], open: !h[key].open } }; persistMechanicHours(next); return next; });
   const toggleSlotClosed = (key, slot) => setMechanicHours(h => { const closed = h[key].closedSlots.includes(slot); const next = { ...h, [key]: { ...h[key], closedSlots: closed ? h[key].closedSlots.filter(s => s !== slot) : [...h[key].closedSlots, slot] } }; persistMechanicHours(next); return next; });
   const addExtraSlot = (key, time) => { if (!time) return; setMechanicHours(h => { if (h[key].extraSlots.includes(time) || genSlots(h[key].start, h[key].end).includes(time)) return h; const next = { ...h, [key]: { ...h[key], extraSlots: [...h[key].extraSlots, time].sort() } }; persistMechanicHours(next); return next; }); };
-  const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: null, _editingId: null }); setShowSellForm(true); };
+  const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], _vehicleId: null, _editingId: null }); setShowSellForm(true); };
   // "Aracımı Satışa Çıkar" tıklanınca: kayıtlı araç(lar)ı varsa hangisini satacağını sorar ve
   // seçilen aracın bilgilerini forma otomatik doldurur; kayıtlı aracı yoksa direkt boş form açar.
   const startSellFlow = () => { if (vehicles.length === 0) { openSellForm(null); return; } setShowSellVehiclePicker(true); };
@@ -2034,10 +2039,21 @@ function useAppLogic() {
     setShowSellVehiclePicker(false);
     const existingListing = listings.find(l => l.id === v.listingId);
     if (existingListing) { openSellForm({ ...existingListing, _vehicleId: v.id, _editingId: existingListing.id }); return; }
-    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: v.id, _editingId: null });
+    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], _vehicleId: v.id, _editingId: null });
   };
   const pickOtherCarToSell = () => { setShowSellVehiclePicker(false); openSellForm(null); };
   const sellPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; setSellForm(f => ({ ...f, photo: URL.createObjectURL(file) })); };
+  // Kapak fotoğrafının yanına eklenen ek galeri fotoğrafları (bkz. ilan detay modalındaki
+  // galeri/thumbnail şeridi) — birden fazla dosya birden seçilebilir, hepsi sellForm.photos
+  // dizisine eklenir.
+  const sellPhotosUpload = (e) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const urls = [];
+    for (let i = 0; i < fileList.length; i++) urls.push(URL.createObjectURL(fileList[i]));
+    setSellForm((f) => ({ ...f, photos: [...(f.photos || []), ...urls] }));
+  };
+  const removeSellPhoto = (idx) => setSellForm((f) => ({ ...f, photos: (f.photos || []).filter((_, i) => i !== idx) }));
   // Bir ilan favorilenmişse (favoriteIds), o ilanla ilgili herhangi bir güncelleme (fiyat, durum, vb.)
   // olduğunda favorileyen kişiye bildirim gönderiyoruz. Demo'da tekil favoriteIds listesi rol bazlı
   // ayrılmadığı için hem owner hem mechanic tarafına düşürüyoruz — hangi rolde bakılırsa görünsün.
@@ -2352,7 +2368,7 @@ function useAppLogic() {
     setQuoteMechSearch, quotePremiumUnlocked, setQuotePremiumUnlocked, showQuotePremiumUpsell, setShowQuotePremiumUpsell, respondingQuoteOfferId, setRespondingQuoteOfferId, quoteOfferForm,
     setQuoteOfferForm, expandedQuoteReqId, setExpandedQuoteReqId, pendingQuoteAccept, setPendingQuoteAccept, coverFileRef, staffFileRefs, expandedDay,
     setExpandedDay, newSlotTime, setNewSlotTime, listings, setListings, showSellForm, setShowSellForm, showSellVehiclePicker,
-    setShowSellVehiclePicker, sellForm, setSellForm, sellPhotoRef, selectedListingId, setSelectedListingId, showOfferForm, setShowOfferForm,
+    setShowSellVehiclePicker, sellForm, setSellForm, sellPhotoRef, selectedListingId, setSelectedListingId, selectedListingPhotoIndex, setSelectedListingPhotoIndex, showOfferForm, setShowOfferForm,
     offerAmount, setOfferAmount, showListingMsgForm, setShowListingMsgForm, listingMsg, setListingMsg, jobListings, setJobListings,
     jobFilters, setJobFilters, selectedJobId, setSelectedJobId, showJobForm, setShowJobForm, jobForm, setJobForm,
     showJobApplyForm, setShowJobApplyForm, jobApplyMsg, setJobApplyMsg, jobApplyCv, setJobApplyCv, jobApplyInfo, setJobApplyInfo,
@@ -2387,7 +2403,7 @@ function useAppLogic() {
     toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
-    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
+    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,

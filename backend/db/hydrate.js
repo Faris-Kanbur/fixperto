@@ -5,7 +5,7 @@ const JSON_FIELDS = {
   mechanics: ["hoursText", "services", "staff", "reviewList", "verificationDocs", "brandsServiced", "paymentMethods"],
   vehicles: ["reminderOverrides", "customReminders", "history"],
   owners: ["favoriteIds"],
-  listings: ["offers", "messages"],
+  listings: ["offers", "messages", "features", "photos"],
   conversations: ["messages"],
   job_listings: ["requirements", "skills", "applicants"],
   appointments: ["issuePhotos"],
@@ -16,6 +16,7 @@ const BOOL_FIELDS = {
   mechanics: ["verified"],
   appointments: ["autoAccepted", "reviewed", "noShow", "historyShareConsent", "depositRefunded"],
   support_tickets: ["refunded"],
+  listings: ["tradeIn"],
 };
 
 export function hydrate(table, row) {

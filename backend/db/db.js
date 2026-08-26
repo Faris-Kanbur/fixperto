@@ -122,7 +122,17 @@ CREATE TABLE IF NOT EXISTS listings (
   messages TEXT DEFAULT '[]',
   fuelType TEXT, transmission TEXT, power TEXT, firstReg TEXT, color TEXT,
   vehicleId INTEGER,
-  shareCount INTEGER DEFAULT 0
+  shareCount INTEGER DEFAULT 0,
+  bodyType TEXT,
+  engineSize TEXT,
+  drivetrain TEXT,
+  ownerCount INTEGER,
+  paintedParts INTEGER DEFAULT 0,
+  changedParts INTEGER DEFAULT 0,
+  tradeIn INTEGER DEFAULT 0,
+  doorCount INTEGER,
+  features TEXT DEFAULT '[]',
+  photos TEXT DEFAULT '[]'
 );
 
 CREATE TABLE IF NOT EXISTS job_listings (
@@ -278,6 +288,16 @@ function ensureColumn(table, columnDef) {
   ["mechanics", "paymentMethods TEXT DEFAULT '[]'"],
   ["listings", "shareCount INTEGER DEFAULT 0"],
   ["job_listings", "shareCount INTEGER DEFAULT 0"],
+  ["listings", "bodyType TEXT"],
+  ["listings", "engineSize TEXT"],
+  ["listings", "drivetrain TEXT"],
+  ["listings", "ownerCount INTEGER"],
+  ["listings", "paintedParts INTEGER DEFAULT 0"],
+  ["listings", "changedParts INTEGER DEFAULT 0"],
+  ["listings", "tradeIn INTEGER DEFAULT 0"],
+  ["listings", "doorCount INTEGER"],
+  ["listings", "features TEXT DEFAULT '[]'"],
+  ["listings", "photos TEXT DEFAULT '[]'"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 // ---------------------------------------------------------------------------
@@ -311,6 +331,36 @@ try {
   });
 } catch (err) {
   console.error("Tamirci marka/ödeme yöntemi backfill hatası:", err.message);
+}
+
+// Aynı gerekçeyle (bkz. MECHANIC_BACKFILL yukarıda): listings tablosu bu alanlar eklenmeden ÖNCE
+// zaten oluşturulmuş olabileceğinden, seed.js'deki zengin örnek veriler yalnızca hâlâ boş/varsayılan
+// olan bilinen demo ilan satırlarına (id 1-8) geriye dönük yazılıyor — kullanıcının kendi girdiği
+// veya düzenlediği ilanlara dokunulmuyor.
+const LISTING_BACKFILL = {
+  1: { bodyType: "Sedan", engineSize: "1.6", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "ABS", "Bluetooth"] },
+  2: { bodyType: "Hatchback/5 Kapı", engineSize: "1.5 dCi", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Hız Sabitleyici (Cruise Control)", "Bluetooth"] },
+  3: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Sunroof/Cam Tavan", "Geri Görüş Kamerası", "Park Sensörü (Ön)", "Park Sensörü (Arka)", "Xenon/LED Far", "Navigasyon", "Alaşım Jant"] },
+  4: { bodyType: "Hatchback/5 Kapı", engineSize: "1.6 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Bluetooth", "ABS"] },
+  5: { bodyType: "Sedan", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Park Sensörü (Arka)"] },
+  6: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 3, paintedParts: 2, changedParts: 1, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Isıtmalı Koltuk", "Sunroof/Cam Tavan", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"] },
+  7: { bodyType: "Hatchback/5 Kapı", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Geri Görüş Kamerası"] },
+  8: { bodyType: "Hatchback/5 Kapı", engineSize: "2.0 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Deri Döşeme", "Xenon/LED Far", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"] },
+};
+try {
+  const listingBackfillStmt = db.prepare(`UPDATE listings SET
+    bodyType = CASE WHEN bodyType IS NULL OR bodyType = '' THEN @bodyType ELSE bodyType END,
+    engineSize = CASE WHEN engineSize IS NULL OR engineSize = '' THEN @engineSize ELSE engineSize END,
+    drivetrain = CASE WHEN drivetrain IS NULL OR drivetrain = '' THEN @drivetrain ELSE drivetrain END,
+    ownerCount = CASE WHEN ownerCount IS NULL THEN @ownerCount ELSE ownerCount END,
+    doorCount = CASE WHEN doorCount IS NULL THEN @doorCount ELSE doorCount END,
+    features = CASE WHEN features IS NULL OR features = '[]' THEN @features ELSE features END
+    WHERE id = @id`);
+  Object.entries(LISTING_BACKFILL).forEach(([id, data]) => {
+    listingBackfillStmt.run({ id: Number(id), bodyType: data.bodyType, engineSize: data.engineSize, drivetrain: data.drivetrain, ownerCount: data.ownerCount, doorCount: data.doorCount, features: JSON.stringify(data.features) });
+  });
+} catch (err) {
+  console.error("İlan araç bilgisi backfill hatası:", err.message);
 }
 
 export function isEmpty(table) {

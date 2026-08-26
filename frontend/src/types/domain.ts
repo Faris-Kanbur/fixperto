@@ -174,6 +174,24 @@ export interface Listing {
   vehicleId: number | null;
   adminRemoved?: boolean;
   shareCount?: number;
+  /** Kasa tipi (Sedan, Hatchback, SUV, ...) — bkz. constants.ts BODY_TYPES. */
+  bodyType?: string;
+  /** Motor hacmi, serbest metin (örn. "1.6", "2.0 TDI"). */
+  engineSize?: string;
+  /** Çekiş tipi — bkz. constants.ts DRIVETRAIN_OPTIONS. */
+  drivetrain?: string;
+  /** Kaçıncı elden (1 = ilk sahibinden). Form input'tan geldiği için year/km gibi string de olabilir. */
+  ownerCount?: number | string;
+  /** Hasar/tramer kaydı: boyalı ve değişen parça sayısı — sahibinden.com/arabam.com kaynaklı. */
+  paintedParts?: number | string;
+  changedParts?: number | string;
+  /** Takas teklifi değerlendirilir mi. */
+  tradeIn?: boolean;
+  doorCount?: number | string;
+  /** Donanım listesi (Klima, ABS, Deri Döşeme, ...) — bkz. constants.ts LISTING_FEATURE_OPTIONS. */
+  features?: string[];
+  /** Ek fotoğraflar (galeri) — boşsa tek `photo` alanı kullanılır. */
+  photos?: string[];
 }
 
 export interface ChatMessage {

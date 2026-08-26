@@ -10,6 +10,17 @@ export const DAY_LABELS_FULL = { mon: "Pazartesi", tue: "Salı", wed: "Çarşamb
 export const JS_DAY_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 export const FUEL_TYPES = ["Benzin", "Dizel", "Elektrik", "Hibrit", "LPG"];
 export const TRANSMISSIONS = ["Manuel", "Otomatik", "Yarı Otomatik"];
+// Araç ilanı detay modalı için — sahibinden.com/arabam.com gibi büyük ikinci el araç
+// platformlarındaki standart ilan alanlarından uyarlandı (kasa tipi, çekiş, donanım listesi vb.).
+export const BODY_TYPES = ["Sedan", "Hatchback/3 Kapı", "Hatchback/5 Kapı", "SUV", "Crossover (SUV)", "Station Wagon", "Coupe", "Cabrio", "Pickup", "Minivan/Panelvan"];
+export const DRIVETRAIN_OPTIONS = ["Önden Çekiş", "Arkadan İtiş", "4x4 (AWD)"];
+export const DOOR_COUNT_OPTIONS = [2, 3, 4, 5];
+export const LISTING_FEATURE_OPTIONS = [
+  "Klima", "Deri Döşeme", "Elektrikli Cam", "Elektrikli Ayna", "Isıtmalı Koltuk", "Sunroof/Cam Tavan",
+  "Geri Görüş Kamerası", "Park Sensörü (Ön)", "Park Sensörü (Arka)", "Xenon/LED Far", "Yağmur Sensörü",
+  "Far Sensörü", "Hız Sabitleyici (Cruise Control)", "Bluetooth", "Navigasyon", "Alaşım Jant",
+  "ABS", "ESP", "Yokuş Kalkış Desteği", "Şerit Takip Asistanı",
+];
 export const EMPLOYMENT_TYPES = ["Tam Zamanlı", "Yarı Zamanlı", "Stajyer/Çırak", "Sözleşmeli"];
 export const EXPERIENCE_LEVELS = ["Deneyim Aranmıyor", "1-3 Yıl", "3-5 Yıl", "5+ Yıl"];
 export const EMPTY_JOB_FORM = { title: "", employmentType: "Tam Zamanlı", experienceLevel: "Deneyim Aranmıyor", location: "", salaryMin: "", salaryMax: "", description: "", requirements: "", skills: "", _editingId: null };

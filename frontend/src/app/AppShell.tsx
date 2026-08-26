@@ -1,5 +1,5 @@
 import { useApp } from "./state/AppLogicProvider";
-import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard } from "lucide-react";
+import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket } from "lucide-react";
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
 import { LangSwitch } from "../components/features/LangSwitch";
@@ -25,6 +25,7 @@ import {
   REMINDER_KIND_LABELS, TRANSMISSIONS, FUEL_TYPES, EMPLOYMENT_TYPES, EXPERIENCE_LEVELS,
   MY_MECHANIC_ID, MY_OWNER_ID, DAY_KEYS, DAY_LABELS_FULL, SHARE_CHANNEL_LABELS,
   CAR_BRANDS, PAYMENT_METHOD_OPTIONS, LANG_LABELS, ATU_FIXED_CATALOG,
+  BODY_TYPES, DRIVETRAIN_OPTIONS, DOOR_COUNT_OPTIONS, LISTING_FEATURE_OPTIONS,
 } from "../data/constants";
 import {
   ticketSlaBreached, ticketDaysOpen, initials, isValidEmail, validatePhone,
@@ -70,7 +71,7 @@ export function AppShell() {
     setQuoteMechSearch, quotePremiumUnlocked, setQuotePremiumUnlocked, showQuotePremiumUpsell, setShowQuotePremiumUpsell, respondingQuoteOfferId, setRespondingQuoteOfferId, quoteOfferForm,
     setQuoteOfferForm, expandedQuoteReqId, setExpandedQuoteReqId, pendingQuoteAccept, setPendingQuoteAccept, coverFileRef, staffFileRefs, expandedDay,
     setExpandedDay, newSlotTime, setNewSlotTime, listings, setListings, showSellForm, setShowSellForm, showSellVehiclePicker,
-    setShowSellVehiclePicker, sellForm, setSellForm, sellPhotoRef, selectedListingId, setSelectedListingId, showOfferForm, setShowOfferForm,
+    setShowSellVehiclePicker, sellForm, setSellForm, sellPhotoRef, selectedListingId, setSelectedListingId, selectedListingPhotoIndex, setSelectedListingPhotoIndex, showOfferForm, setShowOfferForm,
     offerAmount, setOfferAmount, showListingMsgForm, setShowListingMsgForm, listingMsg, setListingMsg, jobListings, setJobListings,
     jobFilters, setJobFilters, selectedJobId, setSelectedJobId, showJobForm, setShowJobForm, jobForm, setJobForm,
     showJobApplyForm, setShowJobApplyForm, jobApplyMsg, setJobApplyMsg, jobApplyCv, setJobApplyCv, jobApplyInfo, setJobApplyInfo,
@@ -105,7 +106,7 @@ export function AppShell() {
     toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
-    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
+    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor, ownerLangFor,
@@ -1574,8 +1575,33 @@ export function AppShell() {
                 <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} onShare={(channel, refCode) => recordShare("listing", selectedListing.id, channel, refCode)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition" />
                 <button onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
               </div>
-              <div className="h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden">{isImgUrl(selectedListing.photo) ? <img src={selectedListing.photo} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : selectedListing.photo}</div>
-              <span className={`absolute bottom-3 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span>
+              {(() => {
+                const galleryPhotos = (selectedListing.photos && selectedListing.photos.length > 0) ? [selectedListing.photo, ...selectedListing.photos] : [selectedListing.photo];
+                const activeIdx = Math.min(selectedListingPhotoIndex, galleryPhotos.length - 1);
+                const activePhoto = galleryPhotos[activeIdx];
+                return (
+                  <>
+                    <div className="h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden relative">
+                      {isImgUrl(activePhoto) ? <img src={activePhoto} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : activePhoto}
+                      {galleryPhotos.length > 1 && (<>
+                        <button onClick={() => setSelectedListingPhotoIndex((activeIdx - 1 + galleryPhotos.length) % galleryPhotos.length)} aria-label="Önceki fotoğraf" className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={16} /></button>
+                        <button onClick={() => setSelectedListingPhotoIndex((activeIdx + 1) % galleryPhotos.length)} aria-label="Sonraki fotoğraf" className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronRight size={16} /></button>
+                        <span className="absolute bottom-3 right-4 text-[10px] font-bold text-white bg-black/40 backdrop-blur px-2 py-1 rounded-full">{activeIdx + 1}/{galleryPhotos.length}</span>
+                      </>)}
+                    </div>
+                    <span className={`absolute bottom-3 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span>
+                    {galleryPhotos.length > 1 && (
+                      <div className="flex gap-1.5 px-4 py-2 bg-gray-50 overflow-x-auto">
+                        {galleryPhotos.map((p, i) => (
+                          <button key={i} onClick={() => setSelectedListingPhotoIndex(i)} className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 flex items-center justify-center text-xl bg-white ${i === activeIdx ? "border-rose-600" : "border-transparent opacity-70"}`}>
+                            {isImgUrl(p) ? <img src={p} alt={`Fotoğraf ${i + 1}`} className="w-full h-full object-cover" /> : p}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
             <div className="flex-1 overflow-y-auto p-5 md:p-8">
               <h1 className="text-xl font-bold text-gray-800">{selectedListing.brand} {selectedListing.model}</h1>
@@ -1587,9 +1613,38 @@ export function AppShell() {
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Cog size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("transmission")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.transmission || "—"}</p></div>
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Zap size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("power")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.power ? `${selectedListing.power} HP` : "—"}</p></div>
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Palette size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("color")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.color || "—"}</p></div>
+                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Car size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Kasa Tipi</p><p className="text-xs font-bold text-gray-700">{selectedListing.bodyType || "—"}</p></div>
+                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Wrench size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Motor Hacmi</p><p className="text-xs font-bold text-gray-700">{selectedListing.engineSize || "—"}</p></div>
+                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Çekiş</p><p className="text-xs font-bold text-gray-700">{selectedListing.drivetrain || "—"}</p></div>
+                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><DoorOpen size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Kapı Sayısı</p><p className="text-xs font-bold text-gray-700">{selectedListing.doorCount || "—"}</p></div>
               </div>
               <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 flex-wrap"><span className={`px-2 py-1 rounded-full font-medium ${selectedListing.sellerType === "mechanic" ? "bg-rose-100 text-rose-700" : "bg-rose-50 text-rose-600"}`}>{selectedListing.sellerType === "mechanic" ? "🔧 Tamirci" : "👤 Sahibinden"}</span><span>{selectedListing.sellerName}</span><span className="text-gray-300">·</span><span className="text-gray-400">İlan #{selectedListing.id}</span></div>
               <p className="text-sm text-gray-600 mt-4 leading-relaxed">{selectedListing.description}</p>
+              {(selectedListing.ownerCount || selectedListing.paintedParts !== undefined || selectedListing.changedParts !== undefined || selectedListing.tradeIn) && (
+                <div className="mt-4">
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Shield size={15} className="text-rose-500" /> Araç Geçmişi</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {!!selectedListing.ownerCount && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-700"><User size={12} /> {selectedListing.ownerCount}. Sahibinden</span>)}
+                    {(!Number(selectedListing.paintedParts) && !Number(selectedListing.changedParts)) ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><BadgeCheck size={12} /> Boya-Değişen Yok</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"><PaintBucket size={12} /> Boyalı: {Number(selectedListing.paintedParts) || 0} parça · Değişen: {Number(selectedListing.changedParts) || 0} parça</span>
+                    )}
+                    {!!selectedListing.tradeIn && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200"><Repeat size={12} /> Takas Yapılır</span>)}
+                  </div>
+                </div>
+              )}
+              {selectedListing.features && selectedListing.features.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Tag size={15} className="text-rose-500" /> Donanım</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedListing.features.map((f, i) => {
+                      const palette = ["bg-rose-50 text-rose-700 border-rose-200", "bg-blue-50 text-blue-700 border-blue-200", "bg-amber-50 text-amber-700 border-amber-200", "bg-emerald-50 text-emerald-700 border-emerald-200", "bg-violet-50 text-violet-700 border-violet-200", "bg-cyan-50 text-cyan-700 border-cyan-200"];
+                      return (<span key={f} className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border ${palette[i % palette.length]}`}><Tag size={10} /> {f}</span>);
+                    })}
+                  </div>
+                </div>
+              )}
               {(() => {
                 const isOwnListing = selectedListing.sellerName === (role === "owner" ? ownerProfile.name : myProfile?.name);
                 const activeOffers = selectedListing.offers.filter(o => o.status !== "replaced");
@@ -1603,7 +1658,7 @@ export function AppShell() {
                     </div>
                     <div className="mt-3 bg-white border border-gray-200 rounded-2xl p-3"><div className="flex items-center justify-between mb-2"><h4 className="text-xs font-semibold text-gray-500">{t("listingStatus")}</h4><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span></div><div className="flex gap-2">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(selectedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${selectedListing.status === st ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div></div>
                     <div className="flex gap-2 mt-3">
-                      <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Pencil size={14} /> İlanı Düzenle</button>
+                      <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, bodyType: selectedListing.bodyType || "", engineSize: selectedListing.engineSize || "", drivetrain: selectedListing.drivetrain || "", ownerCount: selectedListing.ownerCount || "", paintedParts: selectedListing.paintedParts ?? "", changedParts: selectedListing.changedParts ?? "", tradeIn: !!selectedListing.tradeIn, doorCount: selectedListing.doorCount || "", features: selectedListing.features || [], photos: selectedListing.photos || [], _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Pencil size={14} /> İlanı Düzenle</button>
                       <button onClick={() => setConfirmDialog({ title: "İlanı sil", body: "Bu ilanı silmek istediğinizden emin misiniz? Gelen teklifler ve mesajlar dahil tüm veriler kalıcı olarak silinir.", confirmLabel: "Evet, Sil", danger: true, onConfirm: () => { removeListing(selectedListing.id); setSelectedListingId(null); } })} aria-label="İlanı sil" className="flex-shrink-0 border border-gray-200 text-red-400 hover:text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-xl transition"><Trash2 size={16} /></button>
                     </div>
                     <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-2 flex items-center gap-2"><Banknote size={15} className="text-rose-600" /> Teklifler {activeOffers.length > 0 && <span className="text-gray-300 font-normal">({activeOffers.length})</span>}</h3>
@@ -2369,6 +2424,20 @@ export function AppShell() {
               <div className="flex gap-2"><input value={sellForm.power} onChange={(e) => setSellForm({ ...sellForm, power: e.target.value })} placeholder="Güç (HP)" type="number" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.color} onChange={(e) => setSellForm({ ...sellForm, color: e.target.value })} placeholder="Renk" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
               <input value={sellForm.firstReg} onChange={(e) => setSellForm({ ...sellForm, firstReg: e.target.value })} placeholder="İlk Tescil (örn. 03.2019)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
               <textarea value={sellForm.description} onChange={(e) => setSellForm({ ...sellForm, description: e.target.value })} placeholder="Açıklama" rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">Araç Detayları</p>
+              <div className="flex gap-2"><select value={sellForm.bodyType} onChange={(e) => setSellForm({ ...sellForm, bodyType: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700"><option value="">Kasa Tipi</option>{BODY_TYPES.map(b => <option key={b}>{b}</option>)}</select><select value={sellForm.drivetrain} onChange={(e) => setSellForm({ ...sellForm, drivetrain: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700"><option value="">Çekiş</option>{DRIVETRAIN_OPTIONS.map(d => <option key={d}>{d}</option>)}</select></div>
+              <div className="flex gap-2"><input value={sellForm.engineSize} onChange={(e) => setSellForm({ ...sellForm, engineSize: e.target.value })} placeholder="Motor Hacmi (örn. 1.6)" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><select value={sellForm.doorCount} onChange={(e) => setSellForm({ ...sellForm, doorCount: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700"><option value="">Kapı Sayısı</option>{DOOR_COUNT_OPTIONS.map(d => <option key={d} value={d}>{d} Kapı</option>)}</select></div>
+              <div className="flex gap-2"><input value={sellForm.ownerCount} onChange={(e) => setSellForm({ ...sellForm, ownerCount: e.target.value })} type="number" min="1" placeholder="Kaçıncı El (örn. 2)" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><button type="button" onClick={() => setSellForm({ ...sellForm, tradeIn: !sellForm.tradeIn })} className={`w-1/2 px-3 py-2.5 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition ${sellForm.tradeIn ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500"}`}><Repeat size={14} /> Takas {sellForm.tradeIn ? "Var" : "Yok"}</button></div>
+              <div className="flex gap-2"><input value={sellForm.paintedParts} onChange={(e) => setSellForm({ ...sellForm, paintedParts: e.target.value })} type="number" min="0" placeholder="Boyalı Parça Sayısı" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.changedParts} onChange={(e) => setSellForm({ ...sellForm, changedParts: e.target.value })} type="number" min="0" placeholder="Değişen Parça Sayısı" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">Donanım</p>
+              <div className="flex flex-wrap gap-1.5">{LISTING_FEATURE_OPTIONS.map(f => { const active = (sellForm.features || []).includes(f); return (<button key={f} type="button" onClick={() => { const cur = sellForm.features || []; setSellForm({ ...sellForm, features: active ? cur.filter(x => x !== f) : [...cur, f] }); }} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium border transition ${active ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{f}</button>); })}</div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">Ek Fotoğraflar</p>
+              <div className="flex flex-wrap gap-2">
+                {(sellForm.photos || []).map((p, i) => (
+                  <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200"><img src={p} alt={`Ek fotoğraf ${i + 1}`} className="w-full h-full object-cover" /><button type="button" onClick={() => removeSellPhoto(i)} aria-label="Fotoğrafı kaldır" className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center text-white"><X size={9} /></button></div>
+                ))}
+                <label className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:text-rose-500 hover:border-rose-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
+              </div>
             </div>
             <button onClick={() => submitListing(role)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-rose-700 transition">{sellForm._editingId ? t("updateListing") : t("publishListing")}</button>
           </div>
