@@ -111,17 +111,25 @@ export function MechCard({ m, onHover }) {
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
   return (
-    <button onClick={() => openDetail(m)} onMouseEnter={() => onHover && onHover(m.id)} onMouseLeave={() => onHover && onHover(null)} className={`w-full text-left bg-white border rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden group ${onHover && hoveredPinId === m.id ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-200 hover:border-gray-300"}`}>
-      <div className={`h-20 bg-gradient-to-br ${BANNER_PRESETS[m.bannerPreset] || BANNER_PRESETS.blue} flex items-center justify-center relative overflow-hidden`} style={m.coverPhoto ? { backgroundImage: `url(${m.coverPhoto})`, backgroundSize: "cover", backgroundPosition: "center" } : {}}>
-        {!m.coverPhoto && <span className="relative text-2xl w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-105 transition">{m.img}</span>}
-        {m.rating >= 4.7 && <span className="absolute top-2 right-2 bg-white text-gray-800 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-sm"><Star size={10} className="fill-gray-800" /> Öne Çıkan</span>}
-        {m.verified && <span className="absolute top-2 left-2 bg-white text-rose-600 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-sm"><BadgeCheck size={11} /> Doğrulandı</span>}
+    <button onClick={() => openDetail(m)} onMouseEnter={() => onHover && onHover(m.id)} onMouseLeave={() => onHover && onHover(null)} className={`group w-full text-left bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === m.id ? "ring-2 ring-rose-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
+      <div className="relative m-2 mb-0 rounded-2xl overflow-hidden">
+        <div className={`aspect-[16/10] bg-gradient-to-br ${BANNER_PRESETS[m.bannerPreset] || BANNER_PRESETS.blue} flex items-center justify-center relative overflow-hidden`} style={m.coverPhoto ? { backgroundImage: `url(${m.coverPhoto})`, backgroundSize: "cover", backgroundPosition: "center" } : {}}>
+          {!m.coverPhoto && <span className="relative text-4xl w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm transition-transform duration-500 ease-out group-hover:scale-105">{m.img}</span>}
+        </div>
+        {m.rating >= 4.7 && <span className="absolute top-3 right-3 bg-white text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><Star size={10} className="fill-gray-800" /> Öne Çıkan</span>}
+        {m.verified && <span className="absolute top-3 left-3 bg-white text-rose-600 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><BadgeCheck size={11} /> Doğrulandı</span>}
       </div>
-      <div className="p-3">
-        <div className="flex justify-between items-start gap-2"><h3 className="font-semibold text-gray-800 text-sm truncate">{m.name}</h3><PriceLevelDots price={m.price} /></div>
-        <p className="text-xs text-gray-400 mt-0.5 truncate">{m.specialty}</p>
-        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500"><span className="flex items-center gap-1"><MapPin size={12} />{(m.effectiveDistance ?? m.distance).toFixed(1)} km{userLocation && m.effectiveDistance != null && <span title="Gerçek konum"><CheckCircle2 size={11} className="text-green-500" /></span>}</span><span className="flex items-center gap-1"><Star size={12} className="text-gray-900 fill-gray-900" />{m.rating} ({m.reviews})</span></div>
-        <div className="flex items-center gap-2 mt-2 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? "Şu an açık" : "Şu an kapalı"}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Zap size={10} className="text-gray-900" /> Ort. {m.avgResponseMinutes} dk yanıt</span>}</div>
+      <div className="p-4">
+        <div className="flex justify-between items-start gap-2">
+          <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">{m.name}</h3>
+          <span className="flex-shrink-0 flex items-center gap-1 text-sm font-semibold text-gray-900"><Star size={13} className="fill-gray-900" />{m.rating}<span className="text-gray-400 font-normal text-xs">({m.reviews})</span></span>
+        </div>
+        <p className="text-gray-400 text-xs mt-1 truncate">{m.specialty}</p>
+        <div className="flex items-center justify-between gap-2 mt-2.5">
+          <span className="flex items-center gap-1 text-xs text-gray-500"><MapPin size={12} />{(m.effectiveDistance ?? m.distance).toFixed(1)} km{userLocation && m.effectiveDistance != null && <span title="Gerçek konum"><CheckCircle2 size={11} className="text-green-500" /></span>}</span>
+          <PriceLevelDots price={m.price} />
+        </div>
+        <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? "Şu an açık" : "Şu an kapalı"}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Zap size={10} className="text-gray-900" /> Ort. {m.avgResponseMinutes} dk yanıt</span>}</div>
       </div>
     </button>
   );

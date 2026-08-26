@@ -117,26 +117,30 @@ export function ListingCard({ l, onHover = undefined }) {
     const unseenOfferCount = isMine ? l.offers.filter(o => o.status === "pending" && !o.seen).length : 0;
     const questionCount = isMine ? l.messages.length : 0;
     return (
-      <div onMouseEnter={() => onHover && onHover(l.id)} onMouseLeave={() => onHover && onHover(null)} className={`bg-white border rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden ${onHover && hoveredPinId === l.id ? "border-rose-400 ring-2 ring-rose-200" : "border-gray-100"}`}>
-        <div className="h-36 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-5xl overflow-hidden relative">
-          <button onClick={() => setSelectedListingId(l.id)} className="absolute inset-0 w-full h-full flex items-center justify-center">
-            {isImgUrl(l.photo) ? <img src={l.photo} className="w-full h-full object-cover" /> : l.photo}
-          </button>
-          <span className={`absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-1 rounded-full pointer-events-none ${meta.color}`}>{meta.label}</span>
-          <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} className="absolute top-2 right-2 z-10 w-8 h-8 bg-white/95 rounded-full shadow flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-400"} /></button>
-        </div>
-        <button onClick={() => setSelectedListingId(l.id)} className="w-full text-left p-3">
-          <h3 className="font-semibold text-gray-800 text-sm">{l.brand} {l.model}</h3>
-          <p className="text-rose-700 font-bold text-base mt-0.5">{l.price}</p>
-          <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-2 text-[11px] text-gray-500">
-            <span className="flex items-center gap-1"><Gauge size={11} className="text-gray-400" />{Number(l.km).toLocaleString("tr-TR")} km</span>
-            <span className="flex items-center gap-1"><CalendarDays size={11} className="text-gray-400" />{l.firstReg || l.year}</span>
-            <span className="flex items-center gap-1"><Fuel size={11} className="text-gray-400" />{l.fuelType}</span>
-            <span className="flex items-center gap-1"><Cog size={11} className="text-gray-400" />{l.transmission}</span>
+      <div onMouseEnter={() => onHover && onHover(l.id)} onMouseLeave={() => onHover && onHover(null)} className={`group bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === l.id ? "ring-2 ring-rose-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
+        <div className="relative m-2 mb-0 rounded-2xl overflow-hidden">
+          <div className="aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+            <button onClick={() => setSelectedListingId(l.id)} className="w-full h-full flex items-center justify-center text-6xl">
+              {isImgUrl(l.photo) ? <img src={l.photo} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" /> : l.photo}
+            </button>
           </div>
-          <div className="flex items-center gap-1.5 mt-2 text-[10px] text-gray-400"><span className={`px-1.5 py-0.5 rounded-full font-medium ${l.sellerType === "mechanic" ? "bg-rose-100 text-rose-700" : "bg-rose-50 text-rose-600"}`}>{l.sellerType === "mechanic" ? "🔧 Tamirci" : "👤 Sahibinden"}</span><span className="text-gray-300">#{l.id}</span></div>
+          <span className={`absolute top-3 left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full pointer-events-none shadow-sm ${meta.color}`}>{meta.label}</span>
+          <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label="Favorilere ekle" className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
+        </div>
+        <button onClick={() => setSelectedListingId(l.id)} className="w-full text-left p-4">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">{l.brand} {l.model}</h3>
+            <span className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.sellerType === "mechanic" ? "bg-rose-50 text-rose-700" : "bg-gray-100 text-gray-600"}`}>{l.sellerType === "mechanic" ? "🔧 Tamirci" : "👤 Sahibinden"}</span>
+          </div>
+          <p className="text-gray-400 text-xs mt-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
+            <span className="flex items-center gap-1"><Gauge size={11} />{Number(l.km).toLocaleString("tr-TR")} km</span>
+            <span className="flex items-center gap-1"><CalendarDays size={11} />{l.firstReg || l.year}</span>
+            <span className="flex items-center gap-1"><Fuel size={11} />{l.fuelType}</span>
+            <span className="flex items-center gap-1"><Cog size={11} />{l.transmission}</span>
+          </p>
+          <p className="text-gray-900 font-bold text-lg mt-2.5">{l.price}</p>
           {isMine && (pendingOfferCount > 0 || questionCount > 0) && (
-            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-50">
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
               {pendingOfferCount > 0 && <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${unseenOfferCount > 0 ? "bg-rose-200 text-rose-800" : "bg-gray-100 text-gray-500"}`}><Banknote size={10} /> {pendingOfferCount} teklif{unseenOfferCount > 0 ? " (yeni)" : ""}</span>}
               {questionCount > 0 && <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600"><MessageCircle size={10} /> {questionCount} soru</span>}
             </div>

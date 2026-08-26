@@ -1216,13 +1216,13 @@ export function AppShell() {
             </div>
             {ownerTab === "search" ? <BrowseHome /> : (
               <div className="flex-1 overflow-y-auto">
-                {ownerTab === "market" && (<div className="px-5 py-4"><button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>{listings.filter(l => l.sellerName === ownerProfile.name).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{listings.filter(l => l.sellerName === ownerProfile.name).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}</div>)}
+                {ownerTab === "market" && (<div className="px-5 py-4"><button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>{listings.filter(l => l.sellerName === ownerProfile.name).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(l => l.sellerName === ownerProfile.name).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}</div>)}
                 {ownerTab === "favorites" && (
                   <div className="px-5 py-4">
                     {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
                       <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz favori eklemediniz.</p><p className="text-gray-300 text-xs mt-1">İlan kartlarındaki kalp ikonuna dokunarak favorilere ekleyebilirsiniz.</p></div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                     )}
                   </div>
                 )}
@@ -1355,7 +1355,7 @@ export function AppShell() {
                   <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> Bilgilerime Dön</button>
                   <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> Sattığım Araçlar</h2>
                   <button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
-                  {listings.filter(l => l.sellerName === ownerProfile.name).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{listings.filter(l => l.sellerName === ownerProfile.name).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
+                  {listings.filter(l => l.sellerName === ownerProfile.name).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(l => l.sellerName === ownerProfile.name).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
                 </>
               )}
               {ownerProfileTab === "favorites" && (
@@ -1365,7 +1365,7 @@ export function AppShell() {
                   {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
                     <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz favori eklemediniz.</p><p className="text-gray-300 text-xs mt-1">İlan kartlarındaki kalp ikonuna dokunarak favorilere ekleyebilirsiniz.</p></div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   )}
                 </>
               )}

@@ -139,7 +139,7 @@ export function BrowseHome({ theme = undefined }) {
             <p className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} tamirci bulundu</p>
           </div>
           <div className="md:flex md:gap-6">
-            <div className="md:w-[58%]"><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{locationStatus === "loading" ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />) : filtered.map(m => (<MechCard key={m.id} m={m} onHover={setHoveredPinId} />))}</div></div>
+            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{locationStatus === "loading" ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />) : filtered.map(m => (<MechCard key={m.id} m={m} onHover={setHoveredPinId} />))}</div></div>
             <div className="hidden md:block md:w-[42%] md:sticky md:top-4 md:self-start"><MapPanel className="h-[65vh]" items={filtered} onPick={openMapDetail} hoveredId={hoveredPinId} onHoverItem={setHoveredPinId} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /></div>
           </div>
         </div>
@@ -156,7 +156,7 @@ export function BrowseHome({ theme = undefined }) {
             <p className="text-xs text-gray-400 whitespace-nowrap">{filteredListings.length} ilan bulundu</p>
           </div>
           <div className="md:flex md:gap-6">
-            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 relative">{filteredListings.map(l => (<ListingCard key={l.id} l={l} onHover={setHoveredPinId} />))}{filteredListings.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">Bu filtrelere uyan ilan bulunamadı</p>{(activeListingFilterCount > 0 || query.trim()) && <button onClick={() => { clearListingFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">Filtreleri Temizle</button>}</div>)}</div></div>
+            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative">{filteredListings.map(l => (<ListingCard key={l.id} l={l} onHover={setHoveredPinId} />))}{filteredListings.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">Bu filtrelere uyan ilan bulunamadı</p>{(activeListingFilterCount > 0 || query.trim()) && <button onClick={() => { clearListingFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">Filtreleri Temizle</button>}</div>)}</div></div>
             <div className="hidden md:block md:w-[42%] md:sticky md:top-4 md:self-start"><MapPanel className="h-[65vh]" items={filteredListings} onPick={(l) => setSelectedListingId(l.id)} hoveredId={hoveredPinId} onHoverItem={setHoveredPinId} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /></div>
           </div>
         </div>

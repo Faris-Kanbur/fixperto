@@ -108,9 +108,9 @@ export function SkeletonCard() {
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden animate-pulse">
-      <div className="h-20 bg-gray-100" />
-      <div className="p-3 space-y-2">
+    <div className="bg-white rounded-3xl shadow-sm overflow-hidden animate-pulse">
+      <div className="m-2 mb-0 rounded-2xl aspect-[16/10] bg-gray-100" />
+      <div className="p-4 space-y-2.5">
         <div className="flex justify-between gap-2"><div className="h-3.5 bg-gray-200 rounded w-2/3" /><div className="h-3.5 bg-gray-200 rounded w-10" /></div>
         <div className="h-2.5 bg-gray-100 rounded w-1/2" />
         <div className="flex gap-3"><div className="h-2.5 bg-gray-100 rounded w-12" /><div className="h-2.5 bg-gray-100 rounded w-16" /></div>
