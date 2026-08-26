@@ -873,7 +873,12 @@ function useAppLogic() {
       const createdOffers = await Promise.all(offerDrafts.map(o => api.quoteOffers.create(o)));
       setQuoteOffers(os => [...createdOffers, ...os]);
       if (selectedMechIds.includes(MY_MECHANIC_ID)) {
-        fireNotification("Yeni teklif isteği 📋", `${customerName} sizden "${issueText.slice(0, 50)}" için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" });
+        // Not: bildirim metnine arıza açıklamasını (issueText) doğrudan gömmüyoruz — bu metin
+        // müşterinin kendi dilinde yazılmış olabilir ve bildirim burada sabit bir dizgi olduğu
+        // için TranslatedText gibi canlı çeviri altyapısından yararlanamaz (bkz. kullanıcı geri
+        // bildirimi: tamircinin dili değiştirilse bile bildirimde hep orijinal dilde kalıyordu).
+        // Doğru çevrilmiş hali zaten "Teklifler" sekmesinde (bkz. mechReqView === "quotes") gösteriliyor.
+        fireNotification("Yeni teklif isteği 📋", `${customerName} sizden yeni bir arıza için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" });
       }
     } catch (err) {
       setToast({ type: "info", text: `⚠️ Teklif isteği kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
@@ -911,7 +916,7 @@ function useAppLogic() {
     setScreen("booking");
     setToast({ type: "info", text: `✅ ${mech.name} teklifini kabul ettiniz, randevu saatinizi seçin.` });
     if (myLostOffer) {
-      fireNotification("Teklif isteği sonuçlandı", `"${req.issue.slice(0, 40)}" için verdiğiniz teklif kabul edilmedi, müşteri başka bir tamirciyi seçti.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" });
+      fireNotification("Teklif isteği sonuçlandı", "Verdiğiniz teklif kabul edilmedi, müşteri başka bir tamirciyi seçti.", mechSettings.notifyOffers, "mechanic", { type: "appointment" });
     }
   };
   const EXPENSIVE_SERVICE_THRESHOLD = 1500;
