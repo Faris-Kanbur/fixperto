@@ -280,6 +280,39 @@ function ensureColumn(table, columnDef) {
   ["job_listings", "shareCount INTEGER DEFAULT 0"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
+// ---------------------------------------------------------------------------
+// Tek seferlik veri düzeltmesi (backfill): brandsServiced/paymentMethods sütunları yukarıdaki
+// ensureColumn ile eklendiğinde, "CREATE TABLE IF NOT EXISTS" zaten devrede olduğu için (yani
+// mechanics tablosu bu sütunlar eklenmeden ÖNCE zaten oluşturulmuş ve doldurulmuşsa) ALTER TABLE
+// mevcut satırlara sadece DEFAULT '[]' atar — backend/db/seed.js'deki gerçek marka/ödeme
+// yöntemi verileri yalnızca sıfırdan oluşturulan bir veritabanında INSERT ile eklenir, var olan
+// satırları geriye dönük doldurmaz. Bu yüzden burada, hâlâ boş dizi ('[]') olan bilinen demo
+// tamirci satırlarını seed.js ile birebir aynı verilerle dolduruyoruz — kullanıcının kendi
+// profilinden zaten seçim yapmış olduğu satırlara (yani artık '[]' olmayanlara) DOKUNMUYORUZ.
+const MECHANIC_BACKFILL = {
+  1: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Hyundai"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"] },
+  2: { brandsServiced: ["Renault", "Fiat", "Ford", "Opel", "Hyundai", "Peugeot"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"] },
+  3: { brandsServiced: ["Volkswagen", "BMW", "Mercedes-Benz", "Audi"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"] },
+  4: { brandsServiced: ["Renault", "Fiat", "Dacia", "Tofaş", "Hyundai"], paymentMethods: ["Nakit"] },
+  5: { brandsServiced: ["BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Mini"], paymentMethods: ["Kredi/Banka Kartı", "Havale/EFT"] },
+  6: { brandsServiced: ["Fiat", "Renault", "Tofaş", "Dacia"], paymentMethods: ["Nakit"] },
+  7: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Opel"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"] },
+  8: { brandsServiced: ["Renault", "Fiat", "Hyundai", "Toyota"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"] },
+  9: { brandsServiced: ["Renault", "Ford", "Opel", "Volkswagen"], paymentMethods: ["Nakit", "Havale/EFT"] },
+  10: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Honda"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT", "Kapıda Ödeme"] },
+};
+try {
+  const backfillStmt = db.prepare(`UPDATE mechanics SET
+    brandsServiced = CASE WHEN brandsServiced IS NULL OR brandsServiced = '[]' THEN @brandsServiced ELSE brandsServiced END,
+    paymentMethods = CASE WHEN paymentMethods IS NULL OR paymentMethods = '[]' THEN @paymentMethods ELSE paymentMethods END
+    WHERE id = @id`);
+  Object.entries(MECHANIC_BACKFILL).forEach(([id, data]) => {
+    backfillStmt.run({ id: Number(id), brandsServiced: JSON.stringify(data.brandsServiced), paymentMethods: JSON.stringify(data.paymentMethods) });
+  });
+} catch (err) {
+  console.error("Tamirci marka/ödeme yöntemi backfill hatası:", err.message);
+}
+
 export function isEmpty(table) {
   return db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n === 0;
 }
