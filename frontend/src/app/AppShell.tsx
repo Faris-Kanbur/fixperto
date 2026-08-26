@@ -250,6 +250,14 @@ export function AppShell() {
       })()}
       {showQuoteModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] flex items-center justify-center p-4 overflow-y-auto" style={{ zIndex: 9000 }} onClick={closeQuoteModal}>
+          {showQuotePremiumUpsell && (
+            <div style={{ zIndex: 9500 }} className="fixed top-5 left-1/2 -translate-x-1/2 w-[92%] max-w-sm pointer-events-none">
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl shadow-lg p-3 text-center">
+                <p className="text-xs font-semibold text-amber-700">⭐ {FREE_QUOTE_MECH_LIMIT}'ten fazla tamirci seçmek Premium özelliktir</p>
+                <p className="text-[11px] text-amber-600 mt-0.5">Premium ile aynı anda {PREMIUM_QUOTE_MECH_LIMIT} tamirciye kadar teklif isteyebilirsiniz.</p>
+              </div>
+            </div>
+          )}
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg my-auto max-h-[90vh] flex flex-col overflow-hidden">
             <div className="px-5 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <div>
@@ -320,16 +328,6 @@ export function AppShell() {
                   })}
                   {quoteFilteredMechanics.length === 0 && <p className="text-center text-gray-400 text-xs py-6">Bu kriterlere uyan tamirci bulunamadı.</p>}
                 </div>
-                {showQuotePremiumUpsell && (
-                  <div className="mt-2 bg-amber-50 border border-amber-100 rounded-xl p-3">
-                    <p className="text-xs font-semibold text-amber-700 mb-0.5">⭐ {FREE_QUOTE_MECH_LIMIT}'ten fazla tamirci seçmek Premium özelliktir</p>
-                    <p className="text-[11px] text-amber-600 mb-2">Premium ile aynı anda {PREMIUM_QUOTE_MECH_LIMIT} tamirciye kadar teklif isteyebilirsiniz.</p>
-                    <div className="flex gap-2">
-                      <button onClick={() => setShowQuotePremiumUpsell(false)} className="flex-1 border border-amber-200 text-amber-700 text-[11px] py-1.5 rounded-lg font-medium">Kapat</button>
-                      <button onClick={unlockQuotePremium} className="flex-1 bg-amber-500 text-white text-[11px] py-1.5 rounded-lg font-medium">Premium'a Geç (Demo)</button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
             <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">

@@ -509,6 +509,10 @@ function useAppLogic() {
   const [adminChangeLog, setAdminChangeLog] = useState([]);
   useEffect(() => { if (!toast) return; const tm = setTimeout(() => setToast(null), 3200); return () => clearTimeout(tm); }, [toast]);
   useEffect(() => { if (!successPulse) return; const tm = setTimeout(() => setSuccessPulse(null), 1400); return () => clearTimeout(tm); }, [successPulse]);
+  // 5'ten fazla tamirci seçilince çıkan Premium uyarısı — listenin altında kalıp fark
+  // edilmediği için (bkz. kullanıcı geri bildirimi) artık üstte kısa süreliğine beliren
+  // bir uyarıya dönüştürüldü, tıpkı toast gibi kendiliğinden kapanıyor.
+  useEffect(() => { if (!showQuotePremiumUpsell) return; const tm = setTimeout(() => setShowQuotePremiumUpsell(false), 2200); return () => clearTimeout(tm); }, [showQuotePremiumUpsell]);
   const fireSuccessPulse = (text) => setSuccessPulse(text);
   useEffect(() => { if (screen === "booking" && !selectedBookingVehicleId && vehicles.length > 0) setSelectedBookingVehicleId(vehicles[0].id); }, [screen, vehicles, selectedBookingVehicleId]);
   useEffect(() => { if (screen === "booking") { setBookingService(null); setBookingServiceSearch(""); setPaymentForm(f => ({ ...f, method: "card" })); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); } }, [selectedMechanicId]);
