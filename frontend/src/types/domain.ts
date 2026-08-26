@@ -192,6 +192,15 @@ export interface Listing {
   features?: string[];
   /** Ek fotoğraflar (galeri) — boşsa tek `photo` alanı kullanılır. */
   photos?: string[];
+  /** Almanya pazarındaki (mobile.de/AutoScout24) ilan alanlarından uyarlandı — koltuk sayısı,
+   * ortalama yakıt tüketimi (l/100km), CO2 emisyonu (g/km) ve emisyon/Euro normu sınıfı. */
+  seatCount?: number | string;
+  fuelConsumption?: string;
+  co2Emission?: number | string;
+  emissionClass?: string;
+  /** Sadece elektrikli/hibrit araçlarda anlamlı: batarya kapasitesi (kWh) ve menzil (km). */
+  batteryCapacity?: string;
+  rangeKm?: number | string;
 }
 
 export interface ChatMessage {

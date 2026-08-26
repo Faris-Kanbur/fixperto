@@ -132,7 +132,13 @@ CREATE TABLE IF NOT EXISTS listings (
   tradeIn INTEGER DEFAULT 0,
   doorCount INTEGER,
   features TEXT DEFAULT '[]',
-  photos TEXT DEFAULT '[]'
+  photos TEXT DEFAULT '[]',
+  seatCount INTEGER,
+  fuelConsumption TEXT,
+  co2Emission INTEGER,
+  emissionClass TEXT,
+  batteryCapacity TEXT,
+  rangeKm INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS job_listings (
@@ -298,6 +304,12 @@ function ensureColumn(table, columnDef) {
   ["listings", "doorCount INTEGER"],
   ["listings", "features TEXT DEFAULT '[]'"],
   ["listings", "photos TEXT DEFAULT '[]'"],
+  ["listings", "seatCount INTEGER"],
+  ["listings", "fuelConsumption TEXT"],
+  ["listings", "co2Emission INTEGER"],
+  ["listings", "emissionClass TEXT"],
+  ["listings", "batteryCapacity TEXT"],
+  ["listings", "rangeKm INTEGER"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 // ---------------------------------------------------------------------------
@@ -338,14 +350,14 @@ try {
 // olan bilinen demo ilan satırlarına (id 1-8) geriye dönük yazılıyor — kullanıcının kendi girdiği
 // veya düzenlediği ilanlara dokunulmuyor.
 const LISTING_BACKFILL = {
-  1: { bodyType: "Sedan", engineSize: "1.6", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "ABS", "Bluetooth"] },
-  2: { bodyType: "Hatchback/5 Kapı", engineSize: "1.5 dCi", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Hız Sabitleyici (Cruise Control)", "Bluetooth"] },
-  3: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Sunroof/Cam Tavan", "Geri Görüş Kamerası", "Park Sensörü (Ön)", "Park Sensörü (Arka)", "Xenon/LED Far", "Navigasyon", "Alaşım Jant"] },
-  4: { bodyType: "Hatchback/5 Kapı", engineSize: "1.6 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Bluetooth", "ABS"] },
-  5: { bodyType: "Sedan", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Park Sensörü (Arka)"] },
-  6: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 3, paintedParts: 2, changedParts: 1, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Isıtmalı Koltuk", "Sunroof/Cam Tavan", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"] },
-  7: { bodyType: "Hatchback/5 Kapı", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Geri Görüş Kamerası"] },
-  8: { bodyType: "Hatchback/5 Kapı", engineSize: "2.0 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Deri Döşeme", "Xenon/LED Far", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"] },
+  1: { bodyType: "Sedan", engineSize: "1.6", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "ABS", "Bluetooth"], seatCount: 5, fuelConsumption: "6.5", co2Emission: 148, emissionClass: "Euro 6" },
+  2: { bodyType: "Hatchback/5 Kapı", engineSize: "1.5 dCi", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Hız Sabitleyici (Cruise Control)", "Bluetooth"], seatCount: 5, fuelConsumption: "4.2", co2Emission: 110, emissionClass: "Euro 6" },
+  3: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Sunroof/Cam Tavan", "Geri Görüş Kamerası", "Park Sensörü (Ön)", "Park Sensörü (Arka)", "Xenon/LED Far", "Navigasyon", "Alaşım Jant"], seatCount: 5, fuelConsumption: "6.8", co2Emission: 155, emissionClass: "Euro 6" },
+  4: { bodyType: "Hatchback/5 Kapı", engineSize: "1.6 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Bluetooth", "ABS"], seatCount: 5, fuelConsumption: "4.5", co2Emission: 118, emissionClass: "Euro 6" },
+  5: { bodyType: "Sedan", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 0, doorCount: 4, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Park Sensörü (Arka)"], seatCount: 5, fuelConsumption: "5.9", co2Emission: 135, emissionClass: "Euro 6" },
+  6: { bodyType: "Sedan", engineSize: "2.0", drivetrain: "Arkadan İtiş", ownerCount: 3, paintedParts: 2, changedParts: 1, tradeIn: 0, doorCount: 4, features: ["Deri Döşeme", "Isıtmalı Koltuk", "Sunroof/Cam Tavan", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"], seatCount: 5, fuelConsumption: "5.1", co2Emission: 134, emissionClass: "Euro 6" },
+  7: { bodyType: "Hatchback/5 Kapı", engineSize: "1.4", drivetrain: "Önden Çekiş", ownerCount: 1, paintedParts: 0, changedParts: 0, tradeIn: 1, doorCount: 5, features: ["Klima", "Elektrikli Cam", "Elektrikli Ayna", "Bluetooth", "Geri Görüş Kamerası"], seatCount: 5, fuelConsumption: "5.6", co2Emission: 128, emissionClass: "Euro 6" },
+  8: { bodyType: "Hatchback/5 Kapı", engineSize: "2.0 TDI", drivetrain: "Önden Çekiş", ownerCount: 2, paintedParts: 1, changedParts: 0, tradeIn: 0, doorCount: 5, features: ["Deri Döşeme", "Xenon/LED Far", "Navigasyon", "Alaşım Jant", "Park Sensörü (Ön)", "Park Sensörü (Arka)"], seatCount: 5, fuelConsumption: "4.3", co2Emission: 113, emissionClass: "Euro 6" },
 };
 try {
   const listingBackfillStmt = db.prepare(`UPDATE listings SET
@@ -354,10 +366,14 @@ try {
     drivetrain = CASE WHEN drivetrain IS NULL OR drivetrain = '' THEN @drivetrain ELSE drivetrain END,
     ownerCount = CASE WHEN ownerCount IS NULL THEN @ownerCount ELSE ownerCount END,
     doorCount = CASE WHEN doorCount IS NULL THEN @doorCount ELSE doorCount END,
-    features = CASE WHEN features IS NULL OR features = '[]' THEN @features ELSE features END
+    features = CASE WHEN features IS NULL OR features = '[]' THEN @features ELSE features END,
+    seatCount = CASE WHEN seatCount IS NULL THEN @seatCount ELSE seatCount END,
+    fuelConsumption = CASE WHEN fuelConsumption IS NULL OR fuelConsumption = '' THEN @fuelConsumption ELSE fuelConsumption END,
+    co2Emission = CASE WHEN co2Emission IS NULL THEN @co2Emission ELSE co2Emission END,
+    emissionClass = CASE WHEN emissionClass IS NULL OR emissionClass = '' THEN @emissionClass ELSE emissionClass END
     WHERE id = @id`);
   Object.entries(LISTING_BACKFILL).forEach(([id, data]) => {
-    listingBackfillStmt.run({ id: Number(id), bodyType: data.bodyType, engineSize: data.engineSize, drivetrain: data.drivetrain, ownerCount: data.ownerCount, doorCount: data.doorCount, features: JSON.stringify(data.features) });
+    listingBackfillStmt.run({ id: Number(id), bodyType: data.bodyType, engineSize: data.engineSize, drivetrain: data.drivetrain, ownerCount: data.ownerCount, doorCount: data.doorCount, features: JSON.stringify(data.features), seatCount: data.seatCount, fuelConsumption: data.fuelConsumption, co2Emission: data.co2Emission, emissionClass: data.emissionClass });
   });
 } catch (err) {
   console.error("İlan araç bilgisi backfill hatası:", err.message);

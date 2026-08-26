@@ -15,6 +15,10 @@ export const TRANSMISSIONS = ["Manuel", "Otomatik", "Yarı Otomatik"];
 export const BODY_TYPES = ["Sedan", "Hatchback/3 Kapı", "Hatchback/5 Kapı", "SUV", "Crossover (SUV)", "Station Wagon", "Coupe", "Cabrio", "Pickup", "Minivan/Panelvan"];
 export const DRIVETRAIN_OPTIONS = ["Önden Çekiş", "Arkadan İtiş", "4x4 (AWD)"];
 export const DOOR_COUNT_OPTIONS = [2, 3, 4, 5];
+export const SEAT_COUNT_OPTIONS = [2, 4, 5, 6, 7, 8, 9];
+// Almanya (mobile.de/AutoScout24) ilanlarındaki emisyon/Euro normu sınıflandırması — çevre ve
+// vergi bilgisi olarak ilan detayında gösterilir.
+export const EMISSION_CLASS_OPTIONS = ["Euro 3", "Euro 4", "Euro 5", "Euro 6", "Euro 6d"];
 export const LISTING_FEATURE_OPTIONS = [
   "Klima", "Deri Döşeme", "Elektrikli Cam", "Elektrikli Ayna", "Isıtmalı Koltuk", "Sunroof/Cam Tavan",
   "Geri Görüş Kamerası", "Park Sensörü (Ön)", "Park Sensörü (Arka)", "Xenon/LED Far", "Yağmur Sensörü",
