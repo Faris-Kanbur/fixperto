@@ -284,3 +284,28 @@ Ayrıca:
   güncelleyin).
 - Prodüksiyona çıkmadan önce bölüm 14'teki maddeleri (özellikle RBAC ve form label'ları)
   önceliklendirin.
+
+## 16) Planlanmış: Gerçek Google Maps entegrasyonu (henüz yapılmadı)
+
+Şu an `components/features/MapPanel.tsx` gerçek Google Maps SDK'sını KULLANMIYOR — yüzde
+tabanlı (`px`/`py`) pin konumlandırmalı, özel/stilize edilmiş sahte bir harita. İleride gerçek
+Google Maps entegrasyonuna geçilirken (kullanıcı bunu ana sayfada Airbnb tarzı, tek haritalık bir
+kullanım olarak planlıyor — aylık 10.000 ücretsiz "map load" hakkı bekleniyor), "load" sayısını
+gereksiz yere tüketmemek için şu üç kural uygulanmalı:
+
+1. **`google.maps.Map` nesnesinin ömrünü React mount/unmount'a bağlama.** `{sart && <Harita/>}`
+   gibi koşullu mount yerine, harita container elementini DOM'da kalıcı tutup ekranlar arası
+   geçişte CSS ile gizle/göster (`display:none`/`block`) yapılmalı — böylece `Map` nesnesi oturum
+   başına yalnızca BİR kez oluşturulur, kullanıcı ileri-geri gezinse bile her seferinde yeniden
+   "load" sayılmaz.
+2. **İkincil/etkileşimsiz harita gösterimleri için (ör. tamirci detay ekranındaki küçük "adres
+   önizlemesi") Static Maps API (düz bir görsel URL'i) kullan** — bu, ayrı bir SKU/kotadan
+   faturalanır ve 10.000/ay'lık JS "map load" hakkını hiç tüketmez. Gerçek etkileşimli
+   (pan/zoom/pin tıklama) `Map` nesnesini yalnızca ana arama ekranı gibi buna gerçekten ihtiyaç
+   duyan tek bir yerde kullan.
+3. **`new google.maps.Map(...)` çağrısını bir `useRef` "zaten oluşturuldu mu" bayrağıyla koru** —
+   ilgisiz bir state güncellemesinden kaynaklanan yeniden render'ın (veya React dev-mode'un çift
+   çağırma davranışının) yanlışlıkla ikinci bir `Map` nesnesi oluşturup fazladan bir "load"
+   harcamasını engeller.
+
+Bu üç kural, gerçek entegrasyon isteği geldiğinde otomatik olarak uygulanmalı.
