@@ -209,7 +209,7 @@ function useAppLogic() {
   const [listings, setListings] = useState([]);
   const [showSellForm, setShowSellForm] = useState(false);
   const [showSellVehiclePicker, setShowSellVehiclePicker] = useState(false);
-  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", _vehicleId: null, _editingId: null });
+  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: "", _vehicleId: null, _editingId: null });
   const sellPhotoRef = useRef(null);
   const [selectedListingId, setSelectedListingId] = useState(null);
   // İlan detay modalındaki fotoğraf galerisi için seçili küçük resim indeksi — yeni bir ilan
@@ -651,6 +651,7 @@ function useAppLogic() {
   }, [quoteMechSearch, sortBy, sortDir, mechanicsList, filters, userLocation]);
   const filteredListings = useMemo(() => {
     let list = listings.filter(l => !l.adminRemoved && `${l.brand} ${l.model}`.toLowerCase().includes(query.toLowerCase()));
+    if (locationQuery.trim()) list = list.filter(l => (l.city || "").toLowerCase().includes(locationQuery.trim().toLowerCase()));
     if (listingFilters.transmission !== "all") list = list.filter(l => l.transmission === listingFilters.transmission);
     if (listingFilters.fuelType !== "all") list = list.filter(l => l.fuelType === listingFilters.fuelType);
     if (listingFilters.minPrice) list = list.filter(l => parseListingPrice(l.price) >= Number(listingFilters.minPrice));
@@ -663,7 +664,7 @@ function useAppLogic() {
     if (listingSort === "km") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.km) - Number(b.km) : Number(b.km) - Number(a.km));
     if (listingSort === "year") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.year) - Number(b.year) : Number(b.year) - Number(a.year));
     return list;
-  }, [listings, query, listingFilters, listingSort, listingSortDir]);
+  }, [listings, query, locationQuery, listingFilters, listingSort, listingSortDir]);
   const activeListingFilterCount = (listingFilters.transmission !== "all" ? 1 : 0) + (listingFilters.fuelType !== "all" ? 1 : 0) + (listingFilters.minPrice ? 1 : 0) + (listingFilters.maxPrice ? 1 : 0) + (listingFilters.minKm ? 1 : 0) + (listingFilters.maxKm ? 1 : 0) + (listingFilters.minYear ? 1 : 0) + (listingFilters.maxYear ? 1 : 0);
   const filteredJobs = useMemo(() => {
     let list = jobListings.filter(j => j.status === "active");
@@ -2036,7 +2037,7 @@ function useAppLogic() {
   const toggleDayOpen = (key) => setMechanicHours(h => { const next = { ...h, [key]: { ...h[key], open: !h[key].open } }; persistMechanicHours(next); return next; });
   const toggleSlotClosed = (key, slot) => setMechanicHours(h => { const closed = h[key].closedSlots.includes(slot); const next = { ...h, [key]: { ...h[key], closedSlots: closed ? h[key].closedSlots.filter(s => s !== slot) : [...h[key].closedSlots, slot] } }; persistMechanicHours(next); return next; });
   const addExtraSlot = (key, time) => { if (!time) return; setMechanicHours(h => { if (h[key].extraSlots.includes(time) || genSlots(h[key].start, h[key].end).includes(time)) return h; const next = { ...h, [key]: { ...h[key], extraSlots: [...h[key].extraSlots, time].sort() } }; persistMechanicHours(next); return next; }); };
-  const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", _vehicleId: null, _editingId: null }); setShowSellForm(true); };
+  const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", _vehicleId: null, _editingId: null }); setShowSellForm(true); };
   // "Aracımı Satışa Çıkar" tıklanınca: kayıtlı araç(lar)ı varsa hangisini satacağını sorar ve
   // seçilen aracın bilgilerini forma otomatik doldurur; kayıtlı aracı yoksa direkt boş form açar.
   const startSellFlow = () => { if (vehicles.length === 0) { openSellForm(null); return; } setShowSellVehiclePicker(true); };
@@ -2044,7 +2045,7 @@ function useAppLogic() {
     setShowSellVehiclePicker(false);
     const existingListing = listings.find(l => l.id === v.listingId);
     if (existingListing) { openSellForm({ ...existingListing, _vehicleId: v.id, _editingId: existingListing.id }); return; }
-    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", _vehicleId: v.id, _editingId: null });
+    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", _vehicleId: v.id, _editingId: null });
   };
   const pickOtherCarToSell = () => { setShowSellVehiclePicker(false); openSellForm(null); };
   const sellPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; setSellForm(f => ({ ...f, photo: URL.createObjectURL(file) })); };

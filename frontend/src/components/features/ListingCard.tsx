@@ -1,4 +1,4 @@
-import { Banknote, CalendarDays, Cog, Fuel, Gauge, Heart, MessageCircle } from "lucide-react";
+import { Banknote, CalendarDays, Cog, Fuel, Gauge, Heart, MapPin, MessageCircle } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { listingStatusMeta, isImgUrl, imgFallbackHandler, imgThumb } from "../../utils/helpers";
 
@@ -132,6 +132,7 @@ export function ListingCard({ l, onHover = undefined }) {
             <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">{l.brand} {l.model}</h3>
             <span className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.sellerType === "mechanic" ? "bg-rose-50 text-rose-700" : "bg-gray-100 text-gray-600"}`}>{l.sellerType === "mechanic" ? "🔧 Tamirci" : "👤 Sahibinden"}</span>
           </div>
+          {l.city && <p className="text-gray-400 text-xs mt-0.5 flex items-center gap-1"><MapPin size={11} />{l.city}</p>}
           <p className="text-gray-400 text-xs mt-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
             <span className="flex items-center gap-1"><Gauge size={11} />{Number(l.km).toLocaleString("tr-TR")} km</span>
             <span className="flex items-center gap-1"><CalendarDays size={11} />{l.firstReg || l.year}</span>

@@ -174,6 +174,8 @@ export interface Listing {
   vehicleId: number | null;
   adminRemoved?: boolean;
   shareCount?: number;
+  /** İlanın bulunduğu şehir — homepage/filtre modalındaki konum aramasının eşleştiği alan. */
+  city?: string;
   /** Kasa tipi (Sedan, Hatchback, SUV, ...) — bkz. constants.ts BODY_TYPES. */
   bodyType?: string;
   /** Motor hacmi, serbest metin (örn. "1.6", "2.0 TDI"). */
