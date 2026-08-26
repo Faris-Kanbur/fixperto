@@ -11,7 +11,7 @@ export const T = {
   logout: { tr: "Çıkış", en: "Log Out", de: "Abmelden" },
   searchHeroTitle: { tr: "Nereye tamir lazım? 🔧", en: "Where do you need repair? 🔧", de: "Wo brauchst du eine Reparatur? 🔧" },
   searchHeroSub: { tr: "Yakınındaki güvenilir tamircileri keşfet ve dakikalar içinde randevu al", en: "Discover trusted mechanics nearby and book in minutes", de: "Finde vertrauenswürdige Werkstätten in deiner Nähe und buche in Minuten" },
-  searchPlaceholder: { tr: "Tamirci veya hizmet ara...", en: "Search mechanic or service...", de: "Werkstatt oder Service suchen..." },
+  searchPlaceholder: { tr: "Marka ara... (örn: Volkswagen, BMW)", en: "Search by brand... (e.g. Volkswagen, BMW)", de: "Nach Marke suchen... (z. B. Volkswagen, BMW)" },
   navSearch: { tr: "Ara", en: "Search", de: "Suchen" },
   navMarket: { tr: "İlanlarım", en: "My Listings", de: "Meine Anzeigen" },
   navFavorites: { tr: "Favoriler", en: "Saved", de: "Favoriten" },

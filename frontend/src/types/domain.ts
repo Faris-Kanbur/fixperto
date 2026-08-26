@@ -58,6 +58,10 @@ export interface Mechanic {
   reviewList: Review[];
   verificationDocs: string[];
   shareCount?: number;
+  /** Hizmet verdiği araç markaları — profilde tag/chip olarak gösterilir, arama/filtrede kullanılır. */
+  brandsServiced?: string[];
+  /** Kabul ettiği ödeme yöntemleri (Nakit, Kredi/Banka Kartı, Havale/EFT, Kapıda Ödeme). */
+  paymentMethods?: string[];
 }
 
 export interface Owner {

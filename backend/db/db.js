@@ -42,7 +42,9 @@ CREATE TABLE IF NOT EXISTS mechanics (
   staff TEXT DEFAULT '[]',
   reviewList TEXT DEFAULT '[]',
   verificationDocs TEXT DEFAULT '[]',
-  shareCount INTEGER DEFAULT 0
+  shareCount INTEGER DEFAULT 0,
+  brandsServiced TEXT DEFAULT '[]',
+  paymentMethods TEXT DEFAULT '[]'
 );
 
 CREATE TABLE IF NOT EXISTS owners (
@@ -272,6 +274,8 @@ function ensureColumn(table, columnDef) {
   ["owners", "lang TEXT DEFAULT 'tr'"],
   ["admin_change_log", "reverted INTEGER DEFAULT 0"],
   ["mechanics", "shareCount INTEGER DEFAULT 0"],
+  ["mechanics", "brandsServiced TEXT DEFAULT '[]'"],
+  ["mechanics", "paymentMethods TEXT DEFAULT '[]'"],
   ["listings", "shareCount INTEGER DEFAULT 0"],
   ["job_listings", "shareCount INTEGER DEFAULT 0"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));

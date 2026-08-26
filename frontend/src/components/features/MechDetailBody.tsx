@@ -1,11 +1,11 @@
 import { PriceLevelDots } from "../ui/PriceLevelDots";
-import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, Flag, Image as ImageIcon, MapPin, MessageCircle, Navigation, Star, ThumbsUp, Users, Wrench as ToolIcon, Zap } from "lucide-react";
+import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, CreditCard, Flag, Globe, Image as ImageIcon, MapPin, MessageCircle, Navigation, Star, Tag, ThumbsUp, Users, Wrench as ToolIcon, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { MapPanel } from "./MapPanel";
 import { ShareButton } from "./ShareButton";
 import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
-import { BANNER_PRESETS, MY_MECHANIC_ID } from "../../data/constants";
+import { BANNER_PRESETS, MY_MECHANIC_ID, LANG_LABELS } from "../../data/constants";
 import { formatHoursText, isImgUrl } from "../../utils/helpers";
 
 export function MechDetailBody() {
@@ -139,7 +139,45 @@ export function MechDetailBody() {
           <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Clock size={16} className="text-rose-500" /> {t("workingHours")}</h3>
           <div className="bg-white border border-gray-200 rounded-2xl p-3 mb-5 space-y-1">{(selectedMechanic.id === MY_MECHANIC_ID ? formatHoursText(mechanicHours) : selectedMechanic.hoursText || []).map((line, i) => { const isClosed = line.includes("Kapalı") || line.includes("Closed"); return (<div key={i} className="flex justify-between text-xs"><span className="text-gray-500">{line.split(":")[0]}</span><span className={isClosed ? "text-red-400" : "text-gray-700 font-medium"}>{line.split(/:(.+)/)[1]}</span></div>); })}</div>
           <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Navigation size={16} className="text-rose-500" /> {t("location")}</h3>
-          <div className="rounded-2xl overflow-hidden border border-gray-100 mb-5"><MapPanel className="h-28" items={[selectedMechanic]} onPick={() => {}} /><div className="p-3 bg-white"><p className="text-xs text-gray-600">{selectedMechanic.address}</p></div></div>
+          <div className="rounded-2xl overflow-hidden border border-gray-100 mb-5">
+            <MapPanel className="h-28" items={[selectedMechanic]} onPick={() => {}} />
+            <a
+              href={selectedMechanic.lat && selectedMechanic.lng
+                ? `https://www.google.com/maps/dir/?api=1&destination=${selectedMechanic.lat},${selectedMechanic.lng}`
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedMechanic.address || selectedMechanic.name)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="p-3 bg-white flex items-center justify-between gap-2 hover:bg-gray-50 transition group"
+            >
+              <p className="text-xs text-gray-600 group-hover:text-rose-600 transition">{selectedMechanic.address}</p>
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-600 flex-shrink-0"><Navigation size={11} /> Yol Tarifi</span>
+            </a>
+          </div>
+          {/* Diller & Ödeme — Kleinanzeigen/autoservice.com tarzı ikinci bir bilgi bloğu: tamircinin
+              konuştuğu dil (Ayarlar'daki dil seçiciyle senkron) ve kabul ettiği ödeme yöntemleri. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+            <div className="bg-white border border-gray-200 rounded-2xl p-3.5">
+              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Globe size={12} className="text-rose-500" /> Konuşulan Dil</h4>
+              <p className="text-sm font-semibold text-gray-800">{LANG_LABELS[selectedMechanic.lang] || "Türkçe"}</p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl p-3.5">
+              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><CreditCard size={12} className="text-rose-500" /> Ödeme Yöntemleri</h4>
+              {(selectedMechanic.paymentMethods || []).length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">{selectedMechanic.paymentMethods.map((p) => (<span key={p} className="text-[10px] font-medium text-gray-600 bg-gray-100 rounded-full px-2 py-1">{p}</span>))}</div>
+              ) : (<p className="text-xs text-gray-400">Belirtilmemiş</p>)}
+            </div>
+          </div>
+          {(selectedMechanic.brandsServiced || []).length > 0 && (
+            <>
+              <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> Hizmet Verdiği Markalar</h3>
+              <div className="flex flex-wrap gap-2 mb-5">
+                {selectedMechanic.brandsServiced.map((brand, i) => {
+                  const palette = ["bg-rose-50 text-rose-700 border-rose-200", "bg-blue-50 text-blue-700 border-blue-200", "bg-amber-50 text-amber-700 border-amber-200", "bg-emerald-50 text-emerald-700 border-emerald-200", "bg-violet-50 text-violet-700 border-violet-200", "bg-cyan-50 text-cyan-700 border-cyan-200"];
+                  return (<span key={brand} className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border ${palette[i % palette.length]}`}><Tag size={10} /> {brand}</span>);
+                })}
+              </div>
+            </>
+          )}
           <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><ToolIcon size={16} className="text-rose-500" /> {t("services")} <span className="text-gray-300 font-normal">({selectedMechanic.services.length})</span></h3>
           <div className="mb-5">
             <div className={selectedMechanic.services.length > 5 ? "max-h-56 overflow-y-auto pr-1 rounded-xl ring-1 ring-gray-100 p-1" : ""}>

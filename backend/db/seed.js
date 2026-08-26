@@ -13,47 +13,47 @@ const MECHANICS = [
       { name: "Ahmet K.", avatar: "🧔", rating: 5, comment: "Çok hızlı ve dürüst hizmet, tekrar geleceğim.", photo: true },
       { name: "Elif S.", avatar: "👩", rating: 4, comment: "Fiyat performans olarak gayet iyi.", photo: false },
       { name: "Burak T.", avatar: "👨", rating: 5, comment: "Ustalar çok ilgiliydi, aracımı zamanında teslim ettiler.", photo: true },
-    ], verificationDocs: [] },
+    ], verificationDocs: [], brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Hyundai"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"] },
   { id: 2, name: "Hızlı Tamir Merkezi", distance: 2.5, price: 280, rating: 4.5, reviews: 89, verified: 1, avgResponseMinutes: 14, specialty: "Lastik, Fren", img: "🚗", lang: "tr", px: 55, py: 25, bannerPreset: "orange", coverPhoto: null, lat: 39.9179, lng: 32.8627, iban: "", bankName: "", accountHolder: "",
     address: "Atatürk Bulvarı No:112, Çankaya / Ankara", hoursText: ["Pzt: 09:00-18:00", "Sal: 09:00-18:00", "Çar: 09:00-18:00", "Per: 09:00-18:00", "Cum: 09:00-18:00", "Cmt: 09:00-14:00", "Paz: Kapalı"],
     services: [{ name: "Lastik Değişimi", price: "1200₺", fixed: true }, { name: "Fren Balata", price: "700₺", fixed: true }, { name: "Rot Balans", price: "400₺", fixed: true }],
     staff: [{ name: "Serkan Bey", role: "Servis Şefi", emoji: "👨‍🔧" }, { name: "Onur K.", role: "Lastik Ustası", emoji: "🧑‍🔧" }],
-    reviewList: [{ name: "Fatma Y.", avatar: "👩‍🦰", rating: 4, comment: "Lastik değişimi çok hızlı oldu.", photo: false }, { name: "Kerem A.", avatar: "🧑", rating: 5, comment: "Fren sesim tamamen geçti.", photo: true }], verificationDocs: [] },
+    reviewList: [{ name: "Fatma Y.", avatar: "👩‍🦰", rating: 4, comment: "Lastik değişimi çok hızlı oldu.", photo: false }, { name: "Kerem A.", avatar: "🧑", rating: 5, comment: "Fren sesim tamamen geçti.", photo: true }], verificationDocs: [], brandsServiced: ["Renault", "Fiat", "Ford", "Opel", "Hyundai", "Peugeot"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"] },
   { id: 3, name: "Güven Oto", distance: 0.8, price: 420, rating: 4.9, reviews: 210, verified: 1, avgResponseMinutes: 6, specialty: "Elektrik, Elektronik", img: "⚡", lang: "tr", px: 45, py: 60, bannerPreset: "green", coverPhoto: null, lat: 38.4192, lng: 27.1287, iban: "", bankName: "", accountHolder: "",
     address: "İnönü Cad. No:8, Konak / İzmir", hoursText: ["Pzt: 08:30-19:00", "Sal: 08:30-19:00", "Çar: 08:30-19:00", "Per: 08:30-19:00", "Cum: 08:30-19:00", "Cmt: 09:00-15:00", "Paz: Kapalı"],
     services: [{ name: "Elektrik Arıza Tespiti", price: "500₺", fixed: false }, { name: "Akü/Şarj Kontrolü", price: "300₺", fixed: true }],
     staff: [{ name: "Hakan Usta", role: "Elektrik Mühendisi", emoji: "👨‍🔧" }],
-    reviewList: [{ name: "Tolga E.", avatar: "👨‍🦱", rating: 5, comment: "Arızayı dakikalar içinde buldular.", photo: true }], verificationDocs: [] },
+    reviewList: [{ name: "Tolga E.", avatar: "👨‍🦱", rating: 5, comment: "Arızayı dakikalar içinde buldular.", photo: true }], verificationDocs: [], brandsServiced: ["Volkswagen", "BMW", "Mercedes-Benz", "Audi"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"] },
   { id: 4, name: "Anadolu Servis", distance: 3.1, price: 250, rating: 4.2, reviews: 56, verified: 1, avgResponseMinutes: 22, specialty: "Yağ Değişimi, Bakım", img: "🛠️", lang: "tr", px: 70, py: 70, bannerPreset: "blue", coverPhoto: null, lat: 40.1826, lng: 29.0610, iban: "", bankName: "", accountHolder: "",
     address: "Cumhuriyet Mah. No:23, Osmangazi / Bursa", hoursText: ["Pzt: 09:00-18:00", "Sal: 09:00-18:00", "Çar: 09:00-18:00", "Per: 09:00-18:00", "Cum: 09:00-18:00", "Cmt: Kapalı", "Paz: Kapalı"],
     services: [{ name: "Yağ Değişimi", price: "250₺", fixed: true }, { name: "Filtre Değişimi", price: "200₺", fixed: true }],
     staff: [{ name: "İsmail Usta", role: "Servis Sorumlusu", emoji: "👨‍🔧" }],
-    reviewList: [{ name: "Nihal K.", avatar: "👩", rating: 4, comment: "Ekonomik ve iş bilir bir servis.", photo: false }, { name: "Kullanıcı8823", avatar: "🙄", rating: 1, comment: "Bu servise hiç gitmedim ama düşük puan bırakıyorum.", photo: false, flagged: true }], verificationDocs: [] },
+    reviewList: [{ name: "Nihal K.", avatar: "👩", rating: 4, comment: "Ekonomik ve iş bilir bir servis.", photo: false }, { name: "Kullanıcı8823", avatar: "🙄", rating: 1, comment: "Bu servise hiç gitmedim ama düşük puan bırakıyorum.", photo: false, flagged: true }], verificationDocs: [], brandsServiced: ["Renault", "Fiat", "Dacia", "Tofaş", "Hyundai"], paymentMethods: ["Nakit"] },
   { id: 5, name: "Star Auto Care", distance: 1.9, price: 500, rating: 4.7, reviews: 178, verified: 1, avgResponseMinutes: 11, specialty: "Kaporta, Boya", img: "✨", lang: "en", px: 20, py: 65, bannerPreset: "orange", coverPhoto: null, lat: 41.0390, lng: 28.8560, iban: "", bankName: "", accountHolder: "",
     address: "Bağcılar Sanayi Sitesi No:31, İstanbul", hoursText: ["Mon: 09:00-18:00", "Tue: 09:00-18:00", "Wed: 09:00-18:00", "Thu: 09:00-18:00", "Fri: 09:00-18:00", "Sat: 10:00-14:00", "Sun: Closed"],
     services: [{ name: "Kaporta Onarımı", price: "1500₺", fixed: false }, { name: "Boya İşlemi", price: "2000₺", fixed: false }],
     staff: [{ name: "John Miller", role: "Body Shop Lead", emoji: "👨‍🔧" }],
-    reviewList: [{ name: "David R.", avatar: "🧑", rating: 5, comment: "Excellent paint job, looks brand new!", photo: true }], verificationDocs: [] },
+    reviewList: [{ name: "David R.", avatar: "🧑", rating: 5, comment: "Excellent paint job, looks brand new!", photo: true }], verificationDocs: [], brandsServiced: ["BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Mini"], paymentMethods: ["Kredi/Banka Kartı", "Havale/EFT"] },
   { id: 6, name: "Ekonomik Tamir", distance: 4.2, price: 200, rating: 3.9, reviews: 34, verified: 0, avgResponseMinutes: 40, specialty: "Genel Bakım", img: "🔩", lang: "tr", px: 80, py: 35, bannerPreset: "green", coverPhoto: null, lat: 37.8746, lng: 32.4932, iban: "", bankName: "", accountHolder: "",
     address: "Fevzi Çakmak Mah. No:9, Karatay / Konya", hoursText: ["Pzt: 09:00-17:00", "Sal: 09:00-17:00", "Çar: 09:00-17:00", "Per: 09:00-17:00", "Cum: 09:00-17:00", "Cmt: 09:00-13:00", "Paz: Kapalı"],
     services: [{ name: "Genel Bakım", price: "200₺", fixed: true }, { name: "Yağ Değişimi", price: "220₺", fixed: true }],
     staff: [{ name: "Ramazan Usta", role: "Servis Sorumlusu", emoji: "👨‍🔧" }],
-    reviewList: [{ name: "Cem S.", avatar: "👨", rating: 4, comment: "Uygun fiyat, iş de fena değil.", photo: false }], verificationDocs: [] },
+    reviewList: [{ name: "Cem S.", avatar: "👨", rating: 4, comment: "Uygun fiyat, iş de fena değil.", photo: false }], verificationDocs: [], brandsServiced: ["Fiat", "Renault", "Tofaş", "Dacia"], paymentMethods: ["Nakit"] },
   { id: 7, name: "Akdeniz Oto Bakım", distance: 2.7, price: 380, rating: 4.6, reviews: 97, verified: 1, avgResponseMinutes: 13, specialty: "Genel Bakım, Lastik", img: "🌊", lang: "tr", px: 25, py: 80, bannerPreset: "blue", coverPhoto: null, lat: 36.8969, lng: 30.7133, iban: "", bankName: "", accountHolder: "",
     address: "Lara Cad. No:64, Muratpaşa / Antalya", hoursText: ["Pzt: 08:00-19:00", "Sal: 08:00-19:00", "Çar: 08:00-19:00", "Per: 08:00-19:00", "Cum: 08:00-19:00", "Cmt: 09:00-16:00", "Paz: Kapalı"],
     services: [{ name: "Lastik Değişimi", price: "1100₺", fixed: true }, { name: "Genel Bakım", price: "380₺", fixed: true }, { name: "Klima Bakımı", price: "450₺", fixed: true }],
     staff: [{ name: "Yusuf Usta", role: "Servis Sorumlusu", emoji: "👨‍🔧" }, { name: "Barış K.", role: "Lastik Ustası", emoji: "🧑‍🔧" }],
-    reviewList: [{ name: "Selin A.", avatar: "👩‍🦱", rating: 5, comment: "Tatilde arıza yaptı, aynı gün hallettiler.", photo: true }, { name: "Murat D.", avatar: "🧔", rating: 4, comment: "Nazik ve hızlı ekip.", photo: false }], verificationDocs: [] },
+    reviewList: [{ name: "Selin A.", avatar: "👩‍🦱", rating: 5, comment: "Tatilde arıza yaptı, aynı gün hallettiler.", photo: true }, { name: "Murat D.", avatar: "🧔", rating: 4, comment: "Nazik ve hızlı ekip.", photo: false }], verificationDocs: [], brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Opel"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"] },
   { id: 8, name: "Gaziantep Teknik Servis", distance: 5.4, price: 300, rating: 4.3, reviews: 61, verified: 0, avgResponseMinutes: 35, specialty: "Klima, Egzoz", img: "🌡️", lang: "tr", px: 65, py: 55, bannerPreset: "orange", coverPhoto: null, lat: 37.0662, lng: 37.3833, iban: "", bankName: "", accountHolder: "",
     address: "İncilipınar Mah. No:17, Şahinbey / Gaziantep", hoursText: ["Pzt: 09:00-18:00", "Sal: 09:00-18:00", "Çar: 09:00-18:00", "Per: 09:00-18:00", "Cum: 09:00-18:00", "Cmt: 09:00-14:00", "Paz: Kapalı"],
     services: [{ name: "Klima Gazı Dolumu", price: "500₺", fixed: true }, { name: "Egzoz Onarımı", price: "600₺", fixed: true }],
     staff: [{ name: "Halil Usta", role: "Servis Şefi", emoji: "👨‍🔧" }],
-    reviewList: [{ name: "Emre T.", avatar: "👨", rating: 4, comment: "Klima gayet iyi soğutuyor şimdi.", photo: false }], verificationDocs: [] },
+    reviewList: [{ name: "Emre T.", avatar: "👨", rating: 4, comment: "Klima gayet iyi soğutuyor şimdi.", photo: false }], verificationDocs: [], brandsServiced: ["Renault", "Fiat", "Hyundai", "Toyota"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"] },
   { id: 9, name: "Trabzon Karadeniz Oto", distance: 3.6, price: 330, rating: 4.4, reviews: 48, verified: 1, avgResponseMinutes: 18, specialty: "Kaporta, Elektrik", img: "⚙️", lang: "tr", px: 15, py: 15, bannerPreset: "green", coverPhoto: null, lat: 41.0027, lng: 39.7168, iban: "", bankName: "", accountHolder: "",
     address: "Değirmendere Mah. No:52, Ortahisar / Trabzon", hoursText: ["Pzt: 09:00-18:00", "Sal: 09:00-18:00", "Çar: 09:00-18:00", "Per: 09:00-18:00", "Cum: 09:00-18:00", "Cmt: Kapalı", "Paz: Kapalı"],
     services: [{ name: "Kaporta Onarımı", price: "1300₺", fixed: false }, { name: "Elektrik Arıza Tespiti", price: "450₺", fixed: false }],
     staff: [{ name: "Orhan Usta", role: "Kaporta Ustası", emoji: "👨‍🔧" }],
-    reviewList: [{ name: "Gökhan B.", avatar: "🧑", rating: 5, comment: "Çarpma izini fark edilmeyecek şekilde düzelttiler.", photo: true }], verificationDocs: [] },
+    reviewList: [{ name: "Gökhan B.", avatar: "🧑", rating: 5, comment: "Çarpma izini fark edilmeyecek şekilde düzelttiler.", photo: true }], verificationDocs: [], brandsServiced: ["Renault", "Ford", "Opel", "Volkswagen"], paymentMethods: ["Nakit", "Havale/EFT"] },
   { id: 10, name: "Eskişehir Genç Oto", distance: 1.5, price: 260, rating: 4.1, reviews: 40, verified: 0, avgResponseMinutes: 28, specialty: "Motor, Şanzıman", img: "🧰", lang: "tr", px: 50, py: 20, bannerPreset: "blue", coverPhoto: null, lat: 39.7767, lng: 30.5206, iban: "", bankName: "", accountHolder: "",
     address: "Odunpazarı Mah. No:29, Eskişehir", hoursText: ["Pzt: 09:00-18:00", "Sal: 09:00-18:00", "Çar: 09:00-18:00", "Per: 09:00-18:00", "Cum: 09:00-18:00", "Cmt: 09:00-13:00", "Paz: Kapalı"],
     services: [{ name: "Motor Revizyonu", price: "3500₺", fixed: false }, { name: "Şanzıman Bakımı", price: "1200₺", fixed: false }],
@@ -63,7 +63,7 @@ const MECHANICS = [
       { name: "İşletme Ruhsatı.pdf", type: "İşletme Ruhsatı", uploadedDate: "2026-08-12" },
       { name: "Vergi Levhası.pdf", type: "Vergi Levhası", uploadedDate: "2026-08-13" },
       { name: "Usta Belgesi.pdf", type: "Ustalık Belgesi", uploadedDate: "2026-08-13" },
-    ] },
+    ], brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Honda"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT", "Kapıda Ödeme"] },
 ];
 
 const OWNERS = [
@@ -127,10 +127,10 @@ function j(v) { return JSON.stringify(v); }
 
 export function seedIfEmpty() {
   if (isEmpty("mechanics")) {
-    const stmt = db.prepare(`INSERT INTO mechanics (id,name,distance,price,rating,reviews,verified,avgResponseMinutes,specialty,img,lang,px,py,bannerPreset,coverPhoto,lat,lng,iban,bankName,accountHolder,address,hoursText,services,staff,reviewList,verificationDocs)
-    VALUES (@id,@name,@distance,@price,@rating,@reviews,@verified,@avgResponseMinutes,@specialty,@img,@lang,@px,@py,@bannerPreset,@coverPhoto,@lat,@lng,@iban,@bankName,@accountHolder,@address,@hoursText,@services,@staff,@reviewList,@verificationDocs)`);
+    const stmt = db.prepare(`INSERT INTO mechanics (id,name,distance,price,rating,reviews,verified,avgResponseMinutes,specialty,img,lang,px,py,bannerPreset,coverPhoto,lat,lng,iban,bankName,accountHolder,address,hoursText,services,staff,reviewList,verificationDocs,brandsServiced,paymentMethods)
+    VALUES (@id,@name,@distance,@price,@rating,@reviews,@verified,@avgResponseMinutes,@specialty,@img,@lang,@px,@py,@bannerPreset,@coverPhoto,@lat,@lng,@iban,@bankName,@accountHolder,@address,@hoursText,@services,@staff,@reviewList,@verificationDocs,@brandsServiced,@paymentMethods)`);
     const insertMany = db.transaction((rows) => {
-      for (const m of rows) stmt.run({ ...m, hoursText: j(m.hoursText), services: j(m.services), staff: j(m.staff), reviewList: j(m.reviewList), verificationDocs: j(m.verificationDocs) });
+      for (const m of rows) stmt.run({ ...m, hoursText: j(m.hoursText), services: j(m.services), staff: j(m.staff), reviewList: j(m.reviewList), verificationDocs: j(m.verificationDocs), brandsServiced: j(m.brandsServiced || []), paymentMethods: j(m.paymentMethods || []) });
     });
     insertMany(MECHANICS);
   }

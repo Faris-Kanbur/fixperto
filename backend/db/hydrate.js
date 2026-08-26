@@ -2,7 +2,7 @@
 // rows back into the shape the frontend expects (parsed JSON, booleans instead
 // of 0/1) when reading, and back into TEXT when writing.
 const JSON_FIELDS = {
-  mechanics: ["hoursText", "services", "staff", "reviewList", "verificationDocs"],
+  mechanics: ["hoursText", "services", "staff", "reviewList", "verificationDocs", "brandsServiced", "paymentMethods"],
   vehicles: ["reminderOverrides", "customReminders", "history"],
   owners: ["favoriteIds"],
   listings: ["offers", "messages"],

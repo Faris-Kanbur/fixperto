@@ -64,6 +64,16 @@ export const LEGAL_TIRE_RULES = {
 export const DE_CITIES = ["Stuttgart", "Berlin", "München", "Hamburg", "Köln", "Frankfurt", "Dortmund", "Essen"];
 export const REMINDER_KIND_LABELS = { inspection: "Araç Muayenesi", maintenance: "Periyodik Bakım", "tire-winter": "Kışlık Lastik", "tire-summer": "Yazlık Lastik", insurance: "Sigorta Yenileme", battery: "Akü ve Cam Suyu Kontrolü" };
 
+// Tamircinin "Hizmet Verdiği Markalar" bölümü (profil) ve ana sayfa marka arama/filtresi için
+// standart marka listesi — Türkiye'de yaygın markalar baz alınarak oluşturuldu.
+export const CAR_BRANDS = [
+  "Volkswagen", "Renault", "Fiat", "Ford", "Opel", "Toyota", "Hyundai", "Peugeot", "Citroën",
+  "Skoda", "Seat", "BMW", "Mercedes-Benz", "Audi", "Nissan", "Honda", "Kia", "Dacia", "Mini",
+  "Volvo", "Chevrolet", "Mazda", "Suzuki", "Porsche", "Tofaş",
+];
+export const PAYMENT_METHOD_OPTIONS = ["Nakit", "Kredi/Banka Kartı", "Havale/EFT", "Kapıda Ödeme"];
+export const LANG_LABELS = { tr: "Türkçe", en: "English", de: "Deutsch" };
+
 export const FREE_QUOTE_MECH_LIMIT = 5;
 export const PREMIUM_QUOTE_MECH_LIMIT = 10;
 

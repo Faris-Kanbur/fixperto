@@ -66,7 +66,7 @@ function useAppLogic() {
   const [mapPreviewItem, setMapPreviewItem] = useState(null);
   useEffect(() => { setHoveredPinId(null); setMapPreviewItem(null); }, [ownerMode]);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [filters, setFilters] = useState({ priceTier: "all", minRating: 0, maxDistance: 999 });
+  const [filters, setFilters] = useState({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" });
   const [listingFilters, setListingFilters] = useState({ transmission: "all", fuelType: "all", minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "" });
   const [listingSort, setListingSort] = useState("default");
   const [listingSortDir, setListingSortDir] = useState("asc");
@@ -606,13 +606,16 @@ function useAppLogic() {
   }, [allReminders, ownerSettings.smartReminders]);
   const filtered = useMemo(() => {
     let list = mechanicsList.map(m => ({ ...m, effectiveDistance: getEffectiveDistance(m) }));
-    list = list.filter(m => m.name.toLowerCase().includes(query.toLowerCase()) || m.specialty.toLowerCase().includes(query.toLowerCase()));
+    const q = query.toLowerCase().trim();
+    if (q) list = list.filter(m => m.name.toLowerCase().includes(q) || m.specialty.toLowerCase().includes(q) || (m.brandsServiced || []).some(b => b.toLowerCase().includes(q)));
     if (locationQuery.trim()) list = list.filter(m => (m.address || "").toLowerCase().includes(locationQuery.trim().toLowerCase()));
     if (filters.priceTier === "cheap") list = list.filter(m => m.price <= 300);
     if (filters.priceTier === "mid") list = list.filter(m => m.price > 300 && m.price <= 450);
     if (filters.priceTier === "expensive") list = list.filter(m => m.price > 450);
     if (filters.minRating > 0) list = list.filter(m => m.rating >= filters.minRating);
     if (filters.maxDistance < 999) list = list.filter(m => m.effectiveDistance <= filters.maxDistance);
+    if (filters.brand) list = list.filter(m => (m.brandsServiced || []).includes(filters.brand));
+    if (filters.service) list = list.filter(m => (m.services || []).some(s => s.name === filters.service));
     if (sortBy === "distance") list = [...list].sort((a, b) => sortDir === "asc" ? a.effectiveDistance - b.effectiveDistance : b.effectiveDistance - a.effectiveDistance);
     if (sortBy === "price") list = [...list].sort((a, b) => sortDir === "asc" ? a.price - b.price : b.price - a.price);
     if (sortBy === "rating") list = [...list].sort((a, b) => sortDir === "asc" ? a.rating - b.rating : b.rating - a.rating);
@@ -675,7 +678,7 @@ function useAppLogic() {
     }
     return refs;
   }, [jobListings, ownerProfile.email, myProfile?.email]);
-  const activeFilterCount = (filters.priceTier !== "all" ? 1 : 0) + (filters.minRating > 0 ? 1 : 0) + (filters.maxDistance < 999 ? 1 : 0);
+  const activeFilterCount = (filters.priceTier !== "all" ? 1 : 0) + (filters.minRating > 0 ? 1 : 0) + (filters.maxDistance < 999 ? 1 : 0) + (filters.brand ? 1 : 0) + (filters.service ? 1 : 0);
   const nextDays = useMemo(() => { const days = []; const today = new Date(); for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); days.push(d); } return days; }, []);
   const isSameMechanicAppt = (a) => a.mechanicId === MY_MECHANIC_ID || (!a.mechanicId && a.mechanicName === myProfile?.name);
   const customerNoShowCount = (customer) => appointments.filter(a => a.customer === customer && a.noShow && isSameMechanicAppt(a)).length;
@@ -964,7 +967,7 @@ function useAppLogic() {
     title: "Pozisyon", employmentType: "Çalışma Şekli", experienceLevel: "Deneyim Seviyesi", location: "Konum",
     salaryMin: "Min. Maaş", salaryMax: "Maks. Maaş", description: "Açıklama", requirements: "Aranan Nitelikler", skills: "Beceriler",
     adminNote: "Dahili Not", refunded: "İade Durumu", depositRefunded: "Kapora İadesi", services: "Sunulan Hizmetler",
-    reviewList: "Yorumlar",
+    reviewList: "Yorumlar", brandsServiced: "Hizmet Verdiği Markalar", paymentMethods: "Ödeme Yöntemleri", lang: "Konuştuğu Dil",
   };
   const adminFieldLabel = (field) => ADMIN_FIELD_LABELS[field] || field;
   const formatAdminHistoryValue = (field, value) => {
