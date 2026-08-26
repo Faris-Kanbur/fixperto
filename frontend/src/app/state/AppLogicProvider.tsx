@@ -873,12 +873,15 @@ function useAppLogic() {
       const createdOffers = await Promise.all(offerDrafts.map(o => api.quoteOffers.create(o)));
       setQuoteOffers(os => [...createdOffers, ...os]);
       if (selectedMechIds.includes(MY_MECHANIC_ID)) {
-        // Not: bildirim metnine arıza açıklamasını (issueText) doğrudan gömmüyoruz — bu metin
-        // müşterinin kendi dilinde yazılmış olabilir ve bildirim burada sabit bir dizgi olduğu
-        // için TranslatedText gibi canlı çeviri altyapısından yararlanamaz (bkz. kullanıcı geri
-        // bildirimi: tamircinin dili değiştirilse bile bildirimde hep orijinal dilde kalıyordu).
-        // Doğru çevrilmiş hali zaten "Teklifler" sekmesinde (bkz. mechReqView === "quotes") gösteriliyor.
-        fireNotification("Yeni teklif isteği 📋", `${customerName} sizden yeni bir arıza için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" });
+        // Not: bildirim metnine arıza açıklamasını (issueText) her zaman ham haliyle gömmüyoruz —
+        // bildirim burada sabit bir dizgi olduğu için TranslatedText gibi canlı çeviri
+        // altyapısından yararlanamaz (bkz. kullanıcı geri bildirimi: tamircinin dili değiştirilse
+        // bile bildirimde hep orijinal dilde kalıyordu). Tamircinin dili müşteriyle aynıysa metni
+        // yine de gösteriyoruz — sadece diller FARKLIYSA genel bir önizlemeye düşüyoruz. Doğru
+        // çevrilmiş hali her durumda zaten "Teklifler" sekmesinde (mechReqView === "quotes") var.
+        const notifyMech = mechanicsList.find(m => m.id === MY_MECHANIC_ID);
+        const sameLang = (notifyMech?.lang || "tr") === ownerLang;
+        fireNotification("Yeni teklif isteği 📋", sameLang ? `${customerName} sizden "${issueText.slice(0, 50)}" için fiyat teklifi istiyor.` : `${customerName} sizden yeni bir arıza için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" });
       }
     } catch (err) {
       setToast({ type: "info", text: `⚠️ Teklif isteği kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
@@ -1743,7 +1746,7 @@ function useAppLogic() {
     if (!appt) return;
     const mech = mechanicsList.find(m => m.name === appt.mechanicName);
     if (mech) {
-      const newReview = { id: Date.now(), mine: true, date: "az önce", name: ownerProfile.name || "Araç Sahibi", avatar: "🙂", rating: reviewForm.rating, comment: reviewForm.comment.trim() || "Hizmetten memnun kaldım.", photo: false };
+      const newReview = { id: Date.now(), mine: true, date: "az önce", name: ownerProfile.name || "Araç Sahibi", avatar: "🙂", rating: reviewForm.rating, comment: reviewForm.comment.trim() || "Hizmetten memnun kaldım.", photo: false, lang: ownerLang };
       const newReviewsCount = mech.reviews + 1;
       const newAvg = Math.round((((mech.rating * mech.reviews) + reviewForm.rating) / newReviewsCount) * 10) / 10;
       const reviewList = [newReview, ...mech.reviewList];
@@ -1763,7 +1766,7 @@ function useAppLogic() {
     if (!replyDraft.trim()) return;
     const mech = mechanicsList.find(m => m.id === mechanicId);
     const review = mech?.reviewList.find(r => r.id === reviewId);
-    const reviewList = mech ? mech.reviewList.map(r => r.id === reviewId ? { ...r, reply: replyDraft.trim() } : r) : [];
+    const reviewList = mech ? mech.reviewList.map(r => r.id === reviewId ? { ...r, reply: replyDraft.trim(), replyLang: myProfile?.lang || "tr" } : r) : [];
     setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList }));
     if (mech) persist(api.mechanics.update(mechanicId, { reviewList }), "Yanıt kaydedilemedi");
     setReplyingReviewId(null);
@@ -1928,7 +1931,13 @@ function useAppLogic() {
     newMsgs.push({ id: msgId++, sender: "owner", text, lang: ownerLang, image });
     setConversations(cs => cs.map(c => c.id === activeConvoId ? { ...c, messages: newMsgs, pendingContextNote: null } : c));
     persist(api.conversations.update(activeConvoId, { messages: newMsgs, pendingContextNote: null }), "Mesaj kaydedilemedi");
-    fireNotification("Yeni mesaj 💬", `${ownerProfile.name || "Araç sahibi"}: ${text || "📷 Fotoğraf gönderdi"}`, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId });
+    // Not: bildirim gövdesi sabit bir dizgi olduğu için canlı çeviri altyapısını kullanamıyor —
+    // alıcı tamircinin dili göndericiyle AYNI değilse mesaj önizlemesini ham haliyle göstermiyoruz
+    // (bkz. quote-request bildirimi için yukarıdaki not); sohbet ekranındaki ChatBubble zaten
+    // karşı tarafın diline göre otomatik çeviriyor, bildirim o zaman sadece oraya yönlendiriyor.
+    const recipientMech = mechanicsList.find(m => m.id === convo.mechanicId);
+    const chatPreviewSameLang = !recipientMech || (recipientMech.lang || "tr") === ownerLang;
+    fireNotification("Yeni mesaj 💬", `${ownerProfile.name || "Araç sahibi"}: ${!text ? "📷 Fotoğraf gönderdi" : chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId });
     setChatInput("");
   };
   const handleFileSelect = (e) => { const file = e.target.files?.[0]; if (!file) return; sendOwnerMessage("📎 Fotoğraf gönderildi", URL.createObjectURL(file)); };
@@ -1972,7 +1981,10 @@ function useAppLogic() {
     newMsgs.push({ id: msgId++, sender: "mechanic", text, lang: senderLang });
     setConversations(cs => cs.map(c => c.id === mechActiveConvoId ? { ...c, messages: newMsgs, pendingContextNote: null } : c));
     persist(api.conversations.update(mechActiveConvoId, { messages: newMsgs, pendingContextNote: null }), "Mesaj kaydedilemedi");
-    fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${text}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId });
+    // Bildirim gövdesi canlı çeviremediği için (bkz. sendOwnerMessage'daki not) alıcı araç
+    // sahibinin dili göndericiyle farklıysa ham metni değil genel bir önizleme gösteriyoruz.
+    const chatPreviewSameLang = senderLang === ownerLang;
+    fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId });
     setMechChatInput("");
   };
   const updateMyField = (field, value) => { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m)); persist(api.mechanics.update(MY_MECHANIC_ID, { [field]: value }), "Profil bilgisi kaydedilemedi"); };
@@ -2089,8 +2101,13 @@ function useAppLogic() {
     if (missingFields.length > 0) { setToast({ type: "info", text: `⚠️ Eksik bilgiler var: ${missingFields.join(", ")}. Lütfen doldurun.` }); return; }
     if (sellForm._editingId) {
       const before = listings.find(x => x.id === sellForm._editingId);
-      const { _editingId, _vehicleId, ...patch } = sellForm;
-      setListings(l => l.map(x => x.id === sellForm._editingId ? { ...x, ...sellForm } : x));
+      const { _editingId, _vehicleId, ...patchFields } = sellForm;
+      // Açıklama metni bu düzenlemede değiştiyse, hangi dilde yazıldığını güncel dile göre
+      // yeniden etiketliyoruz — bkz. listing.lang alanı, TranslatedText ile ilan açıklaması/
+      // Sorular sekmesi çevirisi için kullanılıyor.
+      const editLang = role === "owner" ? ownerLang : (myProfile?.lang || "tr");
+      const patch = { ...patchFields, lang: editLang };
+      setListings(l => l.map(x => x.id === sellForm._editingId ? { ...x, ...sellForm, lang: editLang } : x));
       persist(api.listings.update(sellForm._editingId, patch), "İlan kaydedilemedi");
       setToast({ type: "info", text: "✅ İlan güncellendi." });
       if (before) {
@@ -2103,7 +2120,9 @@ function useAppLogic() {
     else {
       const sellerName = sellerType === "mechanic" ? (myProfile?.name || "Tamirci") : (ownerProfile.name || "Araç Sahibi");
       const { _editingId, _vehicleId, ...formFields } = sellForm;
-      const draft = { sellerName, sellerType, ...formFields, vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [] };
+      // Açıklama metninin hangi dilde yazıldığını satıcının güncel diline göre etiketliyoruz —
+      // bkz. patch.lang yorum notu yukarıda.
+      const draft = { sellerName, sellerType, ...formFields, vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang };
       setShowSellForm(false);
       setToast({ type: "info", text: "🚗 İlanınız yayınlandı." });
       try {
@@ -2166,7 +2185,8 @@ function useAppLogic() {
   const submitListingMsg = () => {
     if (!listingMsg || !selectedListing) return;
     const senderName = ownerProfile.name || myProfile?.name || "Kullanıcı";
-    const messages = [{ id: Date.now(), text: listingMsg, from: senderName }, ...selectedListing.messages];
+    const senderLang = role === "owner" ? ownerLang : (myProfile?.lang || "tr");
+    const messages = [{ id: Date.now(), text: listingMsg, from: senderName, lang: senderLang }, ...selectedListing.messages];
     setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, messages } : x));
     persist(api.listings.update(selectedListing.id, { messages }), "Mesaj kaydedilemedi");
     setListingMsg("");
@@ -2210,16 +2230,19 @@ function useAppLogic() {
     if (!jobForm.title.trim()) return;
     const requirements = jobForm.requirements.split("\n").map(s => s.trim()).filter(Boolean);
     const skills = jobForm.skills.split(",").map(s => s.trim()).filter(Boolean);
+    // İlan açıklamasının hangi dilde yazıldığını tamircinin güncel diline göre etiketliyoruz —
+    // bkz. listing.lang notu, TranslatedText ile iş ilanı açıklaması çevirisi için kullanılıyor.
+    const jobLang = myProfile?.lang || "tr";
     if (jobForm._editingId) {
       const { _editingId, ...formFields } = jobForm;
-      const patch = { ...formFields, requirements, skills };
+      const patch = { ...formFields, requirements, skills, lang: jobLang };
       setJobListings(js => js.map(j => j.id === jobForm._editingId ? { ...j, ...patch } : j));
       persist(api.jobs.update(jobForm._editingId, patch), "İş ilanı kaydedilemedi");
       setToast({ type: "info", text: "✅ İş ilanı güncellendi." });
       setShowJobForm(false);
     } else {
       const { _editingId, ...formFields } = jobForm;
-      const draft = { mechanicId: MY_MECHANIC_ID, mechanicName: myProfile?.name || "Tamirci", mechanicImg: myProfile?.img || "🔧", ...formFields, requirements, skills, postedDate: "az önce", status: "active", applicants: [] };
+      const draft = { mechanicId: MY_MECHANIC_ID, mechanicName: myProfile?.name || "Tamirci", mechanicImg: myProfile?.img || "🔧", ...formFields, requirements, skills, postedDate: "az önce", status: "active", applicants: [], lang: jobLang };
       setShowJobForm(false);
       setToast({ type: "info", text: "💼 İş ilanınız yayınlandı." });
       try {
@@ -2258,7 +2281,7 @@ function useAppLogic() {
   const jobApplyReady = jobApplyInfoValid && jobApplyCv;
   const submitJobApplication = () => {
     if (!jobApplyReady || !selectedJob) return;
-    const applicant = { id: Date.now(), name: jobApplyInfo.name.trim(), phone: jobApplyInfo.phone.trim(), email: jobApplyInfo.email.trim(), address: jobApplyInfo.address.trim(), message: jobApplyMsg, date: "az önce", status: "pending", cvName: jobApplyCv?.name || null, cvUrl: jobApplyCv?.url || null };
+    const applicant = { id: Date.now(), name: jobApplyInfo.name.trim(), phone: jobApplyInfo.phone.trim(), email: jobApplyInfo.email.trim(), address: jobApplyInfo.address.trim(), message: jobApplyMsg, lang: ownerLang, date: "az önce", status: "pending", cvName: jobApplyCv?.name || null, cvUrl: jobApplyCv?.url || null };
     const applicants = [applicant, ...selectedJob.applicants];
     setJobListings(js => js.map(j => j.id === selectedJob.id ? { ...j, applicants } : j));
     persist(api.jobs.update(selectedJob.id, { applicants }), "Başvuru kaydedilemedi");

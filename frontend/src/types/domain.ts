@@ -176,6 +176,8 @@ export interface Listing {
   shareCount?: number;
   /** İlanın bulunduğu şehir — homepage/filtre modalındaki konum aramasının eşleştiği alan. */
   city?: string;
+  /** Açıklamanın hangi dilde yazıldığı — görüntüleyenin dili farklıysa otomatik çeviri için. */
+  lang?: string;
   /** Kasa tipi (Sedan, Hatchback, SUV, ...) — bkz. constants.ts BODY_TYPES. */
   bodyType?: string;
   /** Motor hacmi, serbest metin (örn. "1.6", "2.0 TDI"). */
@@ -229,6 +231,10 @@ export interface JobApplicant {
   phone?: string;
   cvFileName?: string;
   status?: "pending" | "rejected" | "accepted";
+  /** Başvuru mesajı — adayın kendi diliyle yazdığı serbest metin. */
+  message?: string;
+  /** Başvuru mesajının hangi dilde yazıldığı — TranslatedText ile çeviri için. */
+  lang?: string;
 }
 
 export interface JobListing {
@@ -249,6 +255,8 @@ export interface JobListing {
   status: "active" | "closed" | string;
   applicants: JobApplicant[];
   shareCount?: number;
+  /** İlan açıklamasının hangi dilde yazıldığı — görüntüleyenin dili farklıysa otomatik çeviri için. */
+  lang?: string;
 }
 
 export type TicketType = "payment" | "listing" | "quality" | "verification" | "no_show" | "review" | "bug" | "customer" | string;

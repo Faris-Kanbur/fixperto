@@ -139,7 +139,8 @@ CREATE TABLE IF NOT EXISTS listings (
   emissionClass TEXT,
   batteryCapacity TEXT,
   rangeKm INTEGER,
-  city TEXT
+  city TEXT,
+  lang TEXT
 );
 
 CREATE TABLE IF NOT EXISTS job_listings (
@@ -153,7 +154,8 @@ CREATE TABLE IF NOT EXISTS job_listings (
   skills TEXT DEFAULT '[]',
   postedDate TEXT, status TEXT DEFAULT 'active',
   applicants TEXT DEFAULT '[]',
-  shareCount INTEGER DEFAULT 0
+  shareCount INTEGER DEFAULT 0,
+  lang TEXT
 );
 
 CREATE TABLE IF NOT EXISTS support_tickets (
@@ -312,6 +314,8 @@ function ensureColumn(table, columnDef) {
   ["listings", "batteryCapacity TEXT"],
   ["listings", "rangeKm INTEGER"],
   ["listings", "city TEXT"],
+  ["listings", "lang TEXT"],
+  ["job_listings", "lang TEXT"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 // ---------------------------------------------------------------------------

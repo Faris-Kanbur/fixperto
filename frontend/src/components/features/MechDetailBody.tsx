@@ -6,6 +6,7 @@ import { MapPanel } from "./MapPanel";
 import { ShareButton } from "./ShareButton";
 import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
+import { TranslatedText } from "./TranslatedText";
 import { BANNER_PRESETS, MY_MECHANIC_ID, LANG_LABELS } from "../../data/constants";
 import { formatHoursText, isImgUrl, imgThumb } from "../../utils/helpers";
 
@@ -221,8 +222,8 @@ export function MechDetailBody() {
               <div className="flex items-center gap-2.5 mb-2"><div className={`w-10 h-10 rounded-full bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-lg flex-shrink-0 shadow-sm`}>{r.avatar}</div><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-gray-800 truncate">{r.name}</p><p className="text-[10px] text-gray-400">{times[i % times.length]}</p></div><BadgeCheck size={14} className="text-rose-400 flex-shrink-0" /></div>
               <div className="flex items-center gap-0.5 mb-2">{[...Array(5)].map((_, j) => (<Star key={j} size={12} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div>
               {r.photo && <div className="w-full h-20 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-2xl mb-2"><ImageIcon size={22} className="text-gray-400" /></div>}
-              <p className="text-[11px] text-gray-500 leading-snug">{r.comment}</p>
-              {r.reply && (<div className="mt-2 pt-2 border-t border-gray-50 bg-gray-50 rounded-lg p-2"><p className="text-[9px] font-bold text-gray-500 mb-0.5">İşletme yanıtı</p><p className="text-[10px] text-gray-500 leading-snug">{r.reply}</p></div>)}
+              <p className="text-[11px] text-gray-500 leading-snug"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p>
+              {r.reply && (<div className="mt-2 pt-2 border-t border-gray-50 bg-gray-50 rounded-lg p-2"><p className="text-[9px] font-bold text-gray-500 mb-0.5">İşletme yanıtı</p><p className="text-[10px] text-gray-500 leading-snug"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p></div>)}
               {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                 replyingReviewId === r.id ? (
                   <div className="mt-2 pt-2 border-t border-gray-50">
