@@ -1,6 +1,7 @@
 import { Calendar, CheckCircle2, ChevronRight, ClipboardList, Plus } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { AppointmentCard } from "./AppointmentCard";
+import { TranslatedText } from "./TranslatedText";
 
 export function OwnerAppointmentsView() {
   const {
@@ -137,7 +138,7 @@ export function OwnerAppointmentsView() {
                     {offers.sort((a, b) => (a.price || 999999) - (b.price || 999999)).map(o => (
                       <div key={o.id} className={`rounded-xl p-3 border ${o.status === "accepted" ? "border-green-200 bg-green-50" : "border-gray-100 bg-gray-50"}`}>
                         <div className="flex items-center justify-between mb-1"><div className="flex items-center gap-2 min-w-0"><span className="text-lg flex-shrink-0">{o.mechanicImg}</span><p className="text-xs font-semibold text-gray-800 truncate">{o.mechanicName}</p></div>{o.status === "submitted" && req.status === "open" && (<button onClick={() => acceptQuoteOffer(req.id, o.id)} className="flex-shrink-0 bg-rose-600 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-medium hover:bg-rose-700 transition">Kabul Et</button>)}{o.status === "accepted" && (<span className="flex-shrink-0 text-[10px] text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 size={11} /> Kabul edildi</span>)}{o.status === "lost" && (<span className="flex-shrink-0 text-[10px] text-gray-400">Seçilmedi</span>)}{o.status === "pending" && (<span className="flex-shrink-0 text-[10px] text-amber-500">Yanıt bekleniyor</span>)}</div>
-                        {o.status === "submitted" || o.status === "accepted" ? (<div className="flex items-center gap-3 text-[11px] text-gray-500"><span className="font-bold text-gray-800">{o.price}₺</span>{o.etaDays && <span>· {o.etaDays} gün</span>}{o.note && <span className="truncate">· {o.note}</span>}</div>) : null}
+                        {o.status === "submitted" || o.status === "accepted" ? (<div className="flex items-center gap-3 text-[11px] text-gray-500"><span className="font-bold text-gray-800">{o.price}₺</span>{o.etaDays && <span>· {o.etaDays} gün</span>}{o.note && <span className="truncate">· <TranslatedText id={`quoteoffer-note-${o.id}`} text={o.note} fromLang={mechanicsList.find(m => m.id === o.mechanicId)?.lang || "tr"} viewerLang={ownerLang} compact /></span>}</div>) : null}
                       </div>
                     ))}
                   </div>

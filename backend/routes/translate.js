@@ -3,16 +3,43 @@ import { db } from "../db/db.js";
 
 const router = Router();
 
-// Sohbet mesajlarının gerçek zamanlı çevirisi. MyMemory (api.mymemory.translated.net) ücretsiz,
-// API anahtarı gerektirmeyen bir çeviri servisi — demo/düşük hacimli kullanım için yeterli.
+// Sohbet mesajlarının (ve randevu/not gibi diğer serbest metinlerin) gerçek zamanlı çevirisi.
+// İki ücretsiz, API anahtarı gerektirmeyen servis art arda denenir:
+//   1) Google Translate'in anahtarsız "gtx" uç noktası (birincil) — MyMemory'ye göre hem
+//      belirgin şekilde daha hızlı hem de kısa/gündelik cümlelerde çok daha isabetli. Herhangi
+//      bir günlük kota sınırı yok, bu yüzden "bazen çalışmıyor" sorununu da ortadan kaldırıyor.
+//   2) MyMemory (yedek) — Google uç noktasına ağ erişimi yoksa veya başarısız olursa devreye
+//      girer, böylece hiçbir ağ ortamında özellik tamamen ölü kalmıyor.
 // Uygulamayı YAVAŞLATMAMASI için üç önlem var:
 //   1) SQLite'ta kalıcı bir önbellek (translation_cache) — aynı metin/dil çifti bir daha ASLA
 //      dış servise gitmez, sunucu yeniden başlasa bile.
-//   2) Sıkı bir zaman aşımı (4sn) — dış servis yavaş/çökükse istek asılı kalmaz.
+//   2) Her servis için ayrı, sıkı bir zaman aşımı (3sn) — dış servis yavaş/çökükse istek asılı
+//      kalmaz; en kötü senaryoda (Google tamamen erişilemezse) toplam bekleme ~6sn'yi geçmez.
 //   3) Hata/timeout durumunda 200 ile orijinal metni döner (frontend hiçbir zaman "çeviri
 //      hatası" görmez, sadece sessizce orijinal metni gösterir).
-const TRANSLATE_TIMEOUT_MS = 4000;
+const TRANSLATE_TIMEOUT_MS = 3000;
 const SUPPORTED_LANGS = new Set(["tr", "en", "de"]);
+
+async function fetchFromGoogle(text, from, to) {
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TRANSLATE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return null;
+    const body = await res.json();
+    // Yanıt şekli: [[[çeviri, orijinal, ...], [çeviri, orijinal, ...], ...], ...] — her cümle
+    // parçası ayrı bir alt-dizi olarak gelir, bunları sırayla birleştirip tek metin elde ediyoruz.
+    const chunks = body?.[0];
+    if (!Array.isArray(chunks) || chunks.length === 0) return null;
+    const translated = chunks.map((c) => c?.[0] || "").join("");
+    return translated.trim() || null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function fetchFromMyMemory(text, from, to) {
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
@@ -34,6 +61,12 @@ async function fetchFromMyMemory(text, from, to) {
   }
 }
 
+async function translateText(text, from, to) {
+  const fromGoogle = await fetchFromGoogle(text, from, to);
+  if (fromGoogle) return fromGoogle;
+  return fetchFromMyMemory(text, from, to);
+}
+
 router.post("/", async (req, res) => {
   const { text, from, to } = req.body || {};
   if (!text || !to) return res.status(400).json({ error: "text ve to zorunludur." });
@@ -46,7 +79,7 @@ router.post("/", async (req, res) => {
   ).get(fromLang, toLang, text);
   if (cached) return res.json({ translatedText: cached.translatedText, cached: true });
 
-  const translated = await fetchFromMyMemory(text, fromLang, toLang);
+  const translated = await translateText(text, fromLang, toLang);
   if (!translated) {
     // Çeviri servisi ulaşılamaz/başarısız oldu — kullanıcı orijinal metni görmeye devam etsin,
     // hiçbir zaman hata ile karşılaşmasın. Önbelleğe YAZMIYORUZ ki servis geri geldiğinde tekrar

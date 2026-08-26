@@ -271,6 +271,11 @@ function useAppLogic() {
   // updateMyOwnerField ile diğer profil alanları gibi gerçekten kalıcı.
   const ownerLang = ownerProfile.lang || "tr";
   const setOwnerLang = (value) => { updateMyOwnerField("lang", value); persist(api.owners.update(MY_OWNER_ID, { lang: value }), "Dil tercihi kaydedilemedi"); };
+  // Randevu "sorun açıklaması" / çoklu teklif notu gibi, sohbet dışındaki serbest metinler her
+  // zaman metni YAZAN araç sahibinin o anki diliyle etiketlenmelidir (bkz. TranslatedText.tsx) —
+  // appointment/quoteRequest kayıtlarındaki ownerId'den ownersDirectory'de canlı dil ayarına
+  // bakıyoruz (ownerProfile'ın MY_OWNER_ID için aynı mantığı kullandığı gibi).
+  const ownerLangFor = (ownerId) => ownersDirectory.find(o => o.id === ownerId)?.lang || "tr";
   const [supportTickets, setSupportTickets] = useState([]);
   // --- Backend bootstrap: hydrate the core entities from the Express + SQLite API on mount ---
   // (replaces the single-file demo's hardcoded MECHANICS_INITIAL / INITIAL_* mock arrays).
@@ -2368,7 +2373,7 @@ function useAppLogic() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
-    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats, viewStats, listingFavoriteCount, myProfileViewStats, listingViewStats, translationCache, translateMessage,
+    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats, viewStats, listingFavoriteCount, myProfileViewStats, listingViewStats, translationCache, translateMessage, ownerLangFor,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,
