@@ -26,6 +26,15 @@ import { MiniBarChart } from "../../components/ui/MiniBarChart";
 // destek talebi/teklif isteği/teklif id'leri) — backend'deki gerçek id'ler INSERT sırasında
 // otomatik atanıyor, bunlar sadece bu oturumda henüz kaydedilmemiş taslak nesneler için kullanılıyor.
 let msgId = 1000, apptId = 200, listingId = 500, jobListingId = 800, adminChangeLogId = 1, supportTicketId = 8001, quoteReqId = 5000, quoteOfferId = 9000;
+// Bir üst satırdaki id sayaçları BACKEND'in kendi tablosuna sahip varlıklar için (o varlıklar zaten
+// gerçek id'lerini INSERT sırasında backend'den alıyor, bu sayaçlar hiç kullanılmıyor bile). Burada
+// AYRI bir sayaç var çünkü bazı veriler kendi tabloları OLMAYAN, bir üst kaydın (mechanic/vehicle/
+// job_listing/listing) İÇİNDEKİ JSON dizisi elemanları — id: Date.now() ile üretiliyorlardı. Bu,
+// review'larda daha önce YAKALANAN gerçek bir hataya (aynı milisaniyede oluşturulan iki öğe aynı id'yi
+// alır, "beğen"/"yanıtla" gibi id'ye göre eşleşen her işlem karışır) AÇIK bir davetiyeydi — burada aynı
+// düzeltme deseni (msgId'nin sohbet mesajları için zaten yaptığı gibi) tüm benzer iç içe dizi
+// elemanlarına (yorumlar, ilan teklifleri/mesajları, iş başvuruları, araç hatırlatıcıları) uygulanıyor.
+let nestedItemId = 2000000;
 
 // ---------------------------------------------------------------------------
 // useAppLogic: TÜM uygulama state'i ve business logic'i (eskiden App.jsx'in
@@ -449,7 +458,13 @@ function useAppLogic() {
   }, [screen]);
   const recordConversion = (action) => {
     if (!incomingShareRef) return;
-    persist(api.shareEvents.convert(incomingShareRef), `Dönüşüm kaydedilemedi (${action})`);
+    // ÖNEMLİ: bu tamamen dahili bir referral-atıf kaydı (kullanıcının kendi eylemiyle ilgisi yok) —
+    // önceden persist() kullanıyordu, bu da refCode geçersiz/süresi geçmiş olduğunda (backend 404
+    // döner, bkz. routes/shareEvents.js) sohbet başlatan/randevu alan/teklif veren SIRADAN bir
+    // kullanıcıya alakasız, ürkütücü bir "⚠️ Dönüşüm kaydedilemedi" hata toast'ı gösteriyordu.
+    // Kardeşi olan .click() çağrısı (yukarıda) zaten sessizce geçiyor — aynı davranış burada da
+    // uygulanıyor, kullanıcıya asla görünmemeli.
+    api.shareEvents.convert(incomingShareRef).catch(() => { /* sessizce geç — bu sadece analitik */ });
     setIncomingShareRef(null);
   };
 
@@ -704,11 +719,20 @@ function useAppLogic() {
   // yenilendiğinde boş görünüyordu. Artık kalıcı `jobListings[].applicants` verisinden,
   // e-posta eşleşmesiyle (kendi e-postam) doğrudan türetiliyor — tek doğruluk kaynağı budur.
   const myApplicationRefs = useMemo(() => {
+    // E-postalar burada normalize edilmeden (trim/lowercase) birebir karşılaştırılıyordu —
+    // kullanıcı başvuru formuna e-postasını farklı BÜYÜK/küçük harfle yazarsa (örn. "User@Gmail.com"
+    // vs profildeki "user@gmail.com") başvuru gerçekten kaydedilmiş olsa bile "Başvurularım"
+    // listesinden sessizce kaybolurdu. E-posta karşılaştırması standart olarak case-insensitive
+    // olmalı; başında/sonunda boşluk da aynı şekilde göz ardı edilmeli.
+    const norm = (s) => (s || "").trim().toLowerCase();
+    const myOwnerEmail = norm(ownerProfile.email);
+    const myMechEmail = norm(myProfile?.email);
     const refs = [];
     for (const job of jobListings) {
       for (const applicant of job.applicants || []) {
-        const isOwnerMatch = !!ownerProfile.email && applicant.email === ownerProfile.email;
-        const isMechMatch = !!myProfile?.email && applicant.email === myProfile.email;
+        const applicantEmail = norm(applicant.email);
+        const isOwnerMatch = !!myOwnerEmail && applicantEmail === myOwnerEmail;
+        const isMechMatch = !!myMechEmail && applicantEmail === myMechEmail;
         if (isOwnerMatch || isMechMatch) {
           refs.push({ id: applicant.id, jobId: job.id, applicantId: applicant.id, role: isOwnerMatch ? "owner" : "mechanic", date: applicant.date, job, applicant });
         }
@@ -856,8 +880,12 @@ function useAppLogic() {
     setTimeout(() => URL.revokeObjectURL(url), 3000);
     setToast({ type: "info", text: "🧾 Fiş indirildi. Açıp yazdırabilirsiniz." });
   };
-  const mechanicDirectionsUrl = (mechanicName) => {
-    const mech = mechanicsList.find(m => m.name === mechanicName);
+  // ÖNEMLİ: önceden mechanicName (donmuş, değişebilen bir görünen ad) ile arama yapıyordu — bir
+  // tamirci işletme adını değiştirirse veya iki tamirci aynı adı taşırsa "Yol Tarifi" linki ya
+  // kaybolur ya da YANLIŞ dükkanın konumuna giderdi. Artık her zaman kalıcı mechanicId'yi kabul
+  // ediyor (randevu nesnesinde zaten var, bkz. confirmBooking).
+  const mechanicDirectionsUrl = (mechanicId) => {
+    const mech = mechanicsList.find(m => m.id === mechanicId);
     if (!mech || !mech.lat || !mech.lng) return null;
     return `https://www.google.com/maps/dir/?api=1&destination=${mech.lat},${mech.lng}`;
   };
@@ -1115,8 +1143,26 @@ function useAppLogic() {
     else if (targetType === "ticket") { setSupportTickets(list => list.map(tk => tk.id === targetId ? { ...tk, [field]: value } : tk)); persist(api.tickets.update(targetId, { [field]: value }), "Destek talebi kaydedilemedi"); }
     else if (targetType === "appointment") { setAppointments(apps => apps.map(a => a.id === targetId ? { ...a, [field]: value } : a)); persist(api.appointments.update(targetId, { [field]: value }), "Randevu kaydedilemedi"); }
   };
+  // GERÇEK HATA: bu tek-satır "Geri Al" eskiden koşulsuz entry.oldValue'yu uyguluyordu — aynı
+  // alan (targetType+targetId+field) için SONRADAN yapılmış, henüz geri alınmamış BAŞKA bir kayıt
+  // varsa, o daha yeni değişikliği fark etmeden sessizce eziyordu (ör. fiyat 300→400, sonra
+  // 400→500; ilk kaydı "Geri Al" tıklanınca fiyat 500'den değil 400'den değil doğrudan 300'e
+  // düşerdi, 500 değişikliği ise günlükte hâlâ "geri alınmadı" görünmeye devam ederdi — denetim
+  // izi ile gerçek durum arasında tutarsızlık). adminChangeLog en yeni önce sırayla tutulduğu için,
+  // burada aynı hedef+alan için entry'den DAHA YENİ ve hâlâ geri alınmamış bir kayıt var mı diye
+  // bakılıyor; varsa geri alma engellenip kullanıcıya açıkça bildiriliyor.
   const revertAdminChange = (entry) => {
     if (entry.reverted) return;
+    // adminChangeLog en yeni kayıt en başta olacak şekilde tutuluyor (bkz. logAdminChange:
+    // [logEntry, ...log]) — bu yüzden entry'den ÖNCE gelen (daha küçük index'li) satırlar zaten
+    // daha yeni demek. Aynı hedef+alan için hâlâ geri alınmamış daha yeni bir kayıt varsa, bu
+    // kaydı geri almak o daha yeni değişikliği fark etmeden ezerdi.
+    const entryIdx = adminChangeLog.findIndex(e => e.id === entry.id);
+    const newerActive = adminChangeLog.slice(0, entryIdx).find(e => !e.reverted && e.targetType === entry.targetType && e.targetId === entry.targetId && e.field === entry.field);
+    if (newerActive) {
+      setToast({ type: "info", text: `⚠️ ${adminFieldLabel(entry.field)} bu tarihten SONRA tekrar değiştirilmiş. Önce daha yeni değişikliği geri alın, aksi halde güncel değer üzerine yazılır.` });
+      return;
+    }
     applyAdminFieldChange(entry.targetType, entry.targetId, entry.field, entry.oldValue, entry.extra);
     setAdminChangeLog(log => log.map(e => e.id === entry.id ? { ...e, reverted: true } : e));
     persist(api.admin.revertChange(entry.id), "Geri alma işlemi kaydedilemedi");
@@ -1430,11 +1476,15 @@ function useAppLogic() {
   const adminUserAnalytics = useMemo(() => {
     if (!analyzingUser) return null;
     if (analyzingUser.type === "owner") {
-      const myAppts = appointments.filter(a => a.customer === analyzingUser.name);
+      // customer/fromName (görünen ad) yerine ownerId/fromId kullanılıyor — bkz. isMyOwnerAppt'taki
+      // aynı düzeltme notu: seed randevularının customer alanı ownerProfile.name ile birebir aynı
+      // olmayabiliyor, admin analiz panelinde de aynı "kendi randevularım kayboluyor" hatasına yol
+      // açardı. Eski (id'siz) kayıtlar için isimle eşleştirmeye geri düşülüyor.
+      const myAppts = appointments.filter(a => a.ownerId != null ? a.ownerId === analyzingUser.id : a.customer === analyzingUser.name);
       const byStatus: Record<string, number> = {};
       myAppts.forEach(a => { byStatus[a.status] = (byStatus[a.status] || 0) + 1; });
       const myListings = listings.filter(l => l.sellerName === analyzingUser.name);
-      const myTickets = supportTickets.filter(tk => tk.fromName === analyzingUser.name);
+      const myTickets = supportTickets.filter(tk => tk.fromId != null ? tk.fromId === analyzingUser.id : tk.fromName === analyzingUser.name);
       return {
         apptCount: myAppts.length, byStatus,
         listingCount: myListings.length, activeListings: myListings.filter(l => l.status !== "sold" && !l.adminRemoved).length, soldListings: myListings.filter(l => l.status === "sold").length,
@@ -1442,14 +1492,15 @@ function useAppLogic() {
         totalShares: myListings.reduce((s, l) => s + (l.shareCount || 0), 0),
       };
     }
-    const myAppts = appointments.filter(a => a.mechanicName === analyzingUser.name);
+    // mechanicName (görünen ad) yerine mechanicId — aynı gerekçe (bkz. yukarıdaki owner dalı).
+    const myAppts = appointments.filter(a => a.mechanicId != null ? a.mechanicId === analyzingUser.id : a.mechanicName === analyzingUser.name);
     const completed = myAppts.filter(a => a.status === "Tamir Tamamlandı").length;
     const byStatus: Record<string, number> = {};
     myAppts.forEach(a => { byStatus[a.status] = (byStatus[a.status] || 0) + 1; });
     const myListings = listings.filter(l => l.sellerType === "mechanic" && l.sellerName === analyzingUser.name);
     const myJobs = jobListings.filter(j => j.mechanicId === analyzingUser.id);
     const totalApplicants = myJobs.reduce((s, j) => s + (j.applicants || []).length, 0);
-    const myTickets = supportTickets.filter(tk => tk.fromName === analyzingUser.name);
+    const myTickets = supportTickets.filter(tk => tk.fromId != null ? tk.fromId === analyzingUser.id : tk.fromName === analyzingUser.name);
     const estRevenue = completed * ((analyzingUser as any).price || 0);
     const ownShareCount = mechanicsList.find(m => m.id === analyzingUser.id)?.shareCount || 0;
     const totalShares = ownShareCount + myListings.reduce((s, l) => s + (l.shareCount || 0), 0) + myJobs.reduce((s, j) => s + (j.shareCount || 0), 0);
@@ -1568,7 +1619,11 @@ function useAppLogic() {
   const removeFlaggedReview = (id) => {
     const tk = supportTickets.find(t => t.id === id);
     if (!tk) return;
-    const mech = mechanicsList.find(m => m.name === tk.fromName);
+    // ÖNEMLİ: fromName (görünen ad) yerine kalıcı fromId kullanılıyor — iki tamirci aynı işletme
+    // adını taşırsa isimle eşleştirme YANLIŞ tamircinin yorumlarını silebilirdi (gerçek bir
+    // hesaplar-arası yanlış hedefleme riski). Eski (fromId'den önce açılmış) taleplerde geriye dönük
+    // uyumluluk için isme düşülüyor.
+    const mech = tk.fromId != null ? mechanicsList.find(m => m.id === tk.fromId) : mechanicsList.find(m => m.name === tk.fromName);
     if (!mech) return;
     const removedCount = (mech.reviewList || []).filter(r => r.flagged).length;
     if (removedCount === 0) { setToast({ type: "info", text: "Kaldırılacak işaretli yorum bulunamadı." }); return; }
@@ -1588,9 +1643,11 @@ function useAppLogic() {
   const grantVerification = (id) => {
     const tk = supportTickets.find(t => t.id === id);
     if (!tk) return;
-    const mech = mechanicsList.find(m => m.name === tk.fromName);
+    // removeFlaggedReview'daki aynı not: fromName yerine kalıcı fromId (varsa) kullanılıyor, isim
+    // çakışması/değişimi yüzünden yanlış tamirciye doğrulama rozeti verilmesin diye.
+    const mech = tk.fromId != null ? mechanicsList.find(m => m.id === tk.fromId) : mechanicsList.find(m => m.name === tk.fromName);
     if (mech) { logAdminChange({ targetType: "mechanic", targetId: mech.id, field: "verified", oldValue: mech.verified, newValue: true }); persist(api.mechanics.update(mech.id, { verified: true }), "Doğrulama kaydedilemedi"); }
-    setMechanicsList(list => list.map(m => m.name === tk.fromName ? { ...m, verified: true } : m));
+    setMechanicsList(list => list.map(m => (mech ? m.id === mech.id : m.name === tk.fromName) ? { ...m, verified: true } : m));
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `Doğrulama rozeti verildi (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: "resolved" });
     logAdminChange({ targetType: "ticket", targetId: id, field: "adminNote", oldValue: tk.adminNote, newValue: newNote });
@@ -1704,7 +1761,7 @@ function useAppLogic() {
     if (!newReminderForm.title.trim() || !newReminderForm.date) return;
     if (!isValidDateStr(newReminderForm.date)) { setToast({ type: "info", text: "⚠️ Geçersiz tarih. Lütfen geçerli bir tarih seçin (YYYY-AA-GG)." }); return; }
     if (new Date(newReminderForm.date) < TODAY) { setToast({ type: "info", text: "⚠️ Hatırlatma tarihi bugünden önce olamaz." }); return; }
-    const reminder = { id: Date.now(), title: newReminderForm.title.trim(), date: newReminderForm.date, leadDays: newReminderForm.leadDays || "7" };
+    const reminder = { id: nestedItemId++, title: newReminderForm.title.trim(), date: newReminderForm.date, leadDays: newReminderForm.leadDays || "7" };
     const vehicle = vehicles.find(v => v.id === vehicleId);
     const customReminders = [...(vehicle?.customReminders || []), reminder];
     setVehicles(vs => vs.map(v => v.id === vehicleId ? { ...v, customReminders } : v));
@@ -1753,7 +1810,7 @@ function useAppLogic() {
       if (appt) {
         const vehicle = vehicles.find(v => v.plate && appt.vehicle.includes(v.plate));
         if (vehicle) {
-          const reminder = { id: Date.now(), title: "Parça Garantisi Bitiyor", date: endStr, leadDays: "7" };
+          const reminder = { id: nestedItemId++, title: "Parça Garantisi Bitiyor", date: endStr, leadDays: "7" };
           const customReminders = [...(vehicle.customReminders || []), reminder];
           setVehicles(vs => vs.map(v => v.id === vehicle.id ? { ...v, customReminders } : v));
           persist(api.vehicles.update(vehicle.id, { customReminders }), "Hatırlatma kaydedilemedi");
@@ -1795,7 +1852,7 @@ function useAppLogic() {
     // kaydediliyor) kalıcı, değişmeyen doğru anahtar.
     const mech = mechanicsList.find(m => m.id === appt.mechanicId);
     if (mech) {
-      const newReview = { id: Date.now(), mine: true, date: "az önce", name: ownerProfile.name || "Araç Sahibi", avatar: "🙂", rating: reviewForm.rating, comment: reviewForm.comment.trim() || "Hizmetten memnun kaldım.", photo: false, lang: ownerLang };
+      const newReview = { id: nestedItemId++, mine: true, date: "az önce", name: ownerProfile.name || "Araç Sahibi", avatar: "🙂", rating: reviewForm.rating, comment: reviewForm.comment.trim() || "Hizmetten memnun kaldım.", photo: false, lang: ownerLang };
       const newReviewsCount = mech.reviews + 1;
       const newAvg = Math.round((((mech.rating * mech.reviews) + reviewForm.rating) / newReviewsCount) * 10) / 10;
       const reviewList = [newReview, ...mech.reviewList];
@@ -1856,19 +1913,26 @@ function useAppLogic() {
   // admin panelindeki AYNI supportTickets state'ine düşer, admin panelinden verilen cevapları
   // (adminReplies) burada görebilir. ----
   const mySupportTickets = () => {
-    const myName = role === "owner" ? ownerProfile.name : myProfile?.name;
-    if (!myName) return [];
-    return supportTickets.filter(tk => tk.fromName === myName).sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
+    // fromName yerine fromId ile filtreleniyor — fromName sadece görünen ad, ad değişirse (bkz.
+    // profil ayarları) kullanıcı kendi geçmiş taleplerini artık görememeye başlardı. fromId (aşağıda
+    // submitSupportTicket'ta MY_OWNER_ID/MY_MECHANIC_ID olarak yazılıyor) kalıcı.
+    const myId = role === "owner" ? MY_OWNER_ID : MY_MECHANIC_ID;
+    if (!myId) return [];
+    return supportTickets.filter(tk => (tk.fromId != null ? tk.fromId === myId : tk.fromName === (role === "owner" ? ownerProfile.name : myProfile?.name))).sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
   };
   const submitSupportTicket = async () => {
     if (!newTicketForm.subject.trim() || !newTicketForm.description.trim()) { setToast({ type: "info", text: "⚠️ Lütfen konu ve açıklama girin." }); return; }
     const fromType = role === "owner" ? "owner" : "mechanic";
     const fromName = (role === "owner" ? ownerProfile.name : myProfile?.name) || (role === "owner" ? "Araç Sahibi" : "Tamirci");
+    // fromId: fromName sadece görünen ad (admin panelinde grantVerification/removeFlaggedReview gibi
+    // işlemler bu talebi kimin açtığını bulmak için kullanıyor) — kalıcı kimlik için ayrıca id de
+    // kaydediliyor.
+    const fromId = role === "owner" ? MY_OWNER_ID : MY_MECHANIC_ID;
     const draft = {
       type: newTicketForm.type,
       priority: ADMIN_TICKET_TYPE_DEFAULT_PRIORITY[newTicketForm.type] || "medium",
       status: "open",
-      fromType, fromName,
+      fromType, fromName, fromId,
       subject: newTicketForm.subject.trim(),
       description: newTicketForm.description.trim(),
       relatedNote: newTicketForm.relatedNote.trim() || "—",
@@ -2214,7 +2278,7 @@ function useAppLogic() {
     const existing = myPendingOfferOn(selectedListing);
     const newOffers = existing && !existing.seen
       ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, amount: offerAmount, currency } : o)
-      : [{ id: Date.now(), amount: offerAmount, currency, from: buyerName, status: "pending", seen: false }, ...(existing ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, status: "replaced" } : o) : selectedListing.offers)];
+      : [{ id: nestedItemId++, amount: offerAmount, currency, from: buyerName, status: "pending", seen: false }, ...(existing ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, status: "replaced" } : o) : selectedListing.offers)];
     setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, offers: newOffers } : x));
     persist(api.listings.update(selectedListing.id, { offers: newOffers }), "Teklif kaydedilemedi");
     if (!existing) recordConversion("offer");
@@ -2235,7 +2299,7 @@ function useAppLogic() {
     if (!listingMsg || !selectedListing) return;
     const senderName = ownerProfile.name || myProfile?.name || "Kullanıcı";
     const senderLang = role === "owner" ? ownerLang : (myProfile?.lang || "tr");
-    const messages = [{ id: Date.now(), text: listingMsg, from: senderName, lang: senderLang }, ...selectedListing.messages];
+    const messages = [{ id: nestedItemId++, text: listingMsg, from: senderName, lang: senderLang }, ...selectedListing.messages];
     setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, messages } : x));
     persist(api.listings.update(selectedListing.id, { messages }), "Mesaj kaydedilemedi");
     setListingMsg("");
@@ -2330,7 +2394,7 @@ function useAppLogic() {
   const jobApplyReady = jobApplyInfoValid && jobApplyCv;
   const submitJobApplication = () => {
     if (!jobApplyReady || !selectedJob) return;
-    const applicant = { id: Date.now(), name: jobApplyInfo.name.trim(), phone: jobApplyInfo.phone.trim(), email: jobApplyInfo.email.trim(), address: jobApplyInfo.address.trim(), message: jobApplyMsg, lang: ownerLang, date: "az önce", status: "pending", cvName: jobApplyCv?.name || null, cvUrl: jobApplyCv?.url || null };
+    const applicant = { id: nestedItemId++, name: jobApplyInfo.name.trim(), phone: jobApplyInfo.phone.trim(), email: jobApplyInfo.email.trim(), address: jobApplyInfo.address.trim(), message: jobApplyMsg, lang: ownerLang, date: "az önce", status: "pending", cvName: jobApplyCv?.name || null, cvUrl: jobApplyCv?.url || null };
     const applicants = [applicant, ...selectedJob.applicants];
     setJobListings(js => js.map(j => j.id === selectedJob.id ? { ...j, applicants } : j));
     persist(api.jobs.update(selectedJob.id, { applicants }), "Başvuru kaydedilemedi");

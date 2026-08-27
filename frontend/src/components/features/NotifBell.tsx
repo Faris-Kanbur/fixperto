@@ -125,7 +125,15 @@ export function NotifBell() {
             <div className="absolute right-0 top-10 w-72 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100 p-2" style={{ zIndex: 9560 }}>
               <p className="text-xs font-bold text-gray-800 px-2 py-1.5">Bildirimler</p>
               {myLog.length === 0 && <p className="text-center text-gray-400 text-xs py-8">Henüz bildirim yok.</p>}
-              {myLog.map(n => (<button key={n.id} onClick={() => goToNotifTarget(n.target, n.role)} className={`w-full text-left px-2 py-2 rounded-xl hover:bg-gray-50 transition flex items-start gap-1.5 ${n.target ? "cursor-pointer" : "cursor-default"}`}><div className="flex-1 min-w-0"><p className="text-xs font-semibold text-gray-800">{n.title}</p><p className="text-[11px] text-gray-500 mt-0.5">{n.body}</p><p className="text-[10px] text-gray-300 mt-1">{new Date(n.ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</p></div>{n.target && <ChevronRight size={13} className="text-gray-300 flex-shrink-0 mt-0.5" />}</button>))}
+              {myLog.map(n => {
+                // "broadcast" tipi bildirimlerin gidebileceği bir ekran yok (goToNotifTarget'ta bu
+                // tip için hiç case yok, default:break sessizce hiçbir şey yapmıyordu) — ama n.target
+                // yine de dolu (truthy) olduğu için tıklanabilir gibi (cursor-pointer + ok ikonu)
+                // görünüyordu, kullanıcıyı yanlış yönlendiren bir görsel ipucuydu. Artık sadece
+                // GERÇEKTEN bir yere götürecek bildirimler tıklanabilir gösteriliyor.
+                const isNavigable = !!n.target && n.target.type !== "broadcast";
+                return (<button key={n.id} onClick={() => { if (isNavigable) goToNotifTarget(n.target, n.role); }} className={`w-full text-left px-2 py-2 rounded-xl hover:bg-gray-50 transition flex items-start gap-1.5 ${isNavigable ? "cursor-pointer" : "cursor-default"}`}><div className="flex-1 min-w-0"><p className="text-xs font-semibold text-gray-800">{n.title}</p><p className="text-[11px] text-gray-500 mt-0.5">{n.body}</p><p className="text-[10px] text-gray-300 mt-1">{new Date(n.ts).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</p></div>{isNavigable && <ChevronRight size={13} className="text-gray-300 flex-shrink-0 mt-0.5" />}</button>);
+              })}
             </div>
           </>
         )}

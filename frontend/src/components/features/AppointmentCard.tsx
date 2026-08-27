@@ -122,7 +122,7 @@ export function AppointmentCard({ a }) {
         {cancellable && (
           <div className="flex items-center gap-3 text-[11px] text-rose-500 mb-3">
             <button onClick={() => downloadAppointmentIcs(a)} className="flex items-center gap-1 hover:underline"><CalendarDays size={12} /> Takvime Ekle</button>
-            {mechanicDirectionsUrl(a.mechanicName) && (<a href={mechanicDirectionsUrl(a.mechanicName)} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:underline"><Navigation size={12} /> Yol Tarifi</a>)}
+            {mechanicDirectionsUrl(a.mechanicId) && (<a href={mechanicDirectionsUrl(a.mechanicId)} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:underline"><Navigation size={12} /> Yol Tarifi</a>)}
           </div>
         )}
         <StatusTracker status={a.status} autoAccepted={a.autoAccepted} />

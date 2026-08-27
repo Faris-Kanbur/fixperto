@@ -276,6 +276,10 @@ export interface SupportTicket {
   status: TicketStatus;
   fromType: "owner" | "mechanic" | string;
   fromName: string;
+  /** Talebi açan hesabın kalıcı id'si (MY_OWNER_ID/MY_MECHANIC_ID) — fromName bir görünen ad olduğu
+   * için (kullanıcı sonradan değiştirebilir, ya da iki hesap aynı adı taşıyabilir) admin işlemlerinin
+   * (grantVerification, removeFlaggedReview) DOĞRU hesabı hedeflediğinden emin olmak için kullanılır. */
+  fromId?: number | null;
   subject: string;
   description: string;
   relatedNote: string;

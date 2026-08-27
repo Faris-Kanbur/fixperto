@@ -309,3 +309,56 @@ gereksiz yere tüketmemek için şu üç kural uygulanmalı:
    harcamasını engeller.
 
 Bu üç kural, gerçek entegrasyon isteği geldiğinde otomatik olarak uygulanmalı.
+
+## 17) BİLİNEN, DÜZELTİLMEMİŞ hata: İlan pazarı (araç al/sat) alıcı/satıcı kimliği isimle tutuluyor
+
+**Durum: tespit edildi, kasıtlı olarak bu turda düzeltilmedi (kapsamı çok geniş, canlı tarayıcı
+testi olmadan riskli) — aşağıda net olarak belgeleniyor ki unutulmasın.**
+
+`listings` tablosunda (ve JSON içindeki `offers`/`messages` alt dizilerinde) satıcı/alıcı kimliği
+için **hiçbir zaman kalıcı bir id kullanılmıyor** — sadece dondurulmuş bir görünen ad metni var:
+`sellerName`/`sellerType` (üst seviye) ve teklif/mesajlarda `from: buyerName` / `from: senderName`.
+`ownerId`/`mechanicId` gibi bir sütun `listings` şemasında YOK.
+
+Bu, appointments/quote_requests/support_tickets'ta bu turda düzeltilen "isimle eşleştirme" hata
+sınıfının AYNISI, ama çok daha yaygın: `grep -rn "sellerName ===" frontend/src` **25'ten fazla**
+farklı satırda çıkıyor (`AppLogicProvider.tsx`: `submitListing`, `myBuyerName`, `myPendingOfferOn`,
+`submitOffer`, `submitListingMsg`, `respondOffer`, `markOffersSeen`, `adminUserAnalytics`;
+`AppShell.tsx`: "Pazarım"/"Favorilerim"/"Tekliflerim" sekmeleri, admin kullanıcı profili;
+`ListingCard.tsx`: `isMine`; `MechDetailBody.tsx`: tamircinin kendi ilanları listesi).
+
+**Somut risk:** araç sahibi veya tamirci hesabındaki görünen adını (profil ayarlarından) DEĞİŞTİRİRSE
+— ya da admin panelinden bir kullanıcının adı düzenlenirse — o kullanıcının önceden yayınladığı TÜM
+ilanlar sessizce "benim değil" gibi davranmaya başlar: "Pazarım" sekmesinde kendi ilanları
+görünmez olur, o ilanlara gelen yeni teklif/soru bildirimleri tetiklenmez
+(`isRealSeller` kontrolü artık eşleşmez), ve kendi ilanına tekrar teklif vermeye çalışırsa
+(`myPendingOfferOn` eşleşmediği için) var olan teklifini güncellemek yerine YENİ bir teklif
+oluşturur (yinelenen teklif). Bugün bu SESSİZCE gerçekleşmiyor çünkü demo hesabının adı
+(`ownerProfile.name`/`myProfile.name`) oturum boyunca genelde sabit kalıyor — ama bu, "isim
+değiştirilirse" TAM olarak isMyOwnerAppt'ta (appointments) daha önce KANITLANMIŞ olan hatanın
+aynısı, sadece henüz gösterilmiş bir örneği yok.
+
+**Neden bu turda düzeltilmedi:** appointments/support_tickets/quote_requests düzeltmeleri her biri
+tek bir merkezi fonksiyonu (`isMyOwnerAppt`, `mySupportTickets`, vb.) değiştirerek yapılabildi —
+düşük riskli, izole değişikliklerdi. Listings için aynı düzeltme (şemaya `sellerId`/teklif ve
+mesajlara `buyerId` eklemek + backfill + YUKARIDAKİ 25+ çağrı noktasının HEPSİNİ tutarlı şekilde
+güncellemek) çok daha büyük bir değişiklik kümesi gerektiriyor ve bu sandbox'ta canlı tarayıcı
+testi YAPILAMADIĞI için (bkz. bu dosyanın başındaki not) bu kadar geniş, birbirine bağımlı bir
+değişikliği tek seferde, doğrulama yapamadan uygulamak gerçek bir regresyon riski taşıyordu.
+
+**Önerilen düzeltme (ileride, ayrı bir görev olarak):**
+1. `backend/db/db.js`: `listings` tablosuna `sellerId INTEGER` ekle (appointments'taki `ownerId`/
+   `mechanicId` deseniyle aynı); `offers`/`messages` JSON dizisi elemanlarına `buyerId`/`buyerType`
+   ekle.
+2. Yeni ilan/teklif/mesaj oluşturulurken (`submitListing`, `submitOffer`, `submitListingMsg`)
+   `MY_OWNER_ID`/`MY_MECHANIC_ID`'yi de yaz.
+3. Var olan (seed) verideki `sellerName`/`from` alanlarını mevcut `owners`/`mechanics` tablolarıyla
+   isme göre eşleştirip bir kerelik `sellerId`/`buyerId` backfill'i çalıştır (review id backfill'inde
+   kullanılan JS-taraflı okuma/patch/yazma deseniyle aynı).
+4. Yukarıda listelenen 25+ çağrı noktasının HEPSİNİ `sellerName ===` yerine `sellerId ===` (ve
+   `from ===` yerine `buyerId ===`) kullanacak şekilde tek seferde güncelle — yarım bırakılırsa bazı
+   ekranlar id'ye bazıları isme göre çalışır, bu da yeni ve tespit edilmesi zor tutarsızlıklara yol
+   açar.
+5. Gerçek tarayıcıda (kendi bilgisayarınızda `npm run dev` ile) her iki rolde de "Pazarım", "Aldığım/
+   Verdiğim Teklifler", favori ilan bildirimleri akışlarını uçtan uca test edin — bu değişikliğin
+   güvenle doğrulanabileceği tek yer burası.
