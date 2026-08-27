@@ -721,10 +721,16 @@ function useAppLogic() {
   const isSameMechanicAppt = (a) => a.mechanicId === MY_MECHANIC_ID || (!a.mechanicId && a.mechanicName === myProfile?.name);
   const customerNoShowCount = (customer) => appointments.filter(a => a.customer === customer && a.noShow && isSameMechanicAppt(a)).length;
   // `activeAppts`/`historyByDate` her zaman GÖRÜNTÜLEYEN kullanıcıya göre filtrelenir: araç sahibi
-  // sadece kendi randevularını (customer === ownerProfile.name), tamirci sadece kendisine ait
-  // randevuları (isSameMechanicAppt) görür — aksi halde örnek/başka kullanıcı randevuları herkese
-  // sızardı (önceden bu şekilde bir gizlilik hatası vardı, bu iki liste de aynı hataya sahipti).
-  const isMyOwnerAppt = (a) => a.customer === ownerProfile.name;
+  // sadece kendi randevularını, tamirci sadece kendisine ait randevuları (isSameMechanicAppt) görür.
+  // ÖNEMLİ: burada a.ownerId === MY_OWNER_ID kullanılmalı, a.customer === ownerProfile.name DEĞİL —
+  // customer alanı randevu oluşturulduğu ANDAKİ isim metnini donduruyor (bkz. confirmBooking), ownerId
+  // ise gerçek, değişmeyen ilişki anahtarı. İsimle eşleştirme gerçek bir hataya yol açıyordu: seed
+  // verisindeki demo randevularının (101/102/103, hepsi ownerId: 9001) customer alanları "Ali Yıldız"/
+  // "Zeynep Kaya"/"Mehmet Demir" gibi farklı demo isimleri taşıyor — sadece ownerProfile.name ile
+  // BİREBİR aynı olan (tesadüfen "Ali Yıldız") görünüyor, diğer ikisi sahibinin kendi randevu
+  // geçmişinden tamamen kayboluyordu. Ayrıca kullanıcı profildeki adını değiştirirse geçmiş
+  // randevularının hepsi görünmez olurdu. ownerId hem kalıcı hem de zaten her randevuda kaydediliyor.
+  const isMyOwnerAppt = (a) => a.ownerId === MY_OWNER_ID;
   const activeAppts = useMemo(() => {
     const list = appointments.filter(a => !["Tamir Tamamlandı", "İptal Edildi", "Reddedildi", "Gelmedi"].includes(a.status));
     return list.filter(role === "mechanic" ? isSameMechanicAppt : isMyOwnerAppt);
@@ -940,6 +946,27 @@ function useAppLogic() {
       fireNotification("Teklif isteği sonuçlandı", "Verdiğiniz teklif kabul edilmedi, müşteri başka bir tamirciyi seçti.", mechSettings.notifyOffers, "mechanic", { type: "appointment" });
     }
   };
+  // quoteOffers her render'da JSX içinde ham .filter() ile taranıyordu (bkz. AppShell "Teklifler"
+  // rozeti + listesi, OwnerAppointmentsView'daki teklif isteği kartları) — veri büyüdükçe her
+  // render'da tekrar tekrar O(n) tarama anlamına gelir. Burada iki türetilmiş yapı önceden
+  // hesaplanıp (yalnızca quoteOffers değiştiğinde yeniden hesaplanacak şekilde) memoize ediliyor:
+  // (1) giriş yapmış tamirciye ait teklifler, (2) requestId'ye göre gruplanmış harita — böylece
+  // "Teklifler" listesindeki her istek kartı artık O(1) haritadan okuyor, kendi .filter()'ını
+  // çalıştırmıyor.
+  const myQuoteOffers = useMemo(() => quoteOffers.filter(o => o.mechanicId === MY_MECHANIC_ID), [quoteOffers]);
+  const quoteOffersByRequestId = useMemo(() => {
+    const map = {};
+    quoteOffers.forEach(o => { (map[o.requestId] ||= []).push(o); });
+    return map;
+  }, [quoteOffers]);
+  // GERÇEK HATA: OwnerAppointmentsView'daki "Teklifler" listesi backend'in DÖNDÜRDÜĞÜ quote_requests
+  // tablosunun TAMAMINI (ownerId'ye göre hiç filtrelemeden) gösteriyordu. Bugün bu tablo yalnızca
+  // MY_OWNER_ID tarafından oluşturulan satırlar içerdiği için (submitQuoteRequest her zaman
+  // ownerId: MY_OWNER_ID yazıyor) görünürde bir sorun yaratmıyor, ama gerçek çoklu-kullanıcı girişi
+  // eklendiğinde (bkz. REFACTOR_REPORT.md madde 9, RBAC) bu satır olduğu gibi kalırsa her araç sahibi
+  // BAŞKA araç sahiplerinin teklif isteklerini görür hale gelirdi — appointments/isMyOwnerAppt'ta
+  // zaten kullanılan ownerId deseniyle tutarlı olacak şekilde burada da baştan doğru filtreleniyor.
+  const myQuoteRequests = useMemo(() => quoteRequests.filter(r => r.ownerId === MY_OWNER_ID), [quoteRequests]);
   const EXPENSIVE_SERVICE_THRESHOLD = 1500;
   const confirmBooking = async () => {
     const status = autoAccept ? "Sırada" : "Onay Bekliyor";
@@ -1762,7 +1789,11 @@ function useAppLogic() {
     if (!reviewingApptId) return;
     const appt = appointments.find(a => a.id === reviewingApptId);
     if (!appt) return;
-    const mech = mechanicsList.find(m => m.name === appt.mechanicName);
+    // İsme göre eşleştirme (m.name === appt.mechanicName) yanlıştı: iki tamirci aynı işletme adını
+    // taşıyabilir, ya da tamirci randevudan SONRA işletme adını değiştirebilir — her iki durumda da
+    // değerlendirme yanlış (veya hiçbir) tamirciye yazılırdı. appt.mechanicId (confirmBooking'de zaten
+    // kaydediliyor) kalıcı, değişmeyen doğru anahtar.
+    const mech = mechanicsList.find(m => m.id === appt.mechanicId);
     if (mech) {
       const newReview = { id: Date.now(), mine: true, date: "az önce", name: ownerProfile.name || "Araç Sahibi", avatar: "🙂", rating: reviewForm.rating, comment: reviewForm.comment.trim() || "Hizmetten memnun kaldım.", photo: false, lang: ownerLang };
       const newReviewsCount = mech.reviews + 1;
@@ -2320,12 +2351,21 @@ function useAppLogic() {
     persist(api.jobs.update(jobId, { applicants }), "Başvuru kaydedilemedi");
     const firstName = applicant.name.trim().split(" ")[0] || applicant.name;
     const rejectionText = `Merhaba ${firstName},\n\n"${job.title}" pozisyonuna gösterdiğiniz ilgi için teşekkür ederiz. Başvurunuzu özenle değerlendirdik, ancak bu pozisyon için şu anda sizinle ilerleyemeyeceğimizi üzülerek bildiririz.\n\nBu karar yeteneklerinizle değil, mevcut ihtiyaçlarımızla ilgilidir. İş arayışınızda size başarılar diler, ileride tekrar bir araya gelebilmeyi umarız.\n\nSaygılarımızla,\n${myProfile.name}`;
-    setConversations(cs => {
-      const existing = cs.find(c => c.mechanicId === myProfile.id);
-      const newMsg = { id: msgId++, sender: "mechanic", text: rejectionText, lang: myProfile.lang || "tr", isRejectionNotice: true };
-      if (existing) return cs.map(c => c.id === existing.id ? { ...c, messages: [...c.messages, newMsg] } : c);
-      return [{ id: Date.now(), mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang || "tr", messages: [newMsg] }, ...cs];
-    });
+    // Not: önceden bu mesaj setConversations ile sadece React state'ine yazılıyor, backend'e HİÇ
+    // persist edilmiyordu — sayfa yenilenince ret bildirim mesajı sessizce kayboluyordu. Aşağıda hem
+    // "var olan sohbete ekle" hem "yeni sohbet oluştur" dallarının ikisi de artık gerçek bir
+    // api.conversations.update/create çağrısıyla kalıcı hale getiriliyor.
+    const existing = conversations.find(c => c.mechanicId === myProfile.id);
+    const newMsg = { id: msgId++, sender: "mechanic" as const, text: rejectionText, lang: myProfile.lang || "tr", isRejectionNotice: true };
+    if (existing) {
+      const messages = [...existing.messages, newMsg];
+      setConversations(cs => cs.map(c => c.id === existing.id ? { ...c, messages } : c));
+      persist(api.conversations.update(existing.id, { messages }), "Mesaj kaydedilemedi");
+    } else {
+      const newConvo = { id: Date.now(), mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang || "tr", messages: [newMsg] };
+      setConversations(cs => [newConvo, ...cs]);
+      persist(api.conversations.create(newConvo), "Sohbet başlatılamadı");
+    }
     setToast({ type: "info", text: "❌ Başvuru reddedildi, adaya bilgilendirme mesajı gönderildi." });
     fireNotification("Başvuru sonucu", `"${job.title}" pozisyonuna yaptığınız başvuru için bir güncelleme var.`, ownerSettings.notifyMessages, "owner", { type: "myApplications" });
   };
@@ -2444,6 +2484,7 @@ function useAppLogic() {
     activeFilterCount, nextDays, isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate,
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
+    myQuoteOffers, quoteOffersByRequestId, myQuoteRequests,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
     adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats, viewStats, listingFavoriteCount, myProfileViewStats, listingViewStats, translationCache, translateMessage, ownerLangFor,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,

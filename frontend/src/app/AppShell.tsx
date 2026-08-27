@@ -94,6 +94,7 @@ export function AppShell() {
     activeFilterCount, nextDays, isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate,
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
+    myQuoteOffers,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
     adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats, viewStats, myProfileViewStats, listingViewStats, listingFavoriteCount,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
@@ -1977,7 +1978,7 @@ export function AppShell() {
               <div className="flex-1 px-5 py-4">
                 <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
                   <button onClick={() => setMechReqView("active")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${mechReqView === "active" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}>Aktif ({activeAppts.length})</button>
-                  <button onClick={() => setMechReqView("quotes")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechReqView === "quotes" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><ClipboardList size={12} /> Teklifler {quoteOffers.filter(o => o.mechanicId === MY_MECHANIC_ID && o.status === "pending").length > 0 && (<span className="w-1.5 h-1.5 rounded-full bg-rose-600" />)}</button>
+                  <button onClick={() => setMechReqView("quotes")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechReqView === "quotes" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><ClipboardList size={12} /> Teklifler {myQuoteOffers.filter(o => o.status === "pending").length > 0 && (<span className="w-1.5 h-1.5 rounded-full bg-rose-600" />)}</button>
                   <button onClick={() => setMechReqView("history")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechReqView === "history" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Calendar size={12} /> Geçmiş</button>
                 </div>
                 {mechReqView === "active" && (<>
@@ -2008,8 +2009,8 @@ export function AppShell() {
                 </>)}
                 {mechReqView === "quotes" && (
                   <div className="space-y-3">
-                    {quoteOffers.filter(o => o.mechanicId === MY_MECHANIC_ID).length === 0 && <p className="text-center text-gray-400 text-sm py-10">Henüz size gelen teklif isteği yok</p>}
-                    {quoteOffers.filter(o => o.mechanicId === MY_MECHANIC_ID).map(o => {
+                    {myQuoteOffers.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Henüz size gelen teklif isteği yok</p>}
+                    {myQuoteOffers.map(o => {
                       const req = quoteRequests.find(r => r.id === o.requestId);
                       if (!req) return null;
                       const responding = respondingQuoteOfferId === o.id;
@@ -2057,7 +2058,15 @@ export function AppShell() {
                 )}
               </div>
             )}
-            {mechTab === "messages" && !mechConvo && (<div className="flex-1 px-5 py-4 space-y-3">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-300 transition flex items-center gap-3"><div className="w-11 h-11 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={20} className="text-rose-600" /></div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">Araç Sahibi</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : "Henüz mesaj yok"}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Henüz mesaj yok</p>}</div>)}
+            {/* ÖNEMLİ: conversations tablosu tüm tamircilerin (yalnızca kendi hesabımız değil, demo
+                listesindeki diğer ~9 tamirci dahil) araç sahibiyle olan sohbetlerini tek bir tabloda
+                tutuyor (her satır mechanicId ile ayrılıyor). Önceden bu liste hiç filtrelenmeden
+                render ediliyordu — giriş yapmış tamirci (MY_MECHANIC_ID) kendi "Mesajlar" sekmesinde
+                BAŞKA tamircilere ait sohbetleri de görüyordu, üstelik bir tanesine tıklayıp yanıt
+                yazarsa (sendMechMessage) o mesaj o BAŞKA tamirciymiş gibi araç sahibine gidiyordu —
+                gerçek bir kimlik karışıklığı/veri sızıntısı hatasıydı. Artık yalnızca kendi hesabımıza
+                ait satırlar listeleniyor. */}
+            {mechTab === "messages" && !mechConvo && (<div className="flex-1 px-5 py-4 space-y-3">{conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-300 transition flex items-center gap-3"><div className="w-11 h-11 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={20} className="text-rose-600" /></div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">Araç Sahibi</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : "Henüz mesaj yok"}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).length === 0 && <p className="text-center text-gray-400 text-sm py-10">Henüz mesaj yok</p>}</div>)}
             {mechTab === "messages" && mechConvo && (<><div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"><button onClick={() => setMechActiveConvoId(null)} className="text-gray-400"><ChevronLeft size={18} /></button><span className="text-sm font-semibold text-gray-800">Araç Sahibi Sohbeti</span></div><div className="flex-1 px-5 py-4 overflow-y-auto">{mechConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={myProfile.lang || "tr"} mine={m.sender === "mechanic"} />))}</div><div className="px-5 pb-6 pt-2 border-t border-gray-100 flex items-center gap-2"><input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder="Yanıt yazın..." className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" /><button onClick={() => sendMechMessage(mechChatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button></div></>)}
             {mechTab === "market" && (
               <div className="flex-1 px-5 py-4 overflow-y-auto">

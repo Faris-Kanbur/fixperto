@@ -44,7 +44,7 @@ export function OwnerAppointmentsView() {
     newServiceForm, setNewServiceForm, duplicateServiceWarning, setDuplicateServiceWarning, mechReqView, 
     setMechReqView, mechAnalyticsView, setMechAnalyticsView, expandedCustomerHistory, setExpandedCustomerHistory, 
     historyExpandedDate, setHistoryExpandedDate, ownerApptView, setOwnerApptView, ownerHistoryExpandedDate, 
-    setOwnerHistoryExpandedDate, quoteRequests, setQuoteRequests, quoteOffers, setQuoteOffers, showQuoteModal, 
+    setOwnerHistoryExpandedDate, quoteRequests, setQuoteRequests, quoteOffers, setQuoteOffers, myQuoteRequests, quoteOffersByRequestId, showQuoteModal,
     setShowQuoteModal, quoteVehicleId, setQuoteVehicleId, quoteIssue, setQuoteIssue, quotePhotos, setQuotePhotos, 
     quoteSelectedMechIds, setQuoteSelectedMechIds, quoteMechSearch, setQuoteMechSearch, quotePremiumUnlocked, 
     setQuotePremiumUnlocked, showQuotePremiumUpsell, setShowQuotePremiumUpsell, respondingQuoteOfferId, 
@@ -114,16 +114,16 @@ export function OwnerAppointmentsView() {
     <div>
       <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
         <button onClick={() => setOwnerApptView("active")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${ownerApptView === "active" ? "bg-white shadow-sm text-rose-600" : "text-gray-400"}`}>Aktif ({activeAppts.length})</button>
-        <button onClick={() => setOwnerApptView("quotes")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${ownerApptView === "quotes" ? "bg-white shadow-sm text-rose-600" : "text-gray-400"}`}><ClipboardList size={12} /> Teklifler {quoteRequests.filter(r => r.status === "open").length > 0 && (<span className="w-1.5 h-1.5 rounded-full bg-rose-600" />)}</button>
+        <button onClick={() => setOwnerApptView("quotes")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${ownerApptView === "quotes" ? "bg-white shadow-sm text-rose-600" : "text-gray-400"}`}><ClipboardList size={12} /> Teklifler {myQuoteRequests.filter(r => r.status === "open").length > 0 && (<span className="w-1.5 h-1.5 rounded-full bg-rose-600" />)}</button>
         <button onClick={() => setOwnerApptView("history")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${ownerApptView === "history" ? "bg-white shadow-sm text-rose-600" : "text-gray-400"}`}><Calendar size={12} /> Geçmiş</button>
       </div>
       {ownerApptView === "active" && (<div className="space-y-3">{activeAppts.map(a => (<AppointmentCard key={a.id} a={a} />))}{activeAppts.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Aktif randevunuz yok</p>}</div>)}
       {ownerApptView === "quotes" && (
         <div className="space-y-3">
           <button onClick={() => setShowQuoteModal(true)} className="w-full border-2 border-dashed border-rose-200 rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-rose-600 text-xs font-medium hover:bg-rose-50 transition"><Plus size={14} /> Yeni Teklif İsteği</button>
-          {quoteRequests.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Henüz teklif isteğiniz yok</p>}
-          {quoteRequests.map(req => {
-            const offers = quoteOffers.filter(o => o.requestId === req.id);
+          {myQuoteRequests.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Henüz teklif isteğiniz yok</p>}
+          {myQuoteRequests.map(req => {
+            const offers = quoteOffersByRequestId[req.id] || [];
             const isOpen = expandedQuoteReqId === req.id;
             const submittedCount = offers.filter(o => o.status === "submitted").length;
             return (
