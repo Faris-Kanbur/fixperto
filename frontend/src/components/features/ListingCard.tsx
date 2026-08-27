@@ -119,7 +119,7 @@ export function ListingCard({ l, onHover = undefined }) {
     return (
       <div onMouseEnter={() => onHover && onHover(l.id)} onMouseLeave={() => onHover && onHover(null)} className={`group bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === l.id ? "ring-2 ring-rose-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
         <div className="relative m-2 mb-0 rounded-2xl overflow-hidden">
-          <div className="aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+          <div className="h-44 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
             <button onClick={() => setSelectedListingId(l.id)} className="w-full h-full flex items-center justify-center text-6xl">
               {isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 500)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" /> : l.photo}
             </button>

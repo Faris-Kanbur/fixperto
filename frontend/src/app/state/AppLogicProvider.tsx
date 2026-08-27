@@ -224,6 +224,9 @@ function useAppLogic() {
   const [quoteMechSearch, setQuoteMechSearch] = useState("");
   const [quotePremiumUnlocked, setQuotePremiumUnlocked] = useState(false);
   const [showQuotePremiumUpsell, setShowQuotePremiumUpsell] = useState(false);
+  // İlanı öne çıkarma ücretli bir hizmet — kullanıcı direkt açıp kapatamaz, önce bu ödeme
+  // onayı modalını görmesi gerekiyor (bkz. FEATURED_LISTING_PRICE, confirmFeaturedPurchase).
+  const [showFeaturedUpsell, setShowFeaturedUpsell] = useState(false);
   const [respondingQuoteOfferId, setRespondingQuoteOfferId] = useState(null);
   const [quoteOfferForm, setQuoteOfferForm] = useState({ price: "", etaDays: "", note: "" });
   const [expandedQuoteReqId, setExpandedQuoteReqId] = useState(null);
@@ -2279,13 +2282,32 @@ function useAppLogic() {
   // Satıcının kendi ilanını "öne çıkar" olarak işaretlemesi — gerçek bir ödeme/onay akışı yok
   // (demo kapsamı), sadece ilanı Pazar listesinde üste taşıyan ve kartta/detayda rozet gösteren
   // bir bayrak. Admin panelinden de geri alınabilir (bkz. applyAdminFieldChange("listing", ...)).
-  const toggleListingFeatured = (id) => {
+  const FEATURED_LISTING_PRICE = 49;
+  const FEATURED_LISTING_DAYS = 7;
+  // İlanı öne çıkarmak ücretli bir reklam hizmeti — satıcı kendi kararıyla ücretsiz açamaz.
+  // Öne çıkarma isteği önce showFeaturedUpsell modalını açar (bkz. FEATURED_LISTING_PRICE), asıl
+  // yazma işlemi sadece confirmFeaturedPurchase'da (ödeme onayından sonra) gerçekleşir. Kapatma
+  // (zaten öne çıkan bir ilanı öne çıkarmadan kaldırma) ücretsiz — bu bir iade değil, sadece
+  // reklamı erken sonlandırma, gerçek parayı geri almıyoruz.
+  const requestFeaturedListing = (id) => {
     const listing = listings.find(x => x.id === id);
     if (!listing) return;
-    const next = !listing.featured;
-    setListings(l => l.map(x => x.id === id ? { ...x, featured: next } : x));
-    persist(api.listings.update(id, { featured: next }), "İlan güncellenemedi");
-    setToast({ type: "info", text: next ? "⭐ İlanınız öne çıkarıldı." : "İlan öne çıkarmadan kaldırıldı." });
+    if (listing.featured) {
+      setListings(l => l.map(x => x.id === id ? { ...x, featured: false } : x));
+      persist(api.listings.update(id, { featured: false }), "İlan güncellenemedi");
+      setToast({ type: "info", text: "İlan öne çıkarmadan kaldırıldı." });
+      return;
+    }
+    setShowFeaturedUpsell(true);
+  };
+  const confirmFeaturedPurchase = () => {
+    const id = selectedListingId;
+    const listing = listings.find(x => x.id === id);
+    setShowFeaturedUpsell(false);
+    if (!listing) return;
+    setListings(l => l.map(x => x.id === id ? { ...x, featured: true } : x));
+    persist(api.listings.update(id, { featured: true }), "İlan güncellenemedi");
+    setToast({ type: "info", text: `⭐ Ödeme alındı (demo), ilanınız ${FEATURED_LISTING_DAYS} gün öne çıkarıldı.` });
   };
   const removeListing = (id) => {
     const listing = listings.find(l => l.id === id);
@@ -2661,7 +2683,7 @@ function useAppLogic() {
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
-    similarListings, listingPriceComparison, toggleListingFeatured,
+    similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
     roleBtn, goToNotifTarget,
