@@ -111,7 +111,7 @@ export function AppShell() {
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
-    myBuyerName, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
+    myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor, ownerLangFor,
     roleBtn, goToNotifTarget,
@@ -578,10 +578,10 @@ export function AppShell() {
                             </div>
                             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">Araç İlanları</p>
                             <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
-                              {listings.filter(l => l.sellerName === viewingUser.name).length === 0 ? (
+                              {listings.filter(l => l.sellerId != null ? l.sellerId === viewingUser.id : l.sellerName === viewingUser.name).length === 0 ? (
                                 <p className="text-xs text-gray-400">Bu kullanıcının araç ilanı yok.</p>
                               ) : (
-                                <div className="space-y-2">{listings.filter(l => l.sellerName === viewingUser.name).map(l => renderAdminListingCard(l))}</div>
+                                <div className="space-y-2">{listings.filter(l => l.sellerId != null ? l.sellerId === viewingUser.id : l.sellerName === viewingUser.name).map(l => renderAdminListingCard(l))}</div>
                               )}
                             </div>
                           </>
@@ -624,10 +624,10 @@ export function AppShell() {
                             </div>
                             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">Araç İlanları</p>
                             <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
-                              {listings.filter(l => l.sellerType === "mechanic" && l.sellerName === viewingUser.name).length === 0 ? (
+                              {listings.filter(l => l.sellerType === "mechanic" && (l.sellerId != null ? l.sellerId === viewingUser.id : l.sellerName === viewingUser.name)).length === 0 ? (
                                 <p className="text-xs text-gray-400">Bu tamircinin araç ilanı yok.</p>
                               ) : (
-                                <div className="space-y-2">{listings.filter(l => l.sellerType === "mechanic" && l.sellerName === viewingUser.name).map(l => renderAdminListingCard(l))}</div>
+                                <div className="space-y-2">{listings.filter(l => l.sellerType === "mechanic" && (l.sellerId != null ? l.sellerId === viewingUser.id : l.sellerName === viewingUser.name)).map(l => renderAdminListingCard(l))}</div>
                               )}
                             </div>
                             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">İş İlanları</p>
@@ -1220,7 +1220,7 @@ export function AppShell() {
             </div>
             {ownerTab === "search" ? <BrowseHome /> : (
               <div className="flex-1 overflow-y-auto">
-                {ownerTab === "market" && (<div className="px-5 py-4"><button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>{listings.filter(l => l.sellerName === ownerProfile.name).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(l => l.sellerName === ownerProfile.name).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}</div>)}
+                {ownerTab === "market" && (<div className="px-5 py-4"><button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>{listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}</div>)}
                 {ownerTab === "favorites" && (
                   <div className="px-5 py-4">
                     {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
@@ -1256,7 +1256,7 @@ export function AppShell() {
                 <div className="space-y-2 mb-5"><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder="Ad Soyad" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={ownerProfile.email} onChange={(e) => updateMyOwnerField("email", e.target.value)} placeholder="E-posta" type="email" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} placeholder="Telefon (örn. +90 532 123 45 67)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder="Adres" className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><p className="text-[11px] text-gray-400 px-1">Bu bilgiler iş başvurularında otomatik doldurulur.</p></div>
                 <button onClick={() => { if (ownerProfile.email && !isValidEmail(ownerProfile.email)) { setToast({ type: "info", text: "⚠️ Geçersiz e-posta adresi." }); return; } if (ownerProfile.phone) { const pc = validatePhone(ownerProfile.phone); if (!pc.valid) { setToast({ type: "info", text: `⚠️ ${pc.message}` }); return; } } setToast({ type: "info", text: "✅ Profil güncellendi." }); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-7">{t("save")}</button>
                 <h3 className="hidden md:flex font-semibold text-gray-800 text-sm mb-3 items-center gap-2"><Tag size={15} className="text-gray-400" /> İlanlarım</h3>
-                <button onClick={() => setOwnerProfileTab("market")} className="hidden md:flex w-full items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Tag size={14} className="text-gray-400" /> Sattığım Araçlar{listings.filter(l => l.sellerName === ownerProfile.name).length > 0 && <span className="text-xs text-gray-400">({listings.filter(l => l.sellerName === ownerProfile.name).length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                <button onClick={() => setOwnerProfileTab("market")} className="hidden md:flex w-full items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Tag size={14} className="text-gray-400" /> Sattığım Araçlar{listings.filter(isMyListing).length > 0 && <span className="text-xs text-gray-400">({listings.filter(isMyListing).length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
                 <h3 className="hidden md:flex font-semibold text-gray-800 text-sm mb-3 items-center gap-2"><Heart size={15} className="text-gray-400" /> Favoriler</h3>
                 <button onClick={() => setOwnerProfileTab("favorites")} className="hidden md:flex w-full items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Heart size={14} className="text-gray-400" /> Favori İlanlarım{favoriteIds.length > 0 && <span className="text-xs text-gray-400">({favoriteIds.length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
                 <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Briefcase size={15} className="text-gray-400" /> Kariyer</h3>
@@ -1359,7 +1359,7 @@ export function AppShell() {
                   <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> Bilgilerime Dön</button>
                   <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> Sattığım Araçlar</h2>
                   <button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
-                  {listings.filter(l => l.sellerName === ownerProfile.name).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(l => l.sellerName === ownerProfile.name).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
+                  {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
                 </>
               )}
               {ownerProfileTab === "favorites" && (
@@ -1393,10 +1393,10 @@ export function AppShell() {
                     <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-rose-700 transition">{t("add")}</button>
                   </div>)}
                   <div className="space-y-3">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-rose-600" /></div><div className="flex-1"><h3 className="font-semibold text-gray-800 text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-gray-400">{v.plate}{vListing && <span className="ml-2 text-rose-500">· 🏷️ Satışta{vOfferCount > 0 ? ` · ${vOfferCount} teklif` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-gray-300" /></button>); })}{vehicles.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Henüz araç eklemediniz</p>}
-                  {listings.filter(l => l.sellerName === ownerProfile.name && !vehicles.some(v => v.listingId === l.id)).length > 0 && (
+                  {listings.filter(l => isMyListing(l) && !vehicles.some(v => v.listingId === l.id)).length > 0 && (
                     <>
                       <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-1 flex items-center gap-2"><Tag size={15} className="text-gray-400" /> Kayıtlı Aracım Dışında Sattıklarım</h3>
-                      {listings.filter(l => l.sellerName === ownerProfile.name && !vehicles.some(v => v.listingId === l.id)).map(l => {
+                      {listings.filter(l => isMyListing(l) && !vehicles.some(v => v.listingId === l.id)).map(l => {
                         const offerCount = l.offers.filter(o => o.status !== "replaced").length;
                         return (
                           <div key={l.id} className="bg-white border border-gray-200 rounded-2xl p-4">
@@ -1545,15 +1545,15 @@ export function AppShell() {
               {ownerProfileTab === "chats" && (<div className="space-y-3">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : "Henüz mesaj yok"}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Sohbet yok</p>}</div>)}
               {ownerProfileTab === "offers" && (<>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersMade")}</h3>
-                <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => o.from === ownerProfile.name && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<div key={o.id} className="bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? "✅ Kabul edildi" : o.status === "rejected" ? "❌ Reddedildi" : o.seen ? "⏳ Beklemede · satıcı gördü" : "⏳ Beklemede"}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>))}
-                {listings.flatMap(l => l.offers.filter(o => o.from === ownerProfile.name && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif vermediniz</p>}</div>
+                <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<div key={o.id} className="bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? "✅ Kabul edildi" : o.status === "rejected" ? "❌ Reddedildi" : o.seen ? "⏳ Beklemede · satıcı gördü" : "⏳ Beklemede"}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>))}
+                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif vermediniz</p>}</div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersReceived")}</h3>
-                <div className="space-y-2">{listings.filter(l => l.sellerName === ownerProfile.name).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
+                <div className="space-y-2">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
                   <div key={o.id} className="bg-white border border-gray-100 rounded-xl p-3">
                     <div className="flex justify-between items-center mb-2"><div><p className="text-xs font-medium text-gray-700">{o.from}</p><p className="text-[10px] text-gray-400">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>
                     {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>) : (<p className="text-[11px] text-gray-400">{o.status === "accepted" ? "✅ Kabul edildi" : "❌ Reddedildi"}</p>)}
                   </div>
-                ))}{listings.filter(l => l.sellerName === ownerProfile.name).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif almadınız</p>}</div>
+                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif almadınız</p>}</div>
               </>)}
             </div>
           </div>
@@ -1681,7 +1681,7 @@ export function AppShell() {
                 </div>
               )}
               {(() => {
-                const isOwnListing = selectedListing.sellerName === (role === "owner" ? ownerProfile.name : myProfile?.name);
+                const isOwnListing = isMyListing(selectedListing);
                 const activeOffers = selectedListing.offers.filter(o => o.status !== "replaced");
                 if (isOwnListing) return (
                   <>
@@ -2077,7 +2077,7 @@ export function AppShell() {
                 {mechListingsSubTab === "cars" && (<>
                   <p className="text-xs text-gray-400 mb-3">{t("myListingsSub")}</p>
                   <button onClick={() => openSellForm(null)} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
-                  {listings.filter(l => l.sellerName === myProfile?.name).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 gap-3">{listings.filter(l => l.sellerName === myProfile?.name).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
+                  {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 gap-3">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
                 </>)}
                 {mechListingsSubTab === "jobs" && (<>
                   <p className="text-xs text-gray-400 mb-3">Çalışan aramak için iş ilanı verin, başvuruları burada takip edin.</p>
@@ -2171,7 +2171,7 @@ export function AppShell() {
                     <p className="text-[10px] text-gray-300 mt-4 text-center">Toplam {completed.length} tamamlanan iş üzerinden hesaplanmıştır.</p>
                   </>)}
                   {mechAnalyticsView === "traffic" && (() => {
-                    const myOwnListings = listings.filter(l => l.sellerType === "mechanic" && l.sellerName === myProfile?.name);
+                    const myOwnListings = listings.filter(isMyListing);
                     const myOwnJobs = jobListings.filter(j => j.mechanicId === myProfile?.id);
                     const myTotalShares = (myProfile?.shareCount || 0) + myOwnListings.reduce((s, l) => s + (l.shareCount || 0), 0) + myOwnJobs.reduce((s, j) => s + (j.shareCount || 0), 0);
                     const myTotalApplicants = myOwnJobs.reduce((s, j) => s + (j.applicants || []).length, 0);
@@ -2282,18 +2282,18 @@ export function AppShell() {
             {mechProfileTab === "offers" && (
               <div className="flex-1 px-5 py-4 overflow-y-auto">
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersMade")}</h3>
-                <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => o.from === myProfile.name && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<button key={o.id} onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center hover:border-rose-200 transition"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? "✅ Kabul edildi" : o.status === "rejected" ? "❌ Reddedildi" : o.seen ? "⏳ Beklemede · satıcı gördü" : "⏳ Beklemede"}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></button>))}
-                {listings.flatMap(l => l.offers.filter(o => o.from === myProfile.name && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif vermediniz</p>}</div>
-                {listings.filter(l => l.offers.some(o => o.status === "rejected" && o.from === myProfile.name)).length > 0 && (
+                <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<button key={o.id} onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center hover:border-rose-200 transition"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? "✅ Kabul edildi" : o.status === "rejected" ? "❌ Reddedildi" : o.seen ? "⏳ Beklemede · satıcı gördü" : "⏳ Beklemede"}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></button>))}
+                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif vermediniz</p>}</div>
+                {listings.filter(l => l.offers.some(o => o.status === "rejected" && (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name))).length > 0 && (
                   <p className="text-[11px] text-gray-400 mb-4 -mt-3 flex items-start gap-1.5"><AlertTriangle size={12} className="flex-shrink-0 mt-0.5 text-amber-500" /> Reddedilen bir teklifin üzerine, ilgili ilana girip yeni teklif verebilirsiniz.</p>
                 )}
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersReceived")}</h3>
-                <div className="space-y-2">{listings.filter(l => l.sellerName === myProfile.name).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
+                <div className="space-y-2">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
                   <div key={o.id} className="bg-white border border-gray-100 rounded-xl p-3">
                     <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center mb-2"><div><p className="text-xs font-medium text-gray-700">{o.from}</p><p className="text-[10px] text-gray-400">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></button>
                     {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>) : (<p className="text-[11px] text-gray-400">{o.status === "accepted" ? "✅ Kabul edildi" : "❌ Reddedildi"}</p>)}
                   </div>
-                ))}{listings.filter(l => l.sellerName === myProfile.name).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif almadınız</p>}</div>
+                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif almadınız</p>}</div>
               </div>
             )}
             {mechProfileTab === "settings" && (

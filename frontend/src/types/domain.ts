@@ -143,14 +143,25 @@ export interface Appointment {
 }
 
 export interface ListingOffer {
+  id?: number;
   amount: string;
+  currency?: string;
   from: string;
+  /** Teklifi verenin kalıcı id'si — bkz. Listing.sellerId notu, aynı gerekçe. */
+  buyerId?: number | null;
+  buyerType?: "owner" | "mechanic" | string;
+  status?: string;
   seen?: boolean;
 }
 
 export interface ListingMessage {
+  id?: number;
   from: string;
+  /** Mesajı gönderenin kalıcı id'si — bkz. Listing.sellerId notu, aynı gerekçe. */
+  buyerId?: number | null;
+  buyerType?: "owner" | "mechanic" | string;
   text: string;
+  lang?: string;
   ts?: string;
 }
 
@@ -160,6 +171,10 @@ export interface Listing {
   id: number;
   sellerName: string;
   sellerType: "mechanic" | "owner";
+  /** Satıcının kalıcı id'si (MY_OWNER_ID veya MY_MECHANIC_ID, ya da başka bir owners/mechanics id'si)
+   * — sellerName sadece görünen ad olduğu için (kullanıcı değiştirebilir) "bu ilan benim mi" gibi
+   * kontroller artık öncelikle buna bakıyor; sellerName yalnızca eski/demo kayıtlar için yedek. */
+  sellerId?: number | null;
   brand: string;
   model: string;
   year: number | string;

@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS conversations (
 CREATE TABLE IF NOT EXISTS listings (
   id INTEGER PRIMARY KEY,
   sellerName TEXT, sellerType TEXT,
+  sellerId INTEGER,
   brand TEXT, model TEXT, year INTEGER, km INTEGER,
   price TEXT, description TEXT, photo TEXT,
   status TEXT DEFAULT 'active',
@@ -320,6 +321,9 @@ function ensureColumn(table, columnDef) {
   ["listings", "city TEXT"],
   ["listings", "lang TEXT"],
   ["job_listings", "lang TEXT"],
+  ["listings", "sellerId INTEGER"],
+  ["listings", "offers TEXT DEFAULT '[]'"],
+  ["listings", "messages TEXT DEFAULT '[]'"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 // ---------------------------------------------------------------------------
@@ -439,6 +443,37 @@ try {
   });
 } catch (err) {
   console.error("İlan araç bilgisi backfill hatası:", err.message);
+}
+
+// GERÇEK HATA DÜZELTMESİ: listings tablosu satıcı kimliğini şimdiye kadar sadece sellerName (donmuş
+// bir görünen ad) olarak tutuyordu — sellerId hiç yoktu. Bu, "bu ilan benim mi", "ilana gelen teklif/
+// soru bildirimi bana mı ait" gibi TÜM kontrollerin isimle yapılmasına yol açıyordu: bir kullanıcı adını
+// değiştirirse (profilden veya admin panelinden) kendi ilanlarını, tekliflerini ve bildirimlerini
+// sessizce kaybederdi (bkz. REFACTOR_REPORT.md bölüm 17 — appointments/support_tickets'ta zaten
+// düzeltilen "isimle eşleştirme" hata sınıfının aynısı). Burada seed.js'deki 8 demo ilanın satıcı
+// adı, owners/mechanics tablolarındaki gerçek kayıtlarla eşleştirilip sellerId geriye dönük yazılıyor.
+// "Elif S." (ilan #7) owners tablosunda karşılığı olmayan kurgusal bir isim olduğu için sellerId
+// bilerek NULL bırakılıyor — tıpkı diğer isimsiz/karşılıksız demo verilerinde olduğu gibi (bkz.
+// flagged review "Kullanıcı8823"), zaten gerçek/etkileşimli bir hesaba karşılık gelmiyor.
+const LISTING_SELLER_ID_BACKFILL = {
+  1: { sellerType: "mechanic", sellerName: "Usta Mehmet Oto Servis" },
+  2: { sellerType: "owner", sellerName: "Ali Yıldız" },
+  3: { sellerType: "owner", sellerName: "Zeynep Kaya" },
+  4: { sellerType: "mechanic", sellerName: "Hızlı Tamir Merkezi" },
+  5: { sellerType: "owner", sellerName: "Mehmet Demir" },
+  6: { sellerType: "mechanic", sellerName: "Güven Oto" },
+  8: { sellerType: "mechanic", sellerName: "Anadolu Servis" },
+};
+try {
+  const mechByName = new Map(db.prepare(`SELECT id, name FROM mechanics`).all().map((m) => [m.name, m.id]));
+  const ownerByName = new Map(db.prepare(`SELECT id, name FROM owners`).all().map((o) => [o.name, o.id]));
+  const listingSellerIdStmt = db.prepare(`UPDATE listings SET sellerId = @sellerId WHERE id = @id AND sellerId IS NULL`);
+  Object.entries(LISTING_SELLER_ID_BACKFILL).forEach(([id, meta]) => {
+    const sellerId = meta.sellerType === "mechanic" ? mechByName.get(meta.sellerName) : ownerByName.get(meta.sellerName);
+    if (sellerId != null) listingSellerIdStmt.run({ id: Number(id), sellerId });
+  });
+} catch (err) {
+  console.error("İlan satıcı id backfill hatası:", err.message);
 }
 
 export function isEmpty(table) {

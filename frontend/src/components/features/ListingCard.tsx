@@ -103,7 +103,7 @@ export function ListingCard({ l, onHover = undefined }) {
     cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff, updateStaffField, removeStaff, 
     staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm, 
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, notifyFavoriteWatchers, submitListing, 
-    setListingStatus, removeListing, myBuyerName, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, 
+    setListingStatus, removeListing, myBuyerName, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg,
     respondOffer, markOffersSeen, clearListingFilters, clearJobFilters, openJobForm, submitJobListing, 
     setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm, openJobApplyForm, 
     jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, 
@@ -112,7 +112,7 @@ export function ListingCard({ l, onHover = undefined }) {
 
     const meta = l.adminRemoved ? { label: "Kaldırıldı (Admin)", color: "bg-gray-900" } : listingStatusMeta(l.status, t);
     const fav = favoriteIds.includes(l.id);
-    const isMine = l.sellerName === (role === "owner" ? ownerProfile.name : myProfile?.name);
+    const isMine = isMyListing(l);
     const pendingOfferCount = isMine ? l.offers.filter(o => o.status === "pending").length : 0;
     const unseenOfferCount = isMine ? l.offers.filter(o => o.status === "pending" && !o.seen).length : 0;
     const questionCount = isMine ? l.messages.length : 0;

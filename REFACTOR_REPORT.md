@@ -310,10 +310,10 @@ gereksiz yere tüketmemek için şu üç kural uygulanmalı:
 
 Bu üç kural, gerçek entegrasyon isteği geldiğinde otomatik olarak uygulanmalı.
 
-## 17) BİLİNEN, DÜZELTİLMEMİŞ hata: İlan pazarı (araç al/sat) alıcı/satıcı kimliği isimle tutuluyor
+## 17) [DÜZELTİLDİ] İlan pazarı (araç al/sat) alıcı/satıcı kimliği artık isim değil id ile tutuluyor
 
-**Durum: tespit edildi, kasıtlı olarak bu turda düzeltilmedi (kapsamı çok geniş, canlı tarayıcı
-testi olmadan riskli) — aşağıda net olarak belgeleniyor ki unutulmasın.**
+**Durum: Faris'in onayıyla ayrı bir görev olarak ele alındı ve tamamlandı.** Aşağıdaki analiz (tespit
+anındaki hâliyle) tarihsel bağlam için korunuyor; sonunda ne yapıldığı özetleniyor.
 
 `listings` tablosunda (ve JSON içindeki `offers`/`messages` alt dizilerinde) satıcı/alıcı kimliği
 için **hiçbir zaman kalıcı bir id kullanılmıyor** — sadece dondurulmuş bir görünen ad metni var:
@@ -362,3 +362,27 @@ değişikliği tek seferde, doğrulama yapamadan uygulamak gerçek bir regresyon
 5. Gerçek tarayıcıda (kendi bilgisayarınızda `npm run dev` ile) her iki rolde de "Pazarım", "Aldığım/
    Verdiğim Teklifler", favori ilan bildirimleri akışlarını uçtan uca test edin — bu değişikliğin
    güvenle doğrulanabileceği tek yer burası.
+
+**Yapılan uygulama (özet):**
+- `backend/db/db.js`: `listings` tablosuna `sellerId INTEGER` eklendi; `offers`/`messages` JSON
+  dizisi elemanlarına `buyerId`/`buyerType` alanları eklendi (ayrı bir migrasyon gerekmiyor, JSON
+  blob içindeki alanlar). 8 demo ilanın 7'si (mechanics/owners tablolarındaki isim eşleşmesiyle)
+  `sellerId` ile geriye dönük dolduruldu — "Elif S." (ilan #7) `owners` tablosunda karşılığı olmayan
+  kurgusal bir isim olduğundan bilerek `NULL` bırakıldı (tıpkı diğer karşılıksız demo verileri gibi).
+- `types/domain.ts`: `Listing.sellerId`, `ListingOffer.buyerId/buyerType`, `ListingMessage.buyerId/
+  buyerType` eklendi.
+- `AppLogicProvider.tsx`: `submitListing`/`submitOffer`/`submitListingMsg` artık `sellerId`/`buyerId`/
+  `buyerType` yazıyor. İki paylaşılan yardımcı fonksiyon eklendi ve context'ten export edildi:
+  `isMyListing(listing)` (role'e göre "bu ilan BENİM mi", var olan davranışla birebir aynı ama isim
+  yerine id) ve `isRealSellerOfListing(listing)` (role'den BAĞIMSIZ, "bu ilanın satıcısı iki gerçek
+  hesabımdan biri mi" — bildirim tetikleme mantığı için). Hepsi `sellerId`/`buyerId` varsa ona,
+  yoksa (eski/demo kayıtlar) isme düşen bir yedek zincirle çalışıyor — geriye dönük uyumlu.
+- `AppShell.tsx`, `ListingCard.tsx`, `MechDetailBody.tsx`: tüm `sellerName ===`/`o.from ===`
+  karşılaştırmaları (25+ yer — "Pazarım" sekmeleri, favori/teklif listeleri, admin kullanıcı profili,
+  bir tamircinin kendi ilan listesi) yukarıdaki yardımcı fonksiyonlara veya doğrudan id
+  karşılaştırmasına taşındı.
+- Doğrulama: `npm run typecheck` (sadece bilinen `helpers.test.ts` hatası dışında temiz) ve
+  backend `node --check` — bu sandbox'ta yapılabilecek azami doğrulama bu. **Gerçek canlı test
+  (kendi bilgisayarınızda `npm run dev` ile "Pazarım", "Aldığım/Verdiğim Teklifler", favori ilan
+  bildirimleri akışları) hâlâ önerilir** — bu sandbox'ta backend çalıştırılamadığı için hiçbir
+  şekilde uçtan uca canlı test yapılamadı.

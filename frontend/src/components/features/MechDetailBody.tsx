@@ -197,7 +197,7 @@ export function MechDetailBody() {
           <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Users size={16} className="text-rose-500" /> {t("team")}</h3>
           <div className="flex gap-3 mb-5 overflow-x-auto pb-1">{selectedMechanic.staff.map((s, i) => { const grads = ["from-rose-400 to-rose-500", "from-gray-700 to-gray-900", "from-rose-500 to-rose-600", "from-gray-500 to-gray-700"]; return (<div key={i} className="flex-shrink-0 w-28 text-center bg-white border border-gray-100 rounded-2xl p-3 shadow-sm hover:shadow-md transition"><div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-2xl mb-2 overflow-hidden shadow-md relative`}>{isImgUrl(s.emoji) ? <img src={s.emoji} className="w-full h-full object-cover" /> : <span className="drop-shadow">{s.emoji}</span>}<span className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 border-2 border-white rounded-full" /></div><p className="text-[11px] font-semibold text-gray-700 leading-tight">{s.name}</p><p className="text-[10px] text-gray-400 leading-tight">{s.role}</p></div>); })}</div>
           {role !== "mechanic" && (() => {
-            const mechListings = listings.filter(l => l.sellerType === "mechanic" && l.sellerName === selectedMechanic.name && !l.adminRemoved);
+            const mechListings = listings.filter(l => l.sellerType === "mechanic" && (l.sellerId != null ? l.sellerId === selectedMechanic.id : l.sellerName === selectedMechanic.name) && !l.adminRemoved);
             const mechJobs = jobListings.filter(j => j.mechanicId === selectedMechanic.id);
             if (mechListings.length === 0 && mechJobs.length === 0) return null;
             return (

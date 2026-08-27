@@ -491,7 +491,7 @@ function useAppLogic() {
     // yeniden tetiklenip aynı görüntülemeyi tekrar tekrar kaydederdi. Sadece selectedListingId
     // değiştiğinde, o anki en güncel closure değerleriyle bir kez çalışır.
     const listing = listings.find((l) => l.id === selectedListingId);
-    const isMine = listing && listing.sellerName === (role === "owner" ? ownerProfile.name : myProfile?.name);
+    const isMine = listing && isMyListing(listing);
     if (isMine) return;
     api.profileViews.create("listing", selectedListingId).catch(() => { /* sessizce geç — sadece analitik */ });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -611,7 +611,7 @@ function useAppLogic() {
   const selectedListing = listings.find(l => l.id === selectedListingId) || null;
   useEffect(() => {
     if (!selectedListing) return;
-    const isMine = selectedListing.sellerName === (role === "owner" ? ownerProfile.name : myProfile?.name);
+    const isMine = isMyListing(selectedListing);
     if (isMine && selectedListing.offers.some(o => !o.seen)) markOffersSeen(selectedListing.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedListingId]);
@@ -1483,7 +1483,7 @@ function useAppLogic() {
       const myAppts = appointments.filter(a => a.ownerId != null ? a.ownerId === analyzingUser.id : a.customer === analyzingUser.name);
       const byStatus: Record<string, number> = {};
       myAppts.forEach(a => { byStatus[a.status] = (byStatus[a.status] || 0) + 1; });
-      const myListings = listings.filter(l => l.sellerName === analyzingUser.name);
+      const myListings = listings.filter(l => l.sellerId != null ? l.sellerId === analyzingUser.id : l.sellerName === analyzingUser.name);
       const myTickets = supportTickets.filter(tk => tk.fromId != null ? tk.fromId === analyzingUser.id : tk.fromName === analyzingUser.name);
       return {
         apptCount: myAppts.length, byStatus,
@@ -1497,7 +1497,7 @@ function useAppLogic() {
     const completed = myAppts.filter(a => a.status === "Tamir Tamamlandı").length;
     const byStatus: Record<string, number> = {};
     myAppts.forEach(a => { byStatus[a.status] = (byStatus[a.status] || 0) + 1; });
-    const myListings = listings.filter(l => l.sellerType === "mechanic" && l.sellerName === analyzingUser.name);
+    const myListings = listings.filter(l => l.sellerType === "mechanic" && (l.sellerId != null ? l.sellerId === analyzingUser.id : l.sellerName === analyzingUser.name));
     const myJobs = jobListings.filter(j => j.mechanicId === analyzingUser.id);
     const totalApplicants = myJobs.reduce((s, j) => s + (j.applicants || []).length, 0);
     const myTickets = supportTickets.filter(tk => tk.fromId != null ? tk.fromId === analyzingUser.id : tk.fromName === analyzingUser.name);
@@ -2232,10 +2232,13 @@ function useAppLogic() {
     }
     else {
       const sellerName = sellerType === "mechanic" ? (myProfile?.name || "Tamirci") : (ownerProfile.name || "Araç Sahibi");
+      // sellerId: sellerName sadece görünen ad, kalıcı kimlik için ayrıca id de yazılıyor — bkz.
+      // types/domain.ts Listing.sellerId notu.
+      const sellerId = sellerType === "mechanic" ? MY_MECHANIC_ID : MY_OWNER_ID;
       const { _editingId, _vehicleId, ...formFields } = sellForm;
       // Açıklama metninin hangi dilde yazıldığını satıcının güncel diline göre etiketliyoruz —
       // bkz. patch.lang yorum notu yukarıda.
-      const draft = { sellerName, sellerType, ...formFields, vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang };
+      const draft = { sellerName, sellerType, sellerId, ...formFields, vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang };
       setShowSellForm(false);
       setToast({ type: "info", text: "🚗 İlanınız yayınlandı." });
       try {
@@ -2264,21 +2267,45 @@ function useAppLogic() {
   // onu döndürüp) hesaplamak, tamirci teklif verdiğinde teklifin sahibini yanlışlıkla araç sahibine
   // mal ediyordu (Aldığım Teklifler ile Verdiğim Teklifler karışıyordu). Artık role göre ayrışıyor.
   const myBuyerName = () => role === "mechanic" ? (myProfile?.name || "Tamirci") : (ownerProfile.name || "Araç Sahibi");
-  const myPendingOfferOn = (listing) => listing ? (listing.offers || []).find(o => o.from === myBuyerName() && o.status === "pending") : null;
+  // myBuyerName sadece görünen ad (teklif kartında gösterilecek metin için hâlâ lazım) — kalıcı
+  // eşleştirme artık id ile yapılıyor, bkz. Listing/ListingOffer.buyerId notu (types/domain.ts).
+  const myBuyerId = () => role === "mechanic" ? MY_MECHANIC_ID : MY_OWNER_ID;
+  const myPendingOfferOn = (listing) => listing ? (listing.offers || []).find(o => (o.buyerId != null ? o.buyerId === myBuyerId() : o.from === myBuyerName()) && o.status === "pending") : null;
   const openOfferForm = () => {
     if (!selectedListing) return;
     const existing = myPendingOfferOn(selectedListing);
     setOfferAmount(existing && !existing.seen ? String(existing.amount) : "");
     setShowOfferForm(true);
   };
+  // Bir ilanın gerçekten etkileşimli hesaplardan birine (MY_MECHANIC_ID veya MY_OWNER_ID) ait olup
+  // olmadığını kontrol eder — sellerId varsa öncelikle ona bakar (kalıcı, isim değişikliğinden
+  // etkilenmez), yoksa (eski/demo kayıtlar) isimle eşleştirmeye düşer. `role`'e bağlı DEĞİLDİR:
+  // her iki gerçek hesabı da (owner VE mechanic) kontrol eder, çünkü bu kontrol "şu an hangi rolde
+  // gezindiğim" değil "bu ilanın satıcısı gerçekten benim iki hesabımdan biri mi" sorusuna cevap arar.
+  const isRealSellerOfListing = (listing) => {
+    if (!listing) return false;
+    if (listing.sellerId != null) return listing.sellerType === "mechanic" ? listing.sellerId === MY_MECHANIC_ID : listing.sellerId === MY_OWNER_ID;
+    return listing.sellerType === "mechanic" ? listing.sellerName === myProfile?.name : listing.sellerName === ownerProfile.name;
+  };
+  // "Bu ilan BENİM mi" — ama yukarıdaki isRealSellerOfListing'den farklı olarak, şu an ekranda
+  // AKTİF olan role'e göre bakıyor (owner iken sadece ownerProfile kimliğini, mechanic iken sadece
+  // myProfile kimliğini kontrol eder) — bu, "Pazarım"/favoriler gibi role'e özel sekmelerin var olan
+  // davranışıyla birebir aynı, sadece isim yerine (varsa) id kullanıyor.
+  const isMyListing = (listing) => {
+    if (!listing) return false;
+    if (listing.sellerId != null) return role === "owner" ? listing.sellerId === MY_OWNER_ID : listing.sellerId === MY_MECHANIC_ID;
+    return listing.sellerName === (role === "owner" ? ownerProfile.name : myProfile?.name);
+  };
   const submitOffer = () => {
     if (!offerAmount || !selectedListing) return;
     const currency = listingCurrency(selectedListing.price);
     const buyerName = myBuyerName();
+    const buyerId = myBuyerId();
+    const buyerType = role === "mechanic" ? "mechanic" : "owner";
     const existing = myPendingOfferOn(selectedListing);
     const newOffers = existing && !existing.seen
       ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, amount: offerAmount, currency } : o)
-      : [{ id: nestedItemId++, amount: offerAmount, currency, from: buyerName, status: "pending", seen: false }, ...(existing ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, status: "replaced" } : o) : selectedListing.offers)];
+      : [{ id: nestedItemId++, amount: offerAmount, currency, from: buyerName, buyerId, buyerType, status: "pending", seen: false }, ...(existing ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, status: "replaced" } : o) : selectedListing.offers)];
     setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, offers: newOffers } : x));
     persist(api.listings.update(selectedListing.id, { offers: newOffers }), "Teklif kaydedilemedi");
     if (!existing) recordConversion("offer");
@@ -2288,9 +2315,8 @@ function useAppLogic() {
     // Bildirim sadece ilanın satıcısı gerçekten "siz" iseniz (etkileşimli owner/mechanic hesabı)
     // ateşlenir — demo/örnek satıcılara teklif verilince gerçek bir bildirim gitmemeli, çünkü o
     // hesabın panelinde bu teklif zaten hiç görünmeyecek.
-    if (selectedListing.sellerName !== buyerName) {
-      const isRealSeller = selectedListing.sellerType === "mechanic" ? selectedListing.sellerName === myProfile?.name : selectedListing.sellerName === ownerProfile.name;
-      if (isRealSeller) {
+    if (selectedListing.sellerId != null ? selectedListing.sellerId !== buyerId : selectedListing.sellerName !== buyerName) {
+      if (isRealSellerOfListing(selectedListing)) {
         fireNotification("Yeni teklif aldınız! 💰", `${selectedListing.brand} ${selectedListing.model} ilanınıza ${offerAmount}${currency} teklif geldi.`, selectedListing.sellerType === "mechanic" ? mechSettings.notifyOffers : ownerSettings.notifyOffers, selectedListing.sellerType === "mechanic" ? "mechanic" : "owner", { type: "listing", id: selectedListing.id });
       }
     }
@@ -2299,15 +2325,16 @@ function useAppLogic() {
     if (!listingMsg || !selectedListing) return;
     const senderName = ownerProfile.name || myProfile?.name || "Kullanıcı";
     const senderLang = role === "owner" ? ownerLang : (myProfile?.lang || "tr");
-    const messages = [{ id: nestedItemId++, text: listingMsg, from: senderName, lang: senderLang }, ...selectedListing.messages];
+    const senderId = myBuyerId();
+    const senderType = role === "mechanic" ? "mechanic" : "owner";
+    const messages = [{ id: nestedItemId++, text: listingMsg, from: senderName, buyerId: senderId, buyerType: senderType, lang: senderLang }, ...selectedListing.messages];
     setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, messages } : x));
     persist(api.listings.update(selectedListing.id, { messages }), "Mesaj kaydedilemedi");
     setListingMsg("");
     setShowListingMsgForm(false);
     setToast({ type: "info", text: "💬 Mesaj gönderildi." });
-    if (selectedListing.sellerName !== senderName) {
-      const isRealSeller = selectedListing.sellerType === "mechanic" ? selectedListing.sellerName === myProfile?.name : selectedListing.sellerName === ownerProfile.name;
-      if (isRealSeller) {
+    if (selectedListing.sellerId != null ? selectedListing.sellerId !== senderId : selectedListing.sellerName !== senderName) {
+      if (isRealSellerOfListing(selectedListing)) {
         fireNotification("İlanınıza yeni soru geldi 💬", `"${selectedListing.brand} ${selectedListing.model}" ilanınıza bir soru soruldu.`, selectedListing.sellerType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, selectedListing.sellerType === "mechanic" ? "mechanic" : "owner", { type: "listing", id: selectedListing.id });
       }
     }
@@ -2320,7 +2347,8 @@ function useAppLogic() {
     setListings(l => l.map(x => x.id === listingIdx ? { ...x, ...listingPatch } : x));
     persist(api.listings.update(listingIdx, listingPatch), "Teklif kaydedilemedi");
     // Teklifi veren araç sahibi mi tamirci mi — bildirim tercihini ona göre kontrol ediyoruz.
-    const buyerIsMechanic = offer && myProfile && offer.from === myProfile.name;
+    // buyerId/buyerType varsa öncelikli, yoksa (eski teklif) isimle eşleştirmeye düşer.
+    const buyerIsMechanic = offer && (offer.buyerType != null ? offer.buyerType === "mechanic" : (myProfile && offer.from === myProfile.name));
     const notifyAllowed = buyerIsMechanic ? mechSettings.notifyOffers : ownerSettings.notifyOffers;
     if (status === "accepted") {
       fireSuccessPulse("Teklif kabul edildi 🎉 · Araç satıldı olarak işaretlendi");
@@ -2565,7 +2593,7 @@ function useAppLogic() {
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
-    myBuyerName, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
+    myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
     roleBtn, goToNotifTarget,
