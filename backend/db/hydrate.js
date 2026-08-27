@@ -16,7 +16,7 @@ const BOOL_FIELDS = {
   mechanics: ["verified"],
   appointments: ["autoAccepted", "reviewed", "noShow", "historyShareConsent", "depositRefunded"],
   support_tickets: ["refunded"],
-  listings: ["tradeIn"],
+  listings: ["tradeIn", "negotiable", "featured", "adminRemoved"],
 };
 
 export function hydrate(table, row) {

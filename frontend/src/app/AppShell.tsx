@@ -112,6 +112,7 @@ export function AppShell() {
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
+    similarListings, listingPriceComparison, toggleListingFeatured,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor, ownerLangFor,
     roleBtn, goToNotifTarget,
@@ -1620,7 +1621,20 @@ export function AppShell() {
             <div className="flex-1 overflow-y-auto p-5 md:p-8">
               <h1 className="text-xl font-bold text-gray-800">{selectedListing.brand} {selectedListing.model}</h1>
               {selectedListing.city && <p className="text-gray-400 text-xs mt-1 flex items-center gap-1"><MapPin size={12} />{selectedListing.city}</p>}
-              <p className="text-3xl font-bold text-rose-700 mt-1">{selectedListing.price}</p>
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <p className="text-3xl font-bold text-rose-700">{selectedListing.price}</p>
+                {selectedListing.negotiable && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">🤝 Pazarlık Payı Var</span>}
+                {selectedListing.featured && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">⭐ Öne Çıkan</span>}
+              </div>
+              {(() => {
+                const cmp = listingPriceComparison(selectedListing);
+                if (!cmp || cmp.tier === "average") return null;
+                return (
+                  <p className={`text-[11px] font-medium mt-1 ${cmp.tier === "below" ? "text-emerald-600" : "text-amber-600"}`}>
+                    {cmp.tier === "below" ? `📉 Benzer ilanların ortalamasının %${Math.abs(cmp.diffPercent)} altında` : `📈 Benzer ilanların ortalamasının %${cmp.diffPercent} üstünde`}
+                  </p>
+                );
+              })()}
               <div className="grid grid-cols-3 gap-2 mt-4">
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Gauge size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("mileage")}</p><p className="text-xs font-bold text-gray-700">{Number(selectedListing.km).toLocaleString("tr-TR")} km</p></div>
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><CalendarDays size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("firstReg")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.firstReg || selectedListing.year}</p></div>
@@ -1634,7 +1648,31 @@ export function AppShell() {
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><DoorOpen size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Kapı Sayısı</p><p className="text-xs font-bold text-gray-700">{selectedListing.doorCount || "—"}</p></div>
               </div>
               <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 flex-wrap"><span className={`px-2 py-1 rounded-full font-medium ${selectedListing.sellerType === "mechanic" ? "bg-rose-100 text-rose-700" : "bg-rose-50 text-rose-600"}`}>{selectedListing.sellerType === "mechanic" ? "🔧 Tamirci" : "👤 Sahibinden"}</span><span>{selectedListing.sellerName}</span><span className="text-gray-300">·</span><span className="text-gray-400">İlan #{selectedListing.id}</span></div>
-              <p className="text-sm text-gray-600 mt-4 leading-relaxed"><TranslatedText id={`listing-desc-${selectedListing.id}`} text={selectedListing.description} fromLang={selectedListing.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
+              {selectedListing.inspectionReportUrl && (
+                <a href={selectedListing.inspectionReportUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"><FileText size={12} /> Ekspertiz Raporu Mevcut</a>
+              )}
+              {(() => {
+                const sellerMechanic = selectedListing.sellerType === "mechanic" ? mechanicsList.find(m => selectedListing.sellerId != null ? m.id === selectedListing.sellerId : m.name === selectedListing.sellerName) : null;
+                const sellerOwner = selectedListing.sellerType === "owner" ? ownersDirectory.find(o => selectedListing.sellerId != null ? o.id === selectedListing.sellerId : o.name === selectedListing.sellerName) : null;
+                if (!sellerMechanic && !sellerOwner) return null;
+                return (
+                  <div className="mt-3 bg-gray-50 border border-gray-200 rounded-2xl p-3 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg flex-shrink-0">{sellerMechanic ? sellerMechanic.img : "👤"}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold text-gray-800 truncate">{selectedListing.sellerName}</span>
+                        {sellerMechanic?.verified && <BadgeCheck size={14} className="text-blue-500 flex-shrink-0" />}
+                      </div>
+                      {sellerMechanic ? (
+                        <p className="text-[11px] text-gray-500">⭐ {sellerMechanic.rating} ({sellerMechanic.reviews} değerlendirme) · Genelde {sellerMechanic.avgResponseMinutes} dk içinde yanıtlar</p>
+                      ) : sellerOwner ? (
+                        <p className="text-[11px] text-gray-500">Üye: {sellerOwner.joinDate ? new Date(sellerOwner.joinDate).toLocaleDateString("tr-TR", { year: "numeric", month: "long" }) : "—"}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })()}
+              <p className="text-sm text-gray-600 mt-4 leading-relaxed whitespace-pre-line"><TranslatedText id={`listing-desc-${selectedListing.id}`} text={selectedListing.description} fromLang={selectedListing.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
               {(selectedListing.ownerCount || selectedListing.paintedParts !== undefined || selectedListing.changedParts !== undefined || selectedListing.tradeIn) && (
                 <div className="mt-4">
                   <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Shield size={15} className="text-rose-500" /> Araç Geçmişi</h3>
@@ -1681,6 +1719,29 @@ export function AppShell() {
                 </div>
               )}
               {(() => {
+                const sims = similarListings(selectedListing);
+                if (sims.length === 0) return null;
+                return (
+                  <div className="mt-6">
+                    <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Car size={15} className="text-rose-500" /> Benzer İlanlar</h3>
+                    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+                      {sims.map(sl => (
+                        <button key={sl.id} onClick={() => { setSelectedListingId(sl.id); setSelectedListingPhotoIndex(0); }} className="flex-shrink-0 w-36 text-left bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition">
+                          <div className="w-full h-24 bg-gray-100 flex items-center justify-center text-3xl overflow-hidden">
+                            {isImgUrl(sl.photo) ? <img src={imgThumb(sl.photo, 300)} loading="lazy" onError={imgFallbackHandler} alt={`${sl.brand} ${sl.model}`} className="w-full h-full object-cover" /> : sl.photo}
+                          </div>
+                          <div className="p-2">
+                            <p className="text-[11px] font-semibold text-gray-800 truncate">{sl.brand} {sl.model}</p>
+                            <p className="text-[10px] text-gray-400">{sl.year} · {Number(sl.km).toLocaleString("tr-TR")} km</p>
+                            <p className="text-xs font-bold text-rose-700 mt-0.5">{sl.price}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              {(() => {
                 const isOwnListing = isMyListing(selectedListing);
                 const activeOffers = selectedListing.offers.filter(o => o.status !== "replaced");
                 if (isOwnListing) return (
@@ -1691,9 +1752,27 @@ export function AppShell() {
                       <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Share2 size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{selectedListing.shareCount || 0}</p><p className="text-[9px] text-gray-400">Paylaşım</p></div>
                       <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Heart size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingFavoriteCount(selectedListing.id)}</p><p className="text-[9px] text-gray-400">Favori</p></div>
                     </div>
+                    {listingViewStats?.monthly && listingViewStats.monthly.length > 1 && (
+                      <div className="mt-2 bg-white border border-gray-200 rounded-2xl p-3">
+                        <h4 className="text-[11px] font-semibold text-gray-500 mb-2">Görüntülenme Trendi</h4>
+                        <div className="flex items-end gap-1.5 h-14">
+                          {listingViewStats.monthly.map((m) => {
+                            const max = Math.max(...listingViewStats.monthly.map(x => x.views), 1);
+                            const h = Math.max(4, Math.round((m.views / max) * 56));
+                            return (
+                              <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1" title={`${m.month}: ${m.views} görüntülenme`}>
+                                <div className="w-full bg-rose-200 rounded-t" style={{ height: `${h}px` }} />
+                                <span className="text-[8px] text-gray-400 whitespace-nowrap">{m.month.slice(5)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     <div className="mt-3 bg-white border border-gray-200 rounded-2xl p-3"><div className="flex items-center justify-between mb-2"><h4 className="text-xs font-semibold text-gray-500">{t("listingStatus")}</h4><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span></div><div className="flex gap-2">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(selectedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${selectedListing.status === st ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div></div>
-                    <div className="flex gap-2 mt-3">
-                      <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, bodyType: selectedListing.bodyType || "", engineSize: selectedListing.engineSize || "", drivetrain: selectedListing.drivetrain || "", ownerCount: selectedListing.ownerCount || "", paintedParts: selectedListing.paintedParts ?? "", changedParts: selectedListing.changedParts ?? "", tradeIn: !!selectedListing.tradeIn, doorCount: selectedListing.doorCount || "", features: selectedListing.features || [], photos: selectedListing.photos || [], seatCount: selectedListing.seatCount || "", fuelConsumption: selectedListing.fuelConsumption || "", co2Emission: selectedListing.co2Emission || "", emissionClass: selectedListing.emissionClass || "", batteryCapacity: selectedListing.batteryCapacity || "", rangeKm: selectedListing.rangeKm || "", city: selectedListing.city || "", _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Pencil size={14} /> İlanı Düzenle</button>
+                    <button onClick={() => toggleListingFeatured(selectedListing.id)} className={`w-full mt-2 py-2.5 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 border ${selectedListing.featured ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}>⭐ {selectedListing.featured ? "Öne Çıkarmadan Kaldır" : "İlanı Öne Çıkar"}</button>
+                    <div className="flex gap-2 mt-2">
+                      <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, bodyType: selectedListing.bodyType || "", engineSize: selectedListing.engineSize || "", drivetrain: selectedListing.drivetrain || "", ownerCount: selectedListing.ownerCount || "", paintedParts: selectedListing.paintedParts ?? "", changedParts: selectedListing.changedParts ?? "", tradeIn: !!selectedListing.tradeIn, doorCount: selectedListing.doorCount || "", features: selectedListing.features || [], photos: selectedListing.photos || [], seatCount: selectedListing.seatCount || "", fuelConsumption: selectedListing.fuelConsumption || "", co2Emission: selectedListing.co2Emission || "", emissionClass: selectedListing.emissionClass || "", batteryCapacity: selectedListing.batteryCapacity || "", rangeKm: selectedListing.rangeKm || "", city: selectedListing.city || "", negotiable: !!selectedListing.negotiable, inspectionReportUrl: selectedListing.inspectionReportUrl || "", featured: !!selectedListing.featured, _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Pencil size={14} /> İlanı Düzenle</button>
                       <button onClick={() => setConfirmDialog({ title: "İlanı sil", body: "Bu ilanı silmek istediğinizden emin misiniz? Gelen teklifler ve mesajlar dahil tüm veriler kalıcı olarak silinir.", confirmLabel: "Evet, Sil", danger: true, onConfirm: () => { removeListing(selectedListing.id); setSelectedListingId(null); } })} aria-label="İlanı sil" className="flex-shrink-0 border border-gray-200 text-red-400 hover:text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-xl transition"><Trash2 size={16} /></button>
                     </div>
                     <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-2 flex items-center gap-2"><Banknote size={15} className="text-rose-600" /> Teklifler {activeOffers.length > 0 && <span className="text-gray-300 font-normal">({activeOffers.length})</span>}</h3>
@@ -1720,13 +1799,19 @@ export function AppShell() {
                 const myOffer = myPendingOfferOn(selectedListing);
                 const currency = listingCurrency(selectedListing.price);
                 const offerLabel = myOffer && !myOffer.seen ? "Teklifini Güncelle" : myOffer ? "Yeni Teklif Ver" : t("makeOffer");
+                const sellerPhone = selectedListing.sellerType === "mechanic"
+                  ? mechanicsList.find(m => selectedListing.sellerId != null ? m.id === selectedListing.sellerId : m.name === selectedListing.sellerName)?.phone
+                  : ownersDirectory.find(o => selectedListing.sellerId != null ? o.id === selectedListing.sellerId : o.name === selectedListing.sellerName)?.phone;
                 return (
-                  <div className="grid grid-cols-2 gap-2 mt-5">
+                  <div className="grid grid-cols-2 gap-2 mt-5 sticky bottom-0 bg-white/95 backdrop-blur-sm pt-3 pb-2 -mx-5 px-5 md:-mx-8 md:px-8 border-t border-gray-100">
                     <button onClick={openOfferForm} className="bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Banknote size={15} /> {offerLabel}</button>
                     {selectedListing.sellerType === "mechanic" ? (
                       <button onClick={() => { const mech = mechanicsList.find(m => m.name === selectedListing.sellerName); if (mech) openChatWithMechanic(mech, `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`); setSelectedListingId(null); }} className="border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
                     ) : (
                       <button onClick={() => { const contextNote = `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`; if (role === "mechanic") { openMechChatWithOwnerListing(contextNote); } else { openChatWithMechanic({ id: `seller-${selectedListing.sellerName}`, name: selectedListing.sellerName, img: "👤", lang: "tr" }, contextNote); } setSelectedListingId(null); }} className="border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
+                    )}
+                    {sellerPhone && (
+                      <a href={`tel:${sellerPhone.replace(/\s+/g, "")}`} className="col-span-2 border border-gray-200 text-gray-700 py-2.5 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Phone size={14} /> Telefonla Ara · {sellerPhone}</a>
                     )}
                     {myOffer && <p className="col-span-2 text-[11px] text-gray-400 text-center">Mevcut teklifiniz: {myOffer.amount}{currency}{myOffer.seen ? " · satıcı gördü" : " · henüz görülmedi"}</p>}
                     <button onClick={() => openReportForm("listing", `İlan #${selectedListing.id} · ${selectedListing.sellerName}`, `"${selectedListing.brand} ${selectedListing.model}" ilanını bildiriyorum`)} className="col-span-2 flex items-center justify-center gap-1.5 text-[11px] text-gray-400 hover:text-red-500 transition py-1"><Flag size={11} /> Bu ilanı bildir</button>
@@ -2238,7 +2323,7 @@ export function AppShell() {
               <div className="flex-1 px-5 py-4 overflow-y-auto">
                 <div className="bg-rose-100 rounded-xl p-3 mb-4 text-xs text-rose-800 flex items-center gap-2"><Pencil size={14} /> Değişiklikler anında yansır.</div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">Temel Bilgiler</h3>
-                <div className="space-y-2 mb-5"><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder="İşletme Adı" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder="Uzmanlık Alanı" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder="Adres" className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><input value={myProfile.price} onChange={(e) => updateMyField("price", Number(e.target.value) || 0)} type="number" placeholder="Fiyat (₺)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <div className="space-y-2 mb-5"><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder="İşletme Adı" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder="Uzmanlık Alanı" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder="Adres" className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} placeholder="Telefon (örn. 0216 345 67 89)" className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><input value={myProfile.price} onChange={(e) => updateMyField("price", Number(e.target.value) || 0)} type="number" placeholder="Fiyat (₺)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-1.5"><Tag size={14} className="text-rose-500" /> Hizmet Verdiğiniz Markalar</h3>
                 <p className="text-[11px] text-gray-400 mb-2 -mt-1">Araç sahipleri artık markaya göre arama yapabiliyor — buradan seçtiğiniz markalar profilinizde ve aramada görünür.</p>
                 <div className="flex flex-wrap gap-1.5 mb-5">{CAR_BRANDS.map((brand) => { const active = (myProfile.brandsServiced || []).includes(brand); return (<button key={brand} onClick={() => { const cur = myProfile.brandsServiced || []; updateMyField("brandsServiced", active ? cur.filter((b) => b !== brand) : [...cur, brand]); }} className={`text-xs font-semibold px-2.5 py-1.5 rounded-full border transition ${active ? "bg-rose-600 border-rose-600 text-white" : "bg-white border-gray-200 text-gray-500 hover:border-rose-300"}`}>{brand}</button>); })}</div>
@@ -2486,6 +2571,12 @@ export function AppShell() {
                   <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200"><img src={imgThumb(p, 120)} loading="lazy" onError={imgFallbackHandler} alt={`Ek fotoğraf ${i + 1}`} className="w-full h-full object-cover" /><button type="button" onClick={() => removeSellPhoto(i)} aria-label="Fotoğrafı kaldır" className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center text-white"><X size={9} /></button></div>
                 ))}
                 <label className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:text-rose-500 hover:border-rose-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
+              </div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">Pazarlama</p>
+              <input value={sellForm.inspectionReportUrl || ""} onChange={(e) => setSellForm({ ...sellForm, inspectionReportUrl: e.target.value })} placeholder="Ekspertiz Raporu Bağlantısı (opsiyonel)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setSellForm({ ...sellForm, negotiable: !sellForm.negotiable })} className={`flex-1 px-3 py-2.5 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition ${sellForm.negotiable ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500"}`}>🤝 Pazarlık Payı {sellForm.negotiable ? "Var" : "Yok"}</button>
+                <button type="button" onClick={() => setSellForm({ ...sellForm, featured: !sellForm.featured })} className={`flex-1 px-3 py-2.5 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition ${sellForm.featured ? "bg-amber-50 border-amber-200 text-amber-700" : "border-gray-200 text-gray-500"}`}>⭐ İlanı Öne Çıkar</button>
               </div>
             </div>
             <button onClick={() => submitListing(role)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-rose-700 transition">{sellForm._editingId ? t("updateListing") : t("publishListing")}</button>

@@ -66,6 +66,8 @@ export interface Mechanic {
   brandsServiced?: string[];
   /** Kabul ettiği ödeme yöntemleri (Nakit, Kredi/Banka Kartı, Havale/EFT, Kapıda Ödeme). */
   paymentMethods?: string[];
+  /** İşletme telefon numarası — ilan detayındaki "Telefonla Ara" butonu için. */
+  phone?: string;
 }
 
 export interface Owner {
@@ -226,6 +228,14 @@ export interface Listing {
   /** Sadece elektrikli/hibrit araçlarda anlamlı: batarya kapasitesi (kWh) ve menzil (km). */
   batteryCapacity?: string;
   rangeKm?: number | string;
+  /** Fiyatta pazarlık payı olduğunu belirtir — detay sayfasında ve kartta rozet olarak gösterilir. */
+  negotiable?: boolean;
+  /** Ekspertiz raporu URL'i (fotoğraflarla aynı desen: dosya yükleme değil, dış bağlantı). */
+  inspectionReportUrl?: string | null;
+  /** Satıcı tarafından "öne çıkar" olarak işaretlenmiş mi — pazar listesinde üste sıralanır,
+   * kartta/detayda rozet gösterilir. Gerçek bir ödeme akışı yok; demo kapsamında satıcı kendi
+   * ilanında bunu doğrudan açıp kapatabilir, admin de geri alabilir. */
+  featured?: boolean;
 }
 
 export interface ChatMessage {

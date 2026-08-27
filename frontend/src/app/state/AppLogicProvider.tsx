@@ -235,7 +235,7 @@ function useAppLogic() {
   const [listings, setListings] = useState([]);
   const [showSellForm, setShowSellForm] = useState(false);
   const [showSellVehiclePicker, setShowSellVehiclePicker] = useState(false);
-  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: "", _vehicleId: null, _editingId: null });
+  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: "", negotiable: false, inspectionReportUrl: "", featured: false, _vehicleId: null, _editingId: null });
   const sellPhotoRef = useRef(null);
   const [selectedListingId, setSelectedListingId] = useState(null);
   // İlan detay modalındaki fotoğraf galerisi için seçili küçük resim indeksi — yeni bir ilan
@@ -700,6 +700,12 @@ function useAppLogic() {
     if (listingSort === "price") list = [...list].sort((a, b) => listingSortDir === "asc" ? parseListingPrice(a.price) - parseListingPrice(b.price) : parseListingPrice(b.price) - parseListingPrice(a.price));
     if (listingSort === "km") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.km) - Number(b.km) : Number(b.km) - Number(a.km));
     if (listingSort === "year") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.year) - Number(b.year) : Number(b.year) - Number(a.year));
+    // Kullanıcı fiyat/km/yıl gibi açık bir sıralama seçmediyse (varsayılan görünüm), "öne çıkan"
+    // ilanlar listenin başına taşınır — diğer sıralama kriterleri kendi içindeki göreli sırayı
+    // bozmadan (stabil sort, Array.prototype.sort ES2019+ garantisi).
+    if (listingSort !== "price" && listingSort !== "km" && listingSort !== "year") {
+      list = [...list].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+    }
     return list;
   }, [listings, query, locationQuery, listingFilters, listingSort, listingSortDir]);
   const activeListingFilterCount = (listingFilters.transmission !== "all" ? 1 : 0) + (listingFilters.fuelType !== "all" ? 1 : 0) + (listingFilters.minPrice ? 1 : 0) + (listingFilters.maxPrice ? 1 : 0) + (listingFilters.minKm ? 1 : 0) + (listingFilters.maxKm ? 1 : 0) + (listingFilters.minYear ? 1 : 0) + (listingFilters.maxYear ? 1 : 0);
@@ -1069,6 +1075,7 @@ function useAppLogic() {
     salaryMin: "Min. Maaş", salaryMax: "Maks. Maaş", description: "Açıklama", requirements: "Aranan Nitelikler", skills: "Beceriler",
     adminNote: "Dahili Not", refunded: "İade Durumu", depositRefunded: "Kapora İadesi", services: "Sunulan Hizmetler",
     reviewList: "Yorumlar", brandsServiced: "Hizmet Verdiği Markalar", paymentMethods: "Ödeme Yöntemleri", lang: "Konuştuğu Dil",
+    negotiable: "Pazarlık Payı", inspectionReportUrl: "Ekspertiz Raporu", featured: "Öne Çıkan İlan",
   };
   const adminFieldLabel = (field) => ADMIN_FIELD_LABELS[field] || field;
   const formatAdminHistoryValue = (field, value) => {
@@ -1076,6 +1083,8 @@ function useAppLogic() {
     if (field === "password" || field === "newPassword") return "••••••";
     if (field === "verified") return value ? "Doğrulanmış" : "Doğrulanmamış";
     if (field === "adminRemoved") return value ? "Kaldırıldı" : "Yayında";
+    if (field === "negotiable") return value ? "Var" : "Yok";
+    if (field === "featured") return value ? "Öne Çıkarılmış" : "Normal";
     if (field === "refunded" || field === "depositRefunded") return value ? "Evet" : "Hayır";
     if (field === "status") {
       if (value === "active" || value === "suspended") return value === "active" ? "Aktif" : "Askıya Alınmış";
@@ -1242,7 +1251,7 @@ function useAppLogic() {
     const mechs = mechanicsList.map(m => {
       const ov = mechanicAdminOverrides[m.id] || {};
       const city = (m.address || "").split("/").pop().trim();
-      return { type: "mechanic" as const, id: m.id, name: m.name, email: ov.email || `${slugifyForEmail(m.name)}@fixperto.com`, phone: ov.phone || "+90 5xx xxx xx xx", status: ov.status || "active", joinDate: ov.joinDate || "2026-01-01", password: ov.password || "demo1234", city, specialty: m.specialty, address: m.address, price: m.price, verified: m.verified, verificationDocs: m.verificationDocs || [], extra: `${m.specialty} · ${m.rating}★ (${m.reviews})${m.verified ? "" : " · Doğrulanmamış"}` };
+      return { type: "mechanic" as const, id: m.id, name: m.name, email: ov.email || `${slugifyForEmail(m.name)}@fixperto.com`, phone: m.phone || "+90 5xx xxx xx xx", status: ov.status || "active", joinDate: ov.joinDate || "2026-01-01", password: ov.password || "demo1234", city, specialty: m.specialty, address: m.address, price: m.price, verified: m.verified, verificationDocs: m.verificationDocs || [], extra: `${m.specialty} · ${m.rating}★ (${m.reviews})${m.verified ? "" : " · Doğrulanmamış"}` };
     });
     return [...owners, ...mechs];
   }, [ownersDirectory, mechanicsList, mechanicAdminOverrides]);
@@ -1270,14 +1279,17 @@ function useAppLogic() {
       setOwnersDirectory(list => list.map(o => o.id === selectedAdminUser.id ? { ...o, ...patch } : o));
       persist(api.owners.update(selectedAdminUser.id, patch), "Kullanıcı bilgisi kaydedilemedi");
     } else {
-      const corePatch = { name: adminEditForm.name, specialty: adminEditForm.specialty, address: adminEditForm.address, price: Number(adminEditForm.price) || selectedAdminUser.price, verified: adminEditForm.verified };
+      const corePatch = { name: adminEditForm.name, specialty: adminEditForm.specialty, address: adminEditForm.address, price: Number(adminEditForm.price) || selectedAdminUser.price, verified: adminEditForm.verified, phone: adminEditForm.phone };
       Object.entries(corePatch).forEach(([field, newValue]) => { const oldValue = selectedAdminUser[field]; if (String(oldValue ?? "") !== String(newValue ?? "")) logAdminChange({ targetType: "mechanic", targetId: selectedAdminUser.id, field, oldValue, newValue }); });
       setMechanicsList(list => list.map(m => m.id === selectedAdminUser.id ? { ...m, ...corePatch } : m));
       persist(api.mechanics.update(selectedAdminUser.id, corePatch), "Tamirci bilgisi kaydedilemedi");
-      // Not: email/phone/status alanları mechanicOverride olarak yalnızca istemci tarafında tutuluyor —
+      // Not: email/status alanları mechanicOverride olarak yalnızca istemci tarafında tutuluyor —
       // backend mechanics şemasında bu alanlar yok (demo amaçlı, gerçek bir üretim sisteminde
-      // mechanics tablosuna eklenmesi gerekir; bkz. REFACTOR_REPORT.md).
-      const overridePatch = { email: adminEditForm.email, phone: adminEditForm.phone, status: adminEditForm.status };
+      // mechanics tablosuna eklenmesi gerekir; bkz. REFACTOR_REPORT.md). phone artık gerçek bir
+      // backend sütunu olduğu için (bkz. db.js) buradan corePatch'e taşındı — aksi halde admin'in
+      // düzenlediği telefon numarası hem kalıcı olmaz hem de ilan detayındaki "Telefonla Ara"
+      // butonunun okuduğu gerçek mechanicsList.phone alanıyla senkron dışı kalırdı.
+      const overridePatch = { email: adminEditForm.email, status: adminEditForm.status };
       Object.entries(overridePatch).forEach(([field, newValue]) => { const oldValue = selectedAdminUser[field]; if (String(oldValue ?? "") !== String(newValue ?? "")) logAdminChange({ targetType: "mechanicOverride", targetId: selectedAdminUser.id, field, oldValue, newValue }); });
       setMechanicAdminOverrides(ov => ({ ...ov, [selectedAdminUser.id]: { ...ov[selectedAdminUser.id], ...overridePatch } }));
     }
@@ -1319,14 +1331,16 @@ function useAppLogic() {
     if (key === "verified") value = value === "true";
     const oldValue = profileFieldOldValueRef.current;
     if (String(oldValue ?? "") !== String(value ?? "")) {
-      const targetType = user.type === "owner" ? "owner" : (["email", "phone", "status"].includes(key) ? "mechanicOverride" : "mechanic");
+      const targetType = user.type === "owner" ? "owner" : (["email", "status"].includes(key) ? "mechanicOverride" : "mechanic");
       logAdminChange({ targetType, targetId: user.id, field: key, oldValue, newValue: value });
     }
     if (user.type === "owner") {
       setOwnersDirectory(list => list.map(o => o.id === user.id ? { ...o, [key]: value } : o));
       persist(api.owners.update(user.id, { [key]: value }), "Profil bilgisi kaydedilemedi");
-    } else if (["email", "phone", "status"].includes(key)) {
+    } else if (["email", "status"].includes(key)) {
       // Bu alanlar mechanics şemasında yok — sadece istemci tarafı demo katmanı (bkz. saveAdminUserEdit notu).
+      // phone buraya DAHİL DEĞİL: gerçek bir backend sütunu (bkz. db.js), aşağıdaki genel mechanics
+      // dalına düşüyor.
       setMechanicAdminOverrides(ov => ({ ...ov, [user.id]: { ...ov[user.id], [key]: value } }));
     } else {
       setMechanicsList(list => list.map(m => m.id === user.id ? { ...m, [key]: value } : m));
@@ -1411,10 +1425,12 @@ function useAppLogic() {
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="text-[10px] text-gray-400 flex items-center gap-0.5" title="Kaç kez paylaşıldı"><Share2 size={10} /> {l.shareCount || 0}</span>
             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-gray-800 text-white" : l.status === "sold" ? "bg-red-50 text-red-500" : l.status === "reserved" ? "bg-gray-200 text-gray-700" : "bg-green-50 text-green-600"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
+            {l.featured && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">⭐ Öne Çıkan</span>}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <input value={l.price} onChange={(e) => updateListingField(l.id, "price", e.target.value)} {...trackInputProps("listing", l.id, "price", l.price)} className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" />
+          <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "featured", oldValue: l.featured, newValue: !l.featured }); updateListingField(l.id, "featured", !l.featured); }} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.featured ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "border border-gray-200 text-gray-500 hover:bg-gray-100"}`}>{l.featured ? "⭐ Kaldır" : "⭐ Öne Çıkar"}</button>
           <button onClick={() => toggleListingRemoved(l.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.adminRemoved ? "bg-green-50 text-green-600 hover:bg-green-100" : "bg-red-50 text-red-500 hover:bg-red-100"}`}>{l.adminRemoved ? "Geri Yükle" : "Kaldır"}</button>
           <button onClick={() => setExpandedAdminListingId(x => x === l.id ? null : l.id)} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 border border-gray-200 text-gray-600 hover:bg-gray-100 transition">{expanded ? "Kapat" : "Detaylar"}</button>
         </div>
@@ -1430,6 +1446,10 @@ function useAppLogic() {
             <div><label className="text-[10px] text-gray-400 mb-0.5 block">Renk</label><input value={l.color} onChange={(e) => updateListingField(l.id, "color", e.target.value)} {...trackInputProps("listing", l.id, "color", l.color)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
             <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">İlk Tescil</label><input value={l.firstReg} onChange={(e) => updateListingField(l.id, "firstReg", e.target.value)} {...trackInputProps("listing", l.id, "firstReg", l.firstReg)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
             <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Açıklama</label><textarea value={l.description} onChange={(e) => updateListingField(l.id, "description", e.target.value)} {...trackInputProps("listing", l.id, "description", l.description)} rows={2} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs resize-none" /></div>
+            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Ekspertiz Raporu Bağlantısı</label><input value={l.inspectionReportUrl || ""} onChange={(e) => updateListingField(l.id, "inspectionReportUrl", e.target.value)} {...trackInputProps("listing", l.id, "inspectionReportUrl", l.inspectionReportUrl)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
+            <div className="col-span-2">
+              <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "negotiable", oldValue: l.negotiable, newValue: !l.negotiable }); updateListingField(l.id, "negotiable", !l.negotiable); }} className={`w-full py-1.5 rounded-lg text-[11px] font-semibold border transition ${l.negotiable ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500"}`}>🤝 Pazarlık Payı {l.negotiable ? "Var" : "Yok"}</button>
+            </div>
             <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-1 block">Durum</label>
               <div className="flex gap-1.5">
                 {[{ value: "active", label: "Aktif" }, { value: "reserved", label: "Rezerve" }, { value: "sold", label: "Satıldı" }].map(o => (<button key={o.value} onClick={() => { if (l.status !== o.value) logAdminChange({ targetType: "listing", targetId: l.id, field: "status", oldValue: l.status, newValue: o.value }); updateListingField(l.id, "status", o.value); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold border transition ${l.status === o.value ? "bg-gray-900 border-gray-900 text-white" : "border-gray-200 text-gray-500"}`}>{o.label}</button>))}
@@ -2171,7 +2191,7 @@ function useAppLogic() {
   const toggleDayOpen = (key) => setMechanicHours(h => { const next = { ...h, [key]: { ...h[key], open: !h[key].open } }; persistMechanicHours(next); return next; });
   const toggleSlotClosed = (key, slot) => setMechanicHours(h => { const closed = h[key].closedSlots.includes(slot); const next = { ...h, [key]: { ...h[key], closedSlots: closed ? h[key].closedSlots.filter(s => s !== slot) : [...h[key].closedSlots, slot] } }; persistMechanicHours(next); return next; });
   const addExtraSlot = (key, time) => { if (!time) return; setMechanicHours(h => { if (h[key].extraSlots.includes(time) || genSlots(h[key].start, h[key].end).includes(time)) return h; const next = { ...h, [key]: { ...h[key], extraSlots: [...h[key].extraSlots, time].sort() } }; persistMechanicHours(next); return next; }); };
-  const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", _vehicleId: null, _editingId: null }); setShowSellForm(true); };
+  const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", negotiable: false, inspectionReportUrl: "", featured: false, _vehicleId: null, _editingId: null }); setShowSellForm(true); };
   // "Aracımı Satışa Çıkar" tıklanınca: kayıtlı araç(lar)ı varsa hangisini satacağını sorar ve
   // seçilen aracın bilgilerini forma otomatik doldurur; kayıtlı aracı yoksa direkt boş form açar.
   const startSellFlow = () => { if (vehicles.length === 0) { openSellForm(null); return; } setShowSellVehiclePicker(true); };
@@ -2179,7 +2199,7 @@ function useAppLogic() {
     setShowSellVehiclePicker(false);
     const existingListing = listings.find(l => l.id === v.listingId);
     if (existingListing) { openSellForm({ ...existingListing, _vehicleId: v.id, _editingId: existingListing.id }); return; }
-    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", _vehicleId: v.id, _editingId: null });
+    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", negotiable: false, inspectionReportUrl: "", featured: false, _vehicleId: v.id, _editingId: null });
   };
   const pickOtherCarToSell = () => { setShowSellVehiclePicker(false); openSellForm(null); };
   const sellPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; setSellForm(f => ({ ...f, photo: URL.createObjectURL(file) })); };
@@ -2256,6 +2276,17 @@ function useAppLogic() {
     persist(api.listings.update(id, { status }), "İlan durumu kaydedilemedi");
     if (listing) notifyFavoriteWatchers(id, `${listing.brand} ${listing.model}`, `durumu "${listingStatusMeta(status, t).label}" olarak değişti.`);
   };
+  // Satıcının kendi ilanını "öne çıkar" olarak işaretlemesi — gerçek bir ödeme/onay akışı yok
+  // (demo kapsamı), sadece ilanı Pazar listesinde üste taşıyan ve kartta/detayda rozet gösteren
+  // bir bayrak. Admin panelinden de geri alınabilir (bkz. applyAdminFieldChange("listing", ...)).
+  const toggleListingFeatured = (id) => {
+    const listing = listings.find(x => x.id === id);
+    if (!listing) return;
+    const next = !listing.featured;
+    setListings(l => l.map(x => x.id === id ? { ...x, featured: next } : x));
+    persist(api.listings.update(id, { featured: next }), "İlan güncellenemedi");
+    setToast({ type: "info", text: next ? "⭐ İlanınız öne çıkarıldı." : "İlan öne çıkarmadan kaldırıldı." });
+  };
   const removeListing = (id) => {
     const listing = listings.find(l => l.id === id);
     setListings(l => l.filter(x => x.id !== id));
@@ -2295,6 +2326,42 @@ function useAppLogic() {
     if (!listing) return false;
     if (listing.sellerId != null) return role === "owner" ? listing.sellerId === MY_OWNER_ID : listing.sellerId === MY_MECHANIC_ID;
     return listing.sellerName === (role === "owner" ? ownerProfile.name : myProfile?.name);
+  };
+  // "Benzer İlanlar" — ilan detayının altında gösterilen küçük öneri şeridi için. Önce aynı marka
+  // + kasa tipindeki aktif ilanlara, yetmezse aynı markadaki diğer ilanlara bakar; fiyata en yakın
+  // olanlar öne çıkar. Kaldırılmış (adminRemoved) ilanlar hiçbir zaman önerilmez.
+  const similarListings = (listing, limit = 4) => {
+    if (!listing) return [];
+    const ownPrice = parsePriceNumber(listing.price);
+    const candidates = listings.filter(l => l.id !== listing.id && !l.adminRemoved && l.status === "active" && l.brand === listing.brand);
+    const scored = candidates.map(l => {
+      const sameBody = listing.bodyType && l.bodyType === listing.bodyType;
+      const priceDiff = ownPrice > 0 ? Math.abs(parsePriceNumber(l.price) - ownPrice) : 0;
+      return { l, score: (sameBody ? 0 : 1) * 1_000_000_000 + priceDiff };
+    });
+    scored.sort((a, b) => a.score - b.score);
+    return scored.slice(0, limit).map(s => s.l);
+  };
+  // Piyasa fiyat karşılaştırması — aynı marka+model'deki diğer AKTİF ilanların medyan fiyatına göre
+  // bu ilanın nerede durduğunu hesaplar. Anlamlı bir sinyal için en az 2 karşılaştırma ilanı arar;
+  // yetersizse null döner (rozet hiç gösterilmez — az veriyle yanıltıcı "ucuz/pahalı" etiketi
+  // basmaktansa sessiz kalmak daha doğru).
+  const listingPriceComparison = (listing) => {
+    if (!listing) return null;
+    const ownPrice = parsePriceNumber(listing.price);
+    if (!ownPrice) return null;
+    const samePrices = listings
+      .filter(l => l.id !== listing.id && !l.adminRemoved && l.status === "active" && l.brand === listing.brand && l.model === listing.model)
+      .map(l => parsePriceNumber(l.price))
+      .filter(p => p > 0)
+      .sort((a, b) => a - b);
+    if (samePrices.length < 2) return null;
+    const mid = Math.floor(samePrices.length / 2);
+    const median = samePrices.length % 2 === 0 ? (samePrices[mid - 1] + samePrices[mid]) / 2 : samePrices[mid];
+    if (!median) return null;
+    const diffPercent = Math.round(((ownPrice - median) / median) * 100);
+    const tier = diffPercent <= -5 ? "below" : diffPercent >= 5 ? "above" : "average";
+    return { diffPercent, tier, sampleSize: samePrices.length };
   };
   const submitOffer = () => {
     if (!offerAmount || !selectedListing) return;
@@ -2594,6 +2661,7 @@ function useAppLogic() {
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
+    similarListings, listingPriceComparison, toggleListingFeatured,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
     roleBtn, goToNotifTarget,

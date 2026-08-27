@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS mechanics (
   verificationDocs TEXT DEFAULT '[]',
   shareCount INTEGER DEFAULT 0,
   brandsServiced TEXT DEFAULT '[]',
-  paymentMethods TEXT DEFAULT '[]'
+  paymentMethods TEXT DEFAULT '[]',
+  phone TEXT
 );
 
 CREATE TABLE IF NOT EXISTS owners (
@@ -142,7 +143,11 @@ CREATE TABLE IF NOT EXISTS listings (
   batteryCapacity TEXT,
   rangeKm INTEGER,
   city TEXT,
-  lang TEXT
+  lang TEXT,
+  negotiable INTEGER DEFAULT 0,
+  inspectionReportUrl TEXT,
+  featured INTEGER DEFAULT 0,
+  adminRemoved INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS job_listings (
@@ -324,6 +329,11 @@ function ensureColumn(table, columnDef) {
   ["listings", "sellerId INTEGER"],
   ["listings", "offers TEXT DEFAULT '[]'"],
   ["listings", "messages TEXT DEFAULT '[]'"],
+  ["listings", "negotiable INTEGER DEFAULT 0"],
+  ["listings", "inspectionReportUrl TEXT"],
+  ["listings", "featured INTEGER DEFAULT 0"],
+  ["listings", "adminRemoved INTEGER DEFAULT 0"],
+  ["mechanics", "phone TEXT"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 // ---------------------------------------------------------------------------
@@ -339,25 +349,26 @@ function ensureColumn(table, columnDef) {
 const wc = (lock) => `https://loremflickr.com/800/600/car?lock=${lock}`;
 
 const MECHANIC_BACKFILL = {
-  1: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Hyundai"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc(9) },
-  2: { brandsServiced: ["Renault", "Fiat", "Ford", "Opel", "Hyundai", "Peugeot"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"], coverPhoto: wc(10) },
-  3: { brandsServiced: ["Volkswagen", "BMW", "Mercedes-Benz", "Audi"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc(11) },
-  4: { brandsServiced: ["Renault", "Fiat", "Dacia", "Tofaş", "Hyundai"], paymentMethods: ["Nakit"], coverPhoto: wc(12) },
-  5: { brandsServiced: ["BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Mini"], paymentMethods: ["Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc(13) },
-  6: { brandsServiced: ["Fiat", "Renault", "Tofaş", "Dacia"], paymentMethods: ["Nakit"], coverPhoto: wc(14) },
-  7: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Opel"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc(15) },
-  8: { brandsServiced: ["Renault", "Fiat", "Hyundai", "Toyota"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"], coverPhoto: wc(16) },
-  9: { brandsServiced: ["Renault", "Ford", "Opel", "Volkswagen"], paymentMethods: ["Nakit", "Havale/EFT"], coverPhoto: wc(17) },
-  10: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Honda"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT", "Kapıda Ödeme"], coverPhoto: wc(18) },
+  1: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Hyundai"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc(9), phone: "0216 345 67 89" },
+  2: { brandsServiced: ["Renault", "Fiat", "Ford", "Opel", "Hyundai", "Peugeot"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"], coverPhoto: wc(10), phone: "0312 456 78 90" },
+  3: { brandsServiced: ["Volkswagen", "BMW", "Mercedes-Benz", "Audi"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc(11), phone: "0232 567 89 01" },
+  4: { brandsServiced: ["Renault", "Fiat", "Dacia", "Tofaş", "Hyundai"], paymentMethods: ["Nakit"], coverPhoto: wc(12), phone: "0224 678 90 12" },
+  5: { brandsServiced: ["BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Mini"], paymentMethods: ["Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc(13), phone: "0212 789 01 23" },
+  6: { brandsServiced: ["Fiat", "Renault", "Tofaş", "Dacia"], paymentMethods: ["Nakit"], coverPhoto: wc(14), phone: "0332 890 12 34" },
+  7: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Opel"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT"], coverPhoto: wc(15), phone: "0242 901 23 45" },
+  8: { brandsServiced: ["Renault", "Fiat", "Hyundai", "Toyota"], paymentMethods: ["Nakit", "Kredi/Banka Kartı"], coverPhoto: wc(16), phone: "0342 012 34 56" },
+  9: { brandsServiced: ["Renault", "Ford", "Opel", "Volkswagen"], paymentMethods: ["Nakit", "Havale/EFT"], coverPhoto: wc(17), phone: "0462 123 45 67" },
+  10: { brandsServiced: ["Volkswagen", "Renault", "Fiat", "Ford", "Toyota", "Honda"], paymentMethods: ["Nakit", "Kredi/Banka Kartı", "Havale/EFT", "Kapıda Ödeme"], coverPhoto: wc(18), phone: "0222 234 56 78" },
 };
 try {
   const backfillStmt = db.prepare(`UPDATE mechanics SET
     brandsServiced = CASE WHEN brandsServiced IS NULL OR brandsServiced = '[]' THEN @brandsServiced ELSE brandsServiced END,
     paymentMethods = CASE WHEN paymentMethods IS NULL OR paymentMethods = '[]' THEN @paymentMethods ELSE paymentMethods END,
-    coverPhoto = CASE WHEN coverPhoto IS NULL OR coverPhoto = '' OR coverPhoto LIKE '%wikimedia%' THEN @coverPhoto ELSE coverPhoto END
+    coverPhoto = CASE WHEN coverPhoto IS NULL OR coverPhoto = '' OR coverPhoto LIKE '%wikimedia%' THEN @coverPhoto ELSE coverPhoto END,
+    phone = CASE WHEN phone IS NULL OR phone = '' THEN @phone ELSE phone END
     WHERE id = @id`);
   Object.entries(MECHANIC_BACKFILL).forEach(([id, data]) => {
-    backfillStmt.run({ id: Number(id), brandsServiced: JSON.stringify(data.brandsServiced), paymentMethods: JSON.stringify(data.paymentMethods), coverPhoto: data.coverPhoto });
+    backfillStmt.run({ id: Number(id), brandsServiced: JSON.stringify(data.brandsServiced), paymentMethods: JSON.stringify(data.paymentMethods), coverPhoto: data.coverPhoto, phone: data.phone });
   });
 } catch (err) {
   console.error("Tamirci marka/ödeme yöntemi backfill hatası:", err.message);

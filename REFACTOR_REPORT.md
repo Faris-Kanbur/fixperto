@@ -386,3 +386,53 @@ değişikliği tek seferde, doğrulama yapamadan uygulamak gerçek bir regresyon
   (kendi bilgisayarınızda `npm run dev` ile "Pazarım", "Aldığım/Verdiğim Teklifler", favori ilan
   bildirimleri akışları) hâlâ önerilir** — bu sandbox'ta backend çalıştırılamadığı için hiçbir
   şekilde uçtan uca canlı test yapılamadı.
+
+## 18) İlan detay sayfasını "daha pro" hale getirme (Faris'in seçtiği 4 kategori, hepsi uygulandı)
+
+Faris'in onayladığı öneriler doğrultusunda araç ilanı detay sayfasına eklenenler:
+
+**Güven & doğrulama:** Tamirci satıcılarda doğrulama rozeti + puan/yorum sayısı + ortalama yanıt
+süresi gösteren bir güven kartı; sahibinden satıcılarda üyelik tarihi. Ekspertiz raporu bağlantısı
+(URL, dosya yükleme değil — fotoğraflarla aynı desen) ve varsa rozet olarak gösterimi.
+
+**Alıcı karar araçları:** Aynı marka+model'deki diğer aktif ilanların medyan fiyatına göre "piyasa
+ortalamasının %X altında/üstünde" rozeti (yeterli karşılaştırma verisi yoksa — 2'den az — sessizce
+gizleniyor). "Pazarlık payı var" etiketi. Açıklama metninde artık satır sonları korunuyor
+(`whitespace-pre-line`). Sayfa altında aynı markadan/kasa tipinden fiyata yakın "Benzer İlanlar"
+şeridi.
+
+**Görsel/düzen cilası:** Alıcı görünümündeki teklif/mesaj/ara butonları artık scroll sırasında
+sayfanın altında sabit kalıyor (`sticky bottom-0`). Telefonla ara butonu eklendi (satıcı
+tamirciyse/sahibindense gerçek telefon numarasına `tel:` linki).
+
+**Satıcı analitiği:** Kendi ilanınızdaki "İstatistikler" bölümüne, zaten var olan
+`profile_views` aylık kırılımından (`GET /api/profile-views/stats`) beslenen basit bir
+görüntülenme trend grafiği eklendi — yeni bir backend endpoint gerekmedi, veri zaten
+toplanıyordu. "İlanı Öne Çıkar" butonu (gerçek bir ödeme akışı yok — demo kapsamında satıcı
+kendi ilanında doğrudan açıp kapatabilir, admin panelinden de geri alınabilir); öne çıkan
+ilanlar varsayılan (sıralama seçilmemiş) görünümde listenin başına taşınıyor.
+
+**Bağlantı kontrolü sırasında bulunan ve düzeltilen 3 hata:**
+1. Admin panelindeki "İlanı Kaldır/Geri Yükle" (`adminRemoved`) butonu, `listings` tablosunda hiç
+   var olmayan bir sütuna `UPDATE` atmaya çalışıyordu — her tıklamada backend'de sessizce 500
+   hatası veriyordu (frontend iyimser güncelleme yaptığı için arayüzde çalışıyor GİBİ
+   görünüyordu, ama sayfa yenilenince değişiklik kaybolurdu). `listings.adminRemoved INTEGER`
+   sütunu eklenerek düzeltildi.
+2. Admin'in tamirci düzenleme formundaki "Telefon" alanı, `mechanics` şemasında bu sütun hiç
+   olmadığı için sadece istemci tarafı geçici bir `mechanicAdminOverrides` nesnesine yazılıyordu
+   — hem kalıcı olmuyordu hem de (yeni eklenen) `mechanics.phone` sütununu okuyan "Telefonla Ara"
+   butonuyla senkron dışı kalacaktı. `mechanics.phone` gerçek bir sütun olarak eklenip admin
+   formu ve satır-içi profil düzenleme oradan okuyup yazacak şekilde düzeltildi.
+3. Tamircilerin kendi profillerinden telefon numaralarını düzenleyebileceği bir alan hiç yoktu —
+   eklendi (araç sahipleri için zaten vardı).
+
+Değiştirilen dosyalar: `backend/db/db.js` (şema + backfill), `backend/db/seed.js` (10 tamirciye
+gerçekçi telefon numarası, 8 ilanın bir kısmına demo `negotiable`/`featured`/`inspectionReportUrl`
+verisi), `backend/db/hydrate.js` (yeni boolean alanlar), `types/domain.ts`, `AppLogicProvider.tsx`
+(`similarListings`, `listingPriceComparison`, `toggleListingFeatured` + sell form/admin form
+düzeltmeleri), `AppShell.tsx` (detay sayfası + sat formu + admin ilan kartı), `ListingCard.tsx`
+(öne çıkan rozeti + pazarlıklı etiketi).
+
+Doğrulama: `npm run typecheck` ve backend `node --check` temiz. Gerçek tarayıcıda canlı test
+(kendi bilgisayarınızda `npm run dev` ile) hâlâ önerilir — özellikle sticky CTA bar ve trend
+grafiğinin görsel yerleşimi için, bu sandbox'ta görsel doğrulama yapılamadı.

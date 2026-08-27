@@ -124,7 +124,10 @@ export function ListingCard({ l, onHover = undefined }) {
               {isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 500)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" /> : l.photo}
             </button>
           </div>
-          <span className={`absolute top-3 left-3 text-white text-[10px] font-bold px-2.5 py-1 rounded-full pointer-events-none shadow-sm ${meta.color}`}>{meta.label}</span>
+          <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 pointer-events-none">
+            <span className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${meta.color}`}>{meta.label}</span>
+            {l.featured && <span className="text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-amber-300">⭐ Öne Çıkan</span>}
+          </div>
           <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label="Favorilere ekle" className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
         </div>
         <button onClick={() => setSelectedListingId(l.id)} className="w-full text-left p-4">
@@ -139,7 +142,10 @@ export function ListingCard({ l, onHover = undefined }) {
             <span className="flex items-center gap-1"><Fuel size={11} />{l.fuelType}</span>
             <span className="flex items-center gap-1"><Cog size={11} />{l.transmission}</span>
           </p>
-          <p className="text-gray-900 font-bold text-lg mt-2.5">{l.price}</p>
+          <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+            <p className="text-gray-900 font-bold text-lg">{l.price}</p>
+            {l.negotiable && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">🤝 Pazarlıklı</span>}
+          </div>
           {isMine && (pendingOfferCount > 0 || questionCount > 0) && (
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
               {pendingOfferCount > 0 && <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${unseenOfferCount > 0 ? "bg-rose-200 text-rose-800" : "bg-gray-100 text-gray-500"}`}><Banknote size={10} /> {pendingOfferCount} teklif{unseenOfferCount > 0 ? " (yeni)" : ""}</span>}
