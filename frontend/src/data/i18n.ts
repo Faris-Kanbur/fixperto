@@ -209,6 +209,12 @@ export const T = {
   inspectionReportPlaceholder: { tr: "Ekspertiz Raporu Bağlantısı (opsiyonel)", en: "Inspection Report Link (optional)", de: "Link zum Prüfbericht (optional)" },
   negotiableToggle: { tr: "🤝 Pazarlık Payı", en: "🤝 Negotiable", de: "🤝 Verhandelbar" },
   featuredHintNote: { tr: "İlanınızı yayınladıktan sonra dilerseniz ücret karşılığında öne çıkarabilirsiniz.", en: "After publishing, you can optionally feature your listing for a fee.", de: "Nach der Veröffentlichung können Sie Ihre Anzeige optional gegen Gebühr hervorheben lassen." },
+
+  // --- Sohbet (chat) ekranı ---
+  applicationRejectedNotice: { tr: "Bu başvuru reddedildi. Bu görüşmede mesaj gönderemezsiniz.", en: "This application was rejected. You can't send messages in this conversation.", de: "Diese Bewerbung wurde abgelehnt. Sie können in diesem Gespräch keine Nachrichten senden." },
+  mechanicNoLongerListed: { tr: "⚠️ Bu tamirci artık listede bulunamadı.", en: "⚠️ This mechanic is no longer listed.", de: "⚠️ Diese Werkstatt ist nicht mehr gelistet." },
+  bookWithThisMechanic: { tr: "Bu tamirciden randevu al", en: "Book with this mechanic", de: "Bei dieser Werkstatt einen Termin buchen" },
+  chatInputPlaceholder: { tr: "Mesajınızı yazın...", en: "Type your message...", de: "Nachricht schreiben..." },
 };
 
 export function useT(lang) {
