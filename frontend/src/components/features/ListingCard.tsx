@@ -126,14 +126,14 @@ export function ListingCard({ l, onHover = undefined }) {
           </div>
           <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 pointer-events-none">
             <span className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${meta.color}`}>{meta.label}</span>
-            {l.featured && <span className="text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-amber-300">⭐ Öne Çıkan</span>}
+            {l.featured && <span className="text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-amber-300">{t("featuredBadge")}</span>}
           </div>
           <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label="Favorilere ekle" className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
         </div>
         <button onClick={() => setSelectedListingId(l.id)} className="w-full text-left p-4">
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">{l.brand} {l.model}</h3>
-            <span className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.sellerType === "mechanic" ? "bg-rose-50 text-rose-700" : "bg-gray-100 text-gray-600"}`}>{l.sellerType === "mechanic" ? "🔧 Tamirci" : "👤 Sahibinden"}</span>
+            <span className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.sellerType === "mechanic" ? "bg-rose-50 text-rose-700" : "bg-gray-100 text-gray-600"}`}>{l.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span>
           </div>
           {l.city && <p className="text-gray-400 text-xs mt-0.5 flex items-center gap-1"><MapPin size={11} />{l.city}</p>}
           <p className="text-gray-400 text-xs mt-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
@@ -144,7 +144,7 @@ export function ListingCard({ l, onHover = undefined }) {
           </p>
           <div className="flex items-center gap-2 mt-2.5 flex-wrap">
             <p className="text-gray-900 font-bold text-lg">{l.price}</p>
-            {l.negotiable && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">🤝 Pazarlıklı</span>}
+            {l.negotiable && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{t("negotiableBadge")}</span>}
           </div>
           {isMine && (pendingOfferCount > 0 || questionCount > 0) && (
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">

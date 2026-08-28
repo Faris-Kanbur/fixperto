@@ -121,8 +121,8 @@ export function MechCard({ m, onHover }) {
           {showCover && <img src={imgThumb(m.coverPhoto, 500)} loading="lazy" decoding="async" onError={() => setCoverBroken(true)} alt={m.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />}
           {!showCover && <span className="relative text-4xl w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm transition-transform duration-500 ease-out group-hover:scale-105">{m.img}</span>}
         </div>
-        {m.rating >= 4.7 && <span className="absolute top-3 right-3 bg-white text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><Star size={10} className="fill-gray-800" /> Öne Çıkan</span>}
-        {m.verified && <span className="absolute top-3 left-3 bg-white text-rose-600 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><BadgeCheck size={11} /> Doğrulandı</span>}
+        {m.rating >= 4.7 && <span className="absolute top-3 right-3 bg-white text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><Star size={10} className="fill-gray-800" /> {t("featuredLabel")}</span>}
+        {m.verified && <span className="absolute top-3 left-3 bg-white text-rose-600 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><BadgeCheck size={11} /> {t("verifiedBadge")}</span>}
       </div>
       <div className="p-4">
         <div className="flex justify-between items-start gap-2">
@@ -134,7 +134,7 @@ export function MechCard({ m, onHover }) {
           <span className="flex items-center gap-1 text-xs text-gray-500"><MapPin size={12} />{(m.effectiveDistance ?? m.distance).toFixed(1)} km{userLocation && m.effectiveDistance != null && <span title="Gerçek konum"><CheckCircle2 size={11} className="text-green-500" /></span>}</span>
           <PriceLevelDots price={m.price} />
         </div>
-        <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? "Şu an açık" : "Şu an kapalı"}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Zap size={10} className="text-gray-900" /> Ort. {m.avgResponseMinutes} dk yanıt</span>}</div>
+        <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Zap size={10} className="text-gray-900" /> {m.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>
       </div>
     </button>
   );

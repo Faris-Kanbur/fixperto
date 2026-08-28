@@ -123,7 +123,7 @@ export function BrowseHome({ theme = undefined }) {
               <p className={`text-sm font-semibold truncate ${topReminder.urgent ? "text-red-700" : "text-rose-700"}`}>{topReminder.vehicleName} — {topReminder.title}</p>
               <p className="text-xs text-gray-500 truncate">{topReminder.detail}</p>
             </div>
-            <button onClick={() => goBookFromReminder(topReminder.key)} className={`flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-xl text-white transition ${topReminder.urgent ? "bg-red-600 hover:bg-red-700" : "bg-rose-600 hover:bg-rose-700"}`}>Randevu Al</button>
+            <button onClick={() => goBookFromReminder(topReminder.key)} className={`flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-xl text-white transition ${topReminder.urgent ? "bg-red-600 hover:bg-red-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("bookNow")}</button>
             <button onClick={() => setDismissedReminderKey(topReminder.key)} aria-label="Kapat" className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition p-2 -m-2"><X size={16} /></button>
           </div>
         </div>
@@ -132,11 +132,11 @@ export function BrowseHome({ theme = undefined }) {
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-4">
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {[{ key: "distance", label: "📍 Mesafe" }, { key: "price", label: "💰 Fiyat" }, { key: "rating", label: "⭐ Puan" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
+              {[{ key: "distance", label: t("sortDistance") }, { key: "price", label: t("sortPrice") }, { key: "rating", label: t("sortRating") }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
               <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeFilterCount}</span>}</button>
               <button onClick={() => setShowMapMobile(true)} className="md:hidden px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200"><MapIcon size={12} /> {t("showMap")}</button>
             </div>
-            <p className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} tamirci bulundu</p>
+            <p className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {t("mechanicsFoundSuffix")}</p>
           </div>
           <div className="md:flex md:gap-6">
             <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{locationStatus === "loading" ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />) : filtered.map(m => (<MechCard key={m.id} m={m} onHover={setHoveredPinId} />))}</div></div>
@@ -149,14 +149,14 @@ export function BrowseHome({ theme = undefined }) {
           <button onClick={startSellFlow} className="w-full md:max-w-xs mb-4 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              <button onClick={() => setListingSort("default")} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === "default" ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>Önerilen</button>
-              {[{ key: "price", label: "💰 Fiyat" }, { key: "km", label: "🛞 KM" }, { key: "year", label: "📅 Yıl" }].map(opt => (<button key={opt.key} onClick={() => handleListingSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{listingSort === opt.key ? (listingSortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
+              <button onClick={() => setListingSort("default")} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === "default" ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{t("sortRecommended")}</button>
+              {[{ key: "price", label: t("sortPrice") }, { key: "km", label: t("sortKm") }, { key: "year", label: t("sortYear") }].map(opt => (<button key={opt.key} onClick={() => handleListingSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{listingSort === opt.key ? (listingSortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
               <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeListingFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeListingFilterCount}</span>}</button>
             </div>
-            <p className="text-xs text-gray-400 whitespace-nowrap">{filteredListings.length} ilan bulundu</p>
+            <p className="text-xs text-gray-400 whitespace-nowrap">{filteredListings.length} {t("listingsFoundSuffix")}</p>
           </div>
           <div className="md:flex md:gap-6">
-            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative">{filteredListings.map(l => (<ListingCard key={l.id} l={l} onHover={setHoveredPinId} />))}{filteredListings.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">Bu filtrelere uyan ilan bulunamadı</p>{(activeListingFilterCount > 0 || query.trim()) && <button onClick={() => { clearListingFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">Filtreleri Temizle</button>}</div>)}</div></div>
+            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative">{filteredListings.map(l => (<ListingCard key={l.id} l={l} onHover={setHoveredPinId} />))}{filteredListings.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">{t("noListingsMatchFilters")}</p>{(activeListingFilterCount > 0 || query.trim()) && <button onClick={() => { clearListingFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">{t("clearFiltersBtn")}</button>}</div>)}</div></div>
             <div className="hidden md:block md:w-[42%] md:sticky md:top-4 md:self-start"><MapPanel className="h-[65vh]" items={filteredListings} onPick={(l) => setSelectedListingId(l.id)} hoveredId={hoveredPinId} onHoverItem={setHoveredPinId} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /></div>
           </div>
         </div>
@@ -165,9 +165,9 @@ export function BrowseHome({ theme = undefined }) {
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-4">
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeJobFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeJobFilterCount}</span>}</button>
-            <p className="text-xs text-gray-400 whitespace-nowrap">{filteredJobs.length} iş ilanı bulundu</p>
+            <p className="text-xs text-gray-400 whitespace-nowrap">{filteredJobs.length} {t("jobsFoundSuffix")}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{filteredJobs.map(j => (<JobCard key={j.id} j={j} />))}{filteredJobs.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">Bu filtrelere uyan iş ilanı bulunamadı</p>{(activeJobFilterCount > 0 || query.trim()) && <button onClick={() => { clearJobFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">Filtreleri Temizle</button>}</div>)}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{filteredJobs.map(j => (<JobCard key={j.id} j={j} />))}{filteredJobs.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">{t("noJobsMatchFilters")}</p>{(activeJobFilterCount > 0 || query.trim()) && <button onClick={() => { clearJobFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">{t("clearFiltersBtn")}</button>}</div>)}</div>
         </div>
       )}
     </div>

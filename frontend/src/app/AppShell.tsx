@@ -363,19 +363,19 @@ export function AppShell() {
                   <div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center flex-shrink-0"><Wrench size={16} className="text-white" /></div>
                   <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">Fix<span className="text-rose-600">perto</span></h1>
                 </div>
-                <h2 className="text-3xl font-extrabold leading-tight mb-3 text-gray-900 max-w-[260px]">Aracınız için en iyi çözüm.</h2>
+                <h2 className="text-3xl font-extrabold leading-tight mb-3 text-gray-900 max-w-[260px]">{t("heroHeadline")}</h2>
                 <p className="text-gray-500 text-sm mb-7 max-w-[260px]">{t("tagline")}</p>
                 <div className="grid grid-cols-3 gap-4 max-w-sm">
-                  <div><div className="flex items-center gap-2 mb-1.5"><Shield size={24} className="text-rose-600 flex-shrink-0" /><p className="text-sm font-bold text-gray-900">Güvenilir</p></div><p className="text-xs text-gray-500 leading-snug">Doğrulanmış tamirciler</p></div>
-                  <div><div className="flex items-center gap-2 mb-1.5"><Zap size={24} className="text-rose-600 flex-shrink-0" /><p className="text-sm font-bold text-gray-900">Hızlı</p></div><p className="text-xs text-gray-500 leading-snug">Hızlı randevu imkanı</p></div>
-                  <div><div className="flex items-center gap-2 mb-1.5"><Star size={24} className="text-rose-600 flex-shrink-0" /><p className="text-sm font-bold text-gray-900">Kolay</p></div><p className="text-xs text-gray-500 leading-snug">Kolay ve pratik kullanım</p></div>
+                  <div><div className="flex items-center gap-2 mb-1.5"><Shield size={24} className="text-rose-600 flex-shrink-0" /><p className="text-sm font-bold text-gray-900">{t("featureReliableTitle")}</p></div><p className="text-xs text-gray-500 leading-snug">{t("featureReliableDesc")}</p></div>
+                  <div><div className="flex items-center gap-2 mb-1.5"><Zap size={24} className="text-rose-600 flex-shrink-0" /><p className="text-sm font-bold text-gray-900">{t("featureFastTitle")}</p></div><p className="text-xs text-gray-500 leading-snug">{t("featureFastDesc")}</p></div>
+                  <div><div className="flex items-center gap-2 mb-1.5"><Star size={24} className="text-rose-600 flex-shrink-0" /><p className="text-sm font-bold text-gray-900">{t("featureEasyTitle")}</p></div><p className="text-xs text-gray-500 leading-snug">{t("featureEasyDesc")}</p></div>
                 </div>
               </div>
             </div>
             <div className="px-6 pt-8 pb-10 flex flex-col gap-4 max-w-md mx-auto w-full">
               <div className="text-center mb-1">
-                <h3 className="text-xl font-bold text-gray-900">{lang === "tr" ? "Devam etmek için" : lang === "en" ? "To continue" : "Um fortzufahren"}</h3>
-                <p className="text-gray-500 text-sm mt-1">{lang === "tr" ? "Size en uygun seçeneği seçin" : lang === "en" ? "Choose the option that suits you" : "Wählen Sie die passende Option"}</p>
+                <h3 className="text-xl font-bold text-gray-900">{t("continueHeading")}</h3>
+                <p className="text-gray-500 text-sm mt-1">{t("continueSubheading")}</p>
               </div>
               <button onClick={() => chooseRole("owner")} className="group w-full bg-white border border-gray-200 hover:border-gray-900 shadow-sm hover:shadow-md rounded-2xl p-4 flex items-center gap-4 transition"><div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center flex-shrink-0"><Car size={26} className="text-rose-600" /></div><div className="text-left flex-1"><h3 className="font-bold text-gray-900">{t("ownerRole")}</h3><p className="text-xs text-gray-500">{t("ownerRoleDesc")}</p></div><div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-900 transition"><ChevronRight size={16} className="text-gray-500 group-hover:text-white transition" /></div></button>
               <button onClick={() => chooseRole("mechanic")} className="group w-full bg-white border border-gray-200 hover:border-gray-900 shadow-sm hover:shadow-md rounded-2xl p-4 flex items-center gap-4 transition"><div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center flex-shrink-0"><Wrench size={26} className="text-rose-700" /></div><div className="text-left flex-1"><h3 className="font-bold text-gray-900">{t("mechanicRole")}</h3><p className="text-xs text-gray-500">{t("mechanicRoleDesc")}</p></div><div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-900 transition"><ChevronRight size={16} className="text-gray-500 group-hover:text-white transition" /></div></button>
@@ -383,12 +383,12 @@ export function AppShell() {
                 <div className="stat-track flex items-stretch gap-3 w-max px-6">
                   {(() => {
                     const liveStats = [
-                      { icon: Star, value: `${adminStats.avgRating}`, label: "Puan", bg: "bg-amber-50", color: darkMode ? "text-amber-400" : "text-amber-600" },
-                      { icon: MessageCircle, value: `${adminStats.totalReviews}`, label: "Yorum", bg: "bg-rose-50", color: darkMode ? "text-rose-400" : "text-rose-600" },
-                      { icon: Wrench, value: `${adminStats.totalMechanics}`, label: "Tamirci", bg: "bg-green-50", color: darkMode ? "text-green-400" : "text-green-600" },
-                      { icon: Calendar, value: `${adminStats.totalAppointments}`, label: "Randevu", bg: "bg-amber-50", color: darkMode ? "text-amber-400" : "text-amber-600" },
-                      { icon: Tag, value: `${adminStats.activeCarListings}`, label: "Araç İlanı", bg: "bg-rose-50", color: darkMode ? "text-rose-400" : "text-rose-600" },
-                      { icon: MapPin, value: `${adminStats.totalCities}`, label: "Şehir", bg: "bg-green-50", color: darkMode ? "text-green-400" : "text-green-600" },
+                      { icon: Star, value: `${adminStats.avgRating}`, label: t("statLabelRating"), bg: "bg-amber-50", color: darkMode ? "text-amber-400" : "text-amber-600" },
+                      { icon: MessageCircle, value: `${adminStats.totalReviews}`, label: t("statLabelReviews"), bg: "bg-rose-50", color: darkMode ? "text-rose-400" : "text-rose-600" },
+                      { icon: Wrench, value: `${adminStats.totalMechanics}`, label: t("statLabelMechanics"), bg: "bg-green-50", color: darkMode ? "text-green-400" : "text-green-600" },
+                      { icon: Calendar, value: `${adminStats.totalAppointments}`, label: t("statLabelAppointments"), bg: "bg-amber-50", color: darkMode ? "text-amber-400" : "text-amber-600" },
+                      { icon: Tag, value: `${adminStats.activeCarListings}`, label: t("statLabelCarListings"), bg: "bg-rose-50", color: darkMode ? "text-rose-400" : "text-rose-600" },
+                      { icon: MapPin, value: `${adminStats.totalCities}`, label: t("statLabelCities"), bg: "bg-green-50", color: darkMode ? "text-green-400" : "text-green-600" },
                     ];
                     return liveStats.concat(liveStats).map((s, i) => (
                       <div key={i} className="w-[95px] flex-shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm px-2.5 py-2.5 flex flex-col items-center gap-1">
@@ -404,7 +404,7 @@ export function AppShell() {
             </div>
             <div className="mt-auto pt-5 pb-6 border-t border-gray-100 flex flex-col items-center gap-1">
               <p className="text-sm text-gray-400">© 2026 <span onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
-              <p className="text-[9px] text-gray-200">Tüm hakları saklıdır.</p>
+              <p className="text-[9px] text-gray-200">{t("allRightsReserved")}</p>
             </div>
           </div>
         )}
