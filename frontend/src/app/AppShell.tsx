@@ -1883,12 +1883,23 @@ export function AppShell() {
             {activeConvo.messages.length > 0 && activeConvo.messages[activeConvo.messages.length - 1].isRejectionNotice ? (
               <div className="px-5 pb-6 pt-2 border-t border-gray-100"><div className="bg-gray-100 text-gray-500 text-xs text-center py-3 rounded-xl">Bu başvuru reddedildi. Bu görüşmede mesaj gönderemezsiniz.</div></div>
             ) : (<>
-              <div className="px-5 pb-2"><button onClick={() => setScreen("booking")} className="w-full mb-3 bg-rose-50 text-rose-600 text-xs font-medium py-2 rounded-xl hover:bg-rose-100 transition flex items-center justify-center gap-1"><Calendar size={14} /> Bu tamirciden randevu al</button></div>
+              <div className="px-5 pb-2"><button onClick={() => {
+                // Sohbet ekranı kendi tamirci bağlamını activeConvo.mechanicId üzerinden tutuyor —
+                // selectedMechanicId ile senkron OLMAK ZORUNDA DEĞİL (ör. bu sohbete "Sohbetlerim"
+                // listesinden doğrudan girildiyse selectedMechanicId hiç ayarlanmamış ya da BAŞKA bir
+                // tamirciye ait olabilir). Randevu ekranı selectedMechanic'i okuduğu için burada
+                // ayarlamazsak ya boş/çökmüş bir ekran ya da YANLIŞ tamirciyle randevu oluşurdu.
+                const mech = mechanicsList.find(m => m.id === activeConvo.mechanicId);
+                if (!mech) { setToast({ type: "info", text: "⚠️ Bu tamirci artık listede bulunamadı." }); return; }
+                setSelectedMechanicId(mech.id);
+                setSelectedDate(null); setSelectedTime(null); setBookingService(null); setProblemDesc(""); setProblemPhotos([]);
+                setScreen("booking");
+              }} className="w-full mb-3 bg-rose-50 text-rose-600 text-xs font-medium py-2 rounded-xl hover:bg-rose-100 transition flex items-center justify-center gap-1"><Calendar size={14} /> Bu tamirciden randevu al</button></div>
               <div className="px-5 pb-6 pt-2 border-t border-gray-100 flex items-center gap-2"><input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition flex-shrink-0"><ImageIcon size={18} /></button><input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendOwnerMessageWithReply(chatInput); }} placeholder="Mesajınızı yazın..." className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" /><button onClick={() => sendOwnerMessageWithReply(chatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button></div>
             </>)}
           </div>
         )}
-        {screen === "booking" && (
+        {screen === "booking" && selectedMechanic && (
           <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
             <div className="bg-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-200 shadow-sm"><button onClick={() => setScreen(selectedMechanic ? "detail" : "owner")} className="flex items-center gap-1 text-gray-500 mb-3 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button><h1 className="text-lg font-bold text-gray-900">Randevu Oluştur</h1></div>
             <div className="flex-1 px-5 md:px-8 py-4 md:grid md:grid-cols-2 md:gap-8">

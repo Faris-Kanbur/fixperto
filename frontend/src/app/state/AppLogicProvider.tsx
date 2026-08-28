@@ -1037,7 +1037,11 @@ function useAppLogic() {
       setToast({ type: "info", text: `⚠️ Randevu kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
   };
-  const goHome = () => { setScreen("home"); setRole(null); setSelectedMechanicId(null); setSelectedDate(null); setSelectedTime(null); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); setSelectedBookingVehicleId(null); setBookingService(null); setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" }); setForm({ name: "", email: "", phone: "", password: "" }); setOwnerTab("search"); setOwnerMode("mechanics"); setActiveConvoId(null); setMechActiveConvoId(null); setMechTab("requests"); setSelectedJobId(null); setSelectedListingId(null); setMapDetailOpen(false); setShowMapMobile(false); };
+  // ÖNEMLİ: detailReturnScreen burada da sıfırlanmalı — aksi halde bir önceki oturumdan/rolden
+  // kalan bir ekran adı (ör. "mechBrowse") burada temizlenmeden kalır ve çok daha sonra, tamamen
+  // alakasız bir akışta (ör. randevu ekranından "detay"a geri dönülüp oradan tekrar "geri"ye
+  // basıldığında) kullanıcıyı o an geçerli olmayan/saçma bir ekrana götürebilir.
+  const goHome = () => { setScreen("home"); setRole(null); setSelectedMechanicId(null); setDetailReturnScreen(null); setSelectedDate(null); setSelectedTime(null); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); setSelectedBookingVehicleId(null); setBookingService(null); setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" }); setForm({ name: "", email: "", phone: "", password: "" }); setOwnerTab("search"); setOwnerMode("mechanics"); setActiveConvoId(null); setMechActiveConvoId(null); setMechTab("requests"); setSelectedJobId(null); setSelectedListingId(null); setMapDetailOpen(false); setShowMapMobile(false); };
   const chooseRole = (r) => { setRole(r); setScreen("login"); };
   // ---- Admin (site sahibi) fonksiyonları ----
   // GÜVENLİK: Bu fonksiyon artık admin şifresini istemci tarafında (frontend'de) KARŞILAŞTIRMIYOR.
