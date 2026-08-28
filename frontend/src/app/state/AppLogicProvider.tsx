@@ -2206,7 +2206,13 @@ function useAppLogic() {
   const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", negotiable: false, inspectionReportUrl: "", featured: false, _vehicleId: null, _editingId: null }); setShowSellForm(true); };
   // "Aracımı Satışa Çıkar" tıklanınca: kayıtlı araç(lar)ı varsa hangisini satacağını sorar ve
   // seçilen aracın bilgilerini forma otomatik doldurur; kayıtlı aracı yoksa direkt boş form açar.
-  const startSellFlow = () => { if (vehicles.length === 0) { openSellForm(null); return; } setShowSellVehiclePicker(true); };
+  // ÖNEMLİ: "vehicles" (kayıtlı araçlarım) tamamen ARAÇ SAHİBİNE ait bir kavram — tamirci rolünde
+  // de bu butona ulaşılabiliyor (BrowseHome > "Araç Bul" sekmesi, hem owner hem mechanic tarafından
+  // paylaşılan bir bileşen). role kontrolü olmadan tamirci de "vehicles" dizisinden (aslında SAHİBİN
+  // kayıtlı araçları) seçim yapabiliyordu — bu hem alakasız bir seçiciyi tamirciye gösteriyor hem de
+  // seçilirse sahibin araç kaydını yanlışlıkla tamirciye ait bir ilana bağlıyordu (submitListing'deki
+  // vehicles.update). Tamirci için her zaman boş formla başlanır.
+  const startSellFlow = () => { if (role !== "owner" || vehicles.length === 0) { openSellForm(null); return; } setShowSellVehiclePicker(true); };
   const pickVehicleToSell = (v) => {
     setShowSellVehiclePicker(false);
     const existingListing = listings.find(l => l.id === v.listingId);
