@@ -752,7 +752,12 @@ function useAppLogic() {
   const activeFilterCount = (filters.priceTier !== "all" ? 1 : 0) + (filters.minRating > 0 ? 1 : 0) + (filters.maxDistance < 999 ? 1 : 0) + (filters.brand ? 1 : 0) + (filters.service ? 1 : 0);
   const nextDays = useMemo(() => { const days = []; const today = new Date(); for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); days.push(d); } return days; }, []);
   const isSameMechanicAppt = (a) => a.mechanicId === MY_MECHANIC_ID || (!a.mechanicId && a.mechanicName === myProfile?.name);
-  const customerNoShowCount = (customer) => appointments.filter(a => a.customer === customer && a.noShow && isSameMechanicAppt(a)).length;
+  // ÖNEMLİ: ownerId ile eşleştir, a.customer (isim) ile DEĞİL — customer alanı randevu oluşturulduğu
+  // andaki isim metnini donduruyor (bkz. isMyOwnerAppt üzerindeki not). İsimle eşleştirme, müşteri
+  // profildeki adını değiştirdiğinde geçmiş "gelmedi" kayıtlarını kaybettiriyor, ya da aynı adı
+  // taşıyan İKİ FARKLI müşteriyi tek kişi gibi gösterip güvenilir birini "sık gelmeyen" olarak
+  // damgalayabiliyordu.
+  const customerNoShowCount = (ownerId) => appointments.filter(a => a.ownerId === ownerId && a.noShow && isSameMechanicAppt(a)).length;
   // `activeAppts`/`historyByDate` her zaman GÖRÜNTÜLEYEN kullanıcıya göre filtrelenir: araç sahibi
   // sadece kendi randevularını, tamirci sadece kendisine ait randevuları (isSameMechanicAppt) görür.
   // ÖNEMLİ: burada a.ownerId === MY_OWNER_ID kullanılmalı, a.customer === ownerProfile.name DEĞİL —
