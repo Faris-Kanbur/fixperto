@@ -117,8 +117,65 @@ export const T = {
   allRightsReserved: { tr: "Tüm hakları saklıdır.", en: "All rights reserved.", de: "Alle Rechte vorbehalten." },
   continueHeading: { tr: "Devam etmek için", en: "To continue", de: "Um fortzufahren" },
   continueSubheading: { tr: "Size en uygun seçeneği seçin", en: "Choose the option that suits you", de: "Wählen Sie die passende Option" },
+
+  // --- Randevu oluşturma (booking) akışı ---
+  bookingTitle: { tr: "Randevu Oluştur", en: "Book Appointment", de: "Termin buchen" },
+  bookingSelectVehicle: { tr: "Araç Seç", en: "Select Vehicle", de: "Fahrzeug auswählen" },
+  bookingNoVehicles: { tr: "Henüz kayıtlı bir aracınız yok. Aşağıdan yeni bir araç ekleyerek randevu oluşturabilirsiniz.", en: "You don't have any registered vehicles yet. Add a new vehicle below to book an appointment.", de: "Sie haben noch kein registriertes Fahrzeug. Fügen Sie unten ein neues Fahrzeug hinzu, um einen Termin zu buchen." },
+  bookingAddVehicle: { tr: "Araç Ekle", en: "Add Vehicle", de: "Fahrzeug hinzufügen" },
+  bookingBrandPlaceholder: { tr: "Marka", en: "Make", de: "Marke" },
+  bookingModelPlaceholder: { tr: "Model", en: "Model", de: "Modell" },
+  bookingYearPlaceholder: { tr: "Yıl", en: "Year", de: "Jahr" },
+  bookingPlatePlaceholder: { tr: "Plaka", en: "License Plate", de: "Kennzeichen" },
+  bookingAddAndSelect: { tr: "Ekle ve Seç", en: "Add and Select", de: "Hinzufügen und auswählen" },
+  bookingSelectDate: { tr: "Tarih Seç", en: "Select Date", de: "Datum auswählen" },
+  bookingSelectTime: { tr: "Saat Seç", en: "Select Time", de: "Uhrzeit auswählen" },
+  bookingSelectDateFirst: { tr: "Önce tarih seçin", en: "Select a date first", de: "Wählen Sie zuerst ein Datum" },
+  bookingClosedDay: { tr: "Bu gün kapalı", en: "Closed this day", de: "An diesem Tag geschlossen" },
+  bookingSelectService: { tr: "Hizmet Seçin", en: "Select Service", de: "Leistung auswählen" },
+  bookingServiceSearchPlaceholder: { tr: "Hizmet ara (ör. yağ değişimi, lastik...)", en: "Search services (e.g. oil change, tires...)", de: "Leistung suchen (z. B. Ölwechsel, Reifen...)" },
+  noServiceMatch: { tr: '"{query}" ile eşleşen hizmet bulunamadı.', en: 'No service found matching "{query}".', de: 'Keine Leistung gefunden, die zu "{query}" passt.' },
+  fromCatalogLabel: { tr: "Genel sabit fiyat listesi", en: "General fixed price list", de: "Allgemeine Festpreisliste" },
+  fixedPriceBadge: { tr: "Sabit Fiyat", en: "Fixed Price", de: "Festpreis" },
+  variablePriceBadge: { tr: "Fiyat Değişken", en: "Variable Price", de: "Variabler Preis" },
+  otherServiceLabel: { tr: "Diğer / Listede Yok", en: "Other / Not Listed", de: "Sonstiges / Nicht gelistet" },
+  determinedAfterRepair: { tr: "Tamirden sonra belirlenir", en: "Determined after the repair", de: "Wird nach der Reparatur festgelegt" },
+  problemDescLabel: { tr: "Arıza Açıklaması (opsiyonel)", en: "Problem Description (optional)", de: "Problembeschreibung (optional)" },
+  problemDescPlaceholder: { tr: "Aracınızdaki sorunu kısaca açıklayın...", en: "Briefly describe the issue with your vehicle...", de: "Beschreiben Sie kurz das Problem mit Ihrem Fahrzeug..." },
+  vehiclePhotoAlt: { tr: "Araç fotoğrafı", en: "Vehicle photo", de: "Fahrzeugfoto" },
+  removePhotoAria: { tr: "Fotoğrafı kaldır", en: "Remove photo", de: "Foto entfernen" },
+  addPhotoLabel: { tr: "Ekle", en: "Add", de: "Hinzufügen" },
+  problemPhotoHint: { tr: "Arızayı fotoğraflarsanız tamirci önceden hazırlıklı gelir.", en: "If you photograph the issue, the mechanic can come prepared.", de: "Wenn Sie das Problem fotografieren, kann die Werkstatt vorbereitet kommen." },
+  historyShareConsentTitle: { tr: "Bu tamircinin geçmiş randevularımı görmesine izin veriyorum.", en: "I allow this mechanic to see my past appointments.", de: "Ich erlaube dieser Werkstatt, meine früheren Termine zu sehen." },
+  historyShareConsentDesc: { tr: "Bu sayede tamirci geçmiş bakımlarınızı görüp daha hızlı yardımcı olabilir. İstediğiniz zaman kapatabilirsiniz.", en: "This way the mechanic can see your past maintenance and help you faster. You can turn it off anytime.", de: "So kann die Werkstatt Ihre bisherige Wartung sehen und Ihnen schneller helfen. Sie können dies jederzeit deaktivieren." },
+  paymentSectionTitle: { tr: "Ödeme", en: "Payment", de: "Zahlung" },
+  paymentSelectServiceFirst: { tr: "Ödeme seçeneklerini görmek için önce yukarıdan bir hizmet seçin.", en: "Select a service above first to see payment options.", de: "Wählen Sie zuerst oben eine Leistung aus, um die Zahlungsoptionen zu sehen." },
+  serviceLabel: { tr: "Hizmet", en: "Service", de: "Leistung" },
+  noFixedPriceNotice: { tr: "🏪 Bu hizmetin sabit bir ücreti yok. Fiyat, tamirci aracınızı incelendikten sonra belirlenecek ve ödeme", en: "🏪 This service has no fixed price. The price will be determined after the mechanic inspects your vehicle, and payment will be made", de: "🏪 Diese Leistung hat keinen Festpreis. Der Preis wird festgelegt, nachdem die Werkstatt Ihr Fahrzeug geprüft hat, und die Zahlung erfolgt" },
+  onSiteAfterRepair: { tr: "tamir sonrasında yerinde", en: "on-site after the repair", de: "vor Ort nach der Reparatur" },
+  paymentWillBeMadeSuffix: { tr: "yapılacaktır.", en: ".", de: "." },
+  payNowOption: { tr: "💳 Şimdi Öde", en: "💳 Pay Now", de: "💳 Jetzt bezahlen" },
+  payOnSiteOption: { tr: "🏪 Yerinde Öde", en: "🏪 Pay On-Site", de: "🏪 Vor Ort bezahlen" },
+  cardNumberPlaceholder: { tr: "Kart Numarası", en: "Card Number", de: "Kartennummer" },
+  expiryPlaceholder: { tr: "AA/YY", en: "MM/YY", de: "MM/JJ" },
+  cvcPlaceholder: { tr: "CVC", en: "CVC", de: "CVC" },
+  demoPaymentNotice: { tr: "Bu bir demo ödeme adımıdır, gerçek bir tahsilat yapılmaz.", en: "This is a demo payment step, no real charge will be made.", de: "Dies ist ein Demo-Zahlungsschritt, es erfolgt keine echte Abbuchung." },
+  expensiveServiceConfirmPrefix: { tr: "Bu hizmetin", en: "I've read and confirm that this service costs", de: "Ich habe gelesen und bestätige, dass diese Leistung" },
+  expensiveServiceConfirmSuffix: { tr: "tutarında olduğunu okudum ve onaylıyorum.", en: "and I approve.", de: "kostet, und stimme zu." },
+  confirmBookingBtn: { tr: "Randevuyu Onayla", en: "Confirm Booking", de: "Termin bestätigen" },
+  appointmentConfirmedTitle: { tr: "Randevunuz Onaylandı!", en: "Your Appointment is Confirmed!", de: "Ihr Termin ist bestätigt!" },
+  appointmentRequestSentTitle: { tr: "Randevu Talebiniz Gönderildi!", en: "Your Appointment Request Was Sent!", de: "Ihre Terminanfrage wurde gesendet!" },
+  viewMyAppointmentBtn: { tr: "Randevumu Görüntüle", en: "View My Appointment", de: "Meinen Termin ansehen" },
+  backToHomeBtn: { tr: "Ana Sayfaya Dön", en: "Back to Home", de: "Zurück zur Startseite" },
 };
 
 export function useT(lang) {
-  return (key) => T[key]?.[lang] || T[key]?.tr || key;
+  // İkinci parametre (vars) opsiyonel: "{query}" gibi yer tutucular içeren anahtarlarda
+  // kullanılır, ör. t("noServiceMatch", { query: bookingServiceSearch }). Geriye dönük
+  // uyumlu — vars verilmezse eski tüm t(key) çağrıları aynen çalışmaya devam eder.
+  return (key, vars?: Record<string, string>) => {
+    let str = T[key]?.[lang] || T[key]?.tr || key;
+    if (vars) { for (const k in vars) { str = str.split(`{${k}}`).join(vars[k]); } }
+    return str;
+  };
 }

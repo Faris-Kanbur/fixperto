@@ -1901,109 +1901,109 @@ export function AppShell() {
         )}
         {screen === "booking" && selectedMechanic && (
           <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
-            <div className="bg-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-200 shadow-sm"><button onClick={() => setScreen(selectedMechanic ? "detail" : "owner")} className="flex items-center gap-1 text-gray-500 mb-3 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button><h1 className="text-lg font-bold text-gray-900">Randevu Oluştur</h1></div>
+            <div className="bg-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-200 shadow-sm"><button onClick={() => setScreen(selectedMechanic ? "detail" : "owner")} className="flex items-center gap-1 text-gray-500 mb-3 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button><h1 className="text-lg font-bold text-gray-900">{t("bookingTitle")}</h1></div>
             <div className="flex-1 px-5 md:px-8 py-4 md:grid md:grid-cols-2 md:gap-8">
               <div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Car size={16} /> Araç Seç</h3>
+              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Car size={16} /> {t("bookingSelectVehicle")}</h3>
               {vehicles.length === 0 && !showAddVehicle ? (
-                <div className="bg-gray-100 rounded-xl p-3 mb-3 text-xs text-gray-700">Henüz kayıtlı bir aracınız yok. Aşağıdan yeni bir araç ekleyerek randevu oluşturabilirsiniz.</div>
+                <div className="bg-gray-100 rounded-xl p-3 mb-3 text-xs text-gray-700">{t("bookingNoVehicles")}</div>
               ) : vehicles.length > 0 ? (
                 <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
                   {vehicles.map(v => { const isSel = selectedBookingVehicleId === v.id; return (<button key={v.id} onClick={() => setSelectedBookingVehicleId(v.id)} className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition ${isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}><Car size={14} className="flex-shrink-0" /><div><p className="text-xs font-semibold leading-tight whitespace-nowrap">{v.brand} {v.model}</p><p className={`text-[10px] leading-tight ${isSel ? "text-rose-100" : "text-gray-400"}`}>{v.plate}</p></div></button>); })}
-                  <button onClick={() => setShowAddVehicle(!showAddVehicle)} className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed text-xs font-medium transition ${showAddVehicle ? "bg-rose-50 border-rose-300 text-rose-600" : "border-gray-300 text-gray-500 hover:border-rose-300 hover:text-rose-600"}`}><Plus size={14} /> Araç Ekle</button>
+                  <button onClick={() => setShowAddVehicle(!showAddVehicle)} className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed text-xs font-medium transition ${showAddVehicle ? "bg-rose-50 border-rose-300 text-rose-600" : "border-gray-300 text-gray-500 hover:border-rose-300 hover:text-rose-600"}`}><Plus size={14} /> {t("bookingAddVehicle")}</button>
                 </div>
               ) : null}
               {(vehicles.length === 0 || showAddVehicle) && (
                 <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-3 space-y-2">
-                  <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder="Marka" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                  <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder="Model" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                  <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder="Yıl" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder="Plaka" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                  <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-rose-700 transition">Ekle ve Seç</button>
+                  <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder={t("bookingBrandPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                  <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                  <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                  <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-rose-700 transition">{t("bookingAddAndSelect")}</button>
                 </div>
               )}
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2 mt-3"><Calendar size={16} /> Tarih Seç</h3>
+              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2 mt-3"><Calendar size={16} /> {t("bookingSelectDate")}</h3>
               <div className="flex gap-2 mb-5 overflow-x-auto pb-1">{nextDays.map((d, i) => { const isSel = selectedDate?.toDateString() === d.toDateString(); const open = isDayOpenForMechanic(selectedMechanic, d); return (<button key={i} disabled={!open} onClick={() => setSelectedDate(d)} className={`flex-shrink-0 w-14 py-2 rounded-xl border text-center transition ${!open ? "opacity-30 cursor-not-allowed" : isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}><p className="text-[10px]">{d.toLocaleDateString("tr-TR", { weekday: "short" })}</p><p className="text-sm font-bold">{d.getDate()}</p></button>); })}</div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Clock size={16} /> Saat Seç</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mb-5">{selectedDate ? slotsForDate(selectedMechanic, selectedDate).map(tm => (<button key={tm} onClick={() => setSelectedTime(tm)} className={`py-2 rounded-xl border text-sm font-medium transition ${selectedTime === tm ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>{tm}</button>)) : <p className="col-span-3 md:col-span-4 text-xs text-gray-400 text-center py-4">Önce tarih seçin</p>}{selectedDate && slotsForDate(selectedMechanic, selectedDate).length === 0 && <p className="col-span-3 md:col-span-4 text-xs text-gray-400 text-center py-4">Bu gün kapalı</p>}</div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><ToolIcon size={16} /> Hizmet Seçin</h3>
+              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Clock size={16} /> {t("bookingSelectTime")}</h3>
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mb-5">{selectedDate ? slotsForDate(selectedMechanic, selectedDate).map(tm => (<button key={tm} onClick={() => setSelectedTime(tm)} className={`py-2 rounded-xl border text-sm font-medium transition ${selectedTime === tm ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>{tm}</button>)) : <p className="col-span-3 md:col-span-4 text-xs text-gray-400 text-center py-4">{t("bookingSelectDateFirst")}</p>}{selectedDate && slotsForDate(selectedMechanic, selectedDate).length === 0 && <p className="col-span-3 md:col-span-4 text-xs text-gray-400 text-center py-4">{t("bookingClosedDay")}</p>}</div>
+              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><ToolIcon size={16} /> {t("bookingSelectService")}</h3>
               <div className="relative mb-2">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input value={bookingServiceSearch} onChange={(e) => setBookingServiceSearch(e.target.value)} placeholder="Hizmet ara (ör. yağ değişimi, lastik...)" className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+                <input value={bookingServiceSearch} onChange={(e) => setBookingServiceSearch(e.target.value)} placeholder={t("bookingServiceSearchPlaceholder")} className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
               </div>
               <div className="flex flex-col gap-2 mb-5 max-h-64 overflow-y-auto pr-0.5">
-                {bookingServiceOptions.length === 0 && (<p className="text-xs text-gray-400 text-center py-3">"{bookingServiceSearch}" ile eşleşen hizmet bulunamadı.</p>)}
+                {bookingServiceOptions.length === 0 && (<p className="text-xs text-gray-400 text-center py-3">{t("noServiceMatch", { query: bookingServiceSearch })}</p>)}
                 {bookingServiceOptions.map((s, i) => {
                   const isSel = bookingService && !bookingService.other && bookingService.name === s.name;
                   return (
                     <button key={i} onClick={() => setBookingService({ name: s.name, price: s.price, other: false, fixed: s.fixed })} className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-left transition ${isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>
-                      <span className="text-xs font-medium flex items-center gap-1.5 min-w-0"><ToolIcon size={12} className={`flex-shrink-0 ${isSel ? "text-white" : "text-rose-400"}`} /><span className="truncate">{s.name}{s.fromCatalog && <span className={`block text-[9px] font-normal ${isSel ? "text-rose-100" : "text-gray-400"}`}>Genel sabit fiyat listesi</span>}</span></span>
+                      <span className="text-xs font-medium flex items-center gap-1.5 min-w-0"><ToolIcon size={12} className={`flex-shrink-0 ${isSel ? "text-white" : "text-rose-400"}`} /><span className="truncate">{s.name}{s.fromCatalog && <span className={`block text-[9px] font-normal ${isSel ? "text-rose-100" : "text-gray-400"}`}>{t("fromCatalogLabel")}</span>}</span></span>
                       <span className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${isSel ? "bg-white/20 text-white" : s.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{s.fixed ? "Sabit Fiyat" : "Fiyat Değişken"}</span>
+                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${isSel ? "bg-white/20 text-white" : s.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{s.fixed ? t("fixedPriceBadge") : t("variablePriceBadge")}</span>
                         {String(s.price || "").trim() && <span className="text-xs font-bold whitespace-nowrap">{s.price}</span>}
                       </span>
                     </button>
                   );
                 })}
-                <button onClick={() => setBookingService({ name: "Diğer / Listede Yok", price: null, other: true, fixed: false })} className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-left transition ${bookingService?.other ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>
-                  <span className="text-xs font-medium">Diğer / Listede Yok</span>
-                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${bookingService?.other ? "bg-white/20 text-white" : "bg-gray-100 text-gray-700"}`}>Tamirden sonra belirlenir</span>
+                <button onClick={() => setBookingService({ name: t("otherServiceLabel"), price: null, other: true, fixed: false })} className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-left transition ${bookingService?.other ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>
+                  <span className="text-xs font-medium">{t("otherServiceLabel")}</span>
+                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${bookingService?.other ? "bg-white/20 text-white" : "bg-gray-100 text-gray-700"}`}>{t("determinedAfterRepair")}</span>
                 </button>
               </div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2">Arıza Açıklaması (opsiyonel)</h3>
-              <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} placeholder="Aracınızdaki sorunu kısaca açıklayın..." className="w-full border border-gray-200 rounded-xl p-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none" rows={3} />
+              <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("problemDescLabel")}</h3>
+              <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} placeholder={t("problemDescPlaceholder")} className="w-full border border-gray-200 rounded-xl p-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none" rows={3} />
               <div className="flex items-center gap-2 flex-wrap mb-1 md:mb-0">
                 <input ref={problemPhotoRef} type="file" accept="image/*" onChange={addProblemPhoto} className="hidden" />
                 {problemPhotos.map((src, i) => (
                   <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
-                    <img src={src} alt="Araç fotoğrafı" className="w-full h-full object-cover" />
-                    <button onClick={() => removeProblemPhoto(i)} aria-label="Fotoğrafı kaldır" className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center"><X size={10} className="text-white" /></button>
+                    <img src={src} alt={t("vehiclePhotoAlt")} className="w-full h-full object-cover" />
+                    <button onClick={() => removeProblemPhoto(i)} aria-label={t("removePhotoAria")} className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center"><X size={10} className="text-white" /></button>
                   </div>
                 ))}
-                <button onClick={() => problemPhotoRef.current?.click()} className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-rose-300 hover:text-rose-500 transition flex-shrink-0"><Camera size={16} /><span className="text-[9px] mt-0.5">Ekle</span></button>
+                <button onClick={() => problemPhotoRef.current?.click()} className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-rose-300 hover:text-rose-500 transition flex-shrink-0"><Camera size={16} /><span className="text-[9px] mt-0.5">{t("addPhotoLabel")}</span></button>
               </div>
-              <p className="text-[11px] text-gray-400 mt-1.5">Arızayı fotoğraflarsanız tamirci önceden hazırlıklı gelir.</p>
+              <p className="text-[11px] text-gray-400 mt-1.5">{t("problemPhotoHint")}</p>
               <label className="flex items-start gap-2.5 mt-3 bg-gray-50 rounded-xl p-3 cursor-pointer">
                 <input type="checkbox" checked={shareHistoryConsent} onChange={(e) => setShareHistoryConsent(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
-                <span className="text-xs text-gray-600"><span className="font-medium text-gray-800">Bu tamircinin geçmiş randevularımı görmesine izin veriyorum.</span> Bu sayede tamirci geçmiş bakımlarınızı görüp daha hızlı yardımcı olabilir. İstediğiniz zaman kapatabilirsiniz.</span>
+                <span className="text-xs text-gray-600"><span className="font-medium text-gray-800">{t("historyShareConsentTitle")}</span> {t("historyShareConsentDesc")}</span>
               </label>
               </div>
               <div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2 mt-1 md:mt-0"><Banknote size={16} /> Ödeme</h3>
+              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2 mt-1 md:mt-0"><Banknote size={16} /> {t("paymentSectionTitle")}</h3>
               {!bookingService ? (
-                <div className="bg-gray-100 rounded-2xl p-4 mb-3 text-xs text-gray-700">Ödeme seçeneklerini görmek için önce yukarıdan bir hizmet seçin.</div>
+                <div className="bg-gray-100 rounded-2xl p-4 mb-3 text-xs text-gray-700">{t("paymentSelectServiceFirst")}</div>
               ) : bookingService.other || !bookingService.fixed ? (
                 <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-3">
-                  <div className="flex justify-between items-center mb-2"><span className="text-xs text-gray-500">Hizmet</span><span className="text-sm font-semibold text-gray-800 text-right">{bookingService.name}</span></div>
-                  <p className="text-xs text-gray-500 leading-relaxed bg-white rounded-xl p-3 border border-gray-200">🏪 Bu hizmetin sabit bir ücreti yok. Fiyat, tamirci aracınızı incelendikten sonra belirlenecek ve ödeme <b>tamir sonrasında yerinde</b> yapılacaktır.</p>
+                  <div className="flex justify-between items-center mb-2"><span className="text-xs text-gray-500">{t("serviceLabel")}</span><span className="text-sm font-semibold text-gray-800 text-right">{bookingService.name}</span></div>
+                  <p className="text-xs text-gray-500 leading-relaxed bg-white rounded-xl p-3 border border-gray-200">{t("noFixedPriceNotice")} <b>{t("onSiteAfterRepair")}</b> {t("paymentWillBeMadeSuffix")}</p>
                 </div>
               ) : (
                 <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-3">
                   <div className="flex justify-between items-center mb-3"><span className="text-xs text-gray-500">{bookingService.name}</span><span className="text-lg font-bold text-gray-800">{bookingService.price}</span></div>
                   <div className="flex gap-2 mb-3">
-                    <button onClick={() => setPaymentForm(f => ({ ...f, method: "card" }))} className={`flex-1 py-2 rounded-xl text-xs font-medium border transition ${paymentForm.method === "card" ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600"}`}>💳 Şimdi Öde</button>
-                    <button onClick={() => setPaymentForm(f => ({ ...f, method: "onsite" }))} className={`flex-1 py-2 rounded-xl text-xs font-medium border transition ${paymentForm.method === "onsite" ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600"}`}>🏪 Yerinde Öde</button>
+                    <button onClick={() => setPaymentForm(f => ({ ...f, method: "card" }))} className={`flex-1 py-2 rounded-xl text-xs font-medium border transition ${paymentForm.method === "card" ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600"}`}>{t("payNowOption")}</button>
+                    <button onClick={() => setPaymentForm(f => ({ ...f, method: "onsite" }))} className={`flex-1 py-2 rounded-xl text-xs font-medium border transition ${paymentForm.method === "onsite" ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600"}`}>{t("payOnSiteOption")}</button>
                   </div>
                   {paymentForm.method === "card" && (
                     <div className="space-y-2">
-                      <input value={paymentForm.cardNumber} onChange={(e) => setPaymentForm(f => ({ ...f, cardNumber: e.target.value }))} placeholder="Kart Numarası" maxLength={19} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                      <div className="flex gap-2"><input value={paymentForm.expiry} onChange={(e) => setPaymentForm(f => ({ ...f, expiry: e.target.value }))} placeholder="AA/YY" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={paymentForm.cvc} onChange={(e) => setPaymentForm(f => ({ ...f, cvc: e.target.value }))} placeholder="CVC" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      <input value={paymentForm.cardNumber} onChange={(e) => setPaymentForm(f => ({ ...f, cardNumber: e.target.value }))} placeholder={t("cardNumberPlaceholder")} maxLength={19} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                      <div className="flex gap-2"><input value={paymentForm.expiry} onChange={(e) => setPaymentForm(f => ({ ...f, expiry: e.target.value }))} placeholder={t("expiryPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={paymentForm.cvc} onChange={(e) => setPaymentForm(f => ({ ...f, cvc: e.target.value }))} placeholder={t("cvcPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                     </div>
                   )}
-                  <p className="text-[10px] text-gray-400 mt-3 flex items-start gap-1"><Lock size={11} className="flex-shrink-0 mt-0.5" /> Bu bir demo ödeme adımıdır, gerçek bir tahsilat yapılmaz.</p>
+                  <p className="text-[10px] text-gray-400 mt-3 flex items-start gap-1"><Lock size={11} className="flex-shrink-0 mt-0.5" /> {t("demoPaymentNotice")}</p>
                 </div>
               )}
               {bookingService?.fixed && !bookingService.other && parsePriceNumber(bookingService.price) > EXPENSIVE_SERVICE_THRESHOLD && (
                 <label className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl p-3 mt-3 cursor-pointer">
                   <input type="checkbox" checked={approveExpensiveService} onChange={(e) => setApproveExpensiveService(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
-                  <span className="text-xs text-gray-700">Bu hizmetin <strong>{bookingService.price}</strong> tutarında olduğunu okudum ve onaylıyorum.</span>
+                  <span className="text-xs text-gray-700">{t("expensiveServiceConfirmPrefix")} <strong>{bookingService.price}</strong> {t("expensiveServiceConfirmSuffix")}</span>
                 </label>
               )}
-              <button disabled={!selectedDate || !selectedTime || !bookingService || (vehicles.length > 0 && !selectedBookingVehicleId) || (bookingService?.fixed && !bookingService.other && paymentForm.method === "card" && paymentForm.cardNumber.trim().length < 12) || (bookingService?.fixed && !bookingService.other && parsePriceNumber(bookingService.price) > EXPENSIVE_SERVICE_THRESHOLD && !approveExpensiveService)} onClick={confirmBooking} className={`w-full py-3 rounded-2xl font-semibold text-sm transition mt-3 ${selectedDate && selectedTime && bookingService && (vehicles.length === 0 || selectedBookingVehicleId) && (!bookingService.fixed || bookingService.other || paymentForm.method === "onsite" || paymentForm.cardNumber.trim().length >= 12) && (!bookingService?.fixed || bookingService.other || parsePriceNumber(bookingService.price) <= EXPENSIVE_SERVICE_THRESHOLD || approveExpensiveService) ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>Randevuyu Onayla</button>
+              <button disabled={!selectedDate || !selectedTime || !bookingService || (vehicles.length > 0 && !selectedBookingVehicleId) || (bookingService?.fixed && !bookingService.other && paymentForm.method === "card" && paymentForm.cardNumber.trim().length < 12) || (bookingService?.fixed && !bookingService.other && parsePriceNumber(bookingService.price) > EXPENSIVE_SERVICE_THRESHOLD && !approveExpensiveService)} onClick={confirmBooking} className={`w-full py-3 rounded-2xl font-semibold text-sm transition mt-3 ${selectedDate && selectedTime && bookingService && (vehicles.length === 0 || selectedBookingVehicleId) && (!bookingService.fixed || bookingService.other || paymentForm.method === "onsite" || paymentForm.cardNumber.trim().length >= 12) && (!bookingService?.fixed || bookingService.other || parsePriceNumber(bookingService.price) <= EXPENSIVE_SERVICE_THRESHOLD || approveExpensiveService) ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("confirmBookingBtn")}</button>
               </div>
             </div>
           </div>
         )}
-        {screen === "confirmed" && (<div className="max-w-md mx-auto w-full flex-1 px-5 py-10 flex flex-col items-center text-center"><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4"><Check size={40} className="text-green-500" /></div><h2 className="text-lg font-bold text-gray-800 mb-1">{autoAccept ? "Randevunuz Onaylandı!" : "Randevu Talebiniz Gönderildi!"}</h2><button onClick={() => { setScreen("owner"); setOwnerTab("appointments"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2 mt-4">Randevumu Görüntüle</button><button onClick={goHome} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">Ana Sayfaya Dön</button></div>)}
+        {screen === "confirmed" && (<div className="max-w-md mx-auto w-full flex-1 px-5 py-10 flex flex-col items-center text-center"><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4"><Check size={40} className="text-green-500" /></div><h2 className="text-lg font-bold text-gray-800 mb-1">{autoAccept ? t("appointmentConfirmedTitle") : t("appointmentRequestSentTitle")}</h2><button onClick={() => { setScreen("owner"); setOwnerTab("appointments"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2 mt-4">{t("viewMyAppointmentBtn")}</button><button onClick={goHome} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button></div>)}
         {screen === "mechBrowse" && (
           <>
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
