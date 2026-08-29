@@ -1588,11 +1588,11 @@ export function AppShell() {
                 const activePhoto = galleryPhotos[activeIdx];
                 return (
                   <>
-                    <button onClick={() => setListingLightboxOpen(true)} aria-label="Fotoğrafı büyüt" className="w-full h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden relative cursor-zoom-in">
-                      {isImgUrl(activePhoto) ? <img src={imgThumb(activePhoto, 900)} onError={imgFallbackHandler} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : activePhoto}
+                    <button onClick={() => setListingLightboxOpen(true)} aria-label={t("enlargePhotoAria")} className="w-full h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden relative cursor-zoom-in">
+                      {isImgUrl(activePhoto) ? <img src={imgThumb(activePhoto, 900)} onError={imgFallbackHandler} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover" /> : activePhoto}
                       {galleryPhotos.length > 1 && (<>
-                        <span onClick={(e) => { e.stopPropagation(); setSelectedListingPhotoIndex((activeIdx - 1 + galleryPhotos.length) % galleryPhotos.length); }} role="button" aria-label="Önceki fotoğraf" className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={16} /></span>
-                        <span onClick={(e) => { e.stopPropagation(); setSelectedListingPhotoIndex((activeIdx + 1) % galleryPhotos.length); }} role="button" aria-label="Sonraki fotoğraf" className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronRight size={16} /></span>
+                        <span onClick={(e) => { e.stopPropagation(); setSelectedListingPhotoIndex((activeIdx - 1 + galleryPhotos.length) % galleryPhotos.length); }} role="button" aria-label={t("prevPhotoAria")} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={16} /></span>
+                        <span onClick={(e) => { e.stopPropagation(); setSelectedListingPhotoIndex((activeIdx + 1) % galleryPhotos.length); }} role="button" aria-label={t("nextPhotoAria")} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronRight size={16} /></span>
                         <span className="absolute bottom-3 right-4 text-[10px] font-bold text-white bg-black/40 backdrop-blur px-2 py-1 rounded-full">{activeIdx + 1}/{galleryPhotos.length}</span>
                       </>)}
                     </button>
@@ -1601,7 +1601,7 @@ export function AppShell() {
                       <div className="flex gap-1.5 px-4 py-2 bg-gray-50 overflow-x-auto">
                         {galleryPhotos.map((p, i) => (
                           <button key={i} onClick={() => { setSelectedListingPhotoIndex(i); setListingLightboxOpen(true); }} className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 flex items-center justify-center text-xl bg-white ${i === activeIdx ? "border-rose-600" : "border-transparent opacity-70"}`}>
-                            {isImgUrl(p) ? <img src={imgThumb(p, 160)} loading="lazy" onError={imgFallbackHandler} alt={`Fotoğraf ${i + 1}`} className="w-full h-full object-cover" /> : p}
+                            {isImgUrl(p) ? <img src={imgThumb(p, 160)} loading="lazy" onError={imgFallbackHandler} alt={t("photoNumberAlt", { n: String(i + 1) })} className="w-full h-full object-cover" /> : p}
                           </button>
                         ))}
                       </div>
@@ -1624,15 +1624,15 @@ export function AppShell() {
               {selectedListing.city && <p className="text-gray-400 text-xs mt-1 flex items-center gap-1"><MapPin size={12} />{selectedListing.city}</p>}
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <p className="text-3xl font-bold text-rose-700">{selectedListing.price}</p>
-                {selectedListing.negotiable && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">🤝 Pazarlık Payı Var</span>}
-                {selectedListing.featured && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">⭐ Öne Çıkan</span>}
+                {selectedListing.negotiable && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">{t("negotiableBadge")}</span>}
+                {selectedListing.featured && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{t("featuredBadge")}</span>}
               </div>
               {(() => {
                 const cmp = listingPriceComparison(selectedListing);
                 if (!cmp || cmp.tier === "average") return null;
                 return (
                   <p className={`text-[11px] font-medium mt-1 ${cmp.tier === "below" ? "text-emerald-600" : "text-amber-600"}`}>
-                    {cmp.tier === "below" ? `📉 Benzer ilanların ortalamasının %${Math.abs(cmp.diffPercent)} altında` : `📈 Benzer ilanların ortalamasının %${cmp.diffPercent} üstünde`}
+                    {cmp.tier === "below" ? t("priceBelowAverage", { pct: String(Math.abs(cmp.diffPercent)) }) : t("priceAboveAverage", { pct: String(cmp.diffPercent) })}
                   </p>
                 );
               })()}
@@ -1643,14 +1643,14 @@ export function AppShell() {
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Cog size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("transmission")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.transmission || "—"}</p></div>
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Zap size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("power")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.power ? `${selectedListing.power} HP` : "—"}</p></div>
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Palette size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("color")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.color || "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Car size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Kasa Tipi</p><p className="text-xs font-bold text-gray-700">{selectedListing.bodyType || "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Wrench size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Motor Hacmi</p><p className="text-xs font-bold text-gray-700">{selectedListing.engineSize || "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Çekiş</p><p className="text-xs font-bold text-gray-700">{selectedListing.drivetrain || "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><DoorOpen size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Kapı Sayısı</p><p className="text-xs font-bold text-gray-700">{selectedListing.doorCount || "—"}</p></div>
+                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Car size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("bodyTypePlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.bodyType || "—"}</p></div>
+                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Wrench size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("engineSizeLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.engineSize || "—"}</p></div>
+                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("drivetrainPlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.drivetrain || "—"}</p></div>
+                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><DoorOpen size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("doorCountPlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.doorCount || "—"}</p></div>
               </div>
-              <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 flex-wrap"><span className={`px-2 py-1 rounded-full font-medium ${selectedListing.sellerType === "mechanic" ? "bg-rose-100 text-rose-700" : "bg-rose-50 text-rose-600"}`}>{selectedListing.sellerType === "mechanic" ? "🔧 Tamirci" : "👤 Sahibinden"}</span><span>{selectedListing.sellerName}</span><span className="text-gray-300">·</span><span className="text-gray-400">İlan #{selectedListing.id}</span></div>
+              <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 flex-wrap"><span className={`px-2 py-1 rounded-full font-medium ${selectedListing.sellerType === "mechanic" ? "bg-rose-100 text-rose-700" : "bg-rose-50 text-rose-600"}`}>{selectedListing.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span><span>{selectedListing.sellerName}</span><span className="text-gray-300">·</span><span className="text-gray-400">{t("listingNumberLabel", { id: String(selectedListing.id) })}</span></div>
               {selectedListing.inspectionReportUrl && (
-                <a href={selectedListing.inspectionReportUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"><FileText size={12} /> Ekspertiz Raporu Mevcut</a>
+                <a href={selectedListing.inspectionReportUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"><FileText size={12} /> {t("inspectionReportAvailableLabel")}</a>
               )}
               {(() => {
                 const sellerMechanic = selectedListing.sellerType === "mechanic" ? mechanicsList.find(m => selectedListing.sellerId != null ? m.id === selectedListing.sellerId : m.name === selectedListing.sellerName) : null;
@@ -1665,9 +1665,9 @@ export function AppShell() {
                         {sellerMechanic?.verified && <BadgeCheck size={14} className="text-blue-500 flex-shrink-0" />}
                       </div>
                       {sellerMechanic ? (
-                        <p className="text-[11px] text-gray-500">⭐ {sellerMechanic.rating} ({sellerMechanic.reviews} değerlendirme) · Genelde {sellerMechanic.avgResponseMinutes} dk içinde yanıtlar</p>
+                        <p className="text-[11px] text-gray-500">{t("respondsWithinNote", { rating: String(sellerMechanic.rating), reviews: String(sellerMechanic.reviews), mins: String(sellerMechanic.avgResponseMinutes) })}</p>
                       ) : sellerOwner ? (
-                        <p className="text-[11px] text-gray-500">Üye: {sellerOwner.joinDate ? new Date(sellerOwner.joinDate).toLocaleDateString("tr-TR", { year: "numeric", month: "long" }) : "—"}</p>
+                        <p className="text-[11px] text-gray-500">{t("memberSinceLabel", { date: sellerOwner.joinDate ? new Date(sellerOwner.joinDate).toLocaleDateString("tr-TR", { year: "numeric", month: "long" }) : "—" })}</p>
                       ) : null}
                     </div>
                   </div>
@@ -1676,41 +1676,41 @@ export function AppShell() {
               <p className="text-sm text-gray-600 mt-4 leading-relaxed whitespace-pre-line"><TranslatedText id={`listing-desc-${selectedListing.id}`} text={selectedListing.description} fromLang={selectedListing.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
               {(selectedListing.ownerCount || selectedListing.paintedParts !== undefined || selectedListing.changedParts !== undefined || selectedListing.tradeIn) && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Shield size={15} className="text-rose-500" /> Araç Geçmişi</h3>
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Shield size={15} className="text-rose-500" /> {t("vehicleHistoryTitle")}</h3>
                   <div className="flex flex-wrap gap-2">
-                    {!!selectedListing.ownerCount && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-700"><User size={12} /> {selectedListing.ownerCount}. Sahibinden</span>)}
+                    {!!selectedListing.ownerCount && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-700"><User size={12} /> {t("ownerNumberLabel", { n: String(selectedListing.ownerCount) })}</span>)}
                     {(!Number(selectedListing.paintedParts) && !Number(selectedListing.changedParts)) ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><BadgeCheck size={12} /> Boya-Değişen Yok</span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><BadgeCheck size={12} /> {t("noPaintChangeLabel")}</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"><PaintBucket size={12} /> Boyalı: {Number(selectedListing.paintedParts) || 0} parça · Değişen: {Number(selectedListing.changedParts) || 0} parça</span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"><PaintBucket size={12} /> {t("paintedChangedPartsLabel", { painted: String(Number(selectedListing.paintedParts) || 0), changed: String(Number(selectedListing.changedParts) || 0) })}</span>
                     )}
-                    {!!selectedListing.tradeIn && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200"><Repeat size={12} /> Takas Yapılır</span>)}
+                    {!!selectedListing.tradeIn && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200"><Repeat size={12} /> {t("tradeInAvailableLabel")}</span>)}
                   </div>
                 </div>
               )}
               {(selectedListing.seatCount || selectedListing.fuelConsumption || selectedListing.co2Emission || selectedListing.emissionClass) && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Leaf size={15} className="text-rose-500" /> Yakıt Tüketimi &amp; Emisyon</h3>
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Leaf size={15} className="text-rose-500" /> {t("fuelConsumptionSection")}</h3>
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><User size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Koltuk</p><p className="text-xs font-bold text-gray-700">{selectedListing.seatCount || "—"}</p></div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Droplet size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Tüketim</p><p className="text-xs font-bold text-gray-700">{selectedListing.fuelConsumption ? `${selectedListing.fuelConsumption} L/100km` : "—"}</p></div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Leaf size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">CO₂</p><p className="text-xs font-bold text-gray-700">{selectedListing.co2Emission ? `${selectedListing.co2Emission} g/km` : "—"}</p></div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><User size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("seatCountPlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.seatCount || "—"}</p></div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Droplet size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("consumptionLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.fuelConsumption ? `${selectedListing.fuelConsumption} L/100km` : "—"}</p></div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Leaf size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("co2Label")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.co2Emission ? `${selectedListing.co2Emission} g/km` : "—"}</p></div>
                   </div>
                   {selectedListing.emissionClass && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 mt-2"><BadgeCheck size={12} /> {selectedListing.emissionClass}</span>)}
                 </div>
               )}
               {(selectedListing.batteryCapacity || selectedListing.rangeKm) && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><BatteryCharging size={15} className="text-rose-500" /> Elektrikli Araç Verileri</h3>
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><BatteryCharging size={15} className="text-rose-500" /> {t("evDataTitle")}</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><BatteryCharging size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Batarya</p><p className="text-xs font-bold text-gray-700">{selectedListing.batteryCapacity ? `${selectedListing.batteryCapacity} kWh` : "—"}</p></div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">Menzil</p><p className="text-xs font-bold text-gray-700">{selectedListing.rangeKm ? `${selectedListing.rangeKm} km` : "—"}</p></div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><BatteryCharging size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("batteryLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.batteryCapacity ? `${selectedListing.batteryCapacity} kWh` : "—"}</p></div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("rangeLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.rangeKm ? `${selectedListing.rangeKm} km` : "—"}</p></div>
                   </div>
                 </div>
               )}
               {selectedListing.features && selectedListing.features.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Tag size={15} className="text-rose-500" /> Donanım</h3>
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Tag size={15} className="text-rose-500" /> {t("featuresSection")}</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedListing.features.map((f, i) => {
                       const palette = ["bg-rose-50 text-rose-700 border-rose-200", "bg-blue-50 text-blue-700 border-blue-200", "bg-amber-50 text-amber-700 border-amber-200", "bg-emerald-50 text-emerald-700 border-emerald-200", "bg-violet-50 text-violet-700 border-violet-200", "bg-cyan-50 text-cyan-700 border-cyan-200"];
@@ -1724,7 +1724,7 @@ export function AppShell() {
                 if (sims.length === 0) return null;
                 return (
                   <div className="mt-6">
-                    <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Car size={15} className="text-rose-500" /> Benzer İlanlar</h3>
+                    <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Car size={15} className="text-rose-500" /> {t("similarListingsTitle")}</h3>
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
                       {sims.map(sl => (
                         <button key={sl.id} onClick={() => { setSelectedListingId(sl.id); setSelectedListingPhotoIndex(0); }} className="flex-shrink-0 w-36 text-left bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition">
@@ -1747,21 +1747,21 @@ export function AppShell() {
                 const activeOffers = selectedListing.offers.filter(o => o.status !== "replaced");
                 if (isOwnListing) return (
                   <>
-                    <div className="mt-5 bg-rose-50 rounded-2xl p-3 text-xs text-rose-700 flex items-center gap-2"><Tag size={14} className="flex-shrink-0" /> Bu sizin ilanınız. Gelen teklif ve mesajları aşağıda görebilirsiniz.</div>
+                    <div className="mt-5 bg-rose-50 rounded-2xl p-3 text-xs text-rose-700 flex items-center gap-2"><Tag size={14} className="flex-shrink-0" /> {t("ownListingNotice")}</div>
                     <div className="mt-3 grid grid-cols-3 gap-2">
-                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Eye size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingViewStats?.totalViews ?? "—"}</p><p className="text-[9px] text-gray-400">Görüntülenme</p></div>
-                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Share2 size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{selectedListing.shareCount || 0}</p><p className="text-[9px] text-gray-400">Paylaşım</p></div>
-                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Heart size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingFavoriteCount(selectedListing.id)}</p><p className="text-[9px] text-gray-400">Favori</p></div>
+                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Eye size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingViewStats?.totalViews ?? "—"}</p><p className="text-[9px] text-gray-400">{t("viewsLabel")}</p></div>
+                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Share2 size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{selectedListing.shareCount || 0}</p><p className="text-[9px] text-gray-400">{t("sharesLabel")}</p></div>
+                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Heart size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingFavoriteCount(selectedListing.id)}</p><p className="text-[9px] text-gray-400">{t("favoriteLabel")}</p></div>
                     </div>
                     {listingViewStats?.monthly && listingViewStats.monthly.length > 1 && (
                       <div className="mt-2 bg-white border border-gray-200 rounded-2xl p-3">
-                        <h4 className="text-[11px] font-semibold text-gray-500 mb-2">Görüntülenme Trendi</h4>
+                        <h4 className="text-[11px] font-semibold text-gray-500 mb-2">{t("viewTrendTitle")}</h4>
                         <div className="flex items-end gap-1.5 h-14">
                           {listingViewStats.monthly.map((m) => {
                             const max = Math.max(...listingViewStats.monthly.map(x => x.views), 1);
                             const h = Math.max(4, Math.round((m.views / max) * 56));
                             return (
-                              <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1" title={`${m.month}: ${m.views} görüntülenme`}>
+                              <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1" title={t("viewsTooltip", { month: m.month, views: String(m.views) })}>
                                 <div className="w-full bg-rose-200 rounded-t" style={{ height: `${h}px` }} />
                                 <span className="text-[8px] text-gray-400 whitespace-nowrap">{m.month.slice(5)}</span>
                               </div>
@@ -1771,14 +1771,14 @@ export function AppShell() {
                       </div>
                     )}
                     <div className="mt-3 bg-white border border-gray-200 rounded-2xl p-3"><div className="flex items-center justify-between mb-2"><h4 className="text-xs font-semibold text-gray-500">{t("listingStatus")}</h4><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span></div><div className="flex gap-2">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(selectedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${selectedListing.status === st ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div></div>
-                    <button onClick={() => requestFeaturedListing(selectedListing.id)} className={`w-full mt-2 py-2.5 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 border ${selectedListing.featured ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}>⭐ {selectedListing.featured ? "Öne Çıkarmadan Kaldır" : `İlanı Öne Çıkar (${FEATURED_LISTING_PRICE}₺)`}</button>
+                    <button onClick={() => requestFeaturedListing(selectedListing.id)} className={`w-full mt-2 py-2.5 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 border ${selectedListing.featured ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}>⭐ {selectedListing.featured ? t("removeFromFeaturedBtn") : t("featureListingBtn", { price: String(FEATURED_LISTING_PRICE) })}</button>
                     <div className="flex gap-2 mt-2">
-                      <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, bodyType: selectedListing.bodyType || "", engineSize: selectedListing.engineSize || "", drivetrain: selectedListing.drivetrain || "", ownerCount: selectedListing.ownerCount || "", paintedParts: selectedListing.paintedParts ?? "", changedParts: selectedListing.changedParts ?? "", tradeIn: !!selectedListing.tradeIn, doorCount: selectedListing.doorCount || "", features: selectedListing.features || [], photos: selectedListing.photos || [], seatCount: selectedListing.seatCount || "", fuelConsumption: selectedListing.fuelConsumption || "", co2Emission: selectedListing.co2Emission || "", emissionClass: selectedListing.emissionClass || "", batteryCapacity: selectedListing.batteryCapacity || "", rangeKm: selectedListing.rangeKm || "", city: selectedListing.city || "", negotiable: !!selectedListing.negotiable, inspectionReportUrl: selectedListing.inspectionReportUrl || "", featured: !!selectedListing.featured, _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Pencil size={14} /> İlanı Düzenle</button>
-                      <button onClick={() => setConfirmDialog({ title: "İlanı sil", body: "Bu ilanı silmek istediğinizden emin misiniz? Gelen teklifler ve mesajlar dahil tüm veriler kalıcı olarak silinir.", confirmLabel: "Evet, Sil", danger: true, onConfirm: () => { removeListing(selectedListing.id); setSelectedListingId(null); } })} aria-label="İlanı sil" className="flex-shrink-0 border border-gray-200 text-red-400 hover:text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-xl transition"><Trash2 size={16} /></button>
+                      <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, bodyType: selectedListing.bodyType || "", engineSize: selectedListing.engineSize || "", drivetrain: selectedListing.drivetrain || "", ownerCount: selectedListing.ownerCount || "", paintedParts: selectedListing.paintedParts ?? "", changedParts: selectedListing.changedParts ?? "", tradeIn: !!selectedListing.tradeIn, doorCount: selectedListing.doorCount || "", features: selectedListing.features || [], photos: selectedListing.photos || [], seatCount: selectedListing.seatCount || "", fuelConsumption: selectedListing.fuelConsumption || "", co2Emission: selectedListing.co2Emission || "", emissionClass: selectedListing.emissionClass || "", batteryCapacity: selectedListing.batteryCapacity || "", rangeKm: selectedListing.rangeKm || "", city: selectedListing.city || "", negotiable: !!selectedListing.negotiable, inspectionReportUrl: selectedListing.inspectionReportUrl || "", featured: !!selectedListing.featured, _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListingBtn")}</button>
+                      <button onClick={() => setConfirmDialog({ title: t("deleteListingConfirmTitle"), body: t("deleteListingConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => { removeListing(selectedListing.id); setSelectedListingId(null); } })} aria-label={t("deleteListingAria")} className="flex-shrink-0 border border-gray-200 text-red-400 hover:text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-xl transition"><Trash2 size={16} /></button>
                     </div>
-                    <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-2 flex items-center gap-2"><Banknote size={15} className="text-rose-600" /> Teklifler {activeOffers.length > 0 && <span className="text-gray-300 font-normal">({activeOffers.length})</span>}</h3>
+                    <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-2 flex items-center gap-2"><Banknote size={15} className="text-rose-600" /> {t("tabLabelOffers")} {activeOffers.length > 0 && <span className="text-gray-300 font-normal">({activeOffers.length})</span>}</h3>
                     {activeOffers.length === 0 ? (
-                      <p className="text-center text-gray-400 text-xs py-4">Henüz teklif gelmedi.</p>
+                      <p className="text-center text-gray-400 text-xs py-4">{t("noOffersYetOnListing")}</p>
                     ) : (
                       <div className="space-y-2 mb-2">{activeOffers.map(o => (
                         <div key={o.id} className="bg-white border border-gray-100 rounded-xl p-3">
@@ -1786,20 +1786,20 @@ export function AppShell() {
                           {o.status === "pending" ? (
                             <div className="flex gap-2 mt-2"><button onClick={() => respondOffer(selectedListing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(selectedListing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>
                           ) : (
-                            <p className="text-[11px] text-gray-400 mt-1">{o.status === "accepted" ? "✅ Kabul edildi" : "❌ Reddedildi"}</p>
+                            <p className="text-[11px] text-gray-400 mt-1">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>
                           )}
                         </div>
                       ))}</div>
                     )}
                     {selectedListing.messages.length > 0 && (<>
-                      <h3 className="font-semibold text-gray-800 text-sm mt-5 mb-2 flex items-center gap-2"><MessageCircle size={15} className="text-rose-500" /> Sorular</h3>
+                      <h3 className="font-semibold text-gray-800 text-sm mt-5 mb-2 flex items-center gap-2"><MessageCircle size={15} className="text-rose-500" /> {t("questionsTitle")}</h3>
                       <div className="space-y-2">{selectedListing.messages.map(m => (<div key={m.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs"><span className="font-medium text-gray-700">{m.from}:</span> <span className="text-gray-600"><TranslatedText id={`listingmsg-${m.id}`} text={m.text} fromLang={m.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></span></div>))}</div>
                     </>)}
                   </>
                 );
                 const myOffer = myPendingOfferOn(selectedListing);
                 const currency = listingCurrency(selectedListing.price);
-                const offerLabel = myOffer && !myOffer.seen ? "Teklifini Güncelle" : myOffer ? "Yeni Teklif Ver" : t("makeOffer");
+                const offerLabel = myOffer && !myOffer.seen ? t("updateOfferBtn") : myOffer ? t("newOfferBtn") : t("makeOffer");
                 const sellerPhone = selectedListing.sellerType === "mechanic"
                   ? mechanicsList.find(m => selectedListing.sellerId != null ? m.id === selectedListing.sellerId : m.name === selectedListing.sellerName)?.phone
                   : ownersDirectory.find(o => selectedListing.sellerId != null ? o.id === selectedListing.sellerId : o.name === selectedListing.sellerName)?.phone;
@@ -1812,10 +1812,10 @@ export function AppShell() {
                       <button onClick={() => { const contextNote = `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`; if (role === "mechanic") { openMechChatWithOwnerListing(contextNote); } else { openChatWithMechanic({ id: `seller-${selectedListing.sellerName}`, name: selectedListing.sellerName, img: "👤", lang: "tr" }, contextNote); } setSelectedListingId(null); }} className="border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
                     )}
                     {sellerPhone && (
-                      <a href={`tel:${sellerPhone.replace(/\s+/g, "")}`} className="col-span-2 border border-gray-200 text-gray-700 py-2.5 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Phone size={14} /> Telefonla Ara · {sellerPhone}</a>
+                      <a href={`tel:${sellerPhone.replace(/\s+/g, "")}`} className="col-span-2 border border-gray-200 text-gray-700 py-2.5 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Phone size={14} /> {t("callPhoneBtn", { phone: sellerPhone })}</a>
                     )}
-                    {myOffer && <p className="col-span-2 text-[11px] text-gray-400 text-center">Mevcut teklifiniz: {myOffer.amount}{currency}{myOffer.seen ? " · satıcı gördü" : " · henüz görülmedi"}</p>}
-                    <button onClick={() => openReportForm("listing", `İlan #${selectedListing.id} · ${selectedListing.sellerName}`, `"${selectedListing.brand} ${selectedListing.model}" ilanını bildiriyorum`)} className="col-span-2 flex items-center justify-center gap-1.5 text-[11px] text-gray-400 hover:text-red-500 transition py-1"><Flag size={11} /> Bu ilanı bildir</button>
+                    {myOffer && <p className="col-span-2 text-[11px] text-gray-400 text-center">{t("myCurrentOfferNote", { amount: String(myOffer.amount), currency })}{myOffer.seen ? ` · ${t("sellerSawItSuffix")}` : ` · ${t("notSeenYetSuffix")}`}</p>}
+                    <button onClick={() => openReportForm("listing", `İlan #${selectedListing.id} · ${selectedListing.sellerName}`, `"${selectedListing.brand} ${selectedListing.model}" ilanını bildiriyorum`)} className="col-span-2 flex items-center justify-center gap-1.5 text-[11px] text-gray-400 hover:text-red-500 transition py-1"><Flag size={11} /> {t("reportThisListingBtn")}</button>
                   </div>
                 );
               })()}
@@ -1845,34 +1845,34 @@ export function AppShell() {
                 {(selectedJob.salaryMin || selectedJob.salaryMax) && <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-green-50 text-green-600 flex items-center gap-1"><Banknote size={12} /> {selectedJob.salaryMin && selectedJob.salaryMax ? `${Number(selectedJob.salaryMin).toLocaleString("tr-TR")} - ${Number(selectedJob.salaryMax).toLocaleString("tr-TR")}₺` : `${Number(selectedJob.salaryMin || selectedJob.salaryMax).toLocaleString("tr-TR")}₺+`}</span>}
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full text-white ${jobStatusMeta(selectedJob.status).color}`}>{jobStatusMeta(selectedJob.status).label}</span>
               </div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2">Pozisyon Açıklaması</h3>
+              <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("positionDescriptionTitle")}</h3>
               <p className="text-sm text-gray-600 leading-relaxed mb-5">{selectedJob.description ? <TranslatedText id={`job-desc-${selectedJob.id}`} text={selectedJob.description} fromLang={selectedJob.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /> : "—"}</p>
               {selectedJob.requirements.length > 0 && (<>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">Aranan Nitelikler</h3>
+                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("requiredQualificationsTitle")}</h3>
                 <div className="space-y-1.5 mb-5">{selectedJob.requirements.map((r, i) => (<div key={i} className="flex items-start gap-2 text-sm text-gray-600"><CheckCircle2 size={14} className="text-rose-500 flex-shrink-0 mt-0.5" /><span>{r}</span></div>))}</div>
               </>)}
               {selectedJob.skills.length > 0 && (<>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">Beceriler</h3>
+                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("skillsTitle")}</h3>
                 <div className="flex flex-wrap gap-1.5 mb-5">{selectedJob.skills.map((s, i) => (<span key={i} className="text-xs font-medium px-2.5 py-1 rounded-full bg-rose-50 text-rose-600">{s}</span>))}</div>
               </>)}
-              <p className="text-[11px] text-gray-400 flex items-center gap-1 mb-5"><Clock size={11} /> {selectedJob.postedDate} yayınlandı</p>
+              <p className="text-[11px] text-gray-400 flex items-center gap-1 mb-5"><Clock size={11} /> {t("postedOnLabel", { date: selectedJob.postedDate })}</p>
               {isOwnJob ? (
                 <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Users size={15} /> Başvurular ({selectedJob.applicants.length})</h3>
-                  <div className="space-y-2">{selectedJob.applicants.map(a => (<div key={a.id} className="bg-white border border-gray-100 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><span className="text-xs font-semibold text-gray-700">{a.name}</span><div className="flex items-center gap-1.5 flex-shrink-0">{a.status === "rejected" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500">Reddedildi</span>}<span className="text-[10px] text-gray-400">{a.date}</span></div></div>{(a.phone || a.email || a.address) && (<div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-400 mb-1.5">{a.phone && <span className="flex items-center gap-1"><Phone size={10} /> {a.phone}</span>}{a.email && <span className="flex items-center gap-1"><Mail size={10} /> {a.email}</span>}{a.address && <span className="flex items-center gap-1"><MapPin size={10} /> {a.address}</span>}</div>)}{a.message && <p className="text-xs text-gray-500 mb-1.5"><TranslatedText id={`job-applicant-msg-${a.id}`} text={a.message} fromLang={a.lang || "tr"} viewerLang={myProfile?.lang || "tr"} compact /></p>}<div className="flex items-center gap-2 flex-wrap">{a.cvUrl ? (<a href={a.cvUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[11px] font-medium text-rose-600 hover:text-rose-700 bg-rose-50 rounded-lg px-2 py-1 max-w-full min-w-0"><FileText size={12} className="flex-shrink-0" /><span className="truncate min-w-0">{a.cvName || "CV"}</span></a>) : (<span className="inline-flex items-center gap-1.5 text-[11px] text-gray-300"><FileText size={12} /> CV eklenmedi</span>)}{a.status !== "rejected" && (<button onClick={() => rejectApplication(selectedJob.id, a.id)} className="text-[11px] font-medium text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg px-2 py-1 transition flex-shrink-0">CV Reddet</button>)}</div></div>))}{selectedJob.applicants.length === 0 && <p className="text-center text-gray-400 text-xs py-4">Henüz başvuru yok.</p>}</div>
+                  <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Users size={15} /> {t("applicationsTitle", { n: String(selectedJob.applicants.length) })}</h3>
+                  <div className="space-y-2">{selectedJob.applicants.map(a => (<div key={a.id} className="bg-white border border-gray-100 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><span className="text-xs font-semibold text-gray-700">{a.name}</span><div className="flex items-center gap-1.5 flex-shrink-0">{a.status === "rejected" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500">{t("rejectedLabel")}</span>}<span className="text-[10px] text-gray-400">{a.date}</span></div></div>{(a.phone || a.email || a.address) && (<div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-400 mb-1.5">{a.phone && <span className="flex items-center gap-1"><Phone size={10} /> {a.phone}</span>}{a.email && <span className="flex items-center gap-1"><Mail size={10} /> {a.email}</span>}{a.address && <span className="flex items-center gap-1"><MapPin size={10} /> {a.address}</span>}</div>)}{a.message && <p className="text-xs text-gray-500 mb-1.5"><TranslatedText id={`job-applicant-msg-${a.id}`} text={a.message} fromLang={a.lang || "tr"} viewerLang={myProfile?.lang || "tr"} compact /></p>}<div className="flex items-center gap-2 flex-wrap">{a.cvUrl ? (<a href={a.cvUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[11px] font-medium text-rose-600 hover:text-rose-700 bg-rose-50 rounded-lg px-2 py-1 max-w-full min-w-0"><FileText size={12} className="flex-shrink-0" /><span className="truncate min-w-0">{a.cvName || "CV"}</span></a>) : (<span className="inline-flex items-center gap-1.5 text-[11px] text-gray-300"><FileText size={12} /> {t("noCvAttached")}</span>)}{a.status !== "rejected" && (<button onClick={() => rejectApplication(selectedJob.id, a.id)} className="text-[11px] font-medium text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg px-2 py-1 transition flex-shrink-0">{t("rejectCvBtn")}</button>)}</div></div>))}{selectedJob.applicants.length === 0 && <p className="text-center text-gray-400 text-xs py-4">{t("noApplicationsYet")}</p>}</div>
                   <div className="flex gap-2 mt-4">
-                    <button onClick={() => { openJobForm({ title: selectedJob.title, employmentType: selectedJob.employmentType, experienceLevel: selectedJob.experienceLevel, location: selectedJob.location, salaryMin: selectedJob.salaryMin, salaryMax: selectedJob.salaryMax, description: selectedJob.description, requirements: selectedJob.requirements.join("\n"), skills: selectedJob.skills.join(", "), _editingId: selectedJob.id }); setSelectedJobId(null); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-xs font-medium hover:bg-gray-100 transition flex items-center justify-center gap-1"><Pencil size={13} /> Düzenle</button>
-                    <button onClick={() => { setJobListingStatus(selectedJob.id, selectedJob.status === "active" ? "closed" : "active"); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-xs font-medium hover:bg-gray-100 transition">{selectedJob.status === "active" ? "İlanı Kapat" : "Tekrar Aç"}</button>
-                    <button onClick={() => setConfirmDialog({ title: "İlanı sil", body: "Bu iş ilanını silmek istediğinizden emin misiniz? Başvurular dahil tüm veriler kalıcı olarak silinir.", confirmLabel: "Evet, Sil", danger: true, onConfirm: () => { removeJobListing(selectedJob.id); setSelectedJobId(null); } })} aria-label="İlanı sil" className="text-red-400 hover:text-red-600 px-3 py-2.5"><Trash2 size={16} /></button>
+                    <button onClick={() => { openJobForm({ title: selectedJob.title, employmentType: selectedJob.employmentType, experienceLevel: selectedJob.experienceLevel, location: selectedJob.location, salaryMin: selectedJob.salaryMin, salaryMax: selectedJob.salaryMax, description: selectedJob.description, requirements: selectedJob.requirements.join("\n"), skills: selectedJob.skills.join(", "), _editingId: selectedJob.id }); setSelectedJobId(null); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-xs font-medium hover:bg-gray-100 transition flex items-center justify-center gap-1"><Pencil size={13} /> {t("editBtn")}</button>
+                    <button onClick={() => { setJobListingStatus(selectedJob.id, selectedJob.status === "active" ? "closed" : "active"); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-xs font-medium hover:bg-gray-100 transition">{selectedJob.status === "active" ? t("closeListingBtn") : t("reopenListingBtn")}</button>
+                    <button onClick={() => setConfirmDialog({ title: t("deleteListingConfirmTitle"), body: t("deleteJobConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => { removeJobListing(selectedJob.id); setSelectedJobId(null); } })} aria-label={t("deleteListingAria")} className="text-red-400 hover:text-red-600 px-3 py-2.5"><Trash2 size={16} /></button>
                   </div>
                 </div>
               ) : role === "mechanic" ? (
                 <div className="bg-gray-100 border border-gray-200 rounded-2xl p-4 text-center">
-                  <p className="text-sm text-gray-600 mb-3">Bu ilana başvurmak için bir araç sahibi hesabı oluşturmanız gerekiyor.</p>
-                  <button onClick={goHome} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-800 transition">Araç Sahibi Hesabı Oluştur</button>
+                  <p className="text-sm text-gray-600 mb-3">{t("needOwnerAccountToApplyNote")}</p>
+                  <button onClick={goHome} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-800 transition">{t("createOwnerAccountBtn")}</button>
                 </div>
               ) : (
-                <button onClick={openJobApplyForm} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Briefcase size={15} /> Başvur</button>
+                <button onClick={openJobApplyForm} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Briefcase size={15} /> {t("applyBtn")}</button>
               )}
             </div>
           </div>
