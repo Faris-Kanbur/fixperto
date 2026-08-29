@@ -88,7 +88,7 @@ export function AppShell() {
     adminTicketStatusFilter, setAdminTicketStatusFilter, adminTicketTypeFilter, setAdminTicketTypeFilter, adminTicketPriorityFilter, setAdminTicketPriorityFilter, adminTicketSearch, setAdminTicketSearch,
     adminTicketVisibleCount, setAdminTicketVisibleCount, showTicketAnalytics, setShowTicketAnalytics, selectedTicketId, setSelectedTicketId, adminTicketNote, setAdminTicketNote,
     adminReplyDraft, setAdminReplyDraft, showBroadcastModal, setShowBroadcastModal, broadcastForm, setBroadcastForm, broadcastLog, setBroadcastLog,
-    adminChangeLog, setAdminChangeLog, fireSuccessPulse, getEffectiveDistance, requestLocation, handleSortClick, confirmUseLocation, stopUsingLocation,
+    adminChangeLog, setAdminChangeLog, fireSuccessPulse, getEffectiveDistance, requestLocation, handleSortClick, handleDistanceFilterClick, locationPromptDismissed, dismissLocationPrompt, confirmUseLocation, stopUsingLocation,
     requestNotifPermission, fireNotification, selectedMechanic, bookingServiceOptions, myProfile, selectedListing, allReminders, dismissedReminderKey,
     setDismissedReminderKey, browseScrollRef, heroCollapsed, setHeroCollapsed, goBookFromReminder, topReminder, notifiedReminderKeysRef, filtered,
     quoteFilteredMechanics, filteredListings, activeListingFilterCount, filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs,
@@ -201,13 +201,13 @@ export function AppShell() {
         </div>
       )}
       {showLocationPrompt && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9600 }} onClick={() => setShowLocationPrompt(false)}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9600 }} onClick={dismissLocationPrompt}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
             <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mb-3"><MapPin size={22} className="text-rose-600" /></div>
             <h3 className="font-bold text-gray-900 text-base mb-1">{t("locationPromptTitle")}</h3>
             <p className="text-sm text-gray-500 mb-4">{t("locationPromptBody")}</p>
             <div className="flex gap-2">
-              <button onClick={() => setShowLocationPrompt(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("notNowBtn")}</button>
+              <button onClick={dismissLocationPrompt} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("notNowBtn")}</button>
               <button onClick={confirmUseLocation} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("shareLocationBtn")}</button>
             </div>
           </div>
@@ -2009,8 +2009,8 @@ export function AppShell() {
           <>
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-3 max-w-7xl mx-auto w-full relative md:hidden">
-                <span className="text-xs text-gray-500">Merhaba{form.name ? `, ${form.name}` : ""} 🔧</span>
-                <button onClick={() => setScreen("mechanicDashboard")} className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1"><ChevronLeft size={14}/> Panele Dön</button>
+                <span className="text-xs text-gray-500">{t("greetingHello")}{form.name ? `, ${form.name}` : ""} 🔧</span>
+                <button onClick={() => setScreen("mechanicDashboard")} className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1"><ChevronLeft size={14}/> {t("backToDashboardBtn")}</button>
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
                 <div className="flex items-center gap-2 flex-shrink-0"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></div>
@@ -2021,8 +2021,8 @@ export function AppShell() {
                   })}
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <button onClick={() => setScreen("mechanicDashboard")} className="text-sm font-semibold text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-full transition whitespace-nowrap">Panele Dön</button>
-                  <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("profile"); }} title="Profil ve Ayarlar" className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-lg">{myProfile?.img || "🔧"}</button>
+                  <button onClick={() => setScreen("mechanicDashboard")} className="text-sm font-semibold text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-full transition whitespace-nowrap">{t("backToDashboardBtn")}</button>
+                  <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("profile"); }} title={t("profileSettingsTitle")} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-lg">{myProfile?.img || "🔧"}</button>
                 </div>
               </div>
               <div className="max-w-7xl mx-auto w-full relative">
@@ -2495,7 +2495,8 @@ export function AppShell() {
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("minRatingLabel")}</h4>
                 <div className="flex gap-2 mb-5 flex-wrap">{[{ key: 0, label: t("allFilterLabel") }, { key: 4.0, label: "⭐ 4.0+" }, { key: 4.5, label: "⭐ 4.5+" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, minRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.minRating === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MapPin size={13} /> {t("maxDistanceLabel")}</h4>
-                <div className="flex gap-2 mb-6 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 1, label: "< 1 km" }, { key: 2, label: "< 2 km" }, { key: 5, label: "< 5 km" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, maxDistance: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.maxDistance === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 1, label: "< 1 km" }, { key: 2, label: "< 2 km" }, { key: 5, label: "< 5 km" }].map(o => (<button key={o.key} onClick={() => handleDistanceFilterClick(o.key)} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.maxDistance === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                {!userLocation && (<p className="text-[11px] text-gray-400 mb-5 flex items-center gap-1"><MapPin size={11} /> {t("estimatedDistanceFilterHint")}</p>)}
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Car size={13} /> {t("vehicleBrandLabel")}</h4>
                 <select value={filters.brand} onChange={(e) => setFilters(f => ({ ...f, brand: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allBrandsOption")}</option>{CAR_BRANDS.map(b => (<option key={b} value={b}>{b}</option>))}</select>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Wrench size={13} /> {t("serviceLabelFilter")}</h4>
@@ -2523,7 +2524,7 @@ export function AppShell() {
               </>
             )}
             <div className="flex gap-2">
-              <button onClick={() => ownerMode === "mechanics" ? setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" }) : ownerMode === "cars" ? clearListingFilters() : clearJobFilters()} className="flex-1 border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("clear")}</button>
+              <button onClick={() => ownerMode === "mechanics" ? (() => { setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" }); setQuery(""); setLocationQuery(""); })() : ownerMode === "cars" ? clearListingFilters() : clearJobFilters()} className="flex-1 border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("clear")}</button>
               <button onClick={() => setShowFilterModal(false)} className={`flex-1 text-white py-3 rounded-2xl font-semibold text-sm transition ${ownerMode === "mechanics" ? "bg-rose-600 hover:bg-rose-700" : ownerMode === "cars" ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("apply")}</button>
             </div>
           </div>

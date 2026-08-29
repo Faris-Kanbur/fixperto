@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS owners (
   apptCount INTEGER DEFAULT 0,
   password TEXT NOT NULL,
   favoriteIds TEXT DEFAULT '[]',
+  favoriteMechanicIds TEXT DEFAULT '[]',
   likedReviewIds TEXT DEFAULT '[]',
   lang TEXT DEFAULT 'tr'
 );
@@ -304,6 +305,7 @@ function ensureColumn(table, columnDef) {
   ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
   ["support_tickets", "fromId INTEGER"],
   ["owners", "favoriteIds TEXT DEFAULT '[]'"],
+  ["owners", "favoriteMechanicIds TEXT DEFAULT '[]'"],
   ["owners", "likedReviewIds TEXT DEFAULT '[]'"],
   ["owners", "lang TEXT DEFAULT 'tr'"],
   ["admin_change_log", "reverted INTEGER DEFAULT 0"],

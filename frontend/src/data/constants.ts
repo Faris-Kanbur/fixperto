@@ -30,6 +30,10 @@ export const EXPERIENCE_LEVELS = ["Deneyim Aranmıyor", "1-3 Yıl", "3-5 Yıl", 
 export const EMPTY_JOB_FORM = { title: "", employmentType: "Tam Zamanlı", experienceLevel: "Deneyim Aranmıyor", location: "", salaryMin: "", salaryMax: "", description: "", requirements: "", skills: "", _editingId: null };
 export const DEFAULT_HOURS = { mon: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, tue: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, wed: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, thu: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, fri: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, sat: { open: true, start: "09:00", end: "14:00", closedSlots: [], extraSlots: [] }, sun: { open: false, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] } };
 export const PRICE_LEVEL_BREAKS = [260, 320, 390, 460];
+// Filtre modalındaki ucuz/orta/pahalı sekmeleri PRICE_LEVEL_BREAKS'ten türetilir, böylece bir
+// tamirciğin kart üzerindeki € nokta seviyesi (bkz. PriceLevelDots) filtredeki fiyat etiketiyle
+// çelişmez: ucuz = 1-2 nokta, orta = 3 nokta, pahalı = 4-5 nokta.
+export const PRICE_TIER_BREAKS = [PRICE_LEVEL_BREAKS[1], PRICE_LEVEL_BREAKS[2]];
 
 // The single logged-in demo owner/mechanic account both map to a fixed id, mirroring the
 // original single-file app: the "current user" is always MY_MECHANIC_ID / MY_OWNER_ID from

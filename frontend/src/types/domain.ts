@@ -87,6 +87,8 @@ export interface Owner {
   /** Demo amaçlı düz metin — gerçek bir üretim sisteminde ASLA client'a dönmemeli (bkz. güvenlik notları). */
   password?: string;
   favoriteIds?: number[];
+  /** Favori tamirciler — ayrı bir dizide tutulur, çünkü listing ve mechanic id'leri çakışabilir (bkz. toggleFavoriteMechanic). */
+  favoriteMechanicIds?: number[];
   /** "Faydalı" işaretlediği yorumlar — "mechanicId:reviewId" formatında bileşik anahtarlar. */
   likedReviewIds?: string[];
   /** Sohbet mesajlarının hangi dile otomatik çevrileceğini belirler — bkz. ChatBubble. */

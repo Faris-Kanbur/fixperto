@@ -139,7 +139,7 @@ export function BrowseHome({ theme = undefined }) {
             <p className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {t("mechanicsFoundSuffix")}</p>
           </div>
           <div className="md:flex md:gap-6">
-            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{locationStatus === "loading" ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />) : filtered.map(m => (<MechCard key={m.id} m={m} onHover={setHoveredPinId} />))}</div></div>
+            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{locationStatus === "loading" ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />) : filtered.map(m => (<MechCard key={m.id} m={m} onHover={setHoveredPinId} />))}{locationStatus !== "loading" && filtered.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">{t("noMechanicMatchNote")}</p>{(activeFilterCount > 0 || query.trim() || locationQuery.trim()) && <button onClick={() => { setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" }); setQuery(""); setLocationQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">{t("clearFiltersBtn")}</button>}</div>)}</div></div>
             <div className="hidden md:block md:w-[42%] md:sticky md:top-4 md:self-start"><MapPanel className="h-[65vh]" items={filtered} onPick={openMapDetail} hoveredId={hoveredPinId} onHoverItem={setHoveredPinId} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /></div>
           </div>
         </div>

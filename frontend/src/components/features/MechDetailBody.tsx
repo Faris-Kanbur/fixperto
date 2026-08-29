@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PriceLevelDots } from "../ui/PriceLevelDots";
-import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, CreditCard, Flag, Globe, MapPin, MessageCircle, Navigation, Star, Tag, ThumbsUp, Users, Wrench as ToolIcon, X, Zap } from "lucide-react";
+import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, CreditCard, Flag, Globe, Heart, MapPin, MessageCircle, Navigation, Star, Tag, ThumbsUp, Users, Wrench as ToolIcon, X, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { MapPanel } from "./MapPanel";
 import { ShareButton } from "./ShareButton";
@@ -25,8 +25,8 @@ export function MechDetailBody() {
     setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile, 
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, 
     filters, setFilters, listingFilters, setListingFilters, listingSort, setListingSort, userLocation, 
-    setUserLocation, locationStatus, setLocationStatus, notifPermission, setNotifPermission, favoriteIds, 
-    setFavoriteIds, toggleFavorite, likedReviewIds, toggleReviewHelpful, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query,
+    setUserLocation, locationStatus, setLocationStatus, notifPermission, setNotifPermission, favoriteIds,
+    setFavoriteIds, toggleFavorite, favoriteMechanicIds, toggleFavoriteMechanic, likedReviewIds, toggleReviewHelpful, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query,
     setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir, setSortDir, showLocationPrompt, 
     setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, 
     openMapDetail, selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, 
@@ -130,6 +130,7 @@ export function MechDetailBody() {
         <button onClick={() => { if (mapDetailOpen) { setMapDetailOpen(false); } else { setScreen(detailReturnScreen || (role === "mechanic" ? "mechBrowse" : "owner")); setDetailReturnScreen(null); } }} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={18} /></button>
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
           {selectedMechanic.rating >= 4.7 && <span className="bg-white/95 text-gray-700 text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1"><BadgeCheck size={12} /> {t("featuredLabel")}</span>}
+          <button onClick={() => toggleFavoriteMechanic(selectedMechanic.id)} aria-label={t("addToFavoritesAria")} className="w-9 h-9 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center flex-shrink-0"><Heart size={16} className={(favoriteMechanicIds || []).includes(selectedMechanic.id) ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
           <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — ${t("discoverOnFixperto")}`} path={`?mechanic=${selectedMechanic.id}`} onShare={(channel, refCode) => recordShare("mechanic", selectedMechanic.id, channel, refCode)} />
         </div>
         <div className={`h-36 bg-gradient-to-br ${BANNER_PRESETS[selectedMechanic.bannerPreset] || BANNER_PRESETS.blue} relative overflow-hidden`}>

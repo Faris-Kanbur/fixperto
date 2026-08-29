@@ -5,7 +5,7 @@ import { T, useT } from "../../data/i18n";
 import {
   BANNER_PRESETS, ONBOARDING_SLIDES, DAY_KEYS, DAY_LABELS, DAY_LABELS_FULL, JS_DAY_TO_KEY,
   FUEL_TYPES, TRANSMISSIONS, EMPLOYMENT_TYPES, EXPERIENCE_LEVELS, EMPTY_JOB_FORM, DEFAULT_HOURS,
-  PRICE_LEVEL_BREAKS, MY_MECHANIC_ID, MY_OWNER_ID, TRACK_STATUSES_MANUAL, TRACK_LABELS_MANUAL,
+  PRICE_LEVEL_BREAKS, PRICE_TIER_BREAKS, MY_MECHANIC_ID, MY_OWNER_ID, TRACK_STATUSES_MANUAL, TRACK_LABELS_MANUAL,
   TRACK_STATUSES_AUTO, TRACK_LABELS_AUTO, TODAY, TODAY_STR, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS,
   ATU_FIXED_CATALOG, DICT_TR_EN, DICT_EN_TR, LEGAL_TIRE_RULES, DE_CITIES, REMINDER_KIND_LABELS,
   FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, LEGAL_CONTENT,
@@ -90,6 +90,17 @@ function useAppLogic() {
       return next;
     });
   };
+  // Tamirci favorileri ayrı bir dizide tutulur: listings ve mechanics aynı sayısal id aralığını
+  // paylaştığı için (ör. mechanic id=1 ve listing id=1), tek bir favoriteIds dizisi kullanmak
+  // yanlışlıkla ikisini de favoriye eklemiş gibi gösterirdi.
+  const [favoriteMechanicIds, setFavoriteMechanicIds] = useState([]);
+  const toggleFavoriteMechanic = (id) => {
+    setFavoriteMechanicIds(f => {
+      const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
+      persist(api.owners.update(MY_OWNER_ID, { favoriteMechanicIds: next }), "Favori kaydedilemedi");
+      return next;
+    });
+  };
   const [mechanicsList, setMechanicsList] = useState([]);
   const [mechanicHours, setMechanicHours] = useState(DEFAULT_HOURS);
   // Yorumlardaki "Faydalı" (helpful/like) sayacı — Instagram beğenisi gibi tek tıkla aç/kapa.
@@ -114,6 +125,11 @@ function useAppLogic() {
   const [sortBy, setSortBy] = useState("distance");
   const [sortDir, setSortDir] = useState("asc");
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  // GERÇEK HATA DÜZELTMESİ: "Şimdi Değil" seçilse bile konum izni modalı, mesafeye göre sıralama
+  // her tıklandığında (artan/azalan yön değiştirmede dahil) yeniden açılıyordu — kullanıcı sürekli
+  // rahatsız ediliyordu. Bu bayrak bir kez "Şimdi Değil" denince true olur, o oturum boyunca
+  // modal bir daha kendiliğinden açılmaz (kullanıcı yine de "Konumumu Kullan" ayarını elle açabilir).
+  const [locationPromptDismissed, setLocationPromptDismissed] = useState(false);
   const [selectedMechanicId, setSelectedMechanicId] = useState(null);
   const [mapDetailOpen, setMapDetailOpen] = useState(false);
   const openMapDetail = (m) => { setSelectedMechanicId(m.id); setMapDetailOpen(true); };
@@ -359,6 +375,7 @@ function useAppLogic() {
         setOwnersDirectory(ownersRes);
         const myOwnerRow = ownersRes.find((o) => o.id === MY_OWNER_ID);
         if (myOwnerRow?.favoriteIds) setFavoriteIds(myOwnerRow.favoriteIds);
+        if (myOwnerRow?.favoriteMechanicIds) setFavoriteMechanicIds(myOwnerRow.favoriteMechanicIds);
         if (myOwnerRow?.likedReviewIds) setLikedReviewIds(myOwnerRow.likedReviewIds);
         setSupportTickets(ticketsRes);
         setQuoteRequests(quoteRequestsRes);
@@ -588,7 +605,16 @@ function useAppLogic() {
   const handleSortClick = (key) => {
     if (sortBy === key) { setSortDir(d => (d === "asc" ? "desc" : "asc")); }
     else { setSortBy(key); setSortDir(key === "rating" ? "desc" : "asc"); }
-    if (key === "distance" && !userLocation) setShowLocationPrompt(true);
+    if (key === "distance" && !userLocation && !locationPromptDismissed) setShowLocationPrompt(true);
+  };
+  const dismissLocationPrompt = () => { setShowLocationPrompt(false); setLocationPromptDismissed(true); };
+  // GERÇEK HATA DÜZELTMESİ: mesafe FİLTRESİ (sıralama değil) konum izni hiç istemeden sessizce
+  // tahmini/seed mesafe (m.distance) üzerinden çalışıyordu — kullanıcı "< 1 km" seçtiğinde gerçek
+  // konumu paylaşmadıysa sonuçların ne kadar güvenilir olduğuna dair hiçbir ipucu yoktu. Artık
+  // mesafeye göre sıralamayla aynı şekilde, henüz reddedilmemişse konum paylaşma isteği gösteriliyor.
+  const handleDistanceFilterClick = (km) => {
+    setFilters(f => ({ ...f, maxDistance: km }));
+    if (km < 999 && !userLocation && !locationPromptDismissed) setShowLocationPrompt(true);
   };
   const handleListingSortClick = (key) => {
     if (listingSort === key) { setListingSortDir(d => (d === "asc" ? "desc" : "asc")); }
@@ -671,31 +697,50 @@ function useAppLogic() {
       fireNotification(`⏰ ${r.title}`, `${r.vehicleName} — ${r.detail}`, true, "owner", { type: "vehicle", id: r.vehicleId });
     });
   }, [allReminders, ownerSettings.smartReminders]);
+  // GERÇEK HATA DÜZELTMESİ: bir hizmetin adı mekaniğin kendi girdiği serbest metin olduğu için
+  // (finalizeAddService/updateService), filtre modalındaki sabit katalog listesiyle harf
+  // büyüklüğü/boşluk farkı yüzünden birebir (===) eşleşme sessizce başarısız olabiliyordu.
+  // tryAddService'teki mükerrer-hizmet kontrolüyle aynı normalize edilmiş karşılaştırmayı kullanıyoruz.
+  const serviceNameMatches = (services, wanted) => {
+    const w = wanted.trim().toLocaleLowerCase("tr-TR");
+    return (services || []).some((s) => s.name.trim().toLocaleLowerCase("tr-TR") === w);
+  };
   const filtered = useMemo(() => {
     let list = mechanicsList.map(m => ({ ...m, effectiveDistance: getEffectiveDistance(m) }));
+    // GERÇEK HATA DÜZELTMESİ: tamirci rolü, kendisiyle paylaşılan bu aynı arama ekranını
+    // ("Araç Bul" / mechBrowse) "diğer tamircileri keşfet" amacıyla kullanıyor — kendi profili
+    // hiçbir zaman "diğer tamirci" olamayacağı için sonuçlardan çıkarılıyor.
+    if (role === "mechanic") list = list.filter(m => m.id !== MY_MECHANIC_ID);
     const q = query.toLowerCase().trim();
     if (q) list = list.filter(m => m.name.toLowerCase().includes(q) || m.specialty.toLowerCase().includes(q) || (m.brandsServiced || []).some(b => b.toLowerCase().includes(q)));
     if (locationQuery.trim()) list = list.filter(m => (m.address || "").toLowerCase().includes(locationQuery.trim().toLowerCase()));
-    if (filters.priceTier === "cheap") list = list.filter(m => m.price <= 300);
-    if (filters.priceTier === "mid") list = list.filter(m => m.price > 300 && m.price <= 450);
-    if (filters.priceTier === "expensive") list = list.filter(m => m.price > 450);
+    if (filters.priceTier === "cheap") list = list.filter(m => m.price <= PRICE_TIER_BREAKS[0]);
+    if (filters.priceTier === "mid") list = list.filter(m => m.price > PRICE_TIER_BREAKS[0] && m.price <= PRICE_TIER_BREAKS[1]);
+    if (filters.priceTier === "expensive") list = list.filter(m => m.price > PRICE_TIER_BREAKS[1]);
     if (filters.minRating > 0) list = list.filter(m => m.rating >= filters.minRating);
     if (filters.maxDistance < 999) list = list.filter(m => m.effectiveDistance <= filters.maxDistance);
     if (filters.brand) list = list.filter(m => (m.brandsServiced || []).includes(filters.brand));
-    if (filters.service) list = list.filter(m => (m.services || []).some(s => s.name === filters.service));
+    if (filters.service) list = list.filter(m => serviceNameMatches(m.services, filters.service));
     if (sortBy === "distance") list = [...list].sort((a, b) => sortDir === "asc" ? a.effectiveDistance - b.effectiveDistance : b.effectiveDistance - a.effectiveDistance);
     if (sortBy === "price") list = [...list].sort((a, b) => sortDir === "asc" ? a.price - b.price : b.price - a.price);
     if (sortBy === "rating") list = [...list].sort((a, b) => sortDir === "asc" ? a.rating - b.rating : b.rating - a.rating);
     return list;
-  }, [query, locationQuery, sortBy, sortDir, mechanicsList, filters, userLocation]);
+  }, [role, query, locationQuery, sortBy, sortDir, mechanicsList, filters, userLocation]);
+  // GERÇEK HATA DÜZELTMESİ: bu liste (çoklu teklif isteği modalındaki tamirci seçimi) aynı `filters`
+  // state'ini kullanıyor ve aynı filtre modalını/aynı "N filtre aktif" rozetini paylaşıyor (bkz.
+  // activeFilterCount), ama marka (filters.brand) ve hizmet (filters.service) filtrelerini hiç
+  // uygulamıyordu — kullanıcı "2 filtre aktif" görüp aslında marka/hizmete uymayan tamircilere de
+  // teklif isteği gönderebiliyordu. Artık `filtered` ile birebir aynı filtre setini uyguluyor.
   const quoteFilteredMechanics = useMemo(() => {
     let list = mechanicsList.map(m => ({ ...m, effectiveDistance: getEffectiveDistance(m) }));
     if (quoteMechSearch.trim()) list = list.filter(m => m.name.toLowerCase().includes(quoteMechSearch.toLowerCase()) || m.specialty.toLowerCase().includes(quoteMechSearch.toLowerCase()));
-    if (filters.priceTier === "cheap") list = list.filter(m => m.price <= 300);
-    if (filters.priceTier === "mid") list = list.filter(m => m.price > 300 && m.price <= 450);
-    if (filters.priceTier === "expensive") list = list.filter(m => m.price > 450);
+    if (filters.priceTier === "cheap") list = list.filter(m => m.price <= PRICE_TIER_BREAKS[0]);
+    if (filters.priceTier === "mid") list = list.filter(m => m.price > PRICE_TIER_BREAKS[0] && m.price <= PRICE_TIER_BREAKS[1]);
+    if (filters.priceTier === "expensive") list = list.filter(m => m.price > PRICE_TIER_BREAKS[1]);
     if (filters.minRating > 0) list = list.filter(m => m.rating >= filters.minRating);
     if (filters.maxDistance < 999) list = list.filter(m => m.effectiveDistance <= filters.maxDistance);
+    if (filters.brand) list = list.filter(m => (m.brandsServiced || []).includes(filters.brand));
+    if (filters.service) list = list.filter(m => serviceNameMatches(m.services, filters.service));
     if (sortBy === "distance") list = [...list].sort((a, b) => sortDir === "asc" ? a.effectiveDistance - b.effectiveDistance : b.effectiveDistance - a.effectiveDistance);
     if (sortBy === "price") list = [...list].sort((a, b) => sortDir === "asc" ? a.price - b.price : b.price - a.price);
     if (sortBy === "rating") list = [...list].sort((a, b) => sortDir === "asc" ? a.rating - b.rating : b.rating - a.rating);
@@ -2747,7 +2792,7 @@ function useAppLogic() {
     setShowNotifPanel, darkMode, setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters,
     listingFilters, setListingFilters, listingSort, setListingSort, listingSortDir, setListingSortDir, handleListingSortClick, userLocation, setUserLocation, locationStatus, setLocationStatus,
-    notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, likedReviewIds, setLikedReviewIds, toggleReviewHelpful, mechanicsList, setMechanicsList, mechanicHours,
+    notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, favoriteMechanicIds, setFavoriteMechanicIds, toggleFavoriteMechanic, likedReviewIds, setLikedReviewIds, toggleReviewHelpful, mechanicsList, setMechanicsList, mechanicHours,
     setMechanicHours, query, setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir,
     setSortDir, showLocationPrompt, setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, openMapDetail,
     selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, problemPhotos, setProblemPhotos,
@@ -2787,7 +2832,7 @@ function useAppLogic() {
     adminTicketStatusFilter, setAdminTicketStatusFilter, adminTicketTypeFilter, setAdminTicketTypeFilter, adminTicketPriorityFilter, setAdminTicketPriorityFilter, adminTicketSearch, setAdminTicketSearch,
     adminTicketVisibleCount, setAdminTicketVisibleCount, showTicketAnalytics, setShowTicketAnalytics, selectedTicketId, setSelectedTicketId, adminTicketNote, setAdminTicketNote,
     adminReplyDraft, setAdminReplyDraft, showBroadcastModal, setShowBroadcastModal, broadcastForm, setBroadcastForm, broadcastLog, setBroadcastLog,
-    adminChangeLog, setAdminChangeLog, fireSuccessPulse, getEffectiveDistance, requestLocation, handleSortClick, confirmUseLocation, stopUsingLocation,
+    adminChangeLog, setAdminChangeLog, fireSuccessPulse, getEffectiveDistance, requestLocation, handleSortClick, handleDistanceFilterClick, locationPromptDismissed, dismissLocationPrompt, confirmUseLocation, stopUsingLocation,
     requestNotifPermission, fireNotification, selectedMechanic, bookingServiceOptions, myProfile, selectedListing, allReminders, dismissedReminderKey,
     setDismissedReminderKey, browseScrollRef, heroCollapsed, setHeroCollapsed, goBookFromReminder, topReminder, notifiedReminderKeysRef, filtered,
     quoteFilteredMechanics, filteredListings, activeListingFilterCount, filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs,

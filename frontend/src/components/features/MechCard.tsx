@@ -1,5 +1,5 @@
 import { PriceLevelDots } from "../ui/PriceLevelDots";
-import { BadgeCheck, CheckCircle2, MapPin, Star, Zap } from "lucide-react";
+import { BadgeCheck, CheckCircle2, Heart, MapPin, Star, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { BANNER_PRESETS } from "../../data/constants";
 import { useState } from "react";
@@ -14,8 +14,8 @@ export function MechCard({ m, onHover }) {
     setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile, 
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, 
     filters, setFilters, listingFilters, setListingFilters, listingSort, setListingSort, userLocation, 
-    setUserLocation, locationStatus, setLocationStatus, notifPermission, setNotifPermission, favoriteIds, 
-    setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query, 
+    setUserLocation, locationStatus, setLocationStatus, notifPermission, setNotifPermission, favoriteIds,
+    setFavoriteIds, toggleFavorite, favoriteMechanicIds, toggleFavoriteMechanic, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query,
     setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir, setSortDir, showLocationPrompt, 
     setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, 
     openMapDetail, selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, 
@@ -114,17 +114,21 @@ export function MechCard({ m, onHover }) {
   } = useApp();
   const [coverBroken, setCoverBroken] = useState(false);
   const showCover = m.coverPhoto && !coverBroken;
+  const fav = (favoriteMechanicIds || []).includes(m.id);
   return (
-    <button onClick={() => openDetail(m)} onMouseEnter={() => onHover && onHover(m.id)} onMouseLeave={() => onHover && onHover(null)} className={`group w-full text-left bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === m.id ? "ring-2 ring-rose-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
+    <div onMouseEnter={() => onHover && onHover(m.id)} onMouseLeave={() => onHover && onHover(null)} className={`group bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === m.id ? "ring-2 ring-rose-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
       <div className="relative m-2 mb-0 rounded-2xl overflow-hidden isolate transform-gpu">
-        <div className={`h-44 bg-gradient-to-br ${BANNER_PRESETS[m.bannerPreset] || BANNER_PRESETS.blue} flex items-center justify-center relative overflow-hidden`}>
+        <button onClick={() => openDetail(m)} className={`w-full h-44 bg-gradient-to-br ${BANNER_PRESETS[m.bannerPreset] || BANNER_PRESETS.blue} flex items-center justify-center relative overflow-hidden`}>
           {showCover && <img src={imgThumb(m.coverPhoto, 500)} loading="lazy" decoding="async" onError={() => setCoverBroken(true)} alt={m.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />}
           {!showCover && <span className="relative text-4xl w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm transition-transform duration-500 ease-out group-hover:scale-105">{m.img}</span>}
+        </button>
+        {m.verified && <span className="absolute top-3 left-3 bg-white text-rose-600 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm pointer-events-none"><BadgeCheck size={11} /> {t("verifiedBadge")}</span>}
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
+          {m.rating >= 4.7 && <span className="bg-white text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><Star size={10} className="fill-gray-800" /> {t("featuredLabel")}</span>}
+          <button onClick={(e) => { e.stopPropagation(); toggleFavoriteMechanic(m.id); }} aria-label={t("addToFavoritesAria")} className="w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center flex-shrink-0"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
         </div>
-        {m.rating >= 4.7 && <span className="absolute top-3 right-3 bg-white text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><Star size={10} className="fill-gray-800" /> {t("featuredLabel")}</span>}
-        {m.verified && <span className="absolute top-3 left-3 bg-white text-rose-600 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><BadgeCheck size={11} /> {t("verifiedBadge")}</span>}
       </div>
-      <div className="p-4">
+      <button onClick={() => openDetail(m)} className="w-full text-left p-4">
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">{m.name}</h3>
           <span className="flex-shrink-0 flex items-center gap-1 text-sm font-semibold text-gray-900"><Star size={13} className="fill-gray-900" />{m.rating}<span className="text-gray-400 font-normal text-xs">({m.reviews})</span></span>
@@ -135,7 +139,7 @@ export function MechCard({ m, onHover }) {
           <PriceLevelDots price={m.price} />
         </div>
         <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Zap size={10} className="text-gray-900" /> {m.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>
-      </div>
-    </button>
+      </button>
+    </div>
   );
 }

@@ -79,7 +79,7 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
     notifiedReminderKeysRef, filtered, quoteFilteredMechanics, filteredListings, activeListingFilterCount, 
     filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs, activeFilterCount, nextDays, 
     isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate, 
-    isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, 
+    isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt,
     downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt, mechanicDirectionsUrl, 
     toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, 
     acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD, confirmBooking, goHome, chooseRole, submitAdminLogin, 
@@ -118,6 +118,13 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
     const previewItem = isControlled ? previewItemProp : localPreviewItem;
     const setPreviewItem = isControlled ? onPreviewChange : setLocalPreviewItem;
     const isListing = (it) => it && it.brand !== undefined;
+    // Demo haritası gerçek bir harita SDK'sı kullanmıyor (statik SVG arkaplan + yüzde bazlı pin
+    // konumlandırma); +/- ve pusula/konum butonları önceden görsel-amaçlı ve işlevsizdi. Basit ama
+    // gerçek bir etki için tüm harita içeriğini CSS transform ile yakınlaştırıyoruz.
+    const [zoomLevel, setZoomLevel] = useState(1);
+    const zoomIn = () => setZoomLevel(z => Math.min(1.6, +(z + 0.15).toFixed(2)));
+    const zoomOut = () => setZoomLevel(z => Math.max(0.7, +(z - 0.15).toFixed(2)));
+    const resetView = () => setZoomLevel(1);
     const mapBoxRef = useRef(null);
     const [popupRect, setPopupRect] = useState(null);
     const updatePopupRect = () => { if (mapBoxRef.current) setPopupRect(mapBoxRef.current.getBoundingClientRect()); };
@@ -137,6 +144,7 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
     return (
     <div ref={mapBoxRef} className={`rounded-2xl border border-gray-200 relative ${className}`}>
       <div className="absolute inset-0 rounded-2xl overflow-hidden" style={{ backgroundColor: "#eaf0e4" }}>
+        <div className="absolute inset-0 transition-transform duration-200 ease-out" style={{ transform: `scale(${zoomLevel})`, transformOrigin: "center" }}>
         <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
           <ellipse cx="88%" cy="12%" rx="70" ry="55" fill="#aee1f7" opacity="0.9" />
           <ellipse cx="8%" cy="85%" rx="60" ry="45" fill="#c8e6c9" opacity="0.7" />
@@ -161,15 +169,16 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
             </svg>
           </button>
         ); })}
+        </div>
         <div className="absolute right-2 bottom-2 flex flex-col bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 z-20">
-          <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-lg font-bold border-b border-gray-100">+</button>
-          <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-lg font-bold">−</button>
+          <button type="button" onClick={zoomIn} aria-label={t("mapZoomInAria")} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-lg font-bold border-b border-gray-100">+</button>
+          <button type="button" onClick={zoomOut} aria-label={t("mapZoomOutAria")} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:bg-gray-50 text-lg font-bold">−</button>
         </div>
         <div className="absolute right-2 top-2 flex flex-col gap-1.5 z-20">
-          <div className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100"><Compass size={14} className="text-gray-500" /></div>
-          <div className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100"><Navigation size={13} className="text-rose-600" /></div>
+          <button type="button" onClick={resetView} aria-label={t("mapResetViewAria")} className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100 hover:bg-gray-50"><Compass size={14} className="text-gray-500" /></button>
+          <button type="button" onClick={requestLocation} aria-label={t("mapCenterMyLocationAria")} className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-gray-100 hover:bg-gray-50"><Navigation size={13} className="text-rose-600" /></button>
         </div>
-        <div className="absolute bottom-1 left-2 text-[9px] text-gray-400/80 z-20">Örnek harita verisi</div>
+        <div className="absolute bottom-1 left-2 text-[9px] text-gray-400/80 z-20">{t("sampleMapDataNote")}</div>
       </div>
       {previewItem && popupRect && createPortal(
         <div
@@ -182,9 +191,9 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
               <h4 className="font-semibold text-gray-800 text-xs truncate">{isListing(previewItem) ? `${previewItem.brand} ${previewItem.model}` : previewItem.name}</h4>
               <p className="text-rose-700 font-bold text-xs">{isListing(previewItem) ? previewItem.price : <PriceLevelDots price={previewItem.price} />}</p>
               {!isListing(previewItem) && <p className="text-[10px] text-gray-400 flex items-center gap-1"><Star size={10} className="text-gray-900 fill-gray-900" />{previewItem.rating} ({previewItem.reviews})</p>}
-              <button onClick={() => { const item = previewItem; setPreviewItem(null); onPick(item); }} className="text-[10px] text-rose-600 font-medium hover:underline mt-0.5">Detayları Gör →</button>
+              <button onClick={() => { const item = previewItem; setPreviewItem(null); onPick(item); }} className="text-[10px] text-rose-600 font-medium hover:underline mt-0.5">{t("viewDetailsArrowBtn")}</button>
             </div>
-            <button onClick={() => setPreviewItem(null)} aria-label="Kapat" className="text-gray-300 hover:text-gray-500 flex-shrink-0 self-start p-2 -m-2"><X size={14} /></button>
+            <button onClick={() => setPreviewItem(null)} aria-label={t("closeAria")} className="text-gray-300 hover:text-gray-500 flex-shrink-0 self-start p-2 -m-2"><X size={14} /></button>
           </div>
         </div>,
         document.body
