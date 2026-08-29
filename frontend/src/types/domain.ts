@@ -324,7 +324,7 @@ export interface QuoteRequest {
   issue: string;
   photos: string[];
   mechanicIds: number[];
-  status: "open" | "closed" | string;
+  status: "open" | "closed" | "cancelled" | string;
   createdAt?: string;
 }
 
@@ -334,7 +334,7 @@ export interface QuoteOffer {
   mechanicId: number;
   mechanicName: string;
   mechanicImg: string;
-  status: "pending" | "submitted" | "accepted" | "lost" | string;
+  status: "pending" | "submitted" | "accepted" | "lost" | "declined" | string;
   price: number | null;
   etaDays: number | null;
   note: string;

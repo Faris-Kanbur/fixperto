@@ -250,7 +250,9 @@ export const T = {
   quoteStatusSubmitted: { tr: "Teklif gönderildi", en: "Quote sent", de: "Angebot gesendet" },
   quoteStatusAccepted: { tr: "Kabul edildi 🎉", en: "Accepted 🎉", de: "Angenommen 🎉" },
   quoteStatusLost: { tr: "Kaybedildi", en: "Lost", de: "Verloren" },
+  quoteStatusDeclined: { tr: "Reddedildi", en: "Declined", de: "Abgelehnt" },
   giveQuoteBtn: { tr: "Teklif Ver", en: "Give Quote", de: "Angebot machen" },
+  declineQuoteBtn: { tr: "Reddet", en: "Decline", de: "Ablehnen" },
   priceLabel: { tr: "Fiyat (₺)", en: "Price (₺)", de: "Preis (₺)" },
   pricePlaceholderExample: { tr: "Örn. 450", en: "e.g. 450", de: "z. B. 450" },
   durationDaysLabel: { tr: "Süre (gün)", en: "Duration (days)", de: "Dauer (Tage)" },
@@ -262,6 +264,7 @@ export const T = {
   awaitingResponseEllipsis: { tr: "Yanıt bekleniyor...", en: "Awaiting response...", de: "Antwort ausstehend..." },
   quoteAcceptedNotice: { tr: "Müşteri teklifinizi kabul etti, randevu oluşturulacak.", en: "Customer accepted your quote, an appointment will be created.", de: "Der Kunde hat Ihr Angebot angenommen, ein Termin wird erstellt." },
   quoteLostNotice: { tr: "Müşteri başka bir tamirciyi tercih etti.", en: "Customer chose another mechanic.", de: "Der Kunde hat sich für eine andere Werkstatt entschieden." },
+  quoteDeclinedNotice: { tr: "Bu teklif isteğini reddettiniz.", en: "You declined this quote request.", de: "Sie haben diese Angebotsanfrage abgelehnt." },
   noHistoryYetNotice: { tr: "Henüz geçmiş kayıt yok", en: "No history yet", de: "Noch kein Verlauf" },
   completedAndRecordsCount: { tr: "{done} tamamlanan · {total} kayıt", en: "{done} completed · {total} records", de: "{done} abgeschlossen · {total} Einträge" },
   downloadReceiptBtn: { tr: "Fiş İndir", en: "Download Receipt", de: "Beleg herunterladen" },
@@ -504,7 +507,11 @@ export const T = {
   quotePhotoAlt: { tr: "Teklif fotoğrafı {n}", en: "Quote photo {n}", de: "Angebotsfoto {n}" },
   selectMechanicLabel: { tr: "Tamirci seç", en: "Select mechanics", de: "Werkstatt auswählen" },
   selectedCountSuffix: { tr: "{n} seçili", en: "{n} selected", de: "{n} ausgewählt" },
-  selectAnyCountNote: { tr: "İstediğiniz sayıda tamirci seçebilirsiniz — en az 1 yeterli, {n} tanesi ücretsizdir.", en: "You can select as many mechanics as you'd like — at least 1 is required, {n} are free.", de: "Sie können beliebig viele Werkstätten auswählen — mindestens 1 ist erforderlich, {n} sind kostenlos." },
+  // GERÇEK HATA DÜZELTMESİ: bu metin önceden "istediğiniz sayıda tamirci seçebilirsiniz" diyerek
+  // sınırsız seçim varmış izlenimi veriyordu — oysa ücretsizde {n}, premium ile de sabit bir üst
+  // sınır ({max}) var (bkz. FREE_QUOTE_MECH_LIMIT / PREMIUM_QUOTE_MECH_LIMIT). Artık gerçek
+  // limitleri söylüyor.
+  selectAnyCountNote: { tr: "En az 1 tamirci seçin — {n} tanesi ücretsiz, Premium ile en fazla {max} tamirciye kadar teklif isteyebilirsiniz.", en: "Select at least 1 mechanic — {n} are free, and with Premium you can request quotes from up to {max} mechanics.", de: "Wählen Sie mindestens 1 Werkstatt — {n} sind kostenlos, mit Premium können Sie bis zu {max} Werkstätten anfragen." },
   searchMechOrSpecialtyPlaceholder: { tr: "Tamirci veya uzmanlık ara...", en: "Search mechanic or specialty...", de: "Werkstatt oder Fachgebiet suchen..." },
   mechOpenShort: { tr: "Açık", en: "Open", de: "Geöffnet" },
   mechClosedShort: { tr: "Kapalı", en: "Closed", de: "Geschlossen" },

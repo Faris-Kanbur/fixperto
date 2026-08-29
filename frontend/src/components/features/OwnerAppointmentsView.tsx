@@ -80,7 +80,7 @@ export function OwnerAppointmentsView() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, 
     downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt, mechanicDirectionsUrl, 
     toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, 
-    acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD, confirmBooking, goHome, chooseRole, submitAdminLogin, 
+    acceptQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD, confirmBooking, goHome, chooseRole, submitAdminLogin, 
     adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue, adminChangeTargetLabel, 
     logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, 
     expandedHistoryGroups, setExpandedHistoryGroups, toggleHistoryGroup, revertAdminChangeGroup, 
@@ -129,15 +129,23 @@ export function OwnerAppointmentsView() {
             return (
               <div key={req.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                 <button onClick={() => setExpandedQuoteReqId(isOpen ? null : req.id)} className="w-full flex items-center justify-between p-3.5">
-                  <div className="text-left min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate">{req.issue}</p><p className="text-[11px] text-gray-400 mt-0.5">{req.vehicle} · {offers.length} tamirci{req.status === "open" ? ` · ${submittedCount} teklif geldi` : " · kapandı"}</p></div>
-                  <span className={`text-[10px] px-2 py-1 rounded-full font-medium flex-shrink-0 ml-2 ${req.status === "open" ? "bg-rose-50 text-rose-600" : "bg-gray-100 text-gray-400"}`}>{req.status === "open" ? "Açık" : "Kapandı"}</span>
+                  <div className="text-left min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate">{req.issue}</p><p className="text-[11px] text-gray-400 mt-0.5">{req.vehicle} · {offers.length} tamirci{req.status === "open" ? ` · ${submittedCount} teklif geldi` : req.status === "cancelled" ? " · iptal edildi" : " · kapandı"}</p></div>
+                  <span className={`text-[10px] px-2 py-1 rounded-full font-medium flex-shrink-0 ml-2 ${req.status === "open" ? "bg-rose-50 text-rose-600" : req.status === "cancelled" ? "bg-gray-100 text-gray-400" : "bg-gray-100 text-gray-400"}`}>{req.status === "open" ? "Açık" : req.status === "cancelled" ? "İptal Edildi" : "Kapandı"}</span>
                   <ChevronRight size={14} className={`text-gray-300 transition-transform flex-shrink-0 ml-2 ${isOpen ? "rotate-90" : ""}`} />
                 </button>
                 {isOpen && (
                   <div className="px-3.5 pb-3.5 border-t border-gray-50 pt-3 space-y-2">
+                    {req.status === "open" && (
+                      <button
+                        onClick={() => setConfirmDialog({ title: "Teklif isteğini iptal et", body: "Bu isteği iptal etmek istediğinize emin misiniz? Gelen/bekleyen tüm teklifler kapanacak.", confirmLabel: "Evet, iptal et", danger: true, onConfirm: () => cancelQuoteRequest(req.id) })}
+                        className="w-full text-center text-[11px] text-gray-400 hover:text-rose-600 transition py-1"
+                      >
+                        İsteği iptal et
+                      </button>
+                    )}
                     {offers.sort((a, b) => (a.price || 999999) - (b.price || 999999)).map(o => (
                       <div key={o.id} className={`rounded-xl p-3 border ${o.status === "accepted" ? "border-green-200 bg-green-50" : "border-gray-100 bg-gray-50"}`}>
-                        <div className="flex items-center justify-between mb-1"><div className="flex items-center gap-2 min-w-0"><span className="text-lg flex-shrink-0">{o.mechanicImg}</span><p className="text-xs font-semibold text-gray-800 truncate">{o.mechanicName}</p></div>{o.status === "submitted" && req.status === "open" && (<button onClick={() => acceptQuoteOffer(req.id, o.id)} className="flex-shrink-0 bg-rose-600 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-medium hover:bg-rose-700 transition">Kabul Et</button>)}{o.status === "accepted" && (<span className="flex-shrink-0 text-[10px] text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 size={11} /> Kabul edildi</span>)}{o.status === "lost" && (<span className="flex-shrink-0 text-[10px] text-gray-400">Seçilmedi</span>)}{o.status === "pending" && (<span className="flex-shrink-0 text-[10px] text-amber-500">Yanıt bekleniyor</span>)}</div>
+                        <div className="flex items-center justify-between mb-1"><div className="flex items-center gap-2 min-w-0"><span className="text-lg flex-shrink-0">{o.mechanicImg}</span><p className="text-xs font-semibold text-gray-800 truncate">{o.mechanicName}</p></div>{o.status === "submitted" && req.status === "open" && (<button onClick={() => acceptQuoteOffer(req.id, o.id)} className="flex-shrink-0 bg-rose-600 text-white text-[10px] px-2.5 py-1.5 rounded-lg font-medium hover:bg-rose-700 transition">Kabul Et</button>)}{o.status === "accepted" && (<span className="flex-shrink-0 text-[10px] text-green-600 font-semibold flex items-center gap-1"><CheckCircle2 size={11} /> Kabul edildi</span>)}{o.status === "lost" && (<span className="flex-shrink-0 text-[10px] text-gray-400">Seçilmedi</span>)}{o.status === "declined" && (<span className="flex-shrink-0 text-[10px] text-gray-400">Pas geçti</span>)}{o.status === "pending" && (<span className="flex-shrink-0 text-[10px] text-amber-500">Yanıt bekleniyor</span>)}</div>
                         {o.status === "submitted" || o.status === "accepted" ? (<div className="flex items-center gap-3 text-[11px] text-gray-500"><span className="font-bold text-gray-800">{o.price}₺</span>{o.etaDays && <span>· {o.etaDays} gün</span>}{o.note && <span className="truncate">· <TranslatedText id={`quoteoffer-note-${o.id}`} text={o.note} fromLang={mechanicsList.find(m => m.id === o.mechanicId)?.lang || "tr"} viewerLang={ownerLang} compact /></span>}</div>) : null}
                       </div>
                     ))}

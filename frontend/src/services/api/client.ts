@@ -149,8 +149,21 @@ export const api = {
   conversations: crud<Conversation>("conversations"),
   jobs: crud<JobListing>("jobs"),
   tickets: crud<SupportTicket>("tickets"),
-  quoteRequests: crud<QuoteRequest>("quote-requests"),
-  quoteOffers: crud<QuoteOffer>("quote-offers"),
+  // quote-requests/quote-offers backend'de artık generic CRUD değil (bkz.
+  // backend/routes/quotes.js) — crud<>() ile aynı temel GET/POST/PATCH/DELETE'i korurken,
+  // durum geçişlerini (kabul/iptal/reddet) atomik olarak yapan özel uç noktalar ekleniyor.
+  quoteRequests: {
+    ...crud<QuoteRequest>("quote-requests"),
+    cancel: (id: number | string, opts?: RequestOptions): Promise<{ request: QuoteRequest; offers: QuoteOffer[] }> =>
+      request(`/api/quote-requests/${id}/cancel`, { method: "POST", ...opts }),
+  },
+  quoteOffers: {
+    ...crud<QuoteOffer>("quote-offers"),
+    accept: (id: number | string, opts?: RequestOptions): Promise<{ request: QuoteRequest; offers: QuoteOffer[] }> =>
+      request(`/api/quote-offers/${id}/accept`, { method: "POST", ...opts }),
+    decline: (id: number | string, opts?: RequestOptions): Promise<QuoteOffer> =>
+      request(`/api/quote-offers/${id}/decline`, { method: "POST", ...opts }),
+  },
   admin: {
     login: (email: string, password: string): Promise<{ ok: true }> => request("/api/admin/login", { method: "POST", body: JSON.stringify({ email, password }) }),
     stats: (): Promise<AdminStats> => request("/api/admin/stats"),

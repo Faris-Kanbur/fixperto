@@ -25,7 +25,7 @@ import { MiniBarChart } from "../../components/ui/MiniBarChart";
 // Basit istemci-taraflı sıra numarası sayaçları (mesaj/randevu/ilan/iş ilanı/değişiklik kaydı/
 // destek talebi/teklif isteği/teklif id'leri) — backend'deki gerçek id'ler INSERT sırasında
 // otomatik atanıyor, bunlar sadece bu oturumda henüz kaydedilmemiş taslak nesneler için kullanılıyor.
-let msgId = 1000, apptId = 200, listingId = 500, jobListingId = 800, adminChangeLogId = 1, supportTicketId = 8001, quoteReqId = 5000, quoteOfferId = 9000;
+let msgId = 1000, apptId = 200, listingId = 500, jobListingId = 800, adminChangeLogId = 1, supportTicketId = 8001;
 // Bir üst satırdaki id sayaçları BACKEND'in kendi tablosuna sahip varlıklar için (o varlıklar zaten
 // gerçek id'lerini INSERT sırasında backend'den alıyor, bu sayaçlar hiç kullanılmıyor bile). Burada
 // AYRI bir sayaç var çünkü bazı veriler kendi tabloları OLMAYAN, bir üst kaydın (mechanic/vehicle/
@@ -125,7 +125,19 @@ function useAppLogic() {
   const addProblemPhoto = (e) => { const file = e.target.files?.[0]; if (!file) return; setProblemPhotos(p => [...p, URL.createObjectURL(file)]); e.target.value = ""; };
   const removeProblemPhoto = (idx) => setProblemPhotos(p => p.filter((_, i) => i !== idx));
   const quotePhotoRef = useRef(null);
-  const addQuotePhoto = (e) => { const file = e.target.files?.[0]; if (!file) return; setQuotePhotos(p => [...p, URL.createObjectURL(file)]); e.target.value = ""; };
+  // GERÇEK HATA DÜZELTMESİ: URL.createObjectURL(file) sayfaya özel geçici bir bellek referansı
+  // döndürür — backend'e kaydedilip sayfa yenilendiğinde (veya farklı bir sekmede açıldığında)
+  // artık geçersizdir, fotoğraf sessizce kırık görünür. FileReader.readAsDataURL ile kalıcı,
+  // kendi kendine yeten bir "data:" URI'sine çeviriyoruz — normal bir metin sütunu gibi DB'de
+  // saklanabilir ve her zaman aynı şekilde render edilir.
+  const addQuotePhoto = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { if (typeof reader.result === "string") setQuotePhotos(p => [...p, reader.result as string]); };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
   const removeQuotePhoto = (idx) => setQuotePhotos(p => p.filter((_, i) => i !== idx));
   const [approveExpensiveService, setApproveExpensiveService] = useState(false);
   const [shareHistoryConsent, setShareHistoryConsent] = useState(true);
@@ -953,39 +965,87 @@ function useAppLogic() {
       setToast({ type: "info", text: `⚠️ Teklif isteği kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
   };
-  const submitQuoteOffer = (offerId) => {
+  // GERÇEK HATA DÜZELTMESİ: önceden burada iyimser (optimistic) bir local state güncellemesi
+  // yapılıp persist() ile arka planda "ateşle ve unut" şeklinde kaydediliyordu — istek backend'de
+  // artık açık değilse (başka bir teklif zaten kabul edilmiş, istek iptal edilmiş) kullanıcı yine
+  // de "Teklifiniz gönderildi" başarı mesajı görüyordu, oysa teklif aslında hiç kaydedilmemişti.
+  // Bu akışta doğruluk, diğer ekranlardaki "hemen göster + arkada kaydet" davranışından daha
+  // önemli olduğu için burada bilerek await ediyoruz; sunucu reddederse (409/400) ilgili teklifi
+  // yeniden çekip gerçek durumunu (ör. "lost") ekrana yansıtıyoruz.
+  const submitQuoteOffer = async (offerId) => {
     const price = parsePriceNumber(quoteOfferForm.price);
     if (!price) return;
     const patch = { status: "submitted", price, etaDays: quoteOfferForm.etaDays ? parseInt(quoteOfferForm.etaDays, 10) : null, note: quoteOfferForm.note.trim() };
-    setQuoteOffers(os => os.map(o => o.id === offerId ? { ...o, ...patch } : o));
-    persist(api.quoteOffers.update(offerId, patch), "Teklif kaydedilemedi");
-    setRespondingQuoteOfferId(null);
-    setQuoteOfferForm({ price: "", etaDays: "", note: "" });
-    setToast({ type: "info", text: "💬 Teklifiniz gönderildi." });
-    fireNotification("Yeni teklif geldi! 💰", "Bir tamirci teklif isteğinize yanıt verdi.", ownerSettings.notifyOffers, "owner", { type: "quoteOwner" });
+    try {
+      const updated = await api.quoteOffers.update(offerId, patch);
+      setQuoteOffers(os => os.map(o => o.id === offerId ? updated : o));
+      setRespondingQuoteOfferId(null);
+      setQuoteOfferForm({ price: "", etaDays: "", note: "" });
+      setToast({ type: "info", text: "💬 Teklifiniz gönderildi." });
+      fireNotification("Yeni teklif geldi! 💰", "Bir tamirci teklif isteğinize yanıt verdi.", ownerSettings.notifyOffers, "owner", { type: "quoteOwner" });
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ ${err?.message || "Teklif gönderilemedi."}` });
+      try { const fresh = await api.quoteOffers.get(offerId); setQuoteOffers(os => os.map(o => o.id === offerId ? fresh : o)); } catch { /* hata mesajı zaten gösterildi */ }
+    }
   };
-  const acceptQuoteOffer = (requestId, offerId) => {
+  // Tamirci henüz yanıt vermediği bir teklif isteğine katılmayacağını netleştirir (bkz. "Vazgeç"
+  // butonunun aksine — o sadece fiyat formunu kapatır, teklif "pending" kalmaya devam eder).
+  const declineQuoteOffer = async (offerId) => {
+    try {
+      const updated = await api.quoteOffers.decline(offerId);
+      setQuoteOffers(os => os.map(o => o.id === offerId ? updated : o));
+      setToast({ type: "info", text: "Teklif isteğini reddettiniz." });
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ ${err?.message || "İşlem tamamlanamadı."}` });
+    }
+  };
+  // GERÇEK HATA DÜZELTMESİ (bkz. çoklu teklif akışı incelemesi): önceden bir teklif kabul
+  // edildiğinde yalnızca status'ü "submitted" olan kardeş teklifler "lost" yapılıyordu — henüz
+  // fiyat vermemiş ("pending") tamirciler kabul sonrası da "yanıt bekleniyor" görünmeye devam
+  // ediyordu. Ayrıca kabul + kardeşleri-kaybet + isteği-kapat üç ayrı PATCH ile yapılıyordu (yarış
+  // durumuna açık: iki teklif neredeyse aynı anda kabul edilirse ikisi de "accepted" kalabilirdi).
+  // Şimdi bunların hepsi backend/routes/quotes.js'teki tek bir atomik /accept transaction'ına
+  // taşındı; burada da (submitQuoteOffer'daki gibi) sonucu await edip gerçek sunucu durumunu
+  // uyguluyoruz, iyimser bir güncelleme yapmıyoruz.
+  const acceptQuoteOffer = async (requestId, offerId) => {
     const req = quoteRequests.find(r => r.id === requestId);
     const offer = quoteOffers.find(o => o.id === offerId);
     if (!req || !offer) return;
     const mech = mechanicsList.find(m => m.id === offer.mechanicId);
     if (!mech) { setToast({ type: "info", text: "⚠️ Bu tamirci artık listede bulunamadı." }); return; }
-    const myLostOffer = offer.mechanicId !== MY_MECHANIC_ID && quoteOffers.find(o => o.requestId === requestId && o.mechanicId === MY_MECHANIC_ID && o.status === "submitted");
-    setPendingQuoteAccept({ bookingService: { name: `Teklif: ${req.issue.slice(0, 40)}`, price: `${offer.price}₺`, other: false, fixed: true }, problemDesc: req.issue, problemPhotos: req.photos || [] });
-    setSelectedMechanicId(mech.id);
-    setSelectedDate(null); setSelectedTime(null);
-    setQuoteRequests(qs => qs.map(r => r.id === requestId ? { ...r, status: "closed" } : r));
-    persist(api.quoteRequests.update(requestId, { status: "closed" }), "Teklif isteği kaydedilemedi");
-    const relatedOffers = quoteOffers.filter(o => o.requestId === requestId);
-    relatedOffers.forEach(o => {
-      const nextStatus = o.id === offerId ? "accepted" : (o.status === "submitted" ? "lost" : o.status);
-      if (nextStatus !== o.status) persist(api.quoteOffers.update(o.id, { status: nextStatus }), "Teklif kaydedilemedi");
-    });
-    setQuoteOffers(os => os.map(o => o.requestId === requestId ? { ...o, status: o.id === offerId ? "accepted" : (o.status === "submitted" ? "lost" : o.status) } : o));
-    setScreen("booking");
-    setToast({ type: "info", text: `✅ ${mech.name} teklifini kabul ettiniz, randevu saatinizi seçin.` });
-    if (myLostOffer) {
-      fireNotification("Teklif isteği sonuçlandı", "Verdiğiniz teklif kabul edilmedi, müşteri başka bir tamirciyi seçti.", mechSettings.notifyOffers, "mechanic", { type: "appointment" });
+    const myLostOffer = offer.mechanicId !== MY_MECHANIC_ID && quoteOffers.find(o => o.requestId === requestId && o.mechanicId === MY_MECHANIC_ID && (o.status === "submitted" || o.status === "pending"));
+    try {
+      const { request: updatedReq, offers: updatedOffers } = await api.quoteOffers.accept(offerId);
+      setQuoteRequests(qs => qs.map(r => r.id === requestId ? updatedReq : r));
+      setQuoteOffers(os => os.map(o => updatedOffers.find(u => u.id === o.id) || o));
+      setPendingQuoteAccept({ bookingService: { name: `Teklif: ${req.issue.slice(0, 40)}`, price: `${offer.price}₺`, other: false, fixed: true }, problemDesc: req.issue, problemPhotos: req.photos || [] });
+      setSelectedMechanicId(mech.id);
+      setSelectedDate(null); setSelectedTime(null);
+      setScreen("booking");
+      setToast({ type: "info", text: `✅ ${mech.name} teklifini kabul ettiniz, randevu saatinizi seçin.` });
+      if (myLostOffer) {
+        fireNotification("Teklif isteği sonuçlandı", "Verdiğiniz teklif kabul edilmedi, müşteri başka bir tamirciyi seçti.", mechSettings.notifyOffers, "mechanic", { type: "appointment" });
+      }
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ ${err?.message || "Teklif kabul edilemedi."}` });
+      // İstek zaten kapanmışsa (başka biri az önce kabul etti/iptal etti) ekranı gerçek sunucu
+      // durumuyla senkronize et, yarım kalmış/yanıltıcı bir görünüm bırakma.
+      try {
+        const freshReq = await api.quoteRequests.get(requestId);
+        setQuoteRequests(qs => qs.map(r => r.id === requestId ? freshReq : r));
+      } catch { /* hata mesajı zaten gösterildi */ }
+    }
+  };
+  // Araç sahibi hâlâ açık olan bir isteği tamamen geri çeker (bkz. çoklu teklif akışı incelemesi —
+  // önceden bireysel teklifleri kabul etmek dışında isteğin tamamını iptal etmenin bir yolu yoktu).
+  const cancelQuoteRequest = async (requestId) => {
+    try {
+      const { request: updatedReq, offers: updatedOffers } = await api.quoteRequests.cancel(requestId);
+      setQuoteRequests(qs => qs.map(r => r.id === requestId ? updatedReq : r));
+      setQuoteOffers(os => os.map(o => updatedOffers.find(u => u.id === o.id) || o));
+      setToast({ type: "info", text: "📋 Teklif isteğiniz iptal edildi." });
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ ${err?.message || "İptal edilemedi."}` });
     }
   };
   // quoteOffers her render'da JSX içinde ham .filter() ile taranıyordu (bkz. AppShell "Teklifler"
@@ -2679,7 +2739,7 @@ function useAppLogic() {
     quoteFilteredMechanics, filteredListings, activeListingFilterCount, filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs,
     activeFilterCount, nextDays, isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate,
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
-    mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
+    mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers, quoteOffersByRequestId, myQuoteRequests,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
     adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats, viewStats, listingFavoriteCount, myProfileViewStats, listingViewStats, translationCache, translateMessage, ownerLangFor,

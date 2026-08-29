@@ -94,7 +94,7 @@ export function AppShell() {
     quoteFilteredMechanics, filteredListings, activeListingFilterCount, filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs,
     activeFilterCount, nextDays, isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate,
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
-    mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD,
+    mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
     adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats, viewStats, myProfileViewStats, listingViewStats, listingFavoriteCount,
@@ -299,7 +299,7 @@ export function AppShell() {
                   <label className="text-xs font-semibold text-gray-700">{t("selectMechanicLabel")}</label>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{t("selectedCountSuffix", { n: String(quoteSelectedMechIds.length) })}</span>
                 </div>
-                <p className="text-[10px] text-gray-400 mb-2">{t("selectAnyCountNote", { n: String(FREE_QUOTE_MECH_LIMIT) })}</p>
+                <p className="text-[10px] text-gray-400 mb-2">{t("selectAnyCountNote", { n: String(FREE_QUOTE_MECH_LIMIT), max: String(PREMIUM_QUOTE_MECH_LIMIT) })}</p>
                 <div className="relative mb-2">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
                   <input value={quoteMechSearch} onChange={(e) => setQuoteMechSearch(e.target.value)} placeholder={t("searchMechOrSpecialtyPlaceholder")} className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-xs" />
@@ -2113,10 +2113,10 @@ export function AppShell() {
                       const responding = respondingQuoteOfferId === o.id;
                       return (
                         <div key={o.id} className="border border-gray-100 rounded-2xl p-4 shadow-sm">
-                          <div className="flex justify-between items-start mb-2"><div><h4 className="font-semibold text-gray-800 text-sm">{req.customer}</h4><p className="text-xs text-gray-400">{req.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${o.status === "pending" ? "bg-amber-50 text-amber-600" : o.status === "submitted" ? "bg-rose-50 text-rose-600" : o.status === "accepted" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>{o.status === "pending" ? t("quoteStatusPending") : o.status === "submitted" ? t("quoteStatusSubmitted") : o.status === "accepted" ? t("quoteStatusAccepted") : t("quoteStatusLost")}</span></div>
+                          <div className="flex justify-between items-start mb-2"><div><h4 className="font-semibold text-gray-800 text-sm">{req.customer}</h4><p className="text-xs text-gray-400">{req.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${o.status === "pending" ? "bg-amber-50 text-amber-600" : o.status === "submitted" ? "bg-rose-50 text-rose-600" : o.status === "accepted" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>{o.status === "pending" ? t("quoteStatusPending") : o.status === "submitted" ? t("quoteStatusSubmitted") : o.status === "accepted" ? t("quoteStatusAccepted") : o.status === "declined" ? t("quoteStatusDeclined") : t("quoteStatusLost")}</span></div>
                           <p className="text-xs text-gray-500 mb-3"><TranslatedText id={`quotereq-issue-${req.id}`} text={req.issue} fromLang={ownerLangFor(req.ownerId)} viewerLang={myProfile.lang || "tr"} /></p>
                           {req.photos && req.photos.length > 0 && (<div className="flex gap-1.5 mb-3">{req.photos.map((src, i) => (<img key={i} src={src} alt={t("issuePhotoAlt", { n: String(i + 1) })} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
-                          {o.status === "pending" && !responding && (<button onClick={() => { setRespondingQuoteOfferId(o.id); setQuoteOfferForm({ price: "", etaDays: "", note: "" }); }} className="w-full bg-rose-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-rose-700 transition">{t("giveQuoteBtn")}</button>)}
+                          {o.status === "pending" && !responding && (<div className="flex gap-2"><button onClick={() => { setRespondingQuoteOfferId(o.id); setQuoteOfferForm({ price: "", etaDays: "", note: "" }); }} className="flex-1 bg-rose-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-rose-700 transition">{t("giveQuoteBtn")}</button><button onClick={() => declineQuoteOffer(o.id)} className="border border-gray-200 text-gray-500 text-xs px-3 py-2 rounded-xl font-medium hover:bg-gray-50 transition">{t("declineQuoteBtn")}</button></div>)}
                           {o.status === "pending" && responding && (
                             <div className="bg-gray-50 rounded-xl p-3 space-y-2">
                               <div className="flex gap-2">
@@ -2130,6 +2130,7 @@ export function AppShell() {
                           {o.status === "submitted" && (<div className="bg-rose-50 rounded-xl p-3 flex items-center justify-between"><span className="text-xs text-gray-600">{t("yourQuoteLabel")} <strong className="text-rose-600">{o.price}₺</strong>{o.etaDays ? ` · ${o.etaDays} ${t("daysSuffix")}` : ""}</span><span className="text-[10px] text-gray-400">{t("awaitingResponseEllipsis")}</span></div>)}
                           {o.status === "accepted" && (<p className="text-[11px] text-green-600 flex items-center gap-1"><CheckCircle2 size={12} /> {t("quoteAcceptedNotice")}</p>)}
                           {o.status === "lost" && (<p className="text-[11px] text-gray-400">{t("quoteLostNotice")}</p>)}
+                          {o.status === "declined" && (<p className="text-[11px] text-gray-400">{t("quoteDeclinedNotice")}</p>)}
                         </div>
                       );
                     })}

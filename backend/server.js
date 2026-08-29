@@ -6,6 +6,7 @@ import adminRouter from "./routes/admin.js";
 import shareEventsRouter from "./routes/shareEvents.js";
 import profileViewsRouter from "./routes/profileViews.js";
 import translateRouter from "./routes/translate.js";
+import { quoteRequestsRouter, quoteOffersRouter } from "./routes/quotes.js";
 
 seedIfEmpty();
 
@@ -23,8 +24,10 @@ app.use("/api/listings", makeCrudRouter("listings", { shareCountColumn: "shareCo
 app.use("/api/conversations", makeCrudRouter("conversations"));
 app.use("/api/jobs", makeCrudRouter("job_listings", { shareCountColumn: "shareCount" }));
 app.use("/api/tickets", makeCrudRouter("support_tickets"));
-app.use("/api/quote-requests", makeCrudRouter("quote_requests"));
-app.use("/api/quote-offers", makeCrudRouter("quote_offers"));
+// Genel CRUD factory yerine özel router (bkz. backend/routes/quotes.js) — limit doğrulama,
+// atomik kabul/iptal/reddet geçişleri ve durum makinesi kuralları için.
+app.use("/api/quote-requests", quoteRequestsRouter);
+app.use("/api/quote-offers", quoteOffersRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/share-events", shareEventsRouter);
 app.use("/api/profile-views", profileViewsRouter);
