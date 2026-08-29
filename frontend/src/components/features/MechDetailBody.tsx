@@ -9,6 +9,7 @@ import { JobCard } from "./JobCard";
 import { TranslatedText } from "./TranslatedText";
 import { BANNER_PRESETS, MY_MECHANIC_ID, LANG_LABELS } from "../../data/constants";
 import { formatHoursText, isImgUrl, imgThumb, imgFallbackHandler } from "../../utils/helpers";
+import { REVIEW_TIME_LABELS_BY_LANG } from "../../data/i18n";
 
 export function MechDetailBody() {
   const [coverBroken, setCoverBroken] = useState(false);
@@ -128,8 +129,8 @@ export function MechDetailBody() {
       <div className="relative">
         <button onClick={() => { if (mapDetailOpen) { setMapDetailOpen(false); } else { setScreen(detailReturnScreen || (role === "mechanic" ? "mechBrowse" : "owner")); setDetailReturnScreen(null); } }} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={18} /></button>
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-          {selectedMechanic.rating >= 4.7 && <span className="bg-white/95 text-gray-700 text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1"><BadgeCheck size={12} /> Öne Çıkan</span>}
-          <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — Fixperto'da keşfet`} path={`?mechanic=${selectedMechanic.id}`} onShare={(channel, refCode) => recordShare("mechanic", selectedMechanic.id, channel, refCode)} />
+          {selectedMechanic.rating >= 4.7 && <span className="bg-white/95 text-gray-700 text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1"><BadgeCheck size={12} /> {t("featuredLabel")}</span>}
+          <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — ${t("discoverOnFixperto")}`} path={`?mechanic=${selectedMechanic.id}`} onShare={(channel, refCode) => recordShare("mechanic", selectedMechanic.id, channel, refCode)} />
         </div>
         <div className={`h-36 bg-gradient-to-br ${BANNER_PRESETS[selectedMechanic.bannerPreset] || BANNER_PRESETS.blue} relative overflow-hidden`}>
           {selectedMechanic.coverPhoto && !coverBroken && <img src={imgThumb(selectedMechanic.coverPhoto, 900)} loading="lazy" decoding="async" onError={() => setCoverBroken(true)} alt={selectedMechanic.name} className="absolute inset-0 w-full h-full object-cover" />}
@@ -137,9 +138,9 @@ export function MechDetailBody() {
         <div className="absolute -bottom-8 left-5 w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center text-4xl border-4 border-white overflow-hidden">{selectedMechanic.img}</div>
       </div>
       <div className="pt-10 px-5 md:px-8">
-        <h1 className="text-lg font-bold text-gray-800 flex items-center gap-1.5">{selectedMechanic.name}{selectedMechanic.verified && <BadgeCheck size={16} className="text-rose-500 flex-shrink-0" />}</h1><p className="text-sm text-gray-400">{selectedMechanic.specialty} <span className="text-gray-300">· Tamirci No: #{selectedMechanic.id}</span></p>
-        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 flex-wrap"><span className="flex items-center gap-1"><Star size={12} className="text-gray-900 fill-gray-900" />{selectedMechanic.rating} ({selectedMechanic.reviews})</span><span className="flex items-center gap-1"><MapPin size={12} />{getEffectiveDistance(selectedMechanic).toFixed(1)} km</span>{(() => { const open = mechanicOpenStatus(selectedMechanic); return open === null ? null : (<span className={`px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? "Şu an açık" : "Şu an kapalı"}</span>); })()}{selectedMechanic.avgResponseMinutes && <span className="flex items-center gap-1 text-gray-400"><Zap size={12} className="text-gray-900" /> Ort. {selectedMechanic.avgResponseMinutes} dk yanıt</span>}</div>
-        {selectedMechanic.verified && <p className="text-[11px] text-rose-600 mt-1.5 flex items-center gap-1"><BadgeCheck size={12} className="flex-shrink-0" /> Kimliği ve işletme bilgileri doğrulandı</p>}
+        <h1 className="text-lg font-bold text-gray-800 flex items-center gap-1.5">{selectedMechanic.name}{selectedMechanic.verified && <BadgeCheck size={16} className="text-rose-500 flex-shrink-0" />}</h1><p className="text-sm text-gray-400">{selectedMechanic.specialty} <span className="text-gray-300">· {t("mechanicNumberLabel", { id: String(selectedMechanic.id) })}</span></p>
+        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 flex-wrap"><span className="flex items-center gap-1"><Star size={12} className="text-gray-900 fill-gray-900" />{selectedMechanic.rating} ({selectedMechanic.reviews})</span><span className="flex items-center gap-1"><MapPin size={12} />{getEffectiveDistance(selectedMechanic).toFixed(1)} km</span>{(() => { const open = mechanicOpenStatus(selectedMechanic); return open === null ? null : (<span className={`px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{selectedMechanic.avgResponseMinutes && <span className="flex items-center gap-1 text-gray-400"><Zap size={12} className="text-gray-900" /> {t("avgResponsePrefix")} {selectedMechanic.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>
+        {selectedMechanic.verified && <p className="text-[11px] text-rose-600 mt-1.5 flex items-center gap-1"><BadgeCheck size={12} className="flex-shrink-0" /> {t("identityVerifiedNote")}</p>}
         {role !== "mechanic" && (<button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); setScreen("booking"); }} className="w-full mt-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition shadow-md shadow-rose-200 flex items-center justify-center gap-2"><Calendar size={16} /> {t("bookNow")}</button>)}
       </div>
       <div className="flex-1 overflow-y-auto mt-4">
@@ -159,26 +160,26 @@ export function MechDetailBody() {
               className="p-3 bg-white flex items-center justify-between gap-2 hover:bg-gray-50 transition group"
             >
               <p className="text-xs text-gray-600 group-hover:text-rose-600 transition">{selectedMechanic.address}</p>
-              <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-600 flex-shrink-0"><Navigation size={11} /> Yol Tarifi</span>
+              <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-600 flex-shrink-0"><Navigation size={11} /> {t("directionsLabel")}</span>
             </a>
           </div>
           {/* Diller & Ödeme — Kleinanzeigen/autoservice.com tarzı ikinci bir bilgi bloğu: tamircinin
               konuştuğu dil (Ayarlar'daki dil seçiciyle senkron) ve kabul ettiği ödeme yöntemleri. */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
             <div className="bg-white border border-gray-200 rounded-2xl p-3.5">
-              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Globe size={12} className="text-rose-500" /> Konuşulan Dil</h4>
-              <p className="text-sm font-semibold text-gray-800">{LANG_LABELS[selectedMechanic.lang] || "Türkçe"}</p>
+              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><Globe size={12} className="text-rose-500" /> {t("spokenLanguageLabel")}</h4>
+              <p className="text-sm font-semibold text-gray-800">{LANG_LABELS[selectedMechanic.lang] || t("turkishFallbackLabel")}</p>
             </div>
             <div className="bg-white border border-gray-200 rounded-2xl p-3.5">
-              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><CreditCard size={12} className="text-rose-500" /> Ödeme Yöntemleri</h4>
+              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5"><CreditCard size={12} className="text-rose-500" /> {t("paymentMethodsTitle")}</h4>
               {(selectedMechanic.paymentMethods || []).length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">{selectedMechanic.paymentMethods.map((p) => (<span key={p} className="text-[10px] font-medium text-gray-600 bg-gray-100 rounded-full px-2 py-1">{p}</span>))}</div>
-              ) : (<p className="text-xs text-gray-400">Belirtilmemiş</p>)}
+              ) : (<p className="text-xs text-gray-400">{t("notSpecifiedLabel")}</p>)}
             </div>
           </div>
           {(selectedMechanic.brandsServiced || []).length > 0 && (
             <>
-              <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> Hizmet Verdiği Markalar</h3>
+              <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> {t("brandsServicedByMechanicTitle")}</h3>
               <div className="flex flex-wrap gap-2 mb-5">
                 {selectedMechanic.brandsServiced.map((brand, i) => {
                   const palette = ["bg-rose-50 text-rose-700 border-rose-200", "bg-blue-50 text-blue-700 border-blue-200", "bg-amber-50 text-amber-700 border-amber-200", "bg-emerald-50 text-emerald-700 border-emerald-200", "bg-violet-50 text-violet-700 border-violet-200", "bg-cyan-50 text-cyan-700 border-cyan-200"];
@@ -190,9 +191,9 @@ export function MechDetailBody() {
           <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><ToolIcon size={16} className="text-rose-500" /> {t("services")} <span className="text-gray-300 font-normal">({selectedMechanic.services.length})</span></h3>
           <div className="mb-5">
             <div className={selectedMechanic.services.length > 5 ? "max-h-56 overflow-y-auto pr-1 rounded-xl ring-1 ring-gray-100 p-1" : ""}>
-              <div className="flex flex-col gap-2">{selectedMechanic.services.map((s, i) => (<div key={i} className="flex items-center justify-between gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5"><span className="text-xs text-gray-700 flex items-center gap-1.5 min-w-0"><ToolIcon size={11} className="text-rose-400 flex-shrink-0" /><span className="truncate">{s.name}</span></span><span className="text-xs font-bold text-rose-600 whitespace-nowrap flex-shrink-0">{String(s.price || "").trim() || "Fiyata bakılacak"}</span></div>))}</div>
+              <div className="flex flex-col gap-2">{selectedMechanic.services.map((s, i) => (<div key={i} className="flex items-center justify-between gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5"><span className="text-xs text-gray-700 flex items-center gap-1.5 min-w-0"><ToolIcon size={11} className="text-rose-400 flex-shrink-0" /><span className="truncate">{s.name}</span></span><span className="text-xs font-bold text-rose-600 whitespace-nowrap flex-shrink-0">{String(s.price || "").trim() || t("priceUponInspectionLabel")}</span></div>))}</div>
             </div>
-            {selectedMechanic.services.length > 5 && <p className="text-center text-[10px] text-gray-300 mt-1.5 flex items-center justify-center gap-1"><ChevronRight size={10} className="rotate-90" /> Daha fazlası için kaydırın</p>}
+            {selectedMechanic.services.length > 5 && <p className="text-center text-[10px] text-gray-300 mt-1.5 flex items-center justify-center gap-1"><ChevronRight size={10} className="rotate-90" /> {t("scrollForMoreLabel")}</p>}
           </div>
           <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Users size={16} className="text-rose-500" /> {t("team")}</h3>
           <div className="flex gap-3 mb-5 overflow-x-auto pb-1">{selectedMechanic.staff.map((s, i) => { const grads = ["from-rose-400 to-rose-500", "from-gray-700 to-gray-900", "from-rose-500 to-rose-600", "from-gray-500 to-gray-700"]; return (<div key={i} className="flex-shrink-0 w-28 text-center bg-white border border-gray-100 rounded-2xl p-3 shadow-sm hover:shadow-md transition"><div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-2xl mb-2 overflow-hidden shadow-md relative`}>{isImgUrl(s.emoji) ? <img src={s.emoji} className="w-full h-full object-cover" /> : <span className="drop-shadow">{s.emoji}</span>}<span className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 border-2 border-white rounded-full" /></div><p className="text-[11px] font-semibold text-gray-700 leading-tight">{s.name}</p><p className="text-[10px] text-gray-400 leading-tight">{s.role}</p></div>); })}</div>
@@ -204,53 +205,53 @@ export function MechDetailBody() {
               <>
                 {mechListings.length > 0 && (
                   <>
-                    <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Car size={16} className="text-rose-500" /> Araç İlanları <span className="text-gray-300 font-normal">({mechListings.length})</span></h3>
+                    <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Car size={16} className="text-rose-500" /> {t("carListingsTitle")} <span className="text-gray-300 font-normal">({mechListings.length})</span></h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">{mechListings.map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   </>
                 )}
                 {mechJobs.length > 0 && (
                   <>
-                    <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Briefcase size={16} className="text-rose-500" /> İş İlanları <span className="text-gray-300 font-normal">({mechJobs.length})</span></h3>
+                    <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Briefcase size={16} className="text-rose-500" /> {t("jobListingsTitle")} <span className="text-gray-300 font-normal">({mechJobs.length})</span></h3>
                     <div className="flex flex-col gap-2 mb-5">{mechJobs.map(j => (<JobCard key={j.id} j={j} />))}</div>
                   </>
                 )}
               </>
             );
           })()}
-          {role !== "mechanic" && (<><div className="bg-gray-100 border border-gray-200 rounded-2xl p-4 mb-4"><p className="text-xs text-gray-700 mb-3 flex items-center gap-2"><Banknote size={14} /> Randevu almadan önce fiyat teklifi isteyebilirsiniz.</p><button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); openChatWithMechanic(selectedMechanic); }} className="w-full bg-white border border-gray-300 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-100 transition flex items-center justify-center gap-2"><MessageCircle size={16} /> {t("sendMessage")}</button></div><button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); setScreen("booking"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-3">{t("bookDirect")}</button><button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); openReportForm("quality", `Tamirci #${selectedMechanic.id} · ${selectedMechanic.name}`, `"${selectedMechanic.name}" hakkında şikayetim var`); }} className="w-full flex items-center justify-center gap-1.5 text-[11px] text-gray-400 hover:text-red-500 transition py-1 mb-6"><Flag size={11} /> Bu tamirciyi şikayet et</button></>)}
+          {role !== "mechanic" && (<><div className="bg-gray-100 border border-gray-200 rounded-2xl p-4 mb-4"><p className="text-xs text-gray-700 mb-3 flex items-center gap-2"><Banknote size={14} /> {t("requestQuoteBeforeBookingNote")}</p><button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); openChatWithMechanic(selectedMechanic); }} className="w-full bg-white border border-gray-300 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-100 transition flex items-center justify-center gap-2"><MessageCircle size={16} /> {t("sendMessage")}</button></div><button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); setScreen("booking"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-3">{t("bookDirect")}</button><button onClick={() => { setMapDetailOpen(false); setShowMapMobile(false); openReportForm("quality", `Tamirci #${selectedMechanic.id} · ${selectedMechanic.name}`, `"${selectedMechanic.name}" hakkında şikayetim var`); }} className="w-full flex items-center justify-center gap-1.5 text-[11px] text-gray-400 hover:text-red-500 transition py-1 mb-6"><Flag size={11} /> {t("reportThisMechanicBtn")}</button></>)}
         </div>
         <div className="border-t border-gray-100 pt-4 pb-6 bg-gray-50/50">
           <div className="flex items-center justify-between flex-wrap gap-y-1.5 px-5 md:px-8 mb-3">
             <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Star size={16} className="text-gray-900 fill-gray-900" /> {t("reviews")}</h3>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className={`text-xs flex items-center gap-1 font-medium ${darkMode ? "text-white" : "text-gray-400"}`}>{selectedMechanic.rating} <Star size={11} className="text-gray-900 fill-gray-900" /> · {selectedMechanic.reviews} değerlendirme</span>
+              <span className={`text-xs flex items-center gap-1 font-medium ${darkMode ? "text-white" : "text-gray-400"}`}>{selectedMechanic.rating} <Star size={11} className="text-gray-900 fill-gray-900" /> · {selectedMechanic.reviews} {t("reviewWordPlural")}</span>
               {selectedMechanic.reviewList.length > 0 && (
-                <button onClick={() => setShowAllReviews(true)} className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-0.5 flex-shrink-0">Tümünü Gör <ChevronRight size={12} /></button>
+                <button onClick={() => setShowAllReviews(true)} className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-0.5 flex-shrink-0">{t("viewAllBtn")} <ChevronRight size={12} /></button>
               )}
             </div>
           </div>
           <div className="overflow-hidden"><div className="flex gap-3 w-max review-track px-5 md:px-8">{[...selectedMechanic.reviewList, ...selectedMechanic.reviewList].map((r, i) => {
             const grads = ["from-rose-400 to-rose-500", "from-gray-700 to-gray-900", "from-rose-500 to-rose-600", "from-gray-500 to-gray-700"];
-            const times = ["2 gün önce", "1 hafta önce", "3 hafta önce", "1 ay önce", "2 ay önce"];
+            const times = REVIEW_TIME_LABELS_BY_LANG[lang] || REVIEW_TIME_LABELS_BY_LANG.tr;
             const liked = likedReviewIds.includes(`${selectedMechanic.id}:${r.id}`);
             return (
             <div key={i} className="w-60 flex-shrink-0 bg-white border border-gray-100 rounded-2xl p-3.5 shadow-sm">
               <div className="flex items-center gap-2.5 mb-2"><div className={`w-10 h-10 rounded-full bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-lg flex-shrink-0 shadow-sm`}>{r.avatar}</div><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-gray-800 truncate">{r.name}</p><p className="text-[10px] text-gray-400">{times[i % times.length]}</p></div><BadgeCheck size={14} className="text-rose-400 flex-shrink-0" /></div>
               <div className="flex items-center gap-0.5 mb-2">{[...Array(5)].map((_, j) => (<Star key={j} size={12} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div>
-              {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 400)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt="Yorum fotoğrafı" className="w-full h-28 rounded-xl object-cover mb-2" />}
+              {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 400)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-full h-28 rounded-xl object-cover mb-2" />}
               <p className="text-[11px] text-gray-500 leading-snug"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p>
-              {r.reply && (<div className="mt-2 pt-2 border-t border-gray-50 bg-gray-50 rounded-lg p-2"><p className="text-[9px] font-bold text-gray-500 mb-0.5">İşletme yanıtı</p><p className="text-[10px] text-gray-500 leading-snug"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p></div>)}
+              {r.reply && (<div className="mt-2 pt-2 border-t border-gray-50 bg-gray-50 rounded-lg p-2"><p className="text-[9px] font-bold text-gray-500 mb-0.5">{t("businessReplyLabel")}</p><p className="text-[10px] text-gray-500 leading-snug"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p></div>)}
               {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                 replyingReviewId === r.id ? (
                   <div className="mt-2 pt-2 border-t border-gray-50">
-                    <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder="Yanıtınızı yazın..." className="w-full text-[10px] border border-gray-200 rounded-lg p-1.5 mb-1 resize-none" />
-                    <div className="flex gap-1"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[9px] py-1 rounded-lg border border-gray-200 text-gray-500">Vazgeç</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[9px] py-1 rounded-lg bg-rose-600 text-white">Gönder</button></div>
+                    <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder={t("writeYourReplyPlaceholder")} className="w-full text-[10px] border border-gray-200 rounded-lg p-1.5 mb-1 resize-none" />
+                    <div className="flex gap-1"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[9px] py-1 rounded-lg border border-gray-200 text-gray-500">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[9px] py-1 rounded-lg bg-rose-600 text-white">{t("sendBtn")}</button></div>
                   </div>
-                ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2 text-[9px] text-rose-600 font-semibold">Yanıtla</button>)
+                ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2 text-[9px] text-rose-600 font-semibold">{t("replyBtn")}</button>)
               )}
               <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={role !== "owner"} className={`flex items-center gap-1 mt-2.5 pt-2 border-t border-gray-50 w-full ${role === "owner" ? "cursor-pointer" : "cursor-default"}`}>
                 <ThumbsUp size={11} className={liked ? "text-rose-600 fill-rose-600" : "text-gray-300"} />
-                <span className={`text-[10px] ${liked ? "text-rose-600 font-semibold" : "text-gray-300"}`}>Faydalı{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
+                <span className={`text-[10px] ${liked ? "text-rose-600 font-semibold" : "text-gray-300"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
               </button>
             </div>
           ); })}</div></div>
@@ -261,10 +262,10 @@ export function MechDetailBody() {
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg my-auto max-h-[90vh] flex flex-col overflow-hidden">
             <div className="px-5 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <div>
-                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Star size={18} className="text-gray-900 fill-gray-900" /> Tüm Yorumlar</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{selectedMechanic.rating} <Star size={10} className="inline text-gray-900 fill-gray-900" /> · {selectedMechanic.reviews} değerlendirme</p>
+                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Star size={18} className="text-gray-900 fill-gray-900" /> {t("allReviewsTitle")}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{selectedMechanic.rating} <Star size={10} className="inline text-gray-900 fill-gray-900" /> · {selectedMechanic.reviews} {t("reviewWordPlural")}</p>
               </div>
-              <button onClick={() => setShowAllReviews(false)} aria-label="Kapat" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0 ml-3"><X size={15} /></button>
+              <button onClick={() => setShowAllReviews(false)} aria-label={t("closeAria")} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0 ml-3"><X size={15} /></button>
             </div>
             <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
               {selectedMechanic.reviewList.map((r) => {
@@ -275,21 +276,21 @@ export function MechDetailBody() {
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{r.avatar}</div>
                       <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate flex items-center gap-1">{r.name}<BadgeCheck size={12} className="text-rose-400 flex-shrink-0" /></p><div className="flex items-center gap-1">{[...Array(5)].map((_, j) => (<Star key={j} size={11} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div></div>
                     </div>
-                    {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 300)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt="Yorum fotoğrafı" className="w-1/3 max-w-[110px] aspect-square rounded-xl object-cover mb-2.5 float-left mr-3" />}
+                    {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 300)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-1/3 max-w-[110px] aspect-square rounded-xl object-cover mb-2.5 float-left mr-3" />}
                     <p className="text-sm text-gray-600 leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
                     <div className="clear-left" />
-                    {r.reply && (<div className="mt-2.5 pt-2.5 border-t border-gray-50 bg-gray-50 rounded-xl p-3"><p className="text-[10px] font-bold text-gray-500 mb-1">İşletme yanıtı</p><p className="text-xs text-gray-500 leading-relaxed"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p></div>)}
+                    {r.reply && (<div className="mt-2.5 pt-2.5 border-t border-gray-50 bg-gray-50 rounded-xl p-3"><p className="text-[10px] font-bold text-gray-500 mb-1">{t("businessReplyLabel")}</p><p className="text-xs text-gray-500 leading-relaxed"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p></div>)}
                     {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                       replyingReviewId === r.id ? (
                         <div className="mt-2.5 pt-2.5 border-t border-gray-50">
-                          <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder="Yanıtınızı yazın..." className="w-full text-xs border border-gray-200 rounded-lg p-2 mb-1.5 resize-none" />
-                          <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-gray-200 text-gray-500">Vazgeç</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-rose-600 text-white font-medium">Gönder</button></div>
+                          <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder={t("writeYourReplyPlaceholder")} className="w-full text-xs border border-gray-200 rounded-lg p-2 mb-1.5 resize-none" />
+                          <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-gray-200 text-gray-500">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-rose-600 text-white font-medium">{t("sendBtn")}</button></div>
                         </div>
-                      ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-rose-600 font-semibold">Yanıtla</button>)
+                      ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-rose-600 font-semibold">{t("replyBtn")}</button>)
                     )}
                     <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={role !== "owner"} className={`flex items-center gap-1.5 mt-3 ${role === "owner" ? "cursor-pointer" : "cursor-default"}`}>
                       <ThumbsUp size={14} className={liked ? "text-rose-600 fill-rose-600" : "text-gray-300"} />
-                      <span className={`text-xs ${liked ? "text-rose-600 font-semibold" : "text-gray-400"}`}>Faydalı{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
+                      <span className={`text-xs ${liked ? "text-rose-600 font-semibold" : "text-gray-400"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
                     </button>
                   </div>
                 );

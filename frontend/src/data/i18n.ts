@@ -394,12 +394,44 @@ export const T = {
   dangerZoneBtn: { tr: "Tehlikeli Bölge", en: "Danger Zone", de: "Gefahrenzone" },
   deleteBusinessWarning: { tr: "İşletmeni silersen profilin, ilanların ve randevu geçmişin kalıcı olarak silinir. Bu işlem geri alınamaz.", en: "If you delete your business, your profile, listings, and appointment history will be permanently deleted. This action cannot be undone.", de: "Wenn Sie Ihren Betrieb löschen, werden Ihr Profil, Ihre Anzeigen und Ihr Terminverlauf dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden." },
   deleteBusinessBtn: { tr: "İşletmemi Sil", en: "Delete My Business", de: "Meinen Betrieb löschen" },
+
+  // --- Tamirci detay sayfası (MechDetailBody) ---
+  discoverOnFixperto: { tr: "Fixperto'da keşfet", en: "Discover on Fixperto", de: "Entdecke auf Fixperto" },
+  mechanicNumberLabel: { tr: "Tamirci No: #{id}", en: "Mechanic No: #{id}", de: "Werkstatt-Nr.: #{id}" },
+  identityVerifiedNote: { tr: "Kimliği ve işletme bilgileri doğrulandı", en: "Identity and business information verified", de: "Identität und Geschäftsinformationen verifiziert" },
+  avgResponsePrefix: { tr: "Ort.", en: "Avg.", de: "Ø" },
+  directionsLabel: { tr: "Yol Tarifi", en: "Directions", de: "Wegbeschreibung" },
+  spokenLanguageLabel: { tr: "Konuşulan Dil", en: "Spoken Language", de: "Gesprochene Sprache" },
+  turkishFallbackLabel: { tr: "Türkçe", en: "Turkish", de: "Türkisch" },
+  notSpecifiedLabel: { tr: "Belirtilmemiş", en: "Not specified", de: "Nicht angegeben" },
+  brandsServicedByMechanicTitle: { tr: "Hizmet Verdiği Markalar", en: "Brands Serviced", de: "Bediente Marken" },
+  priceUponInspectionLabel: { tr: "Fiyata bakılacak", en: "Price upon inspection", de: "Preis nach Besichtigung" },
+  scrollForMoreLabel: { tr: "Daha fazlası için kaydırın", en: "Scroll for more", de: "Für mehr scrollen" },
+  carListingsTitle: { tr: "Araç İlanları", en: "Car Listings", de: "Fahrzeuganzeigen" },
+  jobListingsTitle: { tr: "İş İlanları", en: "Job Listings", de: "Stellenanzeigen" },
+  requestQuoteBeforeBookingNote: { tr: "Randevu almadan önce fiyat teklifi isteyebilirsiniz.", en: "You can request a price quote before booking.", de: "Sie können vor der Buchung ein Preisangebot anfordern." },
+  reportThisMechanicBtn: { tr: "Bu tamirciyi şikayet et", en: "Report this mechanic", de: "Diese Werkstatt melden" },
+  businessReplyLabel: { tr: "İşletme yanıtı", en: "Business reply", de: "Antwort des Betriebs" },
+  reviewWordPlural: { tr: "değerlendirme", en: "reviews", de: "Bewertungen" },
+  viewAllBtn: { tr: "Tümünü Gör", en: "View All", de: "Alle ansehen" },
+  reviewPhotoAlt: { tr: "Yorum fotoğrafı", en: "Review photo", de: "Bewertungsfoto" },
+  writeYourReplyPlaceholder: { tr: "Yanıtınızı yazın...", en: "Write your reply...", de: "Schreiben Sie Ihre Antwort..." },
+  sendBtn: { tr: "Gönder", en: "Send", de: "Senden" },
+  replyBtn: { tr: "Yanıtla", en: "Reply", de: "Antworten" },
+  helpfulLabel: { tr: "Faydalı", en: "Helpful", de: "Hilfreich" },
+  allReviewsTitle: { tr: "Tüm Yorumlar", en: "All Reviews", de: "Alle Bewertungen" },
 };
 
 export const MONTH_ABBR_BY_LANG = {
   tr: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"],
   en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   de: ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
+};
+
+export const REVIEW_TIME_LABELS_BY_LANG = {
+  tr: ["2 gün önce", "1 hafta önce", "3 hafta önce", "1 ay önce", "2 ay önce"],
+  en: ["2 days ago", "1 week ago", "3 weeks ago", "1 month ago", "2 months ago"],
+  de: ["vor 2 Tagen", "vor 1 Woche", "vor 3 Wochen", "vor 1 Monat", "vor 2 Monaten"],
 };
 
 export function useT(lang) {
