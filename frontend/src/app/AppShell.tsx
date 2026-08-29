@@ -194,8 +194,8 @@ export function AppShell() {
             <h3 className="font-bold text-gray-900 text-base mb-1">{confirmDialog.title}</h3>
             <p className="text-sm text-gray-500 mb-4">{confirmDialog.body}</p>
             <div className="flex gap-2">
-              <button onClick={() => setConfirmDialog(null)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">Vazgeç</button>
-              <button onClick={() => { const fn = confirmDialog.onConfirm; setConfirmDialog(null); fn(); }} className={`flex-1 text-white py-2.5 rounded-xl font-semibold text-sm transition ${confirmDialog.danger ? "bg-red-500 hover:bg-red-600" : "bg-rose-600 hover:bg-rose-700"}`}>{confirmDialog.confirmLabel || "Onayla"}</button>
+              <button onClick={() => setConfirmDialog(null)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
+              <button onClick={() => { const fn = confirmDialog.onConfirm; setConfirmDialog(null); fn(); }} className={`flex-1 text-white py-2.5 rounded-xl font-semibold text-sm transition ${confirmDialog.danger ? "bg-red-500 hover:bg-red-600" : "bg-rose-600 hover:bg-rose-700"}`}>{confirmDialog.confirmLabel || t("confirmBtnDefault")}</button>
             </div>
           </div>
         </div>
@@ -204,11 +204,11 @@ export function AppShell() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9600 }} onClick={() => setShowLocationPrompt(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
             <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mb-3"><MapPin size={22} className="text-rose-600" /></div>
-            <h3 className="font-bold text-gray-900 text-base mb-1">Konumunuzu Paylaşın</h3>
-            <p className="text-sm text-gray-500 mb-4">Size en yakın tamircileri gösterebilmemiz ve mesafeye göre daha doğru sıralama yapabilmemiz için konumunuza ihtiyacımız var. İzin vermezseniz tahmini mesafeler gösterilir.</p>
+            <h3 className="font-bold text-gray-900 text-base mb-1">{t("locationPromptTitle")}</h3>
+            <p className="text-sm text-gray-500 mb-4">{t("locationPromptBody")}</p>
             <div className="flex gap-2">
-              <button onClick={() => setShowLocationPrompt(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">Şimdi Değil</button>
-              <button onClick={confirmUseLocation} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">Konumu Paylaş</button>
+              <button onClick={() => setShowLocationPrompt(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("notNowBtn")}</button>
+              <button onClick={confirmUseLocation} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("shareLocationBtn")}</button>
             </div>
           </div>
         </div>
@@ -225,15 +225,15 @@ export function AppShell() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-bold text-gray-900 text-base">{doc.title}</h3>
-                    <p className="text-[11px] text-gray-400 mt-0.5">Son güncelleme: {doc.updated}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{t("legalLastUpdatedLabel", { date: doc.updated })}</p>
                   </div>
-                  <button onClick={() => setLegalModalTopic(null)} aria-label="Kapat" className="p-1 -m-1 text-gray-400 hover:text-gray-700"><X size={18} /></button>
+                  <button onClick={() => setLegalModalTopic(null)} aria-label={t("closeAria")} className="p-1 -m-1 text-gray-400 hover:text-gray-700"><X size={18} /></button>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto px-5 py-4">
                 <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 flex items-start gap-2">
                   <AlertTriangle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-amber-700 leading-snug">Bu metin geçici/demo amaçlıdır, bir avukat tarafından hazırlanmamıştır. Fixperto gerçek kullanıcılara açılmadan önce bir hukuk danışmanına onaylatılmalıdır.</p>
+                  <p className="text-[11px] text-amber-700 leading-snug">{t("legalDisclaimerNote")}</p>
                 </div>
                 <div className="space-y-4">
                   {doc.sections.map((s, i) => (
@@ -245,7 +245,7 @@ export function AppShell() {
                 </div>
               </div>
               <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
-                <button onClick={() => setLegalModalTopic(null)} className="w-full bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">Anladım</button>
+                <button onClick={() => setLegalModalTopic(null)} className="w-full bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("understoodBtn")}</button>
               </div>
             </div>
           </>
@@ -264,49 +264,49 @@ export function AppShell() {
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg my-auto max-h-[90vh] flex flex-col overflow-hidden">
             <div className="px-5 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <div>
-                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={18} className="text-rose-600" /> Birden Fazla Tamirciden Teklif Al</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Arızanı bir kez anlat, seçtiğin tamircilerden fiyat teklifi al.</p>
+                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={18} className="text-rose-600" /> {t("multiQuoteModalTitle")}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{t("multiQuoteModalSubtitle")}</p>
               </div>
-              <button onClick={closeQuoteModal} aria-label="Kapat" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0 ml-3"><X size={15} /></button>
+              <button onClick={closeQuoteModal} aria-label={t("closeAria")} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0 ml-3"><X size={15} /></button>
             </div>
             <div className="px-5 py-4 overflow-y-auto flex-1 space-y-4">
               <div>
-                <label className="text-xs font-semibold text-gray-700 mb-1.5 block">Araç</label>
+                <label className="text-xs font-semibold text-gray-700 mb-1.5 block">{t("vehicleFieldLabel")}</label>
                 <div className="flex flex-wrap gap-1.5">
                   {vehicles.map(v => (<button key={v.id} onClick={() => setQuoteVehicleId(v.id)} className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition ${quoteVehicleId === v.id ? "bg-rose-600 text-white border-rose-600" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>{v.brand} {v.model} ({v.plate})</button>))}
-                  <button onClick={() => setShowAddVehicle(!showAddVehicle)} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border border-dashed transition ${showAddVehicle ? "bg-rose-50 border-rose-300 text-rose-600" : "border-gray-300 text-gray-500 hover:border-rose-300 hover:text-rose-600"}`}><Plus size={12} /> Başka Araç Ekle</button>
+                  <button onClick={() => setShowAddVehicle(!showAddVehicle)} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border border-dashed transition ${showAddVehicle ? "bg-rose-50 border-rose-300 text-rose-600" : "border-gray-300 text-gray-500 hover:border-rose-300 hover:text-rose-600"}`}><Plus size={12} /> {t("addAnotherVehicleBtn")}</button>
                 </div>
                 {(vehicles.length === 0 || showAddVehicle) && (
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mt-2 space-y-2">
-                    <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder="Marka" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" />
-                    <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder="Model" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" />
-                    <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder="Yıl" className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder="Plaka" className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
-                    <button onClick={addVehicle} disabled={!newVehicle.brand || !newVehicle.model} className={`w-full py-2 rounded-lg text-xs font-semibold transition ${newVehicle.brand && newVehicle.model ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>Ekle ve Seç</button>
+                    <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder={t("bookingBrandPlaceholder")} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" />
+                    <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" />
+                    <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
+                    <button onClick={addVehicle} disabled={!newVehicle.brand || !newVehicle.model} className={`w-full py-2 rounded-lg text-xs font-semibold transition ${newVehicle.brand && newVehicle.model ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("bookingAddAndSelect")}</button>
                   </div>
                 )}
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-700 mb-1.5 block">Arızayı anlat</label>
-                <textarea value={quoteIssue} onChange={(e) => setQuoteIssue(e.target.value)} rows={3} placeholder="Örn. Fren yaparken ön taraftan ses geliyor..." className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
+                <label className="text-xs font-semibold text-gray-700 mb-1.5 block">{t("describeIssueLabel")}</label>
+                <textarea value={quoteIssue} onChange={(e) => setQuoteIssue(e.target.value)} rows={3} placeholder={t("issueDescPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  {quotePhotos.map((src, i) => (<div key={i} className="relative"><img src={src} alt={`Teklif fotoğrafı ${i + 1}`} className="w-14 h-14 rounded-lg object-cover border border-gray-100" /><button onClick={() => removeQuotePhoto(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center text-white"><X size={10} /></button></div>))}
+                  {quotePhotos.map((src, i) => (<div key={i} className="relative"><img src={src} alt={t("quotePhotoAlt", { n: String(i + 1) })} className="w-14 h-14 rounded-lg object-cover border border-gray-100" /><button onClick={() => removeQuotePhoto(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center text-white"><X size={10} /></button></div>))}
                   <button onClick={() => quotePhotoRef.current?.click()} className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:border-rose-300 hover:text-rose-500 transition"><Camera size={16} /></button>
                   <input ref={quotePhotoRef} type="file" accept="image/*" className="hidden" onChange={addQuotePhoto} />
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-gray-700">Tamirci seç</label>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{quoteSelectedMechIds.length} seçili</span>
+                  <label className="text-xs font-semibold text-gray-700">{t("selectMechanicLabel")}</label>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{t("selectedCountSuffix", { n: String(quoteSelectedMechIds.length) })}</span>
                 </div>
-                <p className="text-[10px] text-gray-400 mb-2">İstediğiniz sayıda tamirci seçebilirsiniz — en az 1 yeterli, {FREE_QUOTE_MECH_LIMIT} tanesi ücretsizdir.</p>
+                <p className="text-[10px] text-gray-400 mb-2">{t("selectAnyCountNote", { n: String(FREE_QUOTE_MECH_LIMIT) })}</p>
                 <div className="relative mb-2">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
-                  <input value={quoteMechSearch} onChange={(e) => setQuoteMechSearch(e.target.value)} placeholder="Tamirci veya uzmanlık ara..." className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                  <input value={quoteMechSearch} onChange={(e) => setQuoteMechSearch(e.target.value)} placeholder={t("searchMechOrSpecialtyPlaceholder")} className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-xs" />
                 </div>
                 <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                   {[{ key: "distance", label: "📍 Mesafe" }, { key: "price", label: "💰 Fiyat" }, { key: "rating", label: "⭐ Puan" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
-                  <button onClick={() => { setOwnerMode("mechanics"); setShowFilterModal(true); }} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={11} /> Filtrele {activeFilterCount > 0 && <span className="ml-0.5 w-3.5 h-3.5 bg-rose-600 text-white rounded-full text-[8px] flex items-center justify-center">{activeFilterCount}</span>}</button>
+                  <button onClick={() => { setOwnerMode("mechanics"); setShowFilterModal(true); }} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={11} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-3.5 h-3.5 bg-rose-600 text-white rounded-full text-[8px] flex items-center justify-center">{activeFilterCount}</span>}</button>
                 </div>
                 <div className="max-h-72 overflow-y-auto rounded-xl ring-1 ring-gray-100 divide-y divide-gray-50">
                   {quoteFilteredMechanics.map(m => {
@@ -322,19 +322,19 @@ export function AppShell() {
                             <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><MapPin size={9} />{(m.effectiveDistance ?? m.distance).toFixed(1)} km</span>
                             <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><Star size={9} className="text-gray-900 fill-gray-900" />{m.rating}</span>
                             <PriceLevelDots price={m.price} />
-                            {open !== null && (<span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? "Açık" : "Kapalı"}</span>)}
+                            {open !== null && (<span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? t("mechOpenShort") : t("mechClosedShort")}</span>)}
                           </div>
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected ? "bg-rose-600 border-rose-600" : "border-gray-300"}`}>{selected && <Check size={12} className="text-white" strokeWidth={3} />}</div>
                       </button>
                     );
                   })}
-                  {quoteFilteredMechanics.length === 0 && <p className="text-center text-gray-400 text-xs py-6">Bu kriterlere uyan tamirci bulunamadı.</p>}
+                  {quoteFilteredMechanics.length === 0 && <p className="text-center text-gray-400 text-xs py-6">{t("noMechanicMatchNote")}</p>}
                 </div>
               </div>
             </div>
             <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
-              <button disabled={!quoteVehicleId || !quoteIssue.trim() || quoteSelectedMechIds.length === 0} onClick={submitQuoteRequest} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${quoteVehicleId && quoteIssue.trim() && quoteSelectedMechIds.length > 0 ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>Teklif İste {quoteSelectedMechIds.length > 0 ? `(${quoteSelectedMechIds.length} tamirci)` : ""}</button>
+              <button disabled={!quoteVehicleId || !quoteIssue.trim() || quoteSelectedMechIds.length === 0} onClick={submitQuoteRequest} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${quoteVehicleId && quoteIssue.trim() && quoteSelectedMechIds.length > 0 ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("requestQuoteBtn")} {quoteSelectedMechIds.length > 0 ? `(${t("mechanicCountSuffix", { n: String(quoteSelectedMechIds.length) })})` : ""}</button>
             </div>
           </div>
         </div>
@@ -343,14 +343,14 @@ export function AppShell() {
         <div className="fixed inset-0 w-screen h-screen bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden my-auto">
             <div className={`bg-gradient-to-br ${slide.grad} px-6 pt-8 pb-10 text-center relative`}>
-              <button onClick={() => setShowOnboarding(false)} aria-label="Turu atla" className="absolute top-3 right-3 text-white/80 hover:text-white p-2 -m-1 text-xs font-medium">Atla</button>
+              <button onClick={() => setShowOnboarding(false)} aria-label={t("skipTourAria")} className="absolute top-3 right-3 text-white/80 hover:text-white p-2 -m-1 text-xs font-medium">{t("skipBtn")}</button>
               <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-3">{slide.icon}</div>
               <h2 className="text-white font-bold text-lg">{slide.title}</h2>
             </div>
             <div className="px-6 py-5">
               <p className="text-sm text-gray-600 leading-relaxed mb-5 min-h-[60px]">{slide.desc}</p>
               <div className="flex items-center justify-center gap-1.5 mb-5">{ONBOARDING_SLIDES.map((_, i) => (<div key={i} className={`h-1.5 rounded-full transition-all ${i === onboardStep ? "w-6 bg-rose-600" : "w-1.5 bg-gray-200"}`} />))}</div>
-              <button onClick={() => { if (isLast) setShowOnboarding(false); else setOnboardStep(s => s + 1); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{isLast ? "Başlayalım" : "İleri"}</button>
+              <button onClick={() => { if (isLast) setShowOnboarding(false); else setOnboardStep(s => s + 1); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{isLast ? t("letsStartBtn") : t("nextBtn")}</button>
             </div>
           </div>
         </div>
@@ -418,11 +418,11 @@ export function AppShell() {
             <div className="flex-1 px-6 py-6">
               <div className="flex bg-gray-100 rounded-xl p-1 mb-6"><button onClick={() => { setScreen("login"); setAuthError(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "login" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("login")}</button><button onClick={() => { setScreen("signup"); setAuthError(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "signup" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("signup")}</button></div>
               <div className="space-y-3">
-                {screen === "signup" && (<div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ad Soyad" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
-                <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="E-posta" type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>
-                {screen === "signup" && (<div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Telefon (örn. +90 532 123 45 67)" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
-                <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Şifre" className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
-                {screen === "login" && (<p onClick={() => setScreen("forgotPassword")} className="text-xs text-rose-500 text-right cursor-pointer hover:underline">Şifremi unuttum</p>)}
+                {screen === "signup" && (<div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("fullNameShortPlaceholder")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
+                <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t("emailPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>
+                {screen === "signup" && (<div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={t("phonePlaceholderExample2")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
+                <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
+                {screen === "login" && (<p onClick={() => setScreen("forgotPassword")} className="text-xs text-rose-500 text-right cursor-pointer hover:underline">{t("forgotPasswordLink")}</p>)}
                 {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
               </div>
               <button onClick={submitAuth} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm mt-6 transition ${roleBtn}`}>{screen === "login" ? t("login") : t("signup")}</button>
@@ -433,25 +433,25 @@ export function AppShell() {
           <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
             <div className="bg-white text-gray-900 px-5 pt-6 pb-6 border-b border-gray-200 shadow-sm">
               <button onClick={() => setScreen("login")} className="flex items-center gap-1 text-gray-500 mb-4 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
-              <div className="flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center"><Lock size={22} className="text-rose-600" /></div><div><h1 className="text-lg font-bold text-gray-900">Şifremi Unuttum</h1><p className="text-xs text-gray-500">E-posta adresinize sıfırlama bağlantısı gönderelim</p></div></div>
+              <div className="flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center"><Lock size={22} className="text-rose-600" /></div><div><h1 className="text-lg font-bold text-gray-900">{t("forgotPasswordTitle")}</h1><p className="text-xs text-gray-500">{t("forgotPasswordSubtitle")}</p></div></div>
             </div>
             <div className="flex-1 px-6 py-6">
-              <p className="text-sm text-gray-500 mb-4">Hesabınıza kayıtlı e-posta adresini girin, size bir şifre sıfırlama bağlantısı gönderelim.</p>
-              <div className="relative mb-4"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder="E-posta adresi" type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" /></div>
-              <button disabled={!forgotEmail} onClick={() => setScreen("resetSent")} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm transition ${forgotEmail ? "bg-rose-600 hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>Sıfırlama Bağlantısı Gönder</button>
-              <p className="text-center text-xs text-gray-400 mt-4">Şifrenizi hatırladınız mı? <span onClick={() => setScreen("login")} className="text-rose-500 font-medium cursor-pointer hover:underline">Giriş Yapın</span></p>
+              <p className="text-sm text-gray-500 mb-4">{t("forgotPasswordBody")}</p>
+              <div className="relative mb-4"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder={t("emailAddressPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" /></div>
+              <button disabled={!forgotEmail} onClick={() => setScreen("resetSent")} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm transition ${forgotEmail ? "bg-rose-600 hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("sendResetLinkBtn")}</button>
+              <p className="text-center text-xs text-gray-400 mt-4">{t("rememberedPasswordNote")} <span onClick={() => setScreen("login")} className="text-rose-500 font-medium cursor-pointer hover:underline">{t("logInLink")}</span></p>
             </div>
           </div>
         )}
         {screen === "resetSent" && (
           <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full px-6 py-10 text-center">
             <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-4"><Mail size={36} className="text-rose-500" /></div>
-            <h2 className="text-lg font-bold text-gray-800 mb-2">E-postanızı Kontrol Edin</h2>
-            <p className="text-sm text-gray-500 mb-1">Eğer <span className="font-medium text-gray-700">{forgotEmail}</span> kayıtlıysa,</p>
-            <p className="text-sm text-gray-500 mb-6">birkaç dakika içinde şifre sıfırlama bağlantısı alacaksınız.</p>
-            <div className="bg-gray-100 rounded-xl p-3 text-xs text-gray-700 mb-6 flex items-start gap-2 text-left"><Bell size={14} className="flex-shrink-0 mt-0.5" /> Bu bir demo ekranıdır — gerçek uygulamada e-posta backend üzerinden gönderilir.</div>
-            <button onClick={() => setScreen("login")} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2">Giriş Ekranına Dön</button>
-            <button onClick={() => setScreen("forgotPassword")} className="text-xs text-gray-400 hover:text-gray-600">E-postayı almadınız mı? Tekrar deneyin</button>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">{t("checkYourEmailTitle")}</h2>
+            <p className="text-sm text-gray-500 mb-1">{t("ifRegisteredNote", { email: forgotEmail })}</p>
+            <p className="text-sm text-gray-500 mb-6">{t("resetLinkComingNote")}</p>
+            <div className="bg-gray-100 rounded-xl p-3 text-xs text-gray-700 mb-6 flex items-start gap-2 text-left"><Bell size={14} className="flex-shrink-0 mt-0.5" /> {t("resetDemoNote")}</div>
+            <button onClick={() => setScreen("login")} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2">{t("backToLoginBtn")}</button>
+            <button onClick={() => setScreen("forgotPassword")} className="text-xs text-gray-400 hover:text-gray-600">{t("didntGetEmailBtn")}</button>
           </div>
         )}
         {screen === "adminLogin" && (
@@ -1166,27 +1166,27 @@ export function AppShell() {
           <>
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-3 max-w-7xl mx-auto w-full relative md:hidden">
-                <span className="text-xs text-gray-500">Merhaba{ownerProfile.name ? `, ${ownerProfile.name}` : ""} 👋</span>
+                <span className="text-xs text-gray-500">{t("greetingHello")}{ownerProfile.name ? `, ${ownerProfile.name}` : ""} 👋</span>
                 <div className="flex items-center gap-2.5">
                   <NotifBell />
-                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || "Profil fotoğrafı"} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
+                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
                 </div>
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
                 <div className="flex items-center gap-2 flex-shrink-0"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></div>
                 <div className="flex items-center gap-8">
-                  {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: "İş İlanları", icon: Briefcase }].map(tab => {
+                  {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: t("jobListingsNavLabel"), icon: Briefcase }].map(tab => {
                     // "Aktif" durumu sadece ownerMode'a değil, ownerTab === "search" olmasına da bakmalı —
                     // yoksa Randevularım/Favoriler/Sohbetler gibi başka bir sekmedeyken bile bu nav hep
                     // "Tamirci Ara" seçiliymiş gibi kalın/altı çizili görünüyordu (kullanıcı geri bildirimi).
                     const Icon = tab.icon; const active = ownerTab === "search" && ownerMode === tab.key;
                     return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
                   })}
-                  <button onClick={() => setShowQuoteModal(true)} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> Çoklu Teklif Al</button>
+                  <button onClick={() => setShowQuoteModal(true)} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> {t("multiQuoteBtn")}</button>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <NotifBell />
-                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title="Profil ve Ayarlar" className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || "Profil fotoğrafı"} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
+                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title={t("profileAndSettingsTitle")} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
                 </div>
               </div>
               <div className="max-w-7xl mx-auto w-full relative">
@@ -1196,26 +1196,26 @@ export function AppShell() {
                       <div className="inline-flex items-center gap-0.5 bg-gray-100 rounded-full p-1">
                         <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
                         <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
-                        <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> İş İlanları</button>
+                        <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                       </div>
-                      <button onClick={() => setShowQuoteModal(true)} className="px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100"><Users size={13} /> Çoklu Teklif Al</button>
+                      <button onClick={() => setShowQuoteModal(true)} className="px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
                     </div>
-                    <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("searchHeroTitle") : ownerMode === "cars" ? t("carMarket") : "İş İlanları"}</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("searchHeroTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
                   </div>
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center gap-2 p-2 pl-2.5 md:hidden">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${ownerMode === "cars" ? "bg-rose-100" : "bg-rose-50"}`}>{ownerMode === "cars" ? <Car size={18} className="text-rose-700" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-rose-600" /> : <Wrench size={18} className="text-rose-600" />}</div>
-                    <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? "Marka veya model ara..." : "Pozisyon veya beceri ara..."} className="flex-1 px-1 py-2 text-gray-800 text-sm focus:outline-none bg-transparent min-w-0" />
-                    <button onClick={(e) => e.currentTarget.blur()} className={`flex-shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition ${ownerMode === "cars" ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-600 hover:bg-rose-700"}`}>Ara</button>
+                    <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="flex-1 px-1 py-2 text-gray-800 text-sm focus:outline-none bg-transparent min-w-0" />
+                    <button onClick={(e) => e.currentTarget.blur()} className={`flex-shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition ${ownerMode === "cars" ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("searchBtn")}</button>
                   </div>
                   <div className="hidden md:flex items-stretch bg-white rounded-full border border-gray-300 shadow-lg divide-x divide-gray-200 max-w-xl mx-auto overflow-hidden">
-                    <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? "Marka" : ownerMode === "cars" ? "Marka / Model" : "Pozisyon"}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? "Marka veya model ara..." : "Pozisyon veya beceri ara..."} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
-                    <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? "Şehir" : "Konum"}</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? "Şehir ara... (örn: İstanbul)" : "Şehir veya semt"} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
-                    <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label="Ara" className="w-11 h-11 rounded-full bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
+                    <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("brandFieldLabel") : ownerMode === "cars" ? t("brandModelFieldLabel") : t("positionFieldLabel")}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                    <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("cityLabelShort") : t("locationFieldLabel")}</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchCityPlaceholder") : t("cityOrDistrictPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                    <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
                   </div>
                 </>)}
                 {ownerTab !== "search" && (<button onClick={() => setOwnerTab("search")} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 text-sm mb-3 transition"><ChevronLeft size={16} /> {t("back")}</button>)}
                 {ownerTab === "market" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">🏷️ {t("navMarket")}</h1><p className="text-gray-500 text-sm">{t("myListingsSub")}</p></>)}
-                {ownerTab === "favorites" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">❤️ {t("favorites")}</h1><p className="text-gray-500 text-sm">Beğendiğiniz ilanları burada bulabilirsiniz</p></>)}
+                {ownerTab === "favorites" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">❤️ {t("favorites")}</h1><p className="text-gray-500 text-sm">{t("favoritesSubtitle")}</p></>)}
                 {ownerTab === "chats" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">💬 {t("chats")}</h1></>)}
                 {ownerTab === "appointments" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">📋 {t("appointments")}</h1></>)}
               </div>
@@ -1226,13 +1226,13 @@ export function AppShell() {
                 {ownerTab === "favorites" && (
                   <div className="px-5 py-4">
                     {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
-                      <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz favori eklemediniz.</p><p className="text-gray-300 text-xs mt-1">İlan kartlarındaki kalp ikonuna dokunarak favorilere ekleyebilirsiniz.</p></div>
+                      <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesOwnerNote")}</p><p className="text-gray-300 text-xs mt-1">{t("favoritesHintNote")}</p></div>
                     ) : (
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                     )}
                   </div>
                 )}
-                {ownerTab === "chats" && (<div className="px-5 py-4 space-y-3">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : "Henüz mesaj yok"}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Henüz bir sohbetiniz yok.</p>}</div>)}
+                {ownerTab === "chats" && (<div className="px-5 py-4 space-y-3">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noConvosYetNote")}</p>}</div>)}
                 {ownerTab === "appointments" && (<div className="px-5 py-4"><OwnerAppointmentsView /></div>)}
               </div>
             )}
@@ -1243,7 +1243,7 @@ export function AppShell() {
           <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-100 shadow-sm">
               <button onClick={() => { if (["applications", "myReviews", "support", "settings", "market", "favorites"].includes(ownerProfileTab)) setOwnerProfileTab("info"); else setScreen("owner"); }} className="flex items-center gap-1 text-gray-500 mb-3 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
-              <div className="flex items-center gap-3 mb-4"><div className="w-16 h-16 rounded-full bg-white shadow-sm border-2 border-white flex items-center justify-center overflow-hidden text-lg font-bold text-gray-700">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || "Profil fotoğrafı"} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</div><div><h1 className="text-xl font-bold text-gray-900">{ownerProfile.name || "Araç Sahibi"}</h1><p className="text-xs text-gray-500">{ownerProfile.email}</p></div></div>
+              <div className="flex items-center gap-3 mb-4"><div className="w-16 h-16 rounded-full bg-white shadow-sm border-2 border-white flex items-center justify-center overflow-hidden text-lg font-bold text-gray-700">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</div><div><h1 className="text-xl font-bold text-gray-900">{ownerProfile.name || t("ownerFallbackName")}</h1><p className="text-xs text-gray-500">{ownerProfile.email}</p></div></div>
               <div className="grid grid-cols-5 gap-1 bg-gray-100 rounded-xl p-1 text-[9px] leading-tight">
                 <button onClick={() => setOwnerProfileTab("info")} className={`px-1 py-1.5 rounded-lg font-medium text-center transition ${ownerProfileTab === "info" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}>{t("myInfo")}</button>
                 <button onClick={() => { setOwnerProfileTab("vehicles"); setSelectedVehicleId(null); }} className={`relative px-1 py-1.5 rounded-lg font-medium text-center transition ${ownerProfileTab === "vehicles" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}>{t("myVehicles")}{allReminders.filter(r=>r.urgent).length > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-white flex items-center justify-center text-[8px]">{allReminders.filter(r=>r.urgent).length}</span>}</button>
@@ -1254,29 +1254,29 @@ export function AppShell() {
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">
               {ownerProfileTab === "info" && (<>
-                <div className="flex flex-col items-center mb-5"><div className="relative w-20 h-20 rounded-full bg-rose-50 flex items-center justify-center text-2xl font-bold text-rose-600 overflow-hidden mb-2">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || "Profil fotoğrafı"} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}<input ref={ownerPhotoRef} type="file" accept="image/*" onChange={ownerPhotoUpload} className="hidden" /><button onClick={() => ownerPhotoRef.current?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={18} /></button></div><button onClick={() => ownerPhotoRef.current?.click()} className="text-xs text-rose-600 font-medium">Fotoğraf Değiştir</button><span className="text-[11px] text-gray-400 mt-1">Kullanıcı No: #{MY_OWNER_ID}</span></div>
-                <div className="space-y-2 mb-5"><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder="Ad Soyad" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={ownerProfile.email} onChange={(e) => updateMyOwnerField("email", e.target.value)} placeholder="E-posta" type="email" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} placeholder="Telefon (örn. +90 532 123 45 67)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder="Adres" className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><p className="text-[11px] text-gray-400 px-1">Bu bilgiler iş başvurularında otomatik doldurulur.</p></div>
-                <button onClick={() => { if (ownerProfile.email && !isValidEmail(ownerProfile.email)) { setToast({ type: "info", text: "⚠️ Geçersiz e-posta adresi." }); return; } if (ownerProfile.phone) { const pc = validatePhone(ownerProfile.phone); if (!pc.valid) { setToast({ type: "info", text: `⚠️ ${pc.message}` }); return; } } setToast({ type: "info", text: "✅ Profil güncellendi." }); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-7">{t("save")}</button>
-                <h3 className="hidden md:flex font-semibold text-gray-800 text-sm mb-3 items-center gap-2"><Tag size={15} className="text-gray-400" /> İlanlarım</h3>
-                <button onClick={() => setOwnerProfileTab("market")} className="hidden md:flex w-full items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Tag size={14} className="text-gray-400" /> Sattığım Araçlar{listings.filter(isMyListing).length > 0 && <span className="text-xs text-gray-400">({listings.filter(isMyListing).length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <h3 className="hidden md:flex font-semibold text-gray-800 text-sm mb-3 items-center gap-2"><Heart size={15} className="text-gray-400" /> Favoriler</h3>
-                <button onClick={() => setOwnerProfileTab("favorites")} className="hidden md:flex w-full items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Heart size={14} className="text-gray-400" /> Favori İlanlarım{favoriteIds.length > 0 && <span className="text-xs text-gray-400">({favoriteIds.length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Briefcase size={15} className="text-gray-400" /> Kariyer</h3>
-                <button onClick={() => setOwnerProfileTab("applications")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Briefcase size={14} className="text-gray-400" /> Başvurularım{myApplicationRefs.filter(r => r.role === "owner").length > 0 && <span className="text-xs text-gray-400">({myApplicationRefs.filter(r => r.role === "owner").length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Star size={15} className="text-gray-400" /> Yorumlarım</h3>
-                <button onClick={() => setOwnerProfileTab("myReviews")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Star size={14} className="text-gray-400" /> Yaptığım Yorumlar{myReviews.length > 0 && <span className="text-xs text-gray-400">({myReviews.length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Settings size={15} className="text-gray-400" /> Uygulama</h3>
-                <button onClick={() => setOwnerProfileTab("settings")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Settings size={14} className="text-gray-400" /> Ayarlar</span><ChevronRight size={15} className="text-gray-300" /></button>
+                <div className="flex flex-col items-center mb-5"><div className="relative w-20 h-20 rounded-full bg-rose-50 flex items-center justify-center text-2xl font-bold text-rose-600 overflow-hidden mb-2">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}<input ref={ownerPhotoRef} type="file" accept="image/*" onChange={ownerPhotoUpload} className="hidden" /><button onClick={() => ownerPhotoRef.current?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={18} /></button></div><button onClick={() => ownerPhotoRef.current?.click()} className="text-xs text-rose-600 font-medium">{t("changePhotoBtn")}</button><span className="text-[11px] text-gray-400 mt-1">{t("userNumberLabel", { id: String(MY_OWNER_ID) })}</span></div>
+                <div className="space-y-2 mb-5"><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder={t("fullNameShortPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={ownerProfile.email} onChange={(e) => updateMyOwnerField("email", e.target.value)} placeholder={t("emailPlaceholder")} type="email" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} placeholder={t("phonePlaceholderExample2")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder={t("addressPlaceholderShort")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><p className="text-[11px] text-gray-400 px-1">{t("autofillJobAppsNote")}</p></div>
+                <button onClick={() => { if (ownerProfile.email && !isValidEmail(ownerProfile.email)) { setToast({ type: "info", text: t("invalidEmailAddrToast") }); return; } if (ownerProfile.phone) { const pc = validatePhone(ownerProfile.phone); if (!pc.valid) { setToast({ type: "info", text: `⚠️ ${pc.message}` }); return; } } setToast({ type: "info", text: t("profileUpdatedToast") }); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-7">{t("save")}</button>
+                <h3 className="hidden md:flex font-semibold text-gray-800 text-sm mb-3 items-center gap-2"><Tag size={15} className="text-gray-400" /> {t("myListingsHeading")}</h3>
+                <button onClick={() => setOwnerProfileTab("market")} className="hidden md:flex w-full items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Tag size={14} className="text-gray-400" /> {t("soldCarsLabel")}{listings.filter(isMyListing).length > 0 && <span className="text-xs text-gray-400">({listings.filter(isMyListing).length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                <h3 className="hidden md:flex font-semibold text-gray-800 text-sm mb-3 items-center gap-2"><Heart size={15} className="text-gray-400" /> {t("favoritesHeadingShort")}</h3>
+                <button onClick={() => setOwnerProfileTab("favorites")} className="hidden md:flex w-full items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Heart size={14} className="text-gray-400" /> {t("favoriteListingsLabel")}{favoriteIds.length > 0 && <span className="text-xs text-gray-400">({favoriteIds.length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Briefcase size={15} className="text-gray-400" /> {t("careerHeading")}</h3>
+                <button onClick={() => setOwnerProfileTab("applications")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Briefcase size={14} className="text-gray-400" /> {t("myApplicationsLabel")}{myApplicationRefs.filter(r => r.role === "owner").length > 0 && <span className="text-xs text-gray-400">({myApplicationRefs.filter(r => r.role === "owner").length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Star size={15} className="text-gray-400" /> {t("myReviewsHeading")}</h3>
+                <button onClick={() => setOwnerProfileTab("myReviews")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Star size={14} className="text-gray-400" /> {t("reviewsIMadeLabel")}{myReviews.length > 0 && <span className="text-xs text-gray-400">({myReviews.length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Settings size={15} className="text-gray-400" /> {t("appSectionHeading")}</h3>
+                <button onClick={() => setOwnerProfileTab("settings")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Settings size={14} className="text-gray-400" /> {t("settingsLabel")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                 <button onClick={goHome} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LogOut size={14} className="text-gray-400" /> {t("logout")}</span><ChevronRight size={15} className="text-gray-300" /></button>
               </>)}
               {ownerProfileTab === "settings" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> Bilgilerime Dön</button>
-                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Settings size={16} className="text-rose-500" /> Ayarlar</h2>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label="Değiştir" className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-500" /> Konumumu Kullan</h4><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? "Gerçek konumunuza göre mesafe gösteriliyor" : "Kapalı — tahmini mesafeler gösteriliyor"}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label="Değiştir" className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
+                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
+                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Settings size={16} className="text-rose-500" /> {t("settingsLabel")}</h2>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-500" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                   {(() => {
-                    const notifOpts = [{ key: "notifyAppointments", label: "Randevu güncellemeleri" }, { key: "notifyOffers", label: "Teklif sonuçları" }, { key: "notifyMessages", label: "Mesaj bildirimleri" }];
+                    const notifOpts = [{ key: "notifyAppointments", label: t("notifApptUpdatesLabel") }, { key: "notifyOffers", label: t("notifOfferResultsLabel") }, { key: "notifyMessages", label: t("notifMessagesLabel") }];
                     const allNotifsOn = notifOpts.every(opt => ownerSettings[opt.key]);
                     const toggleAllNotifs = () => {
                       setOwnerSettings(s => ({ ...s, ...Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])) }));
@@ -1284,12 +1284,12 @@ export function AppShell() {
                     };
                     return (
                       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
-                        <div className="flex items-center justify-between"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> Bildirimler</h4><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? "Tarayıcı ayarlarından izin vermeniz gerekiyor" : allNotifsOn ? "Tüm bildirim türleri açık" : "Randevu güncellemelerini kaçırmayın"}</p></div><button onClick={toggleAllNotifs} aria-label="Değiştir" className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
-                        <button onClick={() => setOwnerNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 hover:text-gray-700 transition"><span>Bildirim türlerini göster</span><ChevronRight size={13} className={`transition-transform ${ownerNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
+                        <div className="flex items-center justify-between"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("notifBellTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? t("notifPermDeniedHint") : allNotifsOn ? t("allNotifTypesOnHint") : t("dontMissApptUpdatesHint")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
+                        <button onClick={() => setOwnerNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 hover:text-gray-700 transition"><span>{t("showNotifTypesBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
                         {ownerNotifDetailsOpen && (
                           <div className="mt-3 space-y-2.5">
                             {notifOpts.map(opt => (
-                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setOwnerSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label="Değiştir" className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
+                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setOwnerSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
                             ))}
                           </div>
                         )}
@@ -1297,79 +1297,79 @@ export function AppShell() {
                     );
                   })()}
                   <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm">{t("siteLanguage")}</h4><LangSwitch /></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-rose-500" /> Mesajlaşma Dili</h4><p className="text-[11px] text-gray-400 mt-0.5">Tamircilerin size yazdığı mesajlar bu dile otomatik çevrilir</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setOwnerLang(l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${ownerLang === l ? "bg-white text-rose-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className="text-rose-500" /> Görünüm — Karanlık Mod</h4><button onClick={() => setDarkMode(d => !d)} aria-label="Değiştir" className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
-                  <button onClick={() => setOwnerAccountOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Lock size={15} className="text-gray-400" /> Hesap</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${ownerAccountOpen ? "rotate-90" : ""}`} /></button>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-rose-500" /> {t("messagingLanguageTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{t("ownerMessagingLangHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setOwnerLang(l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${ownerLang === l ? "bg-white text-rose-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className="text-rose-500" /> {t("appearanceDarkModeTitle")}</h4><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
+                  <button onClick={() => setOwnerAccountOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Lock size={15} className="text-gray-400" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${ownerAccountOpen ? "rotate-90" : ""}`} /></button>
                   {ownerAccountOpen && (<>
-                    <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> Şifre Değiştir</span><ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setOwnerProfileTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> Yardım &amp; Destek</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">Kullanım Şartları</span><ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">Gizlilik Politikası</span><ChevronRight size={15} className="text-gray-300" /></button>
+                    <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordTitle")}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                    <button onClick={() => setOwnerProfileTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
+                    <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                    <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                   </>)}
                   <div className="mt-3" />
-                  <button onClick={() => setOwnerDangerZoneOpen(o => !o)} className="w-full flex items-center justify-between py-2 text-xs text-gray-400 hover:text-gray-600 transition"><span>Tehlikeli Bölge</span><ChevronRight size={13} className={`transition-transform ${ownerDangerZoneOpen ? "rotate-90" : ""}`} /></button>
+                  <button onClick={() => setOwnerDangerZoneOpen(o => !o)} className="w-full flex items-center justify-between py-2 text-xs text-gray-400 hover:text-gray-600 transition"><span>{t("dangerZoneBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerDangerZoneOpen ? "rotate-90" : ""}`} /></button>
                   {ownerDangerZoneOpen && (
                     <div className="border border-red-100 bg-red-50/50 rounded-2xl p-4 mt-1">
-                      <p className="text-xs text-gray-500 mb-3">Hesabını silersen tüm araçların, randevuların ve sohbetlerin kalıcı olarak silinir. Bu işlem geri alınamaz.</p>
-                      <button onClick={() => { setShowDeleteAccountModal(true); setDeleteConfirmText(""); }} className="w-full text-red-500 border border-red-200 py-2.5 rounded-xl font-medium text-xs hover:bg-red-100 transition">Hesabımı Sil</button>
+                      <p className="text-xs text-gray-500 mb-3">{t("ownerDeleteAccountWarningNote")}</p>
+                      <button onClick={() => { setShowDeleteAccountModal(true); setDeleteConfirmText(""); }} className="w-full text-red-500 border border-red-200 py-2.5 rounded-xl font-medium text-xs hover:bg-red-100 transition">{t("deleteMyAccountBtn")}</button>
                     </div>
                   )}
                 </>
               )}
               {ownerProfileTab === "applications" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> Bilgilerime Dön</button>
-                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Briefcase size={16} className="text-rose-500" /> İş Başvurularım</h2>
+                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
+                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Briefcase size={16} className="text-rose-500" /> {t("jobApplicationsHeading")}</h2>
                   <div className="space-y-3">
                     {myApplicationRefs.filter(r => r.role === "owner").map(r => (
                       <button key={r.id} onClick={() => setSelectedJobId(r.job.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h4 className="font-semibold text-gray-800 text-sm">{r.job.title}</h4>
-                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 ${r.applicant?.status === "rejected" ? "bg-red-50 text-red-500" : r.job.status === "closed" ? "bg-gray-100 text-gray-400" : "bg-gray-100 text-gray-700"}`}>{r.applicant?.status === "rejected" ? "Reddedildi" : r.job.status === "closed" ? "İlan Kapandı" : "İnceleniyor"}</span>
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 ${r.applicant?.status === "rejected" ? "bg-red-50 text-red-500" : r.job.status === "closed" ? "bg-gray-100 text-gray-400" : "bg-gray-100 text-gray-700"}`}>{r.applicant?.status === "rejected" ? t("jobAppRejectedStatus") : r.job.status === "closed" ? t("jobListingClosedStatus") : t("jobAppUnderReviewStatus")}</span>
                         </div>
                         <p className="text-xs text-gray-400 mb-1">{r.job.mechanicName}{r.job.location ? ` · ${r.job.location}` : ""}</p>
-                        <p className="text-[11px] text-gray-300">{r.date} başvuruldu</p>
+                        <p className="text-[11px] text-gray-300">{t("appliedOnLabel", { date: r.date })}</p>
                       </button>
                     ))}
-                    {myApplicationRefs.filter(r => r.role === "owner").length === 0 && <div className="text-center py-16"><Briefcase size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz bir iş başvurunuz yok.</p></div>}
+                    {myApplicationRefs.filter(r => r.role === "owner").length === 0 && <div className="text-center py-16"><Briefcase size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noJobApplicationsNote")}</p></div>}
                   </div>
                 </>
               )}
               {ownerProfileTab === "myReviews" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> Bilgilerime Dön</button>
-                  <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><Star size={16} className="text-gray-900" /> Yaptığım Yorumlar</h2>
-                  <p className="text-xs text-gray-400 mb-4">Airbnb'de olduğu gibi, gönderdiğiniz bir yorumu düzenleyemezsiniz — sadece silebilirsiniz.</p>
+                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
+                  <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><Star size={16} className="text-gray-900" /> {t("reviewsIMadeLabel")}</h2>
+                  <p className="text-xs text-gray-400 mb-4">{t("reviewsCannotEditNote")}</p>
                   <div className="space-y-3">
                     {myReviews.map(r => (
                       <div key={r.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h4 className="font-semibold text-gray-800 text-sm">{r.mechanicImg} {r.mechanicName}</h4>
-                          <button onClick={() => setConfirmDialog({ title: "Yorumu sil", body: "Bu yorumu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.", confirmLabel: "Evet, Sil", danger: true, onConfirm: () => deleteMyReview(r.mechanicId, r.id) })} aria-label="Yorumu sil" className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
+                          <button onClick={() => setConfirmDialog({ title: t("deleteReviewConfirmTitle"), body: t("deleteReviewConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => deleteMyReview(r.mechanicId, r.id) })} aria-label={t("deleteReviewAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
                         </div>
                         <div className="flex items-center gap-0.5 mb-1.5">{[1, 2, 3, 4, 5].map(n => (<Star key={n} size={12} className={n <= r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div>
                         <p className="text-xs text-gray-500">{r.comment}</p>
                         <p className="text-[11px] text-gray-300 mt-1.5">{r.date}</p>
                       </div>
                     ))}
-                    {myReviews.length === 0 && <div className="text-center py-16"><Star size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz bir yorum yapmadınız.</p></div>}
+                    {myReviews.length === 0 && <div className="text-center py-16"><Star size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noReviewsWrittenNote")}</p></div>}
                   </div>
                 </>
               )}
               {ownerProfileTab === "market" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> Bilgilerime Dön</button>
-                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> Sattığım Araçlar</h2>
+                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
+                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> {t("soldCarsLabel")}</h2>
                   <button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
                   {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
                 </>
               )}
               {ownerProfileTab === "favorites" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> Bilgilerime Dön</button>
-                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Heart size={16} className="text-rose-500" /> Favori İlanlarım</h2>
+                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
+                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Heart size={16} className="text-rose-500" /> {t("favoriteListingsLabel")}</h2>
                   {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
-                    <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz favori eklemediniz.</p><p className="text-gray-300 text-xs mt-1">İlan kartlarındaki kalp ikonuna dokunarak favorilere ekleyebilirsiniz.</p></div>
+                    <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesOwnerNote")}</p><p className="text-gray-300 text-xs mt-1">{t("favoritesHintNote")}</p></div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   )}
@@ -1380,38 +1380,38 @@ export function AppShell() {
                 <>
                   <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="w-full mb-4 border-2 border-dashed border-rose-200 rounded-2xl py-3 flex items-center justify-center gap-2 text-rose-600 text-sm font-medium hover:bg-rose-50 transition"><Plus size={16} /> {t("addVehicle")}</button>
                   {showAddVehicle && (<div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4 space-y-2">
-                    <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder="Marka" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                    <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder="Model" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                    <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder="Yıl" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder="Plaka" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                    <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder={t("bookingBrandPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                    <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                    <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                     <select value={newVehicle.country} onChange={(e) => setNewVehicle({ ...newVehicle, country: e.target.value, city: "" })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="tr">🇹🇷 Türkiye</option><option value="de">🇩🇪 Almanya</option></select>
                     {newVehicle.country === "de" ? (
-                      <select value={newVehicle.city} onChange={(e) => setNewVehicle({ ...newVehicle, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="">Şehir seçin (resmi lastik tarihi için)</option>{DE_CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                      <select value={newVehicle.city} onChange={(e) => setNewVehicle({ ...newVehicle, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="">{t("selectCityForTireDatePlaceholder")}</option>{DE_CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
                     ) : (
-                      <input value={newVehicle.city} onChange={(e) => setNewVehicle({ ...newVehicle, city: e.target.value })} placeholder="Şehir" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                      <input value={newVehicle.city} onChange={(e) => setNewVehicle({ ...newVehicle, city: e.target.value })} placeholder={t("cityLabelShort")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
                     )}
-                    <select value={newVehicle.tireType} onChange={(e) => setNewVehicle({ ...newVehicle, tireType: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="mevsimlik">Mevsimlik lastik</option><option value="allseason">4 mevsim lastik</option></select>
-                    <div><label className="text-[11px] text-gray-400">Son Muayene</label><input type="date" value={newVehicle.lastInspection} onChange={(e) => setNewVehicle({ ...newVehicle, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                    <div><label className="text-[11px] text-gray-400">Sigorta Bitiş</label><input type="date" value={newVehicle.insuranceEnd} onChange={(e) => setNewVehicle({ ...newVehicle, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                    <select value={newVehicle.tireType} onChange={(e) => setNewVehicle({ ...newVehicle, tireType: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="mevsimlik">{t("seasonalTireOption")}</option><option value="allseason">{t("allSeasonTireOption")}</option></select>
+                    <div><label className="text-[11px] text-gray-400">{t("lastInspectionLabel")}</label><input type="date" value={newVehicle.lastInspection} onChange={(e) => setNewVehicle({ ...newVehicle, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                    <div><label className="text-[11px] text-gray-400">{t("insuranceEndLabel")}</label><input type="date" value={newVehicle.insuranceEnd} onChange={(e) => setNewVehicle({ ...newVehicle, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                     <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-rose-700 transition">{t("add")}</button>
                   </div>)}
-                  <div className="space-y-3">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-rose-600" /></div><div className="flex-1"><h3 className="font-semibold text-gray-800 text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-gray-400">{v.plate}{vListing && <span className="ml-2 text-rose-500">· 🏷️ Satışta{vOfferCount > 0 ? ` · ${vOfferCount} teklif` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-gray-300" /></button>); })}{vehicles.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Henüz araç eklemediniz</p>}
+                  <div className="space-y-3">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-rose-600" /></div><div className="flex-1"><h3 className="font-semibold text-gray-800 text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-gray-400">{v.plate}{vListing && <span className="ml-2 text-rose-500">· {t("forSaleTag")}{vOfferCount > 0 ? ` · ${t("offerCountSuffixShort", { n: String(vOfferCount) })}` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-gray-300" /></button>); })}{vehicles.length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noVehiclesAddedNote")}</p>}
                   {listings.filter(l => isMyListing(l) && !vehicles.some(v => v.listingId === l.id)).length > 0 && (
                     <>
-                      <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-1 flex items-center gap-2"><Tag size={15} className="text-gray-400" /> Kayıtlı Aracım Dışında Sattıklarım</h3>
+                      <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-1 flex items-center gap-2"><Tag size={15} className="text-gray-400" /> {t("soldOutsideRegisteredVehicleHeading")}</h3>
                       {listings.filter(l => isMyListing(l) && !vehicles.some(v => v.listingId === l.id)).map(l => {
                         const offerCount = l.offers.filter(o => o.status !== "replaced").length;
                         return (
                           <div key={l.id} className="bg-white border border-gray-200 rounded-2xl p-4">
                             <button onClick={() => setSelectedListingId(l.id)} className="w-full text-left flex items-center gap-3 mb-3">
-                              <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 100)} loading="lazy" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover" /> : l.photo}</div>
-                              <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{l.brand} {l.model} ({l.year})</p><p className="text-xs text-gray-400">{l.price} · İlan #{l.id}</p></div>
-                              <span className={`text-[10px] font-bold text-white px-2 py-1 rounded-full flex-shrink-0 ${l.adminRemoved ? "bg-gray-900" : listingStatusMeta(l.status, t).color}`}>{l.adminRemoved ? "Kaldırıldı" : listingStatusMeta(l.status, t).label}</span>
+                              <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 100)} loading="lazy" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover" /> : l.photo}</div>
+                              <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{l.brand} {l.model} ({l.year})</p><p className="text-xs text-gray-400">{l.price} · {t("listingNumberLabel", { id: String(l.id) })}</p></div>
+                              <span className={`text-[10px] font-bold text-white px-2 py-1 rounded-full flex-shrink-0 ${l.adminRemoved ? "bg-gray-900" : listingStatusMeta(l.status, t).color}`}>{l.adminRemoved ? t("removedStatusLabel") : listingStatusMeta(l.status, t).label}</span>
                             </button>
                             <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
-                              <span className="text-[11px] text-gray-400">{offerCount > 0 ? `${offerCount} teklif` : "Henüz teklif yok"}</span>
+                              <span className="text-[11px] text-gray-400">{offerCount > 0 ? t("offerCountSuffixShort", { n: String(offerCount) }) : t("noOffersYetShort")}</span>
                               <div className="flex items-center gap-3">
-                                <button onClick={() => openSellForm({ brand: l.brand, model: l.model, year: l.year, km: l.km, price: l.price, description: l.description, photo: l.photo, fuelType: l.fuelType, transmission: l.transmission, power: l.power, firstReg: l.firstReg, color: l.color, city: l.city || "", _vehicleId: null, _editingId: l.id })} className="text-xs font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1"><Pencil size={12} /> Düzenle</button>
-                                <button onClick={() => setSelectedListingId(l.id)} className="text-xs font-medium text-rose-600 hover:text-rose-700 flex items-center gap-1">Teklifleri Gör <ChevronRight size={12} /></button>
+                                <button onClick={() => openSellForm({ brand: l.brand, model: l.model, year: l.year, km: l.km, price: l.price, description: l.description, photo: l.photo, fuelType: l.fuelType, transmission: l.transmission, power: l.power, firstReg: l.firstReg, color: l.color, city: l.city || "", _vehicleId: null, _editingId: l.id })} className="text-xs font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1"><Pencil size={12} /> {t("editBtn")}</button>
+                                <button onClick={() => setSelectedListingId(l.id)} className="text-xs font-medium text-rose-600 hover:text-rose-700 flex items-center gap-1">{t("viewOffersBtn")} <ChevronRight size={12} /></button>
                               </div>
                             </div>
                           </div>
@@ -1424,27 +1424,27 @@ export function AppShell() {
               )}
               {ownerProfileTab === "vehicles" && selectedVehicle && (() => { const linkedListing = listings.find(l => l.id === selectedVehicle.listingId); return (
                 <>
-                  <button onClick={() => setSelectedVehicleId(null)} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> Araçlara Dön</button>
-                  <div className="bg-rose-50 rounded-2xl p-4 mb-5 flex items-center gap-3"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center"><Car size={26} className="text-rose-600" /></div><div className="flex-1"><h2 className="font-bold text-gray-800">{selectedVehicle.brand} {selectedVehicle.model}</h2><p className="text-xs text-gray-500">{selectedVehicle.year} · {selectedVehicle.plate}</p></div><button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} aria-label="Aracı düzenle" className="text-rose-600 p-2 -m-2"><Pencil size={16} /></button></div>
+                  <button onClick={() => setSelectedVehicleId(null)} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToVehiclesBtn")}</button>
+                  <div className="bg-rose-50 rounded-2xl p-4 mb-5 flex items-center gap-3"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center"><Car size={26} className="text-rose-600" /></div><div className="flex-1"><h2 className="font-bold text-gray-800">{selectedVehicle.brand} {selectedVehicle.model}</h2><p className="text-xs text-gray-500">{selectedVehicle.year} · {selectedVehicle.plate}</p></div><button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} aria-label={t("editVehicleAria")} className="text-rose-600 p-2 -m-2"><Pencil size={16} /></button></div>
                   {showEditVehicle && editVehicleForm && (
                     <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5 space-y-2">
-                      <h3 className="font-semibold text-gray-800 text-sm mb-1">Araç Bilgilerini Düzenle</h3>
-                      <div className="flex gap-2"><input value={editVehicleForm.brand} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, brand: e.target.value })} placeholder="Marka" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={editVehicleForm.model} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, model: e.target.value })} placeholder="Model" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                      <div className="flex gap-2"><input value={editVehicleForm.year} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, year: e.target.value })} placeholder="Yıl" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={editVehicleForm.plate} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, plate: e.target.value })} placeholder="Plaka" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      <h3 className="font-semibold text-gray-800 text-sm mb-1">{t("editVehicleInfoTitle")}</h3>
+                      <div className="flex gap-2"><input value={editVehicleForm.brand} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, brand: e.target.value })} placeholder={t("bookingBrandPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={editVehicleForm.model} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      <div className="flex gap-2"><input value={editVehicleForm.year} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={editVehicleForm.plate} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                       <select value={editVehicleForm.country} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, country: e.target.value, city: "" })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="tr">🇹🇷 Türkiye</option><option value="de">🇩🇪 Almanya</option></select>
                       {editVehicleForm.country === "de" ? (
-                        <select value={editVehicleForm.city || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="">Şehir seçin (resmi lastik tarihi için)</option>{DE_CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                        <select value={editVehicleForm.city || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="">{t("selectCityForTireDatePlaceholder")}</option>{DE_CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
                       ) : (
-                        <input value={editVehicleForm.city || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, city: e.target.value })} placeholder="Şehir" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                        <input value={editVehicleForm.city || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, city: e.target.value })} placeholder={t("cityLabelShort")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
                       )}
-                      <select value={editVehicleForm.tireType} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, tireType: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="mevsimlik">Mevsimlik lastik</option><option value="allseason">4 mevsim lastik</option></select>
-                      <div><label className="text-[11px] text-gray-400">Son Muayene</label><input type="date" value={editVehicleForm.lastInspection || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                      <div><label className="text-[11px] text-gray-400">Son Bakım</label><input type="date" value={editVehicleForm.lastMaintenance || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastMaintenance: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                      <div><label className="text-[11px] text-gray-400">Sigorta Bitiş</label><input type="date" value={editVehicleForm.insuranceEnd || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                      <div className="flex gap-2 pt-1"><button onClick={() => setShowEditVehicle(false)} className="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm">{t("cancel")}</button><button onClick={() => { if (editVehicleForm.lastInspection && !isValidDateStr(editVehicleForm.lastInspection)) { setToast({ type: "info", text: "⚠️ Geçersiz Son Muayene tarihi." }); return; } if (editVehicleForm.lastMaintenance && !isValidDateStr(editVehicleForm.lastMaintenance)) { setToast({ type: "info", text: "⚠️ Geçersiz Son Bakım tarihi." }); return; } if (editVehicleForm.insuranceEnd && !isValidDateStr(editVehicleForm.insuranceEnd)) { setToast({ type: "info", text: "⚠️ Geçersiz Sigorta Bitiş tarihi." }); return; } updateVehicleFields(selectedVehicle.id, editVehicleForm); setShowEditVehicle(false); setToast({ type: "info", text: "✅ Araç bilgileri güncellendi." }); }} className="flex-1 bg-rose-600 text-white py-2 rounded-xl text-sm font-medium">{t("save")}</button></div>
+                      <select value={editVehicleForm.tireType} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, tireType: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="mevsimlik">{t("seasonalTireOption")}</option><option value="allseason">{t("allSeasonTireOption")}</option></select>
+                      <div><label className="text-[11px] text-gray-400">{t("lastInspectionLabel")}</label><input type="date" value={editVehicleForm.lastInspection || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      <div><label className="text-[11px] text-gray-400">{t("lastMaintenanceLabel")}</label><input type="date" value={editVehicleForm.lastMaintenance || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastMaintenance: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      <div><label className="text-[11px] text-gray-400">{t("insuranceEndLabel")}</label><input type="date" value={editVehicleForm.insuranceEnd || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      <div className="flex gap-2 pt-1"><button onClick={() => setShowEditVehicle(false)} className="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm">{t("cancel")}</button><button onClick={() => { if (editVehicleForm.lastInspection && !isValidDateStr(editVehicleForm.lastInspection)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastInspectionLabel") }) }); return; } if (editVehicleForm.lastMaintenance && !isValidDateStr(editVehicleForm.lastMaintenance)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastMaintenanceLabel") }) }); return; } if (editVehicleForm.insuranceEnd && !isValidDateStr(editVehicleForm.insuranceEnd)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("insuranceEndLabel") }) }); return; } updateVehicleFields(selectedVehicle.id, editVehicleForm); setShowEditVehicle(false); setToast({ type: "info", text: t("vehicleInfoUpdatedToast") }); }} className="flex-1 bg-rose-600 text-white py-2 rounded-xl text-sm font-medium">{t("save")}</button></div>
                     </div>
                   )}
-                  {linkedListing ? (<div className="mb-5 bg-white border border-gray-100 rounded-2xl p-4"><div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Tag size={15} className="text-rose-500" /> {t("listingStatus")}</h3><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(linkedListing.status, t).color}`}>{listingStatusMeta(linkedListing.status, t).label}</span></div><div className="flex gap-2 mb-3">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(linkedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${linkedListing.status === st ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div><p className="text-[11px] text-gray-400 mb-3">{(() => { const oc = linkedListing.offers.filter(o => o.status !== "replaced").length; return oc > 0 ? `${oc} teklif geldi` : "Henüz teklif gelmedi"; })()}</p><div className="flex gap-2"><button onClick={() => openSellForm({ ...linkedListing, _vehicleId: selectedVehicle.id, _editingId: linkedListing.id })} className="flex-1 bg-gray-50 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-100 transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListing")}</button><button onClick={() => setSelectedListingId(linkedListing.id)} className="flex-1 bg-rose-50 text-rose-600 py-2 rounded-xl text-sm font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><MessageCircle size={14} /> Teklifleri Gör</button></div></div>) : (<button onClick={() => openSellForm({ brand: selectedVehicle.brand, model: selectedVehicle.model, year: selectedVehicle.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: selectedVehicle.id, _editingId: null })} className="w-full mb-5 bg-white border border-rose-200 text-rose-600 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-50 transition flex items-center justify-center gap-2"><Tag size={15} /> {t("sellThisCar")}</button>)}
+                  {linkedListing ? (<div className="mb-5 bg-white border border-gray-100 rounded-2xl p-4"><div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Tag size={15} className="text-rose-500" /> {t("listingStatus")}</h3><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(linkedListing.status, t).color}`}>{listingStatusMeta(linkedListing.status, t).label}</span></div><div className="flex gap-2 mb-3">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(linkedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${linkedListing.status === st ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div><p className="text-[11px] text-gray-400 mb-3">{(() => { const oc = linkedListing.offers.filter(o => o.status !== "replaced").length; return oc > 0 ? t("offersCameInSuffix", { n: String(oc) }) : t("noOffersYetOnListing"); })()}</p><div className="flex gap-2"><button onClick={() => openSellForm({ ...linkedListing, _vehicleId: selectedVehicle.id, _editingId: linkedListing.id })} className="flex-1 bg-gray-50 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-100 transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListing")}</button><button onClick={() => setSelectedListingId(linkedListing.id)} className="flex-1 bg-rose-50 text-rose-600 py-2 rounded-xl text-sm font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><MessageCircle size={14} /> {t("viewOffersBtn")}</button></div></div>) : (<button onClick={() => openSellForm({ brand: selectedVehicle.brand, model: selectedVehicle.model, year: selectedVehicle.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: selectedVehicle.id, _editingId: null })} className="w-full mb-5 bg-white border border-rose-200 text-rose-600 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-50 transition flex items-center justify-center gap-2"><Tag size={15} /> {t("sellThisCar")}</button>)}
                   {ownerSettings.smartReminders && (() => {
                     const vReminders = computeReminders(selectedVehicle);
                     const disabledKinds = Object.entries(selectedVehicle.reminderOverrides || {}).filter(([, ov]: [string, any]) => ov && ov.enabled === false).map(([k]) => k);
@@ -1454,7 +1454,7 @@ export function AppShell() {
                         <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={16} className="text-rose-500" /> {t("smartReminders")}</h3>
                         {selectedVehicle.city && <span className="text-[10px] text-gray-400">📍 {selectedVehicle.city}</span>}
                       </div>
-                      <p className="text-[11px] text-gray-400 -mt-2 mb-3">Sistem hangi hatırlatmaların gerekli olduğuna otomatik karar verir. Düzenlemezsen resmi/yasal tarihler esas alınır — istersen tarihi veya kaç gün önceden hatırlatılacağını sen belirle.</p>
+                      <p className="text-[11px] text-gray-400 -mt-2 mb-3">{t("smartRemindersAutoNote")}</p>
                       <div className="space-y-2 mb-3">
                         {vReminders.map((r) => (
                           <div key={r.kind} className={`rounded-xl p-3 ${r.urgent ? "bg-red-50" : "bg-gray-100"}`}>
@@ -1463,56 +1463,56 @@ export function AppShell() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <p className={`text-xs font-semibold ${r.urgent ? "text-red-600" : "text-gray-700"}`}>{r.title}</p>
-                                  {r.customized && <span className="text-[9px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">Özel ayar</span>}
+                                  {r.customized && <span className="text-[9px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{t("customSettingBadge")}</span>}
                                 </div>
                                 <p className="text-[11px] text-gray-500 mt-0.5">{r.detail}</p>
                               </div>
-                              <button onClick={() => { if (editingReminderKind === r.kind) { setEditingReminderKind(null); } else { setEditingReminderKind(r.kind); setReminderEditForm({ enabled: true, customDate: r.dueDate ? r.dueDate.toISOString().slice(0, 10) : "", leadDays: String(r.leadDays ?? "") }); } }} aria-label="Hatırlatmayı düzenle" className="text-gray-400 hover:text-gray-600 flex-shrink-0 p-2 -m-1.5"><Pencil size={13} /></button>
+                              <button onClick={() => { if (editingReminderKind === r.kind) { setEditingReminderKind(null); } else { setEditingReminderKind(r.kind); setReminderEditForm({ enabled: true, customDate: r.dueDate ? r.dueDate.toISOString().slice(0, 10) : "", leadDays: String(r.leadDays ?? "") }); } }} aria-label={t("editReminderAria")} className="text-gray-400 hover:text-gray-600 flex-shrink-0 p-2 -m-1.5"><Pencil size={13} /></button>
                             </div>
                             {editingReminderKind === r.kind && (
                               <div className="mt-3 pt-3 border-t border-black/5 space-y-2">
-                                <div><label className="text-[10px] text-gray-400">{r.isUserCreated ? "Hatırlatma tarihi" : "Hatırlatma tarihi (boş bırakırsan resmi/otomatik tarih kullanılır)"}</label><input type="date" min={TODAY_STR} value={reminderEditForm.customDate} onChange={(e) => setReminderEditForm(f => ({ ...f, customDate: e.target.value }))} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs mt-0.5" /></div>
-                                <div><label className="text-[10px] text-gray-400">Kaç gün önceden hatırlatayım?</label><input type="number" min="0" value={reminderEditForm.leadDays} onChange={(e) => setReminderEditForm(f => ({ ...f, leadDays: e.target.value }))} placeholder={String(r.leadDays)} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs mt-0.5" /></div>
+                                <div><label className="text-[10px] text-gray-400">{r.isUserCreated ? t("reminderDateLabel") : t("reminderDateAutoHint")}</label><input type="date" min={TODAY_STR} value={reminderEditForm.customDate} onChange={(e) => setReminderEditForm(f => ({ ...f, customDate: e.target.value }))} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs mt-0.5" /></div>
+                                <div><label className="text-[10px] text-gray-400">{t("leadDaysQuestionLabel")}</label><input type="number" min="0" value={reminderEditForm.leadDays} onChange={(e) => setReminderEditForm(f => ({ ...f, leadDays: e.target.value }))} placeholder={String(r.leadDays)} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs mt-0.5" /></div>
                                 {r.isUserCreated ? (
                                   <div className="flex gap-2 pt-1">
                                     <button onClick={() => updateCustomReminder(selectedVehicle.id, r.customId, { date: reminderEditForm.customDate || r.dueDate.toISOString().slice(0, 10), leadDays: reminderEditForm.leadDays || "7" })} className="flex-1 bg-rose-600 text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
-                                    <button onClick={() => removeCustomReminder(selectedVehicle.id, r.customId)} className="flex-1 border border-red-200 text-red-500 py-1.5 rounded-lg text-[11px] font-medium">Sil</button>
+                                    <button onClick={() => removeCustomReminder(selectedVehicle.id, r.customId)} className="flex-1 border border-red-200 text-red-500 py-1.5 rounded-lg text-[11px] font-medium">{t("deleteBtnShort")}</button>
                                   </div>
                                 ) : (
                                   <>
                                     <div className="flex gap-2 pt-1">
                                       <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: true, customDate: reminderEditForm.customDate || null, leadDays: reminderEditForm.leadDays === "" ? null : Number(reminderEditForm.leadDays) })} className="flex-1 bg-rose-600 text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
-                                      <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: false })} className="flex-1 border border-gray-200 text-gray-500 py-1.5 rounded-lg text-[11px] font-medium">Bunu Kapat</button>
+                                      <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: false })} className="flex-1 border border-gray-200 text-gray-500 py-1.5 rounded-lg text-[11px] font-medium">{t("turnOffThisBtn")}</button>
                                     </div>
-                                    {r.customized && <button onClick={() => resetReminderOverride(selectedVehicle.id, r.kind)} className="w-full text-rose-600 text-[11px] font-medium py-1">↩️ Varsayılan (resmi) tarihe dön</button>}
+                                    {r.customized && <button onClick={() => resetReminderOverride(selectedVehicle.id, r.kind)} className="w-full text-rose-600 text-[11px] font-medium py-1">{t("resetToDefaultDateBtn")}</button>}
                                   </>
                                 )}
                               </div>
                             )}
                           </div>
                         ))}
-                        {vReminders.length === 0 && <p className="text-center text-gray-400 text-xs py-3">Şu an aktif hatırlatma yok.</p>}
+                        {vReminders.length === 0 && <p className="text-center text-gray-400 text-xs py-3">{t("noActiveRemindersNote")}</p>}
                       </div>
                       {disabledKinds.length > 0 && (
                         <div className="mb-5 bg-white border border-gray-200 rounded-xl p-3">
-                          <p className="text-[10px] text-gray-400 mb-2">Kapatılan hatırlatmalar</p>
+                          <p className="text-[10px] text-gray-400 mb-2">{t("disabledRemindersLabel")}</p>
                           <div className="flex flex-wrap gap-1.5">
-                            {disabledKinds.map(k => (<button key={k} onClick={() => resetReminderOverride(selectedVehicle.id, k)} className="text-[10px] bg-white border border-gray-200 text-gray-500 px-2 py-1 rounded-full hover:border-rose-300 hover:text-rose-600 transition">{REMINDER_KIND_LABELS[k] || k} · Tekrar Aç</button>))}
+                            {disabledKinds.map(k => (<button key={k} onClick={() => resetReminderOverride(selectedVehicle.id, k)} className="text-[10px] bg-white border border-gray-200 text-gray-500 px-2 py-1 rounded-full hover:border-rose-300 hover:text-rose-600 transition">{REMINDER_KIND_LABELS[k] || k} · {t("reopenSuffixBtn")}</button>))}
                           </div>
                         </div>
                       )}
                       {!showAddReminderForm ? (
-                        <button onClick={() => { setShowAddReminderForm(true); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="w-full border-2 border-dashed border-rose-200 rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-rose-600 text-xs font-medium hover:bg-rose-50 transition mb-5"><Plus size={14} /> Yeni Hatırlatma Ekle</button>
+                        <button onClick={() => { setShowAddReminderForm(true); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="w-full border-2 border-dashed border-rose-200 rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-rose-600 text-xs font-medium hover:bg-rose-50 transition mb-5"><Plus size={14} /> {t("addNewReminderBtn")}</button>
                       ) : (
                         <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 mb-5 space-y-2">
-                          <input autoFocus value={newReminderForm.title} onChange={(e) => setNewReminderForm(f => ({ ...f, title: e.target.value }))} placeholder="Hatırlatma başlığı (örn. Fren Balata Kontrolü)" className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" />
+                          <input autoFocus value={newReminderForm.title} onChange={(e) => setNewReminderForm(f => ({ ...f, title: e.target.value }))} placeholder={t("reminderTitlePlaceholderExample")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" />
                           <div className="flex gap-2">
-                            <div className="flex-1"><label className="text-[9px] text-gray-400 block mb-0.5">Tarih</label><input type="date" min={TODAY_STR} value={newReminderForm.date} onChange={(e) => setNewReminderForm(f => ({ ...f, date: e.target.value }))} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
-                            <div className="w-28"><label className="text-[9px] text-gray-400 block mb-0.5">Kaç gün önceden hatırlatayım?</label><input type="number" min="0" value={newReminderForm.leadDays} onChange={(e) => setNewReminderForm(f => ({ ...f, leadDays: e.target.value }))} placeholder="Gün" className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
+                            <div className="flex-1"><label className="text-[9px] text-gray-400 block mb-0.5">{t("dateLabel")}</label><input type="date" min={TODAY_STR} value={newReminderForm.date} onChange={(e) => setNewReminderForm(f => ({ ...f, date: e.target.value }))} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
+                            <div className="w-28"><label className="text-[9px] text-gray-400 block mb-0.5">{t("leadDaysQuestionLabel")}</label><input type="number" min="0" value={newReminderForm.leadDays} onChange={(e) => setNewReminderForm(f => ({ ...f, leadDays: e.target.value }))} placeholder={t("daysFieldPlaceholder")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
                           </div>
                           <div className="flex gap-2">
                             <button onClick={() => { setShowAddReminderForm(false); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("cancel")}</button>
-                            <button disabled={!newReminderForm.title.trim() || !newReminderForm.date} onClick={() => submitNewReminder(selectedVehicle.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium transition ${newReminderForm.title.trim() && newReminderForm.date ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>Ekle</button>
+                            <button disabled={!newReminderForm.title.trim() || !newReminderForm.date} onClick={() => submitNewReminder(selectedVehicle.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium transition ${newReminderForm.title.trim() && newReminderForm.date ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("add")}</button>
                           </div>
                         </div>
                       )}
@@ -1524,10 +1524,10 @@ export function AppShell() {
                       <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><History size={16} /> {t("maintenanceHistory")} <span className="text-gray-300 font-normal">({selectedVehicle.history.length})</span></h3>
                       <ChevronRight size={16} className={`text-gray-300 transition-transform ${showMaintenanceHistory ? "rotate-90" : ""}`} />
                     </button>
-                    {selectedVehicle.history.length > 0 && (<button onClick={() => downloadMaintenanceReport(selectedVehicle)} title="Raporu indir" className="ml-2 w-7 h-7 flex-shrink-0 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition"><FileText size={13} /></button>)}
+                    {selectedVehicle.history.length > 0 && (<button onClick={() => downloadMaintenanceReport(selectedVehicle)} title={t("downloadReportAria")} className="ml-2 w-7 h-7 flex-shrink-0 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition"><FileText size={13} /></button>)}
                   </div>
                   {showMaintenanceHistory && (selectedVehicle.history.length === 0 ? (
-                    <p className="text-center text-gray-400 text-xs py-6">Henüz bakım kaydı yok.</p>
+                    <p className="text-center text-gray-400 text-xs py-6">{t("noMaintenanceRecordNote")}</p>
                   ) : (
                     <>
                       <div className={selectedVehicle.history.length > 4 ? "max-h-64 overflow-y-auto pr-1 rounded-xl ring-1 ring-gray-100 p-1" : ""}>
@@ -1538,24 +1538,24 @@ export function AppShell() {
                           </div>
                         ))}</div>
                       </div>
-                      {selectedVehicle.history.length > 4 && <p className="text-center text-[10px] text-gray-300 mt-1.5 flex items-center justify-center gap-1"><ChevronRight size={10} className="rotate-90" /> Daha fazlası için kaydırın</p>}
+                      {selectedVehicle.history.length > 4 && <p className="text-center text-[10px] text-gray-300 mt-1.5 flex items-center justify-center gap-1"><ChevronRight size={10} className="rotate-90" /> {t("scrollForMoreHint")}</p>}
                     </>
                   ))}
                 </>
               ); })()}
               {ownerProfileTab === "appts" && <OwnerAppointmentsView />}
-              {ownerProfileTab === "chats" && (<div className="space-y-3">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : "Henüz mesaj yok"}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Sohbet yok</p>}</div>)}
+              {ownerProfileTab === "chats" && (<div className="space-y-3">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noChatsShort")}</p>}</div>)}
               {ownerProfileTab === "offers" && (<>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersMade")}</h3>
-                <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<div key={o.id} className="bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? "✅ Kabul edildi" : o.status === "rejected" ? "❌ Reddedildi" : o.seen ? "⏳ Beklemede · satıcı gördü" : "⏳ Beklemede"}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>))}
-                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif vermediniz</p>}</div>
+                <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<div key={o.id} className="bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("pendingSeenStatus") : t("pendingStatus")}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>))}
+                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">{t("noOffersMadeNote")}</p>}</div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersReceived")}</h3>
                 <div className="space-y-2">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
                   <div key={o.id} className="bg-white border border-gray-100 rounded-xl p-3">
                     <div className="flex justify-between items-center mb-2"><div><p className="text-xs font-medium text-gray-700">{o.from}</p><p className="text-[10px] text-gray-400">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>
-                    {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>) : (<p className="text-[11px] text-gray-400">{o.status === "accepted" ? "✅ Kabul edildi" : "❌ Reddedildi"}</p>)}
+                    {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>) : (<p className="text-[11px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>)}
                   </div>
-                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">Henüz teklif almadınız</p>}</div>
+                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">{t("noOffersReceivedNote")}</p>}</div>
               </>)}
             </div>
           </div>
@@ -2015,7 +2015,7 @@ export function AppShell() {
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
                 <div className="flex items-center gap-2 flex-shrink-0"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></div>
                 <div className="flex items-center gap-8">
-                  {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: "İş İlanları", icon: Briefcase }].map(tab => {
+                  {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: t("jobListingsNavLabel"), icon: Briefcase }].map(tab => {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
                     return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
                   })}
@@ -2031,20 +2031,20 @@ export function AppShell() {
                     <div className="inline-flex items-center gap-0.5 bg-gray-100 rounded-full p-1">
                       <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
                       <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
-                      <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> İş İlanları</button>
+                      <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                     </div>
                   </div>
-                  <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? "Diğer tamircileri keşfet" : ownerMode === "cars" ? t("carMarket") : "İş İlanları"}</h1>
+                  <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("discoverOtherMechanicsTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
                 </div>
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center gap-2 p-2 pl-2.5 md:hidden">
                   <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">{ownerMode === "cars" ? <Car size={18} className="text-rose-700" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-rose-700" /> : <Wrench size={18} className="text-rose-700" />}</div>
-                  <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? "Marka veya model ara..." : "Pozisyon veya beceri ara..."} className="flex-1 px-1 py-2 text-gray-800 text-sm focus:outline-none bg-transparent min-w-0" />
-                  <button onClick={(e) => e.currentTarget.blur()} className="flex-shrink-0 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">Ara</button>
+                  <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="flex-1 px-1 py-2 text-gray-800 text-sm focus:outline-none bg-transparent min-w-0" />
+                  <button onClick={(e) => e.currentTarget.blur()} className="flex-shrink-0 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">{t("searchBtn")}</button>
                 </div>
                 <div className="hidden md:flex items-stretch bg-white rounded-full border border-gray-300 shadow-lg divide-x divide-gray-200 max-w-xl mx-auto overflow-hidden">
-                  <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? "Marka" : ownerMode === "cars" ? "Marka / Model" : "Pozisyon"}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? "Marka veya model ara..." : "Pozisyon veya beceri ara..."} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
-                  <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? "Şehir" : "Konum"}</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? "Şehir ara... (örn: İstanbul)" : "Şehir veya semt"} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
-                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label="Ara" className="w-11 h-11 rounded-full bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
+                  <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("brandFieldLabel") : ownerMode === "cars" ? t("brandModelFieldLabel") : t("positionFieldLabel")}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                  <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("cityLabelShort") : t("locationFieldLabel")}</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchCityPlaceholder") : t("cityOrDistrictPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
                 </div>
               </div>
             </div>
@@ -2485,39 +2485,39 @@ export function AppShell() {
       {showFilterModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" style={{ zIndex: 9500 }} onClick={() => setShowFilterModal(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><SlidersHorizontal size={18} /> {t("filterBtn")}</h3><button onClick={() => setShowFilterModal(false)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><SlidersHorizontal size={18} /> {t("filterBtn")}</h3><button onClick={() => setShowFilterModal(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             {ownerMode === "mechanics" ? (
               <>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Fiyat Aralığı</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: "Tümü" }, { key: "cheap", label: "💵 Uygun" }, { key: "mid", label: "💰 Orta" }, { key: "expensive", label: "💎 Pahalı" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, priceTier: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.priceTier === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Minimum Puan</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: 0, label: "Tümü" }, { key: 4.0, label: "⭐ 4.0+" }, { key: 4.5, label: "⭐ 4.5+" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, minRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.minRating === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MapPin size={13} /> Maksimum Mesafe</h4>
-                <div className="flex gap-2 mb-6 flex-wrap">{[{ key: 999, label: "Tümü" }, { key: 1, label: "< 1 km" }, { key: 2, label: "< 2 km" }, { key: 5, label: "< 5 km" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, maxDistance: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.maxDistance === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Car size={13} /> Araç Markası</h4>
-                <select value={filters.brand} onChange={(e) => setFilters(f => ({ ...f, brand: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">Tüm Markalar</option>{CAR_BRANDS.map(b => (<option key={b} value={b}>{b}</option>))}</select>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Wrench size={13} /> Hizmet / Servis</h4>
-                <select value={filters.service} onChange={(e) => setFilters(f => ({ ...f, service: e.target.value }))} className="w-full mb-6 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">Tüm Hizmetler</option>{ATU_FIXED_CATALOG.map(s => (<option key={s.name} value={s.name}>{s.name}</option>))}</select>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("priceRangeLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "cheap", label: t("affordablePriceTier") }, { key: "mid", label: t("midPriceTier") }, { key: "expensive", label: t("expensivePriceTier") }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, priceTier: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.priceTier === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("minRatingLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: 0, label: t("allFilterLabel") }, { key: 4.0, label: "⭐ 4.0+" }, { key: 4.5, label: "⭐ 4.5+" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, minRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.minRating === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MapPin size={13} /> {t("maxDistanceLabel")}</h4>
+                <div className="flex gap-2 mb-6 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 1, label: "< 1 km" }, { key: 2, label: "< 2 km" }, { key: 5, label: "< 5 km" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, maxDistance: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.maxDistance === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Car size={13} /> {t("vehicleBrandLabel")}</h4>
+                <select value={filters.brand} onChange={(e) => setFilters(f => ({ ...f, brand: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allBrandsOption")}</option>{CAR_BRANDS.map(b => (<option key={b} value={b}>{b}</option>))}</select>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Wrench size={13} /> {t("serviceLabelFilter")}</h4>
+                <select value={filters.service} onChange={(e) => setFilters(f => ({ ...f, service: e.target.value }))} className="w-full mb-6 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allServicesOption")}</option>{ATU_FIXED_CATALOG.map(s => (<option key={s.name} value={s.name}>{s.name}</option>))}</select>
               </>
             ) : ownerMode === "cars" ? (
               <>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Cog size={13} /> Vites</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: "Tümü" }, ...TRANSMISSIONS.map(tr => ({ key: tr, label: tr }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, transmission: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.transmission === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Fuel size={13} /> Yakıt Türü</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: "Tümü" }, ...FUEL_TYPES.map(f => ({ key: f, label: f }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, fuelType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.fuelType === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> Fiyat Aralığı (₺)</h4>
-                <div className="flex gap-2 mb-5"><input type="number" placeholder="Min" value={listingFilters.minPrice} onChange={(e) => setListingFilters(f => ({ ...f, minPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder="Max" value={listingFilters.maxPrice} onChange={(e) => setListingFilters(f => ({ ...f, maxPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Gauge size={13} /> Kilometre Aralığı</h4>
-                <div className="flex gap-2 mb-5"><input type="number" placeholder="Min km" value={listingFilters.minKm} onChange={(e) => setListingFilters(f => ({ ...f, minKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder="Max km" value={listingFilters.maxKm} onChange={(e) => setListingFilters(f => ({ ...f, maxKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><CalendarDays size={13} /> Model Yılı</h4>
-                <div className="flex gap-2 mb-6"><input type="number" placeholder="Min yıl" value={listingFilters.minYear} onChange={(e) => setListingFilters(f => ({ ...f, minYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder="Max yıl" value={listingFilters.maxYear} onChange={(e) => setListingFilters(f => ({ ...f, maxYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Cog size={13} /> {t("transmissionLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...TRANSMISSIONS.map(tr => ({ key: tr, label: tr }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, transmission: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.transmission === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Fuel size={13} /> {t("fuelTypeLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...FUEL_TYPES.map(f => ({ key: f, label: f }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, fuelType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.fuelType === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("priceRangeTlLabel")}</h4>
+                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minPlaceholder")} value={listingFilters.minPrice} onChange={(e) => setListingFilters(f => ({ ...f, minPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxPlaceholder")} value={listingFilters.maxPrice} onChange={(e) => setListingFilters(f => ({ ...f, maxPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Gauge size={13} /> {t("kmRangeLabel")}</h4>
+                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minKmPlaceholder")} value={listingFilters.minKm} onChange={(e) => setListingFilters(f => ({ ...f, minKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxKmPlaceholder")} value={listingFilters.maxKm} onChange={(e) => setListingFilters(f => ({ ...f, maxKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><CalendarDays size={13} /> {t("modelYearLabel")}</h4>
+                <div className="flex gap-2 mb-6"><input type="number" placeholder={t("minYearPlaceholder")} value={listingFilters.minYear} onChange={(e) => setListingFilters(f => ({ ...f, minYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxYearPlaceholder")} value={listingFilters.maxYear} onChange={(e) => setListingFilters(f => ({ ...f, maxYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
               </>
             ) : (
               <>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Briefcase size={13} /> Çalışma Şekli</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: "Tümü" }, ...EMPLOYMENT_TYPES.map(et => ({ key: et, label: et }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, employmentType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.employmentType === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><GraduationCap size={13} /> Deneyim Seviyesi</h4>
-                <div className="flex gap-2 mb-6 flex-wrap">{[{ key: "all", label: "Tümü" }, ...EXPERIENCE_LEVELS.map(ex => ({ key: ex, label: ex }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, experienceLevel: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.experienceLevel === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Briefcase size={13} /> {t("employmentTypeFilterLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EMPLOYMENT_TYPES.map(et => ({ key: et, label: et }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, employmentType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.employmentType === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><GraduationCap size={13} /> {t("experienceLevelFilterLabel")}</h4>
+                <div className="flex gap-2 mb-6 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EXPERIENCE_LEVELS.map(ex => ({ key: ex, label: ex }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, experienceLevel: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.experienceLevel === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
               </>
             )}
             <div className="flex gap-2">
@@ -2527,26 +2527,26 @@ export function AppShell() {
           </div>
         </div>
       )}
-      {showMapMobile && (<div className="fixed inset-0 bg-white z-50 flex flex-col md:hidden"><div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"><h3 className="font-bold text-gray-800">Haritada Tamirciler</h3><button onClick={() => setShowMapMobile(false)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><MapPanel className="flex-1 m-4" items={filtered} onPick={openMapDetail} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /><div className="p-4"><button onClick={() => setShowMapMobile(false)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm">Listeye Dön</button></div></div>)}
+      {showMapMobile && (<div className="fixed inset-0 bg-white z-50 flex flex-col md:hidden"><div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"><h3 className="font-bold text-gray-800">{t("mapMechanicsTitle")}</h3><button onClick={() => setShowMapMobile(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><MapPanel className="flex-1 m-4" items={filtered} onPick={openMapDetail} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /><div className="p-4"><button onClick={() => setShowMapMobile(false)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm">{t("backToListBtn")}</button></div></div>)}
       {showSellVehiclePicker && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowSellVehiclePicker(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-t-3xl md:rounded-3xl p-5 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Car size={18} className="text-rose-600" /> Hangi Aracı Satacaksınız?</h3><button onClick={() => setShowSellVehiclePicker(false)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
-            <p className="text-xs text-gray-400 mb-4">Kayıtlı araçlarınızdan birini seçerseniz bilgileri otomatik doldurulur.</p>
+            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Car size={18} className="text-rose-600" /> {t("whichVehicleSellTitle")}</h3><button onClick={() => setShowSellVehiclePicker(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <p className="text-xs text-gray-400 mb-4">{t("selectRegisteredVehicleHint")}</p>
             <div className="space-y-2">
               {vehicles.map(v => {
                 const linked = listings.find(l => l.id === v.listingId);
                 return (
                   <button key={v.id} onClick={() => pickVehicleToSell(v)} className="w-full flex items-center gap-3 bg-white border border-gray-200 rounded-2xl p-3 hover:border-rose-300 transition text-left">
                     <div className="w-11 h-11 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={20} className="text-rose-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{v.brand} {v.model}</p><p className="text-xs text-gray-400">{v.year} · {v.plate}{linked ? " · zaten ilanda" : ""}</p></div>
+                    <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{v.brand} {v.model}</p><p className="text-xs text-gray-400">{v.year} · {v.plate}{linked ? ` · ${t("alreadyListedSuffix")}` : ""}</p></div>
                     <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
                   </button>
                 );
               })}
               <button onClick={pickOtherCarToSell} className="w-full flex items-center gap-3 bg-white border border-dashed border-gray-300 rounded-2xl p-3 hover:border-rose-300 transition text-left">
                 <div className="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0"><Plus size={20} className="text-gray-500" /></div>
-                <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800">Başka Bir Araç</p><p className="text-xs text-gray-400">Kayıtlı araçlarımda yok, bilgileri kendim gireceğim</p></div>
+                <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800">{t("otherVehicleLabel")}</p><p className="text-xs text-gray-400">{t("otherVehicleHint")}</p></div>
                 <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
               </button>
             </div>
@@ -2599,79 +2599,79 @@ export function AppShell() {
       {showJobForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" onClick={() => setShowJobForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-rose-500" /> {jobForm._editingId ? "İş İlanını Düzenle" : "Yeni İş İlanı"}</h3><button onClick={() => setShowJobForm(false)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-rose-500" /> {jobForm._editingId ? t("editJobListingTitle") : t("newJobListingTitle")}</h3><button onClick={() => setShowJobForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <div className="space-y-2">
-              <input value={jobForm.title} onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })} placeholder="Pozisyon (örn. Motor Ustası)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <input value={jobForm.title} onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })} placeholder={t("jobTitlePlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
               <div className="flex gap-2"><select value={jobForm.employmentType} onChange={(e) => setJobForm({ ...jobForm, employmentType: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm">{EMPLOYMENT_TYPES.map(t2 => <option key={t2}>{t2}</option>)}</select><select value={jobForm.experienceLevel} onChange={(e) => setJobForm({ ...jobForm, experienceLevel: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm">{EXPERIENCE_LEVELS.map(ex => <option key={ex}>{ex}</option>)}</select></div>
-              <input value={jobForm.location} onChange={(e) => setJobForm({ ...jobForm, location: e.target.value })} placeholder="Konum (örn. Kadıköy / İstanbul)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <div className="flex gap-2"><input value={jobForm.salaryMin} onChange={(e) => setJobForm({ ...jobForm, salaryMin: e.target.value })} type="number" placeholder="Min Maaş (₺, opsiyonel)" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={jobForm.salaryMax} onChange={(e) => setJobForm({ ...jobForm, salaryMax: e.target.value })} type="number" placeholder="Max Maaş (₺, opsiyonel)" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-              <textarea value={jobForm.description} onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })} placeholder="Pozisyon açıklaması" rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
-              <textarea value={jobForm.requirements} onChange={(e) => setJobForm({ ...jobForm, requirements: e.target.value })} placeholder={"Aranan nitelikler (her satıra bir tane)\nÖrn: En az 2 yıl tecrübe\nB sınıfı ehliyet"} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
-              <input value={jobForm.skills} onChange={(e) => setJobForm({ ...jobForm, skills: e.target.value })} placeholder="Beceriler (virgülle ayırın, örn. Motor Tamiri, Kaynak)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <input value={jobForm.location} onChange={(e) => setJobForm({ ...jobForm, location: e.target.value })} placeholder={t("jobLocationPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <div className="flex gap-2"><input value={jobForm.salaryMin} onChange={(e) => setJobForm({ ...jobForm, salaryMin: e.target.value })} type="number" placeholder={t("minSalaryPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={jobForm.salaryMax} onChange={(e) => setJobForm({ ...jobForm, salaryMax: e.target.value })} type="number" placeholder={t("maxSalaryPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+              <textarea value={jobForm.description} onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })} placeholder={t("positionDescPlaceholder")} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
+              <textarea value={jobForm.requirements} onChange={(e) => setJobForm({ ...jobForm, requirements: e.target.value })} placeholder={t("requirementsPlaceholderMulti")} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
+              <input value={jobForm.skills} onChange={(e) => setJobForm({ ...jobForm, skills: e.target.value })} placeholder={t("skillsPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
             </div>
-            <button disabled={!jobForm.title.trim()} onClick={submitJobListing} className={`w-full py-3 rounded-2xl font-semibold text-sm mt-4 transition ${jobForm.title.trim() ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{jobForm._editingId ? "İlanı Güncelle" : "İlanı Yayınla"}</button>
+            <button disabled={!jobForm.title.trim()} onClick={submitJobListing} className={`w-full py-3 rounded-2xl font-semibold text-sm mt-4 transition ${jobForm.title.trim() ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{jobForm._editingId ? t("updateListingBtn") : t("publishListingBtn")}</button>
           </div>
         </div>
       )}
       {showOfferForm && selectedListing && (() => { const currency = listingCurrency(selectedListing.price); const existingOffer = myPendingOfferOn(selectedListing); const isUpdate = existingOffer && !existingOffer.seen; return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setShowOfferForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-5">
-            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800">{isUpdate ? "Teklifini Güncelle" : t("makeOffer")}</h3><button onClick={() => setShowOfferForm(false)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800">{isUpdate ? t("updateOfferBtn") : t("makeOffer")}</h3><button onClick={() => setShowOfferForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{selectedListing.brand} {selectedListing.model} · {selectedListing.price}</p>
-            <input value={offerAmount} onChange={(e) => setOfferAmount(e.target.value)} type="number" placeholder={`Teklif tutarı (${currency})`} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4" />
-            <button disabled={!offerAmount} onClick={submitOffer} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${offerAmount ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{isUpdate ? "Teklifi Güncelle" : "Teklifi Gönder"}</button>
+            <input value={offerAmount} onChange={(e) => setOfferAmount(e.target.value)} type="number" placeholder={t("offerAmountPlaceholder", { currency })} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4" />
+            <button disabled={!offerAmount} onClick={submitOffer} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${offerAmount ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{isUpdate ? t("updateOfferSubmitBtn") : t("sendOfferBtn")}</button>
           </div>
         </div>
       ); })()}
       {showFeaturedUpsell && selectedListing && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setShowFeaturedUpsell(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-5">
-            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2">⭐ İlanı Öne Çıkar</h3><button onClick={() => setShowFeaturedUpsell(false)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2">{t("featuredUpsellTitle")}</h3><button onClick={() => setShowFeaturedUpsell(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{selectedListing.brand} {selectedListing.model} · {selectedListing.price}</p>
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
-              <p className="text-sm text-amber-900 leading-relaxed">İlanınız <strong>{FEATURED_LISTING_DAYS} gün</strong> boyunca "⭐ Öne Çıkan" rozetiyle işaretlenir ve Pazar listesinin en üstünde gösterilir.</p>
+              <p className="text-sm text-amber-900 leading-relaxed">{t("featuredUpsellBadgeNote", { days: String(FEATURED_LISTING_DAYS) })}</p>
               <p className="text-2xl font-bold text-amber-800 mt-2">{FEATURED_LISTING_PRICE}₺</p>
             </div>
-            <p className="text-[11px] text-gray-400 mb-4">Bu bir demo ortamdır — gerçek bir ödeme alınmaz, "Öde ve Öne Çıkar" bu işlemi simüle eder.</p>
-            <button onClick={confirmFeaturedPurchase} className="w-full bg-amber-500 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-amber-600 transition flex items-center justify-center gap-2"><Banknote size={15} /> Öde ve Öne Çıkar ({FEATURED_LISTING_PRICE}₺)</button>
+            <p className="text-[11px] text-gray-400 mb-4">{t("featuredUpsellDemoNote")}</p>
+            <button onClick={confirmFeaturedPurchase} className="w-full bg-amber-500 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-amber-600 transition flex items-center justify-center gap-2"><Banknote size={15} /> {t("payAndFeatureBtn", { price: String(FEATURED_LISTING_PRICE) })}</button>
           </div>
         </div>
       )}
-      {showListingMsgForm && (<div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={() => setShowListingMsgForm(false)}><div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5"><div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800">{t("messageSeller")}</h3><button onClick={() => setShowListingMsgForm(false)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><textarea value={listingMsg} onChange={(e) => setListingMsg(e.target.value)} rows={3} placeholder="Mesajınızı yazın..." className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" /><button onClick={submitListingMsg} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">Gönder</button></div></div>)}
+      {showListingMsgForm && (<div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={() => setShowListingMsgForm(false)}><div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5"><div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800">{t("messageSeller")}</h3><button onClick={() => setShowListingMsgForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><textarea value={listingMsg} onChange={(e) => setListingMsg(e.target.value)} rows={3} placeholder={t("listingMsgPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" /><button onClick={submitListingMsg} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{t("sendReviewBtn")}</button></div></div>)}
       {showJobApplyForm && selectedJob && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={closeJobApplyForm}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl ring-1 ring-black/5 max-h-[88vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-rose-500" /> Başvuru</h3>
-              <button onClick={closeJobApplyForm} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
+              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-rose-500" /> {t("applicationTitle")}</h3>
+              <button onClick={closeJobApplyForm} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">
               <p className="text-xs text-gray-400 mb-4">{selectedJob.title} · {selectedJob.mechanicName}</p>
-              <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><User size={13} className="text-gray-400" /> Başvuru Bilgileriniz</h4>
+              <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><User size={13} className="text-gray-400" /> {t("applicationInfoTitle")}</h4>
               <div className="space-y-2 mb-4">
-                <input value={jobApplyInfo.name} onChange={(e) => setJobApplyInfo(i => ({ ...i, name: e.target.value }))} placeholder="Ad Soyad *" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <input value={jobApplyInfo.name} onChange={(e) => setJobApplyInfo(i => ({ ...i, name: e.target.value }))} placeholder={t("fullNameRequiredPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
                 <div className="flex gap-2">
-                  <div className="w-1/2"><input value={jobApplyInfo.phone} onChange={(e) => setJobApplyInfo(i => ({ ...i, phone: e.target.value }))} placeholder="Telefon (+90 / +49) *" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />{jobApplyInfo.phone.trim() && !jobApplyPhoneCheck.valid && <p className="text-[10px] text-red-500 mt-1">{jobApplyPhoneCheck.message}</p>}</div>
-                  <div className="w-1/2"><input value={jobApplyInfo.email} onChange={(e) => setJobApplyInfo(i => ({ ...i, email: e.target.value }))} placeholder="E-posta *" type="email" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />{jobApplyInfo.email.trim() && !jobApplyEmailValid && <p className="text-[10px] text-red-500 mt-1">Geçersiz e-posta.</p>}</div>
+                  <div className="w-1/2"><input value={jobApplyInfo.phone} onChange={(e) => setJobApplyInfo(i => ({ ...i, phone: e.target.value }))} placeholder={t("phoneCountryPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />{jobApplyInfo.phone.trim() && !jobApplyPhoneCheck.valid && <p className="text-[10px] text-red-500 mt-1">{jobApplyPhoneCheck.message}</p>}</div>
+                  <div className="w-1/2"><input value={jobApplyInfo.email} onChange={(e) => setJobApplyInfo(i => ({ ...i, email: e.target.value }))} placeholder={t("emailRequiredPlaceholder")} type="email" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />{jobApplyInfo.email.trim() && !jobApplyEmailValid && <p className="text-[10px] text-red-500 mt-1">{t("invalidEmailNote")}</p>}</div>
                 </div>
-                <input value={jobApplyInfo.address} onChange={(e) => setJobApplyInfo(i => ({ ...i, address: e.target.value }))} placeholder="Adres *" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <input value={jobApplyInfo.address} onChange={(e) => setJobApplyInfo(i => ({ ...i, address: e.target.value }))} placeholder={t("addressRequiredPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
               </div>
-              <h4 className="text-xs font-semibold text-gray-700 mb-2">Ön Yazı (opsiyonel)</h4>
-              <textarea value={jobApplyMsg} onChange={(e) => setJobApplyMsg(e.target.value)} rows={3} placeholder="Kendinizden ve deneyiminizden kısaca bahsedin..." className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" />
-              <h4 className="text-xs font-semibold text-gray-700 mb-2">CV *</h4>
+              <h4 className="text-xs font-semibold text-gray-700 mb-2">{t("coverLetterTitle")}</h4>
+              <textarea value={jobApplyMsg} onChange={(e) => setJobApplyMsg(e.target.value)} rows={3} placeholder={t("coverLetterPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" />
+              <h4 className="text-xs font-semibold text-gray-700 mb-2">{t("cvRequiredTitle")}</h4>
               <input ref={cvFileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleCvSelect} className="hidden" />
               {jobApplyCv ? (
                 <div className="flex items-center justify-between gap-2 bg-rose-50 rounded-xl px-3 py-2.5">
                   <span className="flex items-center gap-2 text-xs text-rose-700 min-w-0"><FileText size={15} className="flex-shrink-0" /><span className="truncate">{jobApplyCv.name}</span></span>
-                  <button onClick={removeCv} aria-label="CV'yi kaldır" className="text-rose-400 hover:text-red-500 flex-shrink-0 p-2 -m-2"><X size={15} /></button>
+                  <button onClick={removeCv} aria-label={t("removeCvAria")} className="text-rose-400 hover:text-red-500 flex-shrink-0 p-2 -m-2"><X size={15} /></button>
                 </div>
               ) : (
-                <button onClick={() => cvFileRef.current?.click()} className="w-full flex items-center justify-center gap-2 border border-dashed border-gray-300 text-gray-500 rounded-xl py-2.5 text-xs font-medium hover:bg-gray-50 transition"><Paperclip size={14} /> CV Yükle (PDF, DOC)</button>
+                <button onClick={() => cvFileRef.current?.click()} className="w-full flex items-center justify-center gap-2 border border-dashed border-gray-300 text-gray-500 rounded-xl py-2.5 text-xs font-medium hover:bg-gray-50 transition"><Paperclip size={14} /> {t("uploadCvBtn")}</button>
               )}
-              <p className="text-[10px] text-gray-300 mt-2">* zorunlu alanlar</p>
+              <p className="text-[10px] text-gray-300 mt-2">{t("requiredFieldsHint")}</p>
             </div>
             <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
-              <button disabled={!jobApplyReady} onClick={submitJobApplication} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${jobApplyReady ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>Başvuruyu Gönder</button>
+              <button disabled={!jobApplyReady} onClick={submitJobApplication} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${jobApplyReady ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("submitApplicationBtn")}</button>
             </div>
           </div>
         </div>
@@ -2679,56 +2679,56 @@ export function AppShell() {
       {reviewingApptId && (() => { const revAppt = appointments.find(a => a.id === reviewingApptId); return (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={() => setReviewingApptId(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
-            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800">Yorum Yap</h3><button onClick={() => setReviewingApptId(null)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800">{t("writeReviewTitle")}</h3><button onClick={() => setReviewingApptId(null)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{revAppt?.mechanicName}</p>
             <div className="flex items-center gap-1.5 mb-4 justify-center">{[1, 2, 3, 4, 5].map(n => (<button key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))}><Star size={30} className={n <= reviewForm.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} /></button>))}</div>
-            <textarea value={reviewForm.comment} onChange={(e) => setReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder="Deneyiminizi paylaşın..." className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" />
-            <button onClick={submitReview} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">Gönder</button>
+            <textarea value={reviewForm.comment} onChange={(e) => setReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder={t("shareExperiencePlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" />
+            <button onClick={submitReview} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{t("sendReviewBtn")}</button>
           </div>
         </div>
       ); })()}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={closePasswordModal}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
-            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Lock size={18} /> Şifre Değiştir</h3><button onClick={closePasswordModal} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Lock size={18} /> {t("changePasswordTitle")}</h3><button onClick={closePasswordModal} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <div className="space-y-2">
-              <input type="password" value={passwordForm.current} onChange={(e) => setPasswordForm(f => ({ ...f, current: e.target.value }))} placeholder="Mevcut Şifre" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <input type="password" value={passwordForm.next} onChange={(e) => setPasswordForm(f => ({ ...f, next: e.target.value }))} placeholder="Yeni Şifre" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <input type="password" value={passwordForm.confirm} onChange={(e) => setPasswordForm(f => ({ ...f, confirm: e.target.value }))} placeholder="Yeni Şifre (Tekrar)" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <input type="password" value={passwordForm.current} onChange={(e) => setPasswordForm(f => ({ ...f, current: e.target.value }))} placeholder={t("currentPasswordPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <input type="password" value={passwordForm.next} onChange={(e) => setPasswordForm(f => ({ ...f, next: e.target.value }))} placeholder={t("newPasswordPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <input type="password" value={passwordForm.confirm} onChange={(e) => setPasswordForm(f => ({ ...f, confirm: e.target.value }))} placeholder={t("newPasswordRepeatPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
             </div>
-            <button onClick={submitPasswordChange} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-rose-700 transition">Şifreyi Güncelle</button>
+            <button onClick={submitPasswordChange} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-rose-700 transition">{t("updatePasswordBtn")}</button>
           </div>
         </div>
       )}
       {showNewTicketForm && (
         <div style={{ zIndex: 9999 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-4" onClick={() => setShowNewTicketForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-t-3xl md:rounded-3xl p-5 max-h-[88vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-1"><h3 className="text-base font-bold text-gray-900">Yeni Destek Talebi</h3><button onClick={() => setShowNewTicketForm(false)} aria-label="Kapat" className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
-            <p className="text-xs text-gray-400 mb-4">Konunu kısaca özetle, ekibimiz en kısa sürede dönüş yapacak.</p>
+            <div className="flex items-center justify-between mb-1"><h3 className="text-base font-bold text-gray-900">{t("newSupportTicketTitle")}</h3><button onClick={() => setShowNewTicketForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <p className="text-xs text-gray-400 mb-4">{t("ticketSummaryHint")}</p>
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-1 block">Talep Türü</label>
+                <label className="text-[11px] font-medium text-gray-500 mb-1 block">{t("requestTypeLabel")}</label>
                 <select value={newTicketForm.type} onChange={(e) => setNewTicketForm(f => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm">
                   {Object.entries(ADMIN_TICKET_TYPE_LABELS).map(([k, label]) => (<option key={k} value={k}>{label}</option>))}
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-1 block">Konu</label>
-                <input value={newTicketForm.subject} onChange={(e) => setNewTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder="Örn. Kapora iade edilmedi" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <label className="text-[11px] font-medium text-gray-500 mb-1 block">{t("subjectLabel")}</label>
+                <input value={newTicketForm.subject} onChange={(e) => setNewTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder={t("subjectPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-1 block">Açıklama</label>
-                <textarea value={newTicketForm.description} onChange={(e) => setNewTicketForm(f => ({ ...f, description: e.target.value }))} rows={4} placeholder="Yaşadığın sorunu detaylı anlat..." className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
+                <label className="text-[11px] font-medium text-gray-500 mb-1 block">{t("descriptionLabel")}</label>
+                <textarea value={newTicketForm.description} onChange={(e) => setNewTicketForm(f => ({ ...f, description: e.target.value }))} rows={4} placeholder={t("describeIssueDetailPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-1 block">İlgili Randevu / İlan / Tamirci No (opsiyonel)</label>
-                <input value={newTicketForm.relatedNote} onChange={(e) => setNewTicketForm(f => ({ ...f, relatedNote: e.target.value }))} placeholder="Örn. İlan #503 veya Tamirci #12" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                <p className="text-[10px] text-gray-300 mt-1">İlan/tamirci numarasını, o ilanın veya tamircinin sayfasında görebilirsin.</p>
+                <label className="text-[11px] font-medium text-gray-500 mb-1 block">{t("relatedApptListingMechLabel")}</label>
+                <input value={newTicketForm.relatedNote} onChange={(e) => setNewTicketForm(f => ({ ...f, relatedNote: e.target.value }))} placeholder={t("relatedNotePlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <p className="text-[10px] text-gray-300 mt-1">{t("relatedNoteHint")}</p>
               </div>
             </div>
             <div className="flex gap-2 mt-5">
-              <button onClick={() => setShowNewTicketForm(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">Vazgeç</button>
-              <button onClick={submitSupportTicket} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">Gönder</button>
+              <button onClick={() => setShowNewTicketForm(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
+              <button onClick={submitSupportTicket} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("sendReviewBtn")}</button>
             </div>
           </div>
         </div>
@@ -2737,15 +2737,15 @@ export function AppShell() {
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={closeDeleteModal}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-3 mx-auto"><Trash2 size={26} className="text-red-500" /></div>
-            <h3 className="font-bold text-gray-800 text-center mb-1">{role === "mechanic" ? "İşletmeni" : "Hesabını"} silmek istediğine emin misin?</h3>
-            <p className="text-xs text-gray-400 text-center mb-4">Bu işlem geri alınamaz. Tüm {role === "mechanic" ? "ilanların ve randevu geçmişin" : "araçların, randevuların ve sohbetlerin"} kalıcı olarak silinir.</p>
+            <h3 className="font-bold text-gray-800 text-center mb-1">{t("deleteBusinessOrAccountQuestion", { who: role === "mechanic" ? t("deleteBusinessSubject") : t("deleteAccountSubject") })}</h3>
+            <p className="text-xs text-gray-400 text-center mb-4">{t("deleteAccountIrreversibleNote", { items: role === "mechanic" ? t("mechanicDeleteItemsNote") : t("ownerDeleteItemsNote") })}</p>
             <div className="bg-red-50 rounded-xl p-3 mb-4">
-              <p className="text-xs text-gray-600 text-center mb-2">Onaylamak için kutuya <span className="font-bold text-red-600">SİL</span> yazın</p>
-              <input value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder="SİL" className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm text-center font-semibold tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-red-300" />
+              <p className="text-xs text-gray-600 text-center mb-2">{t("typeToConfirmNote", { word: t("deleteWordTr") })}</p>
+              <input value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder={t("deleteWordTr")} className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm text-center font-semibold tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-red-300" />
             </div>
             <div className="flex gap-2">
               <button onClick={closeDeleteModal} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("cancel")}</button>
-              <button disabled={!deleteReady} onClick={confirmDeleteAccount} className={`flex-1 py-3 rounded-2xl font-semibold text-sm transition ${deleteReady ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>Evet, Sil</button>
+              <button disabled={!deleteReady} onClick={confirmDeleteAccount} className={`flex-1 py-3 rounded-2xl font-semibold text-sm transition ${deleteReady ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("yesDeleteConfirmLabel")}</button>
             </div>
           </div>
         </div>

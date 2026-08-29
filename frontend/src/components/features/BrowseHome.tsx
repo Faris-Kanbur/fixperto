@@ -124,7 +124,7 @@ export function BrowseHome({ theme = undefined }) {
               <p className="text-xs text-gray-500 truncate">{topReminder.detail}</p>
             </div>
             <button onClick={() => goBookFromReminder(topReminder.key)} className={`flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-xl text-white transition ${topReminder.urgent ? "bg-red-600 hover:bg-red-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("bookNow")}</button>
-            <button onClick={() => setDismissedReminderKey(topReminder.key)} aria-label="Kapat" className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition p-2 -m-2"><X size={16} /></button>
+            <button onClick={() => setDismissedReminderKey(topReminder.key)} aria-label={t("closeAria")} className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition p-2 -m-2"><X size={16} /></button>
           </div>
         </div>
       )}

@@ -131,7 +131,7 @@ export function MechCard({ m, onHover }) {
         </div>
         <p className="text-gray-400 text-xs mt-1 truncate">{m.specialty}</p>
         <div className="flex items-center justify-between gap-2 mt-2.5">
-          <span className="flex items-center gap-1 text-xs text-gray-500"><MapPin size={12} />{(m.effectiveDistance ?? m.distance).toFixed(1)} km{userLocation && m.effectiveDistance != null && <span title="Gerçek konum"><CheckCircle2 size={11} className="text-green-500" /></span>}</span>
+          <span className="flex items-center gap-1 text-xs text-gray-500"><MapPin size={12} />{(m.effectiveDistance ?? m.distance).toFixed(1)} km{userLocation && m.effectiveDistance != null && <span title={t("realLocationBadgeTitle")}><CheckCircle2 size={11} className="text-green-500" /></span>}</span>
           <PriceLevelDots price={m.price} />
         </div>
         <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Zap size={10} className="text-gray-900" /> {m.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>

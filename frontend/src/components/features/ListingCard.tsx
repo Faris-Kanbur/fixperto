@@ -121,14 +121,14 @@ export function ListingCard({ l, onHover = undefined }) {
         <div className="relative m-2 mb-0 rounded-2xl overflow-hidden isolate transform-gpu">
           <div className="h-44 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
             <button onClick={() => setSelectedListingId(l.id)} className="w-full h-full flex items-center justify-center text-6xl">
-              {isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 500)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || "İlan fotoğrafı"} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" /> : l.photo}
+              {isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 500)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" /> : l.photo}
             </button>
           </div>
           <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 pointer-events-none">
             <span className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${meta.color}`}>{meta.label}</span>
             {l.featured && <span className="text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-amber-300">{t("featuredBadge")}</span>}
           </div>
-          <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label="Favorilere ekle" className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
+          <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label={t("addToFavoritesAria")} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
         </div>
         <button onClick={() => setSelectedListingId(l.id)} className="w-full text-left p-4">
           <div className="flex items-start justify-between gap-2">
