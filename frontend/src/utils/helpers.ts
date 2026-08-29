@@ -22,12 +22,34 @@ export function getDaySlots(day) {
   return all;
 }
 
+function addMinutesToTime(time, mins) {
+  const [h, m] = time.split(":").map(Number);
+  const total = h * 60 + m + mins;
+  const hh = Math.floor(total / 60) % 24;
+  const mm = total % 60;
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+// GERÇEK HATA DÜZELTMESİ: genSlots yarı-açık bir aralık üretir (ör. 09:00-18:00 için son eleman
+// "17:30"tür — bu son randevunun BAŞLAYABİLECEĞİ saattir, işletmenin kapandığı saat değil). Eskiden
+// hem burada hem AppShell.tsx'teki gün özeti rozetinde kapanış saati doğrudan
+// `slots[slots.length - 1]` olarak gösteriliyordu — yani her tamirci için gerçek kapanışından
+// (ör. 18:00) 30 dakika erken bir saat (17:30) hem müşteriye gösterilen saatlerde hem "şu an açık"
+// göstergesinde (isOpenNowByHoursText bu metni parse ediyor) yanlış sonuç veriyordu. Son slotun
+// BAŞLANGICINA 30 dakika ekleyerek gerçek kapanış saatini elde ediyoruz — normal günlerde bu
+// zaten d.end'e eşittir, "ekstra slot" ile normal saatlerin ötesine uzatılmış günlerde ise
+// gerçek uzatılmış kapanış saatini doğru yansıtır.
+export function dayClosingTime(day) {
+  const slots = getDaySlots(day);
+  if (!slots.length) return day.end;
+  return addMinutesToTime(slots[slots.length - 1], 30);
+}
+
 export function formatHoursText(hours) {
   const groups = [];
   DAY_KEYS.forEach((k) => {
     const d = hours[k];
-    const slots = getDaySlots(d);
-    const lastEnd = slots.length ? slots[slots.length - 1] : d.end;
+    const lastEnd = dayClosingTime(d);
     groups.push(`${DAY_LABELS[k]}: ${d.open ? `${d.start}-${lastEnd}` : "Kapalı"}`);
   });
   return groups;

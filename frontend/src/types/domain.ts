@@ -68,6 +68,8 @@ export interface Mechanic {
   paymentMethods?: string[];
   /** İşletme telefon numarası — ilan detayındaki "Telefonla Ara" butonu için. */
   phone?: string;
+  /** Demo amaçlı düz metin — gerçek bir üretim sisteminde ASLA client'a dönmemeli (bkz. Owner.password). */
+  password?: string;
 }
 
 export interface Owner {

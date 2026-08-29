@@ -45,7 +45,12 @@ CREATE TABLE IF NOT EXISTS mechanics (
   shareCount INTEGER DEFAULT 0,
   brandsServiced TEXT DEFAULT '[]',
   paymentMethods TEXT DEFAULT '[]',
-  phone TEXT
+  phone TEXT,
+  -- Owners tablosundaki password sütunuyla aynı gerekçeyle eklendi (bkz. o tablodaki yorum):
+  -- tamirci profil ayarlarındaki "şifre değiştir" formu önceden mevcut şifreyi hiç doğrulamıyordu
+  -- çünkü karşılaştırılacak gerçek bir sütun yoktu. Demo amaçlı düz metin — gerçek bir üretim
+  -- sisteminde ASLA client'a dönmemeli.
+  password TEXT DEFAULT 'demo1234'
 );
 
 CREATE TABLE IF NOT EXISTS owners (
@@ -334,6 +339,7 @@ function ensureColumn(table, columnDef) {
   ["listings", "featured INTEGER DEFAULT 0"],
   ["listings", "adminRemoved INTEGER DEFAULT 0"],
   ["mechanics", "phone TEXT"],
+  ["mechanics", "password TEXT DEFAULT 'demo1234'"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 // ---------------------------------------------------------------------------

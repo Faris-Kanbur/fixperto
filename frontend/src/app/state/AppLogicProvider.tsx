@@ -1800,11 +1800,22 @@ function useAppLogic() {
     setAuthError("");
     const isFirstSignup = screen === "signup";
     if (role === "owner") {
-      const ownerPatch = { name: form.name || "Araç Sahibi", email: form.email, phone: form.phone };
+      // GERÇEK HATA DÜZELTMESİ: kayıt formu bir şifre alanı topluyordu ama hiçbir zaman
+      // kaydetmiyordu — kullanıcı bir şifre seçtiğini sanıyordu, oysa hesabına hiç yazılmıyordu.
+      // Bu da profil ayarlarındaki "şifre değiştir" formunun mevcut şifreyi asla doğru
+      // karşılaştıramamasının kök nedeniydi. Sadece ilk kayıtta (girişte değil) kaydediyoruz.
+      const ownerPatch: { name: string; email: string; phone: string; password?: string } = { name: form.name || "Araç Sahibi", email: form.email, phone: form.phone };
+      if (isFirstSignup && form.password) ownerPatch.password = form.password;
       updateMyOwnerFields(ownerPatch);
       persist(api.owners.update(MY_OWNER_ID, ownerPatch), "Kayıt bilgileri kaydedilemedi");
       setScreen("owner"); setOwnerTab("search");
-    } else setScreen("mechanicDashboard");
+    } else {
+      if (isFirstSignup && form.password) {
+        setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, password: form.password } : m));
+        persist(api.mechanics.update(MY_MECHANIC_ID, { password: form.password }), "Kayıt bilgileri kaydedilemedi");
+      }
+      setScreen("mechanicDashboard");
+    }
     if (isFirstSignup) { setOnboardStep(0); setShowOnboarding(true); }
     // Bildirimler varsayılan olarak açık sayılsın diye: tarayıcı henüz sorulmadıysa girişte hemen soruyoruz.
     if (typeof Notification !== "undefined" && Notification.permission === "default") { requestNotifPermission(); }
@@ -1987,10 +1998,28 @@ function useAppLogic() {
     setToast({ type: "info", text: "🗑️ Yorumunuz silindi." });
   };
   const closePasswordModal = () => { setShowPasswordModal(false); setPasswordForm({ current: "", next: "", confirm: "" }); };
+  // GERÇEK HATA DÜZELTMESİ: bu form önceden "mevcut şifre" alanının sadece DOLU olup olmadığını
+  // kontrol ediyordu, gerçek hesap şifresiyle hiç karşılaştırmıyordu — ve hiçbir API çağrısı
+  // yapmadan direkt "şifreniz güncellendi" diyordu, yani yeni şifre hiçbir zaman kaydedilmiyordu.
+  // Kullanıcıya bir güvenlik kontrolü yapıldığı ve şifrenin değiştiği izlenimi veriyordu, oysa
+  // ikisi de gerçek değildi. Bu uygulama (admin panelindeki mevcut şifre sıfırlama akışıyla
+  // tutarlı olarak) şifreleri düz metin tutuyor — burada da aynı modele göre gerçek karşılaştırma
+  // ve gerçek kayıt yapılıyor.
   const submitPasswordChange = () => {
     if (!passwordForm.current || !passwordForm.next) { setToast({ type: "info", text: "⚠️ Lütfen tüm alanları doldurun." }); return; }
+    // Seed verisindeki veya hiç şifre belirlememiş demo hesaplar için varsayılan "demo1234" —
+    // admin panelindeki aynı varsayılanla tutarlı (bkz. adminAllUsers, satır ~1322).
+    const currentRecord = role === "mechanic" ? myProfile : ownerProfile;
+    if (passwordForm.current !== (currentRecord?.password || "demo1234")) { setToast({ type: "info", text: "⚠️ Mevcut şifreniz yanlış." }); return; }
     if (passwordForm.next.length < 6) { setToast({ type: "info", text: "⚠️ Yeni şifre en az 6 karakter olmalı." }); return; }
     if (passwordForm.next !== passwordForm.confirm) { setToast({ type: "info", text: "⚠️ Yeni şifreler eşleşmiyor." }); return; }
+    if (role === "mechanic") {
+      setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, password: passwordForm.next } : m));
+      persist(api.mechanics.update(MY_MECHANIC_ID, { password: passwordForm.next }), "Şifre kaydedilemedi");
+    } else {
+      updateMyOwnerField("password", passwordForm.next);
+      persist(api.owners.update(MY_OWNER_ID, { password: passwordForm.next }), "Şifre kaydedilemedi");
+    }
     setShowPasswordModal(false);
     setPasswordForm({ current: "", next: "", confirm: "" });
     setToast({ type: "info", text: "🔒 Şifreniz güncellendi." });
@@ -2193,9 +2222,25 @@ function useAppLogic() {
     setMechChatInput("");
   };
   const updateMyField = (field, value) => { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m)); persist(api.mechanics.update(MY_MECHANIC_ID, { [field]: value }), "Profil bilgisi kaydedilemedi"); };
+  // GERÇEK HATA DÜZELTMESİ: fiyat alanı yeniden yazmak için boşaltıldığında `Number("") || 0` ile
+  // anında 0'a düşüp kaydediliyordu — "ücretsiz" gibi yanlış bir izlenim verebiliyordu. Alan
+  // boşken sadece görünümü boş bırakıyoruz (henüz kaydetmiyoruz); geçerli bir sayı girilince normal
+  // şekilde kaydediliyor.
+  const updateMyPriceField = (raw) => {
+    if (String(raw).trim() === "") { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, price: "" } : m)); return; }
+    updateMyField("price", Number(raw) || 0);
+  };
   const updateService = (idx, field, value) => {
     const services = myProfile.services.map((s, i) => i === idx ? { ...s, [field]: value } : s);
     setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services }));
+    // GERÇEK HATA DÜZELTMESİ: fiyat alanı her tuş vuruşunda backend'e kaydediliyordu — sabit
+    // fiyatlı bir hizmetin fiyatını silip yeniden yazarken (ör. "450" -> "" -> "500"), o an profili
+    // görüntüleyen bir müşteri kısa süreliğine geçersiz bir durumu (sabit fiyatlı ama fiyatsız
+    // hizmet) görebiliyordu. Yerel state yine de anında güncelleniyor (yazarken akıcı kalsın diye);
+    // sadece geçersiz kombinasyonu backend'e göndermiyoruz — fiyat tekrar geçerli olduğunda bir
+    // sonraki updateService çağrısı zaten güncel diziyi kaydedecek.
+    const hasInvalidFixedPrice = services.some(s => s.fixed && !String(s.price || "").trim());
+    if (hasInvalidFixedPrice) return;
     persist(api.mechanics.update(MY_MECHANIC_ID, { services }), "Hizmet kaydedilemedi");
   };
   const removeService = (idx) => {
@@ -2237,7 +2282,16 @@ function useAppLogic() {
     finalizeAddService(name, price, fixed);
   };
   const cancelAddService = () => { setShowAddServiceForm(false); setNewServiceForm({ name: "", price: "", fixed: false, fixedTouched: false }); setDuplicateServiceWarning(null); };
-  const uploadCoverPhoto = (e) => { const file = e.target.files?.[0]; if (!file) return; updateMyField("coverPhoto", URL.createObjectURL(file)); };
+  // GERÇEK HATA DÜZELTMESİ: URL.createObjectURL(file) sayfaya özel geçici bir referans döndürür —
+  // backend'e kaydedilip sayfa yenilendiğinde (veya profili görüntüleyen bir müşterinin
+  // tarayıcısında) artık geçersizdir, fotoğraf sessizce kırık görünür (bkz. addQuotePhoto'daki aynı
+  // düzeltme). FileReader ile kalıcı bir "data:" URI'sine çeviriyoruz.
+  const readFileAsDataUrl = (file, onDone) => {
+    const reader = new FileReader();
+    reader.onload = () => { if (typeof reader.result === "string") onDone(reader.result); };
+    reader.readAsDataURL(file);
+  };
+  const uploadCoverPhoto = (e) => { const file = e.target.files?.[0]; if (!file) return; readFileAsDataUrl(file, (dataUrl) => updateMyField("coverPhoto", dataUrl)); };
   const removeCoverPhoto = () => updateMyField("coverPhoto", null);
   const addStaff = () => {
     const staff = [...myProfile.staff, { name: "Yeni Çalışan", role: "Görev", emoji: "🧑‍🔧" }];
@@ -2254,8 +2308,8 @@ function useAppLogic() {
     setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, staff }));
     persist(api.mechanics.update(MY_MECHANIC_ID, { staff }), "Çalışan kaydedilemedi");
   };
-  const staffAvatarUpload = (idx, e) => { const file = e.target.files?.[0]; if (!file) return; updateStaffField(idx, "emoji", URL.createObjectURL(file)); };
-  const ownerPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; const url = URL.createObjectURL(file); updateMyOwnerField("photo", url); persist(api.owners.update(MY_OWNER_ID, { photo: url }), "Fotoğraf kaydedilemedi"); };
+  const staffAvatarUpload = (idx, e) => { const file = e.target.files?.[0]; if (!file) return; readFileAsDataUrl(file, (dataUrl) => updateStaffField(idx, "emoji", dataUrl)); };
+  const ownerPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; readFileAsDataUrl(file, (dataUrl) => { updateMyOwnerField("photo", dataUrl); persist(api.owners.update(MY_OWNER_ID, { photo: dataUrl }), "Fotoğraf kaydedilemedi"); }); };
   // Çalışma saatleri (mechanicHours) ayrı bir istemci-taraflı yapı; backend'deki mechanics.hoursText
   // alanına insan-okur biçimde yansıtılır (bkz. formatHoursText) — böylece diğer kullanıcılar
   // gerçek zamanlı çalışma saatlerini görebilir.
@@ -2753,7 +2807,7 @@ function useAppLogic() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateMyPriceField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,

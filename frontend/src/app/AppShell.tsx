@@ -33,7 +33,7 @@ import {
 import {
   ticketSlaBreached, ticketDaysOpen, initials, isValidEmail, validatePhone,
   computeReminders, isImgUrl, listingStatusMeta, isValidDateStr, listingCurrency,
-  jobStatusMeta, parsePriceNumber, isFixedPriceService, statusColor, getDaySlots,
+  jobStatusMeta, parsePriceNumber, isFixedPriceService, statusColor, getDaySlots, dayClosingTime,
   imgFallbackHandler, imgThumb,
 } from "../utils/helpers";
 
@@ -108,7 +108,7 @@ export function AppShell() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateMyPriceField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
@@ -2339,7 +2339,7 @@ export function AppShell() {
               <div className="flex-1 px-5 py-4 overflow-y-auto">
                 <div className="bg-rose-100 rounded-xl p-3 mb-4 text-xs text-rose-800 flex items-center gap-2"><Pencil size={14} /> {t("changesApplyInstantly")}</div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("basicInfoTitle")}</h3>
-                <div className="space-y-2 mb-5"><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} placeholder={t("phonePlaceholderExample")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><input value={myProfile.price} onChange={(e) => updateMyField("price", Number(e.target.value) || 0)} type="number" placeholder={t("priceTlPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <div className="space-y-2 mb-5"><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} placeholder={t("phonePlaceholderExample")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><input value={myProfile.price} onChange={(e) => updateMyPriceField(e.target.value)} type="number" placeholder={t("priceTlPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-1.5"><Tag size={14} className="text-rose-500" /> {t("brandsServicedTitle")}</h3>
                 <p className="text-[11px] text-gray-400 mb-2 -mt-1">{t("brandsServicedHint")}</p>
                 <div className="flex flex-wrap gap-1.5 mb-5">{CAR_BRANDS.map((brand) => { const active = (myProfile.brandsServiced || []).includes(brand); return (<button key={brand} onClick={() => { const cur = myProfile.brandsServiced || []; updateMyField("brandsServiced", active ? cur.filter((b) => b !== brand) : [...cur, brand]); }} className={`text-xs font-semibold px-2.5 py-1.5 rounded-full border transition ${active ? "bg-rose-600 border-rose-600 text-white" : "bg-white border-gray-200 text-gray-500 hover:border-rose-300"}`}>{brand}</button>); })}</div>
@@ -2428,7 +2428,7 @@ export function AppShell() {
                 <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Clock size={16} /> {t("workingHours")}</h3>
                 <p className="text-[11px] text-gray-400 mb-3">{t("workingHoursHint")}</p>
                 <div className="space-y-2 mb-6">
-                  {DAY_KEYS.map(key => { const day = mechanicHours[key]; const isOpen = expandedDay === key; const slots = getDaySlots(day); const summary = day.open ? `${day.start} - ${slots.length ? slots[slots.length - 1] : day.end}` : t("closed"); return (
+                  {DAY_KEYS.map(key => { const day = mechanicHours[key]; const isOpen = expandedDay === key; const slots = getDaySlots(day); const summary = day.open ? `${day.start} - ${dayClosingTime(day)}` : t("closed"); return (
                     <div key={key} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
                       <button onClick={() => setExpandedDay(isOpen ? null : key)} className="w-full flex items-center justify-between p-3">
                         <span className="text-sm font-semibold text-gray-700">{DAY_LABELS_FULL[key]}</span>
