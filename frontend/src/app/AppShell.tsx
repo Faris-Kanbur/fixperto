@@ -1,4 +1,5 @@
 import { useApp } from "./state/AppLogicProvider";
+import { MONTH_ABBR_BY_LANG } from "../data/i18n";
 import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging } from "lucide-react";
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
@@ -2176,19 +2177,19 @@ export function AppShell() {
                   {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 gap-3">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
                 </>)}
                 {mechListingsSubTab === "jobs" && (<>
-                  <p className="text-xs text-gray-400 mb-3">Çalışan aramak için iş ilanı verin, başvuruları burada takip edin.</p>
-                  <button onClick={() => openJobForm(null)} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> Yeni İş İlanı Ver</button>
+                  <p className="text-xs text-gray-400 mb-3">{t("jobListingsHint")}</p>
+                  <button onClick={() => openJobForm(null)} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("postNewJobBtn")}</button>
                   {/* ÖNEMLİ: mechanicId ile eşleştir — mechanicName (isim) ile eşleştirme, tamirci
                       işletme adını değiştirdiğinde kendi iş ilanlarının bu listeden tamamen
                       kaybolmasına (düzenleyememesine/kapatamamasına) yol açıyordu. */}
-                  {jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).length === 0 ? (<div className="text-center py-16"><Briefcase size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz bir iş ilanınız yok.</p></div>) : (<div className="space-y-3">{jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).map(j => (<JobCard key={j.id} j={j} />))}</div>)}
+                  {jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).length === 0 ? (<div className="text-center py-16"><Briefcase size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnJobListings")}</p></div>) : (<div className="space-y-3">{jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).map(j => (<JobCard key={j.id} j={j} />))}</div>)}
                 </>)}
               </div>
             )}
             {mechTab === "favorites" && (
               <div className="flex-1 px-5 py-4 overflow-y-auto">
                 {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
-                  <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz favori eklemediniz.</p><p className="text-gray-300 text-xs mt-1">Pazar'daki veya keşfetteki ilan kartlarında kalp ikonuna dokunarak favorilere ekleyebilirsiniz.</p></div>
+                  <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesYet")}</p><p className="text-gray-300 text-xs mt-1">{t("noFavoritesHint")}</p></div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                 )}
@@ -2218,29 +2219,29 @@ export function AppShell() {
               return (
                 <div className="flex-1 px-5 py-4 overflow-y-auto">
                   <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
-                    <button onClick={() => setMechAnalyticsView("overview")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "overview" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><TrendingUp size={12} /> Genel Analiz</button>
-                    <button onClick={() => setMechAnalyticsView("earnings")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "earnings" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Banknote size={12} /> Kazanç</button>
-                    <button onClick={() => setMechAnalyticsView("traffic")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "traffic" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Compass size={12} /> Ziyaret & Rapor</button>
+                    <button onClick={() => setMechAnalyticsView("overview")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "overview" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><TrendingUp size={12} /> {t("analyticsOverviewTab")}</button>
+                    <button onClick={() => setMechAnalyticsView("earnings")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "earnings" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Banknote size={12} /> {t("analyticsEarningsTab")}</button>
+                    <button onClick={() => setMechAnalyticsView("traffic")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "traffic" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Compass size={12} /> {t("analyticsTrafficTab")}</button>
                   </div>
                   {mechAnalyticsView === "overview" && (<>
                     <div className="grid grid-cols-2 gap-2 mb-3">
-                      <div className="bg-rose-50 rounded-xl p-3"><p className="text-lg font-bold text-rose-600">{totalBooked}</p><p className="text-[10px] text-gray-500 mt-0.5">Toplam randevu</p></div>
-                      <div className="bg-gray-100 rounded-xl p-3"><p className="text-lg font-bold text-gray-700">{monthBooked}</p><p className="text-[10px] text-gray-500 mt-0.5">Bu ay alınan</p></div>
+                      <div className="bg-rose-50 rounded-xl p-3"><p className="text-lg font-bold text-rose-600">{totalBooked}</p><p className="text-[10px] text-gray-500 mt-0.5">{t("totalBookingsLabel")}</p></div>
+                      <div className="bg-gray-100 rounded-xl p-3"><p className="text-lg font-bold text-gray-700">{monthBooked}</p><p className="text-[10px] text-gray-500 mt-0.5">{t("bookedThisMonthLabel")}</p></div>
                     </div>
                     <div className="grid grid-cols-3 gap-2 mb-5">
-                      <div className="bg-green-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-green-600">{completedAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">Geldi</p></div>
-                      <div className="bg-red-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-red-500">{cancelledAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">İptal/Red</p></div>
-                      <div className="bg-amber-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-amber-600">{noShowAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">Gelmedi</p></div>
+                      <div className="bg-green-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-green-600">{completedAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("cameLabel")}</p></div>
+                      <div className="bg-red-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-red-500">{cancelledAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("cancelledRejectedLabel")}</p></div>
+                      <div className="bg-amber-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-amber-600">{noShowAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("noShowBtn")}</p></div>
                     </div>
                     <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
-                      <div className="flex items-center justify-between mb-1"><h3 className="text-sm font-bold text-gray-800">Tamamlanma Oranı</h3><span className="text-sm font-bold text-rose-600">%{completionRate}</span></div>
+                      <div className="flex items-center justify-between mb-1"><h3 className="text-sm font-bold text-gray-800">{t("completionRateTitle")}</h3><span className="text-sm font-bold text-rose-600">%{completionRate}</span></div>
                       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-rose-600 rounded-full" style={{ width: `${completionRate}%` }} /></div>
-                      <p className="text-[10px] text-gray-400 mt-1.5">{completedAll.length} tamamlanan / {totalBooked} toplam randevu</p>
+                      <p className="text-[10px] text-gray-400 mt-1.5">{t("completedOfTotalNote", { completed: String(completedAll.length), total: String(totalBooked) })}</p>
                     </div>
                     <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-                      <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-bold text-gray-800">Müşteri Memnuniyeti</h3><span className="flex items-center gap-1 text-sm font-bold text-gray-900"><Star size={14} className="fill-gray-900" />{avgRating.toFixed(1)}</span></div>
+                      <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-bold text-gray-800">{t("customerSatisfactionTitle")}</h3><span className="flex items-center gap-1 text-sm font-bold text-gray-900"><Star size={14} className="fill-gray-900" />{avgRating.toFixed(1)}</span></div>
                       {reviewList.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-4">Henüz değerlendirme yok.</p>
+                        <p className="text-xs text-gray-400 text-center py-4">{t("noReviewsYetNotice")}</p>
                       ) : (
                         <div className="space-y-1.5">
                           {ratingBreakdown.map(r => (
@@ -2252,65 +2253,65 @@ export function AppShell() {
                           ))}
                         </div>
                       )}
-                      <p className="text-[10px] text-gray-300 mt-3">{reviewList.length} değerlendirme üzerinden hesaplanmıştır.</p>
+                      <p className="text-[10px] text-gray-300 mt-3">{t("basedOnReviewsNote", { n: String(reviewList.length) })}</p>
                     </div>
                   </>)}
                   {mechAnalyticsView === "earnings" && (<>
                     <div className="grid grid-cols-3 gap-2 mb-5">
-                      <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{weekTotal}₺</p><p className="text-[9px] text-gray-500 mt-0.5">Bu hafta</p></div>
-                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{monthTotal}₺</p><p className="text-[9px] text-gray-500 mt-0.5">Bu ay</p></div>
-                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{total}₺</p><p className="text-[9px] text-gray-500 mt-0.5">Toplam</p></div>
+                      <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{weekTotal}₺</p><p className="text-[9px] text-gray-500 mt-0.5">{t("thisWeekLabel")}</p></div>
+                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{monthTotal}₺</p><p className="text-[9px] text-gray-500 mt-0.5">{t("thisMonthLabel")}</p></div>
+                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{total}₺</p><p className="text-[9px] text-gray-500 mt-0.5">{t("totalLabel")}</p></div>
                     </div>
-                    <h3 className="text-sm font-bold text-gray-800 mb-2.5">En Çok Kazandıran Hizmetler</h3>
+                    <h3 className="text-sm font-bold text-gray-800 mb-2.5">{t("topEarningServicesTitle")}</h3>
                     {topServices.length === 0 ? (
-                      <div className="text-center py-14"><Banknote size={36} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz tamamlanmış ücretli iş yok.</p></div>
+                      <div className="text-center py-14"><Banknote size={36} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noPaidWorkYet")}</p></div>
                     ) : (
-                      <div className="space-y-2">{topServices.map(([name, s]) => (<div key={name} className="flex items-center justify-between bg-white border border-gray-100 rounded-xl p-3 shadow-sm"><div className="min-w-0"><p className="text-xs font-semibold text-gray-800 truncate">{name}</p><p className="text-[10px] text-gray-400">{s.count} işlem</p></div><p className="text-sm font-bold text-rose-600 flex-shrink-0 ml-2">{s.total}₺</p></div>))}</div>
+                      <div className="space-y-2">{topServices.map(([name, s]) => (<div key={name} className="flex items-center justify-between bg-white border border-gray-100 rounded-xl p-3 shadow-sm"><div className="min-w-0"><p className="text-xs font-semibold text-gray-800 truncate">{name}</p><p className="text-[10px] text-gray-400">{s.count} {t("transactionsCountSuffix")}</p></div><p className="text-sm font-bold text-rose-600 flex-shrink-0 ml-2">{s.total}₺</p></div>))}</div>
                     )}
-                    <p className="text-[10px] text-gray-300 mt-4 text-center">Toplam {completed.length} tamamlanan iş üzerinden hesaplanmıştır.</p>
+                    <p className="text-[10px] text-gray-300 mt-4 text-center">{t("basedOnCompletedJobsNote", { n: String(completed.length) })}</p>
                   </>)}
                   {mechAnalyticsView === "traffic" && (() => {
                     const myOwnListings = listings.filter(isMyListing);
                     const myOwnJobs = jobListings.filter(j => j.mechanicId === myProfile?.id);
                     const myTotalShares = (myProfile?.shareCount || 0) + myOwnListings.reduce((s, l) => s + (l.shareCount || 0), 0) + myOwnJobs.reduce((s, j) => s + (j.shareCount || 0), 0);
                     const myTotalApplicants = myOwnJobs.reduce((s, j) => s + (j.applicants || []).length, 0);
-                    const TR_MONTH_ABBR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
-                    const formatMonth = (m) => { const parts = String(m).split("-"); return TR_MONTH_ABBR[parseInt(parts[1], 10) - 1] || m; };
+                    const monthAbbr = MONTH_ABBR_BY_LANG[lang] || MONTH_ABBR_BY_LANG.tr;
+                    const formatMonth = (m) => { const parts = String(m).split("-"); return monthAbbr[parseInt(parts[1], 10) - 1] || m; };
                     const stats = myProfileViewStats;
                     const viewConvRate = stats && stats.viewsThisYear > 0 ? Math.round((stats.conversionsThisYear / stats.viewsThisYear) * 100) : 0;
                     return (
                       <>
-                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><Compass size={14} className="text-rose-500" /> Profil Ziyaretleri</h3>
+                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><Compass size={14} className="text-rose-500" /> {t("profileVisitsTitle")}</h3>
                         {!stats ? (
-                          <div className="text-center py-10 text-xs text-gray-400">Yükleniyor…</div>
+                          <div className="text-center py-10 text-xs text-gray-400">{t("loadingEllipsis")}</div>
                         ) : (
                           <>
                             <div className="grid grid-cols-3 gap-2 mb-4">
-                              <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{stats.viewsThisYear}</p><p className="text-[9px] text-gray-500 mt-0.5">Bu yıl ziyaret</p></div>
-                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{stats.conversionsThisYear}</p><p className="text-[9px] text-gray-500 mt-0.5">Randevuya dönüşen</p></div>
-                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">%{viewConvRate}</p><p className="text-[9px] text-gray-500 mt-0.5">Dönüşüm oranı</p></div>
+                              <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{stats.viewsThisYear}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("visitsThisYearLabel")}</p></div>
+                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{stats.conversionsThisYear}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("convertedToBookingLabel")}</p></div>
+                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">%{viewConvRate}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("conversionRateLabel")}</p></div>
                             </div>
                             {stats.monthly.length > 0 && (
                               <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-5">
-                                <h4 className="text-xs font-semibold text-gray-700 mb-3">Aylık Ziyaret Trendi</h4>
+                                <h4 className="text-xs font-semibold text-gray-700 mb-3">{t("monthlyVisitTrendTitle")}</h4>
                                 <MiniBarChart labels={stats.monthly.map(m => formatMonth(m.month))} values={stats.monthly.map(m => m.views)} colorClass="bg-rose-500" />
                               </div>
                             )}
-                            <p className="text-[10px] text-gray-300 mb-5">Toplam (tüm zamanlar): {stats.totalViews} ziyaret, {stats.conversions} dönüşüm.</p>
+                            <p className="text-[10px] text-gray-300 mb-5">{t("totalAllTimeNote", { views: String(stats.totalViews), conversions: String(stats.conversions) })}</p>
                           </>
                         )}
-                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><History size={14} className="text-rose-500" /> Yıllık Özet Raporu</h3>
+                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><History size={14} className="text-rose-500" /> {t("yearlySummaryReportTitle")}</h3>
                         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-2">
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Toplam Randevu</span><span className="font-semibold text-gray-800">{totalBooked}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Tamamlanan Randevu</span><span className="font-semibold text-gray-800">{completedAll.length} (%{completionRate})</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Toplam Kazanç</span><span className="font-semibold text-gray-800">{total.toLocaleString("tr-TR")}₺</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Ortalama Puan</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="fill-gray-900" /> {avgRating.toFixed(1)} ({reviewList.length} değerlendirme)</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Profil + İlan Paylaşımı</span><span className="font-semibold text-gray-800">{myTotalShares}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Bu Yıl Profil Ziyareti</span><span className="font-semibold text-gray-800">{stats?.viewsThisYear ?? "—"}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Aktif Araç İlanı</span><span className="font-semibold text-gray-800">{myOwnListings.filter(l => !l.adminRemoved).length}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">İş İlanlarına Toplam Başvuru</span><span className="font-semibold text-gray-800">{myTotalApplicants}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalBookingsRow")}</span><span className="font-semibold text-gray-800">{totalBooked}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("completedBookingsRow")}</span><span className="font-semibold text-gray-800">{completedAll.length} (%{completionRate})</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalEarningsRow")}</span><span className="font-semibold text-gray-800">{total.toLocaleString("tr-TR")}₺</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("avgRatingRow")}</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="fill-gray-900" /> {avgRating.toFixed(1)} {t("reviewsCountParens", { n: String(reviewList.length) })}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("profileAndListingSharesRow")}</span><span className="font-semibold text-gray-800">{myTotalShares}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("profileVisitsThisYearRow")}</span><span className="font-semibold text-gray-800">{stats?.viewsThisYear ?? "—"}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("activeCarListingsRow")}</span><span className="font-semibold text-gray-800">{myOwnListings.filter(l => !l.adminRemoved).length}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalJobApplicantsRow")}</span><span className="font-semibold text-gray-800">{myTotalApplicants}</span></div>
                         </div>
-                        <p className="text-[10px] text-gray-300 mt-3 text-center">Bu rapor, hesabınızın açıldığı tarihten bugüne kadar biriken verilere dayanır.</p>
+                        <p className="text-[10px] text-gray-300 mt-3 text-center">{t("yearlyReportFootnote")}</p>
                       </>
                     );
                   })()}
