@@ -45,12 +45,39 @@ export function dayClosingTime(day) {
   return addMinutesToTime(slots[slots.length - 1], 30);
 }
 
+// GERÇEK HATA DÜZELTMESİ: bir tamirci tek tek slotları kapatabiliyordu (ör. öğle arası için 12:00
+// ve 12:30'u kapatmak) — toggleSlotClosed, day.closedSlots'a yazıyordu ve randevu alınabilir
+// saatleri doğru filtreliyordu (bkz. slotsForDate), AMA formatHoursText/isOpenNowByHoursText bunu
+// hiç dikkate almadan hep tek bir "başlangıç-bitiş" aralığı üretiyordu. Böylece müşteriye gösterilen
+// saatler ve "şu an açık" rozeti, mekanik günün ortasında bir dilimi kapatsa bile hiç değişmiyordu.
+// Burada açık slotları ardışık bloklara ayırıp, kapalı bir aralığın önce/sonrasını AYRI aralıklar
+// olarak döndürüyoruz (ör. "09:00-12:00, 13:00-18:00").
+export function dayHoursRanges(day) {
+  if (!day.open) return [];
+  const closed = new Set(day.closedSlots || []);
+  const openSlots = getDaySlots(day).filter((s) => !closed.has(s));
+  if (!openSlots.length) return [];
+  const ranges = [];
+  let rangeStart = openSlots[0];
+  let prev = openSlots[0];
+  for (let i = 1; i < openSlots.length; i++) {
+    const slot = openSlots[i];
+    if (slot === addMinutesToTime(prev, 30)) { prev = slot; continue; }
+    ranges.push([rangeStart, addMinutesToTime(prev, 30)]);
+    rangeStart = slot;
+    prev = slot;
+  }
+  ranges.push([rangeStart, addMinutesToTime(prev, 30)]);
+  return ranges;
+}
+
 export function formatHoursText(hours) {
   const groups = [];
   DAY_KEYS.forEach((k) => {
     const d = hours[k];
-    const lastEnd = dayClosingTime(d);
-    groups.push(`${DAY_LABELS[k]}: ${d.open ? `${d.start}-${lastEnd}` : "Kapalı"}`);
+    const ranges = dayHoursRanges(d);
+    const text = ranges.length ? ranges.map(([s, e]) => `${s}-${e}`).join(", ") : "Kapalı";
+    groups.push(`${DAY_LABELS[k]}: ${text}`);
   });
   return groups;
 }
@@ -72,13 +99,18 @@ export function isOpenNowByHoursText(lines) {
   if (!rest) return null;
   const trimmed = rest.trim();
   if (/kapalı|closed|geschlossen/i.test(trimmed)) return false;
-  const m = trimmed.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
-  if (!m) return null;
-  const startMin = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-  const endMin = parseInt(m[3], 10) * 60 + parseInt(m[4], 10);
+  // dayHoursRanges artık öğle arası gibi ara kapatmalarda birden fazla, virgülle ayrılmış aralık
+  // üretebiliyor (ör. "09:00-12:00, 13:00-18:00") — matchAll ile TÜMÜNÜ kontrol ediyoruz, sadece
+  // ilkini değil.
+  const rangeMatches = [...trimmed.matchAll(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g)];
+  if (!rangeMatches.length) return null;
   const now = new Date();
   const nowMin = now.getHours() * 60 + now.getMinutes();
-  return nowMin >= startMin && nowMin <= endMin;
+  return rangeMatches.some((m) => {
+    const startMin = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    const endMin = parseInt(m[3], 10) * 60 + parseInt(m[4], 10);
+    return nowMin >= startMin && nowMin <= endMin;
+  });
 }
 
 // Fiyatı 1-5 arası bir "€" seviyesine çevirir (Google Haritalar tarzı ucuz/pahalı göstergesi).

@@ -349,6 +349,7 @@ export const T = {
   coverPhotoTitle: { tr: "Kapak Fotoğrafı", en: "Cover Photo", de: "Titelbild" },
   coverPhotoAlt: { tr: "Kapak fotoğrafı", en: "Cover photo", de: "Titelbild" },
   removeCoverPhotoAria: { tr: "Kapak fotoğrafını kaldır", en: "Remove cover photo", de: "Titelbild entfernen" },
+  changeCoverPhotoAria: { tr: "Kapak fotoğrafını değiştir", en: "Change cover photo", de: "Titelbild ändern" },
   uploadOwnPhotoBtn: { tr: "Kendi Fotoğrafını Yükle", en: "Upload Your Own Photo", de: "Eigenes Foto hochladen" },
   staffPhotoFallbackAlt: { tr: "Personel fotoğrafı", en: "Staff photo", de: "Mitarbeiterfoto" },
   fullNamePlaceholder: { tr: "Ad Soyad", en: "Full Name", de: "Vor- und Nachname" },
