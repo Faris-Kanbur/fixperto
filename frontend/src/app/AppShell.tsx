@@ -112,7 +112,7 @@ export function AppShell() {
     toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateMyPriceField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
-    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
+    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, toggleBrandServiced, customBrandInput, setCustomBrandInput, addCustomBrand, showAllBrandOptions, setShowAllBrandOptions, togglePaymentMethod, customPaymentInput, setCustomPaymentInput, addCustomPaymentMethod, showAllPaymentOptions, setShowAllPaymentOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
@@ -2410,9 +2410,70 @@ export function AppShell() {
                 <div className="space-y-2 mb-5"><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} placeholder={t("phonePlaceholderExample")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><input value={myProfile.price} onChange={(e) => updateMyPriceField(e.target.value)} type="number" placeholder={t("priceTlPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-1.5"><Tag size={14} className="text-rose-500" /> {t("brandsServicedTitle")}</h3>
                 <p className="text-[11px] text-gray-400 mb-2 -mt-1">{t("brandsServicedHint")}</p>
-                <div className="flex flex-wrap gap-1.5 mb-5">{CAR_BRANDS.map((brand) => { const active = (myProfile.brandsServiced || []).includes(brand); return (<button key={brand} onClick={() => { const cur = myProfile.brandsServiced || []; updateMyField("brandsServiced", active ? cur.filter((b) => b !== brand) : [...cur, brand]); }} className={`text-xs font-semibold px-2.5 py-1.5 rounded-full border transition ${active ? "bg-rose-600 border-rose-600 text-white" : "bg-white border-gray-200 text-gray-500 hover:border-rose-300"}`}>{brand}</button>); })}</div>
+                {/* Donanımdaki gibi: sabit CAR_BRANDS listesinde olmayan bir marka da serbest metin
+                    olarak eklenebiliyor; 25 sabit marka + eklenenler tek ızgarada karmaşık
+                    görünmesin diye seçilmemiş olanlar varsayılan olarak daraltılıp "+N tane daha"
+                    ile açılıyor. */}
+                {(() => {
+                  const selectedBrands = myProfile.brandsServiced || [];
+                  const unselectedBrands = CAR_BRANDS.filter(b => !selectedBrands.includes(b));
+                  const VISIBLE_COUNT = 8;
+                  const visibleUnselected = showAllBrandOptions ? unselectedBrands : unselectedBrands.slice(0, VISIBLE_COUNT);
+                  const hiddenCount = unselectedBrands.length - visibleUnselected.length;
+                  return (
+                    <div className="space-y-2 mb-5">
+                      {selectedBrands.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedBrands.map(b => (
+                            <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-rose-600 border-rose-600 text-white flex items-center gap-1 transition hover:bg-rose-700">{b} <X size={11} /></button>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-1.5">
+                        {visibleUnselected.map(b => (
+                          <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border bg-white border-gray-200 text-gray-500 hover:border-rose-300 transition">{b}</button>
+                        ))}
+                        {hiddenCount > 0 && (
+                          <button type="button" onClick={() => setShowAllBrandOptions(true)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-rose-500 hover:border-rose-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
+                        )}
+                        {showAllBrandOptions && unselectedBrands.length > VISIBLE_COUNT && (
+                          <button type="button" onClick={() => setShowAllBrandOptions(false)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-rose-500 hover:border-rose-300 transition">{t("showLessFeaturesLabel")}</button>
+                        )}
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <input value={customBrandInput} onChange={(e) => setCustomBrandInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomBrand(); } }} placeholder={t("customBrandPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
+                        <button type="button" onClick={addCustomBrand} aria-label={t("addCustomBrandAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-rose-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
+                      </div>
+                    </div>
+                  );
+                })()}
                 <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-1.5"><CreditCard size={14} className="text-rose-500" /> {t("paymentMethodsTitle")}</h3>
-                <div className="flex flex-wrap gap-1.5 mb-5">{PAYMENT_METHOD_OPTIONS.map((method) => { const active = (myProfile.paymentMethods || []).includes(method); return (<button key={method} onClick={() => { const cur = myProfile.paymentMethods || []; updateMyField("paymentMethods", active ? cur.filter((p) => p !== method) : [...cur, method]); }} className={`text-xs font-semibold px-2.5 py-1.5 rounded-full border transition ${active ? "bg-gray-900 border-gray-900 text-white" : "bg-white border-gray-200 text-gray-500 hover:border-gray-400"}`}>{method}</button>); })}</div>
+                {(() => {
+                  const selectedPayments = myProfile.paymentMethods || [];
+                  const unselectedPayments = PAYMENT_METHOD_OPTIONS.filter(p => !selectedPayments.includes(p));
+                  return (
+                    <div className="space-y-2 mb-5">
+                      {selectedPayments.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {selectedPayments.map(p => (
+                            <button key={p} type="button" onClick={() => togglePaymentMethod(p)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-gray-900 border-gray-900 text-white flex items-center gap-1 transition hover:bg-gray-800">{p} <X size={11} /></button>
+                          ))}
+                        </div>
+                      )}
+                      {unselectedPayments.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {unselectedPayments.map(p => (
+                            <button key={p} type="button" onClick={() => togglePaymentMethod(p)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border bg-white border-gray-200 text-gray-500 hover:border-gray-400 transition">{p}</button>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-2 pt-1">
+                        <input value={customPaymentInput} onChange={(e) => setCustomPaymentInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomPaymentMethod(); } }} placeholder={t("customPaymentPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
+                        <button type="button" onClick={addCustomPaymentMethod} aria-label={t("addCustomPaymentAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-rose-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("servicesTitle")}</h3>{!showAddServiceForm && <button onClick={() => setShowAddServiceForm(true)} className="text-xs text-rose-700 font-medium flex items-center gap-1"><Plus size={14} /> {t("genericAddBtn")}</button>}</div>
                 <p className="text-[11px] text-gray-400 mb-2 -mt-1">{t("servicesFixedPriceHint")}</p>
                 <div className="space-y-2 mb-3 max-h-52 overflow-y-auto pr-0.5">{myProfile.services.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><input value={s.name} onChange={(e) => updateService(i, "name", e.target.value)} placeholder={t("servicePlaceholder")} className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><input value={s.price} onChange={(e) => updateService(i, "price", e.target.value)} placeholder={s.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-20 px-2 py-1.5 rounded-lg border text-xs ${s.fixed && !String(s.price || "").trim() ? "border-red-300" : "border-gray-200"}`} /><button onClick={() => toggleServiceFixed(i)} className={`flex-shrink-0 text-[10px] font-semibold px-2 py-1.5 rounded-lg whitespace-nowrap transition ${s.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{s.fixed ? t("fixedPriceBadge") : t("variableLabel")}</button><button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>

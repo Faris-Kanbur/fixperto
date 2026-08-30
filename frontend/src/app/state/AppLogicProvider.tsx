@@ -2319,6 +2319,33 @@ function useAppLogic() {
     setMechChatInput("");
   };
   const updateMyField = (field, value) => { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m)); persist(api.mechanics.update(MY_MECHANIC_ID, { [field]: value }), "Profil bilgisi kaydedilemedi"); };
+  // Hizmet verilen markalar ve ödeme yöntemleri de donanım (features) ile aynı sorunu yaşıyordu:
+  // sabit CAR_BRANDS/PAYMENT_METHOD_OPTIONS listesinde olmayan bir şeyi eklemenin yolu yoktu.
+  // Aynı çözüm burada da uygulanıyor — kullanıcı serbest metin olarak kendi markasını/ödeme
+  // yöntemini ekleyebiliyor; seçilmemiş sabit seçenekler çok sayıdaysa (CAR_BRANDS 25 öğe)
+  // varsayılan olarak daraltılıp "Tümünü göster" ile açılıyor.
+  const [customBrandInput, setCustomBrandInput] = useState("");
+  const [showAllBrandOptions, setShowAllBrandOptions] = useState(false);
+  const toggleBrandServiced = (brand) => { const cur = myProfile.brandsServiced || []; const active = cur.includes(brand); updateMyField("brandsServiced", active ? cur.filter(b => b !== brand) : [...cur, brand]); };
+  const addCustomBrand = () => {
+    const val = customBrandInput.trim();
+    if (!val) return;
+    const cur = myProfile.brandsServiced || [];
+    const exists = cur.some(b => b.toLocaleLowerCase("tr-TR") === val.toLocaleLowerCase("tr-TR"));
+    if (!exists) updateMyField("brandsServiced", [...cur, val]);
+    setCustomBrandInput("");
+  };
+  const [customPaymentInput, setCustomPaymentInput] = useState("");
+  const [showAllPaymentOptions, setShowAllPaymentOptions] = useState(false);
+  const togglePaymentMethod = (method) => { const cur = myProfile.paymentMethods || []; const active = cur.includes(method); updateMyField("paymentMethods", active ? cur.filter(p => p !== method) : [...cur, method]); };
+  const addCustomPaymentMethod = () => {
+    const val = customPaymentInput.trim();
+    if (!val) return;
+    const cur = myProfile.paymentMethods || [];
+    const exists = cur.some(p => p.toLocaleLowerCase("tr-TR") === val.toLocaleLowerCase("tr-TR"));
+    if (!exists) updateMyField("paymentMethods", [...cur, val]);
+    setCustomPaymentInput("");
+  };
   // GERÇEK HATA DÜZELTMESİ: fiyat alanı yeniden yazmak için boşaltıldığında `Number("") || 0` ile
   // anında 0'a düşüp kaydediliyordu — "ücretsiz" gibi yanlış bir izlenim verebiliyordu. Alan
   // boşken sadece görünümü boş bırakıyoruz (henüz kaydetmiyoruz); geçerli bir sayı girilince normal
@@ -2981,7 +3008,7 @@ function useAppLogic() {
     toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateMyPriceField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
-    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
+    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, toggleBrandServiced, customBrandInput, setCustomBrandInput, addCustomBrand, showAllBrandOptions, setShowAllBrandOptions, togglePaymentMethod, customPaymentInput, setCustomPaymentInput, addCustomPaymentMethod, showAllPaymentOptions, setShowAllPaymentOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
