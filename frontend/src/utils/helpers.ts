@@ -14,6 +14,15 @@ export function apptStatusLabel(status, lang) {
   return (APPT_STATUS_LABELS_BY_LANG[lang] || APPT_STATUS_LABELS_BY_LANG.tr)[status] || status;
 }
 
+// apptStatusLabel ile AYNI desen, genel amaçlı: yakıt tipi/vites/kasa tipi/çekiş/çalışma
+// şekli/deneyim seviyesi gibi ham Türkçe sabit-liste değerlerini SADECE ekranda göstermek için
+// çevirir. Kullanıcının eklediği özel (custom) değerler haritada bulunamaz ve olduğu gibi
+// (değiştirilmeden) döner — bu tasarım gereği, çünkü kullanıcı tanımlı metinlerin çevirisi yok.
+export function vocabLabel(value, lang, labelsByLang) {
+  if (!value) return value;
+  return (labelsByLang[lang] || labelsByLang.tr)[value] || value;
+}
+
 export function genSlots(start, end) {
   const slots = [];
   let [h, m] = start.split(":").map(Number);

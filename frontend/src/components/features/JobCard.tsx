@@ -1,5 +1,7 @@
 import { Clock, Users } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
+import { vocabLabel } from "../../utils/helpers";
+import { EMPLOYMENT_TYPE_LABELS_BY_LANG, EXPERIENCE_LEVEL_LABELS_BY_LANG } from "../../data/constants";
 
 export function JobCard({ j }) {
   const {
@@ -116,8 +118,8 @@ export function JobCard({ j }) {
           <div className="flex items-center gap-1.5"><h3 className="font-semibold text-gray-800 text-sm truncate">{j.title}</h3>{j.status === "closed" && <span className="flex-shrink-0 text-[9px] font-bold text-white bg-gray-400 px-1.5 py-0.5 rounded-full">{t("jobStatusClosedLabel")}</span>}</div>
           <p className="text-xs text-gray-400 truncate">{j.mechanicName} · {j.location}</p>
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
-            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${jobEmploymentColor(j.employmentType)}`}>{j.employmentType}</span>
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-500">{j.experienceLevel}</span>
+            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${jobEmploymentColor(j.employmentType)}`}>{vocabLabel(j.employmentType, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG)}</span>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-500">{vocabLabel(j.experienceLevel, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG)}</span>
             {(j.salaryMin || j.salaryMax) && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-600">{j.salaryMin && j.salaryMax ? `${Number(j.salaryMin).toLocaleString("tr-TR")}-${Number(j.salaryMax).toLocaleString("tr-TR")}₺` : `${Number(j.salaryMin || j.salaryMax).toLocaleString("tr-TR")}₺+`}</span>}
           </div>
         </div>

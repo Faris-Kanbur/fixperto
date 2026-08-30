@@ -42,6 +42,46 @@ export const LISTING_FEATURE_OPTIONS = [
 ];
 export const EMPLOYMENT_TYPES = ["Tam Zamanlı", "Yarı Zamanlı", "Stajyer/Çırak", "Sözleşmeli"];
 export const EXPERIENCE_LEVELS = ["Deneyim Aranmıyor", "1-3 Yıl", "3-5 Yıl", "5+ Yıl"];
+
+// GERÇEK HATA DÜZELTMESİ: aşağıdaki 6 sabit liste (yakıt tipi, vites, kasa tipi, çekiş, çalışma
+// şekli, deneyim seviyesi) dil seçeneğinden bağımsız hep ham Türkçe değer olarak gösteriliyordu.
+// APPT_STATUS_LABELS_BY_LANG ile AYNI desen: bu haritalar SADECE ekranda gösterilecek metni
+// çevirir (bkz. helpers.ts vocabLabel) — ham değer (filtre/karşılaştırma/<select> value'su) hep
+// orijinal Türkçe string olarak kalır, DEĞİŞTİRİLMEZ. Kullanıcının serbest metinle eklediği özel
+// (custom) değerler bu haritalarda yoktur ve olduğu gibi gösterilir (kasıtlı — çevirisi yok).
+// NOT: EMISSION_CLASS_OPTIONS ("Euro 3"–"Euro 6d") kasıtlı olarak burada YOK — AB genelinde
+// standart, üç dilde de aynı terminoloji, çeviriye gerek yok.
+export const FUEL_TYPE_LABELS_BY_LANG = {
+  tr: { "Benzin": "Benzin", "Dizel": "Dizel", "Elektrik": "Elektrik", "Hibrit": "Hibrit", "LPG": "LPG" },
+  en: { "Benzin": "Petrol", "Dizel": "Diesel", "Elektrik": "Electric", "Hibrit": "Hybrid", "LPG": "LPG" },
+  de: { "Benzin": "Benzin", "Dizel": "Diesel", "Elektrik": "Elektro", "Hibrit": "Hybrid", "LPG": "LPG" },
+};
+export const TRANSMISSION_LABELS_BY_LANG = {
+  tr: { "Manuel": "Manuel", "Otomatik": "Otomatik", "Yarı Otomatik": "Yarı Otomatik" },
+  en: { "Manuel": "Manual", "Otomatik": "Automatic", "Yarı Otomatik": "Semi-automatic" },
+  de: { "Manuel": "Manuell", "Otomatik": "Automatik", "Yarı Otomatik": "Halbautomatik" },
+};
+export const BODY_TYPE_LABELS_BY_LANG = {
+  tr: { "Sedan": "Sedan", "Hatchback/3 Kapı": "Hatchback/3 Kapı", "Hatchback/5 Kapı": "Hatchback/5 Kapı", "SUV": "SUV", "Crossover (SUV)": "Crossover (SUV)", "Station Wagon": "Station Wagon", "Coupe": "Coupe", "Cabrio": "Cabrio", "Pickup": "Pickup", "Minivan/Panelvan": "Minivan/Panelvan" },
+  en: { "Sedan": "Sedan", "Hatchback/3 Kapı": "Hatchback/3-door", "Hatchback/5 Kapı": "Hatchback/5-door", "SUV": "SUV", "Crossover (SUV)": "Crossover (SUV)", "Station Wagon": "Station Wagon", "Coupe": "Coupe", "Cabrio": "Convertible", "Pickup": "Pickup", "Minivan/Panelvan": "Minivan/Van" },
+  de: { "Sedan": "Limousine", "Hatchback/3 Kapı": "Kleinwagen/3-Türer", "Hatchback/5 Kapı": "Kleinwagen/5-Türer", "SUV": "SUV", "Crossover (SUV)": "Crossover (SUV)", "Station Wagon": "Kombi", "Coupe": "Coupé", "Cabrio": "Cabrio", "Pickup": "Pickup", "Minivan/Panelvan": "Van/Kleinbus" },
+};
+export const DRIVETRAIN_LABELS_BY_LANG = {
+  tr: { "Önden Çekiş": "Önden Çekiş", "Arkadan İtiş": "Arkadan İtiş", "4x4 (AWD)": "4x4 (AWD)" },
+  en: { "Önden Çekiş": "Front-wheel drive", "Arkadan İtiş": "Rear-wheel drive", "4x4 (AWD)": "4x4 (AWD)" },
+  de: { "Önden Çekiş": "Frontantrieb", "Arkadan İtiş": "Heckantrieb", "4x4 (AWD)": "4x4 (Allrad)" },
+};
+export const EMPLOYMENT_TYPE_LABELS_BY_LANG = {
+  tr: { "Tam Zamanlı": "Tam Zamanlı", "Yarı Zamanlı": "Yarı Zamanlı", "Stajyer/Çırak": "Stajyer/Çırak", "Sözleşmeli": "Sözleşmeli" },
+  en: { "Tam Zamanlı": "Full-time", "Yarı Zamanlı": "Part-time", "Stajyer/Çırak": "Intern/Apprentice", "Sözleşmeli": "Contract" },
+  de: { "Tam Zamanlı": "Vollzeit", "Yarı Zamanlı": "Teilzeit", "Stajyer/Çırak": "Praktikant/Azubi", "Sözleşmeli": "Vertragsbasis" },
+};
+export const EXPERIENCE_LEVEL_LABELS_BY_LANG = {
+  tr: { "Deneyim Aranmıyor": "Deneyim Aranmıyor", "1-3 Yıl": "1-3 Yıl", "3-5 Yıl": "3-5 Yıl", "5+ Yıl": "5+ Yıl" },
+  en: { "Deneyim Aranmıyor": "No experience required", "1-3 Yıl": "1-3 years", "3-5 Yıl": "3-5 years", "5+ Yıl": "5+ years" },
+  de: { "Deneyim Aranmıyor": "Keine Erfahrung nötig", "1-3 Yıl": "1-3 Jahre", "3-5 Yıl": "3-5 Jahre", "5+ Yıl": "5+ Jahre" },
+};
+
 export const EMPTY_JOB_FORM = { title: "", employmentType: "Tam Zamanlı", experienceLevel: "Deneyim Aranmıyor", location: "", salaryMin: "", salaryMax: "", description: "", requirements: "", skills: "", _editingId: null };
 export const DEFAULT_HOURS = { mon: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, tue: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, wed: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, thu: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, fri: { open: true, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] }, sat: { open: true, start: "09:00", end: "14:00", closedSlots: [], extraSlots: [] }, sun: { open: false, start: "09:00", end: "18:00", closedSlots: [], extraSlots: [] } };
 export const PRICE_LEVEL_BREAKS = [260, 320, 390, 460];

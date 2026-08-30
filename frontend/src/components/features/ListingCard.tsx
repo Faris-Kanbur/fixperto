@@ -1,6 +1,7 @@
 import { Banknote, CalendarDays, Cog, Fuel, Gauge, Heart, MapPin, MessageCircle } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
-import { listingStatusMeta, isImgUrl, imgFallbackHandler, imgThumb } from "../../utils/helpers";
+import { listingStatusMeta, isImgUrl, imgFallbackHandler, imgThumb, vocabLabel } from "../../utils/helpers";
+import { FUEL_TYPE_LABELS_BY_LANG, TRANSMISSION_LABELS_BY_LANG } from "../../data/constants";
 
 export function ListingCard({ l, onHover = undefined }) {
   const {
@@ -139,8 +140,8 @@ export function ListingCard({ l, onHover = undefined }) {
           <p className="text-gray-400 text-xs mt-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
             <span className="flex items-center gap-1"><Gauge size={11} />{Number(l.km).toLocaleString("tr-TR")} km</span>
             <span className="flex items-center gap-1"><CalendarDays size={11} />{l.firstReg || l.year}</span>
-            <span className="flex items-center gap-1"><Fuel size={11} />{l.fuelType}</span>
-            <span className="flex items-center gap-1"><Cog size={11} />{l.transmission}</span>
+            <span className="flex items-center gap-1"><Fuel size={11} />{vocabLabel(l.fuelType, lang, FUEL_TYPE_LABELS_BY_LANG)}</span>
+            <span className="flex items-center gap-1"><Cog size={11} />{vocabLabel(l.transmission, lang, TRANSMISSION_LABELS_BY_LANG)}</span>
           </p>
           <div className="flex items-center gap-2 mt-2.5 flex-wrap">
             <p className="text-gray-900 font-bold text-lg">{l.price}</p>
