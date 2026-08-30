@@ -89,13 +89,20 @@ export function makeCrudRouter(table, { idColumn = "id", shareCountColumn = null
   // kopyalama, native paylaşım) gerçekleştiğinde atomik olarak +1 yapar — read-then-write PATCH'e
   // göre eşzamanlı paylaşımlarda veri kaybını önler. Sadece bu sütunu opt-in eden kaynaklarda
   // (mechanics/listings/job_listings) etkin.
+  //
+  // GÜVENLİK DÜZELTMESİ (regresyon denetiminde bulundu): bu uç nokta, kimliği bilinen HERHANGİ bir
+  // kaydı HERHANGİ bir ziyaretçi (giriş yapmamış biri dahil) tetikleyebiliyor — yani "kendi profilim"
+  // değil, herkese açık bir eylem. Önceden hydrate() (tekil kayıt versiyonu) kullanıyordu, bu da
+  // mechanics için iban/bankName/accountHolder'ı yanıta geri koyuyordu — toplu listeden kapattığımız
+  // sızıntının aynısını bu uç nokta üzerinden tek tek (ID bilerek) yeniden açıyordu. hydrateAll ile
+  // aynı alan temizliğini burada da uyguluyoruz (tek elemanlı liste olarak).
   if (shareCountColumn) {
     router.post("/:id/share", (req, res) => {
       const existing = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
       if (!existing) return res.status(404).json({ error: `${table} not found` });
       db.prepare(`UPDATE ${table} SET ${shareCountColumn} = COALESCE(${shareCountColumn}, 0) + 1 WHERE ${idColumn} = ?`).run(req.params.id);
       const updated = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
-      res.json(hydrate(table, updated));
+      res.json(hydrateAll(table, [updated])[0]);
     });
   }
 

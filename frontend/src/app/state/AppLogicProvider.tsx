@@ -1356,6 +1356,16 @@ function useAppLogic() {
   // bakılıyor; varsa geri alma engellenip kullanıcıya açıkça bildiriliyor.
   const revertAdminChange = (entry) => {
     if (entry.reverted) return;
+    // GÜVENLİK DÜZELTMESİ: şifre değişikliklerinin eski değeri artık HİÇ saklanmıyor (bkz.
+    // resetUserPassword, oldValue "••••••" olarak loglanıyor) — bu yüzden bir şifre kaydını
+    // "Geri Al" ile eskisine döndürmek artık mümkün değil. Eskiden bu durumda applyAdminFieldChange
+    // sessizce "••••••" değerini şifre olarak yazmaya çalışırdı (backend de zaten password'ü genel
+    // PATCH'ten reddettiği için hiçbir şey olmadan "geri alındı" diye işaretlenirdi) — kullanıcıyı
+    // yanıltmamak için burada açıkça engelliyoruz.
+    if (entry.field === "password") {
+      setToast({ type: "info", text: "⚠️ Şifre değişiklikleri geri alınamaz — eski şifre güvenlik gereği saklanmıyor. Gerekirse yeni bir şifre belirleyin." });
+      return;
+    }
     // adminChangeLog en yeni kayıt en başta olacak şekilde tutuluyor (bkz. logAdminChange:
     // [logEntry, ...log]) — bu yüzden entry'den ÖNCE gelen (daha küçük index'li) satırlar zaten
     // daha yeni demek. Aynı hedef+alan için hâlâ geri alınmamış daha yeni bir kayıt varsa, bu
@@ -1398,15 +1408,22 @@ function useAppLogic() {
   const [expandedHistoryGroups, setExpandedHistoryGroups] = useState({});
   const toggleHistoryGroup = (key) => setExpandedHistoryGroups(g => ({ ...g, [key]: !g[key] }));
   const revertAdminChangeGroup = (group) => {
-    const toRevert = group.entries.filter(e => !e.reverted);
-    if (toRevert.length === 0) return;
+    // GÜVENLİK DÜZELTMESİ: revertAdminChange'deki AYNI gerekçeyle (bkz. o fonksiyondaki yorum) —
+    // şifre alanının eski değeri artık saklanmıyor, toplu "Geri Al" bunu sessizce atlıyor ve
+    // sadece gerçekten geri alınabilen alanları işliyor.
+    const toRevert = group.entries.filter(e => !e.reverted && e.field !== "password");
+    const skippedPasswordCount = group.entries.filter(e => !e.reverted && e.field === "password").length;
+    if (toRevert.length === 0) {
+      if (skippedPasswordCount > 0) setToast({ type: "info", text: "⚠️ Şifre değişiklikleri geri alınamaz — eski şifre güvenlik gereği saklanmıyor." });
+      return;
+    }
     toRevert.forEach(entry => {
       applyAdminFieldChange(entry.targetType, entry.targetId, entry.field, entry.oldValue, entry.extra);
       persist(api.admin.revertChange(entry.id), "Geri alma işlemi kaydedilemedi");
     });
     const ids = new Set(toRevert.map(e => e.id));
     setAdminChangeLog(log => log.map(e => ids.has(e.id) ? { ...e, reverted: true } : e));
-    setToast({ type: "info", text: `↩️ ${group.targetLabel} için ${toRevert.length} değişiklik geri alındı.` });
+    setToast({ type: "info", text: `↩️ ${group.targetLabel} için ${toRevert.length} değişiklik geri alındı.${skippedPasswordCount > 0 ? " (Şifre değişiklikleri hariç.)" : ""}` });
   };
   // Serbest metin alanları (ilan/iş ilanı/hizmet detayları) her tuş vuruşunda değişir; bunları
   // her karakterde değil, alandan çıkıldığında (blur) tek bir "değişiklik" olarak loglamak için
