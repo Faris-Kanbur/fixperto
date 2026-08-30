@@ -7,6 +7,7 @@ import shareEventsRouter from "./routes/shareEvents.js";
 import profileViewsRouter from "./routes/profileViews.js";
 import translateRouter from "./routes/translate.js";
 import { quoteRequestsRouter, quoteOffersRouter } from "./routes/quotes.js";
+import { conversationsRouter } from "./routes/conversations.js";
 
 seedIfEmpty();
 
@@ -48,7 +49,9 @@ app.use("/api/owners", makeCrudRouter("owners", { passwordVerify: true }));
 app.use("/api/vehicles", makeCrudRouter("vehicles"));
 app.use("/api/appointments", makeCrudRouter("appointments"));
 app.use("/api/listings", makeCrudRouter("listings", { shareCountColumn: "shareCount" }));
-app.use("/api/conversations", makeCrudRouter("conversations"));
+// Genel CRUD factory yerine özel router (bkz. backend/routes/conversations.js) — mesaj
+// şeklinin/boyutunun ve sohbet kimliğinin (mechanicId) her zaman geçerli kalması için.
+app.use("/api/conversations", conversationsRouter);
 app.use("/api/jobs", makeCrudRouter("job_listings", { shareCountColumn: "shareCount" }));
 app.use("/api/tickets", makeCrudRouter("support_tickets"));
 // Genel CRUD factory yerine özel router (bkz. backend/routes/quotes.js) — limit doğrulama,

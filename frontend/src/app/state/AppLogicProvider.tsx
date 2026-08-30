@@ -2341,7 +2341,20 @@ function useAppLogic() {
     fireNotification("Yeni mesaj 💬", `${ownerProfile.name || "Araç sahibi"}: ${!text ? "📷 Fotoğraf gönderdi" : chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId });
     setChatInput("");
   };
-  const handleFileSelect = (e) => { const file = e.target.files?.[0]; if (!file) return; sendOwnerMessage("📎 Fotoğraf gönderildi", URL.createObjectURL(file)); };
+  // GERÇEK HATA DÜZELTMESİ (sohbet akışı denetiminde bulundu): sohbette gönderilen fotoğraflar
+  // `URL.createObjectURL(file)` ile geçici bir blob: URL'sine dönüştürülüp öyle kaydediliyordu —
+  // bu URL yalnızca onu oluşturan sekmenin o oturumu boyunca geçerlidir (bkz. addQuotePhoto/
+  // uploadCoverPhoto'daki aynı düzeltme). Sayfa yenilendiğinde, mesaj başka bir rolden (ör. aynı
+  // sohbeti tamirci tarafından açıp bakıldığında) görüntülendiğinde ya da backend'den tekrar
+  // çekildiğinde fotoğraf kırık görünürdü. FileReader ile kalıcı bir "data:" URI'sine çevriliyor.
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { if (typeof reader.result === "string") sendOwnerMessage("📎 Fotoğraf gönderildi", reader.result); };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
   const sendOwnerMessageWithReply = (text, image = undefined) => { const convoId = activeConvoId; const wasEmpty = activeConvo && activeConvo.messages.length === 0; sendOwnerMessage(text, image); if (wasEmpty) { setTimeout(() => { let replyMsgs = null; setConversations(cs => cs.map(c => { if (c.id !== convoId) return c; const replyText = c.mechanicLang === "en" ? "Thanks for reaching out!" : "Merhaba, mesajınız için teşekkürler!"; replyMsgs = [...c.messages, { id: msgId++, sender: "mechanic", text: replyText, lang: c.mechanicLang }]; return { ...c, messages: replyMsgs }; })); if (replyMsgs) persist(api.conversations.update(convoId, { messages: replyMsgs }), "Mesaj kaydedilemedi"); fireNotification("Yeni mesaj 💬", `${activeConvo.mechanicName}: Merhaba, mesajınız için teşekkürler!`, ownerSettings.notifyMessages, "owner", { type: "chat", id: convoId }); }, 900); } };
   // Mesaj çevirisi: varsayılan olarak (kullanıcı elle değiştirmediği sürece) karşı taraf mesajı
   // HER ZAMAN kendi diline otomatik çevrilmiş görür — showTranslated[msgId] burada "true" ise
