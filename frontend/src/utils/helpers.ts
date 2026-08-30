@@ -1,7 +1,17 @@
-import { DAY_KEYS, DAY_LABELS, DAY_LABELS_BY_LANG, CLOSED_LABEL_BY_LANG, TODAY, LEGAL_TIRE_RULES, DICT_TR_EN, DICT_EN_TR, ADMIN_SLA_DAYS, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS, PRICE_LEVEL_BREAKS, TR_ASCII_MAP } from "../data/constants.js";
+import { DAY_KEYS, DAY_LABELS, DAY_LABELS_BY_LANG, CLOSED_LABEL_BY_LANG, APPT_STATUS_LABELS_BY_LANG, TODAY, LEGAL_TIRE_RULES, DICT_TR_EN, DICT_EN_TR, ADMIN_SLA_DAYS, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS, PRICE_LEVEL_BREAKS, TR_ASCII_MAP } from "../data/constants.js";
 
-export function jobStatusMeta(status) {
-  return status === "closed" ? { label: "Kapatıldı", color: "bg-gray-400" } : { label: "Açık", color: "bg-green-500" };
+// `t` opsiyonel: verilmezse (eski çağrılar) geriye dönük uyumluluk için sabit Türkçe metin döner.
+export function jobStatusMeta(status, t) {
+  return status === "closed"
+    ? { label: t ? t("jobStatusClosedLabel") : "Kapatıldı", color: "bg-gray-400" }
+    : { label: t ? t("jobStatusOpenLabel") : "Açık", color: "bg-green-500" };
+}
+
+// GERÇEK HATA DÜZELTMESİ: appointment.status iş mantığında kullanılan ham Türkçe bir değer (bkz.
+// constants.ts APPT_STATUS_LABELS_BY_LANG yorumu) — bu SADECE ekrana yazılacak metni aktif dile
+// çevirir, durumun kendisini (karşılaştırmalarda kullanılan orijinal string) değiştirmez.
+export function apptStatusLabel(status, lang) {
+  return (APPT_STATUS_LABELS_BY_LANG[lang] || APPT_STATUS_LABELS_BY_LANG.tr)[status] || status;
 }
 
 export function genSlots(start, end) {

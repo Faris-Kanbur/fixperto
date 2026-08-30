@@ -71,6 +71,31 @@ export const TRACK_STATUSES_MANUAL = ["Onay Bekliyor", "Sırada", "Tamire Alınd
 export const TRACK_LABELS_MANUAL = ["Onay Bekliyor", "Kabul Edildi", "Serviste", "Tamamlandı"];
 export const TRACK_STATUSES_AUTO = ["Sırada", "Tamire Alındı", "Tamir Tamamlandı"];
 export const TRACK_LABELS_AUTO = ["Kabul Edildi", "Serviste", "Tamamlandı"];
+// GERÇEK HATA DÜZELTMESİ: StatusTracker'daki adım etiketleri (yukarıdaki TRACK_LABELS_*) dil
+// seçeneğinden bağımsız hep Türkçe gösteriliyordu. TRACK_STATUSES_* dizileri appointment.status
+// karşılaştırmalarında (indexOf) kullanılan iç anahtarlar olduğu için DEĞİŞTİRİLEMEZ — sadece
+// GÖSTERİLEN etiketleri dile göre değiştiriyoruz (bkz. StatusTracker.tsx).
+export const TRACK_LABELS_MANUAL_BY_LANG = {
+  tr: TRACK_LABELS_MANUAL,
+  en: ["Awaiting Approval", "Accepted", "In Service", "Completed"],
+  de: ["Warten auf Bestätigung", "Angenommen", "In Wartung", "Abgeschlossen"],
+};
+export const TRACK_LABELS_AUTO_BY_LANG = {
+  tr: TRACK_LABELS_AUTO,
+  en: ["Accepted", "In Service", "Completed"],
+  de: ["Angenommen", "In Wartung", "Abgeschlossen"],
+};
+// GERÇEK HATA DÜZELTMESİ: appointment.status alanı iş mantığında (karşılaştırmalar, backend'e
+// yazma) kullanılan ham bir Türkçe string ("Tamir Tamamlandı" vb.) — bu değer AppointmentCard'da
+// doğrudan {a.status} olarak, HİÇ çevrilmeden ekrana basılıyordu, dil İngilizce/Almanca seçilse
+// bile randevu rozeti hep Türkçe kalıyordu. Buradaki harita SADECE GÖSTERİM amaçlı — durum
+// karşılaştırmalarında hâlâ orijinal Türkçe değerler kullanılıyor, sadece ekrana yazılan metin
+// aktif dile göre değişiyor (bkz. helpers.ts apptStatusLabel, AppointmentCard.tsx).
+export const APPT_STATUS_LABELS_BY_LANG = {
+  tr: { "Onay Bekliyor": "Onay Bekliyor", "Sırada": "Sırada", "Tamire Alındı": "Tamire Alındı", "Tamir Tamamlandı": "Tamir Tamamlandı", "İptal Edildi": "İptal Edildi", "Reddedildi": "Reddedildi", "Gelmedi": "Gelmedi" },
+  en: { "Onay Bekliyor": "Awaiting Approval", "Sırada": "Queued", "Tamire Alındı": "In Repair", "Tamir Tamamlandı": "Completed", "İptal Edildi": "Cancelled", "Reddedildi": "Rejected", "Gelmedi": "No-show" },
+  de: { "Onay Bekliyor": "Warten auf Bestätigung", "Sırada": "In der Warteschlange", "Tamire Alındı": "In Reparatur", "Tamir Tamamlandı": "Abgeschlossen", "İptal Edildi": "Storniert", "Reddedildi": "Abgelehnt", "Gelmedi": "Nicht erschienen" },
+};
 
 export const TODAY = new Date(2026, 7, 15);
 export const TODAY_STR = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, "0")}-${String(TODAY.getDate()).padStart(2, "0")}`;

@@ -115,7 +115,7 @@ export function NotifBell() {
     const openPanel = () => { setShowNotifPanel(v => !v); if (role === "mechanic") setMechNotifSeenAt(Date.now()); else setOwnerNotifSeenAt(Date.now()); };
     return (
       <div className="relative">
-        <button onClick={openPanel} aria-label="Bildirimler" className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition relative flex-shrink-0">
+        <button onClick={openPanel} aria-label={t("notificationsTitle")} className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition relative flex-shrink-0">
           <Bell size={15} />
           {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 rounded-full text-white flex items-center justify-center text-[9px] font-bold">{unread > 9 ? "9+" : unread}</span>}
         </button>
@@ -123,8 +123,8 @@ export function NotifBell() {
           <>
             <div className="fixed inset-0" style={{ zIndex: 9550 }} onClick={() => setShowNotifPanel(false)} />
             <div className="absolute right-0 top-10 w-72 max-h-96 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-gray-100 p-2" style={{ zIndex: 9560 }}>
-              <p className="text-xs font-bold text-gray-800 px-2 py-1.5">Bildirimler</p>
-              {myLog.length === 0 && <p className="text-center text-gray-400 text-xs py-8">Henüz bildirim yok.</p>}
+              <p className="text-xs font-bold text-gray-800 px-2 py-1.5">{t("notificationsTitle")}</p>
+              {myLog.length === 0 && <p className="text-center text-gray-400 text-xs py-8">{t("noNotificationsYet")}</p>}
               {myLog.map(n => {
                 // "broadcast" tipi bildirimlerin gidebileceği bir ekran yok (goToNotifTarget'ta bu
                 // tip için hiç case yok, default:break sessizce hiçbir şey yapmıyordu) — ama n.target

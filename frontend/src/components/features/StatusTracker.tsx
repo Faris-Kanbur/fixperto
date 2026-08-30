@@ -1,6 +1,6 @@
 import { Check, CircleDot } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
-import { TRACK_STATUSES_AUTO, TRACK_STATUSES_MANUAL, TRACK_LABELS_AUTO, TRACK_LABELS_MANUAL } from "../../data/constants";
+import { TRACK_STATUSES_AUTO, TRACK_STATUSES_MANUAL, TRACK_LABELS_AUTO, TRACK_LABELS_MANUAL, TRACK_LABELS_AUTO_BY_LANG, TRACK_LABELS_MANUAL_BY_LANG } from "../../data/constants";
 
 export function StatusTracker({ status, autoAccepted }) {
   const {
@@ -110,12 +110,15 @@ export function StatusTracker({ status, autoAccepted }) {
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
 
-    if (status === "Reddedildi") return <div className="bg-red-50 text-red-500 text-xs rounded-xl p-2.5 text-center font-medium">❌ Tamirci bu randevuyu reddetti</div>;
-    if (status === "İptal Edildi") return <div className="bg-red-50 text-red-500 text-xs rounded-xl p-2.5 text-center font-medium">🚫 Randevu iptal edildi</div>;
-    if (status === "Gelmedi") return <div className="bg-red-50 text-red-500 text-xs rounded-xl p-2.5 text-center font-medium">🚫 Randevuya gelinmedi</div>;
+    if (status === "Reddedildi") return <div className="bg-red-50 text-red-500 text-xs rounded-xl p-2.5 text-center font-medium">{t("apptStatusRejectedNotice")}</div>;
+    if (status === "İptal Edildi") return <div className="bg-red-50 text-red-500 text-xs rounded-xl p-2.5 text-center font-medium">{t("apptStatusCancelledNotice")}</div>;
+    if (status === "Gelmedi") return <div className="bg-red-50 text-red-500 text-xs rounded-xl p-2.5 text-center font-medium">{t("apptStatusNoShowNotice")}</div>;
     const isAuto = autoAccepted !== false;
     const steps = isAuto ? TRACK_STATUSES_AUTO : TRACK_STATUSES_MANUAL;
-    const labels = isAuto ? TRACK_LABELS_AUTO : TRACK_LABELS_MANUAL;
+    // GERÇEK HATA DÜZELTMESİ: adım etiketleri (TRACK_LABELS_*) hep Türkçe sabitti; artık dile göre
+    // (bkz. constants.ts TRACK_LABELS_*_BY_LANG) — TRACK_STATUSES_* (indexOf için kullanılan iç
+    // anahtarlar) değişmedi, sadece görünen metin.
+    const labels = (isAuto ? TRACK_LABELS_AUTO_BY_LANG : TRACK_LABELS_MANUAL_BY_LANG)[lang] || (isAuto ? TRACK_LABELS_AUTO : TRACK_LABELS_MANUAL);
     const currentIdx = steps.indexOf(status);
     return (<>
       <div className="flex items-center gap-1">{steps.map((s, i) => { const done = i <= currentIdx; const active = i === currentIdx; return (<div key={s} className="flex items-center flex-1"><div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition ${done ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-300"} ${active && currentIdx < steps.length - 1 ? "ring-4 ring-rose-100" : ""}`}>{done ? <Check size={12} /> : <CircleDot size={10} />}</div>{i < steps.length - 1 && <div className={`h-0.5 flex-1 ${i < currentIdx ? "bg-rose-600" : "bg-gray-100"}`} />}</div>); })}</div>

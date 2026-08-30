@@ -1,7 +1,7 @@
 import { Banknote, Calendar, CalendarDays, CheckCircle2, Clock, FileText, Navigation, Shield, Star } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { StatusTracker } from "./StatusTracker";
-import { statusColor } from "../../utils/helpers";
+import { statusColor, apptStatusLabel } from "../../utils/helpers";
 
 export function AppointmentCard({ a }) {
   const {
@@ -115,24 +115,24 @@ export function AppointmentCard({ a }) {
     const isRescheduling = reschedulingApptId === a.id;
     return (
       <div className="border border-gray-100 rounded-2xl p-4 shadow-sm">
-        <div className="flex items-start gap-3 mb-3"><div className="text-2xl bg-rose-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">{a.mechanicImg}</div><div className="flex-1"><h4 className="font-semibold text-gray-800 text-sm">{a.mechanicName}</h4><p className="text-xs text-gray-400">{a.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${statusColor(a.status)}`}>{a.status}</span></div>
+        <div className="flex items-start gap-3 mb-3"><div className="text-2xl bg-rose-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">{a.mechanicImg}</div><div className="flex-1"><h4 className="font-semibold text-gray-800 text-sm">{a.mechanicName}</h4><p className="text-xs text-gray-400">{a.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${statusColor(a.status)}`}>{apptStatusLabel(a.status, lang)}</span></div>
         <p className="text-xs text-gray-500 mb-3">{a.issue}</p>
         {a.issuePhotos && a.issuePhotos.length > 0 && (<div className="flex gap-1.5 mb-3">{a.issuePhotos.map((src, i) => (<img key={i} src={src} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
         <div className="flex items-center gap-3 text-xs text-gray-400 mb-3"><span className="flex items-center gap-1"><Calendar size={12} />{a.date}</span><span className="flex items-center gap-1"><Clock size={12} />{a.time}</span></div>
         {cancellable && (
           <div className="flex items-center gap-3 text-[11px] text-rose-500 mb-3">
-            <button onClick={() => downloadAppointmentIcs(a)} className="flex items-center gap-1 hover:underline"><CalendarDays size={12} /> Takvime Ekle</button>
-            {mechanicDirectionsUrl(a.mechanicId) && (<a href={mechanicDirectionsUrl(a.mechanicId)} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:underline"><Navigation size={12} /> Yol Tarifi</a>)}
+            <button onClick={() => downloadAppointmentIcs(a)} className="flex items-center gap-1 hover:underline"><CalendarDays size={12} /> {t("addToCalendarBtn")}</button>
+            {mechanicDirectionsUrl(a.mechanicId) && (<a href={mechanicDirectionsUrl(a.mechanicId)} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:underline"><Navigation size={12} /> {t("directionsLabel")}</a>)}
           </div>
         )}
         <StatusTracker status={a.status} autoAccepted={a.autoAccepted} />
-        {a.depositPaid > 0 && (<p className="text-[11px] text-green-600 mt-2 flex items-center gap-1"><CheckCircle2 size={11} /> {a.depositPaid}₺ kapora ödendi (demo)</p>)}
-        {a.paymentMethod === "onsite" && (<p className="text-[11px] text-gray-400 mt-2 flex items-center gap-1"><Banknote size={11} /> Ödeme yerinde yapılacak</p>)}
-        {a.warrantyEndDate && (<p className="text-[11px] text-gray-500 mt-2 flex items-center gap-1"><Shield size={11} className="text-green-500 flex-shrink-0" /> Değişen parça {new Date(a.warrantyEndDate).toLocaleDateString("tr-TR")} tarihine kadar garantili</p>)}
-        {a.status === "Tamir Tamamlandı" && !a.reviewed && (<button onClick={() => { setReviewingApptId(a.id); setReviewForm({ rating: 5, comment: "" }); }} className="w-full mt-3 border border-gray-300 text-gray-700 text-xs py-2 rounded-xl font-medium hover:bg-gray-100 transition flex items-center justify-center gap-1"><Star size={12} /> Yorum Yap</button>)}
-        {a.status === "Tamir Tamamlandı" && a.reviewed && (<p className="mt-3 text-[11px] text-green-600 flex items-center gap-1 justify-center"><CheckCircle2 size={12} /> Değerlendirmeniz gönderildi</p>)}
-        {a.status === "Tamir Tamamlandı" && (<div className="flex gap-2 mt-2"><button onClick={() => rebookAppt(a)} className="flex-1 bg-rose-50 text-rose-600 text-xs py-2 rounded-xl font-medium hover:bg-rose-100 transition flex items-center justify-center gap-1"><Calendar size={12} /> Tekrar Randevu Al</button><button onClick={() => downloadAppointmentReceipt(a)} className="flex-1 border border-gray-200 text-gray-600 text-xs py-2 rounded-xl font-medium hover:bg-gray-50 transition flex items-center justify-center gap-1"><FileText size={12} /> Fiş İndir</button></div>)}
-        {cancellable && !isRescheduling && (<div className="flex gap-2 mt-3"><button onClick={() => startReschedule(a)} className="flex-1 border border-rose-200 text-rose-600 text-xs py-2 rounded-xl font-medium hover:bg-rose-50 transition">{t("reschedule")}</button><button onClick={() => setConfirmDialog({ title: "Randevuyu iptal et", body: "Bu randevuyu iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.", confirmLabel: "Evet, İptal Et", danger: true, onConfirm: () => cancelOwnAppt(a.id) })} className="flex-1 border border-red-200 text-red-500 text-xs py-2 rounded-xl font-medium hover:bg-red-50 transition">{t("cancelAppt")}</button></div>)}
+        {a.depositPaid > 0 && (<p className="text-[11px] text-green-600 mt-2 flex items-center gap-1"><CheckCircle2 size={11} /> {t("depositPaidDemoNote", { amount: String(a.depositPaid) })}</p>)}
+        {a.paymentMethod === "onsite" && (<p className="text-[11px] text-gray-400 mt-2 flex items-center gap-1"><Banknote size={11} /> {t("paymentOnsiteNote")}</p>)}
+        {a.warrantyEndDate && (<p className="text-[11px] text-gray-500 mt-2 flex items-center gap-1"><Shield size={11} className="text-green-500 flex-shrink-0" /> {t("warrantyUntilNote", { date: new Date(a.warrantyEndDate).toLocaleDateString("tr-TR") })}</p>)}
+        {a.status === "Tamir Tamamlandı" && !a.reviewed && (<button onClick={() => { setReviewingApptId(a.id); setReviewForm({ rating: 5, comment: "" }); }} className="w-full mt-3 border border-gray-300 text-gray-700 text-xs py-2 rounded-xl font-medium hover:bg-gray-100 transition flex items-center justify-center gap-1"><Star size={12} /> {t("writeReviewTitle")}</button>)}
+        {a.status === "Tamir Tamamlandı" && a.reviewed && (<p className="mt-3 text-[11px] text-green-600 flex items-center gap-1 justify-center"><CheckCircle2 size={12} /> {t("reviewSubmittedNotice")}</p>)}
+        {a.status === "Tamir Tamamlandı" && (<div className="flex gap-2 mt-2"><button onClick={() => rebookAppt(a)} className="flex-1 bg-rose-50 text-rose-600 text-xs py-2 rounded-xl font-medium hover:bg-rose-100 transition flex items-center justify-center gap-1"><Calendar size={12} /> {t("rebookApptBtn")}</button><button onClick={() => downloadAppointmentReceipt(a)} className="flex-1 border border-gray-200 text-gray-600 text-xs py-2 rounded-xl font-medium hover:bg-gray-50 transition flex items-center justify-center gap-1"><FileText size={12} /> {t("downloadReceiptBtn")}</button></div>)}
+        {cancellable && !isRescheduling && (<div className="flex gap-2 mt-3"><button onClick={() => startReschedule(a)} className="flex-1 border border-rose-200 text-rose-600 text-xs py-2 rounded-xl font-medium hover:bg-rose-50 transition">{t("reschedule")}</button><button onClick={() => setConfirmDialog({ title: t("cancelApptConfirmTitle"), body: t("cancelApptConfirmBody"), confirmLabel: t("cancelApptConfirmLabel"), danger: true, onConfirm: () => cancelOwnAppt(a.id) })} className="flex-1 border border-red-200 text-red-500 text-xs py-2 rounded-xl font-medium hover:bg-red-50 transition">{t("cancelAppt")}</button></div>)}
         {isRescheduling && (() => {
           // ÖNEMLİ: önce mechanicId ile eşleştir — isimle eşleştirme (eski davranış) bir tamirci
           // işletme adını değiştirdiğinde ya da iki tamirci aynı adı taşıdığında YANLIŞ tamirciyi
@@ -142,7 +142,7 @@ export function AppointmentCard({ a }) {
           return (
           <div className="mt-3 bg-white border border-gray-200 rounded-xl p-3">
             <div className="flex gap-2 mb-2 overflow-x-auto pb-1">{nextDays.map((d, i) => { const isSel = rescheduleDate?.toDateString() === d.toDateString(); const open = isDayOpenForMechanic(mech, d); return (<button key={i} disabled={!open} onClick={() => setRescheduleDate(d)} className={`flex-shrink-0 w-12 py-1.5 rounded-lg border text-center transition ${!open ? "opacity-30 cursor-not-allowed" : isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600"}`}><p className="text-[9px]">{d.toLocaleDateString("tr-TR", { weekday: "short" })}</p><p className="text-xs font-bold">{d.getDate()}</p></button>); })}</div>
-            {rescheduleDate && (<div className="grid grid-cols-4 gap-1.5 mb-2">{slotsForDate(mech, rescheduleDate).map(tm => (<button key={tm} onClick={() => setRescheduleTime(tm)} className={`py-1.5 rounded-lg border text-[11px] font-medium transition ${rescheduleTime === tm ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600"}`}>{tm}</button>))}{slotsForDate(mech, rescheduleDate).length === 0 && <p className="col-span-4 text-[11px] text-gray-400 text-center py-2">Bu gün kapalı</p>}</div>)}
+            {rescheduleDate && (<div className="grid grid-cols-4 gap-1.5 mb-2">{slotsForDate(mech, rescheduleDate).map(tm => (<button key={tm} onClick={() => setRescheduleTime(tm)} className={`py-1.5 rounded-lg border text-[11px] font-medium transition ${rescheduleTime === tm ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600"}`}>{tm}</button>))}{slotsForDate(mech, rescheduleDate).length === 0 && <p className="col-span-4 text-[11px] text-gray-400 text-center py-2">{t("bookingClosedDay")}</p>}</div>)}
             <div className="flex gap-2"><button onClick={() => setReschedulingApptId(null)} className="flex-1 text-xs py-2 rounded-lg border border-gray-200 text-gray-500">{t("cancel")}</button><button disabled={!rescheduleDate || !rescheduleTime} onClick={confirmReschedule} className="flex-1 text-xs py-2 rounded-lg bg-rose-600 text-white disabled:opacity-40">{t("save")}</button></div>
           </div>
         ); })()}

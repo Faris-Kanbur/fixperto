@@ -110,7 +110,7 @@ export function ListingCard({ l, onHover = undefined }) {
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
 
-    const meta = l.adminRemoved ? { label: "Kaldırıldı (Admin)", color: "bg-gray-900" } : listingStatusMeta(l.status, t);
+    const meta = l.adminRemoved ? { label: t("removedByAdminLabel"), color: "bg-gray-900" } : listingStatusMeta(l.status, t);
     const fav = favoriteIds.includes(l.id);
     const isMine = isMyListing(l);
     const pendingOfferCount = isMine ? l.offers.filter(o => o.status === "pending").length : 0;

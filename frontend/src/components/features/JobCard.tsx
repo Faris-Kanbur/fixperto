@@ -113,7 +113,7 @@ export function JobCard({ j }) {
       <div className="flex items-start gap-3">
         <div className="w-11 h-11 bg-rose-50 rounded-xl flex items-center justify-center text-xl flex-shrink-0">{j.mechanicImg}</div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5"><h3 className="font-semibold text-gray-800 text-sm truncate">{j.title}</h3>{j.status === "closed" && <span className="flex-shrink-0 text-[9px] font-bold text-white bg-gray-400 px-1.5 py-0.5 rounded-full">Kapatıldı</span>}</div>
+          <div className="flex items-center gap-1.5"><h3 className="font-semibold text-gray-800 text-sm truncate">{j.title}</h3>{j.status === "closed" && <span className="flex-shrink-0 text-[9px] font-bold text-white bg-gray-400 px-1.5 py-0.5 rounded-full">{t("jobStatusClosedLabel")}</span>}</div>
           <p className="text-xs text-gray-400 truncate">{j.mechanicName} · {j.location}</p>
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
             <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${jobEmploymentColor(j.employmentType)}`}>{j.employmentType}</span>
@@ -122,7 +122,7 @@ export function JobCard({ j }) {
           </div>
         </div>
       </div>
-      <p className="text-[10px] text-gray-300 mt-2.5 flex items-center gap-3"><span className="flex items-center gap-1"><Clock size={10} />{j.postedDate}</span>{j.applicants.length > 0 && <span className="flex items-center gap-1"><Users size={10} />{j.applicants.length} başvuru</span>}</p>
+      <p className="text-[10px] text-gray-300 mt-2.5 flex items-center gap-3"><span className="flex items-center gap-1"><Clock size={10} />{j.postedDate}</span>{j.applicants.length > 0 && <span className="flex items-center gap-1"><Users size={10} />{t("applicantsCountSuffix", { n: String(j.applicants.length) })}</span>}</p>
     </button>
   );
 }

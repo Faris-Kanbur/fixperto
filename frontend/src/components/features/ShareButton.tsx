@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Share2, MessageCircle, Facebook, X as XIcon, Mail, Link2, Check } from "lucide-react";
+import { useApp } from "../../app/state/AppLogicProvider";
 
 // Instagram/Airbnb tarzı paylaşım butonu: tıklanınca WhatsApp/Facebook/X/E-posta seçenekleri ve
 // "Linki Kopyala" içeren küçük bir menü açılır. Cihaz destekliyorsa (çoğunlukla mobil) önce
@@ -16,6 +17,7 @@ import { Share2, MessageCircle, Facebook, X as XIcon, Mail, Link2, Check } from 
 // gerçek bir paylaşım eylemi olduğunda (linke tıklama/kopyalama/native paylaşımın başarıyla
 // açılması) çağrılır — menüyü sadece açmak bir "paylaşım" sayılmaz.
 export function ShareButton({ title, text, path, className = "", iconSize = 16, onShare }) {
+  const { t } = useApp();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const ref = useRef(null);
@@ -71,7 +73,7 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
     { key: "whatsapp", label: "WhatsApp", Icon: MessageCircle, bg: "bg-green-500", href: `https://wa.me/?text=${encodedText}%20${encodedUrl}` },
     { key: "facebook", label: "Facebook", Icon: Facebook, bg: "bg-blue-600", href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
     { key: "x", label: "X", Icon: XIcon, bg: "bg-gray-900", href: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}` },
-    { key: "mail", label: "E-posta", Icon: Mail, bg: "bg-gray-500", href: `mailto:?subject=${encodeURIComponent(title || "")}&body=${encodedText}%20${encodedUrl}` },
+    { key: "mail", label: t("emailPlaceholder"), Icon: Mail, bg: "bg-gray-500", href: `mailto:?subject=${encodeURIComponent(title || "")}&body=${encodedText}%20${encodedUrl}` },
   ];
 
   return (
@@ -79,15 +81,15 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
       <button
         type="button"
         onClick={openShare}
-        aria-label="Paylaş"
-        title="Paylaş"
+        aria-label={t("shareMenuTitle")}
+        title={t("shareMenuTitle")}
         className={className || "w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"}
       >
         <Share2 size={iconSize} />
       </button>
       {open && (
         <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-2 z-[60] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 w-64">
-          <p className="text-xs font-semibold text-gray-500 px-1 mb-2">Paylaş</p>
+          <p className="text-xs font-semibold text-gray-500 px-1 mb-2">{t("shareMenuTitle")}</p>
           <div className="grid grid-cols-4 gap-2 mb-2">
             {platforms.map(({ key, label, Icon, bg, href }) => (
               <a key={key} href={href} target="_blank" rel="noopener noreferrer" onClick={() => { setOpen(false); onShare?.(key, refCode); }} className="flex flex-col items-center gap-1">
@@ -100,7 +102,7 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
           </div>
           <button type="button" onClick={copyLink} className="w-full flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-50 transition text-sm text-gray-700">
             {copied ? <Check size={16} className="text-green-600" /> : <Link2 size={16} className="text-gray-400" />}
-            {copied ? "Kopyalandı!" : "Linki Kopyala"}
+            {copied ? t("linkCopiedNotice") : t("copyLinkBtn")}
           </button>
         </div>
       )}
