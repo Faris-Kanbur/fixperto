@@ -58,6 +58,15 @@ quoteRequestsRouter.post("/", (req, res) => {
 
 // Durum alanı buradan asla değiştirilemez — kapanış/iptal her zaman aşağıdaki /cancel ya da
 // ilgili teklifin /accept uç noktasından, ilişkili tüm satırlarla birlikte atomik yapılmalı.
+//
+// GÜVENLİK DÜZELTMESİ (teklif akışı denetiminde bulundu): frontend bu uç noktayı hiç kullanmıyor
+// (istek oluşturulduktan sonra ownerId/vehicleId/mechanicIds hiçbir ekrandan değiştirilmiyor), ama
+// uç nokta genel PATCH olduğu için doğrudan çağrıldığında bu kimlik alanlarını da serbestçe
+// yeniden yazmaya izin veriyordu — ör. bir isteğin ownerId'sini başka bir araç sahibine devretmek
+// mümkündü. Artık oluşturulduktan sonra sabit kalması gereken alanlar (ownerId, vehicleId,
+// mechanicIds) PATCH ile değiştirilemiyor.
+const IMMUTABLE_REQUEST_FIELDS = ["ownerId", "vehicleId", "mechanicIds"];
+
 quoteRequestsRouter.patch("/:id", (req, res) => {
   const existing = db.prepare(`SELECT * FROM quote_requests WHERE id = ?`).get(req.params.id);
   if (!existing) return res.status(404).json({ error: "quote_requests not found" });
@@ -65,6 +74,7 @@ quoteRequestsRouter.patch("/:id", (req, res) => {
   if ("status" in body) {
     return res.status(400).json({ error: "Durum değişikliği için /cancel veya ilgili teklifin /accept uç noktasını kullanın." });
   }
+  for (const f of IMMUTABLE_REQUEST_FIELDS) delete body[f];
   const cols = Object.keys(body).filter((c) => c !== "id");
   if (cols.length === 0) return res.json(hydrate("quote_requests", existing));
   const stmt = db.prepare(`UPDATE quote_requests SET ${cols.map((c) => `${c} = @${c}`).join(",")} WHERE id = @__id`);
@@ -115,8 +125,48 @@ quoteOffersRouter.get("/:id", (req, res) => {
   res.json(hydrate("quote_offers", row));
 });
 
+// GÜVENLİK DÜZELTMESİ (teklif akışı denetiminde bulundu): bu dosyanın en üstündeki yorum, durum
+// makinesinin (open → submitted → accepted/lost/declined) SADECE sunucuda ve HER ZAMAN uygulandığını
+// söylüyor — ama bu, oluşturma (POST) uç noktası için doğru değildi. PATCH /:id "accepted" durumunu
+// doğrudan yazmayı reddediyordu (bkz. yukarısı), fakat POST / hiçbir status kısıtı uygulamıyordu:
+// istemciyi (ya da API'yi bilen herhangi birini) atlayıp doğrudan `POST /api/quote-offers`
+// `{status:"accepted", requestId, mechanicId, price}` gönderen biri, /accept uç noktasının atomik
+// transaction'ını (kardeş teklifleri "lost" yapma, isteği "closed" kapatma) TAMAMEN atlayarak
+// sahte bir "kabul edilmiş teklif" satırı yaratabilirdi — durum makinesinin bütünlüğünü kökten
+// bozan bir açık. Şimdi oluşturma sırasında yalnızca "pending" (henüz fiyat verilmemiş, tamirci
+// tarafında bekleyen) ve "submitted" (otomatik demo teklifleri gibi baştan fiyatlı) kabul ediliyor;
+// başka bir status gönderilirse reddediliyor. "submitted" olarak oluşturuluyorsa fiyat da (PATCH'teki
+// gibi) pozitif bir sayı olmalı — aksi halde daha önce fiyat hiç doğrulanmadan kaydedilebiliyordu.
+const ALLOWED_OFFER_CREATE_STATUSES = new Set(["pending", "submitted"]);
+
 quoteOffersRouter.post("/", (req, res) => {
   const body = dehydrate("quote_offers", req.body);
+  if (!body.requestId || !body.mechanicId) {
+    return res.status(400).json({ error: "requestId ve mechanicId zorunludur." });
+  }
+  const status = body.status || "pending";
+  if (!ALLOWED_OFFER_CREATE_STATUSES.has(status)) {
+    return res.status(400).json({ error: "Bir teklif yalnızca 'pending' veya 'submitted' durumuyla oluşturulabilir." });
+  }
+  body.status = status;
+  if (status === "submitted") {
+    const price = Number(body.price);
+    if (!Number.isFinite(price) || price <= 0) {
+      return res.status(400).json({ error: "Fiyat verilmiş bir teklif için geçerli, pozitif bir fiyat zorunludur." });
+    }
+    body.price = price;
+  } else {
+    body.price = null;
+  }
+  const parentReq = db.prepare(`SELECT status FROM quote_requests WHERE id = ?`).get(body.requestId);
+  if (!parentReq) return res.status(404).json({ error: "quote_requests not found" });
+  if (parentReq.status !== "open") {
+    return res.status(409).json({ error: "Bu teklif isteği artık açık değil." });
+  }
+  const existingOffer = db.prepare(`SELECT id FROM quote_offers WHERE requestId = ? AND mechanicId = ?`).get(body.requestId, body.mechanicId);
+  if (existingOffer) {
+    return res.status(409).json({ error: "Bu tamirci için bu istekte zaten bir teklif kaydı var." });
+  }
   const cols = Object.keys(body);
   const stmt = db.prepare(`INSERT INTO quote_offers (${cols.join(",")}) VALUES (${cols.map((c) => `@${c}`).join(",")})`);
   const info = stmt.run(body);
@@ -128,10 +178,20 @@ quoteOffersRouter.post("/", (req, res) => {
 // submitQuoteOffer) kullanılabilir. GERÇEK HATA DÜZELTMESİ: önceden bu uç nokta hem kapanmış bir
 // isteğe fiyat verilmesine hem de doğrudan status: "accepted" göndererek kabul akışının (ve
 // diğer tekliflerin "lost" olarak işaretlenmesinin) tamamen atlanmasına izin veriyordu.
+//
+// GÜVENLİK DÜZELTMESİ (devamı, teklif akışı denetiminde bulundu): (1) fiyat hiçbir zaman
+// doğrulanmıyordu — "submitted" durumuna geçerken negatif, sıfır veya sayı olmayan bir `price`
+// gönderen biri bunu olduğu gibi kaydedebiliyordu. (2) requestId/mechanicId gibi kimlik alanları
+// da genel PATCH'in bir parçası olduğu için, bir teklifi başka bir isteğe ya da başka bir tamirciye
+// ait gösterecek şekilde yeniden atamak mümkündü (oluşturulduktan sonra bu alanlar değişmemeli).
+// Artık her ikisi de engelleniyor.
+const IMMUTABLE_OFFER_FIELDS = ["requestId", "mechanicId"];
+
 quoteOffersRouter.patch("/:id", (req, res) => {
   const existing = db.prepare(`SELECT * FROM quote_offers WHERE id = ?`).get(req.params.id);
   if (!existing) return res.status(404).json({ error: "quote_offers not found" });
   const body = dehydrate("quote_offers", req.body);
+  for (const f of IMMUTABLE_OFFER_FIELDS) delete body[f];
   if ("status" in body) {
     if (body.status !== "submitted") {
       return res.status(400).json({ error: "Kabul için /accept, reddetmek için /decline uç noktasını kullanın." });
@@ -142,6 +202,18 @@ quoteOffersRouter.patch("/:id", (req, res) => {
     const parentReq = db.prepare(`SELECT status FROM quote_requests WHERE id = ?`).get(existing.requestId);
     if (!parentReq || parentReq.status !== "open") {
       return res.status(409).json({ error: "Bu teklif isteği artık açık değil." });
+    }
+    const price = Number(body.price);
+    if (!Number.isFinite(price) || price <= 0) {
+      return res.status(400).json({ error: "Lütfen geçerli, pozitif bir fiyat girin." });
+    }
+    body.price = price;
+    if ("etaDays" in body && body.etaDays !== null) {
+      const eta = Number(body.etaDays);
+      if (!Number.isFinite(eta) || eta <= 0) {
+        return res.status(400).json({ error: "Geçerli bir teslim süresi (gün) girin." });
+      }
+      body.etaDays = Math.round(eta);
     }
   }
   const cols = Object.keys(body).filter((c) => c !== "id");
