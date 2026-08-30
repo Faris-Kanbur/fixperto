@@ -1155,19 +1155,24 @@ function useAppLogic() {
     if (servicePrice > EXPENSIVE_SERVICE_THRESHOLD && !approveExpensiveService) { setToast({ type: "info", text: "⚠️ Lütfen devam etmeden önce tutarı onayladığınızı işaretleyin." }); return; }
     const issueText = bookingService ? `${bookingService.name}${problemDesc ? " — " + problemDesc : ""}` : (problemDesc || "Belirtilmedi");
     const draft = { ownerId: MY_OWNER_ID, customer: ownerProfile.name || form.name || "Siz", mechanicName: selectedMechanic.name, mechanicImg: selectedMechanic.img, mechanicId: selectedMechanic.id, vehicle: bookingVehicle ? `${bookingVehicle.brand} ${bookingVehicle.model} (${bookingVehicle.plate})` : "Araç seçilmedi", date: selectedDate?.toLocaleDateString("tr-TR", { day: "numeric", month: "long" }), dateISO: selectedDate ? selectedDate.toISOString() : null, time: selectedTime, status, autoAccepted: autoAccept, issue: issueText, issuePhotos: problemPhotos, paymentMethod, depositPaid: paymentMethod === "card" ? servicePrice : 0, servicePrice, reviewed: false, noShow: false, historyShareConsent: shareHistoryConsent };
-    setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" });
-    setSelectedBookingVehicleId(null);
-    setBookingService(null);
-    setProblemDesc("");
-    setProblemPhotos([]);
-    setApproveExpensiveService(false);
-    setShareHistoryConsent(true);
-    setScreen("confirmed");
+    // ÖNEMLİ: ekran geçişi ("confirmed") ve formu temizleyen tüm setXxx çağrıları artık API isteği
+    // başarıyla tamamlandıktan SONRA, try bloğunun içinde yapılıyor. Önceden bunlar await'ten önce
+    // tetikleniyordu; istek başarısız olursa kullanıcı randevusu hiç kaydedilmemişken sahte bir
+    // "onaylandı" ekranında kalıyor, üstelik seçtiği araç/hizmet/açıklama/fotoğraf gibi tüm form
+    // verileri zaten silindiği için yeniden denemek de mümkün olmuyordu.
     try {
       const created = await api.appointments.create(draft);
       setAppointments(apps => [created, ...apps]);
       recordConversion("appointment");
       recordProfileViewConversion();
+      setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" });
+      setSelectedBookingVehicleId(null);
+      setBookingService(null);
+      setProblemDesc("");
+      setProblemPhotos([]);
+      setApproveExpensiveService(false);
+      setShareHistoryConsent(true);
+      setScreen("confirmed");
       // Sadece gerçekten etkileşimli tamirci hesabına (MY_MECHANIC_ID) yapılan randevularda gerçek
       // bildirim gönderilir — demo/örnek tamircilere randevu alınırken bildirim ateşlenmez, çünkü o
       // tamirci panelinde bu randevu zaten hiç görünmeyecek.
@@ -1908,13 +1913,19 @@ function useAppLogic() {
     setVehicles(vs => [...vs, { id: tempId, ...draft }]);
     setNewVehicle({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "" }); setShowAddVehicle(false);
     if (screen === "booking") setSelectedBookingVehicleId(tempId); if (showQuoteModal) setQuoteVehicleId(tempId);
-    setToast({ type: "info", text: "🚘 Araç eklendi." });
+    // "Araç eklendi" başarı mesajı yalnızca backend isteği gerçekten başarılı olduktan sonra
+    // gösteriliyor. İstek başarısız olursa hem yanlış bir "başarılı" mesajı görülmesin hem de
+    // yerel geçici (tempId) kayıt listede asılı kalmasın diye geri alınıyor (rollback).
     try {
       const created = await api.vehicles.create(draft);
       setVehicles(vs => vs.map(v => v.id === tempId ? created : v));
       if (screen === "booking" && selectedBookingVehicleId === tempId) setSelectedBookingVehicleId(created.id);
       if (showQuoteModal && quoteVehicleId === tempId) setQuoteVehicleId(created.id);
+      setToast({ type: "info", text: "🚘 Araç eklendi." });
     } catch (err) {
+      setVehicles(vs => vs.filter(v => v.id !== tempId));
+      if (screen === "booking" && selectedBookingVehicleId === tempId) setSelectedBookingVehicleId(null);
+      if (showQuoteModal && quoteVehicleId === tempId) setQuoteVehicleId(null);
       setToast({ type: "info", text: `⚠️ Araç kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
   };
@@ -2137,12 +2148,15 @@ function useAppLogic() {
       adminNote: "",
       adminReplies: [],
     };
-    setNewTicketForm({ type: "quality", subject: "", description: "", relatedNote: "" });
-    setShowNewTicketForm(false);
-    setToast({ type: "info", text: "✅ Destek talebiniz alındı. En kısa sürede dönüş yapılacaktır." });
+    // Form ve "alındı" mesajı yalnızca kayıt gerçekten backend'e kaydedildikten sonra temizlenip
+    // gösteriliyor — istek başarısız olursa kullanıcı formda kalır, verdiği bilgiler kaybolmaz ve
+    // sadece hata mesajı görür.
     try {
       const created = await api.tickets.create(draft);
       setSupportTickets(list => [created, ...list]);
+      setNewTicketForm({ type: "quality", subject: "", description: "", relatedNote: "" });
+      setShowNewTicketForm(false);
+      setToast({ type: "info", text: "✅ Destek talebiniz alındı. En kısa sürede dönüş yapılacaktır." });
     } catch (err) {
       setToast({ type: "info", text: `⚠️ Destek talebi kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
@@ -2470,12 +2484,14 @@ function useAppLogic() {
       // Açıklama metninin hangi dilde yazıldığını satıcının güncel diline göre etiketliyoruz —
       // bkz. patch.lang yorum notu yukarıda.
       const draft = { sellerName, sellerType, sellerId, ...formFields, vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang };
-      setShowSellForm(false);
-      setToast({ type: "info", text: "🚗 İlanınız yayınlandı." });
+      // Form ve "yayınlandı" mesajı yalnızca ilan gerçekten kaydedildikten sonra kapatılıp
+      // gösteriliyor — istek başarısız olursa kullanıcı formda kalır, girdiği bilgiler kaybolmaz.
       try {
         const created = await api.listings.create(draft);
         setListings(l => [created, ...l]);
         if (_vehicleId) { setVehicles(vs => vs.map(v => v.id === _vehicleId ? { ...v, listingId: created.id } : v)); persist(api.vehicles.update(_vehicleId, { listingId: created.id }), "Araç kaydedilemedi"); }
+        setShowSellForm(false);
+        setToast({ type: "info", text: "🚗 İlanınız yayınlandı." });
       } catch (err) {
         setToast({ type: "info", text: `⚠️ İlan kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
       }
@@ -2681,11 +2697,13 @@ function useAppLogic() {
     } else {
       const { _editingId, ...formFields } = jobForm;
       const draft = { mechanicId: MY_MECHANIC_ID, mechanicName: myProfile?.name || "Tamirci", mechanicImg: myProfile?.img || "🔧", ...formFields, requirements, skills, postedDate: "az önce", status: "active", applicants: [], lang: jobLang };
-      setShowJobForm(false);
-      setToast({ type: "info", text: "💼 İş ilanınız yayınlandı." });
+      // Form ve "yayınlandı" mesajı yalnızca ilan gerçekten kaydedildikten sonra kapatılıp
+      // gösteriliyor — istek başarısız olursa kullanıcı formda kalır, girdiği bilgiler kaybolmaz.
       try {
         const created = await api.jobs.create(draft);
         setJobListings(js => [created, ...js]);
+        setShowJobForm(false);
+        setToast({ type: "info", text: "💼 İş ilanınız yayınlandı." });
       } catch (err) {
         setToast({ type: "info", text: `⚠️ İş ilanı kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
       }
