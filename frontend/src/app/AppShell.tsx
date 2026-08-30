@@ -112,7 +112,7 @@ export function AppShell() {
     toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateMyPriceField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
-    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
+    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
@@ -1720,11 +1720,13 @@ export function AppShell() {
               {selectedListing.features && selectedListing.features.length > 0 && (
                 <div className="mt-4">
                   <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Tag size={15} className="text-rose-500" /> {t("featuresSection")}</h3>
+                  {/* Donanım sayısı artık sabit olmayabiliyor (kullanıcı kendi donanımını da
+                      ekleyebiliyor, bkz. addCustomFeature) — çok sayıda donanımda karmaşık
+                      görünmemesi için renk döngüsü kaldırıldı, tek/sade bir rozet stili kullanılıyor. */}
                   <div className="flex flex-wrap gap-2">
-                    {selectedListing.features.map((f, i) => {
-                      const palette = ["bg-rose-50 text-rose-700 border-rose-200", "bg-blue-50 text-blue-700 border-blue-200", "bg-amber-50 text-amber-700 border-amber-200", "bg-emerald-50 text-emerald-700 border-emerald-200", "bg-violet-50 text-violet-700 border-violet-200", "bg-cyan-50 text-cyan-700 border-cyan-200"];
-                      return (<span key={f} className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border ${palette[i % palette.length]}`}><Tag size={10} /> {f}</span>);
-                    })}
+                    {selectedListing.features.map((f) => (
+                      <span key={f} className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border bg-gray-50 text-gray-600 border-gray-200"><Tag size={10} className="text-rose-500" /> {f}</span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -2648,7 +2650,47 @@ export function AppShell() {
                 <div className="flex gap-2"><input value={sellForm.batteryCapacity} onChange={(e) => setSellForm({ ...sellForm, batteryCapacity: e.target.value })} placeholder={t("batteryCapacityPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.rangeKm} onChange={(e) => setSellForm({ ...sellForm, rangeKm: e.target.value })} type="number" min="0" placeholder={t("rangeKmPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
               )}
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("featuresSection")}</p>
-              <div className="flex flex-wrap gap-1.5">{LISTING_FEATURE_OPTIONS.map(f => { const active = (sellForm.features || []).includes(f); return (<button key={f} type="button" onClick={() => { const cur = sellForm.features || []; setSellForm({ ...sellForm, features: active ? cur.filter(x => x !== f) : [...cur, f] }); }} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium border transition ${active ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{f}</button>); })}</div>
+              {/* ÖNEMLİ: donanım listesi artık sadece sabit LISTING_FEATURE_OPTIONS ile sınırlı değil —
+                  kullanıcı listede olmayan bir donanımı da yazıp ekleyebiliyor (addCustomFeature).
+                  Sabit liste + eklenen özel donanımlar toplamda kolayca 30'a ulaşabildiği için hepsini
+                  aynı anda tek bir kalabalık ızgarada göstermek yerine: önce SEÇİLİ olanlar ayrı, kompakt
+                  bir satırda (kaldırmak için tıklanabilir); henüz seçilmemiş sabit seçenekler ise
+                  varsayılan olarak sadece ilk birkaçı gösterilip "+N tane daha" ile genişletiliyor. */}
+              {(() => {
+                const selectedFeatures = sellForm.features || [];
+                const unselectedOptions = LISTING_FEATURE_OPTIONS.filter(f => !selectedFeatures.includes(f));
+                const VISIBLE_UNSELECTED_COUNT = 8;
+                const visibleUnselected = showAllFeatureOptions ? unselectedOptions : unselectedOptions.slice(0, VISIBLE_UNSELECTED_COUNT);
+                const hiddenCount = unselectedOptions.length - visibleUnselected.length;
+                return (
+                  <div className="space-y-2">
+                    {selectedFeatures.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedFeatures.map(f => (
+                          <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="pl-2.5 pr-2 py-1.5 rounded-full text-[11px] font-medium border bg-rose-600 text-white border-rose-600 flex items-center gap-1 transition hover:bg-rose-700">
+                            {f} <X size={11} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      {visibleUnselected.map(f => (
+                        <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium border bg-white text-gray-500 border-gray-200 hover:border-rose-300 hover:text-rose-600 transition">{f}</button>
+                      ))}
+                      {hiddenCount > 0 && (
+                        <button type="button" onClick={() => setShowAllFeatureOptions(true)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-gray-300 text-gray-400 hover:text-rose-500 hover:border-rose-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
+                      )}
+                      {showAllFeatureOptions && unselectedOptions.length > VISIBLE_UNSELECTED_COUNT && (
+                        <button type="button" onClick={() => setShowAllFeatureOptions(false)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-gray-300 text-gray-400 hover:text-rose-500 hover:border-rose-300 transition">{t("showLessFeaturesLabel")}</button>
+                      )}
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <input value={customFeatureInput} onChange={(e) => setCustomFeatureInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomFeature(); } }} placeholder={t("customFeaturePlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
+                      <button type="button" onClick={addCustomFeature} aria-label={t("addCustomFeatureAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-rose-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
+                    </div>
+                  </div>
+                );
+              })()}
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1 flex items-center justify-between"><span>{t("extraPhotosSection")}</span><span className="normal-case tracking-normal text-gray-300">{(sellForm.photos || []).length}/{MAX_LISTING_GALLERY_PHOTOS}</span></p>
               <div className="flex flex-wrap gap-2">
                 {(sellForm.photos || []).map((p, i) => (

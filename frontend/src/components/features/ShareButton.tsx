@@ -61,10 +61,17 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
       try {
         await navigator.share({ title, text, url: shareUrl });
         onShare?.("native", refCode);
-        return;
-      } catch {
-        // Kullanıcı iptal etti ya da native paylaşım başarısız oldu — özel menüye düş.
+      } catch (err) {
+        // GERÇEK HATA DÜZELTMESİ: kullanıcı native paylaşım sayfasını kendi isteğiyle kapatırsa
+        // (ör. "İptal"e basarsa) tarayıcı navigator.share() promise'ini AbortError ile reddeder.
+        // Önceden bu durumda da kod özel menüye "düşüyordu" — yani kullanıcı native paylaşım
+        // sayfasını kapatır kapatmaz, hiç istemediği ikinci bir paylaşım menüsü aniden açılıyordu
+        // ("Paylaş düzgün çalışmıyor" hissi buradan geliyordu). Artık sadece native paylaşım
+        // GERÇEKTEN başarısız olduğunda (kullanıcının kendi iptali dışındaki hatalarda) özel
+        // menüye düşülüyor.
+        if (err?.name !== "AbortError") setOpen((o) => !o);
       }
+      return;
     }
     setOpen((o) => !o);
   };
@@ -92,7 +99,10 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
           <p className="text-xs font-semibold text-gray-500 px-1 mb-2">{t("shareMenuTitle")}</p>
           <div className="grid grid-cols-4 gap-2 mb-2">
             {platforms.map(({ key, label, Icon, bg, href }) => (
-              <a key={key} href={href} target="_blank" rel="noopener noreferrer" onClick={() => { setOpen(false); onShare?.(key, refCode); }} className="flex flex-col items-center gap-1">
+              // mailto: linki bir web sayfası değil, işletim sisteminin posta uygulamasını açar —
+              // target="_blank" ile açılırsa arkada boş, hiçbir zaman kapanmayan bir sekme kalıyordu.
+              // Sadece gerçek web linklerinde (WhatsApp/Facebook/X) yeni sekme kullanılıyor.
+              <a key={key} href={href} {...(href.startsWith("mailto:") ? {} : { target: "_blank", rel: "noopener noreferrer" })} onClick={() => { setOpen(false); onShare?.(key, refCode); }} className="flex flex-col items-center gap-1">
                 <span className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center text-white hover:opacity-90 transition`}>
                   <Icon size={18} />
                 </span>
