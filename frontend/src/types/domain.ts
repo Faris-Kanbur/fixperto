@@ -52,6 +52,11 @@ export interface Mechanic {
   coverPhoto: string | null;
   lat: number;
   lng: number;
+  /** GÜVENLİK DÜZELTMESİ: bu 3 alan artık toplu GET /api/mechanics yanıtında YOK (bkz.
+   * hydrate.js LIST_ONLY_SENSITIVE_FIELDS) — sadece GET /api/mechanics/:id (tek kayıt) döndürür.
+   * Tip burada opsiyonel değil çünkü mechanicsList içindeki KENDİ kaydımız (MY_MECHANIC_ID) bu
+   * alanları ayrı bir tekil istekle sonradan dolduruyor (bkz. AppLogicProvider.tsx bootstrap
+   * efekti) — ama başka bir tamircinin kaydında bu alanlar runtime'da gerçekten undefined olur. */
   iban: string;
   bankName: string;
   accountHolder: string;
@@ -68,7 +73,10 @@ export interface Mechanic {
   paymentMethods?: string[];
   /** İşletme telefon numarası — ilan detayındaki "Telefonla Ara" butonu için. */
   phone?: string;
-  /** Demo amaçlı düz metin — gerçek bir üretim sisteminde ASLA client'a dönmemeli (bkz. Owner.password). */
+  /** GÜVENLİK DÜZELTMESİ: backend artık bu alanı hiçbir yanıtta döndürmüyor (bkz. hydrate.js) —
+   * tip burada sadece geriye dönük uyumluluk için opsiyonel olarak duruyor, runtime'da hep
+   * undefined gelir. Şifre değiştirmek için api.owners/mechanics.verifyPassword + setPassword
+   * kullanılmalı, bu alan asla okunmamalı/gösterilmemeli. */
   password?: string;
 }
 

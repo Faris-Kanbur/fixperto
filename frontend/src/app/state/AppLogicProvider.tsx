@@ -359,7 +359,14 @@ function useAppLogic() {
     let cancelled = false;
     (async () => {
       try {
-        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes, conversationsRes, changeLogRes, broadcastsRes] = await Promise.all([
+        // GÜVENLİK DÜZELTMESİ: api.admin.changeLog() artık admin token'ı gerektiriyor (bkz.
+        // backend/routes/admin.js requireAdminAuth) — sayfa her açıldığında (owner/mechanic/hiç
+        // giriş yapılmamış ziyaretçi dahil, rol her zaman sıfırlanmış başlıyor) bu çağrı artık
+        // 401 ile reddedilir. Promise.all içinde kalsaydı TEK bir başarısız istek yüzünden TÜM
+        // bootstrap (mechanics/owners/vehicles/... hiçbiri) yüklenemezdi — bu yüzden değişiklik
+        // geçmişi artık burada değil, admin gerçekten giriş yaptıktan SONRA ayrıca çekiliyor
+        // (bkz. submitAdminLogin -> fetchAdminChangeLog).
+        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes, conversationsRes, broadcastsRes] = await Promise.all([
           api.mechanics.list(),
           api.vehicles.list(),
           api.appointments.list(),
@@ -370,11 +377,22 @@ function useAppLogic() {
           api.quoteRequests.list(),
           api.quoteOffers.list(),
           api.conversations.list(),
-          api.admin.changeLog(),
           api.broadcasts.list(),
         ]);
         if (cancelled) return;
         setMechanicsList(mechanicsRes);
+        // GÜVENLİK DÜZELTMESİ: `iban`/`bankName`/`accountHolder` artık toplu tamirci listesinde
+        // (GET /api/mechanics) dönmüyor (bkz. backend/db/hydrate.js) — çünkü bu alanlar sadece
+        // tamircinin KENDİ profil ayarlarında gösterilmesi gereken özel bilgiler, herkese açık
+        // arama/keşfet listesinde değil (böylece API'yi bilen biri tek istekle TÜM tamircilerin
+        // banka bilgisini toplayamıyor). Kendi profilimiz (myProfile, MY_MECHANIC_ID) bu alanlara
+        // ihtiyaç duyduğu için, tek kayıt uç noktasından (GET /api/mechanics/:id — bu alanları hâlâ
+        // döndürüyor) ayrıca çekip listedeki kendi kaydımızın üzerine yazıyoruz. Diğer tamirciler
+        // için listede bu alanlar hâlâ yok — zaten kimse başkasının banka bilgisini görmemeli.
+        api.mechanics.get(MY_MECHANIC_ID).then((full) => {
+          if (cancelled) return;
+          setMechanicsList((list) => list.map((m) => (m.id === MY_MECHANIC_ID ? { ...m, ...full } : m)));
+        }).catch(() => { /* profil ayarları ekranı boş IBAN ile açılır, kritik değil */ });
         setVehicles(vehiclesRes);
         setAppointments(appointmentsRes);
         setListings(listingsRes);
@@ -397,32 +415,6 @@ function useAppLogic() {
           recipientCount: b.recipientCount,
           date: b.createdAt ? new Date(`${b.createdAt.replace(" ", "T")}Z`).toLocaleDateString("tr-TR") : "",
         })));
-        // admin_change_log backend'de genel bir "action/entityType/entityId/before/after/reverted"
-        // audit şemasıyla saklanıyor (bkz. logAdminChange, backend/routes/admin.js); burada admin
-        // panelin "Geçmiş" ekranının beklediği zengin şekle (targetType/targetId/field/oldValue/
-        // newValue/extra/reverted) geri eşliyoruz ki sayfa yenilenince geçmiş kaybolmasın.
-        const mappedChangeLog = (changeLogRes || []).map((r: any) => {
-          const rawId = r.entityId;
-          const targetId = rawId !== undefined && rawId !== null && rawId !== "" && !Number.isNaN(Number(rawId)) ? Number(rawId) : rawId;
-          const createdAt = r.createdAt ? new Date(`${r.createdAt.replace(" ", "T")}Z`) : null;
-          return {
-            id: r.id,
-            date: createdAt && !Number.isNaN(createdAt.getTime())
-              ? createdAt.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
-              : "",
-            reverted: !!r.reverted,
-            targetType: r.entityType,
-            targetId,
-            field: r.before?.field ?? r.after?.field,
-            oldValue: r.before?.value,
-            newValue: r.after?.value,
-            extra: r.before?.extra ?? r.after?.extra,
-          };
-        });
-        setAdminChangeLog(mappedChangeLog);
-        // Yeni yerel (iyimser) kayıtların, sunucudan gelen gerçek id'lerle çakışmaması için sayaç,
-        // hâlihazırda yüklenen en büyük id'nin üstüne konumlanıyor.
-        if (mappedChangeLog.length) adminChangeLogId = Math.max(adminChangeLogId, ...mappedChangeLog.map((e) => (typeof e.id === "number" ? e.id : 0)) ) + 1;
         setApiReady(true);
       } catch (err) {
         if (!cancelled) setApiError(err.message || "Backend'e bağlanılamadı.");
@@ -1206,6 +1198,43 @@ function useAppLogic() {
   // şifreyi frontend paketine gömüyordu (herkes okuyabilir) hem de "gerçek" bir doğrulama değildi
   // (backend hiç sorulmuyordu). Şimdi gerçek kimlik doğrulaması backend'de yapılıyor:
   // bkz. services/api/client.ts -> api.admin.login() ve backend/routes/admin.js.
+  // GÜVENLİK DÜZELTMESİ: bu fonksiyon eskiden uygulama ilk açıldığında (bootstrap Promise.all
+  // içinde) herkes için koşulsuz çağrılıyordu; artık backend admin.changeLog uç noktası bir token
+  // istediği için (bkz. backend/routes/admin.js requireAdminAuth), bu veriyi sadece gerçekten
+  // admin girişi başarılı olduktan SONRA çekiyoruz — bkz. submitAdminLogin.
+  const fetchAdminChangeLog = async () => {
+    try {
+      const changeLogRes = await api.admin.changeLog();
+      // admin_change_log backend'de genel bir "action/entityType/entityId/before/after/reverted"
+      // audit şemasıyla saklanıyor (bkz. logAdminChange, backend/routes/admin.js); burada admin
+      // panelin "Geçmiş" ekranının beklediği zengin şekle (targetType/targetId/field/oldValue/
+      // newValue/extra/reverted) geri eşliyoruz ki sayfa yenilenince geçmiş kaybolmasın.
+      const mappedChangeLog = (changeLogRes || []).map((r: any) => {
+        const rawId = r.entityId;
+        const targetId = rawId !== undefined && rawId !== null && rawId !== "" && !Number.isNaN(Number(rawId)) ? Number(rawId) : rawId;
+        const createdAt = r.createdAt ? new Date(`${r.createdAt.replace(" ", "T")}Z`) : null;
+        return {
+          id: r.id,
+          date: createdAt && !Number.isNaN(createdAt.getTime())
+            ? createdAt.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+            : "",
+          reverted: !!r.reverted,
+          targetType: r.entityType,
+          targetId,
+          field: r.before?.field ?? r.after?.field,
+          oldValue: r.before?.value,
+          newValue: r.after?.value,
+          extra: r.before?.extra ?? r.after?.extra,
+        };
+      });
+      setAdminChangeLog(mappedChangeLog);
+      // Yeni yerel (iyimser) kayıtların, sunucudan gelen gerçek id'lerle çakışmaması için sayaç,
+      // hâlihazırda yüklenen en büyük id'nin üstüne konumlanıyor.
+      if (mappedChangeLog.length) adminChangeLogId = Math.max(adminChangeLogId, ...mappedChangeLog.map((e) => (typeof e.id === "number" ? e.id : 0))) + 1;
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ Değişiklik geçmişi yüklenemedi: ${err?.message || "Sunucuya bağlanılamadı."}` });
+    }
+  };
   const submitAdminLogin = async () => {
     if (adminLoginLoading) return; // duplicate-submit koruması
     const email = adminForm.email.trim().toLocaleLowerCase("tr-TR");
@@ -1218,13 +1247,14 @@ function useAppLogic() {
     try {
       await api.admin.login(email, adminForm.password);
       setAdminAuthed(true); setAdminError(""); setRole("admin"); setScreen("adminDashboard"); setAdminTab("dashboard");
+      fetchAdminChangeLog();
     } catch (err) {
       setAdminError(err?.status === 401 ? "E-posta veya şifre hatalı." : (err?.message || "Giriş yapılamadı, lütfen tekrar deneyin."));
     } finally {
       setAdminLoginLoading(false);
     }
   };
-  const adminLogout = () => { setAdminAuthed(false); setAdminForm({ email: "", password: "" }); setSelectedAdminUser(null); setAdminEditForm(null); setSelectedTicketId(null); setRole(null); setScreen("home"); };
+  const adminLogout = () => { api.admin.logout(); setAdminAuthed(false); setAdminForm({ email: "", password: "" }); setSelectedAdminUser(null); setAdminEditForm(null); setSelectedTicketId(null); setRole(null); setScreen("home"); };
   // ---- Değişiklik geçmişi / Geri Al altyapısı ----
   // Panelden yapılan her tekil alan değişikliği burada loglanır (kim/ne/eski değer/yeni değer),
   // ve applyAdminFieldChange aynı yazma yolunu tersten çalıştırarak "Geri Al"ı mümkün kılar.
@@ -1410,12 +1440,17 @@ function useAppLogic() {
     const totalCities = new Set(mechanicsList.map(m => (m.address || "").split("/").pop().trim()).filter(Boolean)).size;
     return { totalOwners, totalMechanics, activeCarListings, activeJobListings, totalAppointments, completedThisMonth, openTickets, pendingVerification, avgRating, suspendedOwners, suspendedMechanics, slaBreached, totalUsers: totalOwners + totalMechanics, totalReviews, totalCities };
   }, [ownersDirectory, mechanicsList, listings, jobListings, appointments, supportTickets, mechanicAdminOverrides]);
+  // GÜVENLİK DÜZELTMESİ: `password` alanı burada eskiden API'den gelen (ya da "demo1234"
+  // varsayılanına düşen) gerçek şifre değerini taşıyordu. Backend artık şifreyi hiçbir yanıtta
+  // döndürmediği için (bkz. hydrate.js) bu alan zaten hiçbir zaman gerçek değeri yansıtmıyordu —
+  // kaldırıldı. Admin artık mevcut şifreyi görmek yerine sadece resetUserPassword ile yeni bir
+  // şifre YAZABİLİYOR (zaten önceden de tek gerçek kullanım buydu, bkz. AppShell.tsx "Güncelle").
   const adminAllUsers = useMemo(() => {
-    const owners = ownersDirectory.map(o => ({ type: "owner" as const, id: o.id, name: o.name, email: o.email, phone: o.phone, status: o.status, joinDate: o.joinDate, city: o.city, password: o.password || "demo1234", extra: `${o.vehicleCount} araç · ${o.apptCount} randevu · ${o.city}` }));
+    const owners = ownersDirectory.map(o => ({ type: "owner" as const, id: o.id, name: o.name, email: o.email, phone: o.phone, status: o.status, joinDate: o.joinDate, city: o.city, extra: `${o.vehicleCount} araç · ${o.apptCount} randevu · ${o.city}` }));
     const mechs = mechanicsList.map(m => {
       const ov = mechanicAdminOverrides[m.id] || {};
       const city = (m.address || "").split("/").pop().trim();
-      return { type: "mechanic" as const, id: m.id, name: m.name, email: ov.email || `${slugifyForEmail(m.name)}@fixperto.com`, phone: m.phone || "+90 5xx xxx xx xx", status: ov.status || "active", joinDate: ov.joinDate || "2026-01-01", password: ov.password || "demo1234", city, specialty: m.specialty, address: m.address, price: m.price, verified: m.verified, verificationDocs: m.verificationDocs || [], extra: `${m.specialty} · ${m.rating}★ (${m.reviews})${m.verified ? "" : " · Doğrulanmamış"}` };
+      return { type: "mechanic" as const, id: m.id, name: m.name, email: ov.email || `${slugifyForEmail(m.name)}@fixperto.com`, phone: m.phone || "+90 5xx xxx xx xx", status: ov.status || "active", joinDate: ov.joinDate || "2026-01-01", city, specialty: m.specialty, address: m.address, price: m.price, verified: m.verified, verificationDocs: m.verificationDocs || [], extra: `${m.specialty} · ${m.rating}★ (${m.reviews})${m.verified ? "" : " · Doğrulanmamış"}` };
     });
     return [...owners, ...mechs];
   }, [ownersDirectory, mechanicsList, mechanicAdminOverrides]);
@@ -1468,13 +1503,22 @@ function useAppLogic() {
     setToast({ type: "info", text: nextStatus === "suspended" ? "🚫 Kullanıcı askıya alındı." : "✅ Kullanıcı yeniden etkinleştirildi." });
   };
   // ---- Şifre yardımı: doğrudan yeni şifre belirleme veya sıfırlama bağlantısı gönderme (demo) ----
+  // GÜVENLİK DÜZELTMESİ: artık genel PATCH ile değil (backend bunu zaten reddediyor, bkz.
+  // makeCrudRouter.js passwordVerify) özel set-password uç noktasıyla yazılıyor. Eski şifre
+  // değeri (`selectedAdminUser.password`) backend'den bir daha asla dönmediği için change-log'a
+  // "oldValue" olarak artık bilinmeyen/gizli olduğunu belirten sabit bir değer yazıyoruz —
+  // önceden zaten sadece ekranda maskeleniyordu (bkz. formatAdminHistoryValue), şimdi kaynağında
+  // da gerçek değeri iddia etmiyor.
   const resetUserPassword = () => {
     if (!selectedAdminUser || !adminEditForm || !adminEditForm.newPassword.trim()) return;
     const pwd = adminEditForm.newPassword.trim();
     const pwdTargetType = selectedAdminUser.type === "owner" ? "owner" : "mechanicOverride";
-    logAdminChange({ targetType: pwdTargetType, targetId: selectedAdminUser.id, field: "password", oldValue: selectedAdminUser.password, newValue: pwd });
-    if (selectedAdminUser.type === "owner") { setOwnersDirectory(list => list.map(o => o.id === selectedAdminUser.id ? { ...o, password: pwd } : o)); persist(api.owners.update(selectedAdminUser.id, { password: pwd }), "Şifre kaydedilemedi"); }
-    else setMechanicAdminOverrides(ov => ({ ...ov, [selectedAdminUser.id]: { ...ov[selectedAdminUser.id], password: pwd } }));
+    logAdminChange({ targetType: pwdTargetType, targetId: selectedAdminUser.id, field: "password", oldValue: "••••••", newValue: pwd });
+    if (selectedAdminUser.type === "owner") persist(api.owners.setPassword(selectedAdminUser.id, pwd), "Şifre kaydedilemedi");
+    // GERÇEK HATA DÜZELTMESİ: tamirci şifre sıfırlama önceden hiç API çağrısı yapmıyordu (sadece
+    // local mechanicAdminOverrides state'ine yazıyordu) — yani sayfa yenilenince "sıfırlanan" şifre
+    // hiç kaydedilmemiş olurdu. Artık owner koluyla tutarlı şekilde gerçekten backend'e yazılıyor.
+    else persist(api.mechanics.setPassword(selectedAdminUser.id, pwd), "Şifre kaydedilemedi");
     setAdminEditForm(f => ({ ...f, newPassword: "" }));
     setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." });
   };
@@ -1896,15 +1940,17 @@ function useAppLogic() {
       // kaydetmiyordu — kullanıcı bir şifre seçtiğini sanıyordu, oysa hesabına hiç yazılmıyordu.
       // Bu da profil ayarlarındaki "şifre değiştir" formunun mevcut şifreyi asla doğru
       // karşılaştıramamasının kök nedeniydi. Sadece ilk kayıtta (girişte değil) kaydediyoruz.
-      const ownerPatch: { name: string; email: string; phone: string; password?: string } = { name: form.name || "Araç Sahibi", email: form.email, phone: form.phone };
-      if (isFirstSignup && form.password) ownerPatch.password = form.password;
+      // GÜVENLİK DÜZELTMESİ: şifre artık genel PATCH'e (ownerPatch) DEĞİL, özel set-password uç
+      // noktasına gönderiliyor — backend genel PATCH'ten password alanını zaten sessizce
+      // düşürüyor (bkz. makeCrudRouter.js), o yüzden burada da ayrı çağrı gerekiyor.
+      const ownerPatch: { name: string; email: string; phone: string } = { name: form.name || "Araç Sahibi", email: form.email, phone: form.phone };
       updateMyOwnerFields(ownerPatch);
       persist(api.owners.update(MY_OWNER_ID, ownerPatch), "Kayıt bilgileri kaydedilemedi");
+      if (isFirstSignup && form.password) persist(api.owners.setPassword(MY_OWNER_ID, form.password), "Şifre kaydedilemedi");
       setScreen("owner"); setOwnerTab("search");
     } else {
       if (isFirstSignup && form.password) {
-        setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, password: form.password } : m));
-        persist(api.mechanics.update(MY_MECHANIC_ID, { password: form.password }), "Kayıt bilgileri kaydedilemedi");
+        persist(api.mechanics.setPassword(MY_MECHANIC_ID, form.password), "Şifre kaydedilemedi");
       }
       setScreen("mechanicDashboard");
     }
@@ -2099,28 +2145,31 @@ function useAppLogic() {
   // GERÇEK HATA DÜZELTMESİ: bu form önceden "mevcut şifre" alanının sadece DOLU olup olmadığını
   // kontrol ediyordu, gerçek hesap şifresiyle hiç karşılaştırmıyordu — ve hiçbir API çağrısı
   // yapmadan direkt "şifreniz güncellendi" diyordu, yani yeni şifre hiçbir zaman kaydedilmiyordu.
-  // Kullanıcıya bir güvenlik kontrolü yapıldığı ve şifrenin değiştiği izlenimi veriyordu, oysa
-  // ikisi de gerçek değildi. Bu uygulama (admin panelindeki mevcut şifre sıfırlama akışıyla
-  // tutarlı olarak) şifreleri düz metin tutuyor — burada da aynı modele göre gerçek karşılaştırma
-  // ve gerçek kayıt yapılıyor.
-  const submitPasswordChange = () => {
+  // GÜVENLİK DÜZELTMESİ: şifre artık backend'den asla düz metin dönmediği için (bkz. hydrate.js)
+  // "mevcut şifre doğru mu" kontrolü istemcide saklı bir değerle karşılaştırılarak değil, sunucuya
+  // sorularak yapılıyor (bkz. backend/routes/makeCrudRouter.js /:id/verify-password). Yeni şifre de
+  // genel PATCH yerine ayrı /:id/set-password uç noktasından yazılıyor.
+  const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
+  const submitPasswordChange = async () => {
+    if (passwordChangeLoading) return; // duplicate-submit koruması
     if (!passwordForm.current || !passwordForm.next) { setToast({ type: "info", text: "⚠️ Lütfen tüm alanları doldurun." }); return; }
-    // Seed verisindeki veya hiç şifre belirlememiş demo hesaplar için varsayılan "demo1234" —
-    // admin panelindeki aynı varsayılanla tutarlı (bkz. adminAllUsers, satır ~1322).
-    const currentRecord = role === "mechanic" ? myProfile : ownerProfile;
-    if (passwordForm.current !== (currentRecord?.password || "demo1234")) { setToast({ type: "info", text: "⚠️ Mevcut şifreniz yanlış." }); return; }
     if (passwordForm.next.length < 6) { setToast({ type: "info", text: "⚠️ Yeni şifre en az 6 karakter olmalı." }); return; }
     if (passwordForm.next !== passwordForm.confirm) { setToast({ type: "info", text: "⚠️ Yeni şifreler eşleşmiyor." }); return; }
-    if (role === "mechanic") {
-      setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, password: passwordForm.next } : m));
-      persist(api.mechanics.update(MY_MECHANIC_ID, { password: passwordForm.next }), "Şifre kaydedilemedi");
-    } else {
-      updateMyOwnerField("password", passwordForm.next);
-      persist(api.owners.update(MY_OWNER_ID, { password: passwordForm.next }), "Şifre kaydedilemedi");
+    const myId = role === "mechanic" ? MY_MECHANIC_ID : MY_OWNER_ID;
+    const passwordApi = role === "mechanic" ? api.mechanics : api.owners;
+    setPasswordChangeLoading(true);
+    try {
+      const { valid } = await passwordApi.verifyPassword(myId, passwordForm.current);
+      if (!valid) { setToast({ type: "info", text: "⚠️ Mevcut şifreniz yanlış." }); return; }
+      await passwordApi.setPassword(myId, passwordForm.next);
+      setShowPasswordModal(false);
+      setPasswordForm({ current: "", next: "", confirm: "" });
+      setToast({ type: "info", text: "🔒 Şifreniz güncellendi." });
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ Şifre değiştirilemedi: ${err?.message || "Sunucuya bağlanılamadı."}` });
+    } finally {
+      setPasswordChangeLoading(false);
     }
-    setShowPasswordModal(false);
-    setPasswordForm({ current: "", next: "", confirm: "" });
-    setToast({ type: "info", text: "🔒 Şifreniz güncellendi." });
   };
   const confirmDeleteAccount = () => {
     setShowDeleteAccountModal(false);

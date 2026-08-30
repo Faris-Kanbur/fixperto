@@ -90,8 +90,14 @@ async function request(path: string, options: RequestOptions = {}) {
     let res: Response;
     try {
       res = await fetch(url, {
-        headers: { "Content-Type": "application/json" },
         ...fetchOptions,
+        // GERÇEK HATA DÜZELTMESİ: önceden `{ headers: {"Content-Type": ...}, ...fetchOptions }`
+        // şeklindeydi — fetchOptions içinde bir `headers` alanı varsa (ör. admin token'ı için
+        // Authorization eklerken) bu, Content-Type dahil TÜM varsayılan header'ların üzerine
+        // yazıp siliyordu (obje spread'i iç içe birleştirmez). Sonuç: body'li bir istekte
+        // Content-Type kaybolursa backend'deki express.json() body'yi hiç ayrıştırmaz, req.body
+        // sessizce undefined kalırdı. Şimdi header'lar gerçekten birleştiriliyor.
+        headers: { "Content-Type": "application/json", ...(fetchOptions.headers || {}) },
       });
     } catch (networkErr: any) {
       // fetch, sunucuya hiç ulaşamadığında (backend kapalı, CORS, offline vb.) burada patlar —
@@ -140,9 +146,37 @@ function crud<T extends { id: number | string }>(resource: string) {
   };
 }
 
+// GÜVENLİK DÜZELTMESİ: şifre artık backend'den asla düz metin olarak dönmüyor (bkz.
+// backend/db/hydrate.js) — bu yüzden "mevcut şifre doğru mu" kontrolü artık istemci tarafında
+// kayıtlı bir değerle karşılaştırılarak değil, sunucudan cevap alınarak yapılıyor. Sadece
+// passwordVerify açık olan kaynaklarda (owners/mechanics, bkz. backend/server.js) gerçek bir uç
+// nokta var.
+function withPasswordEndpoints<T extends { id: number | string }>(resource: string) {
+  return {
+    ...crud<T>(resource),
+    verifyPassword: (id: number | string, password: string, opts?: RequestOptions): Promise<{ valid: boolean }> =>
+      request(`/api/${resource}/${id}/verify-password`, { method: "POST", body: JSON.stringify({ password }), ...opts }),
+    setPassword: (id: number | string, password: string, opts?: RequestOptions): Promise<{ ok: true }> =>
+      request(`/api/${resource}/${id}/set-password`, { method: "POST", body: JSON.stringify({ password }), ...opts }),
+  };
+}
+
+// GÜVENLİK DÜZELTMESİ: admin uç noktaları artık bir token gerektiriyor (bkz. backend/routes/admin.js
+// requireAdminAuth). Token, sayfa yenilenince kaybolması KASITLI olacak şekilde sadece bellekte
+// (module-level değişken) tutuluyor — localStorage/sessionStorage'a YAZILMIYOR, çünkü bu proje
+// zaten "kalıcı oturum yerine XSS'e karşı en güvenli seçenek" tercihini benimsemiş durumda (bkz.
+// REFACTOR_REPORT.md bölüm 9 madde 3). Bu, mevcut davranışla da tutarlı: sayfa yenilenince
+// `adminAuthed` zaten sıfırlanıyordu, token'ın da aynı şekilde sıfırlanması yeni bir kısıtlama
+// getirmiyor.
+let adminToken: string | null = null;
+
+function adminAuthOpts(): RequestOptions {
+  return adminToken ? { headers: { Authorization: `Bearer ${adminToken}` } } : {};
+}
+
 export const api = {
-  mechanics: crud<Mechanic>("mechanics"),
-  owners: crud<Owner>("owners"),
+  mechanics: withPasswordEndpoints<Mechanic>("mechanics"),
+  owners: withPasswordEndpoints<Owner>("owners"),
   vehicles: crud<Vehicle>("vehicles"),
   appointments: crud<Appointment>("appointments"),
   listings: crud<Listing>("listings"),
@@ -165,11 +199,25 @@ export const api = {
       request(`/api/quote-offers/${id}/decline`, { method: "POST", ...opts }),
   },
   admin: {
-    login: (email: string, password: string): Promise<{ ok: true }> => request("/api/admin/login", { method: "POST", body: JSON.stringify({ email, password }) }),
-    stats: (): Promise<AdminStats> => request("/api/admin/stats"),
-    changeLog: (): Promise<AdminChangeLogEntry[]> => request("/api/admin/change-log"),
-    logChange: (entry: Partial<AdminChangeLogEntry>): Promise<{ id: number }> => request("/api/admin/change-log", { method: "POST", body: JSON.stringify(entry) }),
-    revertChange: (id: number | string): Promise<AdminChangeLogEntry> => request(`/api/admin/change-log/${id}`, { method: "PATCH" }),
+    // GÜVENLİK DÜZELTMESİ: backend artık başarılı girişte bir token dönüyor (bkz.
+    // backend/routes/admin.js) — bu token bellekte saklanıp aşağıdaki diğer admin çağrılarına
+    // otomatik olarak eklenir (bkz. adminAuthOpts). Token'ı burada, request() çağrısından ÖNCE
+    // değil SONRA (yanıttan okuyarak) saklıyoruz.
+    login: async (email: string, password: string): Promise<{ ok: true }> => {
+      const result = await request("/api/admin/login", { method: "POST", body: JSON.stringify({ email, password }) });
+      adminToken = result?.token || null;
+      return result;
+    },
+    logout: async (): Promise<void> => {
+      if (adminToken) {
+        try { await request("/api/admin/logout", { method: "POST", ...adminAuthOpts() }); } catch { /* çıkışta hata olsa bile devam et */ }
+      }
+      adminToken = null;
+    },
+    stats: (): Promise<AdminStats> => request("/api/admin/stats", { ...adminAuthOpts() }),
+    changeLog: (): Promise<AdminChangeLogEntry[]> => request("/api/admin/change-log", { ...adminAuthOpts() }),
+    logChange: (entry: Partial<AdminChangeLogEntry>): Promise<{ id: number }> => request("/api/admin/change-log", { method: "POST", body: JSON.stringify(entry), ...adminAuthOpts() }),
+    revertChange: (id: number | string): Promise<AdminChangeLogEntry> => request(`/api/admin/change-log/${id}`, { method: "PATCH", ...adminAuthOpts() }),
   },
   // Paylaşım analitiği: her ShareButton eylemi ayrı bir refCode ile kaydedilir; linke tıklama ve
   // sonraki dönüşüm (sohbet/randevu/teklif/başvuru) aynı refCode üzerinden atfedilir.
