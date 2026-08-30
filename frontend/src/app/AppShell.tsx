@@ -257,8 +257,8 @@ export function AppShell() {
           {showQuotePremiumUpsell && (
             <div style={{ zIndex: 9500 }} className="fixed top-5 left-1/2 -translate-x-1/2 w-[92%] max-w-sm pointer-events-none">
               <div className="bg-amber-50 border border-amber-200 rounded-2xl shadow-lg p-3 text-center">
-                <p className="text-xs font-semibold text-amber-700">⭐ {FREE_QUOTE_MECH_LIMIT}'ten fazla tamirci seçmek Premium özelliktir</p>
-                <p className="text-[11px] text-amber-600 mt-0.5">Premium ile aynı anda {PREMIUM_QUOTE_MECH_LIMIT} tamirciye kadar teklif isteyebilirsiniz.</p>
+                <p className="text-xs font-semibold text-amber-700">{t("premiumUpsellTitle", { n: String(FREE_QUOTE_MECH_LIMIT) })}</p>
+                <p className="text-[11px] text-amber-600 mt-0.5">{t("premiumUpsellDesc", { max: String(PREMIUM_QUOTE_MECH_LIMIT) })}</p>
               </div>
             </div>
           )}
@@ -306,7 +306,7 @@ export function AppShell() {
                   <input value={quoteMechSearch} onChange={(e) => setQuoteMechSearch(e.target.value)} placeholder={t("searchMechOrSpecialtyPlaceholder")} className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-xs" />
                 </div>
                 <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                  {[{ key: "distance", label: "📍 Mesafe" }, { key: "price", label: "💰 Fiyat" }, { key: "rating", label: "⭐ Puan" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
+                  {[{ key: "distance", labelKey: "sortDistance" }, { key: "price", labelKey: "sortPrice" }, { key: "rating", labelKey: "sortRating" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{t(opt.labelKey)}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
                   <button onClick={() => { setOwnerMode("mechanics"); setShowFilterModal(true); }} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={11} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-3.5 h-3.5 bg-rose-600 text-white rounded-full text-[8px] flex items-center justify-center">{activeFilterCount}</span>}</button>
                 </div>
                 <div className="max-h-72 overflow-y-auto rounded-xl ring-1 ring-gray-100 divide-y divide-gray-50">

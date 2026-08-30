@@ -266,6 +266,30 @@ export const T = {
   quoteAcceptedNotice: { tr: "Müşteri teklifinizi kabul etti, randevu oluşturulacak.", en: "Customer accepted your quote, an appointment will be created.", de: "Der Kunde hat Ihr Angebot angenommen, ein Termin wird erstellt." },
   quoteLostNotice: { tr: "Müşteri başka bir tamirciyi tercih etti.", en: "Customer chose another mechanic.", de: "Der Kunde hat sich für eine andere Werkstatt entschieden." },
   quoteDeclinedNotice: { tr: "Bu teklif isteğini reddettiniz.", en: "You declined this quote request.", de: "Sie haben diese Angebotsanfrage abgelehnt." },
+  // GERÇEK HATA DÜZELTMESİ: OwnerAppointmentsView.tsx (araç sahibinin "Aktif/Teklifler/Geçmiş"
+  // sekmesi — çoklu teklif akışının araç sahibi tarafı) baştan sona hiç t() kullanmıyor, tamamen
+  // sabit Türkçe metinlerle yazılmıştı — dil İngilizce/Almanca seçilse bile bu ekran hep Türkçe
+  // kalıyordu. Aşağıdaki anahtarlar bunun için eklendi.
+  noActiveApptsNotice: { tr: "Aktif randevunuz yok", en: "You have no active appointments", de: "Sie haben keine aktiven Termine" },
+  newQuoteRequestBtn: { tr: "Yeni Teklif İsteği", en: "New Quote Request", de: "Neue Angebotsanfrage" },
+  noMyQuoteRequestsNotice: { tr: "Henüz teklif isteğiniz yok", en: "You haven't requested any quotes yet", de: "Sie haben noch keine Angebotsanfrage gestellt" },
+  offersReceivedSuffix: { tr: " · {n} teklif geldi", en: " · {n} quote(s) received", de: " · {n} Angebot(e) erhalten" },
+  cancelledSuffix: { tr: " · iptal edildi", en: " · cancelled", de: " · storniert" },
+  closedSuffix: { tr: " · kapandı", en: " · closed", de: " · geschlossen" },
+  quoteReqStatusOpen: { tr: "Açık", en: "Open", de: "Offen" },
+  quoteReqStatusCancelled: { tr: "İptal Edildi", en: "Cancelled", de: "Storniert" },
+  quoteReqStatusClosed: { tr: "Kapandı", en: "Closed", de: "Geschlossen" },
+  cancelQuoteReqBtn: { tr: "İsteği iptal et", en: "Cancel request", de: "Anfrage stornieren" },
+  cancelQuoteReqConfirmTitle: { tr: "Teklif isteğini iptal et", en: "Cancel quote request", de: "Angebotsanfrage stornieren" },
+  cancelQuoteReqConfirmBody: { tr: "Bu isteği iptal etmek istediğinize emin misiniz? Gelen/bekleyen tüm teklifler kapanacak.", en: "Are you sure you want to cancel this request? All received/pending quotes will be closed.", de: "Möchten Sie diese Anfrage wirklich stornieren? Alle erhaltenen/ausstehenden Angebote werden geschlossen." },
+  cancelQuoteReqConfirmLabel: { tr: "Evet, iptal et", en: "Yes, cancel it", de: "Ja, stornieren" },
+  quoteOfferAcceptedShort: { tr: "Kabul edildi", en: "Accepted", de: "Angenommen" },
+  quoteOfferNotSelectedShort: { tr: "Seçilmedi", en: "Not selected", de: "Nicht ausgewählt" },
+  quoteOfferPassedShort: { tr: "Pas geçti", en: "Passed", de: "Abgelehnt" },
+  noCompletedApptsNotice: { tr: "Henüz tamamlanan randevu yok", en: "No completed appointments yet", de: "Noch keine abgeschlossenen Termine" },
+  // Çoklu teklif isteği modalındaki Premium yükseltme banner'ı (bkz. AppShell.tsx showQuotePremiumUpsell).
+  premiumUpsellTitle: { tr: "⭐ {n}'ten fazla tamirci seçmek Premium özelliktir", en: "⭐ Selecting more than {n} mechanics is a Premium feature", de: "⭐ Die Auswahl von mehr als {n} Werkstätten ist eine Premium-Funktion" },
+  premiumUpsellDesc: { tr: "Premium ile aynı anda {max} tamirciye kadar teklif isteyebilirsiniz.", en: "With Premium you can request quotes from up to {max} mechanics at once.", de: "Mit Premium können Sie bis zu {max} Werkstätten gleichzeitig anfragen." },
   noHistoryYetNotice: { tr: "Henüz geçmiş kayıt yok", en: "No history yet", de: "Noch kein Verlauf" },
   completedAndRecordsCount: { tr: "{done} tamamlanan · {total} kayıt", en: "{done} completed · {total} records", de: "{done} abgeschlossen · {total} Einträge" },
   downloadReceiptBtn: { tr: "Fiş İndir", en: "Download Receipt", de: "Beleg herunterladen" },

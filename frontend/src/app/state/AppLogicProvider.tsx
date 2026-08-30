@@ -976,6 +976,16 @@ function useAppLogic() {
   };
   const unlockQuotePremium = () => { setQuotePremiumUnlocked(true); setShowQuotePremiumUpsell(false); setToast({ type: "info", text: "⭐ Premium açıldı (demo) — artık 10 tamirciye kadar teklif isteyebilirsiniz." }); };
   const closeQuoteModal = () => { setShowQuoteModal(false); setShowAddVehicle(false); setShowQuotePremiumUpsell(false); setQuoteVehicleId(null); setQuoteIssue(""); setQuotePhotos([]); setQuoteSelectedMechIds([]); setQuoteMechSearch(""); };
+  // GERÇEK HATA DÜZELTMESİ (bkz. çoklu teklif akışı incelemesi): önceden "gönderildi" başarı toast'ı
+  // ve modalın kapanması, api.quoteRequests.create hiç await edilmeden HEMEN gösteriliyordu — istek
+  // sunucuda başarısız olsa bile kullanıcı önce sahte bir "başarılı" mesajı görüyordu (arkasından
+  // hata toast'ı onu ezip geçse de, o an için yanıltıcıydı). Ayrıca teklif taslakları
+  // Promise.all ile oluşturuluyordu: N tamirciden biri için istek başarısız olursa Promise.all
+  // TÜMÜNÜ reddeder ve o ana kadar sunucuda GERÇEKTEN oluşturulmuş teklifler local state'e hiç
+  // yansıtılmazdı — istek DB'de var ama teklifleri eksik/görünmez bir "hayalet" kayıt kalırdı.
+  // Şimdi: (1) başarı toast'ı yalnızca istek gerçekten oluşturulduktan sonra gösteriliyor, (2)
+  // teklif taslakları Promise.allSettled ile oluşturuluyor — kısmi başarısızlıkta başarılı olanlar
+  // yine de state'e ekleniyor ve kullanıcı ayrı bir uyarı görüyor.
   const submitQuoteRequest = async () => {
     if (!quoteVehicleId || !quoteIssue.trim() || quoteSelectedMechIds.length === 0) return;
     const vehicle = vehicles.find(v => v.id === quoteVehicleId);
@@ -986,7 +996,6 @@ function useAppLogic() {
     const draft = { ownerId: MY_OWNER_ID, vehicleId: quoteVehicleId, customer: customerName, vehicle: vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.plate})` : "Araç seçilmedi", issue: issueText, photos, mechanicIds: selectedMechIds, status: "open" };
     setShowQuoteModal(false);
     setQuoteVehicleId(null); setQuoteIssue(""); setQuotePhotos([]); setQuoteSelectedMechIds([]); setQuoteMechSearch("");
-    setToast({ type: "info", text: `📋 ${selectedMechIds.length} tamirciye teklif isteği gönderildi.` });
     try {
       const createdReq = await api.quoteRequests.create(draft);
       setQuoteRequests(qs => [createdReq, ...qs]);
@@ -999,8 +1008,15 @@ function useAppLogic() {
         const variance = Math.round((basePrice * (0.85 + Math.random() * 0.3)) / 10) * 10;
         return { requestId: createdReq.id, mechanicId: mid, mechanicName: mech?.name || "Tamirci", mechanicImg: mech?.img || "🔧", status: isMe ? "pending" : "submitted", price: isMe ? null : variance, etaDays: isMe ? null : (1 + Math.floor(Math.random() * 3)), note: "" };
       });
-      const createdOffers = await Promise.all(offerDrafts.map(o => api.quoteOffers.create(o)));
-      setQuoteOffers(os => [...createdOffers, ...os]);
+      const offerResults = await Promise.allSettled(offerDrafts.map(o => api.quoteOffers.create(o)));
+      const createdOffers = offerResults.filter(r => r.status === "fulfilled").map(r => r.value);
+      const failedCount = offerResults.length - createdOffers.length;
+      if (createdOffers.length) setQuoteOffers(os => [...createdOffers, ...os]);
+      if (failedCount > 0) {
+        setToast({ type: "info", text: `⚠️ İsteğiniz gönderildi ama ${failedCount} tamirciye teklif isteği kaydedilemedi.` });
+      } else {
+        setToast({ type: "info", text: `📋 ${selectedMechIds.length} tamirciye teklif isteği gönderildi.` });
+      }
       if (selectedMechIds.includes(MY_MECHANIC_ID)) {
         // Not: bildirim metnine arıza açıklamasını (issueText) her zaman ham haliyle gömmüyoruz —
         // bildirim burada sabit bir dizgi olduğu için TranslatedText gibi canlı çeviri
