@@ -3,19 +3,30 @@ import { Share2, MessageCircle, Facebook, X as XIcon, Mail, Link2, Check } from 
 import { useApp } from "../../app/state/AppLogicProvider";
 
 // Instagram/Airbnb tarzı paylaşım butonu: tıklanınca WhatsApp/Facebook/X/E-posta seçenekleri ve
-// "Linki Kopyala" içeren küçük bir menü açılır. Cihaz destekliyorsa (çoğunlukla mobil) önce
-// native paylaşım sayfasını (navigator.share) dener — bu, işletim sisteminin kendi paylaşım
-// sayfasını (Instagram, Mesajlar, AirDrop vb. dahil) açar; desteklenmiyorsa bu özel menüye düşer.
+// "Linki Kopyala" içeren küçük bir menü açılır.
+//
+// GERÇEK HATA DÜZELTMESİ: önceden, cihaz destekliyorsa (macOS Safari/Chrome dahil masaüstünde de
+// destekleniyor) önce native paylaşım sayfası (navigator.share) deneniyor, o başarısız/iptal
+// olursa bu özel menüye "düşülüyordu". Pratikte navigator.share() promise'i native sayfa hâlâ
+// ekranda açıkken de (kullanıcı henüz bir seçim yapmadan) çeşitli tarayıcı/ortam kombinasyonlarında
+// erken reddedilebiliyor — bu durumda kod native sayfa hâlâ açıkken ANINDA özel menüyü de açıyor,
+// ekranda iki paylaşım paneli üst üste görünüyordu (bkz. Faris'in ekran görüntüleri: macOS'un
+// AirDrop/Mail/Messages paneliyle bizim WhatsApp/Facebook/X paneli aynı anda açık). Ayrıca native
+// paylaşımda hangi platforma paylaşıldığı bilgisi kaybolduğu için share_events/refCode analitiği
+// (bkz. aşağıdaki not) hep "native" olarak kayıtlı kalıyor, kanal bazlı atıf yapılamıyordu. Bu
+// yüzden native paylaşım denemesi tamamen kaldırıldı — buton her zaman, her cihazda aynı, kendi
+// tasarımımızdaki bu menüyü açıyor. Böylece hem çift panel sorunu kökünden çözülüyor hem de her
+// paylaşımın hangi kanaldan yapıldığı güvenilir şekilde kaydediliyor.
 // `path`, geçerli sayfanın query string'idir (örn. "?mechanic=12") — paylaşılan link tıklanınca
 // ilgili kayıt otomatik açılsın diye (bkz. AppLogicProvider'daki deep-link okuma efekti).
 //
 // Her buton örneği, mount olduğunda kendine özgü bir `refCode` üretir ve bunu paylaşılan linke
 // `&ref=` olarak ekler. Böylece linke kim tıkladı (click), sonra sohbet/randevu/teklif/başvuru gibi
-// bir eyleme dönüştü mü (conversion) — hangi platformdan (WhatsApp/Facebook/X/e-posta/kopyalama/
-// native) paylaşıldığıyla birlikte backend'de aynı satıra atfedilebiliyor (bkz. share_events
-// tablosu, AppLogicProvider'daki recordShare/recordConversion). `onShare(channel, refCode)` sadece
-// gerçek bir paylaşım eylemi olduğunda (linke tıklama/kopyalama/native paylaşımın başarıyla
-// açılması) çağrılır — menüyü sadece açmak bir "paylaşım" sayılmaz.
+// bir eyleme dönüştü mü (conversion) — hangi platformdan (WhatsApp/Facebook/X/e-posta/kopyalama)
+// paylaşıldığıyla birlikte backend'de aynı satıra atfedilebiliyor (bkz. share_events tablosu,
+// AppLogicProvider'daki recordShare/recordConversion). `onShare(channel, refCode)` sadece gerçek
+// bir paylaşım eylemi olduğunda (linke tıklama/kopyalama) çağrılır — menüyü sadece açmak bir
+// "paylaşım" sayılmaz.
 export function ShareButton({ title, text, path, className = "", iconSize = 16, onShare }) {
   const { t } = useApp();
   const [open, setOpen] = useState(false);
@@ -55,24 +66,8 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
     onShare?.("copy", refCode);
   };
 
-  const openShare = async (e) => {
+  const openShare = (e) => {
     e.stopPropagation();
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({ title, text, url: shareUrl });
-        onShare?.("native", refCode);
-      } catch (err) {
-        // GERÇEK HATA DÜZELTMESİ: kullanıcı native paylaşım sayfasını kendi isteğiyle kapatırsa
-        // (ör. "İptal"e basarsa) tarayıcı navigator.share() promise'ini AbortError ile reddeder.
-        // Önceden bu durumda da kod özel menüye "düşüyordu" — yani kullanıcı native paylaşım
-        // sayfasını kapatır kapatmaz, hiç istemediği ikinci bir paylaşım menüsü aniden açılıyordu
-        // ("Paylaş düzgün çalışmıyor" hissi buradan geliyordu). Artık sadece native paylaşım
-        // GERÇEKTEN başarısız olduğunda (kullanıcının kendi iptali dışındaki hatalarda) özel
-        // menüye düşülüyor.
-        if (err?.name !== "AbortError") setOpen((o) => !o);
-      }
-      return;
-    }
     setOpen((o) => !o);
   };
 
