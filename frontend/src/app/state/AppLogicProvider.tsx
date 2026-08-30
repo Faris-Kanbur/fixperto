@@ -2427,16 +2427,69 @@ function useAppLogic() {
     openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", negotiable: false, inspectionReportUrl: "", featured: false, _vehicleId: v.id, _editingId: null });
   };
   const pickOtherCarToSell = () => { setShowSellVehiclePicker(false); openSellForm(null); };
-  const sellPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; setSellForm(f => ({ ...f, photo: URL.createObjectURL(file) })); };
+  // GERÇEK HATA DÜZELTMESİ (ilan fotoğrafları): önceden hem kapak hem galeri fotoğrafları
+  // URL.createObjectURL(file) ile geçici bir bellek referansı olarak tutuluyordu — sayfa
+  // yenilendiğinde veya ilanı başka biri görüntülediğinde kırık görünür (bkz. addQuotePhoto'daki
+  // aynı düzeltme). Ayrıca telefon kameralarından gelen ham fotoğraflar 3-10MB olabiliyor; bunları
+  // olduğu gibi data URI'ye çevirip saklamak hem sayfayı yavaşlatır hem de veritabanını gereksiz
+  // şişirir. Bu yüzden dosya önce canvas üzerinden en uzun kenarı LISTING_PHOTO_MAX_DIM'e
+  // küçültülüp JPEG kalitesi LISTING_PHOTO_QUALITY'e düşürülerek makul boyutlu (genelde birkaç
+  // yüz KB) kalıcı bir data URI'ye dönüştürülüyor.
+  const LISTING_PHOTO_MAX_DIM = 1600;
+  const LISTING_PHOTO_QUALITY = 0.78;
+  const readImageAsCompressedDataUrl = (file, onDone) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, LISTING_PHOTO_MAX_DIM / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { onDone(reader.result as string); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        onDone(canvas.toDataURL("image/jpeg", LISTING_PHOTO_QUALITY));
+      };
+      img.onerror = () => onDone(reader.result as string);
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  const sellPhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    readImageAsCompressedDataUrl(file, (dataUrl) => setSellForm(f => ({ ...f, photo: dataUrl })));
+    e.target.value = "";
+  };
   // Kapak fotoğrafının yanına eklenen ek galeri fotoğrafları (bkz. ilan detay modalındaki
   // galeri/thumbnail şeridi) — birden fazla dosya birden seçilebilir, hepsi sellForm.photos
-  // dizisine eklenir.
+  // dizisine eklenir. İlan başına galeri fotoğrafı sayısı MAX_LISTING_GALLERY_PHOTOS ile
+  // sınırlanıyor (büyük pazar yerlerindeki tipik ilan başına fotoğraf sayısıyla tutarlı) — hem
+  // yükleme/gösterim süresini hem de ilan başına kaplanan alanı makul tutmak için.
+  const MAX_LISTING_GALLERY_PHOTOS = 15;
   const sellPhotosUpload = (e) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
-    const urls = [];
-    for (let i = 0; i < fileList.length; i++) urls.push(URL.createObjectURL(fileList[i]));
-    setSellForm((f) => ({ ...f, photos: [...(f.photos || []), ...urls] }));
+    const currentCount = (sellForm.photos || []).length;
+    const remaining = MAX_LISTING_GALLERY_PHOTOS - currentCount;
+    if (remaining <= 0) {
+      setToast({ type: "info", text: `⚠️ En fazla ${MAX_LISTING_GALLERY_PHOTOS} ek fotoğraf ekleyebilirsiniz.` });
+      e.target.value = "";
+      return;
+    }
+    const files = Array.from(fileList).slice(0, remaining);
+    if (fileList.length > files.length) {
+      setToast({ type: "info", text: `⚠️ En fazla ${MAX_LISTING_GALLERY_PHOTOS} ek fotoğraf yüklenebiliyor, ilk ${files.length} fotoğraf eklendi.` });
+    }
+    files.forEach((file) => {
+      readImageAsCompressedDataUrl(file, (dataUrl) => {
+        setSellForm((f) => ((f.photos || []).length >= MAX_LISTING_GALLERY_PHOTOS ? f : { ...f, photos: [...(f.photos || []), dataUrl] }));
+      });
+    });
+    e.target.value = "";
   };
   const removeSellPhoto = (idx) => setSellForm((f) => ({ ...f, photos: (f.photos || []).filter((_, i) => i !== idx) }));
   // Bir ilan favorilenmişse (favoriteIds), o ilanla ilgili herhangi bir güncelleme (fiyat, durum, vb.)
@@ -2907,7 +2960,7 @@ function useAppLogic() {
     toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateMyPriceField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
-    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
+    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,

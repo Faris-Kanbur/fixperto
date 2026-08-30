@@ -112,7 +112,7 @@ export function AppShell() {
     toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateMyPriceField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
-    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
+    startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
@@ -1589,15 +1589,23 @@ export function AppShell() {
                 const activePhoto = galleryPhotos[activeIdx];
                 return (
                   <>
+                    {/* ÖNEMLİ: durum rozeti (Rezerve/İade Edildi vb.) artık fotoğraf <button>'ının İÇİNDE,
+                        sabit yükseklikli (h-56) kutuya göre konumlanıyor. Önceden bu rozet <button>'ın
+                        DIŞINDA, hem ana fotoğrafı hem de altındaki küçük resim şeridini saran ortak
+                        "relative" kapsayıcının en altına göre konumlanıyordu — kapsayıcının toplam
+                        yüksekliği (ana foto + şerit) arttıkça rozet şeridin üzerine biniyordu. Artık
+                        kendi kutusuna sabitlendiği için şeritte kaç küçük resim olursa olsun asla
+                        üzerine binmiyor. Fotoğraf sayacı ("1/2") ile çakışmaması için sayaç sol alta,
+                        durum rozeti sağ alta alındı. */}
                     <button onClick={() => setListingLightboxOpen(true)} aria-label={t("enlargePhotoAria")} className="w-full h-56 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-7xl overflow-hidden relative cursor-zoom-in">
                       {isImgUrl(activePhoto) ? <img src={imgThumb(activePhoto, 900)} onError={imgFallbackHandler} alt={`${selectedListing.brand ?? ""} ${selectedListing.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover" /> : activePhoto}
                       {galleryPhotos.length > 1 && (<>
                         <span onClick={(e) => { e.stopPropagation(); setSelectedListingPhotoIndex((activeIdx - 1 + galleryPhotos.length) % galleryPhotos.length); }} role="button" aria-label={t("prevPhotoAria")} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronLeft size={16} /></span>
                         <span onClick={(e) => { e.stopPropagation(); setSelectedListingPhotoIndex((activeIdx + 1) % galleryPhotos.length); }} role="button" aria-label={t("nextPhotoAria")} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/50 transition"><ChevronRight size={16} /></span>
-                        <span className="absolute bottom-3 right-4 text-[10px] font-bold text-white bg-black/40 backdrop-blur px-2 py-1 rounded-full">{activeIdx + 1}/{galleryPhotos.length}</span>
+                        <span className="absolute bottom-3 left-4 text-[10px] font-bold text-white bg-black/40 backdrop-blur px-2 py-1 rounded-full">{activeIdx + 1}/{galleryPhotos.length}</span>
                       </>)}
+                      <span className={`absolute bottom-3 right-4 text-white text-xs font-bold px-3 py-1.5 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span>
                     </button>
-                    <span className={`absolute bottom-3 left-4 text-white text-xs font-bold px-3 py-1.5 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span>
                     {galleryPhotos.length > 1 && (
                       <div className="flex gap-1.5 px-4 py-2 bg-gray-50 overflow-x-auto">
                         {galleryPhotos.map((p, i) => (
@@ -2641,12 +2649,14 @@ export function AppShell() {
               )}
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("featuresSection")}</p>
               <div className="flex flex-wrap gap-1.5">{LISTING_FEATURE_OPTIONS.map(f => { const active = (sellForm.features || []).includes(f); return (<button key={f} type="button" onClick={() => { const cur = sellForm.features || []; setSellForm({ ...sellForm, features: active ? cur.filter(x => x !== f) : [...cur, f] }); }} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium border transition ${active ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{f}</button>); })}</div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("extraPhotosSection")}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1 flex items-center justify-between"><span>{t("extraPhotosSection")}</span><span className="normal-case tracking-normal text-gray-300">{(sellForm.photos || []).length}/{MAX_LISTING_GALLERY_PHOTOS}</span></p>
               <div className="flex flex-wrap gap-2">
                 {(sellForm.photos || []).map((p, i) => (
                   <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200"><img src={imgThumb(p, 120)} loading="lazy" onError={imgFallbackHandler} alt={t("extraPhotoAlt", { n: String(i + 1) })} className="w-full h-full object-cover" /><button type="button" onClick={() => removeSellPhoto(i)} aria-label={t("removePhotoAria")} className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center text-white"><X size={9} /></button></div>
                 ))}
-                <label className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:text-rose-500 hover:border-rose-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
+                {(sellForm.photos || []).length < MAX_LISTING_GALLERY_PHOTOS && (
+                  <label className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:text-rose-500 hover:border-rose-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
+                )}
               </div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("marketingSection")}</p>
               <input value={sellForm.inspectionReportUrl || ""} onChange={(e) => setSellForm({ ...sellForm, inspectionReportUrl: e.target.value })} placeholder={t("inspectionReportPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
