@@ -390,6 +390,10 @@ export interface ProfileViewStats {
   conversions: number;
   conversionsThisYear: number;
   monthly: { month: string; views: number; conversions: number }[];
+  /** İstek `days` parametresiyle yapıldıysa (bkz. tamirci Analiz sekmesi zaman aralığı filtresi) o
+   * pencereye göre sayım; aksi halde null. */
+  viewsInRange?: number | null;
+  conversionsInRange?: number | null;
 }
 
 export interface ProfileViewAggregateStats {

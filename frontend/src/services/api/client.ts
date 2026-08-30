@@ -187,8 +187,10 @@ export const api = {
     create: (targetType: string, targetId: number | string): Promise<{ id: number }> =>
       request("/api/profile-views", { method: "POST", body: JSON.stringify({ targetType, targetId }) }),
     convert: (id: number | string): Promise<unknown> => request(`/api/profile-views/${id}/convert`, { method: "POST" }),
-    stats: (targetType?: string, targetId?: number | string): Promise<ProfileViewStats | ProfileViewAggregateStats> =>
-      request(targetType && targetId ? `/api/profile-views/stats?targetType=${targetType}&targetId=${targetId}` : "/api/profile-views/stats"),
+    // `days` verilirse (bkz. tamirci Analiz sekmesi zaman aralığı filtresi), yanıt ayrıca o
+    // pencereye göre `viewsInRange`/`conversionsInRange` alanlarını da içerir.
+    stats: (targetType?: string, targetId?: number | string, days?: number): Promise<ProfileViewStats | ProfileViewAggregateStats> =>
+      request(targetType && targetId ? `/api/profile-views/stats?targetType=${targetType}&targetId=${targetId}${days ? `&days=${days}` : ""}` : "/api/profile-views/stats"),
   },
   broadcasts: crud<Broadcast>("broadcasts"),
   // Sohbet mesajı çevirisi — bkz. backend/routes/translate.js. Sunucu tarafında SQLite önbelleği

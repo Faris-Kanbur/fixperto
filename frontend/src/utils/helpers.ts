@@ -1,4 +1,4 @@
-import { DAY_KEYS, DAY_LABELS, TODAY, LEGAL_TIRE_RULES, DICT_TR_EN, DICT_EN_TR, ADMIN_SLA_DAYS, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS, PRICE_LEVEL_BREAKS, TR_ASCII_MAP } from "../data/constants.js";
+import { DAY_KEYS, DAY_LABELS, DAY_LABELS_BY_LANG, CLOSED_LABEL_BY_LANG, TODAY, LEGAL_TIRE_RULES, DICT_TR_EN, DICT_EN_TR, ADMIN_SLA_DAYS, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS, PRICE_LEVEL_BREAKS, TR_ASCII_MAP } from "../data/constants.js";
 
 export function jobStatusMeta(status) {
   return status === "closed" ? { label: "Kapatıldı", color: "bg-gray-400" } : { label: "Açık", color: "bg-green-500" };
@@ -71,13 +71,19 @@ export function dayHoursRanges(day) {
   return ranges;
 }
 
-export function formatHoursText(hours) {
+// GERÇEK HATA DÜZELTMESİ: gün isimleri ("Pzt", "Kapalı" vb.) eskiden hep DAY_LABELS/"Kapalı" ile
+// sabit Türkçe üretiliyordu — dil seçeneği İngilizce/Almanca yapılsa bile Öffnungszeiten (çalışma
+// saatleri) bölümü hep Türkçe kalıyordu. `lang` parametresi eklendi; verilmezse (ör. eski
+// çağrılar) geriye dönük uyumluluk için "tr" varsayılıyor.
+export function formatHoursText(hours, lang) {
+  const labels = DAY_LABELS_BY_LANG[lang] || DAY_LABELS;
+  const closedText = CLOSED_LABEL_BY_LANG[lang] || CLOSED_LABEL_BY_LANG.tr;
   const groups = [];
   DAY_KEYS.forEach((k) => {
     const d = hours[k];
     const ranges = dayHoursRanges(d);
-    const text = ranges.length ? ranges.map(([s, e]) => `${s}-${e}`).join(", ") : "Kapalı";
-    groups.push(`${DAY_LABELS[k]}: ${text}`);
+    const text = ranges.length ? ranges.map(([s, e]) => `${s}-${e}`).join(", ") : closedText;
+    groups.push(`${labels[k]}: ${text}`);
   });
   return groups;
 }

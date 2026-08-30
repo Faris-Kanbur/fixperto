@@ -22,7 +22,7 @@ router.post("/:id/convert", (req, res) => {
 });
 
 router.get("/stats", (req, res) => {
-  const { targetType, targetId } = req.query;
+  const { targetType, targetId, days } = req.query;
   const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " ");
 
   if (targetType && targetId) {
@@ -34,7 +34,18 @@ router.get("/stats", (req, res) => {
       `SELECT strftime('%Y-%m', createdAt) AS month, COUNT(*) AS views, SUM(converted) AS conversions
        FROM profile_views WHERE targetType = ? AND targetId = ? AND createdAt >= ? GROUP BY month ORDER BY month`
     ).all(targetType, targetId, oneYearAgo);
-    return res.json({ totalViews, viewsThisYear, conversions, conversionsThisYear, monthly });
+    // Tamircinin "Analiz" sekmesindeki zaman aralığı filtresi (son 24 saat/1 hafta/1 ay/6 ay) için:
+    // istemci bir `days` parametresi gönderirse o pencereye göre de sayım döndürüyoruz — böylece
+    // filtre değiştiğinde "Bu Yıl" sabit penceresine değil, seçilen aralığa göre sayı görünüyor.
+    let viewsInRange = null;
+    let conversionsInRange = null;
+    const daysNum = parseInt(days, 10);
+    if (Number.isFinite(daysNum) && daysNum > 0) {
+      const cutoff = new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " ");
+      viewsInRange = db.prepare(`SELECT COUNT(*) n FROM profile_views WHERE targetType = ? AND targetId = ? AND createdAt >= ?`).get(targetType, targetId, cutoff).n;
+      conversionsInRange = db.prepare(`SELECT COUNT(*) n FROM profile_views WHERE targetType = ? AND targetId = ? AND converted = 1 AND createdAt >= ?`).get(targetType, targetId, cutoff).n;
+    }
+    return res.json({ totalViews, viewsThisYear, conversions, conversionsThisYear, monthly, viewsInRange, conversionsInRange });
   }
 
   const totals = db.prepare(`SELECT COUNT(*) AS views, COALESCE(SUM(converted), 0) AS conversions FROM profile_views`).get();

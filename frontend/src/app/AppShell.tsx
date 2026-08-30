@@ -1,8 +1,9 @@
 import { useApp } from "./state/AppLogicProvider";
 import { MONTH_ABBR_BY_LANG } from "../data/i18n";
-import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging } from "lucide-react";
+import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download } from "lucide-react";
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
+import { generateAnalyticsPdf } from "../utils/analyticsReport";
 import { LangSwitch } from "../components/features/LangSwitch";
 import { NotifBell } from "../components/features/NotifBell";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
@@ -25,10 +26,10 @@ import {
   ONBOARDING_SLIDES, ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
   ADMIN_SLA_DAYS, ADMIN_TREND_DATA, PLATFORM_COMMISSION_RATE, DE_CITIES, TODAY_STR,
   REMINDER_KIND_LABELS, TRANSMISSIONS, FUEL_TYPES, EMPLOYMENT_TYPES, EXPERIENCE_LEVELS,
-  MY_MECHANIC_ID, MY_OWNER_ID, DAY_KEYS, DAY_LABELS_FULL, SHARE_CHANNEL_LABELS,
+  MY_MECHANIC_ID, MY_OWNER_ID, DAY_KEYS, DAY_LABELS_FULL, DAY_LABELS_FULL_BY_LANG, SHARE_CHANNEL_LABELS,
   CAR_BRANDS, PAYMENT_METHOD_OPTIONS, LANG_LABELS, ATU_FIXED_CATALOG,
   BODY_TYPES, DRIVETRAIN_OPTIONS, DOOR_COUNT_OPTIONS, LISTING_FEATURE_OPTIONS,
-  SEAT_COUNT_OPTIONS, EMISSION_CLASS_OPTIONS,
+  SEAT_COUNT_OPTIONS, EMISSION_CLASS_OPTIONS, ANALYTICS_RANGES,
 } from "../data/constants";
 import {
   ticketSlaBreached, ticketDaysOpen, initials, isValidEmail, validatePhone,
@@ -68,7 +69,7 @@ export function AppShell() {
     setReplyingReviewId, replyDraft, setReplyDraft, onboardingVisible, smsLog, setSmsLog, conversations, setConversations,
     activeConvoId, setActiveConvoId, chatInput, setChatInput, showTranslated, setShowTranslated, fileInputRef, mechActiveConvoId,
     setMechActiveConvoId, mechChatInput, setMechChatInput, mechTab, setMechTab, mechProfileTab, setMechProfileTab, showAddServiceForm,
-    setShowAddServiceForm, newServiceForm, setNewServiceForm, duplicateServiceWarning, setDuplicateServiceWarning, mechReqView, setMechReqView, mechAnalyticsView,
+    setShowAddServiceForm, newServiceForm, setNewServiceForm, duplicateServiceWarning, setDuplicateServiceWarning, mechReqView, setMechReqView, mechAnalyticsView, analyticsRange, setAnalyticsRange,
     setMechAnalyticsView, expandedCustomerHistory, setExpandedCustomerHistory, historyExpandedDate, setHistoryExpandedDate, ownerApptView, setOwnerApptView, ownerHistoryExpandedDate,
     setOwnerHistoryExpandedDate, quoteRequests, setQuoteRequests, quoteOffers, setQuoteOffers, showQuoteModal, setShowQuoteModal, quoteVehicleId,
     setQuoteVehicleId, quoteIssue, setQuoteIssue, quotePhotos, setQuotePhotos, quoteSelectedMechIds, setQuoteSelectedMechIds, quoteMechSearch,
@@ -1222,7 +1223,7 @@ export function AppShell() {
             </div>
             {ownerTab === "search" ? <BrowseHome /> : (
               <div className="flex-1 overflow-y-auto">
-                {ownerTab === "market" && (<div className="px-5 py-4"><button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>{listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}</div>)}
+                {ownerTab === "market" && (<div className="px-5 py-4"><button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>{listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}</div>)}
                 {ownerTab === "favorites" && (
                   <div className="px-5 py-4">
                     {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
@@ -1361,7 +1362,7 @@ export function AppShell() {
                   <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
                   <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> {t("soldCarsLabel")}</h2>
                   <button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
-                  {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
+                  {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
                 </>
               )}
               {ownerProfileTab === "favorites" && (
@@ -2124,7 +2125,12 @@ export function AppShell() {
                                 <div className="w-24"><label className="text-[9px] text-gray-400 block mb-0.5">{t("durationDaysLabel")}</label><input type="number" min="0" value={quoteOfferForm.etaDays} onChange={(e) => setQuoteOfferForm(f => ({ ...f, etaDays: e.target.value }))} placeholder="1" className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
                               </div>
                               <textarea value={quoteOfferForm.note} onChange={(e) => setQuoteOfferForm(f => ({ ...f, note: e.target.value }))} rows={2} placeholder={t("noteOptionalPlaceholder")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white resize-none" />
-                              <div className="flex gap-2"><button onClick={() => setRespondingQuoteOfferId(null)} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("giveUpBtn")}</button><button disabled={!parsePriceNumber(quoteOfferForm.price)} onClick={() => submitQuoteOffer(o.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium ${parsePriceNumber(quoteOfferForm.price) ? "bg-rose-600 text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("sendQuoteBtn")}</button></div>
+                              {/* GERÇEK HATA DÜZELTMESİ: buton önceden `disabled` ile tamamen tıklanamaz hale geliyordu —
+                              tarayıcılar disabled elemanlarda hiçbir click olayı ateşlemez, bu da geçersiz bir fiyatta
+                              (ör. otomatik doldurma React state'ini senkronize etmeden inputu doldurmuşsa) kullanıcının
+                              "butona basıyorum hiçbir şey olmuyor" şeklinde algılamasına yol açıyordu. Artık buton her
+                              zaman tıklanabilir; geçersiz fiyatta submitQuoteOffer kendi içinde net bir uyarı gösteriyor. */}
+                              <div className="flex gap-2"><button onClick={() => setRespondingQuoteOfferId(null)} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("giveUpBtn")}</button><button onClick={() => submitQuoteOffer(o.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium ${parsePriceNumber(quoteOfferForm.price) ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-300 text-gray-600"}`}>{t("sendQuoteBtn")}</button></div>
                             </div>
                           )}
                           {o.status === "submitted" && (<div className="bg-rose-50 rounded-xl p-3 flex items-center justify-between"><span className="text-xs text-gray-600">{t("yourQuoteLabel")} <strong className="text-rose-600">{o.price}₺</strong>{o.etaDays ? ` · ${o.etaDays} ${t("daysSuffix")}` : ""}</span><span className="text-[10px] text-gray-400">{t("awaitingResponseEllipsis")}</span></div>)}
@@ -2175,7 +2181,7 @@ export function AppShell() {
                 {mechListingsSubTab === "cars" && (<>
                   <p className="text-xs text-gray-400 mb-3">{t("myListingsSub")}</p>
                   <button onClick={() => openSellForm(null)} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
-                  {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-1 gap-3">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
+                  {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
                 </>)}
                 {mechListingsSubTab === "jobs" && (<>
                   <p className="text-xs text-gray-400 mb-3">{t("jobListingsHint")}</p>
@@ -2200,11 +2206,17 @@ export function AppShell() {
               const myAppts = appointments.filter(isSameMechanicAppt);
               const now = new Date();
               const withinDays = (a, days) => { if (!a.dateISO) return false; const d = new Date(a.dateISO); return (now.getTime() - d.getTime()) / 86400000 <= days && (now.getTime() - d.getTime()) >= 0; };
-              const totalBooked = myAppts.length;
-              const monthBooked = myAppts.filter(a => withinDays(a, 30)).length;
-              const completedAll = myAppts.filter(a => a.status === "Tamir Tamamlandı");
-              const cancelledAll = myAppts.filter(a => a.status === "İptal Edildi" || a.status === "Reddedildi");
-              const noShowAll = myAppts.filter(a => a.status === "Gelmedi" || a.noShow);
+              // GERÇEK ÖZELLİK: tüm Analiz sekmesi (randevu/kazanç/trafik) tek bir zaman aralığı
+              // seçiciyle (24 saat / 1 hafta / 1 ay / 6 ay / tüm zamanlar) filtrelenebiliyor —
+              // bkz. ANALYTICS_RANGES (data/constants.ts) ve analyticsRange state'i.
+              const RANGE_LABEL_KEYS = { "24h": "rangeLast24h", week: "rangeLastWeek", month: "rangeLastMonth", "6m": "rangeLast6Months", all: "rangeAllTime" };
+              const selectedRangeDays = ANALYTICS_RANGES.find(r => r.key === analyticsRange)?.days ?? null;
+              const inSelectedRange = (a) => selectedRangeDays == null ? true : withinDays(a, selectedRangeDays);
+              const rangeAppts = myAppts.filter(inSelectedRange);
+              const totalBooked = rangeAppts.length;
+              const completedAll = rangeAppts.filter(a => a.status === "Tamir Tamamlandı");
+              const cancelledAll = rangeAppts.filter(a => a.status === "İptal Edildi" || a.status === "Reddedildi");
+              const noShowAll = rangeAppts.filter(a => a.status === "Gelmedi" || a.noShow);
               const completionRate = totalBooked > 0 ? Math.round((completedAll.length / totalBooked) * 100) : 0;
               const reviewList = myProfile?.reviewList || [];
               const avgRating = reviewList.length > 0 ? (reviewList.reduce((s, r) => s + r.rating, 0) / reviewList.length) : (myProfile?.rating || 0);
@@ -2212,22 +2224,77 @@ export function AppShell() {
               const maxBreakdown = Math.max(1, ...ratingBreakdown.map(r => r.count));
               const completed = completedAll;
               const total = completed.reduce((s, a) => s + (a.servicePrice || 0), 0);
-              const weekTotal = completed.filter(a => withinDays(a, 7)).reduce((s, a) => s + (a.servicePrice || 0), 0);
-              const monthTotal = completed.filter(a => withinDays(a, 30)).reduce((s, a) => s + (a.servicePrice || 0), 0);
               const serviceMap: Record<string, { count: number; total: number }> = {};
               completed.forEach(a => { const name = (a.issue || "Diğer").split(" — ")[0]; if (!serviceMap[name]) serviceMap[name] = { count: 0, total: 0 }; serviceMap[name].count += 1; serviceMap[name].total += (a.servicePrice || 0); });
               const topServices = Object.entries(serviceMap).sort((a, b) => b[1].total - a[1].total).slice(0, 5);
+              // Trafik sekmesi + PDF raporu her ikisi de bu değerlere ihtiyaç duyduğu için (bkz.
+              // downloadAnalyticsReport) dıştaki scope'a taşındı — önceden yalnızca "traffic" alt
+              // sekmesi içindeki bir IIFE'de hesaplanıyordu, PDF butonu her sekmede görünür olduğu
+              // için erişemiyordu.
+              const myOwnListings = listings.filter(isMyListing);
+              const myOwnJobs = jobListings.filter(j => j.mechanicId === myProfile?.id);
+              const myTotalShares = (myProfile?.shareCount || 0) + myOwnListings.reduce((s, l) => s + (l.shareCount || 0), 0) + myOwnJobs.reduce((s, j) => s + (j.shareCount || 0), 0);
+              const myTotalApplicants = myOwnJobs.reduce((s, j) => s + (j.applicants || []).length, 0);
+              const monthAbbr = MONTH_ABBR_BY_LANG[lang] || MONTH_ABBR_BY_LANG.tr;
+              const formatMonth = (m) => { const parts = String(m).split("-"); return monthAbbr[parseInt(parts[1], 10) - 1] || m; };
+              const stats = myProfileViewStats;
+              // "all" seçiliyken tüm-zamanlar sayaçlarını (totalViews/conversions) kullan; aksi
+              // halde backend'in `days` parametresiyle döndürdüğü aralık-bazlı sayıyı kullan —
+              // bkz. backend/routes/profileViews.js `viewsInRange`/`conversionsInRange`.
+              const rangeViews = stats ? (analyticsRange === "all" ? stats.totalViews : (stats.viewsInRange ?? stats.viewsThisYear)) : 0;
+              const rangeConversions = stats ? (analyticsRange === "all" ? stats.conversions : (stats.conversionsInRange ?? stats.conversionsThisYear)) : 0;
+              const viewConvRate = rangeViews > 0 ? Math.round((rangeConversions / rangeViews) * 100) : 0;
+              const handleDownloadPdf = () => {
+                try {
+                  generateAnalyticsPdf({
+                    mechanicName: myProfile?.name || t("myBusinessFallback"),
+                    mechanicSpecialty: myProfile?.specialty || "",
+                    rangeLabel: t(RANGE_LABEL_KEYS[analyticsRange]),
+                    generatedAtLabel: now.toLocaleString("tr-TR", { dateStyle: "long", timeStyle: "short" }),
+                    totalBooked, completedCount: completedAll.length, cancelledCount: cancelledAll.length,
+                    noShowCount: noShowAll.length, completionRate, avgRating, reviewCount: reviewList.length,
+                    totalEarnings: total, topServices: topServices.map(([name, s]) => ({ name, count: s.count, total: s.total })),
+                    rangeViews, rangeConversions, viewConvRate,
+                    totalSharesAllTime: myTotalShares, activeListingsCount: myOwnListings.filter(l => !l.adminRemoved).length,
+                    totalApplicantsCount: myTotalApplicants,
+                    labels: {
+                      reportSubtitle: t("pdfReportSubtitle"), periodLabel: t("pdfPeriodLabel"), generatedLabel: t("pdfGeneratedLabel"),
+                      summaryTitle: t("pdfSummaryTitle"), totalBookingsLabel: t("totalBookingsLabel"), completionRateLabel: t("completionRateTitle"),
+                      totalEarningsLabel: t("totalEarningsRow"), avgRatingLabel: t("avgRatingRow"), bookingBreakdownTitle: t("pdfBookingBreakdownTitle"),
+                      cameLabel: t("cameLabel"), cancelledRejectedLabel: t("cancelledRejectedLabel"), noShowLabel: t("noShowBtn"),
+                      topEarningServicesTitle: t("topEarningServicesTitle"), noPaidWorkYet: t("noPaidWorkYet"),
+                      serviceColumn: t("pdfServiceColumn"), transactionsColumn: t("pdfTransactionsColumn"), earningsColumn: t("pdfEarningsColumn"),
+                      profileVisitsTitle: t("profileVisitsTitle"), analyticsVisitsLabel: t("analyticsVisitsLabel"),
+                      analyticsConversionsLabel: t("analyticsConversionsLabel"), conversionRateLabel: t("conversionRateLabel"),
+                      periodSummaryReportTitle: t("periodSummaryReportTitle"), profileAndListingSharesRow: t("profileAndListingSharesRow"),
+                      activeCarListingsRow: t("activeCarListingsRow"), totalJobApplicantsRow: t("totalJobApplicantsRow"),
+                      reviewsCountRow: t("pdfReviewsCountRow"), footerNote: t("pdfFooterNote"), pageLabel: t("pdfPageLabel"),
+                    },
+                  });
+                  setToast({ type: "info", text: t("pdfReportGeneratedToast") });
+                } catch (err) {
+                  setToast({ type: "info", text: t("pdfReportFailedToast") });
+                }
+              };
               return (
                 <div className="flex-1 px-5 py-4 overflow-y-auto">
-                  <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
+                  <div className="flex bg-gray-100 rounded-xl p-1 mb-3">
                     <button onClick={() => setMechAnalyticsView("overview")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "overview" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><TrendingUp size={12} /> {t("analyticsOverviewTab")}</button>
                     <button onClick={() => setMechAnalyticsView("earnings")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "earnings" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Banknote size={12} /> {t("analyticsEarningsTab")}</button>
                     <button onClick={() => setMechAnalyticsView("traffic")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "traffic" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Compass size={12} /> {t("analyticsTrafficTab")}</button>
                   </div>
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-5 px-5">
+                      {ANALYTICS_RANGES.map(r => { const key = RANGE_LABEL_KEYS[r.key]; return (
+                        <button key={r.key} onClick={() => setAnalyticsRange(r.key)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold transition whitespace-nowrap ${analyticsRange === r.key ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t(key)}</button>
+                      ); })}
+                    </div>
+                  </div>
+                  <button onClick={handleDownloadPdf} className="w-full mb-5 border border-rose-200 text-rose-600 py-2.5 rounded-xl font-semibold text-xs hover:bg-rose-50 transition flex items-center justify-center gap-1.5"><Download size={13} /> {t("downloadPdfReportBtn")}</button>
                   {mechAnalyticsView === "overview" && (<>
                     <div className="grid grid-cols-2 gap-2 mb-3">
                       <div className="bg-rose-50 rounded-xl p-3"><p className="text-lg font-bold text-rose-600">{totalBooked}</p><p className="text-[10px] text-gray-500 mt-0.5">{t("totalBookingsLabel")}</p></div>
-                      <div className="bg-gray-100 rounded-xl p-3"><p className="text-lg font-bold text-gray-700">{monthBooked}</p><p className="text-[10px] text-gray-500 mt-0.5">{t("bookedThisMonthLabel")}</p></div>
+                      <div className="bg-gray-100 rounded-xl p-3"><p className="text-lg font-bold text-gray-700">{total.toLocaleString("tr-TR")}₺</p><p className="text-[10px] text-gray-500 mt-0.5">{t("totalEarningsRow")}</p></div>
                     </div>
                     <div className="grid grid-cols-3 gap-2 mb-5">
                       <div className="bg-green-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-green-600">{completedAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("cameLabel")}</p></div>
@@ -2258,10 +2325,9 @@ export function AppShell() {
                     </div>
                   </>)}
                   {mechAnalyticsView === "earnings" && (<>
-                    <div className="grid grid-cols-3 gap-2 mb-5">
-                      <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{weekTotal}₺</p><p className="text-[9px] text-gray-500 mt-0.5">{t("thisWeekLabel")}</p></div>
-                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{monthTotal}₺</p><p className="text-[9px] text-gray-500 mt-0.5">{t("thisMonthLabel")}</p></div>
-                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{total}₺</p><p className="text-[9px] text-gray-500 mt-0.5">{t("totalLabel")}</p></div>
+                    <div className="grid grid-cols-2 gap-2 mb-5">
+                      <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{total.toLocaleString("tr-TR")}₺</p><p className="text-[9px] text-gray-500 mt-0.5">{t("totalEarningsRow")}</p></div>
+                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{completed.length}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("completedBookingsRow")}</p></div>
                     </div>
                     <h3 className="text-sm font-bold text-gray-800 mb-2.5">{t("topEarningServicesTitle")}</h3>
                     {topServices.length === 0 ? (
@@ -2272,14 +2338,6 @@ export function AppShell() {
                     <p className="text-[10px] text-gray-300 mt-4 text-center">{t("basedOnCompletedJobsNote", { n: String(completed.length) })}</p>
                   </>)}
                   {mechAnalyticsView === "traffic" && (() => {
-                    const myOwnListings = listings.filter(isMyListing);
-                    const myOwnJobs = jobListings.filter(j => j.mechanicId === myProfile?.id);
-                    const myTotalShares = (myProfile?.shareCount || 0) + myOwnListings.reduce((s, l) => s + (l.shareCount || 0), 0) + myOwnJobs.reduce((s, j) => s + (j.shareCount || 0), 0);
-                    const myTotalApplicants = myOwnJobs.reduce((s, j) => s + (j.applicants || []).length, 0);
-                    const monthAbbr = MONTH_ABBR_BY_LANG[lang] || MONTH_ABBR_BY_LANG.tr;
-                    const formatMonth = (m) => { const parts = String(m).split("-"); return monthAbbr[parseInt(parts[1], 10) - 1] || m; };
-                    const stats = myProfileViewStats;
-                    const viewConvRate = stats && stats.viewsThisYear > 0 ? Math.round((stats.conversionsThisYear / stats.viewsThisYear) * 100) : 0;
                     return (
                       <>
                         <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><Compass size={14} className="text-rose-500" /> {t("profileVisitsTitle")}</h3>
@@ -2288,8 +2346,8 @@ export function AppShell() {
                         ) : (
                           <>
                             <div className="grid grid-cols-3 gap-2 mb-4">
-                              <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{stats.viewsThisYear}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("visitsThisYearLabel")}</p></div>
-                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{stats.conversionsThisYear}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("convertedToBookingLabel")}</p></div>
+                              <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{rangeViews}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("analyticsVisitsLabel")}</p></div>
+                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{rangeConversions}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("analyticsConversionsLabel")}</p></div>
                               <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">%{viewConvRate}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("conversionRateLabel")}</p></div>
                             </div>
                             {stats.monthly.length > 0 && (
@@ -2301,14 +2359,14 @@ export function AppShell() {
                             <p className="text-[10px] text-gray-300 mb-5">{t("totalAllTimeNote", { views: String(stats.totalViews), conversions: String(stats.conversions) })}</p>
                           </>
                         )}
-                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><History size={14} className="text-rose-500" /> {t("yearlySummaryReportTitle")}</h3>
+                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><History size={14} className="text-rose-500" /> {t("periodSummaryReportTitle")}</h3>
                         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-2">
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalBookingsRow")}</span><span className="font-semibold text-gray-800">{totalBooked}</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("completedBookingsRow")}</span><span className="font-semibold text-gray-800">{completedAll.length} (%{completionRate})</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalEarningsRow")}</span><span className="font-semibold text-gray-800">{total.toLocaleString("tr-TR")}₺</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("avgRatingRow")}</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="fill-gray-900" /> {avgRating.toFixed(1)} {t("reviewsCountParens", { n: String(reviewList.length) })}</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("profileAndListingSharesRow")}</span><span className="font-semibold text-gray-800">{myTotalShares}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("profileVisitsThisYearRow")}</span><span className="font-semibold text-gray-800">{stats?.viewsThisYear ?? "—"}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("analyticsVisitsLabel")}</span><span className="font-semibold text-gray-800">{rangeViews}</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("activeCarListingsRow")}</span><span className="font-semibold text-gray-800">{myOwnListings.filter(l => !l.adminRemoved).length}</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalJobApplicantsRow")}</span><span className="font-semibold text-gray-800">{myTotalApplicants}</span></div>
                         </div>
@@ -2432,7 +2490,7 @@ export function AppShell() {
                   {DAY_KEYS.map(key => { const day = mechanicHours[key]; const isOpen = expandedDay === key; const slots = getDaySlots(day); const summary = day.open ? `${day.start} - ${dayClosingTime(day)}` : t("closed"); return (
                     <div key={key} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
                       <button onClick={() => setExpandedDay(isOpen ? null : key)} className="w-full flex items-center justify-between p-3">
-                        <span className="text-sm font-semibold text-gray-700">{DAY_LABELS_FULL[key]}</span>
+                        <span className="text-sm font-semibold text-gray-700">{(DAY_LABELS_FULL_BY_LANG[lang] || DAY_LABELS_FULL)[key]}</span>
                         <div className="flex items-center gap-2"><span className={`text-[11px] ${day.open ? "text-gray-400" : "text-red-400"}`}>{summary}</span><ChevronRight size={14} className={`text-gray-300 transition-transform ${isOpen ? "rotate-90" : ""}`} /></div>
                       </button>
                       {isOpen && (

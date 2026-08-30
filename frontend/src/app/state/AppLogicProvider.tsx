@@ -5,7 +5,7 @@ import { T, useT } from "../../data/i18n";
 import {
   BANNER_PRESETS, ONBOARDING_SLIDES, DAY_KEYS, DAY_LABELS, DAY_LABELS_FULL, JS_DAY_TO_KEY,
   FUEL_TYPES, TRANSMISSIONS, EMPLOYMENT_TYPES, EXPERIENCE_LEVELS, EMPTY_JOB_FORM, DEFAULT_HOURS,
-  PRICE_LEVEL_BREAKS, PRICE_TIER_BREAKS, MY_MECHANIC_ID, MY_OWNER_ID, TRACK_STATUSES_MANUAL, TRACK_LABELS_MANUAL,
+  PRICE_LEVEL_BREAKS, PRICE_TIER_BREAKS, ANALYTICS_RANGES, MY_MECHANIC_ID, MY_OWNER_ID, TRACK_STATUSES_MANUAL, TRACK_LABELS_MANUAL,
   TRACK_STATUSES_AUTO, TRACK_LABELS_AUTO, TODAY, TODAY_STR, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS,
   ATU_FIXED_CATALOG, DICT_TR_EN, DICT_EN_TR, LEGAL_TIRE_RULES, DE_CITIES, REMINDER_KIND_LABELS,
   FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, LEGAL_CONTENT,
@@ -546,11 +546,17 @@ function useAppLogic() {
   // Tamircinin kendi "Analiz" sekmesindeki "Profil Ziyaretleri" ve "Yıllık Özet Raporu" bölümleri
   // için — sadece o sekme açıldığında çekilir (her uygulama açılışında değil).
   const [myProfileViewStats, setMyProfileViewStats] = useState(null);
+  // Analiz sekmesindeki "son 24 saat / son 1 hafta / son 1 ay / son 6 ay / tüm zamanlar" filtresi —
+  // randevu/kazanç istatistikleri client-side (appointments zaten yüklü) filtrelenir, ama profil
+  // ziyaretleri sunucuda saklandığı için (bkz. backend/routes/profileViews.js) seçili aralık
+  // değiştiğinde `days` parametresiyle yeniden çekilir.
+  const [analyticsRange, setAnalyticsRange] = useState("all");
   useEffect(() => {
     if (mechTab === "analytics") {
-      api.profileViews.stats("mechanic", MY_MECHANIC_ID).then(setMyProfileViewStats).catch(() => { /* sessizce geç — sadece analitik */ });
+      const rangeDays = ANALYTICS_RANGES.find(r => r.key === analyticsRange)?.days;
+      api.profileViews.stats("mechanic", MY_MECHANIC_ID, rangeDays || undefined).then(setMyProfileViewStats).catch(() => { /* sessizce geç — sadece analitik */ });
     }
-  }, [mechTab]);
+  }, [mechTab, analyticsRange]);
 
   const [adminTicketStatusFilter, setAdminTicketStatusFilter] = useState("all");
   const [adminTicketTypeFilter, setAdminTicketTypeFilter] = useState("all");
@@ -846,7 +852,7 @@ function useAppLogic() {
   }
   const isDayOpenForMechanic = (mechanic, date) => { if (!mechanic || mechanic.id !== MY_MECHANIC_ID) return true; return mechanicHours[JS_DAY_TO_KEY[date.getDay()]].open; };
   // Bir tamircinin (kendi hesabımız ya da ilan listesindeki herhangi biri) şu an açık mı kapalı mı olduğunu döner.
-  const mechanicOpenStatus = (m) => { if (!m) return null; const lines = m.id === MY_MECHANIC_ID ? formatHoursText(mechanicHours) : m.hoursText; return isOpenNowByHoursText(lines); };
+  const mechanicOpenStatus = (m) => { if (!m) return null; const lines = m.id === MY_MECHANIC_ID ? formatHoursText(mechanicHours, lang) : m.hoursText; return isOpenNowByHoursText(lines); };
   // Bugün için tüm randevu saatleri dolduysa tamirciye bildirim gönder + yeni saat eklemek isteyip
   // istemediğini soran uygulama içi bir davet göster. Aynı gün için tekrar tekrar bildirim gitmesin diye
   // "dayFullNotified" bayrağı kullanılıyor; slotlar boşalırsa (örn. iptal) bayrak sıfırlanır.
@@ -1018,10 +1024,19 @@ function useAppLogic() {
   // önemli olduğu için burada bilerek await ediyoruz; sunucu reddederse (409/400) ilgili teklifi
   // yeniden çekip gerçek durumunu (ör. "lost") ekrana yansıtıyoruz.
   const submitQuoteOffer = async (offerId) => {
-    const price = parsePriceNumber(quoteOfferForm.price);
-    if (!price) return;
-    const patch = { status: "submitted", price, etaDays: quoteOfferForm.etaDays ? parseInt(quoteOfferForm.etaDays, 10) : null, note: quoteOfferForm.note.trim() };
+    // GERÇEK HATA DÜZELTMESİ: önceden geçersiz/boş fiyatta fonksiyon sessizce `return` ediyordu —
+    // hiçbir toast, hiçbir görsel geri bildirim yoktu ("butona basıyorum hiçbir şey olmuyor" geri
+    // bildirimi buradan geliyordu). Ayrıca fonksiyonun tamamı artık tek bir try/catch içinde: fiyat
+    // ayrıştırma veya patch oluşturma sırasında beklenmedik bir şey patlarsa bile (ör. tarayıcı
+    // otomatik doldurma/klavye tahmini React state'ini senkronize etmeden inputu doldurursa) kullanıcı
+    // en azından bir hata mesajı görür, tamamen sessiz bir başarısızlık asla olmaz.
     try {
+      const price = parsePriceNumber(quoteOfferForm.price);
+      if (!price) {
+        setToast({ type: "info", text: "⚠️ Lütfen geçerli bir fiyat girin." });
+        return;
+      }
+      const patch = { status: "submitted", price, etaDays: quoteOfferForm.etaDays ? parseInt(quoteOfferForm.etaDays, 10) : null, note: (quoteOfferForm.note || "").trim() };
       const updated = await api.quoteOffers.update(offerId, patch);
       setQuoteOffers(os => os.map(o => o.id === offerId ? updated : o));
       setRespondingQuoteOfferId(null);
@@ -2357,8 +2372,11 @@ function useAppLogic() {
   const ownerPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; readFileAsDataUrl(file, (dataUrl) => { updateMyOwnerField("photo", dataUrl); persist(api.owners.update(MY_OWNER_ID, { photo: dataUrl }), "Fotoğraf kaydedilemedi"); }); };
   // Çalışma saatleri (mechanicHours) ayrı bir istemci-taraflı yapı; backend'deki mechanics.hoursText
   // alanına insan-okur biçimde yansıtılır (bkz. formatHoursText) — böylece diğer kullanıcılar
-  // gerçek zamanlı çalışma saatlerini görebilir.
-  const persistMechanicHours = (nextHours) => persist(api.mechanics.update(MY_MECHANIC_ID, { hoursText: formatHoursText(nextHours) }), "Çalışma saatleri kaydedilemedi");
+  // gerçek zamanlı çalışma saatlerini görebilir. Kaydedilirken o an aktif olan `lang` kullanılır;
+  // MY_MECHANIC_ID'nin kendi görünümü zaten her zaman formatHoursText(mechanicHours, lang) ile CANLI
+  // hesaplanıyor (bkz. mechanicOpenStatus, MechDetailBody), bu yüzden burada saklanan metin sadece
+  // ikincil bir önbellek niteliğinde.
+  const persistMechanicHours = (nextHours) => persist(api.mechanics.update(MY_MECHANIC_ID, { hoursText: formatHoursText(nextHours, lang) }), "Çalışma saatleri kaydedilemedi");
   const toggleDayOpen = (key) => setMechanicHours(h => { const next = { ...h, [key]: { ...h[key], open: !h[key].open } }; persistMechanicHours(next); return next; });
   const toggleSlotClosed = (key, slot) => setMechanicHours(h => { const closed = h[key].closedSlots.includes(slot); const next = { ...h, [key]: { ...h[key], closedSlots: closed ? h[key].closedSlots.filter(s => s !== slot) : [...h[key].closedSlots, slot] } }; persistMechanicHours(next); return next; });
   const addExtraSlot = (key, time) => { if (!time) return; setMechanicHours(h => { if (h[key].extraSlots.includes(time) || genSlots(h[key].start, h[key].end).includes(time)) return h; const next = { ...h, [key]: { ...h[key], extraSlots: [...h[key].extraSlots, time].sort() } }; persistMechanicHours(next); return next; }); };
@@ -2841,7 +2859,7 @@ function useAppLogic() {
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers, quoteOffersByRequestId, myQuoteRequests,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
-    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats, viewStats, listingFavoriteCount, myProfileViewStats, listingViewStats, translationCache, translateMessage, ownerLangFor,
+    adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, recordConversion, shareStats, viewStats, listingFavoriteCount, myProfileViewStats, analyticsRange, setAnalyticsRange, listingViewStats, translationCache, translateMessage, ownerLangFor,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,

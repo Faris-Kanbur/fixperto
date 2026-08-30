@@ -7,6 +7,21 @@ export const ONBOARDING_SLIDES = [
 export const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 export const DAY_LABELS = { mon: "Pzt", tue: "Sal", wed: "Çar", thu: "Per", fri: "Cum", sat: "Cmt", sun: "Paz" };
 export const DAY_LABELS_FULL = { mon: "Pazartesi", tue: "Salı", wed: "Çarşamba", thu: "Perşembe", fri: "Cuma", sat: "Cumartesi", sun: "Pazar" };
+// GERÇEK HATA DÜZELTMESİ: Çalışma saatleri (Öffnungszeiten) bölümündeki gün isimleri dil seçeneği
+// değişince güncellenmiyordu — çünkü formatHoursText (bkz. helpers.ts) DAY_LABELS'ı doğrudan
+// kullanıyordu, hep Türkçe. Bu üç haritayla formatHoursText artık aktif dile (tr/en/de) göre doğru
+// gün adını ve "Kapalı" metnini üretebiliyor.
+export const DAY_LABELS_BY_LANG = {
+  tr: DAY_LABELS,
+  en: { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" },
+  de: { mon: "Mo", tue: "Di", wed: "Mi", thu: "Do", fri: "Fr", sat: "Sa", sun: "So" },
+};
+export const DAY_LABELS_FULL_BY_LANG = {
+  tr: DAY_LABELS_FULL,
+  en: { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday", sat: "Saturday", sun: "Sunday" },
+  de: { mon: "Montag", tue: "Dienstag", wed: "Mittwoch", thu: "Donnerstag", fri: "Freitag", sat: "Samstag", sun: "Sonntag" },
+};
+export const CLOSED_LABEL_BY_LANG = { tr: "Kapalı", en: "Closed", de: "Geschlossen" };
 export const JS_DAY_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 export const FUEL_TYPES = ["Benzin", "Dizel", "Elektrik", "Hibrit", "LPG"];
 export const TRANSMISSIONS = ["Manuel", "Otomatik", "Yarı Otomatik"];
@@ -34,6 +49,16 @@ export const PRICE_LEVEL_BREAKS = [260, 320, 390, 460];
 // tamirciğin kart üzerindeki € nokta seviyesi (bkz. PriceLevelDots) filtredeki fiyat etiketiyle
 // çelişmez: ucuz = 1-2 nokta, orta = 3 nokta, pahalı = 4-5 nokta.
 export const PRICE_TIER_BREAKS = [PRICE_LEVEL_BREAKS[1], PRICE_LEVEL_BREAKS[2]];
+
+// Tamirci "Analiz" sekmesindeki zaman aralığı filtresi (bkz. AppShell.tsx mechTab === "analytics").
+// `days: null` olan "all" seçeneği filtre uygulanmadığı (tüm zamanlar) anlamına gelir.
+export const ANALYTICS_RANGES = [
+  { key: "24h", days: 1 },
+  { key: "week", days: 7 },
+  { key: "month", days: 30 },
+  { key: "6m", days: 182 },
+  { key: "all", days: null },
+];
 
 // The single logged-in demo owner/mechanic account both map to a fixed id, mirroring the
 // original single-file app: the "current user" is always MY_MECHANIC_ID / MY_OWNER_ID from
