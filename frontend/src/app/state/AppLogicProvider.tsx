@@ -2124,6 +2124,13 @@ function useAppLogic() {
     setMyOwnerId(null); setMyMechanicId(null);
     setVehicles([]); setAppointments([]); setSupportTickets([]); setQuoteRequests([]); setQuoteOffers([]); setConversations([]);
     setFavoriteIds([]); setFavoriteMechanicIds([]); setLikedReviewIds([]);
+    // GERÇEK HATA DÜZELTMESİ: notifLog role'e göre filtreleniyor (bkz. NotifBell.tsx), belirli bir
+    // owner/mechanic id'sine göre DEĞİL — çünkü bildirimler tek bir "benim hesabım" varsayımıyla
+    // tasarlandı. Bu, çıkış yapılıp AYNI sekmede farklı bir hesapla (ör. yeni bir tamirci kaydı)
+    // giriş yapıldığında, önceki hesabın bildirimlerinin yeni hesapta da görünmesine yol açıyordu
+    // (aynı role sahip oldukları için) — kullanıcının hiç göndermediği/almadığı sahte "yeni mesaj"
+    // bildirimleri gibi. Çıkışta bildirim geçmişini ve "görüldü" zaman damgalarını da temizliyoruz.
+    setNotifLog([]); setOwnerNotifSeenAt(0); setMechNotifSeenAt(0);
     goHome();
   };
   const addVehicle = async () => {
