@@ -372,9 +372,15 @@ quoteOffersRouter.post("/:id/decline", (req, res) => {
 quoteOffersRouter.delete("/:id", (req, res) => {
   const existing = db.prepare(`SELECT * FROM quote_offers WHERE id = ?`).get(req.params.id);
   if (!existing) return res.status(404).json({ error: "quote_offers not found" });
-  if (!offerVisibleTo(existing, resolveActor(req))) {
-    const actor = resolveActor(req);
-    return res.status(actor ? 403 : 401).json(actor ? { error: "Bu teklifi silme yetkiniz yok." } : { error: "Bu işlem için giriş yapmanız gerekiyor." });
+  // GÜVENLİK DÜZELTMESİ (bu denetimde bulundu): burada `offerVisibleTo` kullanılıyordu, ama o
+  // fonksiyon GÖRME yetkisi içindir — teklifin bağlı olduğu isteğin sahibi araç sahibini de "görebilir"
+  // sayar, bu da bir owner'ın (frontend'de bu yola hiç UI olmasa da, API'yi doğrudan çağırarak) başka
+  // bir tamircinin teklif satırını SİLEBİLMESİ anlamına geliyordu. Silme, PATCH ile aynı kurala tabi
+  // olmalı: sadece o teklifin gerçek sahibi tamirci ya da admin.
+  const actor = resolveActor(req);
+  if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+  if (actor.role !== "admin" && !(actor.role === "mechanic" && existing.mechanicId === actor.id)) {
+    return res.status(403).json({ error: "Bu teklifi silme yetkiniz yok." });
   }
   try {
     const info = db.prepare(`DELETE FROM quote_offers WHERE id = ?`).run(req.params.id);

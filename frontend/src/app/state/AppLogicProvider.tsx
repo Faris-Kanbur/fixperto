@@ -2022,7 +2022,9 @@ function useAppLogic() {
     // demek gerçekten bir şey ifade etsin.
     if (audience === "all" || audience === "owner") fireNotification("📢 Fixperto Duyurusu", message, true, "owner", { type: "broadcast" });
     if (audience === "all" || audience === "mechanic") fireNotification("📢 Fixperto Duyurusu", message, true, "mechanic", { type: "broadcast" });
-    persist(api.broadcasts.create(entry), "Duyuru kaydedilemedi");
+    // GÜVENLİK DÜZELTMESİ: backend artık /api/broadcasts yazmalarını admin token'ı istiyor
+    // (bkz. server.js) — bu çağrı da diğer ~30 admin-yazma çağrısıyla aynı desene uyuyor.
+    persist(api.broadcasts.create(entry, api.admin.authOpts()), "Duyuru kaydedilemedi");
     setToast({ type: "info", text: `📢 Duyuru ${count} kullanıcıya gönderildi.` });
     setBroadcastForm({ audience: "all", message: "" });
     setShowBroadcastModal(false);

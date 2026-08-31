@@ -92,7 +92,16 @@ app.use("/api/admin", adminRouter);
 app.use("/api/share-events", shareEventsRouter);
 app.use("/api/profile-views", profileViewsRouter);
 app.use("/api/translate", translateRouter);
-app.use("/api/broadcasts", makeCrudRouter("broadcasts"));
+// GÜVENLİK DÜZELTMESİ (bu denetimde bulundu): authScope hiç verilmediği için POST/PATCH/DELETE
+// TAMAMEN açıktı — giriş yapmamış herhangi biri, admin paneli hiç kullanmadan doğrudan API'ye
+// istek atarak sahte "Fixperto Duyurusu" oluşturabilir/değiştirebilir/silebilirdi (frontend'de
+// bunu tetikleyen tek yol admin panelindeki sendBroadcast olsa da, backend bunu hiç zorlamıyordu).
+// fields: [] ile hiçbir owner/mechanic sahiplik alanı tanımlanmadığından POST/PATCH/DELETE artık
+// sadece admin token'ı ile geçer; publicRead: true ile GET (bootstrap'ta tüm kullanıcılara duyuru
+// göstermek için) herkese açık kalmaya devam ediyor.
+app.use("/api/broadcasts", makeCrudRouter("broadcasts", {
+  authScope: { fields: [], publicRead: true },
+}));
 
 app.use((req, res) => res.status(404).json({ error: "Not found" }));
 // eslint-disable-next-line no-unused-vars

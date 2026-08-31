@@ -78,14 +78,24 @@ export function makeCrudRouter(table, {
   router.get("/:id", (req, res) => {
     const row = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
     if (!row) return res.status(404).json({ error: `${table} not found` });
+    const actor = resolveActor(req);
     if (authScope && !publicRead) {
-      const actor = resolveActor(req);
       if (!actor) return res.status(401).json({ error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
       if (actor.role !== "admin" && !matchingField(actor, row)) {
         return res.status(403).json({ error: "Bu kayda erişim yetkiniz yok." });
       }
     }
-    res.json(hydrate(table, row));
+    // GÜVENLİK DÜZELTMESİ: hydrate.js'teki LIST_ONLY_SENSITIVE_FIELDS (mechanics için iban/
+    // bankName/accountHolder) daha önce sadece TOPLU liste (GET /) ve /:id/share uç noktasında
+    // filtreleniyordu — bu TEKİL GET /:id uç noktası ham hydrate() kullanıyordu, yani publicRead
+    // açık kaynaklarda (mechanics gibi, girişsiz kimse erişebilir) herkes tek bir ID bilerek bu
+    // uç noktadan tamircinin banka bilgilerini çekebiliyordu (toplu listeden kapatılan sızıntının
+    // aynısı, ID bilinerek tek tek yeniden açılıyordu). Artık gerçek oturum sistemi var (bkz.
+    // resolveActor) — bu hassas alanlar sadece kaydın SAHİBİNE ya da admin'e gösteriliyor,
+    // başkasına (girişsiz ya da farklı bir kullanıcıya) her zaman toplu-liste seviyesinde
+    // filtrelenmiş hâliyle dönüyor.
+    const isSelfOrAdmin = !!actor && (actor.role === "admin" || !!matchingField(actor, row));
+    res.json(isSelfOrAdmin ? hydrate(table, row) : hydrateAll(table, [row])[0]);
   });
 
   router.post("/", (req, res) => {
