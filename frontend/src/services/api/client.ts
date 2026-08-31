@@ -67,6 +67,45 @@ function friendlyMessageForStatus(status: number, backendMessage?: string): stri
 const BASE_URL = (import.meta as any).env?.VITE_API_URL || "http://localhost:4000";
 const DEV = !!(import.meta as any).env?.DEV;
 
+// GERÇEK OTURUM SİSTEMİ: owner/mechanic girişi artık gerçek (bkz. backend/routes/auth.js) — bu
+// yüzden admin token'ın aksine (bilerek sayfa yenilenince kaybolan, bkz. aşağıdaki adminToken notu)
+// bu oturum token'ı localStorage'a yazılıyor. Sebep: admin paneli tek bir kişi tarafından, kısa
+// süreli kullanılan hassas bir yönetim arayüzü — ama owner/mechanic girişi uygulamanın GERÇEK,
+// günlük kullanım akışı; her sayfa yenilemesinde yeniden giriş istemek gerçek bir ürün için kabul
+// edilemez bir UX olurdu. Bunun bilinen güvenlik ödünleşimi: bir XSS açığı bu token'ı çalabilir
+// (httpOnly cookie'nin aksine) — bu, çoğu SPA'nın (bu projenin geri kalanı da dahil, ör. React
+// state'te tutulan diğer hassas veriler) zaten kabul ettiği standart bir ödünleşim, ama not düşülmesi
+// gereken bir seçim. Sunucu tarafında token'lar da bellekte tutuluyor (bkz. backend/utils/auth.js) —
+// backend yeniden başladığında localStorage'daki eski bir token geçersiz olur, bu durumda
+// restoreSession() /api/auth/me çağrısının başarısız olmasıyla bunu fark edip temizler.
+const SESSION_STORAGE_KEY = "fixperto_session_v1";
+type SessionRole = "owner" | "mechanic";
+let sessionToken: string | null = null;
+let sessionRole: SessionRole | null = null;
+try {
+  if (typeof window !== "undefined") {
+    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.token && parsed?.role) { sessionToken = parsed.token; sessionRole = parsed.role; }
+    }
+  }
+} catch { /* localStorage kullanılamıyor (gizli sekme vb.) — oturumsuz devam edilir */ }
+
+function persistSessionToStorage() {
+  try {
+    if (typeof window === "undefined") return;
+    if (sessionToken && sessionRole) window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ token: sessionToken, role: sessionRole }));
+    else window.localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch { /* yoksay */ }
+}
+
+function setSession(token: string | null, role: SessionRole | null) {
+  sessionToken = token;
+  sessionRole = role;
+  persistSessionToStorage();
+}
+
 interface RequestOptions extends RequestInit {
   /** true ise ağ hatasında (backend'e hiç ulaşılamadıysa) otomatik olarak 1 kez tekrar dener. */
   retryOnNetworkError?: boolean;
@@ -89,6 +128,14 @@ async function request(path: string, options: RequestOptions = {}) {
   const exec = async () => {
     let res: Response;
     try {
+      // GERÇEK OTURUM SİSTEMİ: giriş yapmış bir owner/mechanic varsa, token'ı HER isteğe otomatik
+      // ekleniyor — tek tek her `api.X.method()` çağrısına elle Authorization eklemek yerine (bu,
+      // yüzlerce çağrı sitesini değiştirmek anlamına gelirdi). Bir çağrı kendi `headers`'ını
+      // (ör. admin'in adminAuthOpts()'u) açıkça verirse, aşağıdaki spread sırası sayesinde o her
+      // zaman kazanır — admin işlemleri owner/mechanic oturum token'ıyla değil kendi token'ıyla
+      // gitmeli.
+      const defaultHeaders: Record<string, string> = { "Content-Type": "application/json" };
+      if (sessionToken) defaultHeaders.Authorization = `Bearer ${sessionToken}`;
       res = await fetch(url, {
         ...fetchOptions,
         // GERÇEK HATA DÜZELTMESİ: önceden `{ headers: {"Content-Type": ...}, ...fetchOptions }`
@@ -97,7 +144,7 @@ async function request(path: string, options: RequestOptions = {}) {
         // yazıp siliyordu (obje spread'i iç içe birleştirmez). Sonuç: body'li bir istekte
         // Content-Type kaybolursa backend'deki express.json() body'yi hiç ayrıştırmaz, req.body
         // sessizce undefined kalırdı. Şimdi header'lar gerçekten birleştiriliyor.
-        headers: { "Content-Type": "application/json", ...(fetchOptions.headers || {}) },
+        headers: { ...defaultHeaders, ...(fetchOptions.headers || {}) },
       });
     } catch (networkErr: any) {
       // fetch, sunucuya hiç ulaşamadığında (backend kapalı, CORS, offline vb.) burada patlar —
@@ -175,6 +222,35 @@ function adminAuthOpts(): RequestOptions {
 }
 
 export const api = {
+  // GERÇEK OTURUM SİSTEMİ (bkz. backend/routes/auth.js): kayıt olurken kullanıcı şifre SEÇMEZ —
+  // backend rastgele bir şifre üretip e-postasına gönderir (bu, e-postanın gerçekten kullanıcıya
+  // ait olduğunun ilk doğrulaması). Girişte şifre doğrulandıktan SONRA, ikinci bir doğrulama adımı
+  // olarak e-postaya 6 haneli bir kod gönderilir (çifte doğrulama / 2FA) — gerçek oturum token'ı
+  // sadece bu kod da doğrulanınca verilir (bkz. verifyOtp).
+  auth: {
+    register: (role: "owner" | "mechanic", email: string, name: string, extra?: Record<string, unknown>): Promise<{ ok: true; id: number; email: string; mailSent: boolean; devPassword?: string; devNote?: string }> =>
+      request("/api/auth/register", { method: "POST", body: JSON.stringify({ role, email, name, ...extra }) }),
+    login: (role: "owner" | "mechanic", email: string, password: string): Promise<{ ok: true; requiresOtp: true; loginTicket: string; mailSent: boolean; devOtp?: string; devNote?: string }> =>
+      request("/api/auth/login", { method: "POST", body: JSON.stringify({ role, email, password }) }),
+    verifyOtp: async (loginTicket: string, code: string): Promise<{ ok: true; token: string; user: any }> => {
+      const result = await request("/api/auth/verify-otp", { method: "POST", body: JSON.stringify({ loginTicket, code }) });
+      setSession(result.token, result.user.role);
+      return result;
+    },
+    logout: async (): Promise<void> => {
+      if (sessionToken) {
+        try { await request("/api/auth/logout", { method: "POST" }); } catch { /* çıkışta hata olsa bile devam et */ }
+      }
+      setSession(null, null);
+    },
+    me: (): Promise<any> => request("/api/auth/me"),
+    // Sayfa yenilendiğinde localStorage'da bir token bulunduysa (bkz. yukarısı) bunu kullanıp
+    // kullanıp kullanamayacağını (backend yeniden başlamış olabilir, token artık geçersiz olabilir)
+    // AppLogicProvider'ın bootstrap efekti bu ikisiyle kontrol ediyor.
+    hasStoredSession: (): boolean => !!sessionToken,
+    getStoredRole: (): SessionRole | null => sessionRole,
+    clearSession: (): void => setSession(null, null),
+  },
   mechanics: withPasswordEndpoints<Mechanic>("mechanics"),
   owners: withPasswordEndpoints<Owner>("owners"),
   vehicles: crud<Vehicle>("vehicles"),

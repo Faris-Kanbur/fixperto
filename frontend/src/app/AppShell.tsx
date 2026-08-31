@@ -106,7 +106,8 @@ export function AppShell() {
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,
     updateMechService, removeMechService, addMechService, toggleJobListingStatus, updateJobField, renderAdminListingCard, renderAdminJobCard, openAdminAnalyze,
     analyzingUser, adminUserAnalytics, adminFilteredTickets, adminTicketAnalytics, selectedTicket, updateTicketStatus, saveTicketNote, issueTicketRefund,
-    removeReportedListing, removeFlaggedReview, grantVerification, sendAdminReply, sendBroadcast, adminRegionBreakdown, adminRevenueStats, submitAuth,
+    removeReportedListing, removeFlaggedReview, grantVerification, sendAdminReply, sendBroadcast, adminRegionBreakdown, adminRevenueStats,
+    submitRegister, submitLogin, submitOtpVerify, cancelOtpVerify, logoutUser, otpCode, setOtpCode, authNotice, setAuthNotice, authLoading,
     addVehicle, updateVehicleFields, saveReminderOverride, resetReminderOverride, submitNewReminder, updateCustomReminder, removeCustomReminder, acceptAppt,
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
@@ -419,16 +420,38 @@ export function AppShell() {
               <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Wrench size={28} className="text-rose-600" /></div><h1 className="text-2xl font-bold tracking-tight text-gray-900">{t("appName")}</h1><p className="text-xs text-gray-500 -mt-1">{role === "mechanic" ? t("mechanicRole") : t("ownerRole")}</p></div>
             </div>
             <div className="flex-1 px-6 py-6">
-              <div className="flex bg-gray-100 rounded-xl p-1 mb-6"><button onClick={() => { setScreen("login"); setAuthError(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "login" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("login")}</button><button onClick={() => { setScreen("signup"); setAuthError(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "signup" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("signup")}</button></div>
+              <div className="flex bg-gray-100 rounded-xl p-1 mb-6"><button onClick={() => { setScreen("login"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "login" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("login")}</button><button onClick={() => { setScreen("signup"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "signup" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("signup")}</button></div>
               <div className="space-y-3">
                 {screen === "signup" && (<div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("fullNameShortPlaceholder")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
                 <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t("emailPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>
                 {screen === "signup" && (<div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={t("phonePlaceholderExample2")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
-                <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
+                {/* GERÇEK OTURUM SİSTEMİ: kayıt formunda artık şifre alanı YOK — kullanıcı şifre
+                    seçmiyor, backend rastgele bir şifre üretip e-postasına gönderiyor (bkz.
+                    submitRegister / backend/routes/auth.js). Şifre alanı sadece GİRİŞ ekranında var. */}
+                {screen === "signup" && (<p className="text-xs text-gray-400 leading-relaxed">{t("signupPasswordNote")}</p>)}
+                {screen === "login" && (<div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>)}
                 {screen === "login" && (<p onClick={() => setScreen("forgotPassword")} className="text-xs text-rose-500 text-right cursor-pointer hover:underline">{t("forgotPasswordLink")}</p>)}
+                {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
                 {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
               </div>
-              <button onClick={submitAuth} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm mt-6 transition ${roleBtn}`}>{screen === "login" ? t("login") : t("signup")}</button>
+              <button disabled={authLoading} onClick={screen === "login" ? submitLogin : submitRegister} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm mt-6 transition ${roleBtn} ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : (screen === "login" ? t("login") : t("signup"))}</button>
+            </div>
+          </div>
+        )}
+        {screen === "loginOtp" && (
+          <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
+            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
+              <div className="mb-4"><button onClick={cancelOtpVerify} className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button></div>
+              <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Lock size={28} className="text-rose-600" /></div><h1 className="text-xl font-bold tracking-tight text-gray-900">{t("otpTitle")}</h1><p className="text-xs text-gray-500">{t("otpSubtitle")}</p></div>
+            </div>
+            <div className="flex-1 px-6 py-6">
+              <div className="space-y-3">
+                <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} placeholder={t("otpCodePlaceholder")} inputMode="numeric" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm tracking-[0.3em] text-center font-semibold" /></div>
+                {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
+                {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
+              </div>
+              <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm mt-6 transition ${roleBtn} ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
+              <p className="text-center text-xs text-gray-400 mt-4"><span onClick={cancelOtpVerify} className="text-rose-500 font-medium cursor-pointer hover:underline">{t("otpBackToLogin")}</span></p>
             </div>
           </div>
         )}
@@ -1270,7 +1293,7 @@ export function AppShell() {
                 <button onClick={() => setOwnerProfileTab("myReviews")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Star size={14} className="text-gray-400" /> {t("reviewsIMadeLabel")}{myReviews.length > 0 && <span className="text-xs text-gray-400">({myReviews.length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
                 <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Settings size={15} className="text-gray-400" /> {t("appSectionHeading")}</h3>
                 <button onClick={() => setOwnerProfileTab("settings")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Settings size={14} className="text-gray-400" /> {t("settingsLabel")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <button onClick={goHome} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LogOut size={14} className="text-gray-400" /> {t("logout")}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                <button onClick={logoutUser} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LogOut size={14} className="text-gray-400" /> {t("logout")}</span><ChevronRight size={15} className="text-gray-300" /></button>
               </>)}
               {ownerProfileTab === "settings" && (
                 <>
@@ -2597,7 +2620,7 @@ export function AppShell() {
                   <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                   <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                 </>)}
-                <button onClick={goHome} className="w-full border border-gray-200 text-gray-600 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition mb-5 mt-3">{t("logout")}</button>
+                <button onClick={logoutUser} className="w-full border border-gray-200 text-gray-600 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition mb-5 mt-3">{t("logout")}</button>
                 <button onClick={() => setMechDangerZoneOpen(o => !o)} className="w-full flex items-center justify-between py-2 text-xs text-gray-400 hover:text-gray-600 transition"><span>{t("dangerZoneBtn")}</span><ChevronRight size={13} className={`transition-transform ${mechDangerZoneOpen ? "rotate-90" : ""}`} /></button>
                 {mechDangerZoneOpen && (
                   <div className="border border-red-100 bg-red-50/50 rounded-2xl p-4 mt-1">

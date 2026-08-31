@@ -105,7 +105,7 @@ export function MechDetailBody() {
     toggleJobListingStatus, updateJobField, renderAdminListingCard, renderAdminJobCard, openAdminAnalyze, 
     analyzingUser, adminUserAnalytics, adminFilteredTickets, adminTicketAnalytics, selectedTicket, 
     updateTicketStatus, saveTicketNote, issueTicketRefund, removeReportedListing, removeFlaggedReview, 
-    grantVerification, sendAdminReply, sendBroadcast, adminRegionBreakdown, adminRevenueStats, submitAuth, 
+    grantVerification, sendAdminReply, sendBroadcast, adminRegionBreakdown, adminRevenueStats, 
     addVehicle, updateVehicleFields, saveReminderOverride, resetReminderOverride, submitNewReminder, 
     updateCustomReminder, removeCustomReminder, acceptAppt, rejectAppt, markNoShow, advanceStatus, 
     completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview, 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
 import { hydrate, hydrateAll, dehydrate } from "../db/hydrate.js";
+import { resolveActor } from "../utils/auth.js";
 
 // Çoklu tamirci fiyat teklifi akışı (bkz. frontend/src/app/state/AppLogicProvider.tsx:
 // submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer) generic makeCrudRouter yerine bu özel
@@ -25,18 +26,44 @@ export const quoteOffersRouter = Router();
 
 // --- quote_requests -----------------------------------------------------------------------
 
+// GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): quote_requests kişisel arıza açıklaması/fotoğraf
+// içerdiği için artık girişsiz erişime tamamen kapalı. Sahibi (ownerId eşleşen) kendi isteklerini,
+// davet edilen bir tamirci (kendi id'si mechanicIds içinde geçen) o isteği, admin ise hepsini görür.
+// mechanicIds bir JSON TEXT sütunu olduğu için (gerçek bir FK/ilişki değil) SQL WHERE ile
+// filtrelenemiyor — tüm satırlar çekilip JS tarafında filtreleniyor (bu tablo büyük veri hacmine
+// sahip değil, kabul edilebilir).
+function requestVisibleTo(row, actor) {
+  if (!actor) return false;
+  if (actor.role === "admin") return true;
+  if (actor.role === "owner") return row.ownerId === actor.id;
+  if (actor.role === "mechanic") {
+    try { return (JSON.parse(row.mechanicIds || "[]")).includes(actor.id); } catch { return false; }
+  }
+  return false;
+}
+
 quoteRequestsRouter.get("/", (req, res) => {
-  const rows = db.prepare(`SELECT * FROM quote_requests`).all();
+  const actor = resolveActor(req);
+  if (!actor) return res.status(401).json({ error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
+  const rows = db.prepare(`SELECT * FROM quote_requests`).all().filter((r) => requestVisibleTo(r, actor));
   res.json(hydrateAll("quote_requests", rows));
 });
 
 quoteRequestsRouter.get("/:id", (req, res) => {
   const row = db.prepare(`SELECT * FROM quote_requests WHERE id = ?`).get(req.params.id);
   if (!row) return res.status(404).json({ error: "quote_requests not found" });
+  const actor = resolveActor(req);
+  if (!requestVisibleTo(row, actor)) {
+    return res.status(actor ? 403 : 401).json(actor ? { error: "Bu kayda erişim yetkiniz yok." } : { error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
+  }
   res.json(hydrate("quote_requests", row));
 });
 
 quoteRequestsRouter.post("/", (req, res) => {
+  const actor = resolveActor(req);
+  if (!actor || (actor.role !== "admin" && actor.role !== "owner")) {
+    return res.status(401).json({ error: "Teklif isteği oluşturmak için araç sahibi olarak giriş yapmanız gerekiyor." });
+  }
   const body = dehydrate("quote_requests", req.body);
   let mechanicIds;
   try { mechanicIds = JSON.parse(body.mechanicIds ?? "[]"); } catch { mechanicIds = null; }
@@ -46,6 +73,9 @@ quoteRequestsRouter.post("/", (req, res) => {
   if (mechanicIds.length > MAX_QUOTE_MECHANICS) {
     return res.status(400).json({ error: `En fazla ${MAX_QUOTE_MECHANICS} tamirciye teklif isteği gönderebilirsiniz.` });
   }
+  // GÜVENLİK: ownerId İSTEMCİDEN DEĞİL oturumdan alınıyor — bir owner artık başka bir owner adına
+  // teklif isteği oluşturamaz (admin, gövdede belirtilen ownerId ile demo/test amaçlı oluşturabilir).
+  body.ownerId = actor.role === "owner" ? actor.id : body.ownerId;
   if (!body.ownerId) return res.status(400).json({ error: "ownerId zorunludur." });
   // Yeni bir istek her zaman "open" başlar — istemci başka bir şey gönderse bile yok sayılır.
   body.status = "open";
@@ -67,9 +97,20 @@ quoteRequestsRouter.post("/", (req, res) => {
 // mechanicIds) PATCH ile değiştirilemiyor.
 const IMMUTABLE_REQUEST_FIELDS = ["ownerId", "vehicleId", "mechanicIds"];
 
+// Sadece isteğin sahibi (ya da admin) düzenleyebilir/iptal edebilir/silebilir.
+function requireOwnerOrAdmin(row, req, res) {
+  const actor = resolveActor(req);
+  if (!actor) { res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." }); return false; }
+  if (actor.role === "admin") return true;
+  if (actor.role === "owner" && row.ownerId === actor.id) return true;
+  res.status(403).json({ error: "Bu işlem için yetkiniz yok." });
+  return false;
+}
+
 quoteRequestsRouter.patch("/:id", (req, res) => {
   const existing = db.prepare(`SELECT * FROM quote_requests WHERE id = ?`).get(req.params.id);
   if (!existing) return res.status(404).json({ error: "quote_requests not found" });
+  if (!requireOwnerOrAdmin(existing, req, res)) return;
   const body = dehydrate("quote_requests", req.body);
   if ("status" in body) {
     return res.status(400).json({ error: "Durum değişikliği için /cancel veya ilgili teklifin /accept uç noktasını kullanın." });
@@ -87,6 +128,9 @@ quoteRequestsRouter.patch("/:id", (req, res) => {
 // fiyat verilmiş (submitted) tüm teklifler tek transaction'da "lost" olur.
 quoteRequestsRouter.post("/:id/cancel", (req, res) => {
   const requestId = req.params.id;
+  const preCheck = db.prepare(`SELECT * FROM quote_requests WHERE id = ?`).get(requestId);
+  if (!preCheck) return res.status(404).json({ error: "quote_requests not found" });
+  if (!requireOwnerOrAdmin(preCheck, req, res)) return;
   const result = db.transaction(() => {
     const reqRow = db.prepare(`SELECT * FROM quote_requests WHERE id = ?`).get(requestId);
     if (!reqRow) return { error: 404, msg: "quote_requests not found" };
@@ -102,6 +146,9 @@ quoteRequestsRouter.post("/:id/cancel", (req, res) => {
 });
 
 quoteRequestsRouter.delete("/:id", (req, res) => {
+  const existing = db.prepare(`SELECT * FROM quote_requests WHERE id = ?`).get(req.params.id);
+  if (!existing) return res.status(404).json({ error: "quote_requests not found" });
+  if (!requireOwnerOrAdmin(existing, req, res)) return;
   try {
     const info = db.prepare(`DELETE FROM quote_requests WHERE id = ?`).run(req.params.id);
     if (info.changes === 0) return res.status(404).json({ error: "quote_requests not found" });
@@ -114,14 +161,36 @@ quoteRequestsRouter.delete("/:id", (req, res) => {
 
 // --- quote_offers --------------------------------------------------------------------------
 
+// GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): bir teklifi görme yetkisi ya o teklifin ait olduğu
+// tamirciye (mechanicId eşleşen) ya da o teklifin bağlı olduğu isteğin sahibi araç sahibine ait —
+// başka bir owner/mechanic'in tekliflerini görememeli. requestId → quote_requests.ownerId join'i
+// gerektiği için (mechanic tarafı zaten doğrudan mechanicId ile eşleşiyor) küçük bir yardımcı ile
+// çözülüyor.
+function offerVisibleTo(row, actor) {
+  if (!actor) return false;
+  if (actor.role === "admin") return true;
+  if (actor.role === "mechanic") return row.mechanicId === actor.id;
+  if (actor.role === "owner") {
+    const parentReq = db.prepare(`SELECT ownerId FROM quote_requests WHERE id = ?`).get(row.requestId);
+    return !!parentReq && parentReq.ownerId === actor.id;
+  }
+  return false;
+}
+
 quoteOffersRouter.get("/", (req, res) => {
-  const rows = db.prepare(`SELECT * FROM quote_offers`).all();
+  const actor = resolveActor(req);
+  if (!actor) return res.status(401).json({ error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
+  const rows = db.prepare(`SELECT * FROM quote_offers`).all().filter((r) => offerVisibleTo(r, actor));
   res.json(hydrateAll("quote_offers", rows));
 });
 
 quoteOffersRouter.get("/:id", (req, res) => {
   const row = db.prepare(`SELECT * FROM quote_offers WHERE id = ?`).get(req.params.id);
   if (!row) return res.status(404).json({ error: "quote_offers not found" });
+  const actor = resolveActor(req);
+  if (!offerVisibleTo(row, actor)) {
+    return res.status(actor ? 403 : 401).json(actor ? { error: "Bu kayda erişim yetkiniz yok." } : { error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
+  }
   res.json(hydrate("quote_offers", row));
 });
 
@@ -139,11 +208,27 @@ quoteOffersRouter.get("/:id", (req, res) => {
 // gibi) pozitif bir sayı olmalı — aksi halde daha önce fiyat hiç doğrulanmadan kaydedilebiliyordu.
 const ALLOWED_OFFER_CREATE_STATUSES = new Set(["pending", "submitted"]);
 
+// GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): oturum açmadan kimse teklif oluşturamaz. İki meşru
+// senaryo var: (1) araç sahibi, KENDİ isteğine davet ettiği tamirciler için demo/otomatik teklifler
+// oluşturuyor (bkz. frontend submitQuoteRequest — bu uygulamada gerçek 2. bir tamirci girişi
+// olmadan çalışan bilinen, kasıtlı bir demo davranışı) — bu durumda sadece o isteğin GERÇEK sahibi
+// olabilir; (2) bir tamirci kendi mechanicId'siyle kendi teklifini oluşturuyor — mechanicId
+// İSTEMCİDEN DEĞİL oturumdan alınıyor, başka bir tamirci adına teklif oluşturulamaz.
 quoteOffersRouter.post("/", (req, res) => {
+  const actor = resolveActor(req);
+  if (!actor || (actor.role !== "admin" && actor.role !== "owner" && actor.role !== "mechanic")) {
+    return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+  }
   const body = dehydrate("quote_offers", req.body);
   if (!body.requestId || !body.mechanicId) {
     return res.status(400).json({ error: "requestId ve mechanicId zorunludur." });
   }
+  const parentReq = db.prepare(`SELECT * FROM quote_requests WHERE id = ?`).get(body.requestId);
+  if (!parentReq) return res.status(404).json({ error: "quote_requests not found" });
+  if (actor.role === "owner" && parentReq.ownerId !== actor.id) {
+    return res.status(403).json({ error: "Bu isteğe teklif ekleme yetkiniz yok." });
+  }
+  if (actor.role === "mechanic") body.mechanicId = actor.id; // kendi kimliğin dışında bir tamirci adına teklif oluşturulamaz
   const status = body.status || "pending";
   if (!ALLOWED_OFFER_CREATE_STATUSES.has(status)) {
     return res.status(400).json({ error: "Bir teklif yalnızca 'pending' veya 'submitted' durumuyla oluşturulabilir." });
@@ -158,8 +243,6 @@ quoteOffersRouter.post("/", (req, res) => {
   } else {
     body.price = null;
   }
-  const parentReq = db.prepare(`SELECT status FROM quote_requests WHERE id = ?`).get(body.requestId);
-  if (!parentReq) return res.status(404).json({ error: "quote_requests not found" });
   if (parentReq.status !== "open") {
     return res.status(409).json({ error: "Bu teklif isteği artık açık değil." });
   }
@@ -190,6 +273,14 @@ const IMMUTABLE_OFFER_FIELDS = ["requestId", "mechanicId"];
 quoteOffersRouter.patch("/:id", (req, res) => {
   const existing = db.prepare(`SELECT * FROM quote_offers WHERE id = ?`).get(req.params.id);
   if (!existing) return res.status(404).json({ error: "quote_offers not found" });
+  // GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): fiyat sadece o teklifin GERÇEK sahibi (mechanicId
+  // eşleşen tamirci oturumu) tarafından gönderilebilir — önceden herhangi biri herhangi bir
+  // tamircinin bekleyen teklifine fiyat girebiliyordu.
+  const actor = resolveActor(req);
+  if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+  if (actor.role !== "admin" && !(actor.role === "mechanic" && existing.mechanicId === actor.id)) {
+    return res.status(403).json({ error: "Bu teklifi değiştirme yetkiniz yok." });
+  }
   const body = dehydrate("quote_offers", req.body);
   for (const f of IMMUTABLE_OFFER_FIELDS) delete body[f];
   if ("status" in body) {
@@ -230,6 +321,16 @@ quoteOffersRouter.patch("/:id", (req, res) => {
 // Şimdi pending + submitted TÜMÜ tek transaction'da lost olur, istek de aynı anda kapatılır.
 quoteOffersRouter.post("/:id/accept", (req, res) => {
   const offerId = req.params.id;
+  // GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): sadece isteği açan araç sahibi bir teklifi kabul
+  // edebilir — önceden herhangi biri herhangi bir teklifi kabul edip randevu akışını tetikleyebilirdi.
+  const preOffer = db.prepare(`SELECT * FROM quote_offers WHERE id = ?`).get(offerId);
+  if (!preOffer) return res.status(404).json({ error: "quote_offers not found" });
+  const preReq = db.prepare(`SELECT ownerId FROM quote_requests WHERE id = ?`).get(preOffer.requestId);
+  const actor = resolveActor(req);
+  if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+  if (actor.role !== "admin" && !(actor.role === "owner" && preReq && preReq.ownerId === actor.id)) {
+    return res.status(403).json({ error: "Bu teklifi kabul etme yetkiniz yok." });
+  }
   const result = db.transaction(() => {
     const offer = db.prepare(`SELECT * FROM quote_offers WHERE id = ?`).get(offerId);
     if (!offer) return { error: 404, msg: "quote_offers not found" };
@@ -256,6 +357,12 @@ quoteOffersRouter.post("/:id/accept", (req, res) => {
 quoteOffersRouter.post("/:id/decline", (req, res) => {
   const offer = db.prepare(`SELECT * FROM quote_offers WHERE id = ?`).get(req.params.id);
   if (!offer) return res.status(404).json({ error: "quote_offers not found" });
+  // GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): sadece o teklifin GERÇEK sahibi tamirci reddedebilir.
+  const actor = resolveActor(req);
+  if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+  if (actor.role !== "admin" && !(actor.role === "mechanic" && offer.mechanicId === actor.id)) {
+    return res.status(403).json({ error: "Bu teklifi reddetme yetkiniz yok." });
+  }
   if (offer.status !== "pending") return res.status(409).json({ error: "Sadece yanıt bekleyen bir teklif reddedilebilir." });
   db.prepare(`UPDATE quote_offers SET status = 'declined' WHERE id = ?`).run(req.params.id);
   const updated = db.prepare(`SELECT * FROM quote_offers WHERE id = ?`).get(req.params.id);
@@ -263,6 +370,12 @@ quoteOffersRouter.post("/:id/decline", (req, res) => {
 });
 
 quoteOffersRouter.delete("/:id", (req, res) => {
+  const existing = db.prepare(`SELECT * FROM quote_offers WHERE id = ?`).get(req.params.id);
+  if (!existing) return res.status(404).json({ error: "quote_offers not found" });
+  if (!offerVisibleTo(existing, resolveActor(req))) {
+    const actor = resolveActor(req);
+    return res.status(actor ? 403 : 401).json(actor ? { error: "Bu teklifi silme yetkiniz yok." } : { error: "Bu işlem için giriş yapmanız gerekiyor." });
+  }
   try {
     const info = db.prepare(`DELETE FROM quote_offers WHERE id = ?`).run(req.params.id);
     if (info.changes === 0) return res.status(404).json({ error: "quote_offers not found" });

@@ -8,6 +8,7 @@ import profileViewsRouter from "./routes/profileViews.js";
 import translateRouter from "./routes/translate.js";
 import { quoteRequestsRouter, quoteOffersRouter } from "./routes/quotes.js";
 import { conversationsRouter } from "./routes/conversations.js";
+import { authRouter } from "./routes/auth.js";
 
 seedIfEmpty();
 
@@ -44,20 +45,46 @@ app.use(express.json({ limit: "5mb" }));
 
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "fixperto-backend" }));
 
-app.use("/api/mechanics", makeCrudRouter("mechanics", { shareCountColumn: "shareCount", passwordVerify: true }));
-app.use("/api/owners", makeCrudRouter("owners", { passwordVerify: true }));
-app.use("/api/vehicles", makeCrudRouter("vehicles"));
-app.use("/api/appointments", makeCrudRouter("appointments"));
-app.use("/api/listings", makeCrudRouter("listings", { shareCountColumn: "shareCount" }));
+// GERÇEK OTURUM SİSTEMİ: aşağıdaki authScope seçenekleri, bu oturumda eklenen gerçek owner/mechanic
+// giriş sistemine (bkz. backend/routes/auth.js) bağlanıyor. Her kaynak, "kimin verisi" sorusunu artık
+// istemciden gelen ownerId/mechanicId'ye güvenerek değil, doğrulanmış oturum kimliğinden cevaplıyor
+// (bkz. makeCrudRouter.js üstündeki büyük yorum). vehicles/appointments/tickets tamamen özel veri
+// olduğu için publicRead:false (girişsiz kimse göremez, sahibi ya da admin görür); mechanics/owners/
+// listings/jobs pazar yeri gezinme deneyimi için okumada açık kalıyor (publicRead varsayılan true),
+// sadece yazma (kayıt oluşturma/değiştirme/silme) artık gerçek sahiplik kontrolüne tabi.
+app.use("/api/mechanics", makeCrudRouter("mechanics", {
+  shareCountColumn: "shareCount", passwordVerify: true,
+  authScope: { fields: [{ field: "id", role: "mechanic" }] },
+}));
+app.use("/api/owners", makeCrudRouter("owners", {
+  passwordVerify: true,
+  authScope: { fields: [{ field: "id", role: "owner" }] },
+}));
+app.use("/api/vehicles", makeCrudRouter("vehicles", {
+  authScope: { fields: [{ field: "ownerId", role: "owner" }], publicRead: false },
+}));
+app.use("/api/appointments", makeCrudRouter("appointments", {
+  authScope: { fields: [{ field: "ownerId", role: "owner" }, { field: "mechanicId", role: "mechanic" }], publicRead: false },
+}));
+app.use("/api/listings", makeCrudRouter("listings", {
+  shareCountColumn: "shareCount",
+  authScope: { fields: [{ field: "sellerId", role: "owner" }, { field: "sellerId", role: "mechanic" }] },
+}));
 // Genel CRUD factory yerine özel router (bkz. backend/routes/conversations.js) — mesaj
 // şeklinin/boyutunun ve sohbet kimliğinin (mechanicId) her zaman geçerli kalması için.
 app.use("/api/conversations", conversationsRouter);
-app.use("/api/jobs", makeCrudRouter("job_listings", { shareCountColumn: "shareCount" }));
-app.use("/api/tickets", makeCrudRouter("support_tickets"));
+app.use("/api/jobs", makeCrudRouter("job_listings", {
+  shareCountColumn: "shareCount",
+  authScope: { fields: [{ field: "mechanicId", role: "mechanic" }] },
+}));
+app.use("/api/tickets", makeCrudRouter("support_tickets", {
+  authScope: { fields: [{ field: "fromId", role: "owner" }, { field: "fromId", role: "mechanic" }], publicRead: false },
+}));
 // Genel CRUD factory yerine özel router (bkz. backend/routes/quotes.js) — limit doğrulama,
 // atomik kabul/iptal/reddet geçişleri ve durum makinesi kuralları için.
 app.use("/api/quote-requests", quoteRequestsRouter);
 app.use("/api/quote-offers", quoteOffersRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/share-events", shareEventsRouter);
 app.use("/api/profile-views", profileViewsRouter);

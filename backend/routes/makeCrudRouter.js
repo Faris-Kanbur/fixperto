@@ -1,32 +1,90 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
 import { hydrate, hydrateAll, dehydrate } from "../db/hydrate.js";
+import { hashPassword, verifyPassword as bcryptVerify, resolveActor } from "../utils/auth.js";
 
 // Generic REST CRUD router factory: GET /, GET /:id, POST /, PATCH /:id, DELETE /:id.
 // Every Fixperto entity table (mechanics, listings, appointments, ...) follows the
 // same simple id-keyed shape, so one factory covers all of them instead of hand
 // writing near-identical Express handlers six times over.
-export function makeCrudRouter(table, { idColumn = "id", shareCountColumn = null, passwordVerify = false } = {}) {
+//
+// GERÇEK OTURUM SİSTEMİ: bu proje şimdiye kadar owner/mechanic için gerçek bir oturum katmanı
+// olmadığını defalarca (REFACTOR_REPORT.md, bu oturumdaki güvenlik taramaları) belgeledi — her
+// yazma isteği, gövdede kim gönderirse göndersin, olduğu gibi kabul ediliyordu. `authScope` bunu
+// kapatıyor: bir kaynağı (ör. vehicles → ownerId alanı, owner rolü) belirli bir sahiplik alanına
+// bağlar. Devreye alındığında:
+//   - POST: geçerli bir oturum (roller `fields` içinde listelenenlerden biri) zorunlu; sahiplik
+//     alanı İSTEMCİDEN DEĞİL, oturumdan (req session id) alınır — client hangi ownerId'yi
+//     gönderirse göndersin görmezden gelinir, böylece biri başkası adına kayıt oluşturamaz.
+//   - PATCH/DELETE: mevcut satırın sahiplik alanı oturumun kimliğiyle eşleşmiyorsa 403. Admin
+//     token'ı her zaman geçer (yönetim paneli tüm kayıtları yönetebilmeli).
+//   - GET (liste + tekil): `publicRead: false` ise oturumsuz erişim tamamen kapalı ve liste sonucu
+//     sadece çağıranın kendi kayıtlarıyla sınırlanıyor (admin hepsini görür). `publicRead: true`
+//     (varsayılan, mechanics/listings/jobs gibi pazar yeri verileri için) GET'leri değiştirmiyor —
+//     bunlar zaten girişsiz gezinme için herkese açık kalmalı.
+export function makeCrudRouter(table, {
+  idColumn = "id",
+  shareCountColumn = null,
+  passwordVerify = false,
+  authScope = null, // { fields: [{ field: "ownerId", role: "owner" }, ...], publicRead?: boolean }
+} = {}) {
   const router = Router();
+  const scopeFields = authScope?.fields || [];
+  const publicRead = authScope ? authScope.publicRead !== false : true;
+
+  function matchingField(actor, row) {
+    return scopeFields.find((f) => f.role === actor?.role && row[f.field] === actor.id);
+  }
 
   router.get("/", (req, res) => {
-    const rows = db.prepare(`SELECT * FROM ${table}`).all();
+    if (!authScope || publicRead) {
+      const rows = db.prepare(`SELECT * FROM ${table}`).all();
+      return res.json(hydrateAll(table, rows));
+    }
+    const actor = resolveActor(req);
+    if (!actor) return res.status(401).json({ error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
+    if (actor.role === "admin") {
+      return res.json(hydrateAll(table, db.prepare(`SELECT * FROM ${table}`).all()));
+    }
+    const myFields = scopeFields.filter((f) => f.role === actor.role);
+    if (myFields.length === 0) return res.json([]);
+    const where = myFields.map((f) => `${f.field} = ?`).join(" OR ");
+    const rows = db.prepare(`SELECT * FROM ${table} WHERE ${where}`).all(...myFields.map(() => actor.id));
     res.json(hydrateAll(table, rows));
   });
 
   router.get("/:id", (req, res) => {
     const row = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
     if (!row) return res.status(404).json({ error: `${table} not found` });
+    if (authScope && !publicRead) {
+      const actor = resolveActor(req);
+      if (!actor) return res.status(401).json({ error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
+      if (actor.role !== "admin" && !matchingField(actor, row)) {
+        return res.status(403).json({ error: "Bu kayda erişim yetkiniz yok." });
+      }
+    }
     res.json(hydrate(table, row));
   });
 
   router.post("/", (req, res) => {
+    let actor = null;
+    if (authScope) {
+      actor = resolveActor(req);
+      if (!actor || (actor.role !== "admin" && !scopeFields.some((f) => f.role === actor.role))) {
+        return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+      }
+    }
     const body = dehydrate(table, req.body);
     // GÜVENLİK: password bu genel (mass-assignment'a açık) yazma yolundan asla kabul edilmiyor —
     // yalnızca aşağıdaki özel /:id/set-password uç noktasından değiştirilebilir (bkz. o uç
     // noktanın yorumu). passwordVerify açık olmayan tablolarda (yani şifre sütunu olmayanlarda)
     // bu satırın hiçbir etkisi yok.
     if (passwordVerify) delete body.password;
+    // Sahiplik alanı İSTEMCİDEN DEĞİL oturumdan geliyor — client `ownerId: 9999` gönderse bile
+    // (başka bir kullanıcı adına kayıt oluşturmaya çalışsa bile) yok sayılır.
+    if (actor && actor.role !== "admin") {
+      for (const f of scopeFields) if (f.role === actor.role) body[f.field] = actor.id;
+    }
     const cols = Object.keys(body);
     const stmt = db.prepare(`INSERT INTO ${table} (${cols.join(",")}) VALUES (${cols.map((c) => `@${c}`).join(",")})`);
     const info = stmt.run(body);
@@ -37,8 +95,16 @@ export function makeCrudRouter(table, { idColumn = "id", shareCountColumn = null
   router.patch("/:id", (req, res) => {
     const existing = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
     if (!existing) return res.status(404).json({ error: `${table} not found` });
+    if (authScope) {
+      const actor = resolveActor(req);
+      if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+      if (actor.role !== "admin" && !matchingField(actor, existing)) {
+        return res.status(403).json({ error: "Bu kaydı değiştirme yetkiniz yok." });
+      }
+    }
     const body = dehydrate(table, req.body);
     if (passwordVerify) delete body.password;
+    if (authScope) for (const f of scopeFields) delete body[f.field]; // sahiplik alanı PATCH ile devredilemez
     const cols = Object.keys(body).filter((c) => c !== idColumn);
     if (cols.length === 0) return res.json(hydrate(table, existing));
     const stmt = db.prepare(`UPDATE ${table} SET ${cols.map((c) => `${c} = @${c}`).join(",")} WHERE ${idColumn} = @__id`);
@@ -47,39 +113,56 @@ export function makeCrudRouter(table, { idColumn = "id", shareCountColumn = null
     res.json(hydrate(table, updated));
   });
 
-  // GÜVENLİK DÜZELTMESİ: şifre artık genel POST/PATCH üzerinden (yukarıda engellendi) değil,
-  // sadece bu iki özel uç noktadan değişebiliyor. `verify-password` mevcut şifreyi doğrulamak
-  // için var (kullanıcının kendi "şifre değiştir" formu) — şifrenin kendisini asla döndürmez,
-  // sadece eşleşip eşleşmediğini (true/false) söyler. `set-password` gerçek yazma işlemini yapar;
-  // bunu hem kendi şifresini değiştiren kullanıcı (önce verify-password ile doğrulandıktan sonra)
-  // hem de admin paneli (kullanıcı adına sıfırlama, doğrulama gerektirmeden) çağırıyor — backend'de
-  // gerçek bir oturum katmanı olmadığı için "bu isteği admin mi yoksa kullanıcının kendisi mi
-  // gönderdi" ayrımı burada yapılamıyor (bkz. REFACTOR_REPORT.md bölüm 9 madde 2); bu akışın hangi
-  // sırayla çağrılacağına (önce doğrula, sonra yaz) frontend karar veriyor — mevcut mimarideki
-  // rol/yetki modeliyle aynı, sadece şifrenin ağ üzerinden düz metin olarak GERİ dönmesini
-  // engelliyor.
+  // GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): şifre artık düz metin karşılaştırma DEĞİL, bcrypt
+  // hash karşılaştırmasıyla doğrulanıyor (bkz. backend/utils/auth.js, backend/db/db.js hash
+  // migrasyonu). Ayrıca bu iki uç nokta artık TAMAMEN açık değil — ya kaydın kendi sahibinin geçerli
+  // oturumu ya da geçerli bir admin token'ı gerekiyor. Önceden (bu oturumun daha önceki bir
+  // düzeltmesinde) buraya hiç oturum kontrolü eklenmemişti çünkü henüz gerçek bir oturum sistemi
+  // yoktu — artık var, o boşluk burada kapatılıyor.
   if (passwordVerify) {
-    router.post("/:id/verify-password", (req, res) => {
+    function requireSelfOrAdmin(req, res) {
+      const actor = resolveActor(req);
+      const selfRole = table === "owners" ? "owner" : "mechanic";
+      if (!actor) { res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." }); return null; }
+      if (actor.role === "admin") return actor;
+      if (actor.role === selfRole && String(actor.id) === String(req.params.id)) return actor;
+      res.status(403).json({ error: "Bu işlem için yetkiniz yok." });
+      return null;
+    }
+
+    router.post("/:id/verify-password", async (req, res) => {
+      if (!requireSelfOrAdmin(req, res)) return;
       const { password } = req.body || {};
       const row = db.prepare(`SELECT password FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
       if (!row) return res.status(404).json({ error: `${table} not found` });
-      const stored = row.password ?? "demo1234";
-      res.json({ valid: typeof password === "string" && password.length > 0 && password === stored });
+      const valid = typeof password === "string" && password.length > 0 && await bcryptVerify(password, row.password);
+      res.json({ valid: !!valid });
     });
 
-    router.post("/:id/set-password", (req, res) => {
+    router.post("/:id/set-password", async (req, res) => {
+      if (!requireSelfOrAdmin(req, res)) return;
       const { password } = req.body || {};
       if (typeof password !== "string" || password.length < 6) {
         return res.status(400).json({ error: "Şifre en az 6 karakter olmalı." });
       }
       const existing = db.prepare(`SELECT ${idColumn} FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
       if (!existing) return res.status(404).json({ error: `${table} not found` });
-      db.prepare(`UPDATE ${table} SET password = ? WHERE ${idColumn} = ?`).run(password, req.params.id);
+      const hashed = await hashPassword(password);
+      db.prepare(`UPDATE ${table} SET password = ? WHERE ${idColumn} = ?`).run(hashed, req.params.id);
       res.json({ ok: true });
     });
   }
 
   router.delete("/:id", (req, res) => {
+    if (authScope) {
+      const existing = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
+      if (!existing) return res.status(404).json({ error: `${table} not found` });
+      const actor = resolveActor(req);
+      if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+      if (actor.role !== "admin" && !matchingField(actor, existing)) {
+        return res.status(403).json({ error: "Bu kaydı silme yetkiniz yok." });
+      }
+    }
     const info = db.prepare(`DELETE FROM ${table} WHERE ${idColumn} = ?`).run(req.params.id);
     if (info.changes === 0) return res.status(404).json({ error: `${table} not found` });
     res.status(204).end();

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
 import { hydrate, hydrateAll, dehydrate } from "../db/hydrate.js";
+import { resolveActor } from "../utils/auth.js";
 
 // GÜVENLİK DÜZELTMESİ (sohbet akışı denetiminde bulundu): conversations daha önce generic
 // makeCrudRouter kullanıyordu — bu, `messages` alanının PATCH ile TAMAMEN SERBEST bir JSON dizisi
@@ -14,9 +15,10 @@ import { hydrate, hydrateAll, dehydrate } from "../db/hydrate.js";
 // (3) Boyut sınırı yoktu (5mb'lık genel body limitine kadar) — tek bir PATCH ile devasa bir
 //     `messages` dizisi veya çok büyük bir `image` data URI'si yazılabilirdi.
 // Bu router, generic CRUD'un GET/DELETE davranışını aynen korurken POST/PATCH'e bu doğrulamaları
-// ekliyor. Not: backend'de hâlâ gerçek bir oturum/kimlik doğrulama katmanı yok (bkz.
-// REFACTOR_REPORT.md) — bu yüzden "bu isteği gerçekten bu sohbetin bir tarafı mı gönderdi" sorusu
-// burada da cevaplanamıyor; amaç sadece verinin ŞEKLİNİN her zaman geçerli kalmasını garanti etmek.
+// ekliyor. GÜNCELLEME (gerçek oturum sistemi): artık backend/utils/auth.js üzerinden gerçek bir
+// oturum katmanı var — aşağıdaki her uç nokta artık "bu isteği gerçekten bu sohbetin bir tarafı mı
+// gönderdi" sorusunu da (mecanicId eşleşen tamirci ya da giriş yapmış owner/admin) cevaplıyor,
+// veri şeklinin geçerliliğinin yanı sıra.
 const MAX_MESSAGE_TEXT_LEN = 4000;
 const MAX_MESSAGE_IMAGE_LEN = 6_000_000; // ~4.5MB ikili veri karşılığı base64 (5mb body limitinin altında)
 const MAX_MESSAGES_PER_CONVERSATION = 2000;
@@ -41,22 +43,46 @@ function validateMessages(messages) {
 
 const IMMUTABLE_CONVERSATION_FIELDS = ["mechanicId"];
 
+// GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): conversations tablosunda gerçek bir ownerId sütunu
+// yok (bkz. şema — bu uygulama tek bir "aktif" araç sahibi kimliği varsayımıyla tasarlandı, bkz.
+// REFACTOR_REPORT.md). Bu yüzden bir sohbetin "sahipliği" iki taraflı: mechanicId eşleşen tamirci
+// ya da GİRİŞ YAPMIŞ herhangi bir owner (uygulamanın mimarisinde zaten tek bir owner kimliği "aktif"
+// kabul ediliyor). Admin her zaman erişebilir.
+function convoVisibleTo(row, actor) {
+  if (!actor) return false;
+  if (actor.role === "admin" || actor.role === "owner") return true;
+  if (actor.role === "mechanic") return row.mechanicId === actor.id;
+  return false;
+}
+
 export const conversationsRouter = Router();
 
 conversationsRouter.get("/", (req, res) => {
-  const rows = db.prepare(`SELECT * FROM conversations`).all();
+  const actor = resolveActor(req);
+  if (!actor) return res.status(401).json({ error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
+  const rows = db.prepare(`SELECT * FROM conversations`).all().filter((r) => convoVisibleTo(r, actor));
   res.json(hydrateAll("conversations", rows));
 });
 
 conversationsRouter.get("/:id", (req, res) => {
   const row = db.prepare(`SELECT * FROM conversations WHERE id = ?`).get(req.params.id);
   if (!row) return res.status(404).json({ error: "conversations not found" });
+  const actor = resolveActor(req);
+  if (!convoVisibleTo(row, actor)) {
+    return res.status(actor ? 403 : 401).json(actor ? { error: "Bu kayda erişim yetkiniz yok." } : { error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
+  }
   res.json(hydrate("conversations", row));
 });
 
 conversationsRouter.post("/", (req, res) => {
+  const actor = resolveActor(req);
+  if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
   const body = dehydrate("conversations", req.body);
   if (!body.mechanicId) return res.status(400).json({ error: "mechanicId zorunludur." });
+  // Bir tamirci sadece KENDİ mechanicId'siyle bir sohbet dizisi açabilir (kendi kimliği dışında bir
+  // tamirci adına konuşma başlatamaz) — owner ise (bkz. yukarısı, uygulamada tek aktif owner
+  // kimliği var) istediği tamirciyle sohbet başlatabilir.
+  if (actor.role === "mechanic") body.mechanicId = actor.id;
   if ("messages" in req.body) {
     const err = validateMessages(req.body.messages);
     if (err) return res.status(400).json({ error: err });
@@ -71,6 +97,10 @@ conversationsRouter.post("/", (req, res) => {
 conversationsRouter.patch("/:id", (req, res) => {
   const existing = db.prepare(`SELECT * FROM conversations WHERE id = ?`).get(req.params.id);
   if (!existing) return res.status(404).json({ error: "conversations not found" });
+  const actor = resolveActor(req);
+  if (!convoVisibleTo(existing, actor)) {
+    return res.status(actor ? 403 : 401).json(actor ? { error: "Bu sohbeti değiştirme yetkiniz yok." } : { error: "Bu işlem için giriş yapmanız gerekiyor." });
+  }
   if ("messages" in req.body) {
     const err = validateMessages(req.body.messages);
     if (err) return res.status(400).json({ error: err });
@@ -86,6 +116,12 @@ conversationsRouter.patch("/:id", (req, res) => {
 });
 
 conversationsRouter.delete("/:id", (req, res) => {
+  const existing = db.prepare(`SELECT * FROM conversations WHERE id = ?`).get(req.params.id);
+  if (!existing) return res.status(404).json({ error: "conversations not found" });
+  const actor = resolveActor(req);
+  if (!convoVisibleTo(existing, actor)) {
+    return res.status(actor ? 403 : 401).json(actor ? { error: "Bu sohbeti silme yetkiniz yok." } : { error: "Bu işlem için giriş yapmanız gerekiyor." });
+  }
   const info = db.prepare(`DELETE FROM conversations WHERE id = ?`).run(req.params.id);
   if (info.changes === 0) return res.status(404).json({ error: "conversations not found" });
   res.status(204).end();

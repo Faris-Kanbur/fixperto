@@ -5,7 +5,7 @@ import { T, useT } from "../../data/i18n";
 import {
   BANNER_PRESETS, ONBOARDING_SLIDES, DAY_KEYS, DAY_LABELS, DAY_LABELS_FULL, JS_DAY_TO_KEY,
   FUEL_TYPES, TRANSMISSIONS, EMPLOYMENT_TYPES, EXPERIENCE_LEVELS, EMPTY_JOB_FORM, DEFAULT_HOURS,
-  PRICE_LEVEL_BREAKS, PRICE_TIER_BREAKS, ANALYTICS_RANGES, MY_MECHANIC_ID, MY_OWNER_ID, TRACK_STATUSES_MANUAL, TRACK_LABELS_MANUAL,
+  PRICE_LEVEL_BREAKS, PRICE_TIER_BREAKS, ANALYTICS_RANGES, MY_MECHANIC_ID, MY_OWNER_ID, setMyMechanicId, setMyOwnerId, TRACK_STATUSES_MANUAL, TRACK_LABELS_MANUAL,
   TRACK_STATUSES_AUTO, TRACK_LABELS_AUTO, TODAY, TODAY_STR, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS,
   ATU_FIXED_CATALOG, DICT_TR_EN, DICT_EN_TR, LEGAL_TIRE_RULES, DE_CITIES, REMINDER_KIND_LABELS,
   FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, LEGAL_CONTENT,
@@ -54,6 +54,23 @@ function useAppLogic() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
   const [authError, setAuthError] = useState("");
+  // GERÇEK OTURUM SİSTEMİ: giriş artık iki adımlı (şifre -> e-postaya gönderilen OTP kodu).
+  // otpCode: kullanıcının girdiği 6 haneli kod. pendingLoginTicket: backend'in login() yanıtında
+  // verdiği kısa ömürlü bilet — sadece bu bilet + doğru kod ile gerçek oturum token'ı alınabiliyor.
+  // authNotice: hata değil, bilgilendirme metni (ör. "e-postanızı kontrol edin" veya SMTP
+  // ayarlanmamışsa geliştirme kolaylığı olarak gösterilen devPassword/devOtp). authLoading: istek
+  // sürerken butonları tekrar tıklamayı engellemek için. sessionVersion: bir oturum kurulduğunda
+  // (girişte OTP doğrulanınca ya da sayfa açılışında localStorage'daki eski oturum geri
+  // yüklendiğinde) artan bir sayaç — özel/kullanıcıya-özgü verileri (araçlar, randevular, teklifler,
+  // sohbetler, destek talepleri) çeken efekt buna bağımlı, böylece sadece gerçekten bir kimlik
+  // kurulduğunda tetikleniyor. pendingOnboarding: kayıt tamamlandığında true olur, ilk gerçek
+  // girişte (OTP doğrulanıp panele geçildiğinde) onboarding slaytlarını göstermek için tüketilir.
+  const [otpCode, setOtpCode] = useState("");
+  const [pendingLoginTicket, setPendingLoginTicket] = useState(null);
+  const [authNotice, setAuthNotice] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [sessionVersion, setSessionVersion] = useState(0);
+  const [pendingOnboarding, setPendingOnboarding] = useState(false);
   const [ownerTab, setOwnerTab] = useState("search");
   const [ownerMode, setOwnerMode] = useState("mechanics");
   const [ownerSettings, setOwnerSettings] = useState({ smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true });
@@ -355,57 +372,33 @@ function useAppLogic() {
   // (replaces the single-file demo's hardcoded MECHANICS_INITIAL / INITIAL_* mock arrays).
   const [apiReady, setApiReady] = useState(false);
   const [apiError, setApiError] = useState(null);
+  // GERÇEK OTURUM SİSTEMİ: bu efekt eskiden HER ŞEYİ (özel/kullanıcıya-özgü veriler dahil) tek bir
+  // Promise.all içinde, sayfa her açıldığında koşulsuz çekiyordu — çünkü MY_OWNER_ID/MY_MECHANIC_ID
+  // sabit demo id'leriydi, "giriş yapılmamış" diye bir durum yoktu. Artık vehicles/appointments/
+  // tickets/quote-requests/quote-offers/conversations uç noktaları gerçek oturum gerektiriyor (bkz.
+  // server.js authScope, publicRead:false) — bu yüzden bu tek istek grubu artık İKİYE ayrıldı:
+  // (1) aşağıdaki "genel" efekt — girişsiz bir ziyaretçi için de güvenle çekilebilecek, pazar yeri
+  //     gezinme deneyimi için gereken veriler (tamirciler, ilanlar, iş ilanları, araç sahipleri
+  //     dizini, duyurular). Sayfa her açıldığında koşulsuz çalışır.
+  // (2) az aşağıdaki "özel" efekt — sadece gerçek bir oturum kurulduğunda (girişte OTP doğrulanınca
+  //     ya da sayfa açılışında localStorage'daki eski oturumun geri yüklenmesiyle, bkz. sessionVersion)
+  //     çalışır ve SADECE o kullanıcıya ait özel verileri çeker.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        // GÜVENLİK DÜZELTMESİ: api.admin.changeLog() artık admin token'ı gerektiriyor (bkz.
-        // backend/routes/admin.js requireAdminAuth) — sayfa her açıldığında (owner/mechanic/hiç
-        // giriş yapılmamış ziyaretçi dahil, rol her zaman sıfırlanmış başlıyor) bu çağrı artık
-        // 401 ile reddedilir. Promise.all içinde kalsaydı TEK bir başarısız istek yüzünden TÜM
-        // bootstrap (mechanics/owners/vehicles/... hiçbiri) yüklenemezdi — bu yüzden değişiklik
-        // geçmişi artık burada değil, admin gerçekten giriş yaptıktan SONRA ayrıca çekiliyor
-        // (bkz. submitAdminLogin -> fetchAdminChangeLog).
-        const [mechanicsRes, vehiclesRes, appointmentsRes, listingsRes, jobsRes, ownersRes, ticketsRes, quoteRequestsRes, quoteOffersRes, conversationsRes, broadcastsRes] = await Promise.all([
+        const [mechanicsRes, listingsRes, jobsRes, ownersRes, broadcastsRes] = await Promise.all([
           api.mechanics.list(),
-          api.vehicles.list(),
-          api.appointments.list(),
           api.listings.list(),
           api.jobs.list(),
           api.owners.list(),
-          api.tickets.list(),
-          api.quoteRequests.list(),
-          api.quoteOffers.list(),
-          api.conversations.list(),
           api.broadcasts.list(),
         ]);
         if (cancelled) return;
         setMechanicsList(mechanicsRes);
-        // GÜVENLİK DÜZELTMESİ: `iban`/`bankName`/`accountHolder` artık toplu tamirci listesinde
-        // (GET /api/mechanics) dönmüyor (bkz. backend/db/hydrate.js) — çünkü bu alanlar sadece
-        // tamircinin KENDİ profil ayarlarında gösterilmesi gereken özel bilgiler, herkese açık
-        // arama/keşfet listesinde değil (böylece API'yi bilen biri tek istekle TÜM tamircilerin
-        // banka bilgisini toplayamıyor). Kendi profilimiz (myProfile, MY_MECHANIC_ID) bu alanlara
-        // ihtiyaç duyduğu için, tek kayıt uç noktasından (GET /api/mechanics/:id — bu alanları hâlâ
-        // döndürüyor) ayrıca çekip listedeki kendi kaydımızın üzerine yazıyoruz. Diğer tamirciler
-        // için listede bu alanlar hâlâ yok — zaten kimse başkasının banka bilgisini görmemeli.
-        api.mechanics.get(MY_MECHANIC_ID).then((full) => {
-          if (cancelled) return;
-          setMechanicsList((list) => list.map((m) => (m.id === MY_MECHANIC_ID ? { ...m, ...full } : m)));
-        }).catch(() => { /* profil ayarları ekranı boş IBAN ile açılır, kritik değil */ });
-        setVehicles(vehiclesRes);
-        setAppointments(appointmentsRes);
         setListings(listingsRes);
         setJobListings(jobsRes);
         setOwnersDirectory(ownersRes);
-        const myOwnerRow = ownersRes.find((o) => o.id === MY_OWNER_ID);
-        if (myOwnerRow?.favoriteIds) setFavoriteIds(myOwnerRow.favoriteIds);
-        if (myOwnerRow?.favoriteMechanicIds) setFavoriteMechanicIds(myOwnerRow.favoriteMechanicIds);
-        if (myOwnerRow?.likedReviewIds) setLikedReviewIds(myOwnerRow.likedReviewIds);
-        setSupportTickets(ticketsRes);
-        setQuoteRequests(quoteRequestsRes);
-        setQuoteOffers(quoteOffersRes);
-        setConversations(conversationsRes);
         // Admin duyuruları — önceden sadece local state'te tutuluyor, sayfa yenilenince
         // kayboluyordu (bkz. sendBroadcast); artık backend'den gelen gerçek kayıtlarla dolduruluyor.
         setBroadcastLog((broadcastsRes || []).map((b: any) => ({
@@ -420,6 +413,78 @@ function useAppLogic() {
         if (!cancelled) setApiError(err.message || "Backend'e bağlanılamadı.");
       }
     })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // ÖZEL (oturum gerektiren) veriler: sadece gerçek bir kimlik kurulduğunda (sessionVersion arttığında)
+  // çekilir. Logout'ta bu diziler ayrıca boşaltılıyor (bkz. logoutUser) — bu efekt sadece "kur" tarafını
+  // yönetiyor, "temizle" tarafı logoutUser'da.
+  useEffect(() => {
+    if (sessionVersion === 0) return; // henüz hiç oturum kurulmadı (ilk mount, girişsiz ziyaretçi)
+    if (MY_OWNER_ID == null && MY_MECHANIC_ID == null) return; // savunma amaçlı: kimlik yoksa çekme
+    let cancelled = false;
+    (async () => {
+      try {
+        const [vehiclesRes, appointmentsRes, ticketsRes, quoteRequestsRes, quoteOffersRes, conversationsRes] = await Promise.all([
+          api.vehicles.list(),
+          api.appointments.list(),
+          api.tickets.list(),
+          api.quoteRequests.list(),
+          api.quoteOffers.list(),
+          api.conversations.list(),
+        ]);
+        if (cancelled) return;
+        setVehicles(vehiclesRes);
+        setAppointments(appointmentsRes);
+        setSupportTickets(ticketsRes);
+        setQuoteRequests(quoteRequestsRes);
+        setQuoteOffers(quoteOffersRes);
+        setConversations(conversationsRes);
+        if (MY_MECHANIC_ID != null) {
+          // GÜVENLİK DÜZELTMESİ: `iban`/`bankName`/`accountHolder` artık toplu tamirci listesinde
+          // (GET /api/mechanics) dönmüyor (bkz. backend/db/hydrate.js) — bu alanlar sadece tamircinin
+          // KENDİ profil ayarlarında gösterilmeli. Kendi profilimiz bu alanlara ihtiyaç duyduğu için,
+          // tek kayıt uç noktasından (GET /api/mechanics/:id — bu alanları hâlâ döndürüyor) ayrıca
+          // çekip listedeki kendi kaydımızın üzerine yazıyoruz.
+          api.mechanics.get(MY_MECHANIC_ID).then((full) => {
+            if (cancelled) return;
+            setMechanicsList((list) => list.map((m) => (m.id === MY_MECHANIC_ID ? { ...m, ...full } : m)));
+          }).catch(() => { /* profil ayarları ekranı boş IBAN ile açılır, kritik değil */ });
+        }
+        if (MY_OWNER_ID != null) {
+          // favoriteIds/favoriteMechanicIds/likedReviewIds genel owners listesinde de var, ama o liste
+          // MY_OWNER_ID henüz null iken (girişsiz) çekildiği için burada tek kayıttan tazeliyoruz.
+          api.owners.get(MY_OWNER_ID).then((full) => {
+            if (cancelled) return;
+            if (full?.favoriteIds) setFavoriteIds(full.favoriteIds);
+            if (full?.favoriteMechanicIds) setFavoriteMechanicIds(full.favoriteMechanicIds);
+            if (full?.likedReviewIds) setLikedReviewIds(full.likedReviewIds);
+          }).catch(() => { /* kritik değil, favoriler boş açılır */ });
+        }
+      } catch (err) {
+        if (!cancelled) setToast({ type: "info", text: `⚠️ Özel veriler yüklenemedi: ${err?.message || "Sunucuya bağlanılamadı."}` });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [sessionVersion]);
+
+  // GERÇEK OTURUM SİSTEMİ: sayfa açıldığında localStorage'da geçerli bir oturum token'ı varsa
+  // (bkz. client.ts SESSION_STORAGE_KEY) onu /api/auth/me ile doğrula ve kimliği geri yükle —
+  // aksi halde her sayfa yenilemesinde kullanıcı tekrar giriş yapmak zorunda kalırdı. Token artık
+  // geçersizse (ör. backend yeniden başladı, in-memory oturum haritası sıfırlandı) sessizce temizlenir
+  // ve kullanıcı normal girişsiz/misafir akışına düşer.
+  useEffect(() => {
+    if (!api.auth.hasStoredSession()) return;
+    let cancelled = false;
+    api.auth.me().then((user) => {
+      if (cancelled || !user) return;
+      if (user.role === "owner") setMyOwnerId(user.id); else setMyMechanicId(user.id);
+      setRole(user.role);
+      setScreen(user.role === "owner" ? "owner" : "mechanicDashboard");
+      setSessionVersion((v) => v + 1);
+    }).catch(() => {
+      if (!cancelled) api.auth.clearSession();
+    });
     return () => { cancelled = true; };
   }, []);
 
@@ -1944,36 +2009,90 @@ function useAppLogic() {
     const estCommission = estGMV * PLATFORM_COMMISSION_RATE;
     return { completedCount: completedAppts.length, avgTicket: Math.round(avgTicket), estGMV: Math.round(estGMV), estCommission: Math.round(estCommission) };
   }, [appointments, mechanicsList]);
-  const submitAuth = () => {
-    if (screen === "signup") {
-      if (!isValidEmail(form.email)) { setAuthError("Geçersiz e-posta adresi. Lütfen geçerli bir e-posta girin (örn. ad@ornek.com)."); return; }
-      const phoneCheck = validatePhone(form.phone);
-      if (!phoneCheck.valid) { setAuthError(phoneCheck.message); return; }
+  // GERÇEK OTURUM SİSTEMİ: eski submitAuth() burada duruyordu — sadece SABİT demo owner/mechanic
+  // satırını (MY_OWNER_ID/MY_MECHANIC_ID zaten hep aynıydı) düzenliyordu, hiçbir zaman gerçek bir
+  // hesap OLUŞTURMUYOR ya da giriş bilgisini gerçekten DOĞRULAMIYORDU. Yerini üç gerçek fonksiyon
+  // aldı: submitRegister (yeni hesap — şifre kullanıcı tarafından seçilmez, backend üretip e-postayla
+  // gönderir), submitLogin (e-posta+şifre doğrulanır, oturum HENÜZ verilmez — 2. faktör için e-postaya
+  // kod gönderilir) ve submitOtpVerify (kod doğrulanınca gerçek oturum token'ı alınır ve kimlik
+  // MY_OWNER_ID/MY_MECHANIC_ID'ye yazılır). Bkz. backend/routes/auth.js.
+  const submitRegister = async () => {
+    if (!isValidEmail(form.email)) { setAuthError("Geçersiz e-posta adresi. Lütfen geçerli bir e-posta girin (örn. ad@ornek.com)."); return; }
+    const phoneCheck = validatePhone(form.phone);
+    if (!phoneCheck.valid) { setAuthError(phoneCheck.message); return; }
+    if (!form.name.trim()) { setAuthError("Ad soyad zorunludur."); return; }
+    setAuthError(""); setAuthNotice(""); setAuthLoading(true);
+    try {
+      const result = await api.auth.register(role, form.email, form.name, { phone: form.phone });
+      setAuthLoading(false);
+      setPendingOnboarding(true);
+      // GELİŞTİRME KOLAYLIĞI: backend SMTP ayarlanmamışsa (yerelde çalışırken) üretilen şifreyi
+      // devPassword olarak API yanıtına ekliyor (bkz. auth.js) — burada gösteriyoruz ki Faris gerçek
+      // bir e-posta sunucusu kurmadan akışı uçtan uca test edebilsin. Prodüksiyonda backend bu alanı
+      // asla döndürmez, bu dal hiç tetiklenmez.
+      setAuthNotice(result.devPassword
+        ? `[Geliştirme modu — e-posta gönderilmedi] Otomatik şifreniz: ${result.devPassword}`
+        : "Hesabınız oluşturuldu. Giriş yapmak için kullanacağınız otomatik şifre e-posta adresinize gönderildi.");
+      setForm((f) => ({ ...f, name: "", phone: "", password: "" }));
+      setScreen("login");
+    } catch (err) {
+      setAuthLoading(false);
+      setAuthError(err?.message || "Kayıt oluşturulamadı.");
     }
-    setAuthError("");
-    const isFirstSignup = screen === "signup";
-    if (role === "owner") {
-      // GERÇEK HATA DÜZELTMESİ: kayıt formu bir şifre alanı topluyordu ama hiçbir zaman
-      // kaydetmiyordu — kullanıcı bir şifre seçtiğini sanıyordu, oysa hesabına hiç yazılmıyordu.
-      // Bu da profil ayarlarındaki "şifre değiştir" formunun mevcut şifreyi asla doğru
-      // karşılaştıramamasının kök nedeniydi. Sadece ilk kayıtta (girişte değil) kaydediyoruz.
-      // GÜVENLİK DÜZELTMESİ: şifre artık genel PATCH'e (ownerPatch) DEĞİL, özel set-password uç
-      // noktasına gönderiliyor — backend genel PATCH'ten password alanını zaten sessizce
-      // düşürüyor (bkz. makeCrudRouter.js), o yüzden burada da ayrı çağrı gerekiyor.
-      const ownerPatch: { name: string; email: string; phone: string } = { name: form.name || "Araç Sahibi", email: form.email, phone: form.phone };
-      updateMyOwnerFields(ownerPatch);
-      persist(api.owners.update(MY_OWNER_ID, ownerPatch), "Kayıt bilgileri kaydedilemedi");
-      if (isFirstSignup && form.password) persist(api.owners.setPassword(MY_OWNER_ID, form.password), "Şifre kaydedilemedi");
-      setScreen("owner"); setOwnerTab("search");
-    } else {
-      if (isFirstSignup && form.password) {
-        persist(api.mechanics.setPassword(MY_MECHANIC_ID, form.password), "Şifre kaydedilemedi");
-      }
-      setScreen("mechanicDashboard");
+  };
+  const submitLogin = async () => {
+    if (!isValidEmail(form.email)) { setAuthError("Geçersiz e-posta adresi."); return; }
+    if (!form.password) { setAuthError("Şifre zorunludur."); return; }
+    setAuthError(""); setAuthNotice(""); setAuthLoading(true);
+    try {
+      const result = await api.auth.login(role, form.email, form.password);
+      setAuthLoading(false);
+      setPendingLoginTicket(result.loginTicket);
+      setOtpCode("");
+      setAuthNotice(result.devOtp
+        ? `[Geliştirme modu — e-posta gönderilmedi] Doğrulama kodunuz: ${result.devOtp}`
+        : "Giriş doğrulama kodu e-posta adresinize gönderildi.");
+      setScreen("loginOtp");
+    } catch (err) {
+      setAuthLoading(false);
+      setAuthError(err?.message || "Giriş yapılamadı.");
     }
-    if (isFirstSignup) { setOnboardStep(0); setShowOnboarding(true); }
-    // Bildirimler varsayılan olarak açık sayılsın diye: tarayıcı henüz sorulmadıysa girişte hemen soruyoruz.
-    if (typeof Notification !== "undefined" && Notification.permission === "default") { requestNotifPermission(); }
+  };
+  const submitOtpVerify = async () => {
+    if (!otpCode.trim()) { setAuthError("Doğrulama kodunu girin."); return; }
+    if (!pendingLoginTicket) { setAuthError("Giriş oturumu bulunamadı, lütfen tekrar giriş yapın."); setScreen("login"); return; }
+    setAuthError(""); setAuthLoading(true);
+    try {
+      const result = await api.auth.verifyOtp(pendingLoginTicket, otpCode.trim());
+      setAuthLoading(false);
+      const user = result.user;
+      if (user.role === "owner") setMyOwnerId(user.id); else setMyMechanicId(user.id);
+      setRole(user.role);
+      setSessionVersion((v) => v + 1);
+      setOtpCode(""); setPendingLoginTicket(null); setAuthNotice("");
+      setForm({ name: "", email: "", phone: "", password: "" });
+      setScreen(user.role === "owner" ? "owner" : "mechanicDashboard");
+      if (user.role === "owner") setOwnerTab("search");
+      if (pendingOnboarding) { setOnboardStep(0); setShowOnboarding(true); setPendingOnboarding(false); }
+      // Bildirimler varsayılan olarak açık sayılsın diye: tarayıcı henüz sorulmadıysa girişte hemen soruyoruz.
+      if (typeof Notification !== "undefined" && Notification.permission === "default") { requestNotifPermission(); }
+    } catch (err) {
+      setAuthLoading(false);
+      setAuthError(err?.message || "Kod doğrulanamadı.");
+    }
+  };
+  const cancelOtpVerify = () => { setOtpCode(""); setPendingLoginTicket(null); setAuthError(""); setAuthNotice(""); setScreen("login"); };
+  // Gerçek owner/mechanic çıkışı — eskiden sadece goHome() çağrılıyordu (role sıfırlanıyordu ama
+  // MY_OWNER_ID/MY_MECHANIC_ID sabit demo id'leri olduğu için "kimlik" zaten hiç değişmiyordu).
+  // Artık gerçek bir oturum token'ı var: sunucu tarafında geçersiz kılınmalı (api.auth.logout),
+  // yerel kimlik temizlenmeli (setMyOwnerId/setMyMechanicId(null)) ve önceki kullanıcıya ait özel
+  // veriler bellekte kalıp bir sonraki kullanıcıya sızmasın diye boşaltılmalı.
+  const logoutUser = () => {
+    api.auth.logout().catch(() => { /* ağ hatası olsa bile yerel oturumu temizlemeye devam et */ });
+    setMyOwnerId(null); setMyMechanicId(null);
+    setVehicles([]); setAppointments([]); setSupportTickets([]); setQuoteRequests([]); setQuoteOffers([]); setConversations([]);
+    setFavoriteIds([]); setFavoriteMechanicIds([]); setLikedReviewIds([]);
+    goHome();
   };
   const addVehicle = async () => {
     if (!newVehicle.brand || !newVehicle.model) return;
@@ -3083,7 +3202,8 @@ function useAppLogic() {
     profileFieldOldValueRef, startEditProfileField, cancelEditProfileField, ADMIN_NUMERIC_PROFILE_FIELDS, saveProfileField, renderAdminProfileRow, toggleListingRemoved, updateListingField,
     updateMechService, removeMechService, addMechService, toggleJobListingStatus, updateJobField, renderAdminListingCard, renderAdminJobCard, openAdminAnalyze,
     analyzingUser, adminUserAnalytics, adminFilteredTickets, adminTicketAnalytics, selectedTicket, updateTicketStatus, saveTicketNote, issueTicketRefund,
-    removeReportedListing, removeFlaggedReview, grantVerification, sendAdminReply, sendBroadcast, adminRegionBreakdown, adminRevenueStats, submitAuth,
+    removeReportedListing, removeFlaggedReview, grantVerification, sendAdminReply, sendBroadcast, adminRegionBreakdown, adminRevenueStats,
+    submitRegister, submitLogin, submitOtpVerify, cancelOtpVerify, logoutUser, otpCode, setOtpCode, authNotice, setAuthNotice, authLoading,
     addVehicle, updateVehicleFields, saveReminderOverride, resetReminderOverride, submitNewReminder, updateCustomReminder, removeCustomReminder, acceptAppt,
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,

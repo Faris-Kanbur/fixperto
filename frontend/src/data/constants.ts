@@ -100,11 +100,21 @@ export const ANALYTICS_RANGES = [
   { key: "all", days: null },
 ];
 
-// The single logged-in demo owner/mechanic account both map to a fixed id, mirroring the
-// original single-file app: the "current user" is always MY_MECHANIC_ID / MY_OWNER_ID from
-// the shared mechanics/owners tables, so admin panel edits reflect instantly in their profile.
-export const MY_MECHANIC_ID = 1;
-export const MY_OWNER_ID = 9001;
+// GERÇEK OTURUM SİSTEMİ: bu ikisi eskiden sabit demo id'lerdi (mechanic=1, owner=9001) — "aktif
+// kullanıcı" her zaman bu id'lere hardcode edilmişti (gerçek bir giriş sistemi yoktu). Artık gerçek
+// bir giriş sistemi olduğu için (bkz. backend/routes/auth.js, AppLogicProvider.tsx submitLogin/
+// submitOtp) bunlar `let` ile dışa aktarılan CANLI bağlamalar: null olarak başlıyor (henüz giriş
+// yapılmamış), başarılı girişte setMyOwnerId/setMyMechanicId ile güncelleniyor. Bu dosyayı
+// `import { MY_OWNER_ID } from "./constants"` ile kullanan HER yer (AppLogicProvider, AppShell,
+// MechDetailBody...) ES module canlı bağlama sayesinde değişikliği otomatik görür — 90'dan fazla
+// kullanım sitesini tek tek değiştirmeye gerek kalmadı. Kritik not: React bunu OTOMATİK yeniden
+// render ETMEZ (düz bir modül değişkeni, state değil) — ama giriş akışı zaten hemen ardından gerçek
+// React state günceller (ör. setScreen, veri yeniden çekme), bu da bir render tetikleyip yeni
+// değerin her yerde görünmesini sağlıyor.
+export let MY_MECHANIC_ID: number | null = null;
+export let MY_OWNER_ID: number | null = null;
+export function setMyMechanicId(id: number | null) { MY_MECHANIC_ID = id; }
+export function setMyOwnerId(id: number | null) { MY_OWNER_ID = id; }
 
 // Randevunun autoAccepted bayrağına göre iki ayrı adım seti var (bkz. Uber-style status stepper).
 export const TRACK_STATUSES_MANUAL = ["Onay Bekliyor", "Sırada", "Tamire Alındı", "Tamir Tamamlandı"];

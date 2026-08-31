@@ -1,6 +1,6 @@
 import { Router } from "express";
-import crypto from "node:crypto";
 import { db } from "../db/db.js";
+import { createAdminSession, destroyAdminSession, isAdminToken, extractBearerToken } from "../utils/auth.js";
 
 // Same demo admin credentials the single-file app used to hardcode client-side.
 // In a real deployment these belong in env vars / a hashed-password users table,
@@ -14,26 +14,16 @@ const ADMIN_CREDENTIALS = {
 // (aşağıdaki /stats, /change-log GET/POST/PATCH) hiçbir kimlik doğrulaması YAPMIYORDU — yani giriş
 // yapmadan da herhangi biri bu verileri okuyabilir/yazabilirdi, /login sadece bir "kapı" gibi
 // duruyordu. Şimdi başarılı girişte rastgele, tahmin edilemez bir token üretilip sunucu belleğinde
-// tutuluyor; aşağıdaki admin-özel uç noktalar bu token'ı `Authorization: Bearer <token>` header'ında
-// istiyor. Token'ı bilerek kalıcı bir DB tablosuna ya da dosyaya YAZMIYORUZ — sunucu yeniden
-// başladığında tüm tokenlar geçersiz olur ve admin tekrar giriş yapar; bu, projenin zaten
+// tutuluyor (bkz. backend/utils/auth.js createAdminSession — owner/mechanic oturumlarıyla aynı
+// paylaşılan modülde, böylece makeCrudRouter.js gibi diğer router'lar da "bu token admine mi ait"
+// diye sorabiliyor); aşağıdaki admin-özel uç noktalar bu token'ı `Authorization: Bearer <token>`
+// header'ında istiyor. Token'ı bilerek kalıcı bir DB tablosuna ya da dosyaya YAZMIYORUZ — sunucu
+// yeniden başladığında tüm tokenlar geçersiz olur ve admin tekrar giriş yapar; bu, projenin zaten
 // benimsediği "kalıcı oturum yok, localStorage'a token koyma" tercihiyle tutarlı (bkz.
 // REFACTOR_REPORT.md bölüm 9 madde 3 — XSS'e karşı en güvenli yaklaşım).
-const activeAdminTokens = new Set();
-
-function generateAdminToken() {
-  return crypto.randomBytes(32).toString("hex");
-}
-
-function extractBearerToken(req) {
-  const header = req.headers.authorization || "";
-  const match = /^Bearer\s+(.+)$/i.exec(header);
-  return match ? match[1] : null;
-}
-
 function requireAdminAuth(req, res, next) {
   const token = extractBearerToken(req);
-  if (!token || !activeAdminTokens.has(token)) {
+  if (!isAdminToken(token)) {
     return res.status(401).json({ error: "Bu işlem için admin girişi gerekiyor." });
   }
   next();
@@ -73,8 +63,7 @@ router.post("/login", (req, res) => {
   const { email, password } = req.body || {};
   if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
     loginAttempts.delete(ip);
-    const token = generateAdminToken();
-    activeAdminTokens.add(token);
+    const token = createAdminSession();
     return res.json({ ok: true, token });
   }
   registerLoginFailure(ip);
@@ -83,7 +72,7 @@ router.post("/login", (req, res) => {
 
 router.post("/logout", (req, res) => {
   const token = extractBearerToken(req);
-  if (token) activeAdminTokens.delete(token);
+  if (token) destroyAdminSession(token);
   res.json({ ok: true });
 });
 

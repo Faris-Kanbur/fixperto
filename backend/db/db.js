@@ -1,6 +1,8 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import bcrypt from "bcryptjs";
+import { looksHashed } from "../utils/auth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = process.env.FIXPERTO_DB_PATH || path.join(__dirname, "fixperto.sqlite");
@@ -342,7 +344,54 @@ function ensureColumn(table, columnDef) {
   ["listings", "adminRemoved INTEGER DEFAULT 0"],
   ["mechanics", "phone TEXT"],
   ["mechanics", "password TEXT DEFAULT 'demo1234'"],
+  // GERÇEK OTURUM SİSTEMİ: mechanics tablosunda daha önce hiç email sütunu yoktu (owners'ta vardı) —
+  // gerçek e-posta+şifre ile giriş/kayıt için (bkz. backend/routes/auth.js) artık gerekli.
+  ["mechanics", "email TEXT"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
+
+// GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): owners/mechanics.password sütunu şimdiye kadar düz
+// metin tutuluyordu (bkz. yukarıdaki sütun yorumları — "Demo amaçlı düz metin, gerçek üretimde ASLA
+// client'a dönmemeli" notu zaten vardı, ama sunucu tarafında da hiç hash'lenmiyordu, yani DB dosyasına
+// erişen biri ya da bir SQL injection tüm şifreleri düz metin olarak görebilirdi). Artık her
+// başlangıçta, henüz bcrypt formatında OLMAYAN (yani "$2a$"/"$2b$"/"$2y$" ile başlamayan) şifreler
+// bcrypt ile hash'lenip yerine yazılıyor — idempotent (zaten hash'li olanlara dokunulmuyor), bu yüzden
+// hem eski/var olan bir fixperto.sqlite dosyasında hem sıfırdan oluşturulan bir veritabanında güvenle
+// çalışır. Not: seed.js'deki demo hesapların hepsi bilerek aynı "demo1234" şifresini kullanıyor (bu,
+// üründe/kodda AÇIKÇA belgelenmiş bir demo kolaylığı, gizli bir sızıntı değil) — bu migrasyon onu
+// GÜVENSİZ bırakmıyor, sadece düz metin yerine hash olarak saklanmasını sağlıyor. Gerçek
+// POST /api/auth/register ile oluşturulan hesaplar ise her zaman rastgele, e-posta ile iletilen bir
+// şifre alır (bkz. backend/routes/auth.js) — demo hesaplarla karıştırılmamalı.
+try {
+  for (const table of ["owners", "mechanics"]) {
+    const rows = db.prepare(`SELECT id, password FROM ${table} WHERE password IS NOT NULL`).all();
+    const upd = db.prepare(`UPDATE ${table} SET password = ? WHERE id = ?`);
+    for (const row of rows) {
+      if (!looksHashed(row.password)) {
+        upd.run(bcrypt.hashSync(row.password, 10), row.id);
+      }
+    }
+  }
+} catch (err) {
+  console.error("Şifre hash migrasyonu hatası:", err.message);
+}
+
+// Mechanics tablosunda email sütunu yeni eklendiği için (yukarıdaki ensureColumn), var olan demo
+// tamirci hesaplarının gerçek /api/auth/login ile kullanılabilmesi için bilinen bir demo e-postası
+// geriye dönük yazılıyor — sadece hâlâ email'i boş olan (yani kullanıcının kendi kaydı ÜZERİNE
+// yazılmayan) satırlara dokunuluyor. Şifreleri zaten yukarıda hash'lenen ortak "demo1234" demo
+// şifresiyle aynı kalıyor.
+const MECHANIC_DEMO_EMAILS = {
+  1: "usta.mehmet@fixperto.demo", 2: "hizli.tamir@fixperto.demo", 3: "guven.oto@fixperto.demo",
+  4: "anadolu.servis@fixperto.demo", 5: "premium.oto@fixperto.demo", 6: "dogru.tamir@fixperto.demo",
+  7: "marmara.oto@fixperto.demo", 8: "ege.servis@fixperto.demo", 9: "karadeniz.oto@fixperto.demo",
+  10: "akdeniz.tamir@fixperto.demo",
+};
+try {
+  const emailStmt = db.prepare(`UPDATE mechanics SET email = @email WHERE id = @id AND (email IS NULL OR email = '')`);
+  Object.entries(MECHANIC_DEMO_EMAILS).forEach(([id, email]) => emailStmt.run({ id: Number(id), email }));
+} catch (err) {
+  console.error("Tamirci demo e-posta backfill hatası:", err.message);
+}
 
 // ---------------------------------------------------------------------------
 // Tek seferlik veri düzeltmesi (backfill): brandsServiced/paymentMethods sütunları yukarıdaki
