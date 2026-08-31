@@ -2123,6 +2123,21 @@ function useAppLogic() {
     }
   };
   const updateVehicleFields = (id, updates) => { setVehicles(vs => vs.map(v => v.id === id ? { ...v, ...updates } : v)); persist(api.vehicles.update(id, updates), "Araç güncellenemedi"); };
+  // Araç silme — daha önce hiç yoktu (kullanıcı bildirdi). removeListing ile aynı desen:
+  // önce iyimser (optimistic) yerel kaldırma (UI anında tepki versin), arka planda backend silme
+  // isteği (persist — başarısız olursa toast ile haber verilir). Silinen araca bağlı bir ilan
+  // (listing.vehicleId) varsa onu koparmıyoruz çünkü ilan zaten kendi bağımsız bir kopyası (marka/
+  // model/km/fiyat vb. ilan oluşturulurken snapshot'landı) — hiçbir yerde listing.vehicleId'nin
+  // var olmasına zorunlu şekilde güvenilmiyor, o yüzden silinen bir araca işaret etmesi zararsız.
+  const removeVehicle = (id) => {
+    setVehicles(vs => vs.filter(v => v.id !== id));
+    persist(api.vehicles.remove(id), "Araç silinemedi");
+    if (selectedVehicleId === id) setSelectedVehicleId(null);
+    setShowEditVehicle(false);
+    setEditVehicleForm(null);
+    setShowMaintenanceHistory(false);
+    setToast({ type: "info", text: "🗑️ Araç silindi." });
+  };
   const saveReminderOverride = (vehicleId, kind, override) => {
     if (override.customDate) {
       if (!isValidDateStr(override.customDate)) { setToast({ type: "info", text: "⚠️ Geçersiz tarih. Lütfen geçerli bir tarih seçin (YYYY-AA-GG)." }); return; }
@@ -3204,7 +3219,7 @@ function useAppLogic() {
     analyzingUser, adminUserAnalytics, adminFilteredTickets, adminTicketAnalytics, selectedTicket, updateTicketStatus, saveTicketNote, issueTicketRefund,
     removeReportedListing, removeFlaggedReview, grantVerification, sendAdminReply, sendBroadcast, adminRegionBreakdown, adminRevenueStats,
     submitRegister, submitLogin, submitOtpVerify, cancelOtpVerify, logoutUser, otpCode, setOtpCode, authNotice, setAuthNotice, authLoading,
-    addVehicle, updateVehicleFields, saveReminderOverride, resetReminderOverride, submitNewReminder, updateCustomReminder, removeCustomReminder, acceptAppt,
+    addVehicle, updateVehicleFields, removeVehicle, saveReminderOverride, resetReminderOverride, submitNewReminder, updateCustomReminder, removeCustomReminder, acceptAppt,
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,

@@ -108,7 +108,7 @@ export function AppShell() {
     analyzingUser, adminUserAnalytics, adminFilteredTickets, adminTicketAnalytics, selectedTicket, updateTicketStatus, saveTicketNote, issueTicketRefund,
     removeReportedListing, removeFlaggedReview, grantVerification, sendAdminReply, sendBroadcast, adminRegionBreakdown, adminRevenueStats,
     submitRegister, submitLogin, submitOtpVerify, cancelOtpVerify, logoutUser, otpCode, setOtpCode, authNotice, setAuthNotice, authLoading,
-    addVehicle, updateVehicleFields, saveReminderOverride, resetReminderOverride, submitNewReminder, updateCustomReminder, removeCustomReminder, acceptAppt,
+    addVehicle, updateVehicleFields, removeVehicle, saveReminderOverride, resetReminderOverride, submitNewReminder, updateCustomReminder, removeCustomReminder, acceptAppt,
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
@@ -1451,7 +1451,7 @@ export function AppShell() {
               {ownerProfileTab === "vehicles" && selectedVehicle && (() => { const linkedListing = listings.find(l => l.id === selectedVehicle.listingId); return (
                 <>
                   <button onClick={() => setSelectedVehicleId(null)} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToVehiclesBtn")}</button>
-                  <div className="bg-rose-50 rounded-2xl p-4 mb-5 flex items-center gap-3"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center"><Car size={26} className="text-rose-600" /></div><div className="flex-1"><h2 className="font-bold text-gray-800">{selectedVehicle.brand} {selectedVehicle.model}</h2><p className="text-xs text-gray-500">{selectedVehicle.year} · {selectedVehicle.plate}</p></div><button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} aria-label={t("editVehicleAria")} className="text-rose-600 p-2 -m-2"><Pencil size={16} /></button></div>
+                  <div className="bg-rose-50 rounded-2xl p-4 mb-5 flex items-center gap-3"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center"><Car size={26} className="text-rose-600" /></div><div className="flex-1"><h2 className="font-bold text-gray-800">{selectedVehicle.brand} {selectedVehicle.model}</h2><p className="text-xs text-gray-500">{selectedVehicle.year} · {selectedVehicle.plate}</p></div><button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} aria-label={t("editVehicleAria")} className="text-rose-600 p-2 -m-2"><Pencil size={16} /></button><button onClick={() => setConfirmDialog({ title: t("deleteVehicleConfirmTitle"), body: t("deleteVehicleConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => removeVehicle(selectedVehicle.id) })} aria-label={t("deleteVehicleAria")} className="text-red-400 hover:text-red-600 p-2 -m-2"><Trash2 size={16} /></button></div>
                   {showEditVehicle && editVehicleForm && (
                     <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5 space-y-2">
                       <h3 className="font-semibold text-gray-800 text-sm mb-1">{t("editVehicleInfoTitle")}</h3>
