@@ -228,14 +228,16 @@ try {
 
 function setAdminToken(token: string | null) {
   adminToken = token;
+  console.log("[fixperto-debug] setAdminToken çağrıldı, yeni değer:", token ? token.slice(0, 8) + "…" : null); // GEÇİCİ TEŞHİS — sorun çözülünce kaldırılacak
   try {
     if (typeof window === "undefined") return;
     if (token) window.sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
     else window.sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
-  } catch { /* yoksay */ }
+  } catch (e) { console.log("[fixperto-debug] sessionStorage yazılamadı:", e); } // GEÇİCİ TEŞHİS
 }
 
 function adminAuthOpts(): RequestOptions {
+  console.log("[fixperto-debug] adminAuthOpts çağrıldı, adminToken:", adminToken ? adminToken.slice(0, 8) + "…" : "YOK/NULL"); // GEÇİCİ TEŞHİS — sorun çözülünce kaldırılacak
   return adminToken ? { headers: { Authorization: `Bearer ${adminToken}` } } : {};
 }
 
