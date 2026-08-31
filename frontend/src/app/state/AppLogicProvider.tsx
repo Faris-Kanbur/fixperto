@@ -1422,16 +1422,16 @@ function useAppLogic() {
   // (revertAdminChange/-Group) kullanıldığı için, buraya eklenen persist tek noktadan TÜM admin
   // panel yazma işlemlerini kalıcı hale getiriyor.
   const applyAdminFieldChange = (targetType, targetId, field, value, extra = undefined) => {
-    if (targetType === "owner") { setOwnersDirectory(list => list.map(o => o.id === targetId ? { ...o, [field]: value } : o)); persist(api.owners.update(targetId, { [field]: value }), "Kullanıcı bilgisi kaydedilemedi"); }
-    else if (targetType === "mechanic") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, [field]: value } : m)); persist(api.mechanics.update(targetId, { [field]: value }), "Tamirci bilgisi kaydedilemedi"); }
+    if (targetType === "owner") { setOwnersDirectory(list => list.map(o => o.id === targetId ? { ...o, [field]: value } : o)); persist(api.owners.update(targetId, { [field]: value }, api.admin.authOpts()), "Kullanıcı bilgisi kaydedilemedi"); }
+    else if (targetType === "mechanic") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, [field]: value } : m)); persist(api.mechanics.update(targetId, { [field]: value }, api.admin.authOpts()), "Tamirci bilgisi kaydedilemedi"); }
     else if (targetType === "mechanicOverride") setMechanicAdminOverrides(ov => ({ ...ov, [targetId]: { ...ov[targetId], [field]: value } }));
-    else if (targetType === "mechanicServicesArray") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, services: value } : m)); persist(api.mechanics.update(targetId, { services: value }), "Hizmetler kaydedilemedi"); }
-    else if (targetType === "mechanicReviewList") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, reviewList: value, reviews: extra?.reviews ?? m.reviews } : m)); persist(api.mechanics.update(targetId, { reviewList: value, ...(extra?.reviews !== undefined ? { reviews: extra.reviews } : {}) }), "Yorumlar kaydedilemedi"); }
-    else if (targetType === "service") { const mech = mechanicsList.find(m => m.id === targetId); const services = mech ? mech.services.map((s, i) => i === extra?.serviceIdx ? { ...s, [field]: value } : s) : []; setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, services } : m)); persist(api.mechanics.update(targetId, { services }), "Hizmet kaydedilemedi"); }
-    else if (targetType === "listing") { setListings(ls => ls.map(l => l.id === targetId ? { ...l, [field]: value } : l)); persist(api.listings.update(targetId, { [field]: value }), "İlan kaydedilemedi"); }
-    else if (targetType === "job") { setJobListings(js => js.map(j => j.id === targetId ? { ...j, [field]: value } : j)); persist(api.jobs.update(targetId, { [field]: value }), "İş ilanı kaydedilemedi"); }
-    else if (targetType === "ticket") { setSupportTickets(list => list.map(tk => tk.id === targetId ? { ...tk, [field]: value } : tk)); persist(api.tickets.update(targetId, { [field]: value }), "Destek talebi kaydedilemedi"); }
-    else if (targetType === "appointment") { setAppointments(apps => apps.map(a => a.id === targetId ? { ...a, [field]: value } : a)); persist(api.appointments.update(targetId, { [field]: value }), "Randevu kaydedilemedi"); }
+    else if (targetType === "mechanicServicesArray") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, services: value } : m)); persist(api.mechanics.update(targetId, { services: value }, api.admin.authOpts()), "Hizmetler kaydedilemedi"); }
+    else if (targetType === "mechanicReviewList") { setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, reviewList: value, reviews: extra?.reviews ?? m.reviews } : m)); persist(api.mechanics.update(targetId, { reviewList: value, ...(extra?.reviews !== undefined ? { reviews: extra.reviews } : {}) }, api.admin.authOpts()), "Yorumlar kaydedilemedi"); }
+    else if (targetType === "service") { const mech = mechanicsList.find(m => m.id === targetId); const services = mech ? mech.services.map((s, i) => i === extra?.serviceIdx ? { ...s, [field]: value } : s) : []; setMechanicsList(list => list.map(m => m.id === targetId ? { ...m, services } : m)); persist(api.mechanics.update(targetId, { services }, api.admin.authOpts()), "Hizmet kaydedilemedi"); }
+    else if (targetType === "listing") { setListings(ls => ls.map(l => l.id === targetId ? { ...l, [field]: value } : l)); persist(api.listings.update(targetId, { [field]: value }, api.admin.authOpts()), "İlan kaydedilemedi"); }
+    else if (targetType === "job") { setJobListings(js => js.map(j => j.id === targetId ? { ...j, [field]: value } : j)); persist(api.jobs.update(targetId, { [field]: value }, api.admin.authOpts()), "İş ilanı kaydedilemedi"); }
+    else if (targetType === "ticket") { setSupportTickets(list => list.map(tk => tk.id === targetId ? { ...tk, [field]: value } : tk)); persist(api.tickets.update(targetId, { [field]: value }, api.admin.authOpts()), "Destek talebi kaydedilemedi"); }
+    else if (targetType === "appointment") { setAppointments(apps => apps.map(a => a.id === targetId ? { ...a, [field]: value } : a)); persist(api.appointments.update(targetId, { [field]: value }, api.admin.authOpts()), "Randevu kaydedilemedi"); }
   };
   // GERÇEK HATA: bu tek-satır "Geri Al" eskiden koşulsuz entry.oldValue'yu uyguluyordu — aynı
   // alan (targetType+targetId+field) için SONRADAN yapılmış, henüz geri alınmamış BAŞKA bir kayıt
@@ -1580,12 +1580,12 @@ function useAppLogic() {
       const patch = { name: adminEditForm.name, email: adminEditForm.email, phone: adminEditForm.phone, status: adminEditForm.status, city: adminEditForm.city };
       Object.entries(patch).forEach(([field, newValue]) => { const oldValue = selectedAdminUser[field]; if (String(oldValue ?? "") !== String(newValue ?? "")) logAdminChange({ targetType: "owner", targetId: selectedAdminUser.id, field, oldValue, newValue }); });
       setOwnersDirectory(list => list.map(o => o.id === selectedAdminUser.id ? { ...o, ...patch } : o));
-      persist(api.owners.update(selectedAdminUser.id, patch), "Kullanıcı bilgisi kaydedilemedi");
+      persist(api.owners.update(selectedAdminUser.id, patch, api.admin.authOpts()), "Kullanıcı bilgisi kaydedilemedi");
     } else {
       const corePatch = { name: adminEditForm.name, specialty: adminEditForm.specialty, address: adminEditForm.address, price: Number(adminEditForm.price) || selectedAdminUser.price, verified: adminEditForm.verified, phone: adminEditForm.phone };
       Object.entries(corePatch).forEach(([field, newValue]) => { const oldValue = selectedAdminUser[field]; if (String(oldValue ?? "") !== String(newValue ?? "")) logAdminChange({ targetType: "mechanic", targetId: selectedAdminUser.id, field, oldValue, newValue }); });
       setMechanicsList(list => list.map(m => m.id === selectedAdminUser.id ? { ...m, ...corePatch } : m));
-      persist(api.mechanics.update(selectedAdminUser.id, corePatch), "Tamirci bilgisi kaydedilemedi");
+      persist(api.mechanics.update(selectedAdminUser.id, corePatch, api.admin.authOpts()), "Tamirci bilgisi kaydedilemedi");
       // Not: email/status alanları mechanicOverride olarak yalnızca istemci tarafında tutuluyor —
       // backend mechanics şemasında bu alanlar yok (demo amaçlı, gerçek bir üretim sisteminde
       // mechanics tablosuna eklenmesi gerekir; bkz. REFACTOR_REPORT.md). phone artık gerçek bir
@@ -1601,7 +1601,7 @@ function useAppLogic() {
   };
   const toggleAdminUserStatus = (u) => {
     const nextStatus = u.status === "active" ? "suspended" : "active";
-    if (u.type === "owner") { setOwnersDirectory(list => list.map(o => o.id === u.id ? { ...o, status: nextStatus } : o)); persist(api.owners.update(u.id, { status: nextStatus }), "Kullanıcı durumu kaydedilemedi"); }
+    if (u.type === "owner") { setOwnersDirectory(list => list.map(o => o.id === u.id ? { ...o, status: nextStatus } : o)); persist(api.owners.update(u.id, { status: nextStatus }, api.admin.authOpts()), "Kullanıcı durumu kaydedilemedi"); }
     else setMechanicAdminOverrides(ov => ({ ...ov, [u.id]: { ...ov[u.id], status: nextStatus } }));
     logAdminChange({ targetType: u.type === "owner" ? "owner" : "mechanicOverride", targetId: u.id, field: "status", oldValue: u.status, newValue: nextStatus });
     setToast({ type: "info", text: nextStatus === "suspended" ? "🚫 Kullanıcı askıya alındı." : "✅ Kullanıcı yeniden etkinleştirildi." });
@@ -1618,11 +1618,11 @@ function useAppLogic() {
     const pwd = adminEditForm.newPassword.trim();
     const pwdTargetType = selectedAdminUser.type === "owner" ? "owner" : "mechanicOverride";
     logAdminChange({ targetType: pwdTargetType, targetId: selectedAdminUser.id, field: "password", oldValue: "••••••", newValue: pwd });
-    if (selectedAdminUser.type === "owner") persist(api.owners.setPassword(selectedAdminUser.id, pwd), "Şifre kaydedilemedi");
+    if (selectedAdminUser.type === "owner") persist(api.owners.setPassword(selectedAdminUser.id, pwd, api.admin.authOpts()), "Şifre kaydedilemedi");
     // GERÇEK HATA DÜZELTMESİ: tamirci şifre sıfırlama önceden hiç API çağrısı yapmıyordu (sadece
     // local mechanicAdminOverrides state'ine yazıyordu) — yani sayfa yenilenince "sıfırlanan" şifre
     // hiç kaydedilmemiş olurdu. Artık owner koluyla tutarlı şekilde gerçekten backend'e yazılıyor.
-    else persist(api.mechanics.setPassword(selectedAdminUser.id, pwd), "Şifre kaydedilemedi");
+    else persist(api.mechanics.setPassword(selectedAdminUser.id, pwd, api.admin.authOpts()), "Şifre kaydedilemedi");
     setAdminEditForm(f => ({ ...f, newPassword: "" }));
     setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." });
   };
@@ -1648,7 +1648,7 @@ function useAppLogic() {
     }
     if (user.type === "owner") {
       setOwnersDirectory(list => list.map(o => o.id === user.id ? { ...o, [key]: value } : o));
-      persist(api.owners.update(user.id, { [key]: value }), "Profil bilgisi kaydedilemedi");
+      persist(api.owners.update(user.id, { [key]: value }, api.admin.authOpts()), "Profil bilgisi kaydedilemedi");
     } else if (["email", "status"].includes(key)) {
       // Bu alanlar mechanics şemasında yok — sadece istemci tarafı demo katmanı (bkz. saveAdminUserEdit notu).
       // phone buraya DAHİL DEĞİL: gerçek bir backend sütunu (bkz. db.js), aşağıdaki genel mechanics
@@ -1656,7 +1656,7 @@ function useAppLogic() {
       setMechanicAdminOverrides(ov => ({ ...ov, [user.id]: { ...ov[user.id], [key]: value } }));
     } else {
       setMechanicsList(list => list.map(m => m.id === user.id ? { ...m, [key]: value } : m));
-      persist(api.mechanics.update(user.id, { [key]: value }), "Profil bilgisi kaydedilemedi");
+      persist(api.mechanics.update(user.id, { [key]: value }, api.admin.authOpts()), "Profil bilgisi kaydedilemedi");
     }
     setEditingProfileField(null); setProfileFieldDraft("");
     setToast({ type: "info", text: "✅ Güncellendi." });
@@ -1696,12 +1696,12 @@ function useAppLogic() {
     if (l) { applyAdminFieldChange("listing", id, "adminRemoved", !l.adminRemoved); logAdminChange({ targetType: "listing", targetId: id, field: "adminRemoved", oldValue: l.adminRemoved, newValue: !l.adminRemoved }); }
     setToast({ type: "info", text: "✅ İlan durumu güncellendi." });
   };
-  const updateListingField = (id, field, value) => { setListings(ls => ls.map(l => l.id === id ? { ...l, [field]: value } : l)); persist(api.listings.update(id, { [field]: value }), "İlan kaydedilemedi"); };
+  const updateListingField = (id, field, value) => { setListings(ls => ls.map(l => l.id === id ? { ...l, [field]: value } : l)); persist(api.listings.update(id, { [field]: value }, api.admin.authOpts()), "İlan kaydedilemedi"); };
   const updateMechService = (mechId, idx, field, value) => {
     const mech = mechanicsList.find(m => m.id === mechId);
     const services = mech ? mech.services.map((s, i) => i === idx ? { ...s, [field]: value } : s) : [];
     setMechanicsList(list => list.map(m => m.id === mechId ? { ...m, services } : m));
-    persist(api.mechanics.update(mechId, { services }), "Hizmet kaydedilemedi");
+    persist(api.mechanics.update(mechId, { services }, api.admin.authOpts()), "Hizmet kaydedilemedi");
   };
   const removeMechService = (mechId, idx) => {
     const mech = mechanicsList.find(m => m.id === mechId);
@@ -1724,7 +1724,7 @@ function useAppLogic() {
     if (j) { applyAdminFieldChange("job", jobId, "status", nextStatus); logAdminChange({ targetType: "job", targetId: jobId, field: "status", oldValue: j.status, newValue: nextStatus }); }
     setToast({ type: "info", text: "✅ İş ilanı durumu güncellendi." });
   };
-  const updateJobField = (id, field, value) => { setJobListings(js => js.map(j => j.id === id ? { ...j, [field]: value } : j)); persist(api.jobs.update(id, { [field]: value }), "İş ilanı kaydedilemedi"); };
+  const updateJobField = (id, field, value) => { setJobListings(js => js.map(j => j.id === id ? { ...j, [field]: value } : j)); persist(api.jobs.update(id, { [field]: value }, api.admin.authOpts()), "İş ilanı kaydedilemedi"); };
   // ---- Paylaşılan araç/iş ilanı kartı — hem araç sahibi hem tamirci profilinde kullanılıyor.
   // "Detaylar" ile açılan bölümde ilanın tüm alanları (marka, model, yıl, km, yakıt, vites,
   // güç, renk, ilk tescil, açıklama, durum) tek tek düzenlenebiliyor. ----
@@ -1891,7 +1891,7 @@ function useAppLogic() {
     const tk = supportTickets.find(t => t.id === id);
     const resolvedDate = status === "resolved" ? TODAY.toISOString().slice(0, 10) : null;
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, status, resolvedDate } : t));
-    persist(api.tickets.update(id, { status, resolvedDate }), "Talep durumu kaydedilemedi");
+    persist(api.tickets.update(id, { status, resolvedDate }, api.admin.authOpts()), "Talep durumu kaydedilemedi");
     if (tk) logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: status });
     setToast({ type: "info", text: `📋 Talep durumu güncellendi: ${ADMIN_TICKET_STATUS_LABELS[status]}` });
     if (tk && status === "resolved") fireNotification("Destek talebiniz çözüldü ✅", `"${tk.subject}" talebiniz çözüldü olarak işaretlendi.`, tk.fromType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, tk.fromType === "mechanic" ? "mechanic" : "owner", { type: "supportTicket" });
@@ -1900,7 +1900,7 @@ function useAppLogic() {
     if (!selectedTicketId) return;
     const tk = supportTickets.find(t => t.id === selectedTicketId);
     setSupportTickets(list => list.map(t => t.id === selectedTicketId ? { ...t, adminNote: adminTicketNote } : t));
-    persist(api.tickets.update(selectedTicketId, { adminNote: adminTicketNote }), "Not kaydedilemedi");
+    persist(api.tickets.update(selectedTicketId, { adminNote: adminTicketNote }, api.admin.authOpts()), "Not kaydedilemedi");
     if (tk && (tk.adminNote || "") !== adminTicketNote) logAdminChange({ targetType: "ticket", targetId: selectedTicketId, field: "adminNote", oldValue: tk.adminNote, newValue: adminTicketNote });
     setToast({ type: "info", text: "📝 Not kaydedildi." });
   };
@@ -1921,14 +1921,14 @@ function useAppLogic() {
         logAdminChange({ targetType: "appointment", targetId: aid, field: "depositRefunded", oldValue: appt.depositRefunded, newValue: true });
       }
       setAppointments(apps => apps.map(a => a.id === aid ? { ...a, status: "İptal Edildi", depositRefunded: true } : a));
-      persist(api.appointments.update(aid, { status: "İptal Edildi", depositRefunded: true }), "Randevu güncellenemedi");
+      persist(api.appointments.update(aid, { status: "İptal Edildi", depositRefunded: true }, api.admin.authOpts()), "Randevu güncellenemedi");
     }
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `${amount}₺ iade edildi, randevu iptal edildi (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "refunded", oldValue: tk.refunded, newValue: true });
     logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: "resolved" });
     logAdminChange({ targetType: "ticket", targetId: id, field: "adminNote", oldValue: tk.adminNote, newValue: newNote });
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, refunded: true, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) } : t));
-    persist(api.tickets.update(id, { refunded: true, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }), "Talep güncellenemedi");
+    persist(api.tickets.update(id, { refunded: true, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }, api.admin.authOpts()), "Talep güncellenemedi");
     setToast({ type: "info", text: `💳 ${amount}₺ iade işlemi onaylandı ve randevu iptal edildi (demo).` });
   };
   const removeReportedListing = (id) => {
@@ -1940,12 +1940,12 @@ function useAppLogic() {
     const l = listings.find(x => x.id === lid);
     if (l) logAdminChange({ targetType: "listing", targetId: lid, field: "adminRemoved", oldValue: l.adminRemoved, newValue: true });
     setListings(ls => ls.map(x => x.id === lid ? { ...x, adminRemoved: true } : x));
-    persist(api.listings.update(lid, { adminRemoved: true }), "İlan güncellenemedi");
+    persist(api.listings.update(lid, { adminRemoved: true }, api.admin.authOpts()), "İlan güncellenemedi");
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `İlan #${lid} kaldırıldı (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: "resolved" });
     logAdminChange({ targetType: "ticket", targetId: id, field: "adminNote", oldValue: tk.adminNote, newValue: newNote });
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) } : t));
-    persist(api.tickets.update(id, { status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }), "Talep güncellenemedi");
+    persist(api.tickets.update(id, { status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }, api.admin.authOpts()), "Talep güncellenemedi");
     setToast({ type: "info", text: `🚫 İlan #${lid} platformdan kaldırıldı.` });
   };
   const removeFlaggedReview = (id) => {
@@ -1964,12 +1964,12 @@ function useAppLogic() {
     const newReviewsCount = Math.max(0, mech.reviews - removedCount);
     logAdminChange({ targetType: "mechanicReviewList", targetId: mech.id, field: "reviewList", oldValue: oldReviewList, newValue: newReviewList, extra: { reviews: mech.reviews } });
     setMechanicsList(list => list.map(m => m.id === mech.id ? { ...m, reviewList: newReviewList, reviews: newReviewsCount } : m));
-    persist(api.mechanics.update(mech.id, { reviewList: newReviewList, reviews: newReviewsCount }), "Yorum güncellenemedi");
+    persist(api.mechanics.update(mech.id, { reviewList: newReviewList, reviews: newReviewsCount }, api.admin.authOpts()), "Yorum güncellenemedi");
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `Uygunsuz yorum kaldırıldı (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: "resolved" });
     logAdminChange({ targetType: "ticket", targetId: id, field: "adminNote", oldValue: tk.adminNote, newValue: newNote });
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) } : t));
-    persist(api.tickets.update(id, { status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }), "Talep güncellenemedi");
+    persist(api.tickets.update(id, { status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }, api.admin.authOpts()), "Talep güncellenemedi");
     setToast({ type: "info", text: "🗑️ Şikayet edilen yorum kaldırıldı." });
   };
   const grantVerification = (id) => {
@@ -1978,13 +1978,13 @@ function useAppLogic() {
     // removeFlaggedReview'daki aynı not: fromName yerine kalıcı fromId (varsa) kullanılıyor, isim
     // çakışması/değişimi yüzünden yanlış tamirciye doğrulama rozeti verilmesin diye.
     const mech = tk.fromId != null ? mechanicsList.find(m => m.id === tk.fromId) : mechanicsList.find(m => m.name === tk.fromName);
-    if (mech) { logAdminChange({ targetType: "mechanic", targetId: mech.id, field: "verified", oldValue: mech.verified, newValue: true }); persist(api.mechanics.update(mech.id, { verified: true }), "Doğrulama kaydedilemedi"); }
+    if (mech) { logAdminChange({ targetType: "mechanic", targetId: mech.id, field: "verified", oldValue: mech.verified, newValue: true }); persist(api.mechanics.update(mech.id, { verified: true }, api.admin.authOpts()), "Doğrulama kaydedilemedi"); }
     setMechanicsList(list => list.map(m => (mech ? m.id === mech.id : m.name === tk.fromName) ? { ...m, verified: true } : m));
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `Doğrulama rozeti verildi (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: "resolved" });
     logAdminChange({ targetType: "ticket", targetId: id, field: "adminNote", oldValue: tk.adminNote, newValue: newNote });
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) } : t));
-    persist(api.tickets.update(id, { status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }), "Talep güncellenemedi");
+    persist(api.tickets.update(id, { status: "resolved", adminNote: newNote, resolvedDate: TODAY.toISOString().slice(0, 10) }, api.admin.authOpts()), "Talep güncellenemedi");
     setToast({ type: "info", text: "✅ Tamirciye doğrulama rozeti verildi." });
   };
   // ---- Ticket sahibine doğrudan mesaj (dahili nottan ayrı, kullanıcıya "gönderilen" mesaj kaydı) ----
@@ -1993,7 +1993,7 @@ function useAppLogic() {
     const tk = supportTickets.find(t => t.id === id);
     const adminReplies = [...(tk?.adminReplies || []), { text: adminReplyDraft.trim(), date: TODAY.toLocaleDateString("tr-TR") }];
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, adminReplies } : t));
-    persist(api.tickets.update(id, { adminReplies }), "Yanıt kaydedilemedi");
+    persist(api.tickets.update(id, { adminReplies }, api.admin.authOpts()), "Yanıt kaydedilemedi");
     setAdminReplyDraft("");
     setToast({ type: "info", text: "✉️ Kullanıcıya mesaj gönderildi (demo)." });
     if (tk) fireNotification("Destek talebinize yanıt geldi 📩", `"${tk.subject}" talebiniz için yeni bir mesaj var.`, tk.fromType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, tk.fromType === "mechanic" ? "mechanic" : "owner", { type: "supportTicket" });

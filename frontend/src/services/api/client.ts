@@ -294,6 +294,17 @@ export const api = {
     changeLog: (): Promise<AdminChangeLogEntry[]> => request("/api/admin/change-log", { ...adminAuthOpts() }),
     logChange: (entry: Partial<AdminChangeLogEntry>): Promise<{ id: number }> => request("/api/admin/change-log", { method: "POST", body: JSON.stringify(entry), ...adminAuthOpts() }),
     revertChange: (id: number | string): Promise<AdminChangeLogEntry> => request(`/api/admin/change-log/${id}`, { method: "PATCH", ...adminAuthOpts() }),
+    // GERÇEK HATA DÜZELTMESİ: admin paneli, owners/mechanics/listings/jobs/tickets/appointments
+    // gibi genel (owner/mechanic authScope'lu) kaynaklara YAZARKEN (ör. saveAdminUserEdit,
+    // resetUserPassword, updateListingField...) admin token'ını hiç göndermiyordu — bu istekler
+    // generic `crud()` fonksiyonları üzerinden gidiyor ve `request()` varsayılan olarak SADECE
+    // owner/mechanic oturum token'ını ekliyor (bkz. yukarısı, `sessionToken`). Admin, owner/mechanic
+    // olarak da giriş yapmadıysa (normal durum) bu isteklerde HİÇ Authorization header'ı gitmiyordu,
+    // backend de (artık authScope zorunlu kıldığı için) 401 ile reddediyordu — "az önce giriş
+    // yaptım ama kaydedemiyorum" hatasının kök nedeni buydu. Çözüm: bu opts'u her admin-panel yazma
+    // çağrısına üçüncü argüman olarak (ör. `api.owners.update(id, patch, api.admin.authOpts())`)
+    // açıkça geçmek — admin token'ı varsa Authorization header'ını doğru şekilde ekliyor.
+    authOpts: adminAuthOpts,
   },
   // Paylaşım analitiği: her ShareButton eylemi ayrı bir refCode ile kaydedilir; linke tıklama ve
   // sonraki dönüşüm (sohbet/randevu/teklif/başvuru) aynı refCode üzerinden atfedilir.
