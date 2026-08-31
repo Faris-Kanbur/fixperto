@@ -208,14 +208,32 @@ function withPasswordEndpoints<T extends { id: number | string }>(resource: stri
   };
 }
 
-// GÜVENLİK DÜZELTMESİ: admin uç noktaları artık bir token gerektiriyor (bkz. backend/routes/admin.js
-// requireAdminAuth). Token, sayfa yenilenince kaybolması KASITLI olacak şekilde sadece bellekte
-// (module-level değişken) tutuluyor — localStorage/sessionStorage'a YAZILMIYOR, çünkü bu proje
-// zaten "kalıcı oturum yerine XSS'e karşı en güvenli seçenek" tercihini benimsemiş durumda (bkz.
-// REFACTOR_REPORT.md bölüm 9 madde 3). Bu, mevcut davranışla da tutarlı: sayfa yenilenince
-// `adminAuthed` zaten sıfırlanıyordu, token'ın da aynı şekilde sıfırlanması yeni bir kısıtlama
-// getirmiyor.
+// GERÇEK HATA DÜZELTMESİ: admin token'ı önceden SADECE saf bir module-level değişkende
+// tutuluyordu (localStorage/sessionStorage'a hiç yazılmıyordu). Bunun pratikte kırdığı şey:
+// Vite'nin geliştirme modundaki hot-reload'u (HMR) bu dosyayı (ya da onu import eden başka bir
+// dosyayı) yeniden değerlendirdiğinde, modül baştan çalıştığı için `adminToken` sessizce `null`'a
+// dönüyordu — ANCAK React tarafında `adminAuthed` state'i Fast Refresh ile KORUNUYORDU. Sonuç:
+// admin ekranda hâlâ giriş yapmış görünüyor ama gönderdiği hiçbir istekte Authorization header'ı
+// yok, backend de 401 ile reddediyor ("taze giriş yaptım ama kaydedemiyorum" şikayetinin gerçek
+// kök nedeni). Çözüm: token'ı sessionStorage'a yazıyoruz — localStorage'ın aksine sekme
+// kapanınca/tarayıcı kapanınca otomatik silinir (owner/mechanic'in kalıcı localStorage oturumundan
+// daha kısıtlı, admin panelinin "uzun süre kalıcı olmasın" amacıyla tutarlı) ama modül yeniden
+// yüklendiğinde ya da sayfa aynı sekmede yenilendiğinde HAYATTA kalır — yukarıdaki HMR/refresh
+// sınıfı hataları tamamen ortadan kaldırır.
+const ADMIN_TOKEN_STORAGE_KEY = "fixperto_admin_token_v1";
 let adminToken: string | null = null;
+try {
+  if (typeof window !== "undefined") adminToken = window.sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) || null;
+} catch { /* sessionStorage kullanılamıyor — bellek-içi (eski davranış) ile devam edilir */ }
+
+function setAdminToken(token: string | null) {
+  adminToken = token;
+  try {
+    if (typeof window === "undefined") return;
+    if (token) window.sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+    else window.sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+  } catch { /* yoksay */ }
+}
 
 function adminAuthOpts(): RequestOptions {
   return adminToken ? { headers: { Authorization: `Bearer ${adminToken}` } } : {};
@@ -281,14 +299,14 @@ export const api = {
     // değil SONRA (yanıttan okuyarak) saklıyoruz.
     login: async (email: string, password: string): Promise<{ ok: true }> => {
       const result = await request("/api/admin/login", { method: "POST", body: JSON.stringify({ email, password }) });
-      adminToken = result?.token || null;
+      setAdminToken(result?.token || null);
       return result;
     },
     logout: async (): Promise<void> => {
       if (adminToken) {
         try { await request("/api/admin/logout", { method: "POST", ...adminAuthOpts() }); } catch { /* çıkışta hata olsa bile devam et */ }
       }
-      adminToken = null;
+      setAdminToken(null);
     },
     stats: (): Promise<AdminStats> => request("/api/admin/stats", { ...adminAuthOpts() }),
     changeLog: (): Promise<AdminChangeLogEntry[]> => request("/api/admin/change-log", { ...adminAuthOpts() }),

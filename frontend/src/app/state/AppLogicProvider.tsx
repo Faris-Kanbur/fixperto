@@ -1613,18 +1613,28 @@ function useAppLogic() {
   // "oldValue" olarak artık bilinmeyen/gizli olduğunu belirten sabit bir değer yazıyoruz —
   // önceden zaten sadece ekranda maskeleniyordu (bkz. formatAdminHistoryValue), şimdi kaynağında
   // da gerçek değeri iddia etmiyor.
-  const resetUserPassword = () => {
+  const resetUserPassword = async () => {
     if (!selectedAdminUser || !adminEditForm || !adminEditForm.newPassword.trim()) return;
     const pwd = adminEditForm.newPassword.trim();
     const pwdTargetType = selectedAdminUser.type === "owner" ? "owner" : "mechanicOverride";
-    logAdminChange({ targetType: pwdTargetType, targetId: selectedAdminUser.id, field: "password", oldValue: "••••••", newValue: pwd });
-    if (selectedAdminUser.type === "owner") persist(api.owners.setPassword(selectedAdminUser.id, pwd, api.admin.authOpts()), "Şifre kaydedilemedi");
-    // GERÇEK HATA DÜZELTMESİ: tamirci şifre sıfırlama önceden hiç API çağrısı yapmıyordu (sadece
-    // local mechanicAdminOverrides state'ine yazıyordu) — yani sayfa yenilenince "sıfırlanan" şifre
-    // hiç kaydedilmemiş olurdu. Artık owner koluyla tutarlı şekilde gerçekten backend'e yazılıyor.
-    else persist(api.mechanics.setPassword(selectedAdminUser.id, pwd, api.admin.authOpts()), "Şifre kaydedilemedi");
-    setAdminEditForm(f => ({ ...f, newPassword: "" }));
-    setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." });
+    // GERÇEK HATA DÜZELTMESİ: değişiklik geçmişine (logAdminChange) önceden istek backend'e
+    // GİTMEDEN ÖNCE yazılıyordu — yani istek 401/başka bir hatayla reddedilse bile geçmişte
+    // "şifre değiştirildi" görünüyordu, admini yanıltıyordu ("gecmiste sifre degisikliklerini
+    // gösteriyor ama" şikayeti). Artık backend'e gerçekten yazıldığı DOĞRULANDIKTAN sonra
+    // (await başarıyla döndükten sonra) geçmişe ekleniyor; başarısız olursa geçmiş kirlenmiyor,
+    // gerçek hata mesajı gösteriliyor.
+    try {
+      if (selectedAdminUser.type === "owner") await api.owners.setPassword(selectedAdminUser.id, pwd, api.admin.authOpts());
+      // GERÇEK HATA DÜZELTMESİ: tamirci şifre sıfırlama önceden hiç API çağrısı yapmıyordu (sadece
+      // local mechanicAdminOverrides state'ine yazıyordu) — yani sayfa yenilenince "sıfırlanan" şifre
+      // hiç kaydedilmemiş olurdu. Artık owner koluyla tutarlı şekilde gerçekten backend'e yazılıyor.
+      else await api.mechanics.setPassword(selectedAdminUser.id, pwd, api.admin.authOpts());
+      logAdminChange({ targetType: pwdTargetType, targetId: selectedAdminUser.id, field: "password", oldValue: "••••••", newValue: pwd });
+      setAdminEditForm(f => ({ ...f, newPassword: "" }));
+      setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." });
+    } catch (err: any) {
+      setToast({ type: "info", text: `⚠️ Şifre kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+    }
   };
   const sendPasswordResetLink = () => {
     if (!selectedAdminUser) return;
