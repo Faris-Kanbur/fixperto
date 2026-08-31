@@ -1200,16 +1200,19 @@ export function AppShell() {
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
                 <div className="flex items-center gap-2 flex-shrink-0"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></div>
+                {/* GÜVENLİK/UX DÜZELTMESİ (kullanıcı geri bildirimi): bu "Tamirci Ara / Araç Ara / İş
+                    İlanları" hızlı-arama sekmeleri sadece keşif (search) ekranında anlamlı — önceden
+                    ownerTab ne olursa olsun (ör. Randevularım) hep görünüyordu, sadece "aktif" vurgusu
+                    doğruydu. Artık ownerTab === "search" değilken bu sekme grubu tamamen gizleniyor. */}
+                {ownerTab === "search" && (
                 <div className="flex items-center gap-8">
                   {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: t("jobListingsNavLabel"), icon: Briefcase }].map(tab => {
-                    // "Aktif" durumu sadece ownerMode'a değil, ownerTab === "search" olmasına da bakmalı —
-                    // yoksa Randevularım/Favoriler/Sohbetler gibi başka bir sekmedeyken bile bu nav hep
-                    // "Tamirci Ara" seçiliymiş gibi kalın/altı çizili görünüyordu (kullanıcı geri bildirimi).
-                    const Icon = tab.icon; const active = ownerTab === "search" && ownerMode === tab.key;
+                    const Icon = tab.icon; const active = ownerMode === tab.key;
                     return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
                   })}
                   <button onClick={() => setShowQuoteModal(true)} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> {t("multiQuoteBtn")}</button>
                 </div>
+                )}
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <NotifBell />
                   <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title={t("profileAndSettingsTitle")} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>

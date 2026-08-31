@@ -26,14 +26,36 @@ export function makeCrudRouter(table, {
   idColumn = "id",
   shareCountColumn = null,
   passwordVerify = false,
-  authScope = null, // { fields: [{ field: "ownerId", role: "owner" }, ...], publicRead?: boolean }
+  authScope = null, // { fields: [{ field: "ownerId", role: "owner" }, ...], publicRead?: boolean, sharedWrite?: { fields: [...], roles: [...] } }
 } = {}) {
   const router = Router();
   const scopeFields = authScope?.fields || [];
   const publicRead = authScope ? authScope.publicRead !== false : true;
+  // GÜVENLİK DÜZELTMESİ (regresyon: "Beğeni kaydedilemedi: Bu işlem için yetkiniz yok."): mechanics
+  // tablosundaki reviewList/reviews/rating alanları özel bir durum — bir tamircinin PROFİLİ sadece
+  // o tamirci tarafından düzenlenebilmeli (self-only authScope, doğru), AMA yorumlar/beğeniler HER
+  // ZAMAN başka kullanıcılar (araç sahipleri) tarafından yazılıyor: bir owner bir tamirciye yorum
+  // bırakır, bir yorumu "faydalı" işaretler, ya da kendi yorumunu siler — bunların hepsi o tamircinin
+  // SATIRINI günceller ama yazan kişi o tamirci değildir. Blanket self-only authScope eklendiğinde
+  // (gerçek oturum sistemi) bu akış yanlışlıkla 403 ile kırıldı: local state iyimser (optimistic)
+  // güncellendiği için sayaç ekranda hemen artıyordu ama backend isteği reddediliyor, kalıcı olmuyordu.
+  // `sharedWrite` bu üç alan için (ve SADECE bu üç alan için — PATCH gövdesinde başka hiçbir alan
+  // yoksa) sahiplik kontrolünü atlayıp sadece "geçerli bir owner/mechanic/admin oturumu var mı"
+  // kontrolüne düşürüyor — profildeki diğer TÜM alanlar (iban, fiyat, adres, çalışma saatleri vb.)
+  // hâlâ tamamen self-only kalıyor. Bu, önceki (authScope'tan ÖNCEKİ) davranışla aynı güven
+  // seviyesinde ama artık en azından girişsiz kimse yazamıyor.
+  const sharedWriteFields = new Set(authScope?.sharedWrite?.fields || []);
+  const sharedWriteRoles = new Set(authScope?.sharedWrite?.roles || []);
 
   function matchingField(actor, row) {
     return scopeFields.find((f) => f.role === actor?.role && row[f.field] === actor.id);
+  }
+
+  function isSharedWrite(actor, bodyKeys) {
+    if (sharedWriteFields.size === 0) return false;
+    if (!sharedWriteRoles.has(actor?.role)) return false;
+    if (bodyKeys.length === 0) return false;
+    return bodyKeys.every((k) => sharedWriteFields.has(k));
   }
 
   router.get("/", (req, res) => {
@@ -95,14 +117,14 @@ export function makeCrudRouter(table, {
   router.patch("/:id", (req, res) => {
     const existing = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
     if (!existing) return res.status(404).json({ error: `${table} not found` });
+    const body = dehydrate(table, req.body);
     if (authScope) {
       const actor = resolveActor(req);
       if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
-      if (actor.role !== "admin" && !matchingField(actor, existing)) {
+      if (actor.role !== "admin" && !matchingField(actor, existing) && !isSharedWrite(actor, Object.keys(body))) {
         return res.status(403).json({ error: "Bu kaydı değiştirme yetkiniz yok." });
       }
     }
-    const body = dehydrate(table, req.body);
     if (passwordVerify) delete body.password;
     if (authScope) for (const f of scopeFields) delete body[f.field]; // sahiplik alanı PATCH ile devredilemez
     const cols = Object.keys(body).filter((c) => c !== idColumn);

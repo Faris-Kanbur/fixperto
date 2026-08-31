@@ -54,7 +54,10 @@ app.get("/api/health", (req, res) => res.json({ ok: true, service: "fixperto-bac
 // sadece yazma (kayıt oluşturma/değiştirme/silme) artık gerçek sahiplik kontrolüne tabi.
 app.use("/api/mechanics", makeCrudRouter("mechanics", {
   shareCountColumn: "shareCount", passwordVerify: true,
-  authScope: { fields: [{ field: "id", role: "mechanic" }] },
+  // sharedWrite: reviewList/reviews/rating tek başına self-only olamaz — bir owner bir tamirciye
+  // yorum bırakabilmeli, kendi yorumunu "faydalı" işaretleyebilmeli/silebilmeli (bkz.
+  // makeCrudRouter.js üstündeki büyük yorum, "Beğeni kaydedilemedi" regresyonunun düzeltmesi).
+  authScope: { fields: [{ field: "id", role: "mechanic" }], sharedWrite: { fields: ["reviewList", "reviews", "rating"], roles: ["owner", "mechanic"] } },
 }));
 app.use("/api/owners", makeCrudRouter("owners", {
   passwordVerify: true,

@@ -124,18 +124,40 @@ function useAppLogic() {
   // Anahtar "mechanicId:reviewId" formatında, çünkü review.id her tamircinin kendi
   // reviewList'i içinde ayrı bir sayaç (Date.now()), global olarak benzersiz değil.
   const [likedReviewIds, setLikedReviewIds] = useState([]);
-  const toggleReviewHelpful = (mechanicId, reviewId) => {
+  // GÜVENLİK DÜZELTMESİ (regresyon: "Beğeni kaydedilemedi: Bu işlem için yetkiniz yok." hatası,
+  // ekrandaki sayaç yine de +1 artıyordu): backend'e gerçek oturum sistemi eklendiğinde (bkz.
+  // makeCrudRouter.js authScope) mechanics tablosu SADECE o tamircinin kendisi tarafından
+  // güncellenebilir hale gelmişti — ama bir yorumu "faydalı" işaretlemek başka bir kullanıcının
+  // (owner) tamirci satırını güncellemesi demek, bu yüzden istek 403 ile reddediliyordu.
+  // backend/routes/makeCrudRouter.js + server.js'e eklenen `sharedWrite` istisnasıyla artık
+  // reviewList/reviews/rating alanları herhangi bir giriş yapmış owner/mechanic tarafından
+  // yazılabiliyor (profildeki diğer TÜM alanlar hâlâ self-only). Ayrıca burada: MY_OWNER_ID henüz
+  // yoksa (oturum kurulmadıysa) hiç optimistic güncelleme yapmadan önce açıkça uyarıyoruz, ve
+  // backend isteği gerçekten başarısız olursa yerel sayaç geri alınıyor (önceden hep +1 kalıyordu).
+  const toggleReviewHelpful = async (mechanicId, reviewId) => {
     if (role !== "owner") return;
+    if (MY_OWNER_ID == null) { setToast({ type: "info", text: "⚠️ Yorumu faydalı işaretlemek için giriş yapmalısınız." }); return; }
     const key = `${mechanicId}:${reviewId}`;
     const alreadyLiked = likedReviewIds.includes(key);
     const mech = mechanicsList.find(m => m.id === mechanicId);
     if (!mech) return;
+    const prevReviewList = mech.reviewList;
+    const prevLiked = likedReviewIds;
     const reviewList = mech.reviewList.map(r => r.id === reviewId ? { ...r, helpfulCount: Math.max(0, (r.helpfulCount || 0) + (alreadyLiked ? -1 : 1)) } : r);
-    setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList }));
-    persist(api.mechanics.update(mechanicId, { reviewList }), "Beğeni kaydedilemedi");
     const nextLiked = alreadyLiked ? likedReviewIds.filter(k => k !== key) : [...likedReviewIds, key];
+    setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList }));
     setLikedReviewIds(nextLiked);
-    persist(api.owners.update(MY_OWNER_ID, { likedReviewIds: nextLiked }), "Beğeni kaydedilemedi");
+    try {
+      await Promise.all([
+        api.mechanics.update(mechanicId, { reviewList }),
+        api.owners.update(MY_OWNER_ID, { likedReviewIds: nextLiked }),
+      ]);
+    } catch (err) {
+      // Rollback — istek gerçekten başarısız oldu, sayaç ekranda yanlış kalmasın.
+      setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList: prevReviewList }));
+      setLikedReviewIds(prevLiked);
+      setToast({ type: "info", text: `⚠️ Beğeni kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+    }
   };
   const [query, setQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
