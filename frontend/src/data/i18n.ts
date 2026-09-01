@@ -888,6 +888,26 @@ export const T = {
   pendingStatus: { tr: "⏳ Beklemede", en: "⏳ Pending", de: "⏳ Ausstehend" },
   noOffersMadeNote: { tr: "Henüz teklif vermediniz", en: "You haven't made any offers yet", de: "Sie haben noch keine Angebote gemacht" },
   noOffersReceivedNote: { tr: "Henüz teklif almadınız", en: "You haven't received any offers yet", de: "Sie haben noch keine Angebote erhalten" },
+  // ---- Tamirci galeri paneli: toplu ilan yönetimi ----
+  galleryTitle: { tr: "Galerim", en: "My Gallery", de: "Meine Galerie" },
+  authorizedDealerBadge: { tr: "Yetkili Galeri", en: "Authorized Dealer", de: "Autorisierter Händler" },
+  gallerySelectAllBtn: { tr: "Tümünü Seç", en: "Select All", de: "Alle auswählen" },
+  galleryClearSelectionBtn: { tr: "Seçimi Temizle", en: "Clear Selection", de: "Auswahl aufheben" },
+  gallerySelectedCountLabel: { tr: "{n} ilan seçili", en: "{n} listings selected", de: "{n} Anzeigen ausgewählt" },
+  galleryBulkFeatureBtn: { tr: "⭐ Öne Çıkar", en: "⭐ Feature", de: "⭐ Hervorheben" },
+  galleryBulkUnfeatureBtn: { tr: "Öne Çıkarmayı Kaldır", en: "Remove Featured", de: "Hervorhebung entfernen" },
+  galleryBulkMarkSoldBtn: { tr: "Satıldı İşaretle", en: "Mark as Sold", de: "Als verkauft markieren" },
+  galleryBulkMarkActiveBtn: { tr: "Aktif Yap", en: "Mark Active", de: "Als aktiv markieren" },
+  galleryBulkDeleteBtn: { tr: "Sil", en: "Delete", de: "Löschen" },
+  galleryDaysActiveLabel: { tr: "{n} gündür ilanda", en: "{n} days listed", de: "Seit {n} Tagen gelistet" },
+  galleryViewsCountLabel: { tr: "{n} görüntülenme", en: "{n} views", de: "{n} Aufrufe" },
+  galleryMessagesCountLabel: { tr: "{n} mesaj", en: "{n} messages", de: "{n} Nachrichten" },
+  galleryBulkFeaturedToast: { tr: "⭐ Seçili ilanlar öne çıkarıldı.", en: "⭐ Selected listings are now featured.", de: "⭐ Ausgewählte Anzeigen werden jetzt hervorgehoben." },
+  galleryBulkUnfeaturedToast: { tr: "Seçili ilanlar öne çıkarmadan kaldırıldı.", en: "Selected listings removed from featured.", de: "Ausgewählte Anzeigen sind nicht mehr hervorgehoben." },
+  galleryBulkStatusToast: { tr: "Seçili ilanların durumu \"{status}\" olarak güncellendi.", en: "Selected listings updated to \"{status}\".", de: "Ausgewählte Anzeigen auf „{status}“ aktualisiert." },
+  galleryBulkDeleteConfirmTitle: { tr: "Seçili ilanlar silinsin mi?", en: "Delete selected listings?", de: "Ausgewählte Anzeigen löschen?" },
+  galleryBulkDeleteConfirmBody: { tr: "{n} ilan kalıcı olarak silinecek. Bu işlem geri alınamaz.", en: "{n} listings will be permanently deleted. This cannot be undone.", de: "{n} Anzeigen werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden." },
+  galleryStatusChangeAria: { tr: "Durumu değiştir", en: "Change status", de: "Status ändern" },
 };
 
 export const MONTH_ABBR_BY_LANG = {

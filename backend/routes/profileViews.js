@@ -21,6 +21,32 @@ router.post("/:id/convert", (req, res) => {
   res.json(db.prepare(`SELECT * FROM profile_views WHERE id = ?`).get(req.params.id));
 });
 
+// Tamirci galeri paneli (toplu ilan yönetimi): tek tek her ilan için ayrı bir GET /stats isteği
+// atmak yerine (10-20 ilanlık bir galeride N+1 istek sorunu olurdu), tüm ilan id'lerini tek
+// istekte alıp targetId -> { totalViews, viewsInRange, conversions, conversionsInRange } haritası
+// dönüyoruz. Tek hedefli /stats ile aynı `days` opsiyonel aralık mantığını paylaşır.
+router.get("/stats/bulk", (req, res) => {
+  const { targetType, targetIds, days } = req.query;
+  if (!targetType || !targetIds) return res.status(400).json({ error: "targetType ve targetIds zorunludur." });
+  const ids = String(targetIds).split(",").map((s) => s.trim()).filter(Boolean).slice(0, 200);
+  if (ids.length === 0) return res.json({});
+  const daysNum = parseInt(days, 10);
+  const hasRange = Number.isFinite(daysNum) && daysNum > 0;
+  const cutoff = hasRange ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " ") : null;
+  const result = {};
+  const totalStmt = db.prepare(`SELECT COUNT(*) n, COALESCE(SUM(converted), 0) c FROM profile_views WHERE targetType = ? AND targetId = ?`);
+  const rangeStmt = hasRange ? db.prepare(`SELECT COUNT(*) n, COALESCE(SUM(converted), 0) c FROM profile_views WHERE targetType = ? AND targetId = ? AND createdAt >= ?`) : null;
+  for (const id of ids) {
+    const totals = totalStmt.get(targetType, id);
+    const inRange = hasRange ? rangeStmt.get(targetType, id, cutoff) : null;
+    result[id] = {
+      totalViews: totals.n, conversions: totals.c,
+      viewsInRange: inRange ? inRange.n : null, conversionsInRange: inRange ? inRange.c : null,
+    };
+  }
+  res.json(result);
+});
+
 router.get("/stats", (req, res) => {
   const { targetType, targetId, days } = req.query;
   const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " ");

@@ -1,4 +1,4 @@
-import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats, ProfileViewStats, ProfileViewAggregateStats, Broadcast, TranslateResult } from "../../types/domain";
+import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats, ProfileViewStats, ProfileViewAggregateStats, ProfileViewBulkStats, Broadcast, TranslateResult } from "../../types/domain";
 
 // Thin fetch wrapper around the Fixperto Express + SQLite backend. Set
 // VITE_API_URL in frontend/.env if the backend doesn't run on the default
@@ -344,6 +344,10 @@ export const api = {
     // pencereye göre `viewsInRange`/`conversionsInRange` alanlarını da içerir.
     stats: (targetType?: string, targetId?: number | string, days?: number): Promise<ProfileViewStats | ProfileViewAggregateStats> =>
       request(targetType && targetId ? `/api/profile-views/stats?targetType=${targetType}&targetId=${targetId}${days ? `&days=${days}` : ""}` : "/api/profile-views/stats"),
+    // Tamirci galeri paneli: birden fazla ilanın görüntülenme/dönüşüm sayısını N ayrı istek yerine
+    // tek istekte alır (bkz. backend/routes/profileViews.js GET /stats/bulk).
+    statsBulk: (targetType: string, targetIds: (number | string)[], days?: number): Promise<ProfileViewBulkStats> =>
+      targetIds.length === 0 ? Promise.resolve({}) : request(`/api/profile-views/stats/bulk?targetType=${targetType}&targetIds=${targetIds.join(",")}${days ? `&days=${days}` : ""}`),
   },
   broadcasts: crud<Broadcast>("broadcasts"),
   // Sohbet mesajı çevirisi — bkz. backend/routes/translate.js. Sunucu tarafında SQLite önbelleği

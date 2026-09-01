@@ -206,7 +206,10 @@ export function MechDetailBody() {
               <>
                 {mechListings.length > 0 && (
                   <>
-                    <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Car size={16} className="text-rose-500" /> {t("carListingsTitle")} <span className="text-gray-300 font-normal">({mechListings.length})</span></h3>
+                    <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2 flex-wrap">
+                      <Car size={16} className="text-rose-500" /> {t("carListingsTitle")} <span className="text-gray-300 font-normal">({mechListings.length})</span>
+                      {selectedMechanic.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 flex items-center gap-1"><BadgeCheck size={11} /> {t("authorizedDealerBadge")}</span>}
+                    </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">{mechListings.map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   </>
                 )}

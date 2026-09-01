@@ -155,7 +155,12 @@ CREATE TABLE IF NOT EXISTS listings (
   negotiable INTEGER DEFAULT 0,
   inspectionReportUrl TEXT,
   featured INTEGER DEFAULT 0,
-  adminRemoved INTEGER DEFAULT 0
+  adminRemoved INTEGER DEFAULT 0,
+  -- Tamirci galeri paneli (toplu ilan yönetimi) için "gün sayısı ilanda" hesaplamasında kullanılır.
+  -- Diğer zaman alanları (job_listings.postedDate gibi) bu projede biçimlendirilmiş görüntü metni
+  -- olarak tutuluyordu ("az önce" gibi) — bu, gerçek hesaplama gerektirdiği için ISO tarih olarak
+  -- istemci tarafında (submitListing) set ediliyor, tıpkı owners.joinDate gibi.
+  createdAt TEXT
 );
 
 CREATE TABLE IF NOT EXISTS job_listings (
@@ -344,6 +349,7 @@ function ensureColumn(table, columnDef) {
   ["listings", "adminRemoved INTEGER DEFAULT 0"],
   ["mechanics", "phone TEXT"],
   ["mechanics", "password TEXT DEFAULT 'demo1234'"],
+  ["listings", "createdAt TEXT"],
   // GERÇEK OTURUM SİSTEMİ: mechanics tablosunda daha önce hiç email sütunu yoktu (owners'ta vardı) —
   // gerçek e-posta+şifre ile giriş/kayıt için (bkz. backend/routes/auth.js) artık gerekli.
   ["mechanics", "email TEXT"],
@@ -391,6 +397,16 @@ try {
   Object.entries(MECHANIC_DEMO_EMAILS).forEach(([id, email]) => emailStmt.run({ id: Number(id), email }));
 } catch (err) {
   console.error("Tamirci demo e-posta backfill hatası:", err.message);
+}
+
+// Tek seferlik backfill: createdAt sütunu yeni eklendiği için (yukarıdaki ensureColumn) var olan
+// (seed verisi dahil) ilanların hepsinde bu alan boş — tamirci galeri panelindeki "N gündür ilanda"
+// hesaplaması için hepsine şimdiki zamanı yazıyoruz (gerçek geçmiş tarih bilinmiyor, ama bundan sonra
+// yeni ilanlar submitListing'de gerçek oluşturulma anıyla kaydediliyor).
+try {
+  db.prepare(`UPDATE listings SET createdAt = datetime('now') WHERE createdAt IS NULL OR createdAt = ''`).run();
+} catch (err) {
+  console.error("listings.createdAt backfill hatası:", err.message);
 }
 
 // ---------------------------------------------------------------------------

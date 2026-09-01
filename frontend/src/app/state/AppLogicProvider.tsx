@@ -2842,7 +2842,7 @@ function useAppLogic() {
       const { _editingId, _vehicleId, ...formFields } = sellForm;
       // Açıklama metninin hangi dilde yazıldığını satıcının güncel diline göre etiketliyoruz —
       // bkz. patch.lang yorum notu yukarıda.
-      const draft = { sellerName, sellerType, sellerId, ...formFields, vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang };
+      const draft = { sellerName, sellerType, sellerId, ...formFields, vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang, createdAt: new Date().toISOString() };
       // Form ve "yayınlandı" mesajı yalnızca ilan gerçekten kaydedildikten sonra kapatılıp
       // gösteriliyor — istek başarısız olursa kullanıcı formda kalır, girdiği bilgiler kaybolmaz.
       try {
@@ -2931,6 +2931,56 @@ function useAppLogic() {
     if (!listing) return false;
     if (listing.sellerId != null) return role === "owner" ? listing.sellerId === MY_OWNER_ID : listing.sellerId === MY_MECHANIC_ID;
     return listing.sellerName === (role === "owner" ? ownerProfile.name : myProfile?.name);
+  };
+  // ---- Tamirci galeri paneli: toplu ilan yönetimi ----
+  // "Araç İlanlarım" sekmesi artık sadece kartları listelemekle kalmıyor; çoklu seçim + toplu
+  // aksiyon (öne çıkar/durum değiştir/sil) ve her ilan için görüntülenme/mesaj/teklif özetini tek
+  // bakışta gösteriyor. Görüntülenme sayıları N ayrı istek yerine tek bir /stats/bulk çağrısıyla
+  // gelir (bkz. api.profileViews.statsBulk) — sadece "cars" sekmesi açıkken ve ilan sayısı
+  // değiştiğinde yeniden çekilir.
+  const [gallerySelectedIds, setGallerySelectedIds] = useState([]);
+  const [myListingsStats, setMyListingsStats] = useState(null);
+  const toggleGallerySelect = (id) => setGallerySelectedIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
+  const clearGallerySelection = () => setGallerySelectedIds([]);
+  const myOwnCarListings = () => listings.filter(isMyListing);
+  useEffect(() => {
+    if (mechTab !== "market" || mechListingsSubTab !== "cars") return;
+    const myIds = myOwnCarListings().map(l => l.id);
+    if (myIds.length === 0) { setMyListingsStats({}); return; }
+    api.profileViews.statsBulk("listing", myIds).then(setMyListingsStats).catch(() => setMyListingsStats({}));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mechTab, mechListingsSubTab, listings.length]);
+  // Bir ilanın kaç gündür yayında olduğu — createdAt yoksa (çok eski/backfill edilmiş kayıt) null
+  // döner, UI bu durumda "—" gösterir.
+  const listingDaysActive = (listing) => {
+    if (!listing?.createdAt) return null;
+    const created = new Date(listing.createdAt).getTime();
+    if (Number.isNaN(created)) return null;
+    return Math.max(0, Math.floor((Date.now() - created) / 86400000));
+  };
+  // Toplu aksiyonlar — hepsi mevcut tekil fonksiyonların (updateListingField/setListingStatus/
+  // removeListing) üzerine kurulu, sadece seçili id'ler üzerinde döngü kuruyor. Silme geri
+  // döndürülemez olduğu için mevcut confirmDialog deseni kullanılıyor (tekil silmede karşılık yok
+  // ama toplu silmede yanlışlıkla tüm galeriyi kaybetmemek için önemli).
+  const bulkFeatureSelectedListings = (featured) => {
+    gallerySelectedIds.forEach(id => { setListings(l => l.map(x => x.id === id ? { ...x, featured } : x)); persist(api.listings.update(id, { featured }), "İlan kaydedilemedi"); });
+    setToast({ type: "info", text: featured ? t("galleryBulkFeaturedToast") : t("galleryBulkUnfeaturedToast") });
+    clearGallerySelection();
+  };
+  const bulkSetStatusSelectedListings = (status) => {
+    gallerySelectedIds.forEach(id => setListingStatus(id, status));
+    setToast({ type: "info", text: t("galleryBulkStatusToast", { status: listingStatusMeta(status, t).label }) });
+    clearGallerySelection();
+  };
+  const bulkDeleteSelectedListings = () => {
+    const ids = [...gallerySelectedIds];
+    setConfirmDialog({
+      title: t("galleryBulkDeleteConfirmTitle"),
+      body: t("galleryBulkDeleteConfirmBody", { n: String(ids.length) }),
+      confirmLabel: t("yesDeleteConfirmLabel"),
+      danger: true,
+      onConfirm: () => { ids.forEach(id => removeListing(id)); clearGallerySelection(); },
+    });
   };
   // "Benzer İlanlar" — ilan detayının altında gösterilen küçük öneri şeridi için. Önce aynı marka
   // + kasa tipindeki aktif ilanlara, yetmezse aynı markadaki diğer ilanlara bakar; fiyata en yakın
@@ -3269,6 +3319,7 @@ function useAppLogic() {
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, toggleBrandServiced, customBrandInput, setCustomBrandInput, addCustomBrand, showAllBrandOptions, setShowAllBrandOptions, togglePaymentMethod, customPaymentInput, setCustomPaymentInput, addCustomPaymentMethod, showAllPaymentOptions, setShowAllPaymentOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
+    gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,

@@ -248,6 +248,10 @@ export interface Listing {
    * kartta/detayda rozet gösterilir. Gerçek bir ödeme akışı yok; demo kapsamında satıcı kendi
    * ilanında bunu doğrudan açıp kapatabilir, admin de geri alabilir. */
   featured?: boolean;
+  /** İlanın oluşturulma anı (ISO), submitListing'de istemci tarafında set edilir — tamirci galeri
+   * panelindeki "N gündür ilanda" hesaplaması için. Eski/backfill edilen kayıtlarda gerçek oluşturma
+   * tarihi bilinmediği için backend migrasyon anına eşitlenmiştir, bundan sonrakiler gerçektir. */
+  createdAt?: string;
 }
 
 export interface ChatMessage {
@@ -410,6 +414,15 @@ export interface ProfileViewAggregateStats {
   topMechanics: { targetId: number; views: number; conversions: number }[];
   topListings: { targetId: number; views: number; conversions: number }[];
 }
+
+/** GET /api/profile-views/stats/bulk yanıtı — tamirci galeri panelinde tek istekte tüm ilanların
+ * görüntülenme/dönüşüm sayısını almak için (bkz. AppLogicProvider.tsx myListingsStats). */
+export type ProfileViewBulkStats = Record<string, {
+  totalViews: number;
+  conversions: number;
+  viewsInRange: number | null;
+  conversionsInRange: number | null;
+}>;
 
 export interface Broadcast {
   id: number;

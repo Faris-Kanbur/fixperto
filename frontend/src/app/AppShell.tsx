@@ -117,6 +117,7 @@ export function AppShell() {
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, toggleBrandServiced, customBrandInput, setCustomBrandInput, addCustomBrand, showAllBrandOptions, setShowAllBrandOptions, togglePaymentMethod, customPaymentInput, setCustomPaymentInput, addCustomPaymentMethod, showAllPaymentOptions, setShowAllPaymentOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
+    gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor, ownerLangFor,
@@ -2216,11 +2217,71 @@ export function AppShell() {
                   <button onClick={() => setMechListingsSubTab("cars")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 ${mechListingsSubTab === "cars" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Car size={13} /> {t("myCarListingsTab")}</button>
                   <button onClick={() => setMechListingsSubTab("jobs")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 ${mechListingsSubTab === "jobs" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Briefcase size={13} /> {t("myJobListingsTab")}</button>
                 </div>
-                {mechListingsSubTab === "cars" && (<>
-                  <p className="text-xs text-gray-400 mb-3">{t("myListingsSub")}</p>
-                  <button onClick={() => openSellForm(null)} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
-                  {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
-                </>)}
+                {mechListingsSubTab === "cars" && (() => {
+                  const myCarListings = listings.filter(isMyListing);
+                  const allSelected = myCarListings.length > 0 && gallerySelectedIds.length === myCarListings.length;
+                  return (
+                    <>
+                      <div className="flex items-center justify-between mb-1 gap-2">
+                        <p className="text-xs text-gray-400">{t("myListingsSub")}</p>
+                        {myProfile?.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 flex items-center gap-1 flex-shrink-0"><BadgeCheck size={11} /> {t("authorizedDealerBadge")}</span>}
+                      </div>
+                      <button onClick={() => openSellForm(null)} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
+                      {myCarListings.length === 0 ? (
+                        <div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between mb-2">
+                            <button onClick={() => setGallerySelectedIds(allSelected ? [] : myCarListings.map(l => l.id))} className="text-xs font-medium text-gray-500 hover:text-gray-800">{allSelected || gallerySelectedIds.length > 0 ? t("galleryClearSelectionBtn") : t("gallerySelectAllBtn")}</button>
+                            {gallerySelectedIds.length > 0 && <span className="text-xs font-semibold text-rose-600">{t("gallerySelectedCountLabel", { n: String(gallerySelectedIds.length) })}</span>}
+                          </div>
+                          {gallerySelectedIds.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-3 bg-rose-50 border border-rose-100 rounded-xl p-2.5">
+                              <button onClick={() => bulkFeatureSelectedListings(true)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-rose-300 transition">{t("galleryBulkFeatureBtn")}</button>
+                              <button onClick={() => bulkFeatureSelectedListings(false)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-rose-300 transition">{t("galleryBulkUnfeatureBtn")}</button>
+                              <button onClick={() => bulkSetStatusSelectedListings("sold")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-rose-300 transition">{t("galleryBulkMarkSoldBtn")}</button>
+                              <button onClick={() => bulkSetStatusSelectedListings("active")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-rose-300 transition">{t("galleryBulkMarkActiveBtn")}</button>
+                              <button onClick={bulkDeleteSelectedListings} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-red-200 text-red-600 hover:bg-red-50 transition flex items-center gap-1"><Trash2 size={12} /> {t("galleryBulkDeleteBtn")}</button>
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            {myCarListings.map(l => {
+                              const days = listingDaysActive(l);
+                              const stats = myListingsStats?.[l.id];
+                              const msgCount = (l.messages || []).length;
+                              const offerCount = (l.offers || []).filter(o => o.status !== "replaced").length;
+                              const checked = gallerySelectedIds.includes(l.id);
+                              return (
+                                <div key={l.id} className={`bg-white border rounded-2xl p-3 transition ${checked ? "border-rose-300 ring-1 ring-rose-100" : "border-gray-200"}`}>
+                                  <div className="flex items-center gap-3">
+                                    <input type="checkbox" checked={checked} onChange={() => toggleGallerySelect(l.id)} aria-label={t("gallerySelectAllBtn")} className="w-4 h-4 flex-shrink-0 accent-rose-600" />
+                                    <button onClick={() => setSelectedListingId(l.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
+                                      <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 100)} loading="lazy" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover" /> : l.photo}</div>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-semibold text-gray-800 truncate">{l.brand} {l.model} ({l.year})</p>
+                                        <p className="text-xs text-gray-400">{l.price}{l.featured && <span className="ml-1.5 text-amber-500">★</span>}</p>
+                                      </div>
+                                    </button>
+                                    <span className={`text-[10px] font-bold text-white px-2 py-1 rounded-full flex-shrink-0 ${l.adminRemoved ? "bg-gray-900" : listingStatusMeta(l.status, t).color}`}>{l.adminRemoved ? t("removedStatusLabel") : listingStatusMeta(l.status, t).label}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between gap-2 pt-2.5 mt-2.5 border-t border-gray-100 text-[11px] text-gray-400">
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                      <span>{days != null ? t("galleryDaysActiveLabel", { n: String(days) }) : "—"}</span>
+                                      <span className="flex items-center gap-1"><Eye size={11} /> {stats ? t("galleryViewsCountLabel", { n: String(stats.totalViews) }) : "…"}</span>
+                                      <span>{t("galleryMessagesCountLabel", { n: String(msgCount) })}</span>
+                                      <span>{offerCount > 0 ? t("offerCountSuffixShort", { n: String(offerCount) }) : t("noOffersYetShort")}</span>
+                                    </div>
+                                    <button onClick={() => openSellForm({ brand: l.brand, model: l.model, year: l.year, km: l.km, price: l.price, description: l.description, photo: l.photo, fuelType: l.fuelType, transmission: l.transmission, power: l.power, firstReg: l.firstReg, color: l.color, city: l.city || "", _vehicleId: null, _editingId: l.id })} className="text-gray-500 hover:text-gray-900 flex items-center gap-1 flex-shrink-0"><Pencil size={11} /> {t("editBtn")}</button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
                 {mechListingsSubTab === "jobs" && (<>
                   <p className="text-xs text-gray-400 mb-3">{t("jobListingsHint")}</p>
                   <button onClick={() => openJobForm(null)} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("postNewJobBtn")}</button>
