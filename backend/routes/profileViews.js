@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { makeRateLimiter } from "../utils/auth.js";
 
 // Tamirci profili / araç ilanı görüntülenme takibi. Her açılışta bir satır eklenir; bir randevu/
 // dönüşüm gerçekleşirse o satır "converted" olarak işaretlenir (bkz. AppLogicProvider.tsx).
@@ -25,7 +26,20 @@ router.post("/:id/convert", (req, res) => {
 // atmak yerine (10-20 ilanlık bir galeride N+1 istek sorunu olurdu), tüm ilan id'lerini tek
 // istekte alıp targetId -> { totalViews, viewsInRange, conversions, conversionsInRange } haritası
 // dönüyoruz. Tek hedefli /stats ile aynı `days` opsiyonel aralık mantığını paylaşır.
+//
+// GÜVENLİK NOTU (bu özelliğin denetiminde eklendi): 200 id'lik bir istek tek başına ~400 SQLite
+// sorgusu tetikleyebiliyor — tekil /stats'a göre aynı veriyi toplamak artık 200 kat daha ucuz.
+// Diğer profil-görüntülenme uç noktalarında hiç IP başı hız sınırı yoktu (bu özellik öncesinde de
+// yoktu, o kısma dokunulmadı) ama bulk uç noktası bunu somut bir kötüye kullanım/DoS aracına
+// çevirdiği için (art arda spam edilerek), en azından bu yeni uç noktaya backend/utils/auth.js'teki
+// paylaşılan hız sınırlayıcı (login/OTP'de kullanılanla aynı desen) uygulandı.
+const bulkStatsLimiter = makeRateLimiter({ maxAttempts: 30, lockoutMs: 5 * 60 * 1000 });
 router.get("/stats/bulk", (req, res) => {
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  if (bulkStatsLimiter.check(ip).blocked) {
+    return res.status(429).json({ error: "Çok fazla istek. Lütfen birkaç dakika sonra tekrar deneyin." });
+  }
+  bulkStatsLimiter.registerFailure(ip);
   const { targetType, targetIds, days } = req.query;
   if (!targetType || !targetIds) return res.status(400).json({ error: "targetType ve targetIds zorunludur." });
   const ids = String(targetIds).split(",").map((s) => s.trim()).filter(Boolean).slice(0, 200);
