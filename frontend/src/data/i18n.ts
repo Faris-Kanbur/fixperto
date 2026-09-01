@@ -908,6 +908,25 @@ export const T = {
   galleryBulkDeleteConfirmTitle: { tr: "Seçili ilanlar silinsin mi?", en: "Delete selected listings?", de: "Ausgewählte Anzeigen löschen?" },
   galleryBulkDeleteConfirmBody: { tr: "{n} ilan kalıcı olarak silinecek. Bu işlem geri alınamaz.", en: "{n} listings will be permanently deleted. This cannot be undone.", de: "{n} Anzeigen werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden." },
   galleryStatusChangeAria: { tr: "Durumu değiştir", en: "Change status", de: "Status ändern" },
+  // Karşılaştırma aracı (2-3 ilanı yan yana kıyaslama)
+  compareMaxReachedToast: { tr: "⚠️ En fazla {n} ilan karşılaştırabilirsiniz.", en: "⚠️ You can compare up to {n} listings.", de: "⚠️ Sie können bis zu {n} Anzeigen vergleichen." },
+  compareToggleAria: { tr: "Karşılaştırmaya ekle/çıkar", en: "Add/remove from comparison", de: "Zum Vergleich hinzufügen/entfernen" },
+  compareBarLabel: { tr: "{n}/{max} ilan seçildi", en: "{n}/{max} listings selected", de: "{n}/{max} Anzeigen ausgewählt" },
+  compareBtn: { tr: "Karşılaştır", en: "Compare", de: "Vergleichen" },
+  compareModalTitle: { tr: "İlan Karşılaştırma", en: "Compare Listings", de: "Anzeigenvergleich" },
+  sellerTypeLabel: { tr: "Satıcı", en: "Seller", de: "Verkäufer" },
+  viewListingBtn: { tr: "İlanı Gör", en: "View Listing", de: "Anzeige ansehen" },
+  clearCompareBtn: { tr: "Karşılaştırmayı Temizle", en: "Clear Comparison", de: "Vergleich löschen" },
+  // Kayıtlı aramalar + fiyat düşünce bildirim
+  saveThisSearchBtn: { tr: "🔔 Bu Aramayı Kaydet", en: "🔔 Save This Search", de: "🔔 Diese Suche speichern" },
+  savedSearchNamePlaceholder: { tr: "Arama adı (örn. Uygun Fiyatlı Otomatik)", en: "Search name (e.g. Affordable Automatic)", de: "Suchname (z. B. Günstiger Automatik)" },
+  saveBtn: { tr: "Kaydet", en: "Save", de: "Speichern" },
+  savedSearchNameRequiredToast: { tr: "⚠️ Aramaya bir isim vermelisiniz.", en: "⚠️ Please give the search a name.", de: "⚠️ Bitte geben Sie der Suche einen Namen." },
+  savedSearchSavedToast: { tr: "🔔 \"{name}\" aramanız kaydedildi, yeni eşleşmelerde bildirim alacaksınız.", en: "🔔 Your search \"{name}\" was saved, you'll be notified of new matches.", de: "🔔 Ihre Suche „{name}“ wurde gespeichert, Sie werden bei neuen Treffern benachrichtigt." },
+  savedSearchRemovedToast: { tr: "Kayıtlı arama silindi.", en: "Saved search removed.", de: "Gespeicherte Suche entfernt." },
+  savedSearchesLabel: { tr: "Kayıtlı Aramalarım", en: "My Saved Searches", de: "Meine gespeicherten Suchen" },
+  noSavedSearchesNote: { tr: "Henüz kayıtlı aramanız yok. Filtre uygulayıp \"Bu Aramayı Kaydet\" ile başlayın.", en: "You have no saved searches yet. Apply filters and tap \"Save This Search\" to start.", de: "Sie haben noch keine gespeicherten Suchen. Wenden Sie Filter an und tippen Sie auf „Diese Suche speichern“." },
+  deleteSavedSearchAria: { tr: "Kayıtlı aramayı sil", en: "Delete saved search", de: "Gespeicherte Suche löschen" },
 };
 
 export const MONTH_ABBR_BY_LANG = {

@@ -71,7 +71,11 @@ CREATE TABLE IF NOT EXISTS owners (
   favoriteIds TEXT DEFAULT '[]',
   favoriteMechanicIds TEXT DEFAULT '[]',
   likedReviewIds TEXT DEFAULT '[]',
-  lang TEXT DEFAULT 'tr'
+  lang TEXT DEFAULT 'tr',
+  -- Kayıtlı aramalar (karşılaştırma aracı + fiyat düşünce bildirim özelliğiyle birlikte eklendi):
+  -- { id, name, query, locationQuery, filters, seenListingIds, createdAt }[] — bkz.
+  -- AppLogicProvider.tsx saveCurrentSearch/matchesSavedSearchCriteria.
+  savedSearches TEXT DEFAULT '[]'
 );
 
 CREATE TABLE IF NOT EXISTS vehicles (
@@ -350,6 +354,7 @@ function ensureColumn(table, columnDef) {
   ["mechanics", "phone TEXT"],
   ["mechanics", "password TEXT DEFAULT 'demo1234'"],
   ["listings", "createdAt TEXT"],
+  ["owners", "savedSearches TEXT DEFAULT '[]'"],
   // GERÇEK OTURUM SİSTEMİ: mechanics tablosunda daha önce hiç email sütunu yoktu (owners'ta vardı) —
   // gerçek e-posta+şifre ile giriş/kayıt için (bkz. backend/routes/auth.js) artık gerekli.
   ["mechanics", "email TEXT"],

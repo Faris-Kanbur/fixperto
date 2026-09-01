@@ -118,6 +118,31 @@ function useAppLogic() {
       return next;
     });
   };
+  // Kayıtlı aramalar (favorilenen aramalar): favoriteIds/favoriteMechanicIds ile aynı desen —
+  // owners.savedSearches sütununda kalıcı, ama gösterimi role'e bağlı DEĞİL (demo'nun tek
+  // etkileşimli kullanıcı mimarisiyle tutarlı, bkz. notifyFavoriteWatchers yorum notu).
+  const [savedSearches, setSavedSearches] = useState([]);
+  // Filtre modalındaki "Bu Aramayı Kaydet" satır-içi giriş kutusu — customFeatureInput ile aynı
+  // desen (bkz. addCustomFeature): buton tıklanınca kutu açılır, isim girilip onaylanınca kapanır.
+  const [showSaveSearchInput, setShowSaveSearchInput] = useState(false);
+  const [saveSearchNameInput, setSaveSearchNameInput] = useState("");
+  // Karşılaştırma aracı: sadece bu oturum için geçerli, kalıcı depolamaya YAZILMIYOR (bkz.
+  // "En fazla 3 ilan" sınırı) — bir alışveriş sepeti gibi geçici bir seçim, sayfa yenilenince
+  // sıfırlanması kabul edilebilir/beklenen bir davranış.
+  const [compareListingIds, setCompareListingIds] = useState([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const MAX_COMPARE_LISTINGS = 3;
+  const toggleCompareListing = (id) => {
+    setCompareListingIds(ids => {
+      if (ids.includes(id)) return ids.filter(x => x !== id);
+      if (ids.length >= MAX_COMPARE_LISTINGS) {
+        setToast({ type: "info", text: t("compareMaxReachedToast", { n: String(MAX_COMPARE_LISTINGS) }) });
+        return ids;
+      }
+      return [...ids, id];
+    });
+  };
+  const clearCompareListings = () => { setCompareListingIds([]); setShowCompareModal(false); };
   const [mechanicsList, setMechanicsList] = useState([]);
   const [mechanicHours, setMechanicHours] = useState(DEFAULT_HOURS);
   // Yorumlardaki "Faydalı" (helpful/like) sayacı — Instagram beğenisi gibi tek tıkla aç/kapa.
@@ -481,6 +506,7 @@ function useAppLogic() {
             if (full?.favoriteIds) setFavoriteIds(full.favoriteIds);
             if (full?.favoriteMechanicIds) setFavoriteMechanicIds(full.favoriteMechanicIds);
             if (full?.likedReviewIds) setLikedReviewIds(full.likedReviewIds);
+            if (full?.savedSearches) setSavedSearches(full.savedSearches);
           }).catch(() => { /* kritik değil, favoriler boş açılır */ });
         }
       } catch (err) {
@@ -2125,7 +2151,7 @@ function useAppLogic() {
     api.auth.logout().catch(() => { /* ağ hatası olsa bile yerel oturumu temizlemeye devam et */ });
     setMyOwnerId(null); setMyMechanicId(null);
     setVehicles([]); setAppointments([]); setSupportTickets([]); setQuoteRequests([]); setQuoteOffers([]); setConversations([]);
-    setFavoriteIds([]); setFavoriteMechanicIds([]); setLikedReviewIds([]);
+    setFavoriteIds([]); setFavoriteMechanicIds([]); setLikedReviewIds([]); setSavedSearches([]); clearCompareListings();
     // GERÇEK HATA DÜZELTMESİ: notifLog role'e göre filtreleniyor (bkz. NotifBell.tsx), belirli bir
     // owner/mechanic id'sine göre DEĞİL — çünkü bildirimler tek bir "benim hesabım" varsayımıyla
     // tasarlandı. Bu, çıkış yapılıp AYNI sekmede farklı bir hesapla (ör. yeni bir tamirci kaydı)
@@ -2801,13 +2827,104 @@ function useAppLogic() {
   // Bir ilan favorilenmişse (favoriteIds), o ilanla ilgili herhangi bir güncelleme (fiyat, durum, vb.)
   // olduğunda favorileyen kişiye bildirim gönderiyoruz. Demo'da tekil favoriteIds listesi rol bazlı
   // ayrılmadığı için hem owner hem mechanic tarafına düşürüyoruz — hangi rolde bakılırsa görünsün.
-  const notifyFavoriteWatchers = (listingId, listingLabel, message) => {
+  const notifyFavoriteWatchers = (listingId, listingLabel, message, titleOverride = null) => {
     if (!favoriteIds.includes(listingId)) return;
-    const title = "Favorilediğiniz ilan güncellendi ⭐";
+    const title = titleOverride || "Favorilediğiniz ilan güncellendi ⭐";
     const body = `"${listingLabel}" ilanında bir güncelleme var: ${message}`;
     fireNotification(title, body, ownerSettings.notifyOffers, "owner", { type: "listing", id: listingId });
     fireNotification(title, body, mechSettings.notifyOffers, "mechanic", { type: "listing", id: listingId });
   };
+  // Kayıtlı aramalar: matchesSavedSearchCriteria filteredListings ile AYNI filtre mantığını
+  // kullanır (bkz. yukarıdaki filteredListings tanımı), ama canlı arama/filtre state'i yerine
+  // kaydedilmiş bir search nesnesi üzerinden çalışır — böylece "bu ilan şu kayıtlı aramaya uyuyor
+  // mu" sorusu, arama ekranındaki filtrelemeyle birebir tutarlı olur.
+  const matchesSavedSearchCriteria = (listing, search) => {
+    if (listing.adminRemoved) return false;
+    const q = (search.query || "").trim().toLowerCase();
+    if (q && !`${listing.brand} ${listing.model}`.toLowerCase().includes(q)) return false;
+    const loc = (search.locationQuery || "").trim().toLowerCase();
+    if (loc && !(listing.city || "").toLowerCase().includes(loc)) return false;
+    const f = search.filters || {};
+    if (f.transmission && f.transmission !== "all" && listing.transmission !== f.transmission) return false;
+    if (f.fuelType && f.fuelType !== "all" && listing.fuelType !== f.fuelType) return false;
+    if (f.minPrice && parseListingPrice(listing.price) < Number(f.minPrice)) return false;
+    if (f.maxPrice && parseListingPrice(listing.price) > Number(f.maxPrice)) return false;
+    if (f.minKm && Number(listing.km) < Number(f.minKm)) return false;
+    if (f.maxKm && Number(listing.km) > Number(f.maxKm)) return false;
+    if (f.minYear && Number(listing.year) < Number(f.minYear)) return false;
+    if (f.maxYear && Number(listing.year) > Number(f.maxYear)) return false;
+    return true;
+  };
+  // Şu an aktif olan arama/filtre state'ini bir kayıtlı aramaya dönüştürüp owners.savedSearches'e
+  // ekliyoruz. seenListingIds kaydetme anında ZATEN eşleşen tüm ilanlarla dolduruluyor — aksi
+  // halde kayıttan hemen sonra mevcut tüm eşleşmeler için "yeni eşleşme" bildirimi yağardı.
+  const saveCurrentSearch = (name) => {
+    if (MY_OWNER_ID == null) { setToast({ type: "info", text: "⚠️ Arama kaydetmek için giriş yapmalısınız." }); return; }
+    const trimmed = (name || "").trim();
+    if (!trimmed) { setToast({ type: "info", text: t("savedSearchNameRequiredToast") }); return; }
+    const activeFilters = { ...listingFilters };
+    const newSearch = {
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      name: trimmed,
+      query, locationQuery, filters: activeFilters,
+      seenListingIds: listings.filter(l => matchesSavedSearchCriteria(l, { query, locationQuery, filters: activeFilters })).map(l => l.id),
+      createdAt: new Date().toISOString(),
+    };
+    setSavedSearches(s => {
+      const next = [...s, newSearch];
+      persist(api.owners.update(MY_OWNER_ID, { savedSearches: next }), "Arama kaydedilemedi");
+      return next;
+    });
+    setShowSaveSearchInput(false);
+    setSaveSearchNameInput("");
+    setToast({ type: "info", text: t("savedSearchSavedToast", { name: trimmed }) });
+  };
+  const removeSavedSearch = (id) => {
+    setSavedSearches(s => {
+      const next = s.filter(x => x.id !== id);
+      persist(api.owners.update(MY_OWNER_ID, { savedSearches: next }), "Arama silinemedi");
+      return next;
+    });
+    setToast({ type: "info", text: t("savedSearchRemovedToast") });
+  };
+  // Kaydedilmiş bir aramayı tekrar uygulamak: mevcut arama/filtre state'ini o aramanın
+  // kriterleriyle değiştirip kullanıcıyı ilgili ilan listesi ekranına götürür. Hem owner hem
+  // mechanic tarafından çağrılabilir — bkz. dosya başındaki paylaşılan filtre state notu.
+  const applySavedSearch = (search) => {
+    setQuery(search.query || "");
+    setLocationQuery(search.locationQuery || "");
+    setListingFilters({ transmission: "all", fuelType: "all", minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "", ...(search.filters || {}) });
+    if (role === "mechanic") { setScreen("mechBrowse"); } else { setOwnerMode("cars"); setScreen("home"); }
+  };
+  // Yeni-eşleşme tespiti + fiyat düşünce bildirim: listings ya da kayıtlı arama sayısı her
+  // değiştiğinde, her kayıtlı arama için ŞU AN eşleşen ilan id'lerini hesaplayıp seenListingIds
+  // ile karşılaştırıyoruz. seenListingIds'te OLMAYAN yeni bir eşleşme bulunursa bildirim gönderip
+  // seenListingIds'i güncelliyoruz (böylece aynı ilan için tekrar tekrar bildirim gitmiyor).
+  useEffect(() => {
+    if (MY_OWNER_ID == null || savedSearches.length === 0 || listings.length === 0) return;
+    let changed = false;
+    const nextSearches = savedSearches.map(search => {
+      const matchingIds = listings.filter(l => matchesSavedSearchCriteria(l, search)).map(l => l.id);
+      const seen = search.seenListingIds || [];
+      const newlyMatched = matchingIds.filter(id => !seen.includes(id));
+      if (newlyMatched.length === 0) return search;
+      changed = true;
+      newlyMatched.forEach(id => {
+        const listing = listings.find(l => l.id === id);
+        if (!listing) return;
+        const title = "Kayıtlı aramanızla eşleşen yeni ilan 🔔";
+        const body = `"${search.name}" aramanıza uyan yeni bir ilan var: ${listing.brand} ${listing.model} — ${listing.price}${listingCurrency(listing.price)}.`;
+        fireNotification(title, body, ownerSettings.notifyOffers, "owner", { type: "listing", id });
+        fireNotification(title, body, mechSettings.notifyOffers, "mechanic", { type: "listing", id });
+      });
+      return { ...search, seenListingIds: [...seen, ...newlyMatched] };
+    });
+    if (changed) {
+      setSavedSearches(nextSearches);
+      persist(api.owners.update(MY_OWNER_ID, { savedSearches: nextSearches }), "Arama güncellenemedi");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listings, savedSearches.length, MY_OWNER_ID]);
   const submitListing = async (sellerType) => {
     const missingFields = [];
     if (!sellForm.brand?.trim()) missingFields.push("Marka");
@@ -2829,7 +2946,19 @@ function useAppLogic() {
       setToast({ type: "info", text: "✅ İlan güncellendi." });
       if (before) {
         const label = `${sellForm.brand} ${sellForm.model}`;
-        if (String(before.price) !== String(sellForm.price)) notifyFavoriteWatchers(sellForm._editingId, label, `fiyat ${before.price} → ${sellForm.price} olarak güncellendi.`);
+        if (String(before.price) !== String(sellForm.price)) {
+          // Fiyat düşünce bildirim: genel "fiyat değişti" mesajından ayrı, daha dikkat çekici bir
+          // başlık/emoji kullanıyoruz — favorileyen kullanıcı için asıl aranan sinyal bu (fiyat
+          // artışı da bildiriliyor ama vurgusuz, mevcut genel metinle).
+          const beforeNum = parseListingPrice(before.price);
+          const afterNum = parseListingPrice(sellForm.price);
+          const isDrop = Number.isFinite(beforeNum) && Number.isFinite(afterNum) && afterNum < beforeNum;
+          if (isDrop) {
+            notifyFavoriteWatchers(sellForm._editingId, label, `fiyat düştü: ${before.price} → ${sellForm.price}.`, "📉 Favorilediğiniz ilanda fiyat düştü!");
+          } else {
+            notifyFavoriteWatchers(sellForm._editingId, label, `fiyat ${before.price} → ${sellForm.price} olarak güncellendi.`);
+          }
+        }
         else notifyFavoriteWatchers(sellForm._editingId, label, "ilan bilgileri güncellendi.");
       }
       setShowSellForm(false);
@@ -3321,6 +3450,8 @@ function useAppLogic() {
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
+    savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
+    compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
     roleBtn, goToNotifTarget,

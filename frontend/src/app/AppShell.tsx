@@ -1,6 +1,6 @@
 import { useApp } from "./state/AppLogicProvider";
 import { MONTH_ABBR_BY_LANG } from "../data/i18n";
-import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download } from "lucide-react";
+import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download, Scale, TrendingDown } from "lucide-react";
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
 import { generateAnalyticsPdf } from "../utils/analyticsReport";
@@ -123,6 +123,8 @@ export function AppShell() {
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor, ownerLangFor,
     roleBtn, goToNotifTarget,
     jobEmploymentColor,
+    savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
+    compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
   } = useApp();
   return (
     <div className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-gray-50"}`}>
@@ -164,6 +166,67 @@ export function AppShell() {
       `}</style>
       {toast && (<div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md"><div className={`rounded-2xl shadow-lg p-3 flex items-start gap-2 text-xs ${toast.type === "sms" ? "bg-green-600 text-white" : "bg-gray-800 text-white"}`}><Bell size={16} className="flex-shrink-0 mt-0.5" /><span className="flex-1">{toast.text}</span><button onClick={() => setToast(null)} aria-label={t("dismissToastAria")} className="p-2 -m-2"><X size={14} /></button></div></div>)}
       {successPulse && (<div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none"><div className="success-pulse-badge bg-white rounded-3xl shadow-2xl px-6 py-5 flex flex-col items-center gap-2"><div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center"><Check size={30} className="text-green-500" strokeWidth={3} /></div><p className="text-sm font-semibold text-gray-800 text-center max-w-[220px]">{successPulse}</p></div></div>)}
+      {compareListingIds.length > 0 && !showCompareModal && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md">
+          <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3">
+            <div className="flex -space-x-2 flex-shrink-0">
+              {compareListingIds.map(id => { const cl = listings.find(x => x.id === id); return cl ? (<div key={id} className="w-8 h-8 rounded-full border-2 border-gray-900 bg-gray-700 overflow-hidden flex items-center justify-center text-[10px]">{isImgUrl(cl.photo) ? <img src={imgThumb(cl.photo, 60)} alt="" className="w-full h-full object-cover" /> : cl.photo}</div>) : null; })}
+            </div>
+            <span className="flex-1 text-xs font-medium truncate">{t("compareBarLabel", { n: String(compareListingIds.length), max: String(MAX_COMPARE_LISTINGS) })}</span>
+            <button onClick={clearCompareListings} aria-label={t("closeAria")} className="text-gray-400 hover:text-white p-1.5 -m-1.5 flex-shrink-0"><X size={16} /></button>
+            <button onClick={() => setShowCompareModal(true)} disabled={compareListingIds.length < 2} className={`flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${compareListingIds.length < 2 ? "bg-gray-700 text-gray-500" : "bg-rose-600 text-white hover:bg-rose-700"}`}><Scale size={13} /> {t("compareBtn")}</button>
+          </div>
+        </div>
+      )}
+      {showCompareModal && (() => {
+        const compareListings = compareListingIds.map(id => listings.find(x => x.id === id)).filter(Boolean);
+        if (compareListings.length === 0) return null;
+        const minPrice = Math.min(...compareListings.map(l => parsePriceNumber(l.price)));
+        const minKm = Math.min(...compareListings.map(l => Number(l.km) || Infinity));
+        return (
+          <div className="fixed inset-0 bg-black/50 z-[9500] flex items-end md:items-center justify-center" onClick={() => setShowCompareModal(false)}>
+            <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-4xl md:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+                <h3 className="font-bold text-gray-800 flex items-center gap-2"><Scale size={18} /> {t("compareModalTitle")}</h3>
+                <button onClick={() => setShowCompareModal(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
+              </div>
+              <div className="overflow-auto p-5">
+                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${compareListings.length}, minmax(180px, 1fr))` }}>
+                  {compareListings.map(cl => {
+                    const price = parsePriceNumber(cl.price);
+                    const km = Number(cl.km) || Infinity;
+                    return (
+                      <div key={cl.id} className="border border-gray-100 rounded-2xl overflow-hidden flex flex-col">
+                        <div className="relative h-32 bg-gray-100">
+                          {isImgUrl(cl.photo) ? <img src={imgThumb(cl.photo, 400)} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-4xl">{cl.photo}</div>}
+                          <button onClick={() => toggleCompareListing(cl.id)} aria-label={t("closeAria")} className="absolute top-2 right-2 w-7 h-7 bg-white/95 rounded-full shadow-sm flex items-center justify-center text-gray-500"><X size={13} /></button>
+                        </div>
+                        <div className="p-3 flex-1 flex flex-col gap-2">
+                          <h4 className="font-semibold text-gray-900 text-sm leading-snug">{cl.brand} {cl.model}</h4>
+                          <div className={`flex items-center gap-1.5 text-lg font-bold ${price === minPrice ? "text-green-600" : "text-gray-900"}`}>{cl.price}{price === minPrice && compareListings.length > 1 && <TrendingDown size={15} />}</div>
+                          <div className="text-xs text-gray-500 space-y-1 mt-1">
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Gauge size={11} /> {t("kmRangeLabel")}</span><span className={km === minKm && compareListings.length > 1 ? "font-semibold text-green-600" : "font-medium text-gray-700"}>{Number(cl.km).toLocaleString("tr-TR")} km</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><CalendarDays size={11} /> {t("modelYearLabel")}</span><span className="font-medium text-gray-700">{cl.firstReg || cl.year}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Fuel size={11} /> {t("fuelTypeLabel")}</span><span className="font-medium text-gray-700">{vocabLabel(cl.fuelType, lang, FUEL_TYPE_LABELS_BY_LANG)}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Cog size={11} /> {t("transmissionLabel")}</span><span className="font-medium text-gray-700">{vocabLabel(cl.transmission, lang, TRANSMISSION_LABELS_BY_LANG)}</span></div>
+                            {cl.city && <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><MapPin size={11} /> {t("cityLabelShort")}</span><span className="font-medium text-gray-700">{cl.city}</span></div>}
+                            <div className="flex items-center justify-between"><span className="text-gray-400">{t("sellerTypeLabel")}</span><span className="font-medium text-gray-700">{cl.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span></div>
+                          </div>
+                          {cl.negotiable && <span className="self-start text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{t("negotiableBadge")}</span>}
+                          <button onClick={() => { setSelectedListingId(cl.id); setShowCompareModal(false); }} className="mt-auto w-full bg-rose-600 text-white text-xs font-semibold py-2.5 rounded-xl hover:bg-rose-700 transition">{t("viewListingBtn")}</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
+                <button onClick={clearCompareListings} className="w-full border border-gray-200 text-gray-500 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("clearCompareBtn")}</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {showDayFullPrompt && role === "mechanic" && (
         <div className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => setShowDayFullPrompt(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
@@ -1403,6 +1466,22 @@ export function AppShell() {
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   )}
+                  <h2 className="font-bold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Bell size={16} className="text-rose-500" /> {t("savedSearchesLabel")}</h2>
+                  {savedSearches.length === 0 ? (
+                    <div className="text-center py-10 bg-gray-50 rounded-2xl"><Bell size={32} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-xs">{t("noSavedSearchesNote")}</p></div>
+                  ) : (
+                    <div className="space-y-2">
+                      {savedSearches.map(s => (
+                        <div key={s.id} className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
+                          <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
+                            <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
+                            <p className="text-[11px] text-gray-400 truncate">{[s.query, s.locationQuery].filter(Boolean).join(" · ") || t("allFilterLabel")}</p>
+                          </button>
+                          <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               )}
               {ownerProfileTab === "support" && renderSupportView("settings", setOwnerProfileTab)}
@@ -2299,6 +2378,22 @@ export function AppShell() {
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                 )}
+                <h2 className="font-bold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Bell size={16} className="text-rose-500" /> {t("savedSearchesLabel")}</h2>
+                {savedSearches.length === 0 ? (
+                  <div className="text-center py-10 bg-gray-50 rounded-2xl"><Bell size={32} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-xs">{t("noSavedSearchesNote")}</p></div>
+                ) : (
+                  <div className="space-y-2">
+                    {savedSearches.map(s => (
+                      <div key={s.id} className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
+                        <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
+                          <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
+                          <p className="text-[11px] text-gray-400 truncate">{[s.query, s.locationQuery].filter(Boolean).join(" · ") || t("allFilterLabel")}</p>
+                        </button>
+                        <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             {mechTab === "analytics" && (() => {
@@ -2732,6 +2827,17 @@ export function AppShell() {
                 <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minKmPlaceholder")} value={listingFilters.minKm} onChange={(e) => setListingFilters(f => ({ ...f, minKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxKmPlaceholder")} value={listingFilters.maxKm} onChange={(e) => setListingFilters(f => ({ ...f, maxKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><CalendarDays size={13} /> {t("modelYearLabel")}</h4>
                 <div className="flex gap-2 mb-6"><input type="number" placeholder={t("minYearPlaceholder")} value={listingFilters.minYear} onChange={(e) => setListingFilters(f => ({ ...f, minYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxYearPlaceholder")} value={listingFilters.maxYear} onChange={(e) => setListingFilters(f => ({ ...f, maxYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                {MY_OWNER_ID != null && (
+                  showSaveSearchInput ? (
+                    <div className="mb-6 flex gap-2">
+                      <input autoFocus value={saveSearchNameInput} onChange={(e) => setSaveSearchNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveCurrentSearch(saveSearchNameInput); }} placeholder={t("savedSearchNamePlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                      <button onClick={() => saveCurrentSearch(saveSearchNameInput)} className="px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 transition">{t("saveBtn")}</button>
+                      <button onClick={() => { setShowSaveSearchInput(false); setSaveSearchNameInput(""); }} aria-label={t("closeAria")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0"><X size={16} /></button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setShowSaveSearchInput(true)} className="mb-6 w-full flex items-center justify-center gap-1.5 border border-dashed border-rose-300 text-rose-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-50 transition"><Bell size={14} /> {t("saveThisSearchBtn")}</button>
+                  )
+                )}
               </>
             ) : (
               <>

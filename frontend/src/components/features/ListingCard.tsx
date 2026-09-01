@@ -1,4 +1,4 @@
-import { Banknote, CalendarDays, Cog, Fuel, Gauge, Heart, MapPin, MessageCircle } from "lucide-react";
+import { Banknote, CalendarDays, Cog, Fuel, Gauge, Heart, MapPin, MessageCircle, Scale } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { listingStatusMeta, isImgUrl, imgFallbackHandler, imgThumb, vocabLabel } from "../../utils/helpers";
 import { FUEL_TYPE_LABELS_BY_LANG, TRANSMISSION_LABELS_BY_LANG } from "../../data/constants";
@@ -108,11 +108,13 @@ export function ListingCard({ l, onHover = undefined }) {
     respondOffer, markOffersSeen, clearListingFilters, clearJobFilters, openJobForm, submitJobListing, 
     setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm, openJobApplyForm, 
     jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, 
-    rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
+    rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor,
+    compareListingIds, toggleCompareListing,
   } = useApp();
 
     const meta = l.adminRemoved ? { label: t("removedByAdminLabel"), color: "bg-gray-900" } : listingStatusMeta(l.status, t);
     const fav = favoriteIds.includes(l.id);
+    const inCompare = compareListingIds.includes(l.id);
     const isMine = isMyListing(l);
     const pendingOfferCount = isMine ? l.offers.filter(o => o.status === "pending").length : 0;
     const unseenOfferCount = isMine ? l.offers.filter(o => o.status === "pending" && !o.seen).length : 0;
@@ -130,6 +132,7 @@ export function ListingCard({ l, onHover = undefined }) {
             {l.featured && <span className="text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-amber-300">{t("featuredBadge")}</span>}
           </div>
           <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label={t("addToFavoritesAria")} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
+          <button onClick={(e) => { e.stopPropagation(); toggleCompareListing(l.id); }} aria-label={t("compareToggleAria")} title={t("compareToggleAria")} className={`absolute top-3 right-14 z-10 w-8 h-8 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center ${inCompare ? "bg-rose-600" : "bg-white/95"}`}><Scale size={14} className={inCompare ? "text-white" : "text-gray-500"} /></button>
         </div>
         <button onClick={() => setSelectedListingId(l.id)} className="w-full text-left p-4">
           <div className="flex items-start justify-between gap-2">

@@ -101,6 +101,31 @@ export interface Owner {
   likedReviewIds?: string[];
   /** Sohbet mesajlarının hangi dile otomatik çevrileceğini belirler — bkz. ChatBubble. */
   lang?: "tr" | "en" | "de";
+  /** Kayıtlı aramalar (karşılaştırma aracı + fiyat düşünce bildirim özelliği) — bkz. AppLogicProvider.tsx
+   * saveCurrentSearch/matchesSavedSearchCriteria. */
+  savedSearches?: SavedSearch[];
+}
+
+/** Bir kullanıcının kaydettiği araç arama kriterleri — yeni bir ilan bu kritere uyduğunda bildirim
+ * göndermek için `seenListingIds` (daha önce eşleşmiş/görülmüş ilan id'leri) tutulur, böylece sadece
+ * GERÇEKTEN yeni bir eşleşme olduğunda bildirim tetiklenir. */
+export interface SavedSearch {
+  id: number;
+  name: string;
+  query: string;
+  locationQuery: string;
+  filters: {
+    transmission: string;
+    fuelType: string;
+    minPrice: string;
+    maxPrice: string;
+    minKm: string;
+    maxKm: string;
+    minYear: string;
+    maxYear: string;
+  };
+  seenListingIds: number[];
+  createdAt: string;
 }
 
 export interface MaintenanceRecord {
