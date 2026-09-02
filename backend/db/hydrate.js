@@ -47,8 +47,21 @@ const SENSITIVE_FIELDS = {
 // tamircilerin banka bilgisini tek istekte toplayamaz); frontend kendi profilini artık ayrıca
 // GET /api/mechanics/:id ile çekip toplu listedeki kendi kaydının üzerine yazıyor (bkz.
 // AppLogicProvider.tsx ilk veri yükleme efekti) — bu tekil uç nokta hâlâ bu alanları döndürüyor.
+// GÜVENLİK DÜZELTMESİ (karşılaştırma/kayıtlı arama denetiminde bulundu): owners.savedSearches
+// eklenirken fark edildi — owners tablosunun favoriteMechanicIds/likedReviewIds/savedSearches
+// alanları da mechanics'teki iban/bankName/accountHolder ile AYNI sorunu taşıyordu: `authScope`
+// owners için publicRead'i kapatmadığından (owner profilleri "üyelik tarihi" gibi bilgiler için
+// herkese açık kalmalı), GET /api/owners (toplu) ve girişsiz/başkasının GET /api/owners/:id
+// isteği bu alanları da olduğu gibi döndürüyordu — yani ID'sini bilen HERKES başka bir araç
+// sahibinin favori tamirci listesini, beğendiği yorumları ve (bu özellikle) kayıtlı arama
+// geçmişini (ne tür araç aradığı, hangi fiyat aralığında vb.) tek istekle çekebiliyordu.
+// favoriteIds burada YOK — o alan listingFavoriteCount tarafından KASITLI olarak toplu listede
+// kullanılıyor (bkz. AppLogicProvider.tsx, "kaç kişi favoriledi" sayacı), o yüzden çıkarılmadı.
+// Kendi profilini görüntüleyen kullanıcı (isSelfOrAdmin) hâlâ hydrate() ile TÜM alanları görüyor —
+// bu sadece BAŞKALARININ toplu/tekil genel görünümünden bu üç kişisel alanı gizliyor.
 const LIST_ONLY_SENSITIVE_FIELDS = {
   mechanics: ["iban", "bankName", "accountHolder"],
+  owners: ["favoriteMechanicIds", "likedReviewIds", "savedSearches"],
 };
 
 export function hydrate(table, row) {

@@ -185,13 +185,13 @@ export function AppShell() {
         const minKm = Math.min(...compareListings.map(l => Number(l.km) || Infinity));
         return (
           <div className="fixed inset-0 bg-black/50 z-[9500] flex items-end md:items-center justify-center" onClick={() => setShowCompareModal(false)}>
-            <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-4xl md:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-5xl md:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col">
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2"><Scale size={18} /> {t("compareModalTitle")}</h3>
                 <button onClick={() => setShowCompareModal(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
               </div>
               <div className="overflow-auto p-5">
-                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${compareListings.length}, minmax(180px, 1fr))` }}>
+                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${compareListings.length}, minmax(210px, 1fr))` }}>
                   {compareListings.map(cl => {
                     const price = parsePriceNumber(cl.price);
                     const km = Number(cl.km) || Infinity;
@@ -203,16 +203,32 @@ export function AppShell() {
                         </div>
                         <div className="p-3 flex-1 flex flex-col gap-2">
                           <h4 className="font-semibold text-gray-900 text-sm leading-snug">{cl.brand} {cl.model}</h4>
-                          <div className={`flex items-center gap-1.5 text-lg font-bold ${price === minPrice ? "text-green-600" : "text-gray-900"}`}>{cl.price}{price === minPrice && compareListings.length > 1 && <TrendingDown size={15} />}</div>
+                          <div className={`flex items-center gap-1.5 text-lg font-bold ${price === minPrice && compareListings.length > 1 ? "text-green-600" : "text-gray-900"}`}>{cl.price}{price === minPrice && compareListings.length > 1 && <TrendingDown size={15} />}</div>
                           <div className="text-xs text-gray-500 space-y-1 mt-1">
                             <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Gauge size={11} /> {t("kmRangeLabel")}</span><span className={km === minKm && compareListings.length > 1 ? "font-semibold text-green-600" : "font-medium text-gray-700"}>{Number(cl.km).toLocaleString("tr-TR")} km</span></div>
                             <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><CalendarDays size={11} /> {t("modelYearLabel")}</span><span className="font-medium text-gray-700">{cl.firstReg || cl.year}</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Fuel size={11} /> {t("fuelTypeLabel")}</span><span className="font-medium text-gray-700">{vocabLabel(cl.fuelType, lang, FUEL_TYPE_LABELS_BY_LANG)}</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Cog size={11} /> {t("transmissionLabel")}</span><span className="font-medium text-gray-700">{vocabLabel(cl.transmission, lang, TRANSMISSION_LABELS_BY_LANG)}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Fuel size={11} /> {t("fuelTypeLabel")}</span><span className="font-medium text-gray-700">{cl.fuelType ? vocabLabel(cl.fuelType, lang, FUEL_TYPE_LABELS_BY_LANG) : "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Cog size={11} /> {t("transmissionLabel")}</span><span className="font-medium text-gray-700">{cl.transmission ? vocabLabel(cl.transmission, lang, TRANSMISSION_LABELS_BY_LANG) : "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Car size={11} /> {t("bodyTypePlaceholder")}</span><span className="font-medium text-gray-700">{cl.bodyType ? vocabLabel(cl.bodyType, lang, BODY_TYPE_LABELS_BY_LANG) : "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Wrench size={11} /> {t("engineSizeLabel")}</span><span className="font-medium text-gray-700">{cl.engineSize || "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Compass size={11} /> {t("drivetrainPlaceholder")}</span><span className="font-medium text-gray-700">{cl.drivetrain ? vocabLabel(cl.drivetrain, lang, DRIVETRAIN_LABELS_BY_LANG) : "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><DoorOpen size={11} /> {t("doorCountPlaceholder")}</span><span className="font-medium text-gray-700">{cl.doorCount || "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Palette size={11} /> {t("color")}</span><span className="font-medium text-gray-700">{cl.color || "—"}</span></div>
                             {cl.city && <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><MapPin size={11} /> {t("cityLabelShort")}</span><span className="font-medium text-gray-700">{cl.city}</span></div>}
                             <div className="flex items-center justify-between"><span className="text-gray-400">{t("sellerTypeLabel")}</span><span className="font-medium text-gray-700">{cl.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span></div>
                           </div>
-                          {cl.negotiable && <span className="self-start text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{t("negotiableBadge")}</span>}
+                          <div className="flex flex-wrap gap-1.5 mt-1">
+                            {cl.negotiable && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{t("negotiableBadge")}</span>}
+                            {cl.featured && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">{t("featuredBadge")}</span>}
+                            {!!cl.ownerCount && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"><User size={10} /> {t("ownerNumberLabel", { n: String(cl.ownerCount) })}</span>}
+                            {(!Number(cl.paintedParts) && !Number(cl.changedParts)) ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><BadgeCheck size={10} /> {t("noPaintChangeLabel")}</span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"><PaintBucket size={10} /> {t("paintedChangedPartsLabel", { painted: String(Number(cl.paintedParts) || 0), changed: String(Number(cl.changedParts) || 0) })}</span>
+                            )}
+                            {!!cl.tradeIn && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200"><Repeat size={10} /> {t("tradeInAvailableLabel")}</span>}
+                            {cl.inspectionReportUrl && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><FileText size={10} /> {t("inspectionReportAvailableLabel")}</span>}
+                          </div>
                           <button onClick={() => { setSelectedListingId(cl.id); setShowCompareModal(false); }} className="mt-auto w-full bg-rose-600 text-white text-xs font-semibold py-2.5 rounded-xl hover:bg-rose-700 transition">{t("viewListingBtn")}</button>
                         </div>
                       </div>
