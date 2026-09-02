@@ -52,7 +52,7 @@ export function AppShell() {
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters,
     listingFilters, setListingFilters, listingSort, setListingSort, userLocation, setUserLocation, locationStatus, setLocationStatus,
     notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours,
-    setMechanicHours, query, setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir,
+    setMechanicHours, query, setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery, sortBy, setSortBy, sortDir,
     setSortDir, showLocationPrompt, setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, openMapDetail,
     selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, problemPhotos, setProblemPhotos,
     problemPhotoRef, addProblemPhoto, removeProblemPhoto, quotePhotoRef, addQuotePhoto, removeQuotePhoto, approveExpensiveService, setApproveExpensiveService,
@@ -1316,9 +1316,12 @@ export function AppShell() {
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="flex-1 px-1 py-2 text-gray-800 text-sm focus:outline-none bg-transparent min-w-0" />
                     <button onClick={(e) => e.currentTarget.blur()} className={`flex-shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition ${ownerMode === "cars" ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("searchBtn")}</button>
                   </div>
-                  <div className="hidden md:flex items-stretch bg-white rounded-full border border-gray-300 shadow-lg divide-x divide-gray-200 max-w-xl mx-auto overflow-hidden">
+                  <div className={`hidden md:flex items-stretch bg-white rounded-full border border-gray-300 shadow-lg divide-x divide-gray-200 mx-auto overflow-hidden ${ownerMode === "mechanics" ? "max-w-2xl" : "max-w-xl"}`}>
                     <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("brandFieldLabel") : ownerMode === "cars" ? t("brandModelFieldLabel") : t("positionFieldLabel")}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
                     <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("cityLabelShort") : t("locationFieldLabel")}</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchCityPlaceholder") : t("cityOrDistrictPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                    {ownerMode === "mechanics" && (
+                      <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{t("serviceFieldLabel")}</label><input value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} placeholder={t("searchServicePlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                    )}
                     <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
                   </div>
                 </>)}

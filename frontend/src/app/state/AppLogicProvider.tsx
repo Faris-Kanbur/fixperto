@@ -186,6 +186,11 @@ function useAppLogic() {
   };
   const [query, setQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  // Ana sayfadaki tamirci aramasına eklenen üçüncü alan: "Hizmet / Servis Ara" — marka/şehir
+  // alanlarının yanına, tamircinin verdiği hizmetlere göre serbest metin (kısmi eşleşme) araması.
+  // Filtre modalındaki filters.service (ATU_FIXED_CATALOG'dan BİREBİR eşleşen bir <select>) ile
+  // karıştırılmamalı — bu ayrı, daha esnek bir alan (bkz. filtered useMemo).
+  const [serviceQuery, setServiceQuery] = useState("");
   const [sortBy, setSortBy] = useState("distance");
   const [sortDir, setSortDir] = useState("asc");
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
@@ -832,6 +837,13 @@ function useAppLogic() {
     const q = query.toLowerCase().trim();
     if (q) list = list.filter(m => m.name.toLowerCase().includes(q) || m.specialty.toLowerCase().includes(q) || (m.brandsServiced || []).some(b => b.toLowerCase().includes(q)));
     if (locationQuery.trim()) list = list.filter(m => (m.address || "").toLowerCase().includes(locationQuery.trim().toLowerCase()));
+    // "Hizmet / Servis Ara" alanı: filters.service'ten farklı olarak birebir değil, KISMİ metin
+    // eşleşmesi yapıyor (ör. "yağ" yazınca "Yağ Değişimi" hizmeti veren tüm tamirciler çıkar) —
+    // hem tamircinin kendi girdiği hizmet adlarına hem de uzmanlık alanına (specialty) bakıyor.
+    if (serviceQuery.trim()) {
+      const sq = serviceQuery.trim().toLocaleLowerCase("tr-TR");
+      list = list.filter(m => (m.services || []).some(s => (s.name || "").toLocaleLowerCase("tr-TR").includes(sq)) || (m.specialty || "").toLocaleLowerCase("tr-TR").includes(sq));
+    }
     if (filters.priceTier === "cheap") list = list.filter(m => m.price <= PRICE_TIER_BREAKS[0]);
     if (filters.priceTier === "mid") list = list.filter(m => m.price > PRICE_TIER_BREAKS[0] && m.price <= PRICE_TIER_BREAKS[1]);
     if (filters.priceTier === "expensive") list = list.filter(m => m.price > PRICE_TIER_BREAKS[1]);
@@ -843,7 +855,7 @@ function useAppLogic() {
     if (sortBy === "price") list = [...list].sort((a, b) => sortDir === "asc" ? a.price - b.price : b.price - a.price);
     if (sortBy === "rating") list = [...list].sort((a, b) => sortDir === "asc" ? a.rating - b.rating : b.rating - a.rating);
     return list;
-  }, [role, query, locationQuery, sortBy, sortDir, mechanicsList, filters, userLocation]);
+  }, [role, query, locationQuery, serviceQuery, sortBy, sortDir, mechanicsList, filters, userLocation]);
   // GERÇEK HATA DÜZELTMESİ: bu liste (çoklu teklif isteği modalındaki tamirci seçimi) aynı `filters`
   // state'ini kullanıyor ve aynı filtre modalını/aynı "N filtre aktif" rozetini paylaşıyor (bkz.
   // activeFilterCount), ama marka (filters.brand) ve hizmet (filters.service) filtrelerini hiç
@@ -3383,7 +3395,7 @@ function useAppLogic() {
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters,
     listingFilters, setListingFilters, listingSort, setListingSort, listingSortDir, setListingSortDir, handleListingSortClick, userLocation, setUserLocation, locationStatus, setLocationStatus,
     notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, favoriteMechanicIds, setFavoriteMechanicIds, toggleFavoriteMechanic, likedReviewIds, setLikedReviewIds, toggleReviewHelpful, mechanicsList, setMechanicsList, mechanicHours,
-    setMechanicHours, query, setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir,
+    setMechanicHours, query, setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery, sortBy, setSortBy, sortDir,
     setSortDir, showLocationPrompt, setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, openMapDetail,
     selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, problemPhotos, setProblemPhotos,
     problemPhotoRef, addProblemPhoto, removeProblemPhoto, quotePhotoRef, addQuotePhoto, removeQuotePhoto, approveExpensiveService, setApproveExpensiveService,
