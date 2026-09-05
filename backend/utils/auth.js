@@ -47,6 +47,13 @@ export function generateToken() {
 // middleware'de "bu token hangi role için geçerli" kontrolünü basitleştiriyor.
 const activeSessions = new Map(); // token -> { id, role, createdAt }
 
+// GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): oturumların hiçbir SÜRE SINIRI yoktu —
+// `createdAt` yazılıyordu ama hiç okunmuyordu. Yani bir kez üretilen token, sunucu yeniden
+// başlayana kadar (haftalar/aylar olabilir) geçerli kalıyordu; çalınmış bir token'ın kendi kendine
+// geçersizleşmesi diye bir şey yoktu ve activeSessions map'i sınırsız büyüyordu. Artık her oturumun
+// sabit bir ömrü var ve süresi dolmuş kayıtlar hem okuma anında hem de periyodik olarak temizleniyor.
+const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 gün
+
 export function createSession(id, role) {
   const token = generateToken();
   activeSessions.set(token, { id, role, createdAt: Date.now() });
@@ -54,8 +61,26 @@ export function createSession(id, role) {
 }
 
 export function getSession(token) {
-  return activeSessions.get(token) || null;
+  const session = activeSessions.get(token);
+  if (!session) return null;
+  if (Date.now() - session.createdAt > SESSION_TTL_MS) {
+    activeSessions.delete(token);
+    return null;
+  }
+  return session;
 }
+
+// Süresi dolmuş oturumları periyodik olarak bellekten at (yukarıdaki tembel temizlik, bir daha hiç
+// kullanılmayan token'ları temizlemez — bu da bellek sızıntısına dönerdi). unref() ile bu zamanlayıcı
+// Node sürecinin kapanmasını engellemiyor.
+const SESSION_SWEEP_MS = 60 * 60 * 1000; // saatte bir
+const sweepTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [token, session] of activeSessions) {
+    if (now - session.createdAt > SESSION_TTL_MS) activeSessions.delete(token);
+  }
+}, SESSION_SWEEP_MS);
+if (typeof sweepTimer.unref === "function") sweepTimer.unref();
 
 export function destroySession(token) {
   activeSessions.delete(token);

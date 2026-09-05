@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { resolveActor } from "../utils/auth.js";
 
 // Paylaşım analitiği: her ShareButton eylemi ayrı bir satır (kendi refCode'u ile). Link o refCode'u
 // taşıdığı için tıklama ve sonraki dönüşüm (sohbet/randevu/teklif/başvuru) aynı satıra atfedilebiliyor.
@@ -37,7 +38,15 @@ router.post("/:refCode/convert", (req, res) => {
   res.json(db.prepare(`SELECT * FROM share_events WHERE refCode = ?`).get(req.params.refCode));
 });
 
+// GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): bu uç nokta platformun TAMAMINA ait paylaşım/
+// tıklama/dönüşüm istatistiklerini (ve en çok paylaşılan tamirci/ilanları) kimlik doğrulaması
+// olmadan döndürüyordu — yani rakipler dâhil herkes sitenin gerçek trafik ve dönüşüm verisini tek
+// istekle çekebiliyordu. Bu veriyi kullanan tek ekran admin panelidir; artık admin token'ı şart.
 router.get("/stats", (req, res) => {
+  const actor = resolveActor(req);
+  if (actor?.role !== "admin") {
+    return res.status(403).json({ error: "Bu veriye erişim yetkiniz yok." });
+  }
   const byChannel = db.prepare(
     `SELECT channel, COUNT(*) AS shares, SUM(clickCount) AS clicks, SUM(conversionCount) AS conversions FROM share_events GROUP BY channel ORDER BY shares DESC`
   ).all();

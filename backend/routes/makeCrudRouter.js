@@ -47,8 +47,22 @@ export function makeCrudRouter(table, {
   const sharedWriteFields = new Set(authScope?.sharedWrite?.fields || []);
   const sharedWriteRoles = new Set(authScope?.sharedWrite?.roles || []);
 
+  // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu — ROLLER ARASI ID ÇAKIŞMASI / IDOR):
+  // owners.id ve mechanics.id AYRI tablolarda, ayrı sayaçlarla üretiliyor — yani owner #7 ile
+  // mechanic #7 tamamen farklı iki kişi. listings (sellerId) ve support_tickets (fromId) gibi
+  // tablolarda ise HER İKİ rol de AYNI sütuna yazıyor, rolü ayıran bilgi ayrı bir sütunda
+  // (sellerType / fromType) duruyor. Bu kontrol eskiden sadece `row[field] === actor.id`
+  // karşılaştırıyordu, rolü hiç hesaba katmıyordu: sonuç olarak owner #7, mechanic #7'nin
+  // ilanını düzenleyebiliyor/silebiliyor ve mechanic #7'nin destek taleplerini (kişisel şikâyet
+  // metinleri dâhil) okuyabiliyordu — tersi de geçerliydi. Artık böyle tablolarda authScope'a
+  // bir ayırt edici (typeField/typeValue) veriliyor ve sahiplik ancak HEM id HEM de tür
+  // eşleşiyorsa kabul ediliyor.
   function matchingField(actor, row) {
-    return scopeFields.find((f) => f.role === actor?.role && row[f.field] === actor.id);
+    return scopeFields.find((f) => (
+      f.role === actor?.role
+      && row[f.field] === actor.id
+      && (!f.typeField || row[f.typeField] === f.typeValue)
+    ));
   }
 
   function isSharedWrite(actor, bodyKeys) {
@@ -70,8 +84,12 @@ export function makeCrudRouter(table, {
     }
     const myFields = scopeFields.filter((f) => f.role === actor.role);
     if (myFields.length === 0) return res.json([]);
-    const where = myFields.map((f) => `${f.field} = ?`).join(" OR ");
-    const rows = db.prepare(`SELECT * FROM ${table} WHERE ${where}`).all(...myFields.map(() => actor.id));
+    // Roller arası id çakışması (bkz. matchingField yorumu): tür ayırt edicisi tanımlıysa liste
+    // sorgusu da hem id'yi hem türü şart koşuyor — aksi halde owner #7, mechanic #7'nin
+    // kayıtlarını listede görmeye devam ederdi.
+    const where = myFields.map((f) => (f.typeField ? `(${f.field} = ? AND ${f.typeField} = ?)` : `${f.field} = ?`)).join(" OR ");
+    const params = myFields.flatMap((f) => (f.typeField ? [actor.id, f.typeValue] : [actor.id]));
+    const rows = db.prepare(`SELECT * FROM ${table} WHERE ${where}`).all(...params);
     res.json(hydrateAll(table, rows));
   });
 
@@ -115,7 +133,14 @@ export function makeCrudRouter(table, {
     // Sahiplik alanı İSTEMCİDEN DEĞİL oturumdan geliyor — client `ownerId: 9999` gönderse bile
     // (başka bir kullanıcı adına kayıt oluşturmaya çalışsa bile) yok sayılır.
     if (actor && actor.role !== "admin") {
-      for (const f of scopeFields) if (f.role === actor.role) body[f.field] = actor.id;
+      // Tür ayırt edicisi de (sellerType/fromType) istemciden DEĞİL oturumdan yazılıyor — böylece
+      // bir owner, kendini "sellerType: mechanic" gösteren bir ilan oluşturup yukarıdaki sahiplik
+      // kontrolünü baştan yanıltamaz (bkz. matchingField yorumu).
+      for (const f of scopeFields) {
+        if (f.role !== actor.role) continue;
+        body[f.field] = actor.id;
+        if (f.typeField) body[f.typeField] = f.typeValue;
+      }
     }
     const cols = Object.keys(body);
     const stmt = db.prepare(`INSERT INTO ${table} (${cols.join(",")}) VALUES (${cols.map((c) => `@${c}`).join(",")})`);

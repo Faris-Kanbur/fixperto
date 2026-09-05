@@ -69,9 +69,18 @@ app.use("/api/vehicles", makeCrudRouter("vehicles", {
 app.use("/api/appointments", makeCrudRouter("appointments", {
   authScope: { fields: [{ field: "ownerId", role: "owner" }, { field: "mechanicId", role: "mechanic" }], publicRead: false },
 }));
+// GÜVENLİK DÜZELTMESİ (roller arası id çakışması — bkz. makeCrudRouter.js matchingField yorumu):
+// owner #7 ile mechanic #7 farklı kişiler, ama ikisi de aynı `sellerId` sütununa yazıyor. Rolü
+// ayıran `sellerType` sütunu da kontrole dâhil edilmezse bir araç sahibi, aynı id'ye sahip bir
+// tamircinin ilanını düzenleyip silebiliyordu.
 app.use("/api/listings", makeCrudRouter("listings", {
   shareCountColumn: "shareCount",
-  authScope: { fields: [{ field: "sellerId", role: "owner" }, { field: "sellerId", role: "mechanic" }] },
+  authScope: {
+    fields: [
+      { field: "sellerId", role: "owner", typeField: "sellerType", typeValue: "owner" },
+      { field: "sellerId", role: "mechanic", typeField: "sellerType", typeValue: "mechanic" },
+    ],
+  },
 }));
 // Genel CRUD factory yerine özel router (bkz. backend/routes/conversations.js) — mesaj
 // şeklinin/boyutunun ve sohbet kimliğinin (mechanicId) her zaman geçerli kalması için.
@@ -80,8 +89,16 @@ app.use("/api/jobs", makeCrudRouter("job_listings", {
   shareCountColumn: "shareCount",
   authScope: { fields: [{ field: "mechanicId", role: "mechanic" }] },
 }));
+// Aynı roller arası id çakışması riski destek taleplerinde daha da hassastı (kişisel şikâyet
+// metinleri): owner #7, mechanic #7'nin taleplerini okuyabiliyor/değiştirebiliyordu.
 app.use("/api/tickets", makeCrudRouter("support_tickets", {
-  authScope: { fields: [{ field: "fromId", role: "owner" }, { field: "fromId", role: "mechanic" }], publicRead: false },
+  authScope: {
+    fields: [
+      { field: "fromId", role: "owner", typeField: "fromType", typeValue: "owner" },
+      { field: "fromId", role: "mechanic", typeField: "fromType", typeValue: "mechanic" },
+    ],
+    publicRead: false,
+  },
 }));
 // Genel CRUD factory yerine özel router (bkz. backend/routes/quotes.js) — limit doğrulama,
 // atomik kabul/iptal/reddet geçişleri ve durum makinesi kuralları için.

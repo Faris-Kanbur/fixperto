@@ -117,6 +117,9 @@ CREATE TABLE IF NOT EXISTS appointments (
 
 CREATE TABLE IF NOT EXISTS conversations (
   id INTEGER PRIMARY KEY,
+  -- Sohbetin iki tarafı: tamirci (mechanicId) ve araç sahibi (ownerId). ownerId güvenlik
+  -- denetiminde eklendi — bkz. aşağıdaki ensureColumn yorumu ve routes/conversations.js.
+  ownerId INTEGER,
   mechanicId INTEGER,
   mechanicName TEXT,
   mechanicImg TEXT,
@@ -355,6 +358,13 @@ function ensureColumn(table, columnDef) {
   ["mechanics", "password TEXT DEFAULT 'demo1234'"],
   ["listings", "createdAt TEXT"],
   ["owners", "savedSearches TEXT DEFAULT '[]'"],
+  // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): conversations tablosunda sohbetin araç
+  // sahibi tarafını gösteren bir sütun HİÇ YOKTU — sadece mechanicId vardı. Bu yüzden backend
+  // "bu sohbet hangi araç sahibine ait" sorusunu cevaplayamıyor, giriş yapmış HERHANGİ bir owner'a
+  // TÜM sohbetleri (başka araç sahiplerinin tamircilerle yazışmaları dâhil) gösteriyordu. Artık
+  // sohbet oluşturulurken ownerId oturumdan yazılıyor ve okuma/yazma buna göre kısıtlanıyor
+  // (bkz. backend/routes/conversations.js convoVisibleTo).
+  ["conversations", "ownerId INTEGER"],
   // GERÇEK OTURUM SİSTEMİ: mechanics tablosunda daha önce hiç email sütunu yoktu (owners'ta vardı) —
   // gerçek e-posta+şifre ile giriş/kayıt için (bkz. backend/routes/auth.js) artık gerekli.
   ["mechanics", "email TEXT"],
@@ -412,6 +422,20 @@ try {
   db.prepare(`UPDATE listings SET createdAt = datetime('now') WHERE createdAt IS NULL OR createdAt = ''`).run();
 } catch (err) {
   console.error("listings.createdAt backfill hatası:", err.message);
+}
+
+// Tek seferlik backfill: conversations.ownerId sütunu güvenlik denetiminde eklendi (bkz. yukarıdaki
+// ensureColumn yorumu). Sütun eklenmeden ÖNCE oluşmuş sohbetlerin hangi araç sahibine ait olduğu
+// veride hiçbir yerde yazmıyor — bu satırlar tek "aktif" araç sahibi varsayımıyla (demo dönemi)
+// oluşturulduğu için en eski owner kaydına atanıyorlar. Böylece eski sohbetler sahipsiz (ve dolayısıyla
+// hiçbir kullanıcıya görünmez) kalmıyor, ama yeni sohbetler her zaman gerçek oturum sahibine yazılıyor.
+try {
+  const firstOwner = db.prepare(`SELECT id FROM owners ORDER BY id LIMIT 1`).get();
+  if (firstOwner) {
+    db.prepare(`UPDATE conversations SET ownerId = ? WHERE ownerId IS NULL`).run(firstOwner.id);
+  }
+} catch (err) {
+  console.error("conversations.ownerId backfill hatası:", err.message);
 }
 
 // ---------------------------------------------------------------------------

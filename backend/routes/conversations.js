@@ -41,16 +41,20 @@ function validateMessages(messages) {
   return null;
 }
 
-const IMMUTABLE_CONVERSATION_FIELDS = ["mechanicId"];
+const IMMUTABLE_CONVERSATION_FIELDS = ["mechanicId", "ownerId"];
 
-// GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): conversations tablosunda gerçek bir ownerId sütunu
-// yok (bkz. şema — bu uygulama tek bir "aktif" araç sahibi kimliği varsayımıyla tasarlandı, bkz.
-// REFACTOR_REPORT.md). Bu yüzden bir sohbetin "sahipliği" iki taraflı: mechanicId eşleşen tamirci
-// ya da GİRİŞ YAPMIŞ herhangi bir owner (uygulamanın mimarisinde zaten tek bir owner kimliği "aktif"
-// kabul ediliyor). Admin her zaman erişebilir.
+// GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): burada eskiden "giriş yapmış HERHANGİ bir
+// owner tüm sohbetleri görebilir" kuralı vardı — çünkü conversations tablosunda araç sahibi tarafını
+// gösteren bir sütun yoktu ve uygulama tek bir "aktif" araç sahibi varsayımıyla tasarlanmıştı. Gerçek
+// kayıt/giriş sistemi eklendikten sonra bu varsayım geçersiz: siteye kaydolan HERKES owner olabildiği
+// için, kaydolan herhangi biri diğer tüm araç sahiplerinin tamircilerle yaptığı özel yazışmaları
+// okuyabiliyor, hatta değiştirip silebiliyordu. Artık conversations.ownerId sütunu var (bkz.
+// backend/db/db.js ensureColumn + backfill) ve sohbet yalnızca İKİ GERÇEK TARAFINA (o araç sahibi ve
+// o tamirci) ve admin'e görünüyor.
 function convoVisibleTo(row, actor) {
   if (!actor) return false;
-  if (actor.role === "admin" || actor.role === "owner") return true;
+  if (actor.role === "admin") return true;
+  if (actor.role === "owner") return row.ownerId === actor.id;
   if (actor.role === "mechanic") return row.mechanicId === actor.id;
   return false;
 }
@@ -79,10 +83,20 @@ conversationsRouter.post("/", (req, res) => {
   if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
   const body = dehydrate("conversations", req.body);
   if (!body.mechanicId) return res.status(400).json({ error: "mechanicId zorunludur." });
-  // Bir tamirci sadece KENDİ mechanicId'siyle bir sohbet dizisi açabilir (kendi kimliği dışında bir
-  // tamirci adına konuşma başlatamaz) — owner ise (bkz. yukarısı, uygulamada tek aktif owner
-  // kimliği var) istediği tamirciyle sohbet başlatabilir.
-  if (actor.role === "mechanic") body.mechanicId = actor.id;
+  // Sohbetin iki tarafı da İSTEMCİDEN DEĞİL oturumdan yazılıyor: bir tamirci sadece kendi
+  // mechanicId'siyle sohbet açabilir, bir araç sahibi de sohbeti ancak kendi adına açabilir
+  // (başkasının adına sohbet oluşturup sonra o kişinin yazışmasıymış gibi gösteremez).
+  if (actor.role === "mechanic") {
+    body.mechanicId = actor.id;
+    // Tamirci bir araç sahibiyle sohbet başlatıyorsa (ör. bir "sahibinden" ilanı hakkında) karşı
+    // tarafın kimliğini gövdede belirtir — ama bu değer doğrulanır: gerçekten var olan bir owner
+    // kaydı olmalı, aksi halde sohbet sahipsiz kalır ve hiçbir araç sahibine görünmez.
+    if (body.ownerId != null) {
+      const target = db.prepare(`SELECT id FROM owners WHERE id = ?`).get(body.ownerId);
+      if (!target) return res.status(400).json({ error: "Geçersiz ownerId." });
+    }
+  }
+  if (actor.role === "owner") body.ownerId = actor.id;
   if ("messages" in req.body) {
     const err = validateMessages(req.body.messages);
     if (err) return res.status(400).json({ error: err });

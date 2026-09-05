@@ -289,6 +289,11 @@ export interface ChatMessage {
 
 export interface Conversation {
   id: number;
+  /** Sohbetin araç sahibi tarafı — güvenlik denetiminde eklendi: bu alan olmadan backend sohbeti
+   * kimin görebileceğini bilemiyor ve giriş yapmış her araç sahibine TÜM sohbetleri gösteriyordu
+   * (bkz. backend/routes/conversations.js convoVisibleTo). Tamirci tarafından başlatılan ve karşı
+   * tarafın kimliği bilinemeyen eski/istisnai sohbetlerde null olabilir. */
+  ownerId?: number | null;
   mechanicId: number;
   mechanicName: string;
   mechanicImg: string;

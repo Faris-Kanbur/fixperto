@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { makeRateLimiter } from "../utils/auth.js";
 
 const router = Router();
 
@@ -67,9 +68,26 @@ async function translateText(text, from, to) {
   return fetchFromMyMemory(text, from, to);
 }
 
+// GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): bu uç nokta kimlik doğrulaması, uzunluk
+// sınırı ve hız sınırı olmadan dışarıya açıktı — yani herkes siteyi ücretsiz bir çeviri proxy'si
+// gibi kullanabilir (dış servislerin bizim IP'mizi kısıtlamasına yol açar) ve 5MB'a kadar metinleri
+// translation_cache tablosuna yazdırarak veritabanını şişirebilirdi. Artık makul bir metin uzunluğu
+// sınırı ve IP başına hız sınırı var. Uygulamanın kendi kullanımı (sohbet/ilan çevirisi) kısa
+// metinlerle çalıştığı için bu sınırlar normal kullanımı etkilemiyor.
+const MAX_TRANSLATE_TEXT_LEN = 5000;
+const translateLimiter = makeRateLimiter({ maxAttempts: 120, lockoutMs: 10 * 60 * 1000 });
+
 router.post("/", async (req, res) => {
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  if (translateLimiter.check(ip).blocked) {
+    return res.status(429).json({ error: "Çok fazla çeviri isteği. Lütfen birkaç dakika sonra tekrar deneyin." });
+  }
+  translateLimiter.registerFailure(ip);
   const { text, from, to } = req.body || {};
   if (!text || !to) return res.status(400).json({ error: "text ve to zorunludur." });
+  if (typeof text !== "string" || text.length > MAX_TRANSLATE_TEXT_LEN) {
+    return res.status(400).json({ error: "Çevrilecek metin çok uzun." });
+  }
   const fromLang = SUPPORTED_LANGS.has(from) ? from : "tr";
   const toLang = SUPPORTED_LANGS.has(to) ? to : "tr";
   if (fromLang === toLang || !text.trim()) return res.json({ translatedText: text });

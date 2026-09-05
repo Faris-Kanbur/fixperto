@@ -2,13 +2,30 @@ import { Router } from "express";
 import { db } from "../db/db.js";
 import { createAdminSession, destroyAdminSession, isAdminToken, extractBearerToken } from "../utils/auth.js";
 
-// Same demo admin credentials the single-file app used to hardcode client-side.
-// In a real deployment these belong in env vars / a hashed-password users table,
-// not in source — kept simple here to match the existing demo's scope.
+// GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): admin kimlik bilgilerinin kaynak koda
+// gömülü bir varsayılanı vardı ve depo herkese açık (GitHub) — yani FIXPERTO_ADMIN_* ortam
+// değişkenlerini set etmeden yayına alınan bir kurulumda, depoyu okuyan HERKES admin paneline
+// girebilirdi (tüm kullanıcı verisi, ilan silme, doğrulama verme...). Artık:
+//   - Varsayılan kimlik bilgileri SADECE yerel geliştirmede (NODE_ENV !== "production") geçerli.
+//   - Prodüksiyonda env değişkenleri set edilmemişse admin girişi TAMAMEN kapalı (herhangi bir
+//     şifreyle giriş denemesi reddedilir) — "unuttum" senaryosunda sessizce açık kalmaktansa
+//     kapalı kalması tercih edilir (fail closed).
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const DEV_FALLBACK_EMAIL = "admin@fixperto.com";
+const DEV_FALLBACK_PASSWORD = "Fixperto2026!";
 const ADMIN_CREDENTIALS = {
-  email: process.env.FIXPERTO_ADMIN_EMAIL || "admin@fixperto.com",
-  password: process.env.FIXPERTO_ADMIN_PASSWORD || "Fixperto2026!",
+  email: process.env.FIXPERTO_ADMIN_EMAIL || (IS_PRODUCTION ? null : DEV_FALLBACK_EMAIL),
+  password: process.env.FIXPERTO_ADMIN_PASSWORD || (IS_PRODUCTION ? null : DEV_FALLBACK_PASSWORD),
 };
+if (IS_PRODUCTION && (!ADMIN_CREDENTIALS.email || !ADMIN_CREDENTIALS.password)) {
+  console.error("[admin] FIXPERTO_ADMIN_EMAIL/FIXPERTO_ADMIN_PASSWORD set edilmediği için admin girişi DEVRE DIŞI.");
+}
+// Prodüksiyonda env ile de olsa varsayılan (herkesin bildiği) şifrenin kullanılmasını engelliyoruz.
+const usesDefaultProdPassword = IS_PRODUCTION && ADMIN_CREDENTIALS.password === DEV_FALLBACK_PASSWORD;
+if (usesDefaultProdPassword) {
+  console.error("[admin] FIXPERTO_ADMIN_PASSWORD varsayılan örnek şifreye eşit — admin girişi DEVRE DIŞI. Lütfen güçlü, benzersiz bir şifre belirleyin.");
+}
+const adminLoginEnabled = !!ADMIN_CREDENTIALS.email && !!ADMIN_CREDENTIALS.password && !usesDefaultProdPassword;
 
 // GÜVENLİK DÜZELTMESİ: /login gerçek kimlik bilgilerini doğruluyordu ama arkasındaki uç noktalar
 // (aşağıdaki /stats, /change-log GET/POST/PATCH) hiçbir kimlik doğrulaması YAPMIYORDU — yani giriş
@@ -59,6 +76,9 @@ router.post("/login", (req, res) => {
   const ip = req.ip || req.socket?.remoteAddress || "unknown";
   if (checkLoginRateLimit(ip).blocked) {
     return res.status(429).json({ ok: false, error: "Çok fazla başarısız deneme. Lütfen birkaç dakika sonra tekrar deneyin." });
+  }
+  if (!adminLoginEnabled) {
+    return res.status(503).json({ ok: false, error: "Admin girişi bu kurulumda yapılandırılmamış." });
   }
   const { email, password } = req.body || {};
   if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {

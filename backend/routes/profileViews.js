@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
-import { makeRateLimiter } from "../utils/auth.js";
+import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 
 // Tamirci profili / araç ilanı görüntülenme takibi. Her açılışta bir satır eklenir; bir randevu/
 // dönüşüm gerçekleşirse o satır "converted" olarak işaretlenir (bkz. AppLogicProvider.tsx).
@@ -88,6 +88,15 @@ router.get("/stats", (req, res) => {
     return res.json({ totalViews, viewsThisYear, conversions, conversionsThisYear, monthly, viewsInRange, conversionsInRange });
   }
 
+  // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): parametresiz çağrıldığında bu uç nokta
+  // platformun TAMAMINA ait görüntülenme/dönüşüm verisini ve en çok görüntülenen tamirci/ilan
+  // listesini kimlik doğrulaması olmadan döndürüyordu. Bunu kullanan tek ekran admin panelinin
+  // "Sayfa Ziyaretleri" bölümü; hedef bazlı (targetType+targetId) çağrılar ise kullanıcıların kendi
+  // analiz ekranları için açık kalmaya devam ediyor.
+  const actor = resolveActor(req);
+  if (actor?.role !== "admin") {
+    return res.status(403).json({ error: "Bu veriye erişim yetkiniz yok." });
+  }
   const totals = db.prepare(`SELECT COUNT(*) AS views, COALESCE(SUM(converted), 0) AS conversions FROM profile_views`).get();
   const byTargetType = db.prepare(
     `SELECT targetType, COUNT(*) AS views, COALESCE(SUM(converted), 0) AS conversions FROM profile_views GROUP BY targetType`

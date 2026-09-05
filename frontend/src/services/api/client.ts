@@ -331,7 +331,10 @@ export const api = {
       request("/api/share-events", { method: "POST", body: JSON.stringify(data) }),
     click: (refCode: string): Promise<ShareEvent> => request(`/api/share-events/${refCode}/click`, { method: "POST" }),
     convert: (refCode: string): Promise<ShareEvent> => request(`/api/share-events/${refCode}/convert`, { method: "POST" }),
-    stats: (): Promise<ShareStats> => request("/api/share-events/stats"),
+    // Platform geneli paylaşım istatistikleri artık admin token'ı gerektiriyor (bkz. güvenlik
+    // denetimi — bu veri daha önce girişsiz herkese açıktı). Bu uç noktayı sadece admin panelinin
+    // Analitik sekmesi kullanıyor.
+    stats: (): Promise<ShareStats> => request("/api/share-events/stats", { ...adminAuthOpts() }),
   },
   // Tamirci profili / araç ilanı görüntülenme takibi — bkz. backend/routes/profileViews.js.
   // stats() parametresiz çağrılırsa platform geneli (admin), targetType+targetId verilirse tek bir
@@ -342,8 +345,12 @@ export const api = {
     convert: (id: number | string): Promise<unknown> => request(`/api/profile-views/${id}/convert`, { method: "POST" }),
     // `days` verilirse (bkz. tamirci Analiz sekmesi zaman aralığı filtresi), yanıt ayrıca o
     // pencereye göre `viewsInRange`/`conversionsInRange` alanlarını da içerir.
+    // Parametresiz (platform geneli) varyant artık admin token'ı gerektiriyor — bkz. güvenlik
+    // denetimi; hedef bazlı varyant (kullanıcının kendi analiz ekranı) açık kalmaya devam ediyor.
     stats: (targetType?: string, targetId?: number | string, days?: number): Promise<ProfileViewStats | ProfileViewAggregateStats> =>
-      request(targetType && targetId ? `/api/profile-views/stats?targetType=${targetType}&targetId=${targetId}${days ? `&days=${days}` : ""}` : "/api/profile-views/stats"),
+      targetType && targetId
+        ? request(`/api/profile-views/stats?targetType=${targetType}&targetId=${targetId}${days ? `&days=${days}` : ""}`)
+        : request("/api/profile-views/stats", { ...adminAuthOpts() }),
     // Tamirci galeri paneli: birden fazla ilanın görüntülenme/dönüşüm sayısını N ayrı istek yerine
     // tek istekte alır (bkz. backend/routes/profileViews.js GET /stats/bulk).
     statsBulk: (targetType: string, targetIds: (number | string)[], days?: number): Promise<ProfileViewBulkStats> =>

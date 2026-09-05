@@ -27,11 +27,28 @@ const OTP_MAX_ATTEMPTS = 5;
 
 const loginLimiter = makeRateLimiter({ maxAttempts: 10, lockoutMs: 15 * 60 * 1000 });
 const otpLimiter = makeRateLimiter({ maxAttempts: OTP_MAX_ATTEMPTS, lockoutMs: 15 * 60 * 1000 });
+// GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): /register'da hiçbir hız sınırı yoktu — tek bir
+// IP, script ile sınırsız sahte hesap açıp hem veritabanını şişirebilir hem de her kayıtta bir
+// e-posta gönderttiği için SMTP hesabının spam olarak işaretlenmesine (mail itibarının yanmasına)
+// yol açabilirdi. Giriş/OTP ile aynı paylaşılan sınırlayıcı deseni burada da uygulanıyor.
+const registerLimiter = makeRateLimiter({ maxAttempts: 5, lockoutMs: 60 * 60 * 1000 });
 
 // loginTicket -> { role, id, email, otp, expiresAt } — şifre doğrulandıktan sonra, OTP onaylanana
 // kadar geçen KISA süreli ara adım. Gerçek oturum token'ı (createSession) sadece OTP doğrulanınca
 // verilir — bu map'teki bir ticket TEK BAŞINA hiçbir korumalı uç noktaya erişim sağlamaz.
 const pendingLogins = new Map();
+
+// Süresi dolan (hiç doğrulanmayan) giriş biletleri, birileri o bileti tekrar denemedikçe map'te
+// sonsuza kadar kalıyordu — hem bellek sızıntısı hem de gereksiz şekilde OTP kodlarını bellekte
+// tutmak demekti. Periyodik olarak temizleniyor (unref: süreç kapanışını engellemez).
+const PENDING_SWEEP_MS = 5 * 60 * 1000;
+const pendingSweepTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [ticket, pending] of pendingLogins) {
+    if (now > pending.expiresAt) pendingLogins.delete(ticket);
+  }
+}, PENDING_SWEEP_MS);
+if (typeof pendingSweepTimer.unref === "function") pendingSweepTimer.unref();
 
 function clientIp(req) {
   return req.ip || req.socket?.remoteAddress || "unknown";
@@ -46,6 +63,11 @@ export const authRouter = Router();
 
 authRouter.post("/register", async (req, res) => {
   try {
+    const ip = clientIp(req);
+    if (registerLimiter.check(ip).blocked) {
+      return res.status(429).json({ error: "Çok fazla kayıt denemesi. Lütfen daha sonra tekrar deneyin." });
+    }
+    registerLimiter.registerFailure(ip); // her kayıt denemesi (başarılı da olsa) sayaca yazılır
     const { role, email, name } = req.body || {};
     if (!ROLE_TABLES[role]) return res.status(400).json({ error: "role 'owner' veya 'mechanic' olmalıdır." });
     const cleanEmail = String(email || "").trim().toLowerCase();

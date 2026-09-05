@@ -2499,7 +2499,9 @@ function useAppLogic() {
   const openChatWithMechanic = (m, contextNote = undefined) => {
     let convo = conversations.find(c => c.mechanicId === m.id);
     if (!convo) {
-      convo = { id: Date.now(), mechanicId: m.id, mechanicName: m.name, mechanicImg: m.img, mechanicLang: m.lang, messages: [], pendingContextNote: contextNote || null };
+      // ownerId: sohbetin araç sahibi tarafı (güvenlik denetiminde eklendi — backend bu alanı
+      // oturumdan da zorluyor, burada yerel state'in de doğru olması için yazıyoruz).
+      convo = { id: Date.now(), ownerId: MY_OWNER_ID, mechanicId: m.id, mechanicName: m.name, mechanicImg: m.img, mechanicLang: m.lang, messages: [], pendingContextNote: contextNote || null };
       setConversations([convo, ...conversations]);
       persist(api.conversations.create(convo), "Sohbet başlatılamadı");
       recordConversion("chat");
@@ -2516,11 +2518,14 @@ function useAppLogic() {
   // Tamirci, kendi ilanı olmayan bir "araç sahibi" tipi ilana bakarken sohbet başlatırsa: bu her
   // zaman (tek) gerçek araç sahibiyle olan aynı sohbet dizisine bağlanır — kendi kimliğiyle
   // (myProfile) anchor edilir, böylece araç sahibi bunu Sohbetlerim'de görüp cevaplayabilir.
-  const openMechChatWithOwnerListing = (contextNote) => {
+  const openMechChatWithOwnerListing = (contextNote, targetOwnerId = null) => {
     if (!myProfile) return;
-    let convo = conversations.find(c => c.mechanicId === myProfile.id);
+    // GÜVENLİK DÜZELTMESİ (sohbet sahipliği): sohbetler artık (ownerId, mechanicId) çiftiyle
+    // eşleşiyor — tamirci bir ilan sahibiyle konuşurken o ilanın SAHİBİNİN kimliğiyle (sellerId)
+    // eşleşen sohbeti açıyor, böylece mesaj yanlış araç sahibine gitmiyor/görünmüyor.
+    let convo = conversations.find(c => c.mechanicId === myProfile.id && (targetOwnerId == null || c.ownerId === targetOwnerId));
     if (!convo) {
-      convo = { id: Date.now(), mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang, messages: [], pendingContextNote: contextNote || null };
+      convo = { id: Date.now(), ownerId: targetOwnerId, mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang, messages: [], pendingContextNote: contextNote || null };
       setConversations([convo, ...conversations]);
       persist(api.conversations.create(convo), "Sohbet başlatılamadı");
       recordConversion("chat");
@@ -3312,14 +3317,23 @@ function useAppLogic() {
     // persist edilmiyordu — sayfa yenilenince ret bildirim mesajı sessizce kayboluyordu. Aşağıda hem
     // "var olan sohbete ekle" hem "yeni sohbet oluştur" dallarının ikisi de artık gerçek bir
     // api.conversations.update/create çağrısıyla kalıcı hale getiriliyor.
-    const existing = conversations.find(c => c.mechanicId === myProfile.id);
+    // GÜVENLİK DÜZELTMESİ (sohbet sahipliği): ret mesajı, başvuran adayın KENDİ sohbetine gitmeli —
+    // adayın owner kaydını e-postasından bulup sohbeti (ownerId, mechanicId) çiftiyle eşleştiriyoruz.
+    // Aday sitede kayıtlı bir araç sahibi değilse (ownerId bulunamazsa) mesaj yine kaydediliyor ama
+    // hiçbir araç sahibinin gelen kutusuna düşmüyor — bu, önceki "herkes görebilir" davranışından
+    // kasıtlı olarak daha kısıtlı.
+    const applicantEmail = (applicant.email || "").trim().toLowerCase();
+    const applicantOwnerId = applicantEmail
+      ? (ownersDirectory.find(o => (o.email || "").trim().toLowerCase() === applicantEmail)?.id ?? null)
+      : null;
+    const existing = conversations.find(c => c.mechanicId === myProfile.id && (applicantOwnerId == null || c.ownerId === applicantOwnerId));
     const newMsg = { id: msgId++, sender: "mechanic" as const, text: rejectionText, lang: myProfile.lang || "tr", isRejectionNotice: true };
     if (existing) {
       const messages = [...existing.messages, newMsg];
       setConversations(cs => cs.map(c => c.id === existing.id ? { ...c, messages } : c));
       persist(api.conversations.update(existing.id, { messages }), "Mesaj kaydedilemedi");
     } else {
-      const newConvo = { id: Date.now(), mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang || "tr", messages: [newMsg] };
+      const newConvo = { id: Date.now(), ownerId: applicantOwnerId, mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang || "tr", messages: [newMsg] };
       setConversations(cs => [newConvo, ...cs]);
       persist(api.conversations.create(newConvo), "Sohbet başlatılamadı");
     }
