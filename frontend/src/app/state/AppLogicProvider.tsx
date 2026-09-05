@@ -122,7 +122,19 @@ function useAppLogic() {
   useEffect(() => { setHoveredPinId(null); setMapPreviewItem(null); }, [ownerMode]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" });
-  const [listingFilters, setListingFilters] = useState({ transmission: "all", fuelType: "all", minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "" });
+  // İKİNCİ EL ARAÇ FİLTRELERİ (AutoScout24 deseninden genişletildi): eskiden yalnızca vites, yakıt,
+  // fiyat, km ve yıl vardı. Gerçek bir araç pazarında alıcı kararını belirleyen alanların tamamı
+  // artık filtrelenebiliyor — kasa tipi, çekiş, motor gücü, kapı/koltuk sayısı, renk, satıcı tipi
+  // (sahibinden/galeriden), emisyon sınıfı, azami CO2, kaçıncı el, hasarsızlık (boya-değişen yok),
+  // takas, pazarlık payı ve donanım listesi. Boş/"all" değerler o filtrenin kapalı olduğunu belirtir.
+  const EMPTY_LISTING_FILTERS = {
+    transmission: "all", fuelType: "all", bodyType: "all", drivetrain: "all",
+    minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "",
+    minPower: "", maxPower: "", doorCount: "all", seatCount: "all", color: "",
+    sellerType: "all", emissionClass: "all", maxCo2: "", maxOwnerCount: "",
+    damageFree: false, tradeIn: false, negotiable: false, features: [] as string[],
+  };
+  const [listingFilters, setListingFilters] = useState({ ...EMPTY_LISTING_FILTERS });
   const [listingSort, setListingSort] = useState("default");
   const [listingSortDir, setListingSortDir] = useState("asc");
   const [userLocation, setUserLocation] = useState(null);
@@ -224,6 +236,10 @@ function useAppLogic() {
   // Filtre modalındaki filters.service (ATU_FIXED_CATALOG'dan BİREBİR eşleşen bir <select>) ile
   // karıştırılmamalı — bu ayrı, daha esnek bir alan (bkz. filtered useMemo).
   const [serviceQuery, setServiceQuery] = useState("");
+  // "Filtrele" düğmesi ilk arama yapılmadan gösterilmiyor (kullanıcı isteği): karşılama sayfasından
+  // ya da arama çubuğundan bir arama tetiklendiğinde true olur ve sonuç ekranındaki filtre/kaydet
+  // araçları görünür hâle gelir.
+  const [hasSearched, setHasSearched] = useState(false);
   const [sortBy, setSortBy] = useState("distance");
   const [sortDir, setSortDir] = useState("asc");
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
@@ -920,6 +936,25 @@ function useAppLogic() {
     if (listingFilters.maxKm) list = list.filter(l => Number(l.km) <= Number(listingFilters.maxKm));
     if (listingFilters.minYear) list = list.filter(l => Number(l.year) >= Number(listingFilters.minYear));
     if (listingFilters.maxYear) list = list.filter(l => Number(l.year) <= Number(listingFilters.maxYear));
+    // AutoScout24 tarzı ek filtreler (bkz. EMPTY_LISTING_FILTERS yorumu). Her biri yalnızca
+    // kullanıcı o alanı doldurduğunda devreye giriyor; ilanda o veri hiç yoksa filtre elemez
+    // (eksik veri yüzünden ilan kaybolmasın diye) — sayısal alanlar için Number(...) || 0 yerine
+    // açıkça "değer var mı" kontrolü yapılıyor.
+    if (listingFilters.bodyType && listingFilters.bodyType !== "all") list = list.filter(l => l.bodyType === listingFilters.bodyType);
+    if (listingFilters.drivetrain && listingFilters.drivetrain !== "all") list = list.filter(l => l.drivetrain === listingFilters.drivetrain);
+    if (listingFilters.doorCount && listingFilters.doorCount !== "all") list = list.filter(l => String(l.doorCount || "") === String(listingFilters.doorCount));
+    if (listingFilters.seatCount && listingFilters.seatCount !== "all") list = list.filter(l => String(l.seatCount || "") === String(listingFilters.seatCount));
+    if (listingFilters.sellerType && listingFilters.sellerType !== "all") list = list.filter(l => l.sellerType === listingFilters.sellerType);
+    if (listingFilters.emissionClass && listingFilters.emissionClass !== "all") list = list.filter(l => l.emissionClass === listingFilters.emissionClass);
+    if (listingFilters.color?.trim()) list = list.filter(l => (l.color || "").toLocaleLowerCase("tr-TR").includes(listingFilters.color.trim().toLocaleLowerCase("tr-TR")));
+    if (listingFilters.minPower) list = list.filter(l => l.power !== undefined && l.power !== null && String(l.power) !== "" && Number(l.power) >= Number(listingFilters.minPower));
+    if (listingFilters.maxPower) list = list.filter(l => l.power !== undefined && l.power !== null && String(l.power) !== "" && Number(l.power) <= Number(listingFilters.maxPower));
+    if (listingFilters.maxCo2) list = list.filter(l => l.co2Emission !== undefined && l.co2Emission !== null && String(l.co2Emission) !== "" && Number(l.co2Emission) <= Number(listingFilters.maxCo2));
+    if (listingFilters.maxOwnerCount) list = list.filter(l => l.ownerCount !== undefined && l.ownerCount !== null && String(l.ownerCount) !== "" && Number(l.ownerCount) <= Number(listingFilters.maxOwnerCount));
+    if (listingFilters.damageFree) list = list.filter(l => !Number(l.paintedParts) && !Number(l.changedParts));
+    if (listingFilters.tradeIn) list = list.filter(l => !!l.tradeIn);
+    if (listingFilters.negotiable) list = list.filter(l => !!l.negotiable);
+    if (listingFilters.features?.length) list = list.filter(l => listingFilters.features.every(f => (l.features || []).includes(f)));
     if (listingSort === "price") list = [...list].sort((a, b) => listingSortDir === "asc" ? parseListingPrice(a.price) - parseListingPrice(b.price) : parseListingPrice(b.price) - parseListingPrice(a.price));
     if (listingSort === "km") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.km) - Number(b.km) : Number(b.km) - Number(a.km));
     if (listingSort === "year") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.year) - Number(b.year) : Number(b.year) - Number(a.year));
@@ -931,7 +966,16 @@ function useAppLogic() {
     }
     return list;
   }, [listings, query, locationQuery, listingFilters, listingSort, listingSortDir]);
-  const activeListingFilterCount = (listingFilters.transmission !== "all" ? 1 : 0) + (listingFilters.fuelType !== "all" ? 1 : 0) + (listingFilters.minPrice ? 1 : 0) + (listingFilters.maxPrice ? 1 : 0) + (listingFilters.minKm ? 1 : 0) + (listingFilters.maxKm ? 1 : 0) + (listingFilters.minYear ? 1 : 0) + (listingFilters.maxYear ? 1 : 0);
+  // Aktif filtre sayacı: "Filtrele (N)" rozetinde gösteriliyor. EMPTY_LISTING_FILTERS ile
+  // karşılaştırarak hesaplanıyor — yeni bir filtre eklendiğinde burayı ayrıca güncellemek
+  // gerekmiyor (eskiden her alan tek tek elle sayılıyordu ve yeni alanlar sayaca yansımıyordu).
+  const activeListingFilterCount = Object.keys(EMPTY_LISTING_FILTERS).reduce((n, key) => {
+    const cur = (listingFilters as any)[key];
+    const empty = (EMPTY_LISTING_FILTERS as any)[key];
+    if (Array.isArray(empty)) return n + ((cur || []).length > 0 ? 1 : 0);
+    if (typeof empty === "boolean") return n + (cur ? 1 : 0);
+    return n + (cur !== empty && cur !== "" && cur != null ? 1 : 0);
+  }, 0);
   const filteredJobs = useMemo(() => {
     let list = jobListings.filter(j => j.status === "active");
     const q = query.toLowerCase();
@@ -1364,6 +1408,7 @@ function useAppLogic() {
   const goToBrowse = (mode = "mechanics") => {
     setOwnerMode(mode);
     setOwnerTab("search");
+    setHasSearched(true);
     setScreen(role === "mechanic" && MY_MECHANIC_ID != null ? "mechBrowse" : "owner");
   };
   // ---- Giriş kapısı (auth gate) ----------------------------------------------------------------
@@ -2979,44 +3024,98 @@ function useAppLogic() {
     fireNotification(title, body, ownerSettings.notifyOffers, "owner", { type: "listing", id: listingId });
     fireNotification(title, body, mechSettings.notifyOffers, "mechanic", { type: "listing", id: listingId });
   };
-  // Kayıtlı aramalar: matchesSavedSearchCriteria filteredListings ile AYNI filtre mantığını
-  // kullanır (bkz. yukarıdaki filteredListings tanımı), ama canlı arama/filtre state'i yerine
-  // kaydedilmiş bir search nesnesi üzerinden çalışır — böylece "bu ilan şu kayıtlı aramaya uyuyor
-  // mu" sorusu, arama ekranındaki filtrelemeyle birebir tutarlı olur.
-  const matchesSavedSearchCriteria = (listing, search) => {
-    if (listing.adminRemoved) return false;
-    const q = (search.query || "").trim().toLowerCase();
-    if (q && !`${listing.brand} ${listing.model}`.toLowerCase().includes(q)) return false;
-    const loc = (search.locationQuery || "").trim().toLowerCase();
-    if (loc && !(listing.city || "").toLowerCase().includes(loc)) return false;
+  // ---- KAYITLI ARAMALAR (AutoScout24'teki "Suche speichern" karşılığı) ------------------------
+  // Üç arama türünü de destekler: "mechanics" (tamirci ara), "cars" (ikinci el araç), "jobs"
+  // (iş ilanı). Her tür kendi filtre setini saklar ve kendi koleksiyonunda eşleşme arar; yeni bir
+  // kayıt o kritere uyduğunda kullanıcıya bildirim gider. Rol ayrımı YOK — hem araç sahibi hem
+  // tamirci aynı şekilde arama kaydedebilir (bkz. favoriteIds ile aynı tek-hesap deseni).
+  const SAVED_SEARCH_TYPES = ["mechanics", "cars", "jobs"];
+  // Tek bir kaydın (ilan/tamirci/iş ilanı) bir kayıtlı aramanın kriterlerine uyup uymadığını söyler.
+  // Her tür için ilgili canlı filtreleme mantığının (filtered / filteredListings / filteredJobs)
+  // birebir aynısını kullanır ki "aramada gördüğüm sonuç" ile "bildirim aldığım sonuç" tutarlı olsun.
+  const matchesSavedSearchCriteria = (item, search) => {
+    const type = search.type || "cars";
     const f = search.filters || {};
-    if (f.transmission && f.transmission !== "all" && listing.transmission !== f.transmission) return false;
-    if (f.fuelType && f.fuelType !== "all" && listing.fuelType !== f.fuelType) return false;
-    if (f.minPrice && parseListingPrice(listing.price) < Number(f.minPrice)) return false;
-    if (f.maxPrice && parseListingPrice(listing.price) > Number(f.maxPrice)) return false;
-    if (f.minKm && Number(listing.km) < Number(f.minKm)) return false;
-    if (f.maxKm && Number(listing.km) > Number(f.maxKm)) return false;
-    if (f.minYear && Number(listing.year) < Number(f.minYear)) return false;
-    if (f.maxYear && Number(listing.year) > Number(f.maxYear)) return false;
+    const q = (search.query || "").trim().toLocaleLowerCase("tr-TR");
+    const loc = (search.locationQuery || "").trim().toLocaleLowerCase("tr-TR");
+    if (type === "cars") {
+      if (item.adminRemoved) return false;
+      if (q && !`${item.brand} ${item.model}`.toLocaleLowerCase("tr-TR").includes(q)) return false;
+      if (loc && !(item.city || "").toLocaleLowerCase("tr-TR").includes(loc)) return false;
+      if (f.transmission && f.transmission !== "all" && item.transmission !== f.transmission) return false;
+      if (f.fuelType && f.fuelType !== "all" && item.fuelType !== f.fuelType) return false;
+      if (f.bodyType && f.bodyType !== "all" && item.bodyType !== f.bodyType) return false;
+      if (f.drivetrain && f.drivetrain !== "all" && item.drivetrain !== f.drivetrain) return false;
+      if (f.doorCount && f.doorCount !== "all" && String(item.doorCount || "") !== String(f.doorCount)) return false;
+      if (f.seatCount && f.seatCount !== "all" && String(item.seatCount || "") !== String(f.seatCount)) return false;
+      if (f.sellerType && f.sellerType !== "all" && item.sellerType !== f.sellerType) return false;
+      if (f.emissionClass && f.emissionClass !== "all" && item.emissionClass !== f.emissionClass) return false;
+      if (f.color?.trim() && !(item.color || "").toLocaleLowerCase("tr-TR").includes(f.color.trim().toLocaleLowerCase("tr-TR"))) return false;
+      if (f.minPrice && parseListingPrice(item.price) < Number(f.minPrice)) return false;
+      if (f.maxPrice && parseListingPrice(item.price) > Number(f.maxPrice)) return false;
+      if (f.minKm && Number(item.km) < Number(f.minKm)) return false;
+      if (f.maxKm && Number(item.km) > Number(f.maxKm)) return false;
+      if (f.minYear && Number(item.year) < Number(f.minYear)) return false;
+      if (f.maxYear && Number(item.year) > Number(f.maxYear)) return false;
+      if (f.minPower && !(String(item.power ?? "") !== "" && Number(item.power) >= Number(f.minPower))) return false;
+      if (f.maxPower && !(String(item.power ?? "") !== "" && Number(item.power) <= Number(f.maxPower))) return false;
+      if (f.maxCo2 && !(String(item.co2Emission ?? "") !== "" && Number(item.co2Emission) <= Number(f.maxCo2))) return false;
+      if (f.maxOwnerCount && !(String(item.ownerCount ?? "") !== "" && Number(item.ownerCount) <= Number(f.maxOwnerCount))) return false;
+      if (f.damageFree && (Number(item.paintedParts) || Number(item.changedParts))) return false;
+      if (f.tradeIn && !item.tradeIn) return false;
+      if (f.negotiable && !item.negotiable) return false;
+      if (f.features?.length && !f.features.every(x => (item.features || []).includes(x))) return false;
+      return true;
+    }
+    if (type === "mechanics") {
+      if (q && !(
+        (item.name || "").toLocaleLowerCase("tr-TR").includes(q)
+        || (item.specialty || "").toLocaleLowerCase("tr-TR").includes(q)
+        || (item.brandsServiced || []).some(b => b.toLocaleLowerCase("tr-TR").includes(q))
+      )) return false;
+      if (loc && !(item.address || "").toLocaleLowerCase("tr-TR").includes(loc)) return false;
+      const sq = (search.serviceQuery || "").trim().toLocaleLowerCase("tr-TR");
+      if (sq && !((item.services || []).some(s => (s.name || "").toLocaleLowerCase("tr-TR").includes(sq)) || (item.specialty || "").toLocaleLowerCase("tr-TR").includes(sq))) return false;
+      if (f.priceTier === "cheap" && !(item.price <= PRICE_TIER_BREAKS[0])) return false;
+      if (f.priceTier === "mid" && !(item.price > PRICE_TIER_BREAKS[0] && item.price <= PRICE_TIER_BREAKS[1])) return false;
+      if (f.priceTier === "expensive" && !(item.price > PRICE_TIER_BREAKS[1])) return false;
+      if (f.minRating > 0 && !(item.rating >= f.minRating)) return false;
+      if (f.brand && !(item.brandsServiced || []).includes(f.brand)) return false;
+      if (f.service && !serviceNameMatches(item.services, f.service)) return false;
+      return true;
+    }
+    // jobs
+    if (item.status && item.status !== "active") return false;
+    if (q && !(`${item.title || ""} ${(item.skills || []).join(" ")}`.toLocaleLowerCase("tr-TR").includes(q))) return false;
+    if (loc && !(item.location || "").toLocaleLowerCase("tr-TR").includes(loc)) return false;
+    if (f.employmentType && f.employmentType !== "all" && item.employmentType !== f.employmentType) return false;
+    if (f.experienceLevel && f.experienceLevel !== "all" && item.experienceLevel !== f.experienceLevel) return false;
     return true;
   };
-  // Şu an aktif olan arama/filtre state'ini bir kayıtlı aramaya dönüştürüp owners.savedSearches'e
-  // ekliyoruz. seenListingIds kaydetme anında ZATEN eşleşen tüm ilanlarla dolduruluyor — aksi
-  // halde kayıttan hemen sonra mevcut tüm eşleşmeler için "yeni eşleşme" bildirimi yağardı.
-  const saveCurrentSearch = (name) => {
+  // Bir arama türünün şu anki kaynak listesi (eşleşme/bildirim hesapları bunun üzerinden yapılır).
+  const savedSearchSource = (type) => (type === "mechanics" ? mechanicsList : type === "jobs" ? jobListings : listings);
+  // Şu an aktif olan arama/filtre state'ini kayıtlı aramaya dönüştürür. `type` verilmezse kullanıcının
+  // baktığı sekmeden (ownerMode) çıkarılır. seenIds kaydetme anında ZATEN eşleşenlerle doldurulur —
+  // aksi halde kayıttan hemen sonra mevcut tüm eşleşmeler için bildirim yağardı.
+  const saveCurrentSearch = (name, type = undefined) => {
     const trimmed = (name || "").trim();
     if (!trimmed) { setToast({ type: "info", text: t("savedSearchNameRequiredToast") }); return; }
+    const searchType = SAVED_SEARCH_TYPES.includes(type) ? type : (ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics");
     // MİSAFİR GEZİNME: arama/filtreler serbest, ama kaydetmek hesaba yazıldığı için giriş gerekiyor —
     // giriş sonrası arama girilen isimle otomatik kaydediliyor (kullanıcı baştan yazmıyor).
-    if (!ensureAuth(t("authGateReasonSavedSearch"), () => callLatest("saveCurrentSearch", trimmed))) return;
-    const activeFilters = { ...listingFilters };
-    const newSearch = {
+    if (!ensureAuth(t("authGateReasonSavedSearch"), () => callLatest("saveCurrentSearch", trimmed, searchType))) return;
+    const activeFilters = searchType === "cars" ? { ...listingFilters } : searchType === "jobs" ? { ...jobFilters } : { ...filters };
+    const draft = {
       id: Date.now() + Math.floor(Math.random() * 1000),
       name: trimmed,
-      query, locationQuery, filters: activeFilters,
-      seenListingIds: listings.filter(l => matchesSavedSearchCriteria(l, { query, locationQuery, filters: activeFilters })).map(l => l.id),
+      type: searchType,
+      query,
+      locationQuery,
+      serviceQuery: searchType === "mechanics" ? serviceQuery : "",
+      filters: activeFilters,
       createdAt: new Date().toISOString(),
     };
+    const newSearch = { ...draft, seenListingIds: savedSearchSource(searchType).filter(x => matchesSavedSearchCriteria(x, draft)).map(x => x.id) };
     setSavedSearches(s => {
       const next = [...s, newSearch];
       persist(api.owners.update(MY_OWNER_ID, { savedSearches: next }), "Arama kaydedilemedi");
@@ -3034,37 +3133,50 @@ function useAppLogic() {
     });
     setToast({ type: "info", text: t("savedSearchRemovedToast") });
   };
-  // Kaydedilmiş bir aramayı tekrar uygulamak: mevcut arama/filtre state'ini o aramanın
-  // kriterleriyle değiştirip kullanıcıyı ilgili ilan listesi ekranına götürür. Hem owner hem
-  // mechanic tarafından çağrılabilir — bkz. dosya başındaki paylaşılan filtre state notu.
+  // Kaydedilmiş bir aramayı tekrar uygular: türüne göre ilgili filtre state'ini geri yükler ve
+  // kullanıcıyı o türün sonuç ekranına götürür.
   const applySavedSearch = (search) => {
+    const type = search.type || "cars";
     setQuery(search.query || "");
     setLocationQuery(search.locationQuery || "");
-    setListingFilters({ transmission: "all", fuelType: "all", minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "", ...(search.filters || {}) });
-    // NOT: "home" artık giriş/rol seçim ekranı değil (misafir gezinmeyle birlikte kaldırıldı) —
-    // araç sahibi tarafındaki arama ekranı screen="owner" + ownerTab="search".
-    if (role === "mechanic") { setScreen("mechBrowse"); } else { setOwnerMode("cars"); setOwnerTab("search"); setScreen("owner"); }
+    if (type === "cars") {
+      setListingFilters({ ...EMPTY_LISTING_FILTERS, ...(search.filters || {}) });
+    } else if (type === "jobs") {
+      setJobFilters({ employmentType: "all", experienceLevel: "all", ...(search.filters || {}) });
+    } else {
+      setServiceQuery(search.serviceQuery || "");
+      setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "", ...(search.filters || {}) });
+    }
+    setHasSearched(true);
+    goToBrowse(type === "cars" ? "cars" : type === "jobs" ? "jobs" : "mechanics");
   };
-  // Yeni-eşleşme tespiti + fiyat düşünce bildirim: listings ya da kayıtlı arama sayısı her
-  // değiştiğinde, her kayıtlı arama için ŞU AN eşleşen ilan id'lerini hesaplayıp seenListingIds
-  // ile karşılaştırıyoruz. seenListingIds'te OLMAYAN yeni bir eşleşme bulunursa bildirim gönderip
-  // seenListingIds'i güncelliyoruz (böylece aynı ilan için tekrar tekrar bildirim gitmiyor).
+  // Yeni-eşleşme bildirimi: kaynak listeler ya da kayıtlı arama sayısı değiştiğinde, her kayıtlı
+  // arama için ŞU AN eşleşen kayıtların id'lerini hesaplayıp seenListingIds ile karşılaştırıyoruz.
+  // Listede OLMAYAN yeni bir eşleşme bulunursa bildirim gönderip listeyi güncelliyoruz (aynı kayıt
+  // için tekrar bildirim gitmesin diye).
   useEffect(() => {
-    if (MY_OWNER_ID == null || savedSearches.length === 0 || listings.length === 0) return;
+    if (MY_OWNER_ID == null || savedSearches.length === 0) return;
     let changed = false;
     const nextSearches = savedSearches.map(search => {
-      const matchingIds = listings.filter(l => matchesSavedSearchCriteria(l, search)).map(l => l.id);
+      const type = search.type || "cars";
+      const source = savedSearchSource(type);
+      if (source.length === 0) return search;
+      const matchingIds = source.filter(x => matchesSavedSearchCriteria(x, search)).map(x => x.id);
       const seen = search.seenListingIds || [];
       const newlyMatched = matchingIds.filter(id => !seen.includes(id));
       if (newlyMatched.length === 0) return search;
       changed = true;
       newlyMatched.forEach(id => {
-        const listing = listings.find(l => l.id === id);
-        if (!listing) return;
-        const title = "Kayıtlı aramanızla eşleşen yeni ilan 🔔";
-        const body = `"${search.name}" aramanıza uyan yeni bir ilan var: ${listing.brand} ${listing.model} — ${listing.price}${listingCurrency(listing.price)}.`;
-        fireNotification(title, body, ownerSettings.notifyOffers, "owner", { type: "listing", id });
-        fireNotification(title, body, mechSettings.notifyOffers, "mechanic", { type: "listing", id });
+        const item = source.find(x => x.id === id);
+        if (!item) return;
+        const title = "Kayıtlı aramanızla eşleşen yeni sonuç 🔔";
+        const label = type === "cars" ? `${item.brand} ${item.model} — ${item.price}${listingCurrency(item.price)}`
+          : type === "jobs" ? `${item.title} — ${item.mechanicName || ""}`.trim()
+          : `${item.name}${item.specialty ? " — " + item.specialty : ""}`;
+        const body = `"${search.name}" aramanıza uyan yeni bir sonuç var: ${label}.`;
+        const target = type === "cars" ? { type: "listing", id } : type === "jobs" ? { type: "job", id } : { type: "mechanicDetail", id };
+        fireNotification(title, body, ownerSettings.notifyOffers, "owner", target);
+        fireNotification(title, body, mechSettings.notifyOffers, "mechanic", target);
       });
       return { ...search, seenListingIds: [...seen, ...newlyMatched] };
     });
@@ -3073,7 +3185,7 @@ function useAppLogic() {
       persist(api.owners.update(MY_OWNER_ID, { savedSearches: nextSearches }), "Arama güncellenemedi");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listings, savedSearches.length, MY_OWNER_ID]);
+  }, [listings, mechanicsList, jobListings, savedSearches.length, MY_OWNER_ID]);
   const submitListing = async (sellerType) => {
     const missingFields = [];
     if (!sellForm.brand?.trim()) missingFields.push("Marka");
@@ -3372,7 +3484,7 @@ function useAppLogic() {
     setListings(l => l.map(x => x.id === listingId ? { ...x, offers } : x));
     persist(api.listings.update(listingId, { offers }), "Teklif kaydedilemedi");
   };
-  const clearListingFilters = () => setListingFilters({ transmission: "all", fuelType: "all", minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "" });
+  const clearListingFilters = () => setListingFilters({ ...EMPTY_LISTING_FILTERS });
   const clearJobFilters = () => setJobFilters({ employmentType: "all", experienceLevel: "all" });
   const openJobForm = (prefill) => { setJobForm(prefill || EMPTY_JOB_FORM); setShowJobForm(true); };
   const submitJobListing = async () => {
@@ -3628,7 +3740,7 @@ function useAppLogic() {
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
-    isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
+    isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,

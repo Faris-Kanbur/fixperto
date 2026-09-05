@@ -1008,6 +1008,20 @@ export const T = {
   landingFooterExplore: { tr: "Keşfet", en: "Explore", de: "Entdecken" },
   landingFooterServices: { tr: "Hizmetler", en: "Services", de: "Leistungen" },
   landingFooterAccount: { tr: "Hesap", en: "Account", de: "Konto" },
+  landingFilterBtn: { tr: "Filtrele", en: "Filters", de: "Filter" },
+  landingQuoteCta: { tr: "📋 Fiyat Teklifi İste", en: "📋 Request a Quote", de: "📋 Angebot anfordern" },
+  landingQuoteCtaNote: { tr: "Arızanı bir kez anlat, birden fazla tamirciden fiyat al.", en: "Describe your issue once, get prices from several mechanics.", de: "Problem einmal beschreiben, Preise von mehreren Werkstätten erhalten." },
+  // AutoScout24 tarzı genişletilmiş araç filtreleri
+  powerRangeLabel: { tr: "Motor Gücü (HP)", en: "Power (HP)", de: "Leistung (PS)" },
+  seatCountLabel: { tr: "Koltuk Sayısı", en: "Seats", de: "Sitze" },
+  maxCo2Label: { tr: "Azami CO2 (g/km)", en: "Max CO2 (g/km)", de: "Max. CO2 (g/km)" },
+  maxOwnerCountLabel: { tr: "Azami Kaçıncı El", en: "Max Previous Owners", de: "Max. Vorbesitzer" },
+  filterDamageFree: { tr: "Sadece boya-değişen olmayanlar", en: "Only damage-free cars", de: "Nur unfallfreie Fahrzeuge" },
+  filterFeaturesLabel: { tr: "Donanım", en: "Equipment", de: "Ausstattung" },
+  emissionClassLabel: { tr: "Emisyon Sınıfı", en: "Emission Class", de: "Schadstoffklasse" },
+  savedSearchTypeCars: { tr: "İkinci el araç", en: "Used cars", de: "Gebrauchtwagen" },
+  savedSearchTypeMechanics: { tr: "Tamirci", en: "Mechanics", de: "Werkstätten" },
+  savedSearchTypeJobs: { tr: "İş ilanı", en: "Jobs", de: "Stellen" },
 };
 
 export const MONTH_ABBR_BY_LANG = {

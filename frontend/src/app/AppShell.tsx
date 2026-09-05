@@ -2430,8 +2430,8 @@ export function AppShell() {
                     {savedSearches.map(s => (
                       <div key={s.id} className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
                         <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
-                          <p className="text-[11px] text-gray-400 truncate">{[s.query, s.locationQuery].filter(Boolean).join(" · ") || t("allFilterLabel")}</p>
+                          <p className="font-semibold text-gray-800 text-sm truncate flex items-center gap-1.5">{s.name}<span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">{s.type === "jobs" ? t("savedSearchTypeJobs") : s.type === "mechanics" ? t("savedSearchTypeMechanics") : t("savedSearchTypeCars")}</span></p>
+                          <p className="text-[11px] text-gray-400 truncate">{[s.query, s.serviceQuery, s.locationQuery].filter(Boolean).join(" · ") || t("allFilterLabel")}</p>
                         </button>
                         <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
                       </div>
@@ -2870,18 +2870,58 @@ export function AppShell() {
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Gauge size={13} /> {t("kmRangeLabel")}</h4>
                 <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minKmPlaceholder")} value={listingFilters.minKm} onChange={(e) => setListingFilters(f => ({ ...f, minKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxKmPlaceholder")} value={listingFilters.maxKm} onChange={(e) => setListingFilters(f => ({ ...f, maxKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><CalendarDays size={13} /> {t("modelYearLabel")}</h4>
-                <div className="flex gap-2 mb-6"><input type="number" placeholder={t("minYearPlaceholder")} value={listingFilters.minYear} onChange={(e) => setListingFilters(f => ({ ...f, minYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxYearPlaceholder")} value={listingFilters.maxYear} onChange={(e) => setListingFilters(f => ({ ...f, maxYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                {MY_OWNER_ID != null && (
-                  showSaveSearchInput ? (
-                    <div className="mb-6 flex gap-2">
-                      <input autoFocus value={saveSearchNameInput} onChange={(e) => setSaveSearchNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveCurrentSearch(saveSearchNameInput); }} placeholder={t("savedSearchNamePlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                      <button onClick={() => saveCurrentSearch(saveSearchNameInput)} className="px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 transition">{t("saveBtn")}</button>
-                      <button onClick={() => { setShowSaveSearchInput(false); setSaveSearchNameInput(""); }} aria-label={t("closeAria")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0"><X size={16} /></button>
-                    </div>
-                  ) : (
-                    <button onClick={() => setShowSaveSearchInput(true)} className="mb-6 w-full flex items-center justify-center gap-1.5 border border-dashed border-rose-300 text-rose-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-50 transition"><Bell size={14} /> {t("saveThisSearchBtn")}</button>
-                  )
-                )}
+                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minYearPlaceholder")} value={listingFilters.minYear} onChange={(e) => setListingFilters(f => ({ ...f, minYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxYearPlaceholder")} value={listingFilters.maxYear} onChange={(e) => setListingFilters(f => ({ ...f, maxYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                {/* AutoScout24 tarzı genişletilmiş araç filtreleri (bkz. AppLogicProvider EMPTY_LISTING_FILTERS) */}
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Car size={13} /> {t("bodyTypePlaceholder")}</h4>
+                <select value={listingFilters.bodyType} onChange={(e) => setListingFilters(f => ({ ...f, bodyType: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{BODY_TYPES.map(b => (<option key={b} value={b}>{vocabLabel(b, lang, BODY_TYPE_LABELS_BY_LANG)}</option>))}</select>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Compass size={13} /> {t("drivetrainPlaceholder")}</h4>
+                <select value={listingFilters.drivetrain} onChange={(e) => setListingFilters(f => ({ ...f, drivetrain: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{DRIVETRAIN_OPTIONS.map(d => (<option key={d} value={d}>{vocabLabel(d, lang, DRIVETRAIN_LABELS_BY_LANG)}</option>))}</select>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Zap size={13} /> {t("powerRangeLabel")}</h4>
+                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minPlaceholder")} value={listingFilters.minPower} onChange={(e) => setListingFilters(f => ({ ...f, minPower: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxPlaceholder")} value={listingFilters.maxPower} onChange={(e) => setListingFilters(f => ({ ...f, maxPower: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><DoorOpen size={13} /> {t("doorCountPlaceholder")}</h4>
+                    <select value={listingFilters.doorCount} onChange={(e) => setListingFilters(f => ({ ...f, doorCount: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{DOOR_COUNT_OPTIONS.map(d => (<option key={d} value={d}>{d}</option>))}</select>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Users size={13} /> {t("seatCountLabel")}</h4>
+                    <select value={listingFilters.seatCount} onChange={(e) => setListingFilters(f => ({ ...f, seatCount: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{SEAT_COUNT_OPTIONS.map(sc => (<option key={sc} value={sc}>{sc}</option>))}</select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Palette size={13} /> {t("color")}</h4>
+                    <input value={listingFilters.color} onChange={(e) => setListingFilters(f => ({ ...f, color: e.target.value }))} placeholder={t("colorPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><User size={13} /> {t("sellerTypeLabel")}</h4>
+                    <select value={listingFilters.sellerType} onChange={(e) => setListingFilters(f => ({ ...f, sellerType: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option><option value="owner">{t("sellerTypeOwner")}</option><option value="mechanic">{t("sellerTypeMechanic")}</option></select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Leaf size={13} /> {t("emissionClassLabel")}</h4>
+                    <select value={listingFilters.emissionClass} onChange={(e) => setListingFilters(f => ({ ...f, emissionClass: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{EMISSION_CLASS_OPTIONS.map(ec => (<option key={ec} value={ec}>{ec}</option>))}</select>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Droplet size={13} /> {t("maxCo2Label")}</h4>
+                    <input type="number" value={listingFilters.maxCo2} onChange={(e) => setListingFilters(f => ({ ...f, maxCo2: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                  </div>
+                </div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><History size={13} /> {t("maxOwnerCountLabel")}</h4>
+                <input type="number" min="1" value={listingFilters.maxOwnerCount} onChange={(e) => setListingFilters(f => ({ ...f, maxOwnerCount: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <div className="space-y-2 mb-5">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.damageFree} onChange={(e) => setListingFilters(f => ({ ...f, damageFree: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("filterDamageFree")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.tradeIn} onChange={(e) => setListingFilters(f => ({ ...f, tradeIn: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("tradeInAvailableLabel")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.negotiable} onChange={(e) => setListingFilters(f => ({ ...f, negotiable: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("negotiableBadge")}</label>
+                </div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Settings size={13} /> {t("filterFeaturesLabel")}</h4>
+                <div className="flex flex-wrap gap-1.5 mb-6">
+                  {LISTING_FEATURE_OPTIONS.slice(0, 12).map(feat => {
+                    const on = (listingFilters.features || []).includes(feat);
+                    return (<button key={feat} onClick={() => setListingFilters(f => ({ ...f, features: on ? (f.features || []).filter(x => x !== feat) : [...(f.features || []), feat] }))} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${on ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{feat}</button>);
+                  })}
+                </div>
               </>
             ) : (
               <>
@@ -2891,8 +2931,20 @@ export function AppShell() {
                 <div className="flex gap-2 mb-6 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EXPERIENCE_LEVELS.map(ex => ({ key: ex, label: vocabLabel(ex, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, experienceLevel: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.experienceLevel === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
               </>
             )}
+            {/* "Bu aramayı kaydet" (AutoScout24'teki "Suche speichern"): artık ÜÇ arama türü için de
+                geçerli — tamirci, ikinci el araç ve iş ilanı. Kaydedilen arama türüyle birlikte
+                saklanıyor, yeni eşleşmede bildirim gidiyor (bkz. AppLogicProvider saveCurrentSearch). */}
+            {showSaveSearchInput ? (
+              <div className="mb-4 flex gap-2">
+                <input autoFocus value={saveSearchNameInput} onChange={(e) => setSaveSearchNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveCurrentSearch(saveSearchNameInput, ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics"); }} placeholder={t("savedSearchNamePlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <button onClick={() => saveCurrentSearch(saveSearchNameInput, ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics")} className="px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 transition">{t("saveBtn")}</button>
+                <button onClick={() => { setShowSaveSearchInput(false); setSaveSearchNameInput(""); }} aria-label={t("closeAria")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0"><X size={16} /></button>
+              </div>
+            ) : (
+              <button onClick={() => setShowSaveSearchInput(true)} className="mb-4 w-full flex items-center justify-center gap-1.5 border border-dashed border-rose-300 text-rose-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-50 transition"><Bell size={14} /> {t("saveThisSearchBtn")}</button>
+            )}
             <div className="flex gap-2">
-              <button onClick={() => ownerMode === "mechanics" ? (() => { setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" }); setQuery(""); setLocationQuery(""); })() : ownerMode === "cars" ? clearListingFilters() : clearJobFilters()} className="flex-1 border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("clear")}</button>
+              <button onClick={() => ownerMode === "mechanics" ? (() => { setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" }); setQuery(""); setLocationQuery(""); setServiceQuery(""); })() : ownerMode === "cars" ? clearListingFilters() : clearJobFilters()} className="flex-1 border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("clear")}</button>
               <button onClick={() => setShowFilterModal(false)} className={`flex-1 text-white py-3 rounded-2xl font-semibold text-sm transition ${ownerMode === "mechanics" ? "bg-rose-600 hover:bg-rose-700" : ownerMode === "cars" ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("apply")}</button>
             </div>
           </div>
