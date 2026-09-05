@@ -54,7 +54,12 @@ function useAppLogic() {
   // kalkıştığında ise araya bir giriş/kayıt POPUP'ı giriyor ve giriş sonrası kaldığı yerden devam
   // ediyor (bkz. requireAuth + pendingAuthActionRef). Bu yüzden başlangıç ekranı "owner" (arama
   // görünümü) ve role "owner" — ama MY_OWNER_ID hâlâ null, yani "kimliği yok, sadece geziyor".
-  const [screen, setScreen] = useState("owner");
+  // Açılış ekranı: siteye ilk giren herkes (giriş yapmamış ziyaretçi) karşılama/tanıtım sayfasını
+  // görüyor (bkz. components/features/LandingHome.tsx) — üstte arama kartı, altında şehirler, öne
+  // çıkan tamirciler, hizmetler, araç pazarı, nasıl çalışır, yorumlar. Arama yapınca ya da bir
+  // bağlantıya tıklayınca gerçek sonuç ekranına (screen "owner"/"mechBrowse") geçiyor. Giriş yapan
+  // kullanıcı ise doğrudan kendi paneline yönleniyor (bkz. submitOtpVerify / oturum geri yükleme).
+  const [screen, setScreen] = useState("landing");
   const [role, setRole] = useState("owner");
   const [showPass, setShowPass] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -1351,8 +1356,16 @@ function useAppLogic() {
   // MİSAFİR GEZİNME: "ana sayfa" artık giriş/rol seçim ekranı değil, herkese açık arama ekranı —
   // çıkış yapan ya da bir akıştan çıkan kullanıcı da oraya dönüyor (rol "owner" görünümünde kalıyor
   // ama kimlik temizlendiği için misafir sayılıyor, bkz. isAuthed).
-  const goHome = () => { setScreen("owner"); setRole("owner"); setSelectedMechanicId(null); setDetailReturnScreen(null); setSelectedDate(null); setSelectedTime(null); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); setSelectedBookingVehicleId(null); setBookingService(null); setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" }); setForm({ name: "", email: "", phone: "", password: "" }); setOwnerTab("search"); setOwnerMode("mechanics"); setActiveConvoId(null); setMechActiveConvoId(null); setMechTab("requests"); setSelectedJobId(null); setSelectedListingId(null); setMapDetailOpen(false); setShowMapMobile(false); };
+  const goHome = () => { setScreen("landing"); setRole("owner"); setSelectedMechanicId(null); setDetailReturnScreen(null); setSelectedDate(null); setSelectedTime(null); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); setSelectedBookingVehicleId(null); setBookingService(null); setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" }); setForm({ name: "", email: "", phone: "", password: "" }); setOwnerTab("search"); setOwnerMode("mechanics"); setActiveConvoId(null); setMechActiveConvoId(null); setMechTab("requests"); setSelectedJobId(null); setSelectedListingId(null); setMapDetailOpen(false); setShowMapMobile(false); };
   const chooseRole = (r) => { setRole(r); setScreen("login"); };
+  // Karşılama sayfasından (ve her yerden) gerçek arama/sonuç ekranına geçiş. Tamirci rolüyle giriş
+  // yapmış kullanıcı kendi keşif ekranına (mechBrowse), diğer herkes araç sahibi arama görünümüne
+  // gider. mode: "mechanics" | "cars" | "jobs".
+  const goToBrowse = (mode = "mechanics") => {
+    setOwnerMode(mode);
+    setOwnerTab("search");
+    setScreen(role === "mechanic" && MY_MECHANIC_ID != null ? "mechBrowse" : "owner");
+  };
   // ---- Giriş kapısı (auth gate) ----------------------------------------------------------------
   // isAuthed: gerçek bir kimlik var mı? role "owner" olması TEK BAŞINA yeterli değil — misafir de
   // owner görünümünde geziniyor (bkz. yukarıdaki screen/role başlangıç değerleri). Belirleyici olan,
@@ -3615,7 +3628,7 @@ function useAppLogic() {
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
-    isAuthed, requireAuth, ensureAuth, requireAuthForTab, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
+    isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,

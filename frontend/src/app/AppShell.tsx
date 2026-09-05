@@ -18,6 +18,7 @@ import { JobCard } from "../components/features/JobCard";
 import { MechDetailBody } from "../components/features/MechDetailBody";
 import { AppointmentCard } from "../components/features/AppointmentCard";
 import { BrowseHome } from "../components/features/BrowseHome";
+import { LandingHome } from "../components/features/LandingHome";
 import { ShareButton } from "../components/features/ShareButton";
 import { TranslatedText } from "../components/features/TranslatedText";
 import { PhotoLightbox } from "../components/features/PhotoLightbox";
@@ -503,7 +504,9 @@ export function AppShell() {
           </div>
         </div>
       ); })()}
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${(screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" ? "max-w-none" : (screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+        {/* Karşılama/tanıtım sayfası — siteye ilk giren herkesin gördüğü ekran (bkz. LandingHome.tsx) */}
+        {screen === "landing" && <LandingHome />}
         {(screen === "login" || screen === "signup") && (
           <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
