@@ -124,12 +124,21 @@ authRouter.post("/login", async (req, res) => {
       return res.status(429).json({ error: "Çok fazla başarısız deneme. Lütfen birkaç dakika sonra tekrar deneyin." });
     }
     const { role, email, password } = req.body || {};
-    if (!ROLE_TABLES[role]) return res.status(400).json({ error: "role 'owner' veya 'mechanic' olmalıdır." });
     const cleanEmail = String(email || "").trim().toLowerCase();
-    const table = ROLE_TABLES[role];
-    const row = db.prepare(`SELECT * FROM ${table} WHERE lower(email) = ?`).get(cleanEmail);
-    const valid = row ? await verifyPassword(password, row.password) : false;
-    if (!row || !valid) {
+    // MİSAFİR GEZİNME / POPUP GİRİŞ: giriş ekranı artık "önce rolünü seç" adımından sonra gelmiyor
+    // (rol seçim sayfası kaldırıldı, giriş bir popup) — bu yüzden `role` artık ZORUNLU DEĞİL.
+    // Verilmezse hesap, e-postadan otomatik bulunuyor: önce araç sahipleri, sonra tamirciler
+    // tablosunda aranıyor ve ŞİFRESİ EŞLEŞEN kayıt kullanılıyor. Böylece kullanıcı "ben tamirci
+    // miyim, araç sahibi miyim" diye seçmek zorunda kalmıyor (Airbnb/benzeri siteler gibi tek giriş).
+    const candidateRoles = ROLE_TABLES[role] ? [role] : ["owner", "mechanic"];
+    let matchedRole = null;
+    let row = null;
+    for (const r of candidateRoles) {
+      const candidate = db.prepare(`SELECT * FROM ${ROLE_TABLES[r]} WHERE lower(email) = ?`).get(cleanEmail);
+      // eslint-disable-next-line no-await-in-loop
+      if (candidate && await verifyPassword(password, candidate.password)) { matchedRole = r; row = candidate; break; }
+    }
+    if (!row) {
       loginLimiter.registerFailure(ip);
       return res.status(401).json({ error: "Geçersiz e-posta veya şifre." });
     }
@@ -139,7 +148,7 @@ authRouter.post("/login", async (req, res) => {
     // 6 haneli bir kod gönderiliyor; gerçek oturum token'ı sadece bu kod doğrulanınca üretiliyor.
     const otp = generateOtp();
     const loginTicket = generateRandomTicket();
-    pendingLogins.set(loginTicket, { role, id: row.id, email: cleanEmail, otp, expiresAt: Date.now() + OTP_TTL_MS, attempts: 0 });
+    pendingLogins.set(loginTicket, { role: matchedRole, id: row.id, email: cleanEmail, otp, expiresAt: Date.now() + OTP_TTL_MS, attempts: 0 });
 
     const mailResult = await sendMail({
       to: cleanEmail,

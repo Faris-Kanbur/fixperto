@@ -106,13 +106,19 @@ export function OwnerBottomNav() {
     respondOffer, markOffersSeen, clearListingFilters, clearJobFilters, openJobForm, submitJobListing, 
     setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm, openJobApplyForm, 
     jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, 
-    rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
+    rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor,
+    isAuthed, requireAuthForTab,
   } = useApp();
+  // MİSAFİR GEZİNME: "Ara" ve "Pazar" sekmeleri herkese açık (arama/gözatma serbest); Favoriler,
+  // Mesajlar ve Randevular kişisel veri gösterdiği için giriş gerektiriyor — tıklanınca giriş
+  // popup'ı açılıyor ve giriş sonrası kullanıcı istediği sekmede devam ediyor (bkz. requireAuthForTab).
+  const PUBLIC_TABS = ["search", "market"];
   return (
     <div className="border-t border-gray-200 bg-white flex sticky bottom-0 md:hidden">
       {[{ key: "search", label: t("navSearch"), icon: Search }, { key: "market", label: t("navMarket"), icon: Tag }, { key: "favorites", label: t("navFavorites"), icon: Heart }, { key: "chats", label: t("navChats"), icon: MessageCircle }, { key: "appointments", label: t("navAppointments"), icon: ClipboardList }].map(tab => {
         const Icon = tab.icon; const active = ownerTab === tab.key;
-        return (<button key={tab.key} onClick={() => { setOwnerTab(tab.key); setScreen("owner"); }} className={`flex-1 py-3 flex flex-col items-center gap-1 text-[10px] font-medium transition relative ${active ? "text-rose-600" : "text-gray-400"}`}><Icon size={17} className={tab.key === "favorites" && favoriteIds.length > 0 ? "fill-current" : ""} />{tab.label}{tab.key === "favorites" && favoriteIds.length > 0 && <span className="absolute top-1.5 right-[28%] w-3.5 h-3.5 bg-rose-600 rounded-full text-white text-[8px] flex items-center justify-center">{favoriteIds.length}</span>}</button>);
+        const needsAuth = !isAuthed && !PUBLIC_TABS.includes(tab.key);
+        return (<button key={tab.key} onClick={() => { if (needsAuth) { requireAuthForTab(tab.key); return; } setOwnerTab(tab.key); setScreen("owner"); }} className={`flex-1 py-3 flex flex-col items-center gap-1 text-[10px] font-medium transition relative ${active ? "text-rose-600" : "text-gray-400"}`}><Icon size={17} className={tab.key === "favorites" && favoriteIds.length > 0 ? "fill-current" : ""} />{tab.label}{tab.key === "favorites" && favoriteIds.length > 0 && <span className="absolute top-1.5 right-[28%] w-3.5 h-3.5 bg-rose-600 rounded-full text-white text-[8px] flex items-center justify-center">{favoriteIds.length}</span>}</button>);
       })}
     </div>
   );

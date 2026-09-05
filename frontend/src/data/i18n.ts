@@ -929,6 +929,28 @@ export const T = {
   savedSearchesLabel: { tr: "Kayıtlı Aramalarım", en: "My Saved Searches", de: "Meine gespeicherten Suchen" },
   noSavedSearchesNote: { tr: "Henüz kayıtlı aramanız yok. Filtre uygulayıp \"Bu Aramayı Kaydet\" ile başlayın.", en: "You have no saved searches yet. Apply filters and tap \"Save This Search\" to start.", de: "Sie haben noch keine gespeicherten Suchen. Wenden Sie Filter an und tippen Sie auf „Diese Suche speichern“." },
   deleteSavedSearchAria: { tr: "Kayıtlı aramayı sil", en: "Delete saved search", de: "Gespeicherte Suche löschen" },
+  // Misafir gezinme / giriş kapısı (auth gate) — bkz. AppLogicProvider.tsx requireAuth
+  authGateTitle: { tr: "Devam etmek için giriş yapın", en: "Sign in to continue", de: "Zum Fortfahren anmelden" },
+  authGateSignupTitle: { tr: "Hesap oluşturun", en: "Create an account", de: "Konto erstellen" },
+  authGateOtpTitle: { tr: "E-postanızdaki kodu girin", en: "Enter the code from your email", de: "Code aus Ihrer E-Mail eingeben" },
+  authGateKeepsWorkNote: { tr: "Girdiğiniz bilgiler korunuyor — giriş yaptıktan sonra kaldığınız yerden devam edeceksiniz.", en: "Everything you've entered is saved — you'll continue right where you left off after signing in.", de: "Ihre Eingaben bleiben erhalten — nach der Anmeldung machen Sie genau dort weiter." },
+  authGateLoginTab: { tr: "Giriş Yap", en: "Log In", de: "Anmelden" },
+  authGateSignupTab: { tr: "Kayıt Ol", en: "Sign Up", de: "Registrieren" },
+  authGateRoleQuestion: { tr: "Hangi amaçla kullanacaksınız?", en: "How will you use Fixperto?", de: "Wie werden Sie Fixperto nutzen?" },
+  authGateGuestBadge: { tr: "Misafir", en: "Guest", de: "Gast" },
+  authGateReasonBooking: { tr: "Randevunuzu tamamlamak için giriş yapın", en: "Sign in to complete your booking", de: "Melden Sie sich an, um die Buchung abzuschließen" },
+  authGateReasonChat: { tr: "Mesaj gönderebilmek için giriş yapın", en: "Sign in to send messages", de: "Melden Sie sich an, um Nachrichten zu senden" },
+  authGateReasonOffer: { tr: "Teklifinizi göndermek için giriş yapın", en: "Sign in to send your offer", de: "Melden Sie sich an, um Ihr Angebot zu senden" },
+  authGateReasonQuestion: { tr: "Satıcıya soru sormak için giriş yapın", en: "Sign in to ask the seller a question", de: "Melden Sie sich an, um dem Verkäufer eine Frage zu stellen" },
+  authGateReasonJobApply: { tr: "Başvurunuzu göndermek için giriş yapın", en: "Sign in to submit your application", de: "Melden Sie sich an, um Ihre Bewerbung zu senden" },
+  authGateReasonFavorite: { tr: "Favorilerinizi kaydetmek için giriş yapın", en: "Sign in to save favorites", de: "Melden Sie sich an, um Favoriten zu speichern" },
+  authGateReasonSavedSearch: { tr: "Aramanızı kaydetmek için giriş yapın", en: "Sign in to save your search", de: "Melden Sie sich an, um Ihre Suche zu speichern" },
+  authGateReasonSellListing: { tr: "İlanınızı yayınlamak için giriş yapın", en: "Sign in to publish your listing", de: "Melden Sie sich an, um Ihre Anzeige zu veröffentlichen" },
+  authGateReasonQuote: { tr: "Fiyat teklifi istemek için giriş yapın", en: "Sign in to request quotes", de: "Melden Sie sich an, um Angebote anzufordern" },
+  authGateReasonReview: { tr: "Değerlendirme yapmak için giriş yapın", en: "Sign in to leave a review", de: "Melden Sie sich an, um zu bewerten" },
+  authGateReasonReviewHelpful: { tr: "Yorumu faydalı işaretlemek için giriş yapın", en: "Sign in to mark a review helpful", de: "Melden Sie sich an, um eine Bewertung als hilfreich zu markieren" },
+  authGateReasonSupport: { tr: "Destek talebi oluşturmak için giriş yapın", en: "Sign in to open a support request", de: "Melden Sie sich an, um eine Supportanfrage zu stellen" },
+  authGateReasonAccount: { tr: "Hesabınıza erişmek için giriş yapın", en: "Sign in to access your account", de: "Melden Sie sich an, um auf Ihr Konto zuzugreifen" },
 };
 
 export const MONTH_ABBR_BY_LANG = {

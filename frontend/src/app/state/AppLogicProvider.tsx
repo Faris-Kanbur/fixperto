@@ -48,8 +48,14 @@ let nestedItemId = 2000000;
 function useAppLogic() {
   const [lang, setLang] = useState("tr");
   const t = useT(lang);
-  const [screen, setScreen] = useState("home");
-  const [role, setRole] = useState(null);
+  // MİSAFİR GEZİNME (Airbnb deseni): uygulama artık giriş/rol seçim ekranıyla DEĞİL, doğrudan arama
+  // ekranıyla açılıyor. Giriş yapmamış bir ziyaretçi tamircileri, ikinci el araçları ve iş ilanlarını
+  // arayıp filtreleyebiliyor; hesabına bağlı bir işleme (randevu, mesaj, teklif, başvuru, favori...)
+  // kalkıştığında ise araya bir giriş/kayıt POPUP'ı giriyor ve giriş sonrası kaldığı yerden devam
+  // ediyor (bkz. requireAuth + pendingAuthActionRef). Bu yüzden başlangıç ekranı "owner" (arama
+  // görünümü) ve role "owner" — ama MY_OWNER_ID hâlâ null, yani "kimliği yok, sadece geziyor".
+  const [screen, setScreen] = useState("owner");
+  const [role, setRole] = useState("owner");
   const [showPass, setShowPass] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
@@ -71,6 +77,24 @@ function useAppLogic() {
   const [authLoading, setAuthLoading] = useState(false);
   const [sessionVersion, setSessionVersion] = useState(0);
   const [pendingOnboarding, setPendingOnboarding] = useState(false);
+  // ---- Giriş kapısı (auth gate) ----------------------------------------------------------------
+  // Misafir gezinme deseninin ikinci yarısı: korumalı bir işleme kalkışıldığında tam sayfa bir giriş
+  // ekranına GİTMİYORUZ (bu, kullanıcının o ana kadar doldurduğu formu/açtığı ilanı kaybettirirdi) —
+  // onun yerine mevcut ekranın ÜSTÜNE bir popup açıyoruz. Alttaki ekran mount'lu kaldığı için tüm
+  // form state'i (teklif tutarı, mesaj metni, başvuru bilgileri, seçili tarih/saat...) yerinde duruyor;
+  // giriş tamamlanınca popup kapanıyor ve kullanıcının başlatmak istediği işlem otomatik çalışıyor.
+  const [authGateOpen, setAuthGateOpen] = useState(false);
+  const [authGateStep, setAuthGateStep] = useState("login"); // "login" | "signup" | "otp"
+  const [authGateReason, setAuthGateReason] = useState("");  // "Randevu almak için giriş yapın" gibi
+  const pendingAuthActionRef = useRef(null);
+  // Bekleyen işlem giriş TAMAMLANDIKTAN SONRA çalışıyor; o an artık yeni bir kimlik (ve o kimliğe ait
+  // profil bilgileri) var. Eğer saklanan fonksiyon, kullanıcının tıkladığı ANDAKİ render'ın closure'ı
+  // olsaydı, içindeki `ownerProfile` gibi değerler hâlâ "misafir" hâlini gösterirdi (ör. randevu
+  // kaydına müşteri adı yerine "Siz" yazılırdı). Bu ref her render'da güncellenen "en güncel
+  // fonksiyon" tablosu: kapılanan akışlar kendilerini buradan çağırıyor, böylece giriş sonrası
+  // çalışan sürüm her zaman taze verilerle çalışıyor.
+  const latestFnsRef = useRef<Record<string, (...args: any[]) => any>>({});
+  const callLatest = (name, ...args) => latestFnsRef.current[name]?.(...args);
   const [ownerTab, setOwnerTab] = useState("search");
   const [ownerMode, setOwnerMode] = useState("mechanics");
   const [ownerSettings, setOwnerSettings] = useState({ smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true });
@@ -100,24 +124,26 @@ function useAppLogic() {
   const [locationStatus, setLocationStatus] = useState("idle");
   const [notifPermission, setNotifPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "unsupported");
   const [favoriteIds, setFavoriteIds] = useState([]);
-  const toggleFavorite = (id) => {
+  // MİSAFİR GEZİNME: favori bir hesaba yazıldığı için giriş gerektiriyor — giriş yoksa popup açılır
+  // ve giriş tamamlanınca bu işlem otomatik olarak çalışır (bkz. requireAuth).
+  const toggleFavorite = (id) => requireAuth(() => {
     setFavoriteIds(f => {
       const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
       persist(api.owners.update(MY_OWNER_ID, { favoriteIds: next }), "Favori kaydedilemedi");
       return next;
     });
-  };
+  }, t("authGateReasonFavorite"));
   // Tamirci favorileri ayrı bir dizide tutulur: listings ve mechanics aynı sayısal id aralığını
   // paylaştığı için (ör. mechanic id=1 ve listing id=1), tek bir favoriteIds dizisi kullanmak
   // yanlışlıkla ikisini de favoriye eklemiş gibi gösterirdi.
   const [favoriteMechanicIds, setFavoriteMechanicIds] = useState([]);
-  const toggleFavoriteMechanic = (id) => {
+  const toggleFavoriteMechanic = (id) => requireAuth(() => {
     setFavoriteMechanicIds(f => {
       const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
       persist(api.owners.update(MY_OWNER_ID, { favoriteMechanicIds: next }), "Favori kaydedilemedi");
       return next;
     });
-  };
+  }, t("authGateReasonFavorite"));
   // Kayıtlı aramalar (favorilenen aramalar): favoriteIds/favoriteMechanicIds ile aynı desen —
   // owners.savedSearches sütununda kalıcı, ama gösterimi role'e bağlı DEĞİL (demo'nun tek
   // etkileşimli kullanıcı mimarisiyle tutarlı, bkz. notifyFavoriteWatchers yorum notu).
@@ -161,7 +187,9 @@ function useAppLogic() {
   // backend isteği gerçekten başarısız olursa yerel sayaç geri alınıyor (önceden hep +1 kalıyordu).
   const toggleReviewHelpful = async (mechanicId, reviewId) => {
     if (role !== "owner") return;
-    if (MY_OWNER_ID == null) { setToast({ type: "info", text: "⚠️ Yorumu faydalı işaretlemek için giriş yapmalısınız." }); return; }
+    // MİSAFİR GEZİNME: eskiden burada sadece bir uyarı toast'ı gösteriliyordu; artık giriş popup'ı
+    // açılıyor ve giriş sonrası beğeni otomatik uygulanıyor.
+    if (MY_OWNER_ID == null) { requireAuth(() => callLatest("toggleReviewHelpful", mechanicId, reviewId), t("authGateReasonReviewHelpful")); return; }
     const key = `${mechanicId}:${reviewId}`;
     const alreadyLiked = likedReviewIds.includes(key);
     const mech = mechanicsList.find(m => m.id === mechanicId);
@@ -1275,6 +1303,11 @@ function useAppLogic() {
   const myQuoteRequests = useMemo(() => quoteRequests.filter(r => r.ownerId === MY_OWNER_ID), [quoteRequests]);
   const EXPENSIVE_SERVICE_THRESHOLD = 1500;
   const confirmBooking = async () => {
+    // MİSAFİR GEZİNME: randevu akışının TAMAMI (tamirci seçimi, hizmet, tarih/saat, arıza açıklaması,
+    // fotoğraflar) giriş yapmadan doldurulabiliyor — giriş yalnızca SON adımda, "Randevuyu Onayla"
+    // anında isteniyor. Popup açıldığında alttaki ekran mount'lu kaldığı için form kaybolmuyor;
+    // giriş biter bitmez bu fonksiyon aynı verilerle otomatik yeniden çağrılıyor.
+    if (!ensureAuth(t("authGateReasonBooking"), () => callLatest("confirmBooking"))) return;
     const status = autoAccept ? "Sırada" : "Onay Bekliyor";
     const bookingVehicle = vehicles.find(v => v.id === selectedBookingVehicleId) || vehicles[0];
     const isPayableNow = bookingService && bookingService.fixed && !bookingService.other;
@@ -1315,8 +1348,61 @@ function useAppLogic() {
   // kalan bir ekran adı (ör. "mechBrowse") burada temizlenmeden kalır ve çok daha sonra, tamamen
   // alakasız bir akışta (ör. randevu ekranından "detay"a geri dönülüp oradan tekrar "geri"ye
   // basıldığında) kullanıcıyı o an geçerli olmayan/saçma bir ekrana götürebilir.
-  const goHome = () => { setScreen("home"); setRole(null); setSelectedMechanicId(null); setDetailReturnScreen(null); setSelectedDate(null); setSelectedTime(null); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); setSelectedBookingVehicleId(null); setBookingService(null); setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" }); setForm({ name: "", email: "", phone: "", password: "" }); setOwnerTab("search"); setOwnerMode("mechanics"); setActiveConvoId(null); setMechActiveConvoId(null); setMechTab("requests"); setSelectedJobId(null); setSelectedListingId(null); setMapDetailOpen(false); setShowMapMobile(false); };
+  // MİSAFİR GEZİNME: "ana sayfa" artık giriş/rol seçim ekranı değil, herkese açık arama ekranı —
+  // çıkış yapan ya da bir akıştan çıkan kullanıcı da oraya dönüyor (rol "owner" görünümünde kalıyor
+  // ama kimlik temizlendiği için misafir sayılıyor, bkz. isAuthed).
+  const goHome = () => { setScreen("owner"); setRole("owner"); setSelectedMechanicId(null); setDetailReturnScreen(null); setSelectedDate(null); setSelectedTime(null); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); setSelectedBookingVehicleId(null); setBookingService(null); setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" }); setForm({ name: "", email: "", phone: "", password: "" }); setOwnerTab("search"); setOwnerMode("mechanics"); setActiveConvoId(null); setMechActiveConvoId(null); setMechTab("requests"); setSelectedJobId(null); setSelectedListingId(null); setMapDetailOpen(false); setShowMapMobile(false); };
   const chooseRole = (r) => { setRole(r); setScreen("login"); };
+  // ---- Giriş kapısı (auth gate) ----------------------------------------------------------------
+  // isAuthed: gerçek bir kimlik var mı? role "owner" olması TEK BAŞINA yeterli değil — misafir de
+  // owner görünümünde geziniyor (bkz. yukarıdaki screen/role başlangıç değerleri). Belirleyici olan,
+  // giriş sonrası set edilen MY_OWNER_ID / MY_MECHANIC_ID. (Bunlar modül düzeyinde canlı bağlama;
+  // giriş/çıkış her durumda bir React state'ini de değiştirdiği için bu ifade her render'da güncel
+  // değerle yeniden hesaplanıyor — bkz. constants.ts setMyOwnerId yorumu.)
+  const isAuthed = MY_OWNER_ID != null || MY_MECHANIC_ID != null;
+  const openAuthGate = (reason = "", step = "login") => {
+    setAuthGateReason(reason);
+    setAuthGateStep(step);
+    setAuthError(""); setAuthNotice("");
+    setOtpCode(""); setPendingLoginTicket(null);
+    setAuthGateOpen(true);
+  };
+  const closeAuthGate = () => {
+    setAuthGateOpen(false);
+    setAuthGateReason("");
+    setAuthError(""); setAuthNotice("");
+    setOtpCode(""); setPendingLoginTicket(null);
+    pendingAuthActionRef.current = null;
+  };
+  // Korumalı işlemlerin tek geçiş noktası: kimlik varsa işlemi hemen çalıştırır; yoksa işlemi
+  // saklayıp giriş popup'ını açar (giriş tamamlanınca submitOtpVerify bu işlemi çalıştırır).
+  // Kullanım: requireAuth(() => gerçekİşlem(), t("authGateReasonBooking"))
+  const requireAuth = (action, reason = "") => {
+    if (MY_OWNER_ID != null || MY_MECHANIC_ID != null) { action(); return true; }
+    pendingAuthActionRef.current = action;
+    openAuthGate(reason);
+    return false;
+  };
+  // ensureAuth: requireAuth'un "bekçi" (guard) sürümü. Fark kritik: kimlik VARSA hiçbir şey
+  // çalıştırmaz, sadece `true` döner — çağıran fonksiyon kendi gövdesiyle devam eder. requireAuth
+  // ise kimlik varsa verilen işlemi ÇALIŞTIRIR; bu yüzden bir fonksiyonun kendi içinde
+  // `if (!requireAuth(() => kendisi(), ...)) return;` yazmak sonsuz özyinelemeye yol açar
+  // (giriş yapmış kullanıcıda fonksiyon kendini sonsuz kez çağırır — bu desen izole birim testinde
+  // yakalandı). Uzun formlu akışlar (randevu, teklif, başvuru, ilan...) bu yüzden ensureAuth kullanır:
+  //   if (!ensureAuth(t("..."), () => callLatest("submitOffer"))) return;
+  const ensureAuth = (reason, resumeAction) => {
+    if (MY_OWNER_ID != null || MY_MECHANIC_ID != null) return true;
+    pendingAuthActionRef.current = resumeAction;
+    openAuthGate(reason);
+    return false;
+  };
+  // Çoklu fiyat teklifi akışı, kullanıcının KAYITLI ARAÇLARI üzerinden çalıştığı için (misafirin
+  // aracı yok) modal açılırken kapılanıyor — diğer akışlardaki "son adımda sor" deseninden farkı bu.
+  const openQuoteModal = () => requireAuth(() => setShowQuoteModal(true), t("authGateReasonQuote"));
+  // Hesap alanları (Randevularım, Araçlarım, Mesajlar, Profil, Favoriler...) tamamen kişisel veri
+  // gösterdiği için misafire açılmıyor; sekmeye tıklanınca giriş popup'ı çıkıyor ve giriş sonrası
+  // kullanıcı istediği sekmeye otomatik geçiyor.
+  const requireAuthForTab = (tab) => requireAuth(() => setOwnerTab(tab), t("authGateReasonAccount"));
   // ---- Admin (site sahibi) fonksiyonları ----
   // GÜVENLİK: Bu fonksiyon artık admin şifresini istemci tarafında (frontend'de) KARŞILAŞTIRMIYOR.
   // Eskiden burada ADMIN_CREDENTIALS adlı düz-metin bir sabitle karşılaştırma yapılıyordu; bu hem
@@ -1379,7 +1465,7 @@ function useAppLogic() {
       setAdminLoginLoading(false);
     }
   };
-  const adminLogout = () => { api.admin.logout(); setAdminAuthed(false); setAdminForm({ email: "", password: "" }); setSelectedAdminUser(null); setAdminEditForm(null); setSelectedTicketId(null); setRole(null); setScreen("home"); };
+  const adminLogout = () => { api.admin.logout(); setAdminAuthed(false); setAdminForm({ email: "", password: "" }); setSelectedAdminUser(null); setAdminEditForm(null); setSelectedTicketId(null); goHome(); };
   // ---- Değişiklik geçmişi / Geri Al altyapısı ----
   // Panelden yapılan her tekil alan değişikliği burada loglanır (kim/ne/eski değer/yeni değer),
   // ve applyAdminFieldChange aynı yazma yolunu tersten çalıştırarak "Geri Al"ı mümkün kılar.
@@ -2095,7 +2181,9 @@ function useAppLogic() {
     if (!form.name.trim()) { setAuthError("Ad soyad zorunludur."); return; }
     setAuthError(""); setAuthNotice(""); setAuthLoading(true);
     try {
-      const result = await api.auth.register(role, form.email, form.name, { phone: form.phone });
+      // role artık misafir gezinme yüzünden "owner" ile başlıyor (eskiden null'dı) — bu yüzden
+      // tipi daraltmak gerekiyor; kayıt/giriş yalnızca bu iki rol için geçerli.
+      const result = await api.auth.register(role as "owner" | "mechanic", form.email, form.name, { phone: form.phone });
       setAuthLoading(false);
       setPendingOnboarding(true);
       // GELİŞTİRME KOLAYLIĞI: backend SMTP ayarlanmamışsa (yerelde çalışırken) üretilen şifreyi
@@ -2106,7 +2194,9 @@ function useAppLogic() {
         ? `[Geliştirme modu — e-posta gönderilmedi] Otomatik şifreniz: ${result.devPassword}`
         : "Hesabınız oluşturuldu. Giriş yapmak için kullanacağınız otomatik şifre e-posta adresinize gönderildi.");
       setForm((f) => ({ ...f, name: "", phone: "", password: "" }));
-      setScreen("login");
+      // Popup modunda tam sayfa giriş ekranına GİTMİYORUZ — kullanıcı hangi ekranda/formda kaldıysa
+      // orada kalıyor, sadece popup'ın adımı "giriş"e dönüyor (bkz. authGate yorumu).
+      if (authGateOpen) setAuthGateStep("login"); else setScreen("login");
     } catch (err) {
       setAuthLoading(false);
       setAuthError(err?.message || "Kayıt oluşturulamadı.");
@@ -2117,14 +2207,16 @@ function useAppLogic() {
     if (!form.password) { setAuthError("Şifre zorunludur."); return; }
     setAuthError(""); setAuthNotice(""); setAuthLoading(true);
     try {
-      const result = await api.auth.login(role, form.email, form.password);
+      // Rol GÖNDERMİYORUZ: hesabın araç sahibi mi tamirci mi olduğunu backend e-postadan buluyor
+      // (bkz. api client yorumu) — kullanıcı giriş yaparken rol seçmek zorunda kalmıyor.
+      const result = await api.auth.login(null, form.email, form.password);
       setAuthLoading(false);
       setPendingLoginTicket(result.loginTicket);
       setOtpCode("");
       setAuthNotice(result.devOtp
         ? `[Geliştirme modu — e-posta gönderilmedi] Doğrulama kodunuz: ${result.devOtp}`
         : "Giriş doğrulama kodu e-posta adresinize gönderildi.");
-      setScreen("loginOtp");
+      if (authGateOpen) setAuthGateStep("otp"); else setScreen("loginOtp");
     } catch (err) {
       setAuthLoading(false);
       setAuthError(err?.message || "Giriş yapılamadı.");
@@ -2143,8 +2235,23 @@ function useAppLogic() {
       setSessionVersion((v) => v + 1);
       setOtpCode(""); setPendingLoginTicket(null); setAuthNotice("");
       setForm({ name: "", email: "", phone: "", password: "" });
-      setScreen(user.role === "owner" ? "owner" : "mechanicDashboard");
-      if (user.role === "owner") setOwnerTab("search");
+      // POPUP (auth gate) MODU: kullanıcı zaten bir işin ortasındaydı (ilan detayı açık, teklif
+      // formu dolu, randevu saati seçili...). Bu yüzden ekranı DEĞİŞTİRMİYORUZ — sadece popup'ı
+      // kapatıp, kullanıcının başlatmak istediği işlemi çalıştırıyoruz; kaldığı yerden devam ediyor.
+      // Tam sayfa giriş akışında (popup yoksa) eski davranış korunuyor: role'e göre panele gider.
+      const resumeAction = pendingAuthActionRef.current;
+      if (authGateOpen) {
+        pendingAuthActionRef.current = null;
+        setAuthGateOpen(false);
+        setAuthGateReason("");
+        // Tamirci hesabıyla giriş yapıldıysa arama görünümü tamircinin kendi keşif ekranına denk
+        // gelmeli (owner arama ekranı tamirciye ait sekmeleri içermiyor).
+        if (user.role === "mechanic" && screen === "owner") setScreen("mechBrowse");
+        if (resumeAction) setTimeout(() => { try { resumeAction(); } catch { /* işlem artık geçersizse sessizce geç */ } }, 0);
+      } else {
+        setScreen(user.role === "owner" ? "owner" : "mechanicDashboard");
+        if (user.role === "owner") setOwnerTab("search");
+      }
       if (pendingOnboarding) { setOnboardStep(0); setShowOnboarding(true); setPendingOnboarding(false); }
       // Bildirimler varsayılan olarak açık sayılsın diye: tarayıcı henüz sorulmadıysa girişte hemen soruyoruz.
       if (typeof Notification !== "undefined" && Notification.permission === "default") { requestNotifPermission(); }
@@ -2153,7 +2260,10 @@ function useAppLogic() {
       setAuthError(err?.message || "Kod doğrulanamadı.");
     }
   };
-  const cancelOtpVerify = () => { setOtpCode(""); setPendingLoginTicket(null); setAuthError(""); setAuthNotice(""); setScreen("login"); };
+  const cancelOtpVerify = () => {
+    setOtpCode(""); setPendingLoginTicket(null); setAuthError(""); setAuthNotice("");
+    if (authGateOpen) setAuthGateStep("login"); else setScreen("login");
+  };
   // Gerçek owner/mechanic çıkışı — eskiden sadece goHome() çağrılıyordu (role sıfırlanıyordu ama
   // MY_OWNER_ID/MY_MECHANIC_ID sabit demo id'leri olduğu için "kimlik" zaten hiç değişmiyordu).
   // Artık gerçek bir oturum token'ı var: sunucu tarafında geçersiz kılınmalı (api.auth.logout),
@@ -2321,6 +2431,7 @@ function useAppLogic() {
   };
   const submitReview = () => {
     if (!reviewingApptId) return;
+    if (!ensureAuth(t("authGateReasonReview"), () => callLatest("submitReview"))) return;
     const appt = appointments.find(a => a.id === reviewingApptId);
     if (!appt) return;
     // İsme göre eşleştirme (m.name === appt.mechanicName) yanlıştı: iki tamirci aynı işletme adını
@@ -2420,6 +2531,7 @@ function useAppLogic() {
   };
   const submitSupportTicket = async () => {
     if (!newTicketForm.subject.trim() || !newTicketForm.description.trim()) { setToast({ type: "info", text: "⚠️ Lütfen konu ve açıklama girin." }); return; }
+    if (!ensureAuth(t("authGateReasonSupport"), () => callLatest("submitSupportTicket"))) return;
     const fromType = role === "owner" ? "owner" : "mechanic";
     const fromName = (role === "owner" ? ownerProfile.name : myProfile?.name) || (role === "owner" ? "Araç Sahibi" : "Tamirci");
     // fromId: fromName sadece görünen ad (admin panelinde grantVerification/removeFlaggedReview gibi
@@ -2497,6 +2609,9 @@ function useAppLogic() {
     );
   };
   const openChatWithMechanic = (m, contextNote = undefined) => {
+    // Sohbet bir hesaba bağlı olduğu için (mesajlar kalıcı bir sohbet kaydına yazılıyor) giriş
+    // gerekiyor — giriş sonrası sohbet otomatik açılıyor.
+    if (!ensureAuth(t("authGateReasonChat"), () => callLatest("openChatWithMechanic", m, contextNote))) return;
     let convo = conversations.find(c => c.mechanicId === m.id);
     if (!convo) {
       // ownerId: sohbetin araç sahibi tarafı (güvenlik denetiminde eklendi — backend bu alanı
@@ -2876,9 +2991,11 @@ function useAppLogic() {
   // ekliyoruz. seenListingIds kaydetme anında ZATEN eşleşen tüm ilanlarla dolduruluyor — aksi
   // halde kayıttan hemen sonra mevcut tüm eşleşmeler için "yeni eşleşme" bildirimi yağardı.
   const saveCurrentSearch = (name) => {
-    if (MY_OWNER_ID == null) { setToast({ type: "info", text: "⚠️ Arama kaydetmek için giriş yapmalısınız." }); return; }
     const trimmed = (name || "").trim();
     if (!trimmed) { setToast({ type: "info", text: t("savedSearchNameRequiredToast") }); return; }
+    // MİSAFİR GEZİNME: arama/filtreler serbest, ama kaydetmek hesaba yazıldığı için giriş gerekiyor —
+    // giriş sonrası arama girilen isimle otomatik kaydediliyor (kullanıcı baştan yazmıyor).
+    if (!ensureAuth(t("authGateReasonSavedSearch"), () => callLatest("saveCurrentSearch", trimmed))) return;
     const activeFilters = { ...listingFilters };
     const newSearch = {
       id: Date.now() + Math.floor(Math.random() * 1000),
@@ -2911,7 +3028,9 @@ function useAppLogic() {
     setQuery(search.query || "");
     setLocationQuery(search.locationQuery || "");
     setListingFilters({ transmission: "all", fuelType: "all", minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "", ...(search.filters || {}) });
-    if (role === "mechanic") { setScreen("mechBrowse"); } else { setOwnerMode("cars"); setScreen("home"); }
+    // NOT: "home" artık giriş/rol seçim ekranı değil (misafir gezinmeyle birlikte kaldırıldı) —
+    // araç sahibi tarafındaki arama ekranı screen="owner" + ownerTab="search".
+    if (role === "mechanic") { setScreen("mechBrowse"); } else { setOwnerMode("cars"); setOwnerTab("search"); setScreen("owner"); }
   };
   // Yeni-eşleşme tespiti + fiyat düşünce bildirim: listings ya da kayıtlı arama sayısı her
   // değiştiğinde, her kayıtlı arama için ŞU AN eşleşen ilan id'lerini hesaplayıp seenListingIds
@@ -2950,6 +3069,9 @@ function useAppLogic() {
     if (!String(sellForm.km ?? "").trim()) missingFields.push("Kilometre");
     if (!sellForm.price?.trim()) missingFields.push("Fiyat");
     if (missingFields.length > 0) { setToast({ type: "info", text: `⚠️ Eksik bilgiler var: ${missingFields.join(", ")}. Lütfen doldurun.` }); return; }
+    // Misafir ilan formunun tamamını (fotoğraflar dâhil) doldurabiliyor; giriş sadece "Yayınla"
+    // anında isteniyor ve giriş sonrası ilan aynı verilerle otomatik yayınlanıyor.
+    if (!ensureAuth(t("authGateReasonSellListing"), () => callLatest("submitListing", sellerType))) return;
     if (sellForm._editingId) {
       const before = listings.find(x => x.id === sellForm._editingId);
       const { _editingId, _vehicleId, ...patchFields } = sellForm;
@@ -3166,6 +3288,9 @@ function useAppLogic() {
   };
   const submitOffer = () => {
     if (!offerAmount || !selectedListing) return;
+    // Misafir teklif tutarını yazabiliyor; giriş sadece "Teklif Ver" anında isteniyor (bkz.
+    // confirmBooking'deki aynı desen) — giriş sonrası teklif aynı tutarla otomatik gönderiliyor.
+    if (!ensureAuth(t("authGateReasonOffer"), () => callLatest("submitOffer"))) return;
     const currency = listingCurrency(selectedListing.price);
     const buyerName = myBuyerName();
     const buyerId = myBuyerId();
@@ -3191,6 +3316,8 @@ function useAppLogic() {
   };
   const submitListingMsg = () => {
     if (!listingMsg || !selectedListing) return;
+    // Misafir sorusunu yazabiliyor; giriş sadece göndermeden hemen önce isteniyor.
+    if (!ensureAuth(t("authGateReasonQuestion"), () => callLatest("submitListingMsg"))) return;
     const senderName = ownerProfile.name || myProfile?.name || "Kullanıcı";
     const senderLang = role === "owner" ? ownerLang : (myProfile?.lang || "tr");
     const senderId = myBuyerId();
@@ -3292,6 +3419,9 @@ function useAppLogic() {
   const jobApplyReady = jobApplyInfoValid && jobApplyCv;
   const submitJobApplication = () => {
     if (!jobApplyReady || !selectedJob) return;
+    // Misafir başvuru formunu (ad, telefon, e-posta, adres, mesaj, CV) tamamen doldurabiliyor;
+    // giriş yalnızca "Başvur" anında isteniyor ve giriş sonrası başvuru otomatik gönderiliyor.
+    if (!ensureAuth(t("authGateReasonJobApply"), () => callLatest("submitJobApplication"))) return;
     const applicant = { id: nestedItemId++, name: jobApplyInfo.name.trim(), phone: jobApplyInfo.phone.trim(), email: jobApplyInfo.email.trim(), address: jobApplyInfo.address.trim(), message: jobApplyMsg, lang: ownerLang, date: "az önce", status: "pending", cvName: jobApplyCv?.name || null, cvUrl: jobApplyCv?.url || null };
     const applicants = [applicant, ...selectedJob.applicants];
     setJobListings(js => js.map(j => j.id === selectedJob.id ? { ...j, applicants } : j));
@@ -3400,6 +3530,14 @@ function useAppLogic() {
   // LinkedIn tarzı iş ilanı kartı — pozisyon, işletme, konum, çalışma şekli/deneyim/maaş etiketleri
   // Tamirci profil detayı — normal "detail" ekranında tam sayfa, harita üzerinden açılınca ortalanmış modal içinde kullanılıyor. İçerik tek yerden geliyor, iki görünüm de senkron kalıyor.
   // ---- Araç Ara / Tamirci Ara — hem owner hem mechanic tarafından paylaşılan arama görünümü ----
+  // Giriş kapısı: kapılanan akışların HER RENDER'DAKİ güncel sürümü buraya yazılıyor. Giriş
+  // tamamlandığında bekleyen işlem bu tablodan çağrılıyor (callLatest) — böylece işlem, misafirken
+  // oluşmuş eski closure ile değil, giriş sonrası taze verilerle (yeni kimlik, profil adı vb.)
+  // çalışıyor. Bkz. latestFnsRef tanımı.
+  latestFnsRef.current = {
+    confirmBooking, submitOffer, submitListingMsg, submitJobApplication, submitReview,
+    submitSupportTicket, submitListing, openChatWithMechanic, saveCurrentSearch, toggleReviewHelpful,
+  };
   return {
     lang, setLang, t, screen, setScreen, role, setRole, showPass,
     setShowPass, forgotEmail, setForgotEmail, form, setForm, authError, setAuthError, ownerTab,
@@ -3477,6 +3615,7 @@ function useAppLogic() {
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
+    isAuthed, requireAuth, ensureAuth, requireAuthForTab, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,

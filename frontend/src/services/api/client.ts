@@ -248,8 +248,11 @@ export const api = {
   auth: {
     register: (role: "owner" | "mechanic", email: string, name: string, extra?: Record<string, unknown>): Promise<{ ok: true; id: number; email: string; mailSent: boolean; devPassword?: string; devNote?: string }> =>
       request("/api/auth/register", { method: "POST", body: JSON.stringify({ role, email, name, ...extra }) }),
-    login: (role: "owner" | "mechanic", email: string, password: string): Promise<{ ok: true; requiresOtp: true; loginTicket: string; mailSent: boolean; devOtp?: string; devNote?: string }> =>
-      request("/api/auth/login", { method: "POST", body: JSON.stringify({ role, email, password }) }),
+    // `role` opsiyonel: verilmezse backend hesabı e-posta+şifreden otomatik buluyor (araç sahibi mi
+    // tamirci mi) — misafir gezinmeyle birlikte giriş artık rol seçimi olmadan, tek bir popup'tan
+    // yapılıyor (bkz. backend/routes/auth.js login).
+    login: (role: "owner" | "mechanic" | null, email: string, password: string): Promise<{ ok: true; requiresOtp: true; loginTicket: string; mailSent: boolean; devOtp?: string; devNote?: string }> =>
+      request("/api/auth/login", { method: "POST", body: JSON.stringify({ role: role || undefined, email, password }) }),
     verifyOtp: async (loginTicket: string, code: string): Promise<{ ok: true; token: string; user: any }> => {
       const result = await request("/api/auth/verify-otp", { method: "POST", body: JSON.stringify({ loginTicket, code }) });
       setSession(result.token, result.user.role);

@@ -170,6 +170,12 @@ export function BrowseHome({ theme = undefined }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{filteredJobs.map(j => (<JobCard key={j.id} j={j} />))}{filteredJobs.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">{t("noJobsMatchFilters")}</p>{(activeJobFilterCount > 0 || query.trim()) && <button onClick={() => { clearJobFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">{t("clearFiltersBtn")}</button>}</div>)}</div>
         </div>
       )}
+      {/* Alt bilgi: eski karşılama (hero + rol seçim) ekranı misafir gezinmeyle birlikte kaldırıldı;
+          oradaki gizli admin girişi (© Fixperto yazısına tıklama) burada korunuyor. */}
+      <div className="mt-auto pt-6 pb-6 border-t border-gray-100 flex flex-col items-center gap-1">
+        <p className="text-sm text-gray-400">© 2026 <span onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
+        <p className="text-[9px] text-gray-200">{t("allRightsReserved")}</p>
+      </div>
     </div>
   );
 }

@@ -125,6 +125,7 @@ export function AppShell() {
     jobEmploymentColor,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
+    isAuthed, requireAuth, requireAuthForTab, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate,
   } = useApp();
   return (
     <div className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-gray-50"}`}>
@@ -243,6 +244,69 @@ export function AppShell() {
           </div>
         );
       })()}
+      {/* MİSAFİR GEZİNME (Airbnb deseni): korumalı bir işleme kalkışan giriş yapmamış ziyaretçiye
+          tam sayfa giriş ekranı yerine bu POPUP açılıyor. Alttaki ekran mount'lu kaldığı için
+          kullanıcının o ana kadar doldurduğu her şey (teklif tutarı, randevu saati, başvuru formu,
+          ilan bilgileri...) yerinde duruyor; giriş tamamlanınca popup kapanıp işlem otomatik
+          devam ediyor — bkz. AppLogicProvider.tsx requireAuth / submitOtpVerify. */}
+      {authGateOpen && (
+        <div className="fixed inset-0 bg-black/50 z-[9900] flex items-end md:items-center justify-center" onClick={closeAuthGate}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl max-h-[92vh] overflow-y-auto">
+            <div className="px-5 pt-5 pb-4">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-11 h-11 bg-rose-50 rounded-2xl flex items-center justify-center flex-shrink-0"><Lock size={20} className="text-rose-600" /></div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-gray-900 text-base leading-snug">{authGateStep === "otp" ? t("authGateOtpTitle") : authGateStep === "signup" ? t("authGateSignupTitle") : t("authGateTitle")}</h3>
+                    {authGateReason && <p className="text-xs text-gray-500 mt-0.5">{authGateReason}</p>}
+                  </div>
+                </div>
+                <button onClick={closeAuthGate} aria-label={t("closeAria")} className="w-9 h-9 -m-1 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
+              </div>
+              <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 mb-4 flex items-start gap-1.5"><Check size={12} className="flex-shrink-0 mt-0.5" /> {t("authGateKeepsWorkNote")}</p>
+              {authGateStep !== "otp" && (
+                <>
+                  <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
+                    <button onClick={() => { setAuthGateStep("login"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${authGateStep === "login" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("authGateLoginTab")}</button>
+                    <button onClick={() => { setAuthGateStep("signup"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${authGateStep === "signup" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("authGateSignupTab")}</button>
+                  </div>
+                  {authGateStep === "signup" && (
+                    <>
+                      <p className="text-xs font-semibold text-gray-700 mb-2">{t("authGateRoleQuestion")}</p>
+                      <div className="grid grid-cols-2 gap-2 mb-4">
+                        <button onClick={() => setRole("owner")} className={`rounded-2xl border p-3 text-left transition ${role === "owner" ? "border-rose-600 bg-rose-50" : "border-gray-200 hover:border-gray-300"}`}><Car size={18} className={role === "owner" ? "text-rose-600 mb-1" : "text-gray-400 mb-1"} /><p className="text-xs font-bold text-gray-900">{t("ownerRole")}</p></button>
+                        <button onClick={() => setRole("mechanic")} className={`rounded-2xl border p-3 text-left transition ${role === "mechanic" ? "border-rose-600 bg-rose-50" : "border-gray-200 hover:border-gray-300"}`}><Wrench size={18} className={role === "mechanic" ? "text-rose-600 mb-1" : "text-gray-400 mb-1"} /><p className="text-xs font-bold text-gray-900">{t("mechanicRole")}</p></button>
+                      </div>
+                    </>
+                  )}
+                  <div className="space-y-3">
+                    {authGateStep === "signup" && (<div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("fullNameShortPlaceholder")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
+                    <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t("emailPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>
+                    {authGateStep === "signup" && (<div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={t("phonePlaceholderExample2")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
+                    {authGateStep === "signup" && (<p className="text-xs text-gray-400 leading-relaxed">{t("signupPasswordNote")}</p>)}
+                    {authGateStep === "login" && (<div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter" && !authLoading) submitLogin(); }} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>)}
+                    {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
+                    {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
+                  </div>
+                  <button disabled={authLoading} onClick={authGateStep === "login" ? submitLogin : submitRegister} className={`w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : (authGateStep === "login" ? t("login") : t("signup"))}</button>
+                </>
+              )}
+              {authGateStep === "otp" && (
+                <>
+                  <p className="text-sm text-gray-500 mb-3">{t("otpSubtitle")}</p>
+                  <div className="space-y-3">
+                    <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input autoFocus value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} onKeyDown={(e) => { if (e.key === "Enter" && !authLoading) submitOtpVerify(); }} placeholder={t("otpCodePlaceholder")} inputMode="numeric" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm tracking-[0.3em] text-center font-semibold" /></div>
+                    {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
+                    {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
+                  </div>
+                  <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
+                  <p className="text-center text-xs text-gray-400 mt-3"><span onClick={cancelOtpVerify} className="text-rose-500 font-medium cursor-pointer hover:underline">{t("otpBackToLogin")}</span></p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {showDayFullPrompt && role === "mechanic" && (
         <div className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => setShowDayFullPrompt(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
@@ -440,59 +504,6 @@ export function AppShell() {
         </div>
       ); })()}
       <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${(screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
-        {screen === "home" && (
-          <div className="flex-1 flex flex-col">
-            <div className="bg-gradient-to-b from-rose-50 to-white pb-6 rounded-b-[32px]">
-              <div className="px-6 pt-8 max-w-md mx-auto w-full">
-                <div className="flex items-center gap-2 mb-8">
-                  <div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center flex-shrink-0"><Wrench size={16} className="text-white" /></div>
-                  <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">Fix<span className="text-rose-600">perto</span></h1>
-                </div>
-                <h2 className="text-3xl font-extrabold leading-tight mb-3 text-gray-900 max-w-[260px]">{t("heroHeadline")}</h2>
-                <p className="text-gray-500 text-sm mb-7 max-w-[260px]">{t("tagline")}</p>
-                <div className="grid grid-cols-3 gap-4 max-w-sm">
-                  <div><div className="flex items-center gap-2 mb-1.5"><Shield size={24} className="text-rose-600 flex-shrink-0" /><p className="text-sm font-bold text-gray-900">{t("featureReliableTitle")}</p></div><p className="text-xs text-gray-500 leading-snug">{t("featureReliableDesc")}</p></div>
-                  <div><div className="flex items-center gap-2 mb-1.5"><Zap size={24} className="text-rose-600 flex-shrink-0" /><p className="text-sm font-bold text-gray-900">{t("featureFastTitle")}</p></div><p className="text-xs text-gray-500 leading-snug">{t("featureFastDesc")}</p></div>
-                  <div><div className="flex items-center gap-2 mb-1.5"><Star size={24} className="text-rose-600 flex-shrink-0" /><p className="text-sm font-bold text-gray-900">{t("featureEasyTitle")}</p></div><p className="text-xs text-gray-500 leading-snug">{t("featureEasyDesc")}</p></div>
-                </div>
-              </div>
-            </div>
-            <div className="px-6 pt-8 pb-10 flex flex-col gap-4 max-w-md mx-auto w-full">
-              <div className="text-center mb-1">
-                <h3 className="text-xl font-bold text-gray-900">{t("continueHeading")}</h3>
-                <p className="text-gray-500 text-sm mt-1">{t("continueSubheading")}</p>
-              </div>
-              <button onClick={() => chooseRole("owner")} className="group w-full bg-white border border-gray-200 hover:border-gray-900 shadow-sm hover:shadow-md rounded-2xl p-4 flex items-center gap-4 transition"><div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center flex-shrink-0"><Car size={26} className="text-rose-600" /></div><div className="text-left flex-1"><h3 className="font-bold text-gray-900">{t("ownerRole")}</h3><p className="text-xs text-gray-500">{t("ownerRoleDesc")}</p></div><div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-900 transition"><ChevronRight size={16} className="text-gray-500 group-hover:text-white transition" /></div></button>
-              <button onClick={() => chooseRole("mechanic")} className="group w-full bg-white border border-gray-200 hover:border-gray-900 shadow-sm hover:shadow-md rounded-2xl p-4 flex items-center gap-4 transition"><div className="w-14 h-14 bg-rose-100 rounded-2xl flex items-center justify-center flex-shrink-0"><Wrench size={26} className="text-rose-700" /></div><div className="text-left flex-1"><h3 className="font-bold text-gray-900">{t("mechanicRole")}</h3><p className="text-xs text-gray-500">{t("mechanicRoleDesc")}</p></div><div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-900 transition"><ChevronRight size={16} className="text-gray-500 group-hover:text-white transition" /></div></button>
-              <div className="mt-2 -mx-6 overflow-hidden" style={{ WebkitMaskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)", maskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)" }}>
-                <div className="stat-track flex items-stretch gap-3 w-max px-6">
-                  {(() => {
-                    const liveStats = [
-                      { icon: Star, value: `${adminStats.avgRating}`, label: t("statLabelRating"), bg: "bg-amber-50", color: darkMode ? "text-amber-400" : "text-amber-600" },
-                      { icon: MessageCircle, value: `${adminStats.totalReviews}`, label: t("statLabelReviews"), bg: "bg-rose-50", color: darkMode ? "text-rose-400" : "text-rose-600" },
-                      { icon: Wrench, value: `${adminStats.totalMechanics}`, label: t("statLabelMechanics"), bg: "bg-green-50", color: darkMode ? "text-green-400" : "text-green-600" },
-                      { icon: Calendar, value: `${adminStats.totalAppointments}`, label: t("statLabelAppointments"), bg: "bg-amber-50", color: darkMode ? "text-amber-400" : "text-amber-600" },
-                      { icon: Tag, value: `${adminStats.activeCarListings}`, label: t("statLabelCarListings"), bg: "bg-rose-50", color: darkMode ? "text-rose-400" : "text-rose-600" },
-                      { icon: MapPin, value: `${adminStats.totalCities}`, label: t("statLabelCities"), bg: "bg-green-50", color: darkMode ? "text-green-400" : "text-green-600" },
-                    ];
-                    return liveStats.concat(liveStats).map((s, i) => (
-                      <div key={i} className="w-[95px] flex-shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm px-2.5 py-2.5 flex flex-col items-center gap-1">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${s.bg}`}><s.icon size={13.5} className={`${s.color} flex-shrink-0`} /></div>
-                        <p className="text-sm font-extrabold tracking-tight text-gray-900 leading-none">{s.value}</p>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wide leading-none text-center">{s.label}</p>
-                      </div>
-                    ));
-                  })()}
-                </div>
-                <style>{`@keyframes statScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } } .stat-track { animation: statScroll 26s linear infinite; } .stat-track:hover { animation-play-state: paused; }`}</style>
-              </div>
-            </div>
-            <div className="mt-auto pt-5 pb-6 border-t border-gray-100 flex flex-col items-center gap-1">
-              <p className="text-sm text-gray-400">© 2026 <span onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
-              <p className="text-[9px] text-gray-200">{t("allRightsReserved")}</p>
-            </div>
-          </div>
-        )}
         {(screen === "login" || screen === "signup") && (
           <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
@@ -1290,12 +1301,23 @@ export function AppShell() {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
                     return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
                   })}
-                  <button onClick={() => setShowQuoteModal(true)} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> {t("multiQuoteBtn")}</button>
+                  <button onClick={openQuoteModal} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> {t("multiQuoteBtn")}</button>
                 </div>
                 )}
+                {/* MİSAFİR GEZİNME: giriş yapmamış ziyaretçiye bildirim zili/profil yerine
+                    Giriş Yap + Kayıt Ol butonları gösteriliyor (Airbnb deseni). */}
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <NotifBell />
-                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title={t("profileAndSettingsTitle")} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
+                  {isAuthed ? (
+                    <>
+                      <NotifBell />
+                      <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title={t("profileAndSettingsTitle")} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => openAuthGate("", "login")} className="text-sm font-semibold text-gray-700 hover:text-gray-900 px-3 py-2 rounded-full hover:bg-gray-100 transition whitespace-nowrap">{t("authGateLoginTab")}</button>
+                      <button onClick={() => openAuthGate("", "signup")} className="text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-full transition whitespace-nowrap">{t("authGateSignupTab")}</button>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="max-w-7xl mx-auto w-full relative">
@@ -1307,7 +1329,7 @@ export function AppShell() {
                         <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
                         <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                       </div>
-                      <button onClick={() => setShowQuoteModal(true)} className="px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
+                      <button onClick={openQuoteModal} className="px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
                     </div>
                     <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("searchHeroTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
                   </div>
