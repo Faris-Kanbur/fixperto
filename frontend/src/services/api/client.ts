@@ -295,6 +295,12 @@ export const api = {
     decline: (id: number | string, opts?: RequestOptions): Promise<QuoteOffer> =>
       request(`/api/quote-offers/${id}/decline`, { method: "POST", ...opts }),
   },
+  analytics: {
+    // Tamircinin KENDİ analitiği. Hedef id GÖNDERİLMİYOR — backend oturum token'ından çözüyor
+    // (bkz. backend/routes/analytics.js my-mechanic), böylece başkasının verisi istenemez.
+    myMechanic: (days?: number): Promise<any> =>
+      request(`/api/analytics/my-mechanic${days ? `?days=${days}` : ""}`),
+  },
   admin: {
     // GÜVENLİK DÜZELTMESİ: backend artık başarılı girişte bir token dönüyor (bkz.
     // backend/routes/admin.js) — bu token bellekte saklanıp aşağıdaki diğer admin çağrılarına

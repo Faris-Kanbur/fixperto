@@ -798,8 +798,13 @@ function useAppLogic() {
     if (mechTab === "analytics") {
       const rangeDays = ANALYTICS_RANGES.find(r => r.key === analyticsRange)?.days;
       api.profileViews.stats("mechanic", MY_MECHANIC_ID, rangeDays || undefined).then(setMyProfileViewStats).catch(() => { /* sessizce geç — sadece analitik */ });
+      // Yeni olay tabanlı analitik (huni + trafik kaynağı + şehirdeki talep). Eski profileViews
+      // istatistiği yerine geçmiyor, YANINA geliyor: o tek bir sayaç, bu davranışsal huni.
+      api.analytics.myMechanic(rangeDays || undefined).then(setMyMechanicAnalytics).catch(() => setMyMechanicAnalytics(null));
     }
   }, [mechTab, analyticsRange]);
+  // Tamircinin kendi olay-tabanlı analitiği. Hedef id gönderilmiyor — backend oturumdan çözüyor.
+  const [myMechanicAnalytics, setMyMechanicAnalytics] = useState(null);
 
   const [adminTicketStatusFilter, setAdminTicketStatusFilter] = useState("all");
   const [adminTicketTypeFilter, setAdminTicketTypeFilter] = useState("all");
@@ -4150,7 +4155,7 @@ function useAppLogic() {
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
-    detectedCountry, adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading,
+    detectedCountry, myMechanicAnalytics, adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading,
     listingPageId, listingPageItem, openListingPage, closeListingPage, sellPrefillFromListing,
     isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,

@@ -53,7 +53,7 @@ export function AppShell() {
     setMechSettings, notifLog, setNotifLog, ownerNotifSeenAt, setOwnerNotifSeenAt, mechNotifSeenAt, setMechNotifSeenAt, showNotifPanel,
     setShowNotifPanel, darkMode, setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters, clearMechFilters, openListingPage,
-    adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading,
+    adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading, myMechanicAnalytics,
     listingFilters, setListingFilters, listingSort, setListingSort, userLocation, setUserLocation, locationStatus, setLocationStatus,
     notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours,
     setMechanicHours, query, setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery, sortBy, setSortBy, sortDir,
@@ -2734,8 +2734,69 @@ export function AppShell() {
                     <p className="text-[10px] text-gray-300 mt-4 text-center">{t("basedOnCompletedJobsNote", { n: String(completed.length) })}</p>
                   </>)}
                   {mechAnalyticsView === "traffic" && (() => {
+                    // OLAY TABANLI HUNİ (yeni): aşağıdaki eski "profil ziyaretleri" bloğu tek bir
+                    // sayaçtı; bu blok ziyaretçinin profili gördükten sonra ne yaptığını gösteriyor.
+                    // Veri yalnızca bu tamirciye ait — backend hedefi oturumdan çözüyor, id istemiyor.
+                    const ma = myMechanicAnalytics;
+                    const maFunnelLabels = { view: t("mechFunnelView"), contact: t("mechFunnelContact"), appointment: t("mechFunnelAppointment") };
+                    const maTop = ma?.funnel?.[0]?.count || 0;
                     return (
                       <>
+                        {ma && (ma.views > 0 || (ma.cityDemand || []).length > 0) && (
+                          <div className="mb-6">
+                            <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><TrendingUp size={14} className="text-rose-500" /> {t("mechFunnelTitle")}</h3>
+                            <div className="grid grid-cols-3 gap-2 mb-3">
+                              <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-gray-900 leading-none">{ma.uniqueViewers}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelView")}</p></div>
+                              <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-gray-900 leading-none">{ma.contacts}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelContact")}</p></div>
+                              <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-rose-600 leading-none">{ma.appointments}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelAppointment")}</p></div>
+                            </div>
+                            <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2">
+                              {(ma.funnel || []).map((step, i) => {
+                                const pct = maTop > 0 ? Math.round((step.count / maTop) * 100) : 0;
+                                const prev = i > 0 ? ma.funnel[i - 1].count : null;
+                                const stepPct = prev ? Math.round((step.count / Math.max(1, prev)) * 100) : null;
+                                return (
+                                  <div key={step.key}>
+                                    <div className="flex items-center justify-between text-[11px] mb-1">
+                                      <span className="text-gray-600">{maFunnelLabels[step.key]}</span>
+                                      <span className="font-semibold text-gray-900">{step.count}{stepPct != null && <span className="text-gray-400 font-normal"> · {stepPct}%</span>}</span>
+                                    </div>
+                                    <div className="h-4 bg-gray-100 rounded-md overflow-hidden"><div className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-md" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {(ma.sources || []).length > 0 && (
+                              <div className="bg-white border border-gray-200 rounded-2xl p-4 mt-3">
+                                <h4 className="text-xs font-bold text-gray-700 mb-2.5">{t("mechTrafficSourceTitle")}</h4>
+                                {ma.sources.map(r => { const max = Math.max(1, ...ma.sources.map(x => x.visitors)); return (
+                                  <div key={r.label} className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[11px] text-gray-600 w-24 truncate">{r.label}</span>
+                                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.round((r.visitors / max) * 100)}%` }} /></div>
+                                    <span className="text-[11px] font-semibold text-gray-700 w-8 text-right">{r.visitors}</span>
+                                  </div>
+                                ); })}
+                              </div>
+                            )}
+                            {/* ŞEHRİNDEKİ TALEP: kişi bazlı değil, toplu arama sayıları. Tamirciye
+                                "hangi hizmete talep var ama sen sunmuyorsun" sinyali veriyor. */}
+                            {(ma.cityDemand || []).length > 0 && (
+                              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mt-3">
+                                <h4 className="text-xs font-bold text-blue-900 mb-1">{t("mechDemandTitle")}</h4>
+                                <p className="text-[11px] text-blue-700 mb-2.5">{t("mechDemandHint")}</p>
+                                {ma.cityDemand.slice(0, 6).map(r => {
+                                  const iOffer = (myProfile?.services || []).some(sv => (sv.name || "").toLocaleLowerCase("tr-TR") === String(r.label || "").toLocaleLowerCase("tr-TR"));
+                                  return (
+                                    <div key={r.label} className="flex items-center justify-between text-[11px] py-1">
+                                      <span className="text-blue-900 truncate flex items-center gap-1.5">{r.label}{!iOffer && <span className="text-[9px] font-bold bg-white border border-blue-300 text-blue-700 rounded px-1.5 py-0.5">{t("mechDemandNotOffered")}</span>}</span>
+                                      <span className="font-bold text-blue-900">{r.n}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
                         <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><Compass size={14} className="text-rose-500" /> {t("profileVisitsTitle")}</h3>
                         {!stats ? (
                           <div className="text-center py-10 text-xs text-gray-400">{t("loadingEllipsis")}</div>

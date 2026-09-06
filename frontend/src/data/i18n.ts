@@ -1136,6 +1136,15 @@ export const T = {
   featureGroup_media: { tr: "Multimedya", en: "Media", de: "Unterhaltung/Media" },
   featureGroup_extras: { tr: "Ekstralar", en: "Extras", de: "Extras" },
   featureGroup_other: { tr: "Diğer", en: "Other", de: "Sonstiges" },
+  // ---- Tamirci analiz paneli: olay tabanlı huni ----
+  mechFunnelTitle: { tr: "Ziyaretçiden Randevuya", en: "Visitor to Booking", de: "Vom Besucher zur Buchung" },
+  mechFunnelView: { tr: "Profili gördü", en: "Viewed profile", de: "Profil angesehen" },
+  mechFunnelContact: { tr: "İletişime geçti", en: "Made contact", de: "Kontakt aufgenommen" },
+  mechFunnelAppointment: { tr: "Randevu aldı", en: "Booked", de: "Termin gebucht" },
+  mechTrafficSourceTitle: { tr: "Ziyaretçiler Nereden Geldi", en: "Where Visitors Came From", de: "Herkunft der Besucher" },
+  mechDemandTitle: { tr: "Bölgende Aranan Hizmetler", en: "Services Searched in Your Area", de: "Gesuchte Leistungen in Ihrer Region" },
+  mechDemandHint: { tr: "Kullanıcıların aradığı hizmetler. Sunmadıklarını eklemek yeni müşteri getirebilir.", en: "What users are searching for. Adding services you don't offer yet can bring new customers.", de: "Wonach Nutzer suchen. Fehlende Leistungen anzubieten kann neue Kunden bringen." },
+  mechDemandNotOffered: { tr: "sunmuyorsun", en: "not offered", de: "nicht im Angebot" },
 };
 
 export const MONTH_ABBR_BY_LANG = {

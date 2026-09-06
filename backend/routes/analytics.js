@@ -237,4 +237,72 @@ router.get("/top-targets", requireAdmin, (req, res) => {
   res.json(rows);
 });
 
+// --------------------------- TAMİRCİNİN KENDİ ANALİTİĞİ ---------------------------
+/**
+ * GET /api/analytics/my-mechanic
+ *
+ * GÜVENLİK — BU UCUN EN ÖNEMLİ ÖZELLİĞİ: hedef tamirci id'si İSTEKTEN ALINMIYOR (ne query, ne body).
+ * Doğrudan oturum token'ından çözülen actor.id kullanılıyor. Aksi halde bir tamirci
+ * ?mechanicId=<rakip> yazarak rakibinin dönüşüm verisini okuyabilirdi — bu, admin uçlarını
+ * korumamızı tamamen anlamsız kılardı.
+ *
+ * Dönen veriler tamircinin KENDİ profiline ait; tek istisna "şehrindeki talep" bloğu, ki o da
+ * kimseye ait olmayan toplu arama sayılarıdır (hangi tamircinin aradığı bilgisi taşımaz).
+ */
+router.get("/my-mechanic", (req, res) => {
+  const actor = resolveActor(req);
+  if (actor?.role !== "mechanic" || actor.id == null) return res.status(403).json({ error: "Yetkisiz." });
+  const mechanicId = actor.id;
+  const cutoff = cutoffFor(req.query.days);
+  const p = { cutoff, mid: mechanicId };
+  const one = (sql) => db.prepare(sql).get(p) || {};
+
+  const mine = ` AND targetType = 'mechanic' AND targetId = @mid`;
+  const views = one(`SELECT COUNT(*) n FROM analytics_events WHERE name='mechanic_view'${mine}${since(cutoff)}`).n || 0;
+  const uniqueViewers = one(`SELECT COUNT(DISTINCT visitorId) n FROM analytics_events WHERE name='mechanic_view'${mine} AND visitorId IS NOT NULL${since(cutoff)}`).n || 0;
+  const contacts = one(`SELECT COUNT(DISTINCT visitorId) n FROM analytics_events WHERE name='contact_started'${mine} AND visitorId IS NOT NULL${since(cutoff)}`).n || 0;
+  const appointments = one(`SELECT COUNT(DISTINCT visitorId) n FROM analytics_events WHERE name='appointment_booked'${mine} AND visitorId IS NOT NULL${since(cutoff)}`).n || 0;
+
+  // Tamircinin şehri: profilinden okunuyor (adres alanı serbest metin olduğu için basit eşleşme).
+  // "Şehrindeki talep" bloğu bunun üzerine kuruluyor.
+  const mech = db.prepare(`SELECT address FROM mechanics WHERE id = ?`).get(mechanicId) || {};
+
+  // ŞEHRİNDEKİ TALEP: kullanıcıların bu tamircinin şehri için ne aradığı. Tamirciye satış argümanı
+  // ("şehrinde ayda 80 kez kaporta aranıyor") ve ürün geliştirme sinyali. Kişi bazlı hiçbir veri yok.
+  const cityDemand = db.prepare(`
+    SELECT json_extract(meta, '$.service') label, COUNT(*) n
+    FROM analytics_events
+    WHERE name = 'search_performed'
+      AND json_extract(meta, '$.service') IS NOT NULL
+      AND TRIM(json_extract(meta, '$.service')) != ''${since(cutoff)}
+    GROUP BY label ORDER BY n DESC LIMIT 8
+  `).all({ cutoff });
+
+  const series = db.prepare(`
+    SELECT date(createdAt) day, COUNT(*) views
+    FROM analytics_events
+    WHERE name='mechanic_view' AND targetType='mechanic' AND targetId=@mid${since(cutoff)}
+    GROUP BY day ORDER BY day ASC LIMIT 90
+  `).all(p);
+
+  const sources = db.prepare(`
+    SELECT COALESCE(NULLIF(source, ''), 'bilinmiyor') label, COUNT(DISTINCT visitorId) visitors
+    FROM analytics_events
+    WHERE name='mechanic_view' AND targetType='mechanic' AND targetId=@mid${since(cutoff)}
+    GROUP BY label ORDER BY visitors DESC LIMIT 6
+  `).all(p);
+
+  res.json({
+    views, uniqueViewers, contacts, appointments,
+    // Huni: profil görüntüleme → iletişim → randevu. Adımlar tekil ziyaretçi bazında.
+    funnel: [
+      { key: "view", count: uniqueViewers },
+      { key: "contact", count: contacts },
+      { key: "appointment", count: appointments },
+    ],
+    city: mech.address || null,
+    cityDemand, series, sources,
+  });
+});
+
 export default router;
