@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PriceLevelDots } from "../ui/PriceLevelDots";
 import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, CreditCard, Flag, Globe, Heart, MapPin, MessageCircle, Navigation, Phone, Star, Tag, ThumbsUp, Users, Wrench as ToolIcon, X, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
@@ -29,7 +29,8 @@ export function MechDetailBody() {
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, 
     filters, setFilters, listingFilters, setListingFilters, listingSort, setListingSort, userLocation, 
     setUserLocation, locationStatus, setLocationStatus, notifPermission, setNotifPermission, favoriteIds,
-    setFavoriteIds, toggleFavorite, favoriteMechanicIds, toggleFavoriteMechanic, likedReviewIds, toggleReviewHelpful, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query,
+    setFavoriteIds, toggleFavorite, favoriteMechanicIds, toggleFavoriteMechanic, likedReviewIds, toggleReviewHelpful,
+    serviceLabel, servicePriceForBrand, mechanicStartingPrice, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query,
     setQuery, locationQuery, setLocationQuery, sortBy, setSortBy, sortDir, setSortDir, showLocationPrompt, 
     setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, 
     openMapDetail, selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, 
@@ -147,6 +148,16 @@ export function MechDetailBody() {
   const SERVICE_PREVIEW = 6;
   const services = selectedMechanic.services || [];
   const visibleServices = showAllServices ? services : services.slice(0, SERVICE_PREVIEW);
+  // MARKA BAZLI FİYAT: tamirci bazı işler için markaya göre farklı fiyat girmiş olabilir
+  // (aynı kapı tamiri BMW'de başka, Toyota'da başka). ATU'da da akış aynı: önce marka seçiliyor,
+  // fiyat ona göre gösteriliyor. Burada müşteri markasını seçince tüm liste o markaya göre
+  // yeniden fiyatlanıyor; hiçbir hizmette marka farkı yoksa seçici hiç gösterilmiyor.
+  const priceBrands = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of services) for (const b of Object.keys(s.brandPrices || {})) set.add(b);
+    return [...set].sort();
+  }, [services]);
+  const [priceBrand, setPriceBrand] = useState(null);
   // Sayfa içi bölüm bağlantıları: id'ler bu bileşende benzersiz olsun diye tamirci id'siyle
   // öneklenmiyor — aynı anda yalnızca tek bir tamirci profili açık olabiliyor.
   const scrollToSection = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -322,17 +333,38 @@ export function MechDetailBody() {
 
           {/* Hizmetler ve fiyatlar — servis menüsü gibi iki sütunlu liste */}
           <Section id="mech-services" icon={ToolIcon} title={t("mechServicesPriceTitle")} count={services.length}>
-            <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 overflow-hidden">
-              {visibleServices.map((s, i) => (
-                <div key={i} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50/70 transition">
-                  <span className="text-sm text-gray-700 flex items-center gap-2 min-w-0">
-                    <ToolIcon size={13} className="text-rose-400 flex-shrink-0" />
-                    <span className="truncate">{s.name}</span>
-                    {s.fixed && String(s.price || "").trim() && <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 flex-shrink-0">FIX</span>}
-                  </span>
-                  <span className="text-sm font-bold text-gray-900 whitespace-nowrap flex-shrink-0">{String(s.price || "").trim() || <span className="text-xs font-medium text-gray-400">{t("priceUponInspectionLabel")}</span>}</span>
+            {priceBrands.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1.5"><Car size={13} className="text-rose-500" /> {t("brandPricesOnDetailTitle")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button onClick={() => setPriceBrand(null)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === null ? "bg-gray-900 text-white border-gray-900" : "bg-white border-gray-200 text-gray-500 hover:border-gray-400"}`}>{t("otherBrandsLabel")}</button>
+                  {priceBrands.map((b) => (
+                    <button key={b} onClick={() => setPriceBrand(b)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === b ? "bg-rose-600 text-white border-rose-600" : "bg-white border-gray-200 text-gray-500 hover:border-rose-300"}`}>{b}</button>
+                  ))}
                 </div>
-              ))}
+              </div>
+            )}
+            <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 overflow-hidden">
+              {visibleServices.map((s, i) => {
+                // Eski kayıtlarda fiyat "350₺" gibi para birimiyle yazılmış olabilir (serbest metin
+                // dönemi); yenilerde yalnızca rakam. İki durumu da doğru gösteriyoruz.
+                const raw = String(servicePriceForBrand(s, priceBrand) || "").trim();
+                const shown = raw === "" ? "" : (/[₺€$]/.test(raw) ? raw : `${raw}₺`);
+                const isBrandPrice = !!(priceBrand && s.brandPrices?.[priceBrand]);
+                return (
+                  <div key={s.key || `c-${i}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50/70 transition">
+                    <span className="text-sm text-gray-700 flex items-center gap-2 min-w-0">
+                      <ToolIcon size={13} className="text-rose-400 flex-shrink-0" />
+                      <span className="truncate">{serviceLabel(s)}</span>
+                      {s.fixed && String(s.price || "").trim() && <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 flex-shrink-0">FIX</span>}
+                    </span>
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      {isBrandPrice && <span className="text-[10px] font-bold text-rose-600 bg-rose-50 rounded px-1.5 py-0.5">{priceBrand}</span>}
+                      <span className="text-sm font-bold text-gray-900 whitespace-nowrap">{shown || <span className="text-xs font-medium text-gray-400">{t("priceUponInspectionLabel")}</span>}</span>
+                    </span>
+                  </div>
+                );
+              })}
             </div>
             {services.length > SERVICE_PREVIEW && (
               <button onClick={() => setShowAllServices((v) => !v)} className="mt-3 text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1">

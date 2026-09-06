@@ -9,9 +9,19 @@
 // edilmeden riskli olacağından bu geçişte YAPILMADI; bkz. REFACTOR_REPORT.md "kalan teknik borç".
 
 export interface Service {
+  /** Katalogdan seçildiyse SERVICE_CATALOG anahtarı (ör. "brake_pads"). Serbest metinle eklenen
+   *  hizmetlerde yok. Anahtarı olan hizmetler üç dilde otomatik çevriliyor ve aramada eşleşiyor. */
+  key?: string;
+  /** Görünen ad. Katalog hizmetlerinde seçildiği andaki Türkçe ad (eski kayıtlarla uyumluluk ve
+   *  key kataloğdan kalkarsa yedek olarak); serbest hizmetlerde tamircinin yazdığı metin. */
   name: string;
+  /** Varsayılan fiyat — brandPrices'ta karşılığı olmayan tüm markalar için geçerli. */
   price: string;
   fixed: boolean;
+  /** Marka bazlı fiyat farkları: { "BMW": "1200", "Toyota": "800" }.
+   *  ATU'nun modeli birebir bu: önce marka/model seçiliyor, fiyat ona göre gösteriliyor —
+   *  aynı kapı tamiri BMW'de 1200₺, Toyota'da 800₺ olabilir. Boş/yoksa `price` geçerli. */
+  brandPrices?: Record<string, string>;
 }
 
 export interface StaffMember {

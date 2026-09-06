@@ -167,22 +167,199 @@ export const VARIABLE_PRICE_KEYWORDS = ["arıza tespit", "arıza", "kaporta", "b
 
 // ATU'nun (Almanya'nın en büyük oto servis zinciri) web sitesinde ve fiyat araştırmalarında
 // sabit fiyatla sunulan başlıca hizmetler baz alınarak oluşturulmuş standart hizmet kataloğu.
-export const ATU_FIXED_CATALOG = [
-  { matchKey: "yağ değişimi", name: "Yağ Değişimi", price: "350₺" },
-  { matchKey: "filtre", name: "Filtre Değişimi (Yağ/Hava/Polen)", price: "250₺" },
-  { matchKey: "lastik", name: "Lastik Değişimi / Montajı", price: "300₺" },
-  { matchKey: "rot balans", name: "Rot Balans Ayarı", price: "400₺" },
-  { matchKey: "fren balata", name: "Fren Balata Değişimi", price: "700₺" },
-  { matchKey: "fren diski", name: "Fren Diski Değişimi", price: "1200₺" },
-  { matchKey: "akü", name: "Akü Değişimi", price: "900₺" },
-  { matchKey: "klima gazı", name: "Klima Gazı Dolumu", price: "500₺" },
-  { matchKey: "klima bakımı", name: "Klima Bakımı", price: "450₺" },
-  { matchKey: "egzoz", name: "Egzoz Değişimi", price: "900₺" },
-  { matchKey: "periyodik bakım", name: "Periyodik Bakım (Genel Bakım)", price: "600₺" },
-  { matchKey: "muayene", name: "Araç Muayenesi", price: "300₺" },
-  { matchKey: "silecek", name: "Silecek Değişimi", price: "150₺" },
-  { matchKey: "far ampul", name: "Far Ampulü Değişimi", price: "150₺" },
+// ---------------------------------------------------------------------------------------------
+// HİZMET KATALOĞU
+// ---------------------------------------------------------------------------------------------
+// Kaynak/örnek: ATU (atu.de) "Werkstattservices" sayfasındaki hizmet ağacı — Almanya'nın en büyük
+// zincir servislerinden biri. ATU'nun akışı şu: önce ARAÇ MARKASI + model + yıl seçiliyor, SONRA o
+// hizmetin fiyatı gösteriliyor. Yani fiyat markaya göre değişiyor; bu katalog ve altındaki
+// `brandPrices` alanı (bkz. types/domain.ts → Service) tam olarak bu modeli izliyor.
+//
+// Tamirci serbest metin yazmak yerine bu listeden çoklu seçim yapıyor. Bunun üç faydası var:
+//   1) Arama/filtreleme gerçekten çalışıyor ("fren balata" yazan da "Balata Değişimi" bulabiliyor),
+//   2) hizmet adları üç dilde tutarlı görünüyor (tamirci Türkçe seçiyor, Alman müşteri Almanca
+//      görüyor — serbest metinle bu imkânsızdı),
+//   3) müşteri farklı tamircileri gerçekten karşılaştırabiliyor (aynı hizmetin aynı adı).
+// Katalogda olmayan bir iş için serbest metin ekleme yolu hâlâ açık (key'i olmayan hizmet).
+export const SERVICE_CATALOG = [
+  {
+    key: "maintenance", icon: "wrench",
+    tr: "Bakım & Servis", en: "Maintenance & Service", de: "Wartung & Service",
+    items: [
+      { key: "periodic_service", tr: "Periyodik Bakım", en: "Periodic Service", de: "Inspektion" },
+      { key: "oil_change", tr: "Yağ Değişimi", en: "Oil Change", de: "Ölwechsel" },
+      { key: "oil_filter", tr: "Yağ Filtresi Değişimi", en: "Oil Filter Replacement", de: "Ölfilterwechsel" },
+      { key: "air_filter", tr: "Hava Filtresi Değişimi", en: "Air Filter Replacement", de: "Luftfilterwechsel" },
+      { key: "cabin_filter", tr: "Polen Filtresi Değişimi", en: "Cabin Filter Replacement", de: "Innenraumfilterwechsel" },
+      { key: "fuel_filter", tr: "Yakıt Filtresi Değişimi", en: "Fuel Filter Replacement", de: "Kraftstofffilterwechsel" },
+      { key: "spark_plugs", tr: "Buji Değişimi", en: "Spark Plug Replacement", de: "Zündkerzenwechsel" },
+      { key: "timing_belt", tr: "Triger Kayışı Değişimi", en: "Timing Belt Replacement", de: "Zahnriemenwechsel" },
+      { key: "vbelt", tr: "V Kayışı Değişimi", en: "Drive Belt Replacement", de: "Keilriemenwechsel" },
+      { key: "coolant", tr: "Antifriz / Soğutma Suyu", en: "Coolant Top-up", de: "Kühlmittel nachfüllen" },
+      { key: "wipers", tr: "Silecek Değişimi", en: "Wiper Blade Replacement", de: "Scheibenwischerwechsel" },
+    ],
+  },
+  {
+    key: "brakes", icon: "disc",
+    tr: "Fren Sistemi", en: "Brake System", de: "Bremsanlage",
+    items: [
+      { key: "brake_pads", tr: "Fren Balata Değişimi", en: "Brake Pad Replacement", de: "Bremsbeläge wechseln" },
+      { key: "brake_discs", tr: "Fren Diski Değişimi", en: "Brake Disc Replacement", de: "Bremsscheiben wechseln" },
+      { key: "brake_fluid", tr: "Fren Hidroliği Değişimi", en: "Brake Fluid Change", de: "Bremsflüssigkeitswechsel" },
+      { key: "brake_check", tr: "Fren Kontrolü", en: "Brake Check", de: "Bremsen-Check" },
+      { key: "handbrake", tr: "El Freni Ayarı", en: "Handbrake Adjustment", de: "Handbremse einstellen" },
+      { key: "abs_repair", tr: "ABS Arıza Onarımı", en: "ABS Fault Repair", de: "ABS-Reparatur" },
+    ],
+  },
+  {
+    key: "tires", icon: "circle",
+    tr: "Lastik & Jant", en: "Tires & Wheels", de: "Reifen & Felgen",
+    items: [
+      { key: "tire_change", tr: "Lastik Değişimi", en: "Tire Change", de: "Reifenwechsel" },
+      { key: "tire_mounting", tr: "Lastik Montajı", en: "Tire Mounting", de: "Reifenmontage" },
+      { key: "wheel_balance", tr: "Balans Ayarı", en: "Wheel Balancing", de: "Auswuchten" },
+      { key: "wheel_alignment", tr: "Rot Balans / Aks Ayarı", en: "Wheel Alignment", de: "Achsvermessung" },
+      { key: "tire_repair", tr: "Lastik Tamiri", en: "Tire Repair", de: "Reifenreparatur" },
+      { key: "tire_storage", tr: "Lastik Oteli (Saklama)", en: "Tire Storage", de: "Reifeneinlagerung" },
+      { key: "rim_repair", tr: "Jant Onarımı", en: "Rim Refurbishment", de: "Felgenaufbereitung" },
+      { key: "tpms", tr: "Lastik Basınç Sensörü (TPMS)", en: "TPMS Service", de: "Reifendrucksensor (RDKS)" },
+    ],
+  },
+  {
+    key: "engine", icon: "cog",
+    tr: "Motor & Şanzıman", en: "Engine & Transmission", de: "Motor & Getriebe",
+    items: [
+      { key: "engine_diag", tr: "Motor Arıza Tespiti", en: "Engine Diagnostics", de: "Motordiagnose" },
+      { key: "engine_repair", tr: "Motor Onarımı", en: "Engine Repair", de: "Motorreparatur" },
+      { key: "clutch", tr: "Debriyaj Değişimi", en: "Clutch Replacement", de: "Kupplungswechsel" },
+      { key: "gearbox", tr: "Şanzıman Bakımı / Onarımı", en: "Gearbox Service / Repair", de: "Getriebeservice" },
+      { key: "gearbox_oil", tr: "Şanzıman Yağı Değişimi", en: "Transmission Oil Change", de: "Getriebeölwechsel" },
+      { key: "starter", tr: "Marş Motoru Değişimi", en: "Starter Motor Replacement", de: "Anlasser wechseln" },
+      { key: "alternator", tr: "Alternatör (Şarj Dinamosu)", en: "Alternator Replacement", de: "Lichtmaschine wechseln" },
+      { key: "turbo", tr: "Turbo Onarımı", en: "Turbocharger Repair", de: "Turbolader-Reparatur" },
+      { key: "carbon_clean", tr: "Hidrojenle Motor Temizliği", en: "Engine Carbon Cleaning", de: "Carbon Cleaning" },
+      { key: "water_pump", tr: "Devirdaim (Su Pompası)", en: "Water Pump Replacement", de: "Wasserpumpe wechseln" },
+    ],
+  },
+  {
+    key: "suspension", icon: "activity",
+    tr: "Süspansiyon & Direksiyon", en: "Suspension & Steering", de: "Fahrwerk & Lenkung",
+    items: [
+      { key: "shock_absorbers", tr: "Amortisör Değişimi", en: "Shock Absorber Replacement", de: "Stoßdämpfer wechseln" },
+      { key: "springs", tr: "Helezon Yay Değişimi", en: "Spring Replacement", de: "Federn wechseln" },
+      { key: "control_arm", tr: "Salıncak / Rotil Değişimi", en: "Control Arm / Ball Joint", de: "Querlenker / Traggelenk" },
+      { key: "steering_rack", tr: "Direksiyon Kutusu Onarımı", en: "Steering Rack Repair", de: "Lenkgetriebe-Reparatur" },
+      { key: "cv_joint", tr: "Aks / Körük Değişimi", en: "CV Joint / Boot Replacement", de: "Antriebswelle / Manschette" },
+      { key: "suspension_check", tr: "Süspansiyon Kontrolü", en: "Suspension Check", de: "Fahrwerks-Check" },
+    ],
+  },
+  {
+    key: "electrics", icon: "zap",
+    tr: "Elektrik & Elektronik", en: "Electrics & Electronics", de: "Elektrik & Elektronik",
+    items: [
+      { key: "battery", tr: "Akü Değişimi", en: "Battery Replacement", de: "Batteriewechsel" },
+      { key: "battery_test", tr: "Akü & Şarj Testi", en: "Battery & Charging Test", de: "Batterie- und Ladetest" },
+      { key: "error_memory", tr: "Arıza Kodu Okuma / Silme", en: "Fault Code Read / Reset", de: "Fehlerspeicher auslesen" },
+      { key: "lighting", tr: "Far & Ampul Değişimi", en: "Lighting & Bulb Replacement", de: "Beleuchtung & Leuchtmittel" },
+      { key: "led_retrofit", tr: "LED Dönüşümü", en: "LED Retrofit", de: "LED Umrüstung" },
+      { key: "headlight_align", tr: "Far Ayarı", en: "Headlight Alignment", de: "Scheinwerfer einstellen" },
+      { key: "adas", tr: "Sürüş Asistanı Kalibrasyonu", en: "Driver Assistance Calibration", de: "Fahrassistenzsysteme kalibrieren" },
+      { key: "car_audio", tr: "Multimedya / Ses Sistemi", en: "Multimedia / Audio System", de: "Multimedia / Audio" },
+      { key: "parking_sensor", tr: "Park Sensörü / Kamera", en: "Parking Sensor / Camera", de: "Einparkhilfe / Kamera" },
+    ],
+  },
+  {
+    key: "climate", icon: "wind",
+    tr: "Klima & Isıtma", en: "Climate & Heating", de: "Klima & Heizung",
+    items: [
+      { key: "ac_service", tr: "Klima Bakımı", en: "A/C Service", de: "Klimaanlagen-Service" },
+      { key: "ac_gas", tr: "Klima Gazı Dolumu", en: "A/C Refrigerant Refill", de: "Klimaanlage befüllen" },
+      { key: "ac_disinfect", tr: "Klima Dezenfeksiyonu", en: "A/C Disinfection", de: "Klimaanlagen-Desinfektion" },
+      { key: "ac_repair", tr: "Klima Onarımı", en: "A/C Repair", de: "Klimaanlagen-Reparatur" },
+      { key: "heater_repair", tr: "Kalorifer Onarımı", en: "Heater Repair", de: "Heizungsreparatur" },
+    ],
+  },
+  {
+    key: "exhaust", icon: "cloud",
+    tr: "Egzoz & Emisyon", en: "Exhaust & Emissions", de: "Abgas & Emissionen",
+    items: [
+      { key: "exhaust", tr: "Egzoz Değişimi / Onarımı", en: "Exhaust Replacement / Repair", de: "Auspuff wechseln / reparieren" },
+      { key: "dpf_clean", tr: "Partikül Filtresi (DPF) Temizliği", en: "Diesel Particulate Filter Cleaning", de: "Dieselpartikelfilter-Reinigung" },
+      { key: "catalyst", tr: "Katalizör Değişimi", en: "Catalytic Converter Replacement", de: "Katalysator wechseln" },
+      { key: "adblue", tr: "AdBlue Dolumu", en: "AdBlue Refill", de: "AdBlue Betankung" },
+      { key: "emission_test", tr: "Egzoz Emisyon Ölçümü", en: "Emissions Test", de: "Abgasuntersuchung (AU)" },
+    ],
+  },
+  {
+    key: "body", icon: "car",
+    tr: "Kaporta, Boya & Cam", en: "Body, Paint & Glass", de: "Karosserie, Lack & Glas",
+    items: [
+      { key: "body_repair", tr: "Kaporta Onarımı", en: "Body Repair", de: "Karosseriereparatur" },
+      { key: "paint", tr: "Boya", en: "Paint Work", de: "Lackierung" },
+      { key: "smart_repair", tr: "Lokal Onarım (Smart Repair)", en: "Smart Repair", de: "Smart Repair" },
+      { key: "dent_removal", tr: "Boyasız Göçük Düzeltme", en: "Paintless Dent Removal", de: "Dellenentfernung" },
+      { key: "accident_repair", tr: "Kaza Hasar Onarımı", en: "Accident Damage Repair", de: "Unfallschadenreparatur" },
+      { key: "windshield", tr: "Ön Cam Değişimi", en: "Windshield Replacement", de: "Windschutzscheibe wechseln" },
+      { key: "glass_repair", tr: "Cam Çatlak Onarımı", en: "Glass Chip Repair", de: "Steinschlagreparatur" },
+      { key: "towbar", tr: "Çeki Demiri Montajı", en: "Towbar Fitting", de: "Anhängerkupplung montieren" },
+      { key: "roof_rack", tr: "Port Bagaj / Tavan Kutusu Montajı", en: "Roof Rack / Box Fitting", de: "Dachträger / Dachbox montieren" },
+    ],
+  },
+  {
+    key: "inspection", icon: "clipboard",
+    tr: "Muayene & Kontroller", en: "Inspection & Checks", de: "Prüfung & Checks",
+    items: [
+      { key: "pre_inspection", tr: "Muayene Öncesi Kontrol", en: "Pre-Inspection Check", de: "HU-Vorabcheck" },
+      { key: "official_inspection", tr: "Araç Muayenesi (TÜVTÜRK)", en: "Official Vehicle Inspection", de: "Hauptuntersuchung (HU)" },
+      { key: "expertise", tr: "Ekspertiz Raporu", en: "Vehicle Expertise Report", de: "Fahrzeug-Gutachten" },
+      { key: "mobility_check", tr: "Yolculuk Öncesi Kontrol", en: "Pre-Trip Mobility Check", de: "Mobilitäts-Check" },
+      { key: "fleet_check", tr: "Filo Aracı Kontrolü (UVV)", en: "Fleet Vehicle Check (UVV)", de: "Flottencheck (UVV / DGUV)" },
+    ],
+  },
+  {
+    key: "ev", icon: "battery",
+    tr: "Elektrikli & Hibrit Araçlar", en: "Electric & Hybrid Vehicles", de: "E-Mobilität & Hybrid",
+    items: [
+      { key: "ev_service", tr: "Elektrikli Araç Bakımı", en: "EV Service", de: "E-Fahrzeug-Service" },
+      { key: "hv_battery_check", tr: "Yüksek Voltaj Batarya Testi", en: "HV Battery Health Check", de: "HV-Batterie-Check" },
+      { key: "charge_port", tr: "Şarj Soketi Onarımı", en: "Charging Port Repair", de: "Ladeanschluss-Reparatur" },
+      { key: "wallbox", tr: "Duvar Tipi Şarj Ünitesi Montajı", en: "Wallbox Installation", de: "Wallbox-Installation" },
+      { key: "hybrid_service", tr: "Hibrit Sistem Bakımı", en: "Hybrid System Service", de: "Hybrid-Service" },
+    ],
+  },
+  {
+    key: "care", icon: "sparkles",
+    tr: "Bakım & Temizlik", en: "Care & Detailing", de: "Pflege & Aufbereitung",
+    items: [
+      { key: "detailing", tr: "İç & Dış Detaylı Temizlik", en: "Interior & Exterior Detailing", de: "Innen- & Außenaufbereitung" },
+      { key: "polish", tr: "Pasta & Cila", en: "Polish & Wax", de: "Politur & Versiegelung" },
+      { key: "ceramic", tr: "Seramik Kaplama", en: "Ceramic Coating", de: "Keramikversiegelung" },
+      { key: "ppf", tr: "Kaporta Koruma Filmi (PPF)", en: "Paint Protection Film", de: "Lackschutzfolie" },
+      { key: "window_tint", tr: "Cam Filmi", en: "Window Tinting", de: "Scheibentönung" },
+    ],
+  },
 ];
+
+// Katalogdaki tüm hizmetler tek düz listede — arama ve key→isim çözümü için.
+export const SERVICE_CATALOG_FLAT = SERVICE_CATALOG.flatMap((cat) =>
+  cat.items.map((it) => ({ ...it, categoryKey: cat.key, categoryTr: cat.tr, categoryEn: cat.en, categoryDe: cat.de }))
+);
+export const SERVICE_BY_KEY = Object.fromEntries(SERVICE_CATALOG_FLAT.map((it) => [it.key, it]));
+
+// Randevu ekranındaki "tamircinin listelemediği ama yine de sorulabilecek" sabit fiyatlı hizmetler.
+// Eskiden elle yazılmış 14 satırlık ayrı bir listeydi; artık katalogdan türetiliyor ki iki liste
+// birbirinden ayrı düşmesin (bkz. bookingServiceOptions).
+const COMMON_FIXED_KEYS = {
+  oil_change: "350₺", cabin_filter: "250₺", tire_change: "300₺", wheel_alignment: "400₺",
+  brake_pads: "700₺", brake_discs: "1200₺", battery: "900₺", ac_gas: "500₺", ac_service: "450₺",
+  exhaust: "900₺", periodic_service: "600₺", official_inspection: "300₺", wipers: "150₺", lighting: "150₺",
+};
+export const ATU_FIXED_CATALOG = Object.entries(COMMON_FIXED_KEYS).map(([key, price]) => ({
+  key,
+  matchKey: (SERVICE_BY_KEY[key]?.tr || key).toLocaleLowerCase("tr-TR"),
+  name: SERVICE_BY_KEY[key]?.tr || key,
+  price,
+}));
 
 export const DICT_TR_EN = { "merhaba": "hello", "selam": "hi", "teşekkürler": "thank you", "fren sesi geliyor": "there's a brake noise", "ne kadar tutar": "how much will it cost", "tamam": "okay", "evet": "yes", "hayır": "no" };
 export const DICT_EN_TR = Object.fromEntries(Object.entries(DICT_TR_EN).map(([k, v]) => [v, k]));

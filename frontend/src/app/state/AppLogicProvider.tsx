@@ -8,7 +8,8 @@ import {
   FUEL_TYPES, TRANSMISSIONS, EMPLOYMENT_TYPES, EXPERIENCE_LEVELS, EMPTY_JOB_FORM, DEFAULT_HOURS,
   PRICE_LEVEL_BREAKS, PRICE_TIER_BREAKS, ANALYTICS_RANGES, MY_MECHANIC_ID, MY_OWNER_ID, setMyMechanicId, setMyOwnerId, TRACK_STATUSES_MANUAL, TRACK_LABELS_MANUAL,
   TRACK_STATUSES_AUTO, TRACK_LABELS_AUTO, TODAY, TODAY_STR, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS,
-  ATU_FIXED_CATALOG, DICT_TR_EN, DICT_EN_TR, LEGAL_TIRE_RULES, DE_CITIES, REMINDER_KIND_LABELS,
+  ATU_FIXED_CATALOG, SERVICE_CATALOG, SERVICE_CATALOG_FLAT, SERVICE_BY_KEY, CAR_BRANDS,
+  DICT_TR_EN, DICT_EN_TR, LEGAL_TIRE_RULES, DE_CITIES, REMINDER_KIND_LABELS,
   FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, LEGAL_CONTENT,
   ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_STATUS_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
   ADMIN_TICKET_PRIORITY_WEIGHT, ADMIN_TICKET_TYPE_DEFAULT_PRIORITY, TR_ASCII_MAP,
@@ -944,14 +945,39 @@ function useAppLogic() {
     if (typeof Notification !== "undefined" && Notification.permission === "granted") { try { new Notification(title, { body }); } catch (e) {} }
   };
   const selectedMechanic = mechanicsList.find(m => m.id === selectedMechanicId) || null;
+  // Randevu ekranındaki hizmet listesi. İKİ YENİLİK:
+  //   1) katalog hizmetleri müşterinin diline çevriliyor (tamirci Türkçe seçmiş olsa bile),
+  //   2) müşteri hangi aracıyla geliyorsa O MARKANIN fiyatı gösteriliyor — tamirci "kapı tamiri
+  //      BMW'de 1200, diğerlerinde 800" dediyse, BMW'siyle randevu alan 1200 görüyor.
+  //      (ATU'nun akışının aynısı: önce araç, sonra fiyat.)
+  // NOT: burada serviceLabel/servicePriceForBrand yardımcıları KULLANILAMAZ — onlar dosyanın çok
+  // aşağısında tanımlı ve bu useMemo render sırasında hemen çalışıyor (TDZ). Bu yüzden aynı mantık
+  // burada satır içi duruyor.
   const bookingServiceOptions = useMemo(() => {
-    const own = (selectedMechanic?.services || []).map(s => ({ name: s.name, price: s.price, other: false, fixed: s.fixed !== undefined ? !!s.fixed : isFixedPriceService(s.name), fromCatalog: false }));
-    const ownKeys = own.map(s => s.name.toLocaleLowerCase("tr-TR"));
-    const extras = ATU_FIXED_CATALOG.filter(c => !ownKeys.some(k => k.includes(c.matchKey) || c.matchKey.includes(k))).map(c => ({ name: c.name, price: c.price, other: false, fixed: true, fromCatalog: true }));
+    const bookingVehicleBrand = (vehicles.find(v => v.id === selectedBookingVehicleId) || vehicles[0])?.brand || null;
+    const priceFor = (s) => {
+      const override = bookingVehicleBrand ? s?.brandPrices?.[bookingVehicleBrand] : null;
+      const raw = (override != null && String(override).trim() !== "") ? String(override) : String(s?.price ?? "");
+      // Tamirci artık sadece rakam giriyor (₺ arayüzde ekleniyor); randevu ekranı ise fiyatı
+      // hazır metin olarak basıyor — para birimini burada ekliyoruz ki "800" değil "800₺" görünsün.
+      return raw.trim() === "" ? "" : (/[₺€$]/.test(raw) ? raw : `${raw}₺`);
+    };
+    const labelFor = (s) => {
+      const item = s?.key ? SERVICE_BY_KEY[s.key] : null;
+      return item ? (item[lang] || item.tr) : (s?.name || "");
+    };
+    const own = (selectedMechanic?.services || []).map(s => ({
+      name: labelFor(s), price: priceFor(s), other: false,
+      fixed: s.fixed !== undefined ? !!s.fixed : isFixedPriceService(s.name),
+      fromCatalog: false,
+      brandPriced: !!(bookingVehicleBrand && s?.brandPrices?.[bookingVehicleBrand]),
+    }));
+    const ownKeys = (selectedMechanic?.services || []).map(s => (s.name || "").toLocaleLowerCase("tr-TR"));
+    const extras = ATU_FIXED_CATALOG.filter(c => !ownKeys.some(k => k.includes(c.matchKey) || c.matchKey.includes(k))).map(c => ({ name: SERVICE_BY_KEY[c.key] ? (SERVICE_BY_KEY[c.key][lang] || c.name) : c.name, price: c.price, other: false, fixed: true, fromCatalog: true, brandPriced: false }));
     const all = [...own, ...extras];
     const q = bookingServiceSearch.trim().toLocaleLowerCase("tr-TR");
     return q ? all.filter(s => s.name.toLocaleLowerCase("tr-TR").includes(q)) : all;
-  }, [selectedMechanic, bookingServiceSearch]);
+  }, [selectedMechanic, bookingServiceSearch, vehicles, selectedBookingVehicleId, lang]);
   // Backend fetch is async now (bkz. yukarıdaki bootstrap useEffect), bu yüzden mechanicsList ilk
   // render'da boş olabilir; ownerProfile'daki gibi güvenli bir varsayılan nesne veriyoruz ki tamirci
   // profil sayfası veri gelmeden önce açılırsa myProfile.xxx erişimleri çökmesin.
@@ -1014,9 +1040,17 @@ function useAppLogic() {
   // (finalizeAddService/updateService), filtre modalındaki sabit katalog listesiyle harf
   // büyüklüğü/boşluk farkı yüzünden birebir (===) eşleşme sessizce başarısız olabiliyordu.
   // tryAddService'teki mükerrer-hizmet kontrolüyle aynı normalize edilmiş karşılaştırmayı kullanıyoruz.
+  // Bir hizmetin ARAMADA eşleşebileceği tüm adlar: serbest metin adı + (katalog hizmetiyse) üç
+  // dildeki karşılığı. Böylece Alman müşteri "Bremsbeläge" yazdığında da, Türk tamircinin
+  // "Fren Balata Değişimi" olarak eklediği aynı katalog hizmeti bulunuyor.
+  const serviceSearchTerms = (s) => {
+    const item = s?.key ? SERVICE_BY_KEY[s.key] : null;
+    const words = item ? [s.name, item.tr, item.en, item.de] : [s?.name];
+    return words.filter(Boolean).map((w) => String(w).trim().toLocaleLowerCase("tr-TR"));
+  };
   const serviceNameMatches = (services, wanted) => {
     const w = wanted.trim().toLocaleLowerCase("tr-TR");
-    return (services || []).some((s) => s.name.trim().toLocaleLowerCase("tr-TR") === w);
+    return (services || []).some((s) => serviceSearchTerms(s).includes(w));
   };
   // TEK DOĞRULUK KAYNAĞI: tamirci filtre kuralları eskiden `filtered`, `quoteFilteredMechanics` ve
   // kayıtlı-arama eşleştiricisinde ÜÇ AYRI yerde elle kopyalanmıştı — geçmişte bu yüzden marka/hizmet
@@ -1063,7 +1097,7 @@ function useAppLogic() {
     // hem tamircinin kendi girdiği hizmet adlarına hem de uzmanlık alanına (specialty) bakıyor.
     if (serviceQuery.trim()) {
       const sq = serviceQuery.trim().toLocaleLowerCase("tr-TR");
-      list = list.filter(m => (m.services || []).some(s => (s.name || "").toLocaleLowerCase("tr-TR").includes(sq)) || (m.specialty || "").toLocaleLowerCase("tr-TR").includes(sq));
+      list = list.filter(m => (m.services || []).some(s => serviceSearchTerms(s).some(term => term.includes(sq))) || (m.specialty || "").toLocaleLowerCase("tr-TR").includes(sq));
     }
     list = list.filter(m => mechanicPassesFilters(m, filters));
     if (sortBy === "distance") list = [...list].sort((a, b) => {
@@ -3182,10 +3216,79 @@ function useAppLogic() {
   // anında 0'a düşüp kaydediliyordu — "ücretsiz" gibi yanlış bir izlenim verebiliyordu. Alan
   // boşken sadece görünümü boş bırakıyoruz (henüz kaydetmiyoruz); geçerli bir sayı girilince normal
   // şekilde kaydediliyor.
-  const updateMyPriceField = (raw) => {
-    if (String(raw).trim() === "") { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, price: "" } : m)); return; }
-    updateMyField("price", Number(raw) || 0);
+  // ---------------------------------------------------------------------------------------------
+  // HİZMETLER: katalog seçimi + MARKA BAZLI FİYATLANDIRMA
+  // ---------------------------------------------------------------------------------------------
+  // Katalog anahtarı olan hizmetler görüntüleyenin diline çevrilir; serbest metinle eklenenler
+  // yazıldığı gibi kalır (çeviremeyeceğimiz için).
+  const serviceLabel = (svc, viewerLang = lang) => {
+    const item = svc?.key ? SERVICE_BY_KEY[svc.key] : null;
+    if (item) return item[viewerLang] || item.tr;
+    return svc?.name || "";
   };
+  const serviceCategoryOf = (svc) => (svc?.key ? SERVICE_CATALOG_FLAT.find(i => i.key === svc.key)?.categoryKey || null : null);
+  // Bir hizmetin BELİRLİ BİR MARKA için fiyatı. brandPrices'ta karşılığı yoksa varsayılan fiyat.
+  // ATU'nun yaptığı da tam olarak bu: marka seçilmeden fiyat gösterilmiyor.
+  const servicePriceForBrand = (svc, brand) => {
+    const override = brand ? svc?.brandPrices?.[brand] : null;
+    return (override != null && String(override).trim() !== "") ? String(override) : String(svc?.price ?? "");
+  };
+  // Tamircinin "başlangıç fiyatı": listelediği TÜM fiyatların (varsayılan + marka bazlı) en düşüğü.
+  // Eskiden tamirciye elle yazdırılan "saatlik ücret" alanı vardı — uydurma bir sayıydı, hiçbir
+  // yerde doğrulanmıyordu ve müşteriye yanlış beklenti veriyordu. Artık gerçek fiyat listesinden
+  // türetiliyor; filtreler/sıralama/kartlar aynı `price` alanını okumaya devam ediyor.
+  const startingPriceFromServices = (services) => {
+    const nums = [];
+    for (const s of services || []) {
+      const vals = [s.price, ...Object.values(s.brandPrices || {})];
+      for (const v of vals) { const n = parsePriceNumber(v); if (n > 0) nums.push(n); }
+    }
+    return nums.length ? Math.min(...nums) : null;
+  };
+  const mechanicStartingPrice = (m) => startingPriceFromServices(m?.services) ?? (Number(m?.price) || 0);
+  // TEK YAZMA YOLU: hizmet dizisini değiştiren her yer buradan geçiyor ki türetilmiş başlangıç
+  // fiyatı da aynı istekte güncellensin (iki ayrı PATCH atıp yarı-güncel kalma riski olmasın).
+  const saveServices = (services, failMessage = "Hizmet kaydedilemedi") => {
+    const derived = startingPriceFromServices(services);
+    const patch = derived != null ? { services, price: derived } : { services };
+    setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, ...patch }));
+    persist(api.mechanics.update(MY_MECHANIC_ID, patch), failMessage);
+  };
+  const [servicePickerOpen, setServicePickerOpen] = useState(false);
+  const [servicePickerQuery, setServicePickerQuery] = useState("");
+  const [servicePickerCat, setServicePickerCat] = useState("all");
+  const [brandPriceEditKey, setBrandPriceEditKey] = useState(null); // hangi hizmetin marka fiyatları açık
+  // Katalogdan çoklu seçim: seçiliyse çıkarır, değilse ekler.
+  const toggleCatalogService = (item) => {
+    const services = myProfile?.services || [];
+    const exists = services.some(s => s.key === item.key);
+    const next = exists
+      ? services.filter(s => s.key !== item.key)
+      : [...services, { key: item.key, name: item.tr, price: "", fixed: false, brandPrices: {} }];
+    saveServices(next);
+  };
+  // Marka bazlı fiyat gir / temizle. Boş bırakılan marka anahtarı tamamen siliniyor —
+  // aksi halde `brandPrices: { BMW: "" }` gibi anlamsız kayıtlar birikirdi ve "bu markada fiyat
+  // verilmiş" gibi görünürdü.
+  const setServiceBrandPrice = (idx, brand, value) => {
+    const services = (myProfile?.services || []).map((s, i) => {
+      if (i !== idx) return s;
+      const bp = { ...(s.brandPrices || {}) };
+      if (String(value).trim() === "") delete bp[brand]; else bp[brand] = String(value).replace(/[^\d]/g, "");
+      return { ...s, brandPrices: bp };
+    });
+    saveServices(services, "Marka fiyatı kaydedilemedi");
+  };
+  const clearServiceBrandPrices = (idx) => {
+    const services = (myProfile?.services || []).map((s, i) => (i === idx ? { ...s, brandPrices: {} } : s));
+    saveServices(services, "Marka fiyatları temizlenemedi");
+  };
+  // Fiyat farkı girilebilecek markalar: tamircinin "baktığım markalar" listesi. Hiç seçmemişse
+  // en yaygın 10 marka öneriliyor ki özellik boş bir ekranla karşılamasın.
+  const brandPriceOptions = useMemo(() => {
+    const own = myProfile?.brandsServiced || [];
+    return own.length > 0 ? own : CAR_BRANDS.slice(0, 10);
+  }, [myProfile?.brandsServiced]);
   const updateService = (idx, field, value) => {
     const services = myProfile.services.map((s, i) => i === idx ? { ...s, [field]: value } : s);
     setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services }));
@@ -3197,12 +3300,10 @@ function useAppLogic() {
     // sonraki updateService çağrısı zaten güncel diziyi kaydedecek.
     const hasInvalidFixedPrice = services.some(s => s.fixed && !String(s.price || "").trim());
     if (hasInvalidFixedPrice) return;
-    persist(api.mechanics.update(MY_MECHANIC_ID, { services }), "Hizmet kaydedilemedi");
+    saveServices(services);
   };
   const removeService = (idx) => {
-    const services = myProfile.services.filter((_, i) => i !== idx);
-    setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services }));
-    persist(api.mechanics.update(MY_MECHANIC_ID, { services }), "Hizmet kaydedilemedi");
+    saveServices(myProfile.services.filter((_, i) => i !== idx));
   };
   const toggleServiceFixed = (idx) => {
     const svc = myProfile?.services?.[idx];
@@ -3211,9 +3312,9 @@ function useAppLogic() {
     updateService(idx, "fixed", !svc.fixed);
   };
   const finalizeAddService = (name, price, fixed) => {
-    const services = [...myProfile.services, { name, price, fixed }];
-    setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, services }));
-    persist(api.mechanics.update(MY_MECHANIC_ID, { services }), "Hizmet kaydedilemedi");
+    // Katalogda olmayan bir iş: key'siz, serbest metin hizmet. Bu yüzden çevrilemez —
+    // arayüzde de böyle işaretleniyor.
+    saveServices([...myProfile.services, { name, price, fixed, brandPrices: {} }]);
     setNewServiceForm({ name: "", price: "", fixed: false, fixedTouched: false }); setShowAddServiceForm(false); setDuplicateServiceWarning(null);
   };
   const findMissingFixedPriceService = () => (myProfile?.services || []).find(s => s.fixed && !String(s.price || "").trim()) || null;
@@ -4294,7 +4395,11 @@ function useAppLogic() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateMyPriceField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    serviceLabel, serviceCategoryOf, servicePriceForBrand, mechanicStartingPrice, saveServices,
+    servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
+    servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,
+    toggleCatalogService, setServiceBrandPrice, clearServiceBrandPrices, brandPriceOptions,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, toggleBrandServiced, customBrandInput, setCustomBrandInput, addCustomBrand, showAllBrandOptions, setShowAllBrandOptions, togglePaymentMethod, customPaymentInput, setCustomPaymentInput, addCustomPaymentMethod, showAllPaymentOptions, setShowAllPaymentOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,

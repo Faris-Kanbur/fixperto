@@ -35,6 +35,7 @@ import {
   LISTED_WITHIN_OPTIONS, RESPONSE_TIME_OPTIONS, MIN_REVIEW_COUNT_OPTIONS,
   FUEL_TYPE_LABELS_BY_LANG, TRANSMISSION_LABELS_BY_LANG, BODY_TYPE_LABELS_BY_LANG,
   DRIVETRAIN_LABELS_BY_LANG, EMPLOYMENT_TYPE_LABELS_BY_LANG, EXPERIENCE_LEVEL_LABELS_BY_LANG,
+  SERVICE_CATALOG,
 } from "../data/constants";
 import {
   ticketSlaBreached, ticketDaysOpen, initials, isValidEmail, validatePhone,
@@ -116,7 +117,11 @@ export function AppShell() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateMyPriceField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    serviceLabel, servicePriceForBrand, mechanicStartingPrice,
+    servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
+    servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,
+    toggleCatalogService, setServiceBrandPrice, clearServiceBrandPrices, brandPriceOptions,
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, toggleBrandServiced, customBrandInput, setCustomBrandInput, addCustomBrand, showAllBrandOptions, setShowAllBrandOptions, togglePaymentMethod, customPaymentInput, setCustomPaymentInput, addCustomPaymentMethod, showAllPaymentOptions, setShowAllPaymentOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
@@ -3108,7 +3113,7 @@ export function AppShell() {
                 { ok: !!String(myProfile.specialty || "").trim(), label: t("completeItemSpecialty") },
                 { ok: !!String(myProfile.address || "").trim(), label: t("completeItemAddress") },
                 { ok: !!String(myProfile.phone || "").trim(), label: t("completeItemPhone") },
-                { ok: Number(myProfile.price) > 0, label: t("completeItemPrice") },
+                { ok: DAY_KEYS.some((k) => mechanicHours[k]?.open), label: t("completeItemHours") },
                 { ok: (myProfile.services || []).length > 0, label: t("completeItemServices") },
                 { ok: (myProfile.brandsServiced || []).length > 0, label: t("completeItemBrands") },
                 { ok: (myProfile.paymentMethods || []).length > 0, label: t("completeItemPayment") },
@@ -3150,7 +3155,18 @@ export function AppShell() {
                     <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("specialtyPlaceholder")}</span><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
                     <label className="block sm:col-span-2"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholder")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></div></label>
                     <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample")}</span><div className="relative"><Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} placeholder={t("phonePlaceholderExample")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></div></label>
-                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("priceTlPlaceholder")}</span><input value={myProfile.price} onChange={(e) => updateMyPriceField(e.target.value)} type="number" placeholder={t("priceTlPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
+                    {/* KALDIRILDI — "saatlik ücret": tamircinin elle yazdığı, hiçbir yerde
+                        doğrulanmayan uydurma bir sayıydı ve müşteriye yanlış beklenti veriyordu.
+                        Yerine aşağıdaki hizmet listesinden otomatik türetilen "başlangıç fiyatı"
+                        geçti (bkz. startingPriceFromServices) — filtreler ve kartlar aynı alanı
+                        okumaya devam ediyor, ama artık gerçek fiyatlardan geliyor. */}
+                    <div className="sm:col-span-2 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-gray-700">{t("startingPriceLabel")}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">{t("startingPriceHint")}</p>
+                      </div>
+                      <span className="text-lg font-bold text-rose-600 flex-shrink-0">{mechanicStartingPrice(myProfile) > 0 ? `${mechanicStartingPrice(myProfile).toLocaleString("tr-TR")}₺` : "—"}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
@@ -3223,34 +3239,128 @@ export function AppShell() {
                   );
                 })()}
                 </div>
+                {/* ---- HİZMETLER (katalog seçimi + marka bazlı fiyat) ----
+                    Eskiden burada serbest metin kutuları vardı: tamirci "fren balata" yazıyordu,
+                    başkası "Balata değişimi", bir diğeri "Bremsbeläge" — arama tutmuyor, müşteri
+                    karşılaştıramıyor, üç dilde göstermek imkânsızdı. Artık ATU'daki gibi hazır bir
+                    katalogdan çoklu seçim yapılıyor; katalogda olmayan iş için serbest ekleme yolu
+                    duruyor. Her hizmetin varsayılan bir fiyatı, istenirse MARKA BAZLI fiyatları var
+                    (aynı iş BMW'de başka, Toyota'da başka tutabiliyor — ATU da önce marka soruyor). */}
                 <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
-                <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("servicesTitle")}</h3>{!showAddServiceForm && <button onClick={() => setShowAddServiceForm(true)} className="text-sm text-rose-700 font-semibold flex items-center gap-1 hover:text-rose-800"><Plus size={15} /> {t("genericAddBtn")}</button>}</div>
-                <p className="text-xs text-gray-400 mb-4">{t("servicesFixedPriceHint")}</p>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 mb-3 max-h-64 overflow-y-auto pr-0.5">{myProfile.services.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><input value={s.name} onChange={(e) => updateService(i, "name", e.target.value)} placeholder={t("servicePlaceholder")} className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><input value={s.price} onChange={(e) => updateService(i, "price", e.target.value)} placeholder={s.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-20 px-2 py-1.5 rounded-lg border text-xs ${s.fixed && !String(s.price || "").trim() ? "border-red-300" : "border-gray-200"}`} /><button onClick={() => toggleServiceFixed(i)} className={`flex-shrink-0 text-[10px] font-semibold px-2 py-1.5 rounded-lg whitespace-nowrap transition ${s.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{s.fixed ? t("fixedPriceBadge") : t("variableLabel")}</button><button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
-                {showAddServiceForm && (
-                  <div className="bg-rose-100 border border-rose-200 rounded-xl p-3 mb-5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <input autoFocus value={newServiceForm.name} onChange={(e) => { const val = e.target.value; setNewServiceForm(f => ({ ...f, name: val, fixed: f.fixedTouched ? f.fixed : isFixedPriceService(val) })); setDuplicateServiceWarning(null); }} placeholder={t("newServiceNamePlaceholder")} className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs bg-white" />
-                      <input value={newServiceForm.price} onChange={(e) => setNewServiceForm(f => ({ ...f, price: e.target.value }))} placeholder={newServiceForm.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-20 px-2 py-1.5 rounded-lg border text-xs bg-white ${newServiceForm.fixed && !newServiceForm.price.trim() ? "border-red-300" : "border-gray-200"}`} />
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+                    <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("servicesTitle")} <span className="text-gray-300 font-normal text-sm">({myProfile.services.length})</span></h3>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => { setServicePickerOpen(true); setServicePickerQuery(""); setServicePickerCat("all"); }} className="bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-rose-700 transition flex items-center gap-1.5"><ClipboardList size={15} /> {t("pickFromCatalogBtn")}</button>
+                      {!showAddServiceForm && <button onClick={() => setShowAddServiceForm(true)} className="text-sm text-gray-500 font-semibold flex items-center gap-1 hover:text-rose-700 transition"><Plus size={15} /> {t("addCustomServiceBtn")}</button>}
                     </div>
-                    <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: !f.fixed, fixedTouched: true }))} className={`w-full mb-2 text-[11px] font-semibold py-1.5 rounded-lg transition ${newServiceForm.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{newServiceForm.fixed ? t("fixedPricePrepayNote") : t("variablePriceAfterNote")}</button>
-                    {newServiceForm.fixed && !newServiceForm.price.trim() && (<p className="text-[10px] text-red-500 mb-2 -mt-1">{t("fixedPriceRequiredWarning")}</p>)}
-                    {duplicateServiceWarning ? (
-                      <div className="bg-white border border-gray-300 rounded-lg p-2.5 mb-2">
-                        <p className="text-[11px] text-gray-700 mb-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {t("duplicateServiceWarningText", { name: duplicateServiceWarning.name })}</p>
-                        <div className="flex gap-2">
-                          <button onClick={() => setDuplicateServiceWarning(null)} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("giveUpBtn")}</button>
-                          <button onClick={() => finalizeAddService(duplicateServiceWarning.name, duplicateServiceWarning.price, duplicateServiceWarning.fixed)} className="flex-1 bg-rose-600 text-white text-[11px] py-1.5 rounded-lg font-medium hover:bg-rose-700 transition">{t("addAnywayBtn")}</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <button onClick={cancelAddService} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("cancel")}</button>
-                        <button disabled={!newServiceForm.name.trim() || (newServiceForm.fixed && !newServiceForm.price.trim())} onClick={tryAddService} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium transition ${newServiceForm.name.trim() && (!newServiceForm.fixed || newServiceForm.price.trim()) ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("genericAddBtn")}</button>
-                      </div>
-                    )}
                   </div>
-                )}
+                  <p className="text-xs text-gray-400 mb-4">{t("servicesFixedPriceHint")}</p>
+                  {myProfile.services.length === 0 && !showAddServiceForm && (
+                    <button onClick={() => setServicePickerOpen(true)} className="w-full border-2 border-dashed border-gray-200 rounded-2xl py-10 text-center hover:border-rose-300 hover:bg-rose-50/40 transition">
+                      <ClipboardList size={32} className="mx-auto text-gray-200 mb-2" />
+                      <p className="text-sm text-gray-500 font-medium">{t("noServicesYetTitle")}</p>
+                      <p className="text-xs text-gray-400 mt-1">{t("noServicesYetHint")}</p>
+                    </button>
+                  )}
+                  <div className="space-y-2.5 mb-4">
+                    {myProfile.services.map((s, i) => {
+                      const bp = s.brandPrices || {};
+                      const bpCount = Object.keys(bp).length;
+                      const open = brandPriceEditKey === (s.key || `custom-${i}`);
+                      return (
+                        <div key={s.key || `custom-${i}`} className={`border rounded-2xl transition ${open ? "border-rose-300 bg-rose-50/30" : "border-gray-100 hover:border-gray-200"}`}>
+                          <div className="flex flex-wrap items-center gap-2 p-3">
+                            <div className="flex-1 min-w-[160px]">
+                              {s.key ? (
+                                <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">{serviceLabel(s)}<Check size={13} className="text-emerald-500" /></p>
+                              ) : (
+                                <input value={s.name} onChange={(e) => updateService(i, "name", e.target.value)} placeholder={t("servicePlaceholder")} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm" />
+                              )}
+                              {s.key && <p className="text-[11px] text-gray-400 mt-0.5">{t("catalogServiceLabel")}</p>}
+                            </div>
+                            <div className="relative">
+                              <input value={s.price} onChange={(e) => updateService(i, "price", e.target.value.replace(/[^0-9]/g, ""))} placeholder={s.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-28 pl-2.5 pr-6 py-1.5 rounded-lg border text-sm ${s.fixed && !String(s.price || "").trim() ? "border-red-300" : "border-gray-200"}`} />
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">₺</span>
+                            </div>
+                            <button onClick={() => toggleServiceFixed(i)} title={t("fixedPriceHelpTitle")} className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition ${s.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>{s.fixed ? t("fixedPriceBadge") : t("variableLabel")}</button>
+                            <button onClick={() => setBrandPriceEditKey(open ? null : (s.key || `custom-${i}`))} className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1 ${bpCount > 0 ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}><Tag size={12} /> {bpCount > 0 ? t("brandPriceCountLabel", { n: String(bpCount) }) : t("brandPriceAddLabel")}</button>
+                            <button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-1"><Trash2 size={15} /></button>
+                          </div>
+                          {open && (
+                            <div className="px-3 pb-3 pt-1 border-t border-rose-100">
+                              <p className="text-[11px] text-gray-500 mb-2.5">{t("brandPriceHint", { price: String(s.price || "—") })}</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                                {brandPriceOptions.map(b => (
+                                  <div key={b} className="relative">
+                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-gray-500 pointer-events-none max-w-[70px] truncate">{b}</span>
+                                    <input value={bp[b] ?? ""} onChange={(e) => setServiceBrandPrice(i, b, e.target.value)} placeholder={s.price ? String(s.price) : "—"} className={`w-full pl-[76px] pr-5 py-2 rounded-lg border text-sm text-right ${bp[b] ? "border-rose-300 bg-white" : "border-gray-200 bg-white"}`} />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] pointer-events-none">₺</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex items-center justify-between mt-3">
+                                <p className="text-[11px] text-gray-400">{(myProfile.brandsServiced || []).length === 0 ? t("brandPriceNoBrandsNote") : t("brandPriceEmptyMeansDefault")}</p>
+                                {bpCount > 0 && <button onClick={() => clearServiceBrandPrices(i)} className="text-[11px] font-semibold text-gray-400 hover:text-red-500 transition flex-shrink-0">{t("brandPriceClearBtn")}</button>}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {showAddServiceForm && (
+                    <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+                      <p className="text-xs font-semibold text-gray-700 mb-2.5">{t("addCustomServiceBtn")}</p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <input autoFocus value={newServiceForm.name} onChange={(e) => { const val = e.target.value; setNewServiceForm(f => ({ ...f, name: val, fixed: f.fixedTouched ? f.fixed : isFixedPriceService(val) })); setDuplicateServiceWarning(null); }} placeholder={t("newServiceNamePlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white" />
+                        <input value={newServiceForm.price} onChange={(e) => setNewServiceForm(f => ({ ...f, price: e.target.value.replace(/[^0-9]/g, "") }))} placeholder={newServiceForm.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-24 px-3 py-2 rounded-xl border text-sm bg-white ${newServiceForm.fixed && !newServiceForm.price.trim() ? "border-red-300" : "border-gray-200"}`} />
+                      </div>
+                      <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: !f.fixed, fixedTouched: true }))} className={`w-full mb-2 text-[11px] font-semibold py-2 rounded-xl transition ${newServiceForm.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{newServiceForm.fixed ? t("fixedPricePrepayNote") : t("variablePriceAfterNote")}</button>
+                      {newServiceForm.fixed && !newServiceForm.price.trim() && (<p className="text-[11px] text-red-500 mb-2 -mt-1">{t("fixedPriceRequiredWarning")}</p>)}
+                      {duplicateServiceWarning ? (
+                        <div className="bg-white border border-gray-300 rounded-xl p-3 mb-2">
+                          <p className="text-[11px] text-gray-700 mb-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {t("duplicateServiceWarningText", { name: duplicateServiceWarning.name })}</p>
+                          <div className="flex gap-2">
+                            <button onClick={() => setDuplicateServiceWarning(null)} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-2 rounded-lg font-semibold">{t("giveUpBtn")}</button>
+                            <button onClick={() => finalizeAddService(duplicateServiceWarning.name, duplicateServiceWarning.price, duplicateServiceWarning.fixed)} className="flex-1 bg-rose-600 text-white text-[11px] py-2 rounded-lg font-semibold hover:bg-rose-700 transition">{t("addAnywayBtn")}</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button onClick={cancelAddService} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-2 rounded-lg font-semibold bg-white">{t("cancel")}</button>
+                          <button onClick={tryAddService} className={`flex-1 text-[11px] py-2 rounded-lg font-semibold transition ${newServiceForm.name.trim() && (!newServiceForm.fixed || newServiceForm.price.trim()) ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-500"}`}>{t("genericAddBtn")}</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* ---- ÇALIŞMA SAATLERİ ----
+                    TAŞINDI: eskiden "Ayarlar" sekmesindeydi. Ama bu, müşterinin profilde gördüğü
+                    bir bilgi — adres, telefon, hizmetler gibi. Müşteriye görünen her şey artık tek
+                    yerde, profilin altında düzenleniyor; Ayarlar sekmesi yalnızca hesabı/uygulamayı
+                    ilgilendiren şeylere (bildirim, dil, ödeme bilgisi, şifre) ayrıldı. */}
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                  <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Clock size={16} className="text-rose-500" /> {t("workingHours")}</h3>
+                  <p className="text-xs text-gray-400 mb-4">{t("workingHoursHint")}</p>
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
+                  {DAY_KEYS.map(key => { const day = mechanicHours[key]; const isOpen = expandedDay === key; const slots = getDaySlots(day); const summary = day.open ? `${day.start} - ${dayClosingTime(day)}` : t("closed"); return (
+                    <div key={key} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+                      <button onClick={() => setExpandedDay(isOpen ? null : key)} className="w-full flex items-center justify-between p-3">
+                        <span className="text-sm font-semibold text-gray-700">{(DAY_LABELS_FULL_BY_LANG[lang] || DAY_LABELS_FULL)[key]}</span>
+                        <div className="flex items-center gap-2"><span className={`text-[11px] ${day.open ? "text-gray-400" : "text-red-400"}`}>{summary}</span><ChevronRight size={14} className={`text-gray-300 transition-transform ${isOpen ? "rotate-90" : ""}`} /></div>
+                      </button>
+                      {isOpen && (
+                        <div className="px-3 pb-3 border-t border-gray-50 pt-3">
+                          <div className="flex items-center justify-between mb-2"><span className="text-xs text-gray-500">{t("dayOpenLabel")}</span><button onClick={() => toggleDayOpen(key)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-11 h-6 rounded-full transition relative ${day.open ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition ${day.open ? "left-6" : "left-1"}`} /></div></button></div>
+                          {day.open && (<>
+                            <div className="flex flex-wrap gap-1.5 mb-3">{slots.map(slot => { const closed = day.closedSlots.includes(slot); return (<button key={slot} onClick={() => toggleSlotClosed(key, slot)} className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition ${closed ? "bg-red-50 text-red-400 border-red-100 line-through" : "bg-green-50 text-green-600 border-green-100"}`}>{slot}</button>); })}</div>
+                            <div className="flex items-center gap-2"><input type="time" value={expandedDay === key ? newSlotTime : ""} onChange={(e) => setNewSlotTime(e.target.value)} step="1800" className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><button onClick={() => { addExtraSlot(key, newSlotTime); setNewSlotTime(""); }} className="w-8 h-8 bg-rose-600 text-white rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-rose-700 transition"><Plus size={16} /></button></div>
+                          </>)}
+                        </div>
+                      )}
+                    </div>
+                  ); })}
+                </div>
                 </div>
                 <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
                 <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><Camera size={16} className="text-rose-500" /> {t("coverPhotoTitle")}</h3>
@@ -3327,27 +3437,6 @@ export function AppShell() {
                 <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><h3 className="font-semibold text-gray-800 text-sm">{t("siteLanguage")}</h3><LangSwitch /></div>
                 <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-rose-600" /> {t("messagingLanguageTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{t("messagingLanguageHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => updateMyField("lang", l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${(myProfile.lang || "tr") === l ? "bg-white text-rose-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
                 <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className={darkMode ? "text-rose-500" : "text-rose-600"} /> {t("darkModeAppearanceTitle")}</h3><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Clock size={16} /> {t("workingHours")}</h3>
-                <p className="text-[11px] text-gray-400 mb-3">{t("workingHoursHint")}</p>
-                <div className="space-y-2 mb-6">
-                  {DAY_KEYS.map(key => { const day = mechanicHours[key]; const isOpen = expandedDay === key; const slots = getDaySlots(day); const summary = day.open ? `${day.start} - ${dayClosingTime(day)}` : t("closed"); return (
-                    <div key={key} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-                      <button onClick={() => setExpandedDay(isOpen ? null : key)} className="w-full flex items-center justify-between p-3">
-                        <span className="text-sm font-semibold text-gray-700">{(DAY_LABELS_FULL_BY_LANG[lang] || DAY_LABELS_FULL)[key]}</span>
-                        <div className="flex items-center gap-2"><span className={`text-[11px] ${day.open ? "text-gray-400" : "text-red-400"}`}>{summary}</span><ChevronRight size={14} className={`text-gray-300 transition-transform ${isOpen ? "rotate-90" : ""}`} /></div>
-                      </button>
-                      {isOpen && (
-                        <div className="px-3 pb-3 border-t border-gray-50 pt-3">
-                          <div className="flex items-center justify-between mb-2"><span className="text-xs text-gray-500">{t("dayOpenLabel")}</span><button onClick={() => toggleDayOpen(key)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-11 h-6 rounded-full transition relative ${day.open ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition ${day.open ? "left-6" : "left-1"}`} /></div></button></div>
-                          {day.open && (<>
-                            <div className="flex flex-wrap gap-1.5 mb-3">{slots.map(slot => { const closed = day.closedSlots.includes(slot); return (<button key={slot} onClick={() => toggleSlotClosed(key, slot)} className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition ${closed ? "bg-red-50 text-red-400 border-red-100 line-through" : "bg-green-50 text-green-600 border-green-100"}`}>{slot}</button>); })}</div>
-                            <div className="flex items-center gap-2"><input type="time" value={expandedDay === key ? newSlotTime : ""} onChange={(e) => setNewSlotTime(e.target.value)} step="1800" className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><button onClick={() => { addExtraSlot(key, newSlotTime); setNewSlotTime(""); }} className="w-8 h-8 bg-rose-600 text-white rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-rose-700 transition"><Plus size={16} /></button></div>
-                          </>)}
-                        </div>
-                      )}
-                    </div>
-                  ); })}
-                </div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Bell size={16} /> {t("smsNotifHistoryTitle")}</h3>
                 <div className="space-y-2 mb-6">{smsLog.map(s => (<div key={s.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs text-gray-600">{s.text}</div>))}{smsLog.length === 0 && <p className="text-center text-gray-400 text-sm py-8">{t("noSmsSentYet")}</p>}</div>
                 <button onClick={() => setMechPaymentInfoOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Banknote size={16} /> {t("paymentInfoTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${mechPaymentInfoOpen ? "rotate-90" : ""}`} /></button>
@@ -3401,7 +3490,18 @@ export function AppShell() {
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Car size={13} /> {t("vehicleBrandLabel")}</h4>
                 <select value={filters.brand} onChange={(e) => setFilters(f => ({ ...f, brand: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allBrandsOption")}</option>{CAR_BRANDS.map(b => (<option key={b} value={b}>{b}</option>))}</select>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Wrench size={13} /> {t("serviceLabelFilter")}</h4>
-                <select value={filters.service} onChange={(e) => setFilters(f => ({ ...f, service: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allServicesOption")}</option>{ATU_FIXED_CATALOG.map(s => (<option key={s.name} value={s.name}>{s.name}</option>))}</select>
+                {/* Filtre listesi artık 14 satırlık kısa sabit liste değil, tamircilerin de seçtiği TAM katalog —
+                    kategorilere göre gruplanmış. Filtre değeri Türkçe ad üzerinden eşleşiyor
+                    (serviceNameMatches katalog anahtarıyla üç dili birden karşılaştırıyor), bu yüzden
+                    arayüz dili ne olursa olsun doğru tamirciler çıkıyor. */}
+                <select value={filters.service} onChange={(e) => setFilters(f => ({ ...f, service: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white">
+                  <option value="">{t("allServicesOption")}</option>
+                  {SERVICE_CATALOG.map(cat => (
+                    <optgroup key={cat.key} label={cat[lang] || cat.tr}>
+                      {cat.items.map(it => (<option key={it.key} value={it.tr}>{it[lang] || it.tr}</option>))}
+                    </optgroup>
+                  ))}
+                </select>
                 {/* ---- Genişletilmiş tamirci filtreleri: kalite/güven ve hizmet/ödeme grupları ---- */}
                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("mechFilterSectionQuality")}</p>
                 <div className="space-y-2 mb-5">
@@ -3776,6 +3876,72 @@ export function AppShell() {
               <input type="password" value={passwordForm.confirm} onChange={(e) => setPasswordForm(f => ({ ...f, confirm: e.target.value }))} placeholder={t("newPasswordRepeatPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
             </div>
             <button onClick={submitPasswordChange} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-rose-700 transition">{t("updatePasswordBtn")}</button>
+          </div>
+        </div>
+      )}
+      {/* ---- HİZMET KATALOĞU SEÇİCİ ----
+          ATU'nun servis ağacı örnek alınarak hazırlanan kataloğu kategori + arama ile gezip
+          çoklu seçim yapılan tam ekran modal. Tamircinin serbest metin yazmasına gerek kalmıyor;
+          seçilen hizmetler üç dile otomatik çevriliyor ve aramada gerçekten eşleşiyor. */}
+      {servicePickerOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-end md:items-center justify-center md:p-6" onClick={() => setServicePickerOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-4xl rounded-t-3xl md:rounded-3xl flex flex-col max-h-[92vh] md:max-h-[85vh] overflow-hidden">
+            <div className="px-5 md:px-6 pt-5 pb-4 border-b border-gray-100">
+              <div className="flex items-start justify-between gap-3 mb-1">
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg">{t("serviceCatalogTitle")}</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">{t("serviceCatalogSub")}</p>
+                </div>
+                <button onClick={() => setServicePickerOpen(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-1 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
+              </div>
+              <div className="relative mt-3">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input autoFocus value={servicePickerQuery} onChange={(e) => setServicePickerQuery(e.target.value)} placeholder={t("serviceCatalogSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" />
+              </div>
+              <div className="flex gap-1.5 overflow-x-auto mt-3 pb-1">
+                <button onClick={() => setServicePickerCat("all")} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === "all" ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t("serviceCatalogAllCats")}</button>
+                {SERVICE_CATALOG.map(cat => (
+                  <button key={cat.key} onClick={() => setServicePickerCat(cat.key)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === cat.key ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{cat[lang] || cat.tr}</button>
+                ))}
+              </div>
+            </div>
+            {(() => {
+              const q = servicePickerQuery.trim().toLocaleLowerCase("tr-TR");
+              const selectedKeys = new Set((myProfile?.services || []).map(s => s.key).filter(Boolean));
+              // Arama üç dilde birden yapılıyor: Türk tamirci "balata" da yazabilir, Alman tamirci
+              // "Bremsbeläge" de — ikisi de aynı hizmeti bulmalı.
+              const matches = (it) => !q || [it.tr, it.en, it.de].some(v => v.toLocaleLowerCase("tr-TR").includes(q));
+              const cats = SERVICE_CATALOG
+                .filter(c => servicePickerCat === "all" || c.key === servicePickerCat)
+                .map(c => ({ ...c, items: c.items.filter(matches) }))
+                .filter(c => c.items.length > 0);
+              return (
+                <div className="flex-1 overflow-y-auto px-5 md:px-6 py-5">
+                  {cats.length === 0 ? (
+                    <div className="text-center py-16"><Search size={32} className="mx-auto text-gray-200 mb-3" /><p className="text-sm text-gray-400">{t("serviceCatalogNoResult")}</p></div>
+                  ) : cats.map(cat => (
+                    <div key={cat.key} className="mb-6 last:mb-0">
+                      <h4 className="text-sm font-bold text-gray-900 mb-2.5">{cat[lang] || cat.tr}</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {cat.items.map(it => {
+                          const on = selectedKeys.has(it.key);
+                          return (
+                            <button key={it.key} onClick={() => toggleCatalogService(it)} className={`text-left px-3.5 py-2.5 rounded-xl border text-sm font-medium transition flex items-center gap-2.5 ${on ? "bg-rose-50 border-rose-300 text-rose-800" : "bg-white border-gray-200 text-gray-600 hover:border-rose-200 hover:bg-rose-50/40"}`}>
+                              <span className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center flex-shrink-0 ${on ? "bg-rose-600 border-rose-600" : "border-gray-300"}`} style={{ width: 18, height: 18 }}>{on && <Check size={12} className="text-white" />}</span>
+                              <span className="min-w-0 truncate">{it[lang] || it.tr}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+            <div className="px-5 md:px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+              <span className="text-xs text-gray-400">{t("serviceCatalogSelectedCount", { n: String((myProfile?.services || []).filter(s => s.key).length) })}</span>
+              <button onClick={() => setServicePickerOpen(false)} className="bg-rose-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("serviceCatalogDoneBtn")}</button>
+            </div>
           </div>
         </div>
       )}
