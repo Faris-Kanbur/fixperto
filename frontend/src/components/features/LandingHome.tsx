@@ -5,7 +5,7 @@ import { LangSwitch } from "./LangSwitch";
 import { ATU_FIXED_CATALOG } from "../../data/constants";
 import {
   Search, MapPin, Star, Wrench, Car, Briefcase, BadgeCheck, ChevronRight, Navigation,
-  Shield, Zap, SlidersHorizontal, Calendar, MessageCircle, LifeBuoy, Users, Quote,
+  Shield, Zap, SlidersHorizontal, Calendar, MessageCircle, LifeBuoy, Users, Quote, Globe,
 } from "lucide-react";
 
 // MİSAFİR KARŞILAMA SAYFASI (landing)
@@ -76,8 +76,11 @@ export function LandingHome() {
                 (kullanıcı isteği) — vurgulu görünsün diye hafif arka planlı bir hap biçiminde. */}
             <button onClick={openQuoteModal} title={t("landingQuoteCtaNote")} className="text-sm font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 whitespace-nowrap"><Users size={14} /> {t("landingQuoteCta")}</button>
           </nav>
+          {/* NOT: Buradaki TR/EN/DE seçicisi KALDIRILDI — dil artık kullanıcının bulunduğu ülkeye
+              göre otomatik seçiliyor (bkz. helpers.ts initialSiteLang). Yine de kimse yanlış dilde
+              kilitli kalmasın diye seçici footer'a taşındı: Airbnb/Booking gibi büyük sitelerin de
+              kullandığı, üst çubuğu kalabalıklaştırmayan yerleşim. */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <LangSwitch />
             {isAuthed ? (
               <button onClick={() => goToBrowse("mechanics")} className="text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-full transition whitespace-nowrap">{ownerProfile?.name ? ownerProfile.name.split(" ")[0] : t("navSearch")}</button>
             ) : (
@@ -354,7 +357,11 @@ export function LandingHome() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-200 pt-5 flex flex-col items-center gap-1">
+          <div className="border-t border-gray-200 pt-5 flex flex-col items-center gap-2.5">
+            <div className="flex items-center gap-2">
+              <Globe size={13} className="text-gray-400" />
+              <LangSwitch />
+            </div>
             {/* Gizli admin girişi: eski karşılama ekranındaki desen korunuyor (© yazısına tıklama). */}
             <p className="text-xs text-gray-400">© 2026 <span onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
             <p className="text-[9px] text-gray-300">{t("allRightsReserved")}</p>

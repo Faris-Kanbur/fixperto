@@ -112,6 +112,83 @@ export function parseListingPrice(p) {
   return Number(String(p).replace(/[^\d]/g, "")) || 0;
 }
 
+// ==================== ÜLKE / DİL OTOMATİK TESPİTİ ====================
+// Kullanıcıya HİÇBİR ŞEY SORMADAN, konum izni İSTEMEDEN ve IP işlemeden ülke tahmini yapar.
+// İki sinyal kullanılır:
+//   1) Cihazın saat dilimi (Intl) — "Europe/Istanbul" gibi. Ülke için şaşırtıcı derecede güvenilir,
+//      çünkü kullanıcı fiziksel olarak neredeyse saat dilimi de odur.
+//   2) Tarayıcı dili (navigator.language) — "tr-TR" gibi. Bölge eki varsa yedek sinyal.
+// Saat dilimine ÖNCELİK verilir: Almanya'da yaşayan bir kullanıcının tarayıcı dili "tr-TR" olabilir
+// ama saat dilimi "Europe/Berlin"dir; fiziksel konum sorusunun doğru cevabı ikincisidir.
+// KVKK/GDPR notu: burada hiçbir kişisel veri sunucuya gönderilmiyor, IP kaydı tutulmuyor — tespit
+// tamamen tarayıcının kendi ayarlarından, istemci tarafında yapılıyor.
+const TIMEZONE_COUNTRY = {
+  "Europe/Istanbul": "TR",
+  "Asia/Istanbul": "TR",
+  "Europe/Berlin": "DE", "Europe/Busingen": "DE",
+  "Europe/Vienna": "AT",
+  "Europe/Zurich": "CH",
+  "Europe/London": "GB",
+  "Europe/Amsterdam": "NL",
+  "Europe/Brussels": "BE",
+  "Europe/Paris": "FR",
+  "Europe/Madrid": "ES",
+  "Europe/Rome": "IT",
+  "Europe/Nicosia": "CY", "Asia/Nicosia": "CY", "Asia/Famagusta": "CY",
+};
+
+/** Kullanıcının bulunduğu ülkenin ISO kodu ("TR", "DE", ...) veya tespit edilemezse null. */
+export function detectCountryCode() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz && TIMEZONE_COUNTRY[tz]) return TIMEZONE_COUNTRY[tz];
+  } catch { /* Intl yoksa/desteklenmiyorsa dil sinyaline düş */ }
+  try {
+    // "tr-TR" → "TR". Bölge eki olmayan ("tr" gibi) değerlerden ülke çıkarılamaz.
+    const region = String(navigator?.language || "").split("-")[1];
+    if (region && region.length === 2) return region.toUpperCase();
+  } catch { /* navigator yoksa (SSR/test) sessizce geç */ }
+  return null;
+}
+
+/** Ülke kodundan sitenin desteklediği dile eşleme. Bilinmeyen ülkelerde ortak dil olarak İngilizce. */
+export function langForCountry(country) {
+  if (country === "TR" || country === "CY") return "tr";
+  if (country === "DE" || country === "AT" || country === "CH") return "de";
+  return country ? "en" : null;
+}
+
+export const LANG_STORAGE_KEY = "fixperto_lang";
+const SUPPORTED_LANGS = ["tr", "en", "de"];
+
+/**
+ * Site açılışındaki dil. Öncelik sırası:
+ *   1) Kullanıcının DAHA ÖNCE kendi seçtiği dil (localStorage) — otomatik tespit bunu asla ezmez.
+ *   2) Saat dilimi/tarayıcıdan tespit edilen ülkenin dili.
+ *   3) Tarayıcı dilinin kendisi (desteklenen bir dilse).
+ *   4) Türkçe.
+ * Giriş yapan kullanıcının HESABINDA kayıtlı dil bundan da önceliklidir; o, oturum açıldıktan sonra
+ * AppLogicProvider'daki efektle uygulanır (cihaz değişse bile kendi dilini görsün).
+ */
+export function initialSiteLang() {
+  try {
+    const saved = localStorage.getItem(LANG_STORAGE_KEY);
+    if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
+  } catch { /* localStorage kapalıysa (gizli sekme vb.) tespite düş */ }
+  const byCountry = langForCountry(detectCountryCode());
+  if (byCountry && SUPPORTED_LANGS.includes(byCountry)) return byCountry;
+  try {
+    const base = String(navigator?.language || "").split("-")[0].toLowerCase();
+    if (SUPPORTED_LANGS.includes(base)) return base;
+  } catch { /* yoksa varsayılana düş */ }
+  return "tr";
+}
+
+/** Kullanıcının AÇIKÇA seçtiği dili hatırla — bir daha otomatik tespitle ezilmesin. */
+export function rememberSiteLang(l) {
+  try { localStorage.setItem(LANG_STORAGE_KEY, l); } catch { /* yazılamıyorsa sorun değil, oturum içi state yeterli */ }
+}
+
 // Serbest metin sayısal alanları ("1.6", "2.0 TDI", "6,5 l/100km", "77 kWh") tek bir ondalık sayıya
 // çevirir. parseListingPrice'tan farkı: burada ondalık ayırıcı KORUNUYOR (motor hacmi/yakıt tüketimi
 // gibi alanlarda 1.6 ile 16 arasındaki fark kritik). Türkçe virgüllü yazım da destekleniyor.

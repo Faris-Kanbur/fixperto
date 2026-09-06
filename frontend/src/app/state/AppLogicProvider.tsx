@@ -18,7 +18,7 @@ import {
   priceLevel, haversineDistanceKm, isValidDateStr, isFixedPriceService, parsePriceNumber,
   listingCurrency, isValidEmail, validatePhone, computeReminders, mockTranslate, statusColor,
   isImgUrl, monthsBetween, initials, listingStatusMeta, slugifyForEmail, ticketDaysOpen, ticketSlaBreached,
-  parseDecimalField, listingMarketPriceTier,
+  parseDecimalField, listingMarketPriceTier, initialSiteLang, detectCountryCode, rememberSiteLang,
 } from "../../utils/helpers";
 import { PriceLevelDots } from "../../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../../components/ui/MiniBarChart";
@@ -47,7 +47,15 @@ let nestedItemId = 2000000;
 // önerilir — bkz. proje kökündeki REFACTOR_REPORT.md.
 // ---------------------------------------------------------------------------
 function useAppLogic() {
-  const [lang, setLang] = useState("tr");
+  // OTOMATİK DİL: site artık sabit Türkçe açılmıyor. Kullanıcıya hiçbir şey sormadan, konum izni
+  // istemeden, cihazın saat dilimi + tarayıcı dilinden ülke tahmin edilip o ülkenin dili seçiliyor
+  // (bkz. helpers.ts initialSiteLang). Öncelik sırası: kullanıcının daha önce KENDİ seçtiği dil >
+  // ülke tespiti > tarayıcı dili > Türkçe. Giriş yapan kullanıcının hesabındaki dil ise hepsinden
+  // öncelikli ve oturum açılınca aşağıdaki efektle uygulanıyor.
+  const [lang, setLangState] = useState(initialSiteLang);
+  // Tespit edilen ülke ("TR", "DE", ...) — şu an dil seçimi için kullanılıyor; ileride şehir
+  // ön-doldurma / para birimi gibi yerelleştirmeler de buradan beslenebilir.
+  const [detectedCountry] = useState(detectCountryCode);
   const t = useT(lang);
   // MİSAFİR GEZİNME (Airbnb deseni): uygulama artık giriş/rol seçim ekranıyla DEĞİL, doğrudan arama
   // ekranıyla açılıyor. Giriş yapmamış bir ziyaretçi tamircileri, ikinci el araçları ve iş ilanlarını
@@ -2893,6 +2901,37 @@ function useAppLogic() {
     setMechChatInput("");
   };
   const updateMyField = (field, value) => { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m)); persist(api.mechanics.update(MY_MECHANIC_ID, { [field]: value }), "Profil bilgisi kaydedilemedi"); };
+  // Dil DEĞİŞTİRME (kullanıcının açık tercihi). Üç yere birden yazılıyor:
+  //   1) ekran state'i — arayüz anında değişsin,
+  //   2) localStorage — aynı cihazda bir daha otomatik tespitle ezilmesin,
+  //   3) hesabı (owners.lang / mechanics.lang) — BAŞKA bir cihazdan giriş yaptığında da kendi
+  //      seçtiği dili görsün. Misafirse 3. adım atlanır.
+  // ownerProfile.lang aynı zamanda kullanıcının yazdığı içeriğin dili olarak da kullanılıyor
+  // (yorum/mesaj/ilan; bkz. ownerLang) — bu yüzden ikisini ayrı tutmak yerine tek kaynağa bağlamak
+  // doğrusu: arayüzü Almanca kullanan biri mesajlarını da Almanca yazıyordur.
+  const setLang = (l) => {
+    setLangState(l);
+    rememberSiteLang(l);
+    if (role === "owner" && MY_OWNER_ID != null) {
+      updateMyOwnerField("lang", l);
+      persist(api.owners.update(MY_OWNER_ID, { lang: l }), "Dil tercihi kaydedilemedi");
+    } else if (role === "mechanic" && MY_MECHANIC_ID != null) {
+      updateMyField("lang", l);
+    }
+  };
+  // Oturum açıldığında hesapta kayıtlı dili uygula. sessionVersion başına YALNIZCA BİR KEZ çalışır —
+  // aksi halde kullanıcı giriş yaptıktan sonra dili değiştirdiğinde efekt onu hemen geri alırdı.
+  const appliedAccountLangRef = useRef(null);
+  useEffect(() => {
+    if (appliedAccountLangRef.current === sessionVersion) return;
+    const accountLang = role === "mechanic"
+      ? (MY_MECHANIC_ID != null ? myProfile?.lang : null)
+      : (MY_OWNER_ID != null ? ownerProfile?.lang : null);
+    if (!accountLang || !["tr", "en", "de"].includes(accountLang)) return;
+    appliedAccountLangRef.current = sessionVersion;
+    setLangState(accountLang);
+    rememberSiteLang(accountLang);
+  }, [sessionVersion, role, myProfile?.lang, ownerProfile?.lang]);
   // Hizmet verilen markalar ve ödeme yöntemleri de donanım (features) ile aynı sorunu yaşıyordu:
   // sabit CAR_BRANDS/PAYMENT_METHOD_OPTIONS listesinde olmayan bir şeyi eklemenin yolu yoktu.
   // Aynı çözüm burada da uygulanıyor — kullanıcı serbest metin olarak kendi markasını/ödeme
@@ -3953,6 +3992,7 @@ function useAppLogic() {
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
+    detectedCountry,
     isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
