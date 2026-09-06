@@ -453,6 +453,22 @@ try {
   console.error("Tamirci demo e-posta backfill hatası:", err.message);
 }
 
+// Tek seferlik onarım: KAYIT AKIŞI HATASI DÜZELTMESİ (bkz. routes/auth.js).
+// Bu düzeltmeden ÖNCE kaydolmuş tamircilerin rating/reviews/price/verified sütunları NULL kaldı ve
+// arayüz bu değerleri sayı olarak işlediği için (puan, fiyat seviyesi, .toFixed) uygulama çöküyordu.
+// Var olan veritabanlarında da bu satırları düzeltiyoruz — sadece NULL olanlara dokunuyor, gerçek
+// değerleri EZMİYOR. distance/lat/lng bilerek NULL bırakılıyor (mesafe gerçekten bilinmiyor;
+// arayüz "—" gösteriyor, 0 yazmak yanlış bilgi olurdu).
+try {
+  db.exec(`
+    UPDATE mechanics SET rating = 0 WHERE rating IS NULL;
+    UPDATE mechanics SET reviews = 0 WHERE reviews IS NULL;
+    UPDATE mechanics SET price = 0 WHERE price IS NULL;
+    UPDATE mechanics SET verified = 0 WHERE verified IS NULL;
+    UPDATE mechanics SET shareCount = 0 WHERE shareCount IS NULL;
+  `);
+} catch { /* sütun yoksa (çok eski şema) sessizce geç — ensureColumn zaten ekliyor */ }
+
 // Tek seferlik backfill: createdAt sütunu yeni eklendiği için (yukarıdaki ensureColumn) var olan
 // (seed verisi dahil) ilanların hepsinde bu alan boş — tamirci galeri panelindeki "N gündür ilanda"
 // hesaplaması için hepsine şimdiki zamanı yazıyoruz (gerçek geçmiş tarih bilinmiyor, ama bundan sonra

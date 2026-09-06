@@ -8,7 +8,7 @@ import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
 import { TranslatedText } from "./TranslatedText";
 import { BANNER_PRESETS, MY_MECHANIC_ID, LANG_LABELS } from "../../data/constants";
-import { formatHoursText, isImgUrl, imgThumb, imgFallbackHandler } from "../../utils/helpers";
+import { formatHoursText, isImgUrl, imgThumb, imgFallbackHandler, formatDistanceKm } from "../../utils/helpers";
 import { REVIEW_TIME_LABELS_BY_LANG } from "../../data/i18n";
 
 export function MechDetailBody() {
@@ -164,7 +164,7 @@ export function MechDetailBody() {
   ].filter(Boolean);
   const statTiles = [
     { icon: Star, label: t("rating"), value: `${selectedMechanic.rating}/5`, tint: "text-amber-500" },
-    { icon: MapPin, label: t("distance"), value: `${dist.toFixed(1)} km`, tint: "text-rose-500" },
+    { icon: MapPin, label: t("distance"), value: formatDistanceKm(dist), tint: "text-rose-500" },
     selectedMechanic.avgResponseMinutes ? { icon: Zap, label: t("mechResponseStatLabel"), value: `${selectedMechanic.avgResponseMinutes} ${t("mechMinuteShort")}`, tint: "text-blue-500" } : null,
     { icon: Banknote, label: t("price"), value: null, tint: "text-emerald-500" },
   ].filter(Boolean);
@@ -247,7 +247,7 @@ export function MechDetailBody() {
               <p className="text-sm text-gray-500 mt-0.5">{selectedMechanic.specialty}</p>
               <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500 flex-wrap">
                 <span className="flex items-center gap-1 font-semibold text-gray-900"><Star size={13} className="fill-gray-900" />{selectedMechanic.rating}<span className="font-normal text-gray-400">({selectedMechanic.reviews})</span></span>
-                <span className="flex items-center gap-1"><MapPin size={12} />{dist.toFixed(1)} km</span>
+                <span className="flex items-center gap-1"><MapPin size={12} />{formatDistanceKm(dist)}</span>
                 {openNow !== null && (<span className={`px-2 py-0.5 rounded-full font-semibold ${openNow ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{openNow ? t("mechOpenNow") : t("mechClosedNow")}</span>)}
                 {selectedMechanic.avgResponseMinutes && <span className="flex items-center gap-1"><Zap size={12} className="text-blue-500" />{t("avgResponsePrefix")} {selectedMechanic.avgResponseMinutes} {t("avgResponseSuffix")}</span>}
               </div>

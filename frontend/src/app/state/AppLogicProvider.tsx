@@ -836,7 +836,21 @@ function useAppLogic() {
   useEffect(() => { if (screen === "booking" && !selectedBookingVehicleId && vehicles.length > 0) setSelectedBookingVehicleId(vehicles[0].id); }, [screen, vehicles, selectedBookingVehicleId]);
   useEffect(() => { if (screen === "booking") { setBookingService(null); setBookingServiceSearch(""); setPaymentForm(f => ({ ...f, method: "card" })); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); } }, [selectedMechanicId]);
   useEffect(() => { if (pendingQuoteAccept && screen === "booking") { setBookingService(pendingQuoteAccept.bookingService); setProblemDesc(pendingQuoteAccept.problemDesc); setProblemPhotos(pendingQuoteAccept.problemPhotos); setPendingQuoteAccept(null); } }, [pendingQuoteAccept, selectedMechanicId, screen]);
-  const getEffectiveDistance = (m) => (userLocation && m.lat != null && m.lng != null) ? haversineDistanceKm(userLocation.lat, userLocation.lng, m.lat, m.lng) : m.distance;
+  // Konum paylaşıldıysa gerçek mesafeyi hesaplar; paylaşılmadıysa kayıttaki tahmini mesafeye düşer.
+  // YENİ kaydolan tamircide bunların ÜÇÜ de (lat/lng/distance) NULL olabilir — bu durumda mesafe
+  // gerçekten bilinmiyor demektir ve null dönüyoruz. Çağıran taraflar bunu şöyle ele alıyor:
+  //   • gösterim  → formatDistanceKm ile "—"
+  //   • sıralama  → bilinmeyenler en sona
+  //   • yarıçap filtresi → bilinmeyen mesafe "< 5 km" iddiasını karşılayamaz, elenir
+  const getEffectiveDistance = (m) => {
+    if (userLocation && m?.lat != null && m?.lng != null) return haversineDistanceKm(userLocation.lat, userLocation.lng, m.lat, m.lng);
+    // Number(null) === 0 olduğu için null/boş değer ÖNCE elenmeli — yoksa mesafesi bilinmeyen
+    // tamirci "0 km" sanılır, hem yanlış gösterilir hem "< 5 km" filtresinden geçer.
+    const raw = m?.distance;
+    if (raw === null || raw === undefined || raw === "") return null;
+    const d = Number(raw);
+    return Number.isFinite(d) ? d : null;
+  };
   const requestLocation = () => {
     if (typeof navigator === "undefined" || !navigator.geolocation) { setLocationStatus("denied"); setToast({ type: "info", text: "📍 Tarayıcınız konum özelliğini desteklemiyor, tahmini mesafeler gösteriliyor." }); return; }
     setLocationStatus("loading");
@@ -978,7 +992,7 @@ function useAppLogic() {
     if (f.priceTier === "mid" && !(m.price > PRICE_TIER_BREAKS[0] && m.price <= PRICE_TIER_BREAKS[1])) return false;
     if (f.priceTier === "expensive" && !(m.price > PRICE_TIER_BREAKS[1])) return false;
     if (f.minRating > 0 && !(m.rating >= f.minRating)) return false;
-    if (f.maxDistance < 999 && !(getEffectiveDistance(m) <= f.maxDistance)) return false;
+    if (f.maxDistance < 999) { const d = getEffectiveDistance(m); if (d == null || !(d <= f.maxDistance)) return false; }
     if (f.brand && !(m.brandsServiced || []).includes(f.brand)) return false;
     if (f.service && !serviceNameMatches(m.services, f.service)) return false;
     // --- 2. tur: profesyonel tamirci filtreleri ---
@@ -1013,7 +1027,16 @@ function useAppLogic() {
       list = list.filter(m => (m.services || []).some(s => (s.name || "").toLocaleLowerCase("tr-TR").includes(sq)) || (m.specialty || "").toLocaleLowerCase("tr-TR").includes(sq));
     }
     list = list.filter(m => mechanicPassesFilters(m, filters));
-    if (sortBy === "distance") list = [...list].sort((a, b) => sortDir === "asc" ? a.effectiveDistance - b.effectiveDistance : b.effectiveDistance - a.effectiveDistance);
+    if (sortBy === "distance") list = [...list].sort((a, b) => {
+      // Mesafesi bilinmeyenler HER İKİ yönde de en sonda kalır. Infinity kullansaydık azalan
+      // sıralamada ("en uzak önce") bilinmeyenler en BAŞA gelirdi — "bilinmiyor" ile "çok uzak"
+      // aynı şey değil, kullanıcıyı yanıltırdı.
+      const x = a.effectiveDistance, y = b.effectiveDistance;
+      if (x == null && y == null) return 0;
+      if (x == null) return 1;
+      if (y == null) return -1;
+      return sortDir === "asc" ? x - y : y - x;
+    });
     if (sortBy === "price") list = [...list].sort((a, b) => sortDir === "asc" ? a.price - b.price : b.price - a.price);
     if (sortBy === "rating") list = [...list].sort((a, b) => sortDir === "asc" ? a.rating - b.rating : b.rating - a.rating);
     return list;
@@ -1027,7 +1050,16 @@ function useAppLogic() {
     let list = mechanicsList.map(m => ({ ...m, effectiveDistance: getEffectiveDistance(m) }));
     if (quoteMechSearch.trim()) list = list.filter(m => m.name.toLowerCase().includes(quoteMechSearch.toLowerCase()) || m.specialty.toLowerCase().includes(quoteMechSearch.toLowerCase()));
     list = list.filter(m => mechanicPassesFilters(m, filters));
-    if (sortBy === "distance") list = [...list].sort((a, b) => sortDir === "asc" ? a.effectiveDistance - b.effectiveDistance : b.effectiveDistance - a.effectiveDistance);
+    if (sortBy === "distance") list = [...list].sort((a, b) => {
+      // Mesafesi bilinmeyenler HER İKİ yönde de en sonda kalır. Infinity kullansaydık azalan
+      // sıralamada ("en uzak önce") bilinmeyenler en BAŞA gelirdi — "bilinmiyor" ile "çok uzak"
+      // aynı şey değil, kullanıcıyı yanıltırdı.
+      const x = a.effectiveDistance, y = b.effectiveDistance;
+      if (x == null && y == null) return 0;
+      if (x == null) return 1;
+      if (y == null) return -1;
+      return sortDir === "asc" ? x - y : y - x;
+    });
     if (sortBy === "price") list = [...list].sort((a, b) => sortDir === "asc" ? a.price - b.price : b.price - a.price);
     if (sortBy === "rating") list = [...list].sort((a, b) => sortDir === "asc" ? a.rating - b.rating : b.rating - a.rating);
     return list;
@@ -1964,7 +1996,9 @@ function useAppLogic() {
     const completedThisMonth = appointments.filter(a => a.status === "Tamir Tamamlandı").length;
     const openTickets = supportTickets.filter(tk => tk.status !== "resolved").length;
     const pendingVerification = mechanicsList.filter(m => !m.verified).length;
-    const avgRating = mechanicsList.length ? (mechanicsList.reduce((s, m) => s + m.rating, 0) / mechanicsList.length).toFixed(1) : "-";
+    // Number(...) || 0 sarmalayıcısı: yeni kaydolan tamircilerde rating NULL olabiliyordu; null
+    // sessizce 0 gibi toplanıp ortalamayı bozuyordu. Artık niyet açık ve tip güvenli.
+    const avgRating = mechanicsList.length ? (mechanicsList.reduce((s, m) => s + (Number(m.rating) || 0), 0) / mechanicsList.length).toFixed(1) : "-";
     const suspendedOwners = ownersDirectory.filter(o => o.status === "suspended").length;
     const suspendedMechanics = mechanicsList.filter(m => (mechanicAdminOverrides[m.id]?.status || "active") === "suspended").length;
     const slaBreached = supportTickets.filter(ticketSlaBreached).length;

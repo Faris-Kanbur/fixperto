@@ -40,7 +40,7 @@ import {
   ticketSlaBreached, ticketDaysOpen, initials, isValidEmail, validatePhone,
   computeReminders, isImgUrl, listingStatusMeta, isValidDateStr, listingCurrency,
   jobStatusMeta, parsePriceNumber, isFixedPriceService, statusColor, getDaySlots, dayClosingTime,
-  imgFallbackHandler, imgThumb, apptStatusLabel, vocabLabel,
+  imgFallbackHandler, imgThumb, apptStatusLabel, vocabLabel, formatDistanceKm, formatNumber,
 } from "../utils/helpers";
 
 // AppShell: eskiden App.jsx'in return(...) bloğuydu. Tüm state/handler'lar
@@ -471,7 +471,7 @@ export function AppShell() {
                           <p className="text-xs font-semibold text-gray-800 truncate flex items-center gap-1">{m.name}{m.verified && <BadgeCheck size={11} className="text-rose-600 flex-shrink-0" />}</p>
                           <p className="text-[10px] text-gray-400 truncate">{m.specialty}</p>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><MapPin size={9} />{(m.effectiveDistance ?? m.distance).toFixed(1)} km</span>
+                            <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><MapPin size={9} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}</span>
                             <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><Star size={9} className="text-gray-900 fill-gray-900" />{m.rating}</span>
                             <PriceLevelDots price={m.price} />
                             {open !== null && (<span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? t("mechOpenShort") : t("mechClosedShort")}</span>)}
@@ -2748,7 +2748,7 @@ export function AppShell() {
                       <p className="text-[10px] text-gray-400 mt-1.5">{t("completedOfTotalNote", { completed: String(completedAll.length), total: String(totalBooked) })}</p>
                     </div>
                     <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-                      <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-bold text-gray-800">{t("customerSatisfactionTitle")}</h3><span className="flex items-center gap-1 text-sm font-bold text-gray-900"><Star size={14} className="fill-gray-900" />{avgRating.toFixed(1)}</span></div>
+                      <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-bold text-gray-800">{t("customerSatisfactionTitle")}</h3><span className="flex items-center gap-1 text-sm font-bold text-gray-900"><Star size={14} className="fill-gray-900" />{formatNumber(avgRating, 1, "0.0")}</span></div>
                       {reviewList.length === 0 ? (
                         <p className="text-xs text-gray-400 text-center py-4">{t("noReviewsYetNotice")}</p>
                       ) : (
@@ -2866,7 +2866,7 @@ export function AppShell() {
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalBookingsRow")}</span><span className="font-semibold text-gray-800">{totalBooked}</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("completedBookingsRow")}</span><span className="font-semibold text-gray-800">{completedAll.length} (%{completionRate})</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalEarningsRow")}</span><span className="font-semibold text-gray-800">{total.toLocaleString("tr-TR")}₺</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("avgRatingRow")}</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="fill-gray-900" /> {avgRating.toFixed(1)} {t("reviewsCountParens", { n: String(reviewList.length) })}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("avgRatingRow")}</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="fill-gray-900" /> {formatNumber(avgRating, 1, "0.0")} {t("reviewsCountParens", { n: String(reviewList.length) })}</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("profileAndListingSharesRow")}</span><span className="font-semibold text-gray-800">{myTotalShares}</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("analyticsVisitsLabel")}</span><span className="font-semibold text-gray-800">{rangeViews}</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("activeCarListingsRow")}</span><span className="font-semibold text-gray-800">{myOwnListings.filter(l => !l.adminRemoved).length}</span></div>

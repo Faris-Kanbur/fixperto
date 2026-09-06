@@ -260,6 +260,34 @@ export function priceLevel(price) {
   return 5;
 }
 
+/**
+ * Mesafeyi ekranda gösterilecek metne çevirir.
+ *
+ * GERÇEK HATA DÜZELTMESİ: eskiden her yerde doğrudan `dist.toFixed(1)` çağrılıyordu. Yeni kaydolan
+ * bir tamircide `distance`, `lat` ve `lng` sütunları NULL olduğu için (henüz adresi yok — mesafe
+ * GERÇEKTEN bilinmiyor) bu çağrı `Cannot read properties of null (reading 'toFixed')` ile tüm
+ * uygulamayı çökertiyordu.
+ *
+ * Bilinmeyen mesafede 0 yazmıyoruz: "0.0 km" kullanıcıya "kapının önünde" gibi bir YALAN söyler.
+ * Bunun yerine "—" gösteriyoruz; dürüst ve görsel olarak da sakin.
+ */
+export function formatDistanceKm(d) {
+  // DİKKAT — buradaki en kritik satır: Number(null) === 0 ve Number("") === 0'dır, NaN DEĞİL.
+  // Sadece Number.isFinite ile kontrol etseydik "bilinmiyor" değeri sessizce "0.0 km"e dönüşür,
+  // yani kullanıcıya "bu servis kapının önünde" gibi bir yalan söylerdik. Bu yüzden null/undefined/
+  // boş metin ÖNCE ve açıkça eleniyor. (Bu tam olarak testin yakaladığı hataydı.)
+  if (d === null || d === undefined || d === "") return "—";
+  const n = Number(d);
+  return Number.isFinite(n) ? `${n.toFixed(1)} km` : "—";
+}
+
+/** Puan/fiyat gibi sayısal alanlar için aynı gerekçeyle güvenli biçimlendirme. */
+export function formatNumber(v, digits = 1, fallback = "—") {
+  if (v === null || v === undefined || v === "") return fallback; // bkz. formatDistanceKm notu
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toFixed(digits) : fallback;
+}
+
 export function haversineDistanceKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const toRad = (v) => (v * Math.PI) / 180;

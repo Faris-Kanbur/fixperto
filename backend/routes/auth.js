@@ -88,7 +88,15 @@ authRouter.post("/register", async (req, res) => {
       const info = stmt.run({ name: cleanName, email: cleanEmail, phone: req.body.phone || null, city: req.body.city || null, joinDate: new Date().toISOString().slice(0, 10), password: hashed });
       created = db.prepare(`SELECT * FROM owners WHERE id = ?`).get(info.lastInsertRowid);
     } else {
-      const stmt = db.prepare(`INSERT INTO mechanics (name, email, phone, specialty, lang, password) VALUES (@name, @email, @phone, @specialty, 'tr', @password)`);
+      // GERÇEK HATA DÜZELTMESİ: yeni kaydolan tamircide rating/reviews/price/verified sütunları
+      // NULL kalıyordu. Bu alanlar arayüzde doğrudan sayı olarak işleniyor (puan yıldızı, fiyat
+      // seviyesi, `.toFixed()`), NULL gelince uygulama çöküyordu. Yeni bir işletme için doğru
+      // başlangıç değeri sıfırdır — bunları açıkça 0 yazıyoruz.
+      // distance/lat/lng bilerek NULL bırakılıyor: yeni tamircinin henüz adresi yok, mesafesi
+      // GERÇEKTEN bilinmiyor. 0 yazmak "0 km uzaklıkta" gibi bir YALAN olurdu; arayüz bunu
+      // "—" olarak gösteriyor (bkz. frontend helpers.ts formatDistance).
+      const stmt = db.prepare(`INSERT INTO mechanics (name, email, phone, specialty, lang, password, rating, reviews, price, verified, shareCount)
+        VALUES (@name, @email, @phone, @specialty, 'tr', @password, 0, 0, 0, 0, 0)`);
       const info = stmt.run({ name: cleanName, email: cleanEmail, phone: req.body.phone || null, specialty: req.body.specialty || null, password: hashed });
       created = db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(info.lastInsertRowid);
     }
