@@ -507,7 +507,7 @@ export function AppShell() {
           </div>
         </div>
       ); })()}
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" ? "max-w-none" : (screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" ? "max-w-none" : (screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
             max-w-7xl kapsayıcılarla yapılıyor. Haritadan açılan modal bu daldan geçmiyor. */}
@@ -2418,7 +2418,7 @@ export function AppShell() {
           </>
         )}
         {screen === "mechanicDashboard" && !onboardingVisible && (
-          <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
+          <div className="w-full max-w-md md:max-w-3xl xl:max-w-6xl mx-auto flex flex-col flex-1">
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-100 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs text-gray-500">{t("greetingHello")}{form.name ? `, ${form.name}` : ""} 🔧</span>
@@ -2882,7 +2882,7 @@ export function AppShell() {
           </div>
         )}
         {screen === "mechProfilePage" && myProfile && (
-          <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
+          <div className="w-full max-w-md md:max-w-3xl xl:max-w-6xl mx-auto flex flex-col flex-1">
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-100 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 text-gray-700 hover:bg-gray-100 transition"><ChevronLeft size={16} /></button>

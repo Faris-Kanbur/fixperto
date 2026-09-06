@@ -4080,6 +4080,71 @@ function useAppLogic() {
     confirmBooking, submitOffer, submitListingMsg, submitJobApplication, submitReview,
     submitSupportTicket, submitListing, openChatWithMechanic, saveCurrentSearch, toggleReviewHelpful,
   };
+  // ==================== TARAYICI GERİ TUŞU ====================
+  // SORUN: uygulamada router yok; tüm gezinme React state'inde (screen/sekmeler). Tarayıcı bunu
+  // bilmediği için GERİ tuşu doğrudan siteden ÇIKIYORDU — kullanıcı ayarlardayken geri deyince
+  // uygulamadan atılıyordu.
+  //
+  // ÇÖZÜM: gezinme durumunun bir "anlık görüntüsünü" history yığınına yazıyoruz. Ekran/sekme
+  // değiştiğinde pushState, geri/ileri basıldığında popstate ile o anlık görüntüyü geri yüklüyoruz.
+  // Tam bir router değil (URL değişmiyor, adres çubuğundan derin bağlantı verilemez) ama kullanıcının
+  // beklediği davranışı tam olarak karşılıyor: geri = bir önceki ekran/sekme.
+  //
+  // Modallar bilinçli olarak DIŞARIDA: her modal açılışını geçmişe yazmak, kullanıcının geri tuşuna
+  // arka arkaya basmasını gerektirirdi. Modallar zaten kendi kapatma butonlarına sahip.
+  const navSnapshot = {
+    screen, ownerTab, ownerMode, ownerProfileTab,
+    mechTab, mechProfileTab, mechReqView, mechAnalyticsView,
+    adminTab, selectedMechanicId, listingPageId, selectedListingId, selectedJobId,
+  };
+  const navKey = JSON.stringify(navSnapshot);
+  const navStackRef = useRef([]);
+  const navIndexRef = useRef(0);
+  useEffect(() => {
+    // NOT: burada "şu an geri yükleme yapıyoruz" bayrağı KULLANILMIYOR. İlk yazımda bir bayrak
+    // vardı ama testte şu senaryoda kırıldı: geri bas → sonra YENİ bir yere git. Bayrak o yeni
+    // gezinmeyi "geri yüklemenin devamı" sanıp yutuyor ve geçmişe yazmıyordu.
+    // Bunun yerine aşağıdaki indeks karşılaştırması kullanılıyor: popstate zaten navIndexRef'i
+    // geri yüklediği girdiye ayarlıyor, dolayısıyla o anda stack[index] === navKey olur ve efekt
+    // kendiliğinden erken çıkar. Bu kontrol durum-bilgisiz (idempotent) — takılı kalamaz.
+    if (navStackRef.current.length === 0) {
+      // İlk yükleme: yeni girdi EKLEMİYORUZ (replaceState) — aksi halde kullanıcının siteden
+      // çıkmak için iki kez geri basması gerekirdi.
+      navStackRef.current = [navSnapshot];
+      navIndexRef.current = 0;
+      try { window.history.replaceState({ fx: 0 }, ""); } catch { /* history yoksa sessizce geç */ }
+      return;
+    }
+    if (JSON.stringify(navStackRef.current[navIndexRef.current]) === navKey) return;
+    // Kullanıcı geri gidip SONRA yeni bir yere giderse, ileri taraftaki girdiler geçersizleşir —
+    // tarayıcı da aynısını yapar; yığını aynı noktadan kesiyoruz ki indeksler kaymasın.
+    const nextIndex = navIndexRef.current + 1;
+    navStackRef.current = [...navStackRef.current.slice(0, nextIndex), navSnapshot];
+    navIndexRef.current = nextIndex;
+    try { window.history.pushState({ fx: nextIndex }, ""); } catch { /* yut */ }
+  }, [navKey]);
+  useEffect(() => {
+    const onPop = (e) => {
+      const idx = e.state?.fx;
+      const snap = typeof idx === "number" ? navStackRef.current[idx] : null;
+      // Bizim girdimiz değilse (ör. kullanıcı gerçekten siteye girmeden önceki sayfaya dönüyor)
+      // müdahale etmiyoruz — tarayıcı normal davranışını sürdürsün.
+      if (!snap) return;
+      navIndexRef.current = idx;
+      setScreen(snap.screen);
+      setOwnerTab(snap.ownerTab); setOwnerMode(snap.ownerMode); setOwnerProfileTab(snap.ownerProfileTab);
+      setMechTab(snap.mechTab); setMechProfileTab(snap.mechProfileTab);
+      setMechReqView(snap.mechReqView); setMechAnalyticsView(snap.mechAnalyticsView);
+      setAdminTab(snap.adminTab);
+      setSelectedMechanicId(snap.selectedMechanicId);
+      setListingPageId(snap.listingPageId);
+      setSelectedListingId(snap.selectedListingId);
+      setSelectedJobId(snap.selectedJobId);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   return {
     lang, setLang, t, screen, setScreen, role, setRole, showPass,
     setShowPass, forgotEmail, setForgotEmail, form, setForm, authError, setAuthError, ownerTab,
