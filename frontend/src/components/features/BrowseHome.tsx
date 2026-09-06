@@ -17,7 +17,7 @@ export function BrowseHome({ theme = undefined }) {
     filters, setFilters, listingFilters, setListingFilters, listingSort, setListingSort, listingSortDir, handleListingSortClick, userLocation,
     setUserLocation, locationStatus, setLocationStatus, notifPermission, setNotifPermission, favoriteIds, 
     setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours, setMechanicHours, query,
-    setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery, hasSearched, sortBy, setSortBy, sortDir, setSortDir, showLocationPrompt,
+    setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery, sortBy, setSortBy, sortDir, setSortDir, showLocationPrompt,
     setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, 
     openMapDetail, selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, 
     problemPhotos, setProblemPhotos, problemPhotoRef, addProblemPhoto, removeProblemPhoto, quotePhotoRef, 
@@ -133,7 +133,6 @@ export function BrowseHome({ theme = undefined }) {
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               {[{ key: "distance", label: t("sortDistance") }, { key: "price", label: t("sortPrice") }, { key: "rating", label: t("sortRating") }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
-              {hasSearched && <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeFilterCount}</span>}</button>}
               <button onClick={() => setShowMapMobile(true)} className="md:hidden px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200"><MapIcon size={12} /> {t("showMap")}</button>
             </div>
             <p className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {t("mechanicsFoundSuffix")}</p>
@@ -151,8 +150,7 @@ export function BrowseHome({ theme = undefined }) {
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               <button onClick={() => setListingSort("default")} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === "default" ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{t("sortRecommended")}</button>
               {[{ key: "price", label: t("sortPrice") }, { key: "km", label: t("sortKm") }, { key: "year", label: t("sortYear") }].map(opt => (<button key={opt.key} onClick={() => handleListingSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{listingSort === opt.key ? (listingSortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
-              {hasSearched && <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeListingFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeListingFilterCount}</span>}</button>}
-            </div>
+              </div>
             <p className="text-xs text-gray-400 whitespace-nowrap">{filteredListings.length} {t("listingsFoundSuffix")}</p>
           </div>
           <div className="md:flex md:gap-6">
@@ -164,7 +162,6 @@ export function BrowseHome({ theme = undefined }) {
       {ownerMode === "jobs" && (
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-4">
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-            {hasSearched && <button onClick={() => setShowFilterModal(true)} className="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={12} /> {t("filterBtn")} {activeJobFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeJobFilterCount}</span>}</button>}
             <p className="text-xs text-gray-400 whitespace-nowrap">{filteredJobs.length} {t("jobsFoundSuffix")}</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{filteredJobs.map(j => (<JobCard key={j.id} j={j} />))}{filteredJobs.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">{t("noJobsMatchFilters")}</p>{(activeJobFilterCount > 0 || query.trim()) && <button onClick={() => { clearJobFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">{t("clearFiltersBtn")}</button>}</div>)}</div>

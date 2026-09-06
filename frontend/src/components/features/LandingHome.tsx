@@ -113,6 +113,13 @@ export function LandingHome() {
                 <label className="block text-[11px] font-bold text-gray-900 mb-0.5">{t("cityLabelShort")}</label>
                 <input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchCityPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" />
               </div>
+              {/* Filtrele, arama alanlarıyla AYNI seviyede — kullanıcı arama yapmadan önce de tüm
+                  filtreleri açıp öyle aratabiliyor (sonuç ekranındaki arama çubuğuyla aynı desen). */}
+              <button onClick={() => setShowFilterModal(true)} className="flex items-center justify-center md:justify-start gap-2 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-2xl md:rounded-none transition whitespace-nowrap">
+                <SlidersHorizontal size={15} className="text-gray-500" />
+                {t("landingFilterBtn")}
+                {activeFilterCount > 0 && <span className="w-5 h-5 bg-rose-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
+              </button>
               <div className="flex items-center px-1">
                 <button onClick={runSearch} className="w-full md:w-auto bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold px-6 py-3 rounded-2xl transition flex items-center justify-center gap-2 whitespace-nowrap"><Search size={16} /> {t("landingSearchCta")}</button>
               </div>
@@ -123,9 +130,6 @@ export function LandingHome() {
                 sonuçlar mesafeye göre sıralanır. İzin reddedilirse requestLocation kullanıcıyı
                 bilgilendirip tahmini mesafelerle devam eder. */}
             <button onClick={() => { requestLocation(); setSortBy("distance"); setSortDir("asc"); goToBrowse("mechanics"); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 px-3.5 py-2 rounded-full hover:border-gray-900 transition"><Navigation size={13} className="text-rose-600" /> {t("landingNearMe")}</button>
-            {/* Filtrele: kullanıcı arama yapmadan ÖNCE de tüm filtreleri açıp öyle arayabilsin diye
-                (kullanıcı isteği) — modal, sonuç ekranındakiyle aynı filtre setini kullanır. */}
-            <button onClick={() => setShowFilterModal(true)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 px-3.5 py-2 rounded-full hover:border-gray-900 transition relative"><SlidersHorizontal size={13} className="text-rose-600" /> {t("landingFilterBtn")}{activeFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeFilterCount}</span>}</button>
             {/* Çoklu fiyat teklifi masaüstünde üst gezinme çubuğunda (diğer bağlantılarla aynı
                 seviyede) duruyor; üst çubuk mobilde gizlendiği için burada SADECE mobilde gösteriliyor. */}
             <button onClick={openQuoteModal} title={t("landingQuoteCtaNote")} className="md:hidden inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 px-3.5 py-2 rounded-full hover:bg-rose-100 transition"><Users size={13} /> {t("landingQuoteCta")}</button>
