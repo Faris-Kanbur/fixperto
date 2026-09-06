@@ -2418,8 +2418,8 @@ export function AppShell() {
           </>
         )}
         {screen === "mechanicDashboard" && !onboardingVisible && (
-          <div className="w-full max-w-md md:max-w-3xl xl:max-w-6xl mx-auto flex flex-col flex-1">
-            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-100 shadow-sm">
+          <div className="w-full flex flex-col flex-1">
+            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 border-b border-gray-100 shadow-sm"><div className="w-full max-w-7xl mx-auto px-5 md:px-8 pt-6 pb-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs text-gray-500">{t("greetingHello")}{form.name ? `, ${form.name}` : ""} 🔧</span>
                 <div className="flex items-center gap-2.5">
@@ -2435,6 +2435,7 @@ export function AppShell() {
                 <button onClick={() => setMechTab("market")} className={`py-1.5 rounded-lg text-[9px] font-medium transition ${mechTab === "market" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}>{t("navMarket")}</button>
                 <button onClick={() => setMechTab("favorites")} className={`py-1.5 rounded-lg text-[9px] font-medium transition flex items-center justify-center gap-0.5 ${mechTab === "favorites" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}><Heart size={10} /> {t("mechTabFavorites")}</button>
                 <button onClick={() => setMechTab("analytics")} className={`py-1.5 rounded-lg text-[9px] font-medium transition flex items-center justify-center gap-0.5 ${mechTab === "analytics" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}><TrendingUp size={10} /> {t("mechTabAnalytics")}</button>
+              </div>
               </div>
             </div>
             {mechTab === "requests" && (
@@ -2882,21 +2883,82 @@ export function AppShell() {
           </div>
         )}
         {screen === "mechProfilePage" && myProfile && (
-          <div className="w-full max-w-md md:max-w-2xl xl:max-w-4xl mx-auto flex flex-col flex-1">
-            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-100 shadow-sm">
-              <div className="flex items-center gap-3 mb-4">
-                <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 text-gray-700 hover:bg-gray-100 transition"><ChevronLeft size={16} /></button>
-                <div className="w-12 h-12 rounded-full bg-white shadow-sm border border-white flex items-center justify-center text-lg flex-shrink-0">{myProfile.img || "🔧"}</div>
-                <div className="min-w-0"><h1 className="text-lg font-bold truncate text-gray-900">{myProfile.name || t("myBusinessFallback")}</h1><p className="text-gray-500 text-xs">{t("profileSettingsTitle")}</p></div>
-              </div>
-              <div className="grid grid-cols-3 gap-1 bg-gray-100 rounded-xl p-1">
-                <button onClick={() => setMechProfileTab("profile")} className={`py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1 ${mechProfileTab === "profile" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}><Pencil size={12} /> {t("tabLabelProfile")}</button>
-                <button onClick={() => setMechProfileTab("offers")} className={`py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1 ${mechProfileTab === "offers" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}><Banknote size={12} /> {t("tabLabelOffers")}</button>
-                <button onClick={() => setMechProfileTab("settings")} className={`py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1 ${mechProfileTab === "settings" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}><Settings size={12} /> {t("tabLabelSettings")}</button>
+          <div className="w-full bg-gray-50 min-h-screen">
+            {/* ---- TAM SAYFA İŞLETME PANELİ ----
+                Tasarım dili araç/tamirci DETAY sayfalarıyla aynı: tam genişlikte renkli bir üst
+                bant, üzerine binen beyaz profil kartı, yapışkan sekme çubuğu ve max-w-7xl gövde.
+                Eskiden bu ekran dar bir mobil kolondu; geniş ekranda tek sütun form absürt
+                görünüyordu. Formlar artık sol kolonda KARTLARA bölünmüş, sağda yapışkan bir
+                "profil tamamlama" kartı var. */}
+            <div className="h-28 md:h-36 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
+              <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} className="absolute top-4 left-4 z-10 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
+              <button onClick={previewMyProfile} className="absolute top-4 right-4 z-10 flex items-center gap-1.5 bg-white/95 backdrop-blur text-gray-700 text-xs font-semibold px-3.5 py-2.5 rounded-full shadow-sm hover:text-rose-600 transition"><Eye size={14} /> {t("previewProfileBtn")}</button>
+            </div>
+            <div className="max-w-7xl mx-auto px-5 md:px-8">
+              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-12 md:-mt-14 p-5 md:p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 flex items-center justify-center text-3xl md:text-4xl flex-shrink-0 overflow-hidden">{myProfile.img || "🔧"}</div>
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate flex items-center gap-2">{myProfile.name || t("myBusinessFallback")}{myProfile.verified && <BadgeCheck size={18} className="text-rose-500 flex-shrink-0" />}</h1>
+                    <p className="text-sm text-gray-500 mt-0.5 truncate">{myProfile.specialty || t("profileSettingsTitle")}</p>
+                    <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500 flex-wrap">
+                      <span className="flex items-center gap-1 font-semibold text-gray-900"><Star size={12} className="fill-gray-900" />{formatNumber(myProfile.rating, 1, "0.0")}<span className="font-normal text-gray-400">({myProfile.reviews || 0})</span></span>
+                      {myProfile.address && <span className="flex items-center gap-1 truncate max-w-[220px]"><MapPin size={12} />{myProfile.address}</span>}
+                      <span className="flex items-center gap-1"><Wrench size={12} />{(myProfile.services || []).length} {t("servicesTitle").toLocaleLowerCase("tr-TR")}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            {mechProfileTab === "profile" && (
-              <div className="flex-1 w-full max-w-2xl mx-auto px-5 py-4 overflow-y-auto">
+            {/* Yapışkan sekme çubuğu — detay sayfasındaki bölüm navigasyonuyla aynı desen. */}
+            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6">
+              <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
+                {[{ key: "profile", label: t("tabLabelProfile"), icon: Pencil }, { key: "offers", label: t("tabLabelOffers"), icon: Banknote }, { key: "settings", label: t("tabLabelSettings"), icon: Settings }].map((tb) => {
+                  const Icon = tb.icon; const active = mechProfileTab === tb.key;
+                  return (<button key={tb.key} onClick={() => setMechProfileTab(tb.key)} className={`px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-rose-600 border-rose-500" : "text-gray-500 border-transparent hover:text-rose-600 hover:border-rose-200"}`}><Icon size={14} /> {tb.label}</button>);
+                })}
+              </div>
+            </div>
+            {mechProfileTab === "profile" && (() => {
+              // PROFİL TAMAMLANMA — sağdaki yapışkan kart. Bu bir "süsleme" değil: tamirciye somut
+              // olarak neyi eksik bıraktığını ve neden önemli olduğunu söylüyor. Alanlar aramada
+              // gerçekten kullanılan alanlarla birebir aynı (marka filtresi, ödeme filtresi vb.).
+              const checks = [
+                { ok: !!String(myProfile.name || "").trim(), label: t("completeItemName") },
+                { ok: !!String(myProfile.specialty || "").trim(), label: t("completeItemSpecialty") },
+                { ok: !!String(myProfile.address || "").trim(), label: t("completeItemAddress") },
+                { ok: !!String(myProfile.phone || "").trim(), label: t("completeItemPhone") },
+                { ok: Number(myProfile.price) > 0, label: t("completeItemPrice") },
+                { ok: (myProfile.services || []).length > 0, label: t("completeItemServices") },
+                { ok: (myProfile.brandsServiced || []).length > 0, label: t("completeItemBrands") },
+                { ok: (myProfile.paymentMethods || []).length > 0, label: t("completeItemPayment") },
+                { ok: !!myProfile.coverPhoto, label: t("completeItemCover") },
+              ];
+              const done = checks.filter((c) => c.ok).length;
+              const pct = Math.round((done / checks.length) * 100);
+              return (
+              <div className="max-w-7xl mx-auto px-5 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+                <aside className="hidden lg:block lg:order-2 lg:sticky lg:top-20">
+                  <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-lg shadow-gray-100">
+                    <div className="flex items-end justify-between mb-2">
+                      <p className="text-sm font-bold text-gray-800">{t("profileCompletenessTitle")}</p>
+                      <span className={`text-2xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-rose-600"}`}>%{pct}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
+                      <div className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : "bg-rose-500"}`} style={{ width: `${pct}%` }} />
+                    </div>
+                    <p className="text-[11px] text-gray-400 mb-4 leading-snug">{t("profileCompletenessHint")}</p>
+                    <div className="space-y-1.5">
+                      {checks.map((c) => (
+                        <div key={c.label} className={`flex items-center gap-2 text-xs ${c.ok ? "text-gray-400" : "text-gray-700 font-medium"}`}>
+                          {c.ok ? <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" /> : <CircleDot size={14} className="text-gray-300 flex-shrink-0" />}
+                          <span className={c.ok ? "line-through" : ""}>{c.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </aside>
+                <div className="lg:col-span-2 lg:order-1">
                 <div className="bg-rose-100 rounded-xl p-3 mb-4 text-xs text-rose-800 flex items-center gap-2"><Pencil size={14} /> {t("changesApplyInstantly")}</div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("basicInfoTitle")}</h3>
                 <div className="space-y-2 mb-5"><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} placeholder={t("phonePlaceholderExample")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><input value={myProfile.price} onChange={(e) => updateMyPriceField(e.target.value)} type="number" placeholder={t("priceTlPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
@@ -3000,10 +3062,19 @@ export function AppShell() {
                 <div className="space-y-3 mb-6">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-rose-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img src={s.emoji} alt={s.name || t("staffPhotoFallbackAlt")} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder={t("fullNamePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder={t("rolePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /></div><button onClick={() => removeStaff(i)} aria-label={t("removeStaffAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
                 <button onClick={saveMyProfile} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2 mb-2"><Save size={16} /> {t("save")}</button>
                 <button onClick={previewMyProfile} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition mb-5">{t("previewMyPageBtn")}</button>
+                  {/* Mobilde tamamlanma kartı en altta — yapışkan sağ kolon yok. */}
+                  <div className="lg:hidden bg-white border border-gray-200 rounded-2xl p-4 mb-4">
+                    <div className="flex items-end justify-between mb-2">
+                      <p className="text-sm font-bold text-gray-800">{t("profileCompletenessTitle")}</p>
+                      <span className={`text-xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-rose-600"}`}>%{pct}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${pct === 100 ? "bg-emerald-500" : "bg-rose-500"}`} style={{ width: `${pct}%` }} /></div>
+                  </div>
+                </div>
               </div>
-            )}
+              ); })()}
             {mechProfileTab === "offers" && (
-              <div className="flex-1 w-full max-w-2xl mx-auto px-5 py-4 overflow-y-auto">
+              <div className="w-full max-w-3xl mx-auto px-5 md:px-8 py-6">
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersMade")}</h3>
                 <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<button key={o.id} onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center hover:border-rose-200 transition"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("offerPendingSeenStatus") : t("offerPendingStatus")}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></button>))}
                 {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">{t("noOffersMadeYet")}</p>}</div>
@@ -3020,7 +3091,7 @@ export function AppShell() {
               </div>
             )}
             {mechProfileTab === "settings" && (
-              <div className="flex-1 px-5 py-5 overflow-y-auto">
+              <div className="w-full max-w-3xl mx-auto px-5 md:px-8 py-6">
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={() => setAutoAccept(!autoAccept)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
                 <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-600" /> {t("useMyLocationTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                 {(() => {
@@ -3098,7 +3169,7 @@ export function AppShell() {
               </div>
             )}
             {mechProfileTab === "support" && (
-              <div className="flex-1 px-5 py-5 overflow-y-auto">
+              <div className="w-full max-w-3xl mx-auto px-5 md:px-8 py-6">
                 {renderSupportView("settings", setMechProfileTab)}
               </div>
             )}

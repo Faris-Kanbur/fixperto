@@ -1145,6 +1145,19 @@ export const T = {
   mechDemandTitle: { tr: "Bölgende Aranan Hizmetler", en: "Services Searched in Your Area", de: "Gesuchte Leistungen in Ihrer Region" },
   mechDemandHint: { tr: "Kullanıcıların aradığı hizmetler. Sunmadıklarını eklemek yeni müşteri getirebilir.", en: "What users are searching for. Adding services you don't offer yet can bring new customers.", de: "Wonach Nutzer suchen. Fehlende Leistungen anzubieten kann neue Kunden bringen." },
   mechDemandNotOffered: { tr: "sunmuyorsun", en: "not offered", de: "nicht im Angebot" },
+  // ---- İşletme paneli (tam sayfa yeniden tasarım) ----
+  previewProfileBtn: { tr: "Profilimi Gör", en: "View My Profile", de: "Mein Profil ansehen" },
+  profileCompletenessTitle: { tr: "Profil Tamamlanma", en: "Profile Completeness", de: "Profil-Vollständigkeit" },
+  profileCompletenessHint: { tr: "Eksikleri tamamlayan işletmeler aramalarda daha üst sırada çıkar ve daha çok randevu alır.", en: "Complete profiles rank higher in search and get more bookings.", de: "Vollständige Profile ranken besser und erhalten mehr Buchungen." },
+  completeItemName: { tr: "İşletme adı", en: "Business name", de: "Firmenname" },
+  completeItemSpecialty: { tr: "Uzmanlık alanı", en: "Specialty", de: "Spezialgebiet" },
+  completeItemAddress: { tr: "Adres", en: "Address", de: "Adresse" },
+  completeItemPhone: { tr: "Telefon", en: "Phone", de: "Telefon" },
+  completeItemPrice: { tr: "Saatlik ücret", en: "Hourly rate", de: "Stundensatz" },
+  completeItemServices: { tr: "En az bir hizmet", en: "At least one service", de: "Mindestens eine Leistung" },
+  completeItemBrands: { tr: "Servis verdiğin markalar", en: "Brands serviced", de: "Betreute Marken" },
+  completeItemPayment: { tr: "Ödeme yöntemleri", en: "Payment methods", de: "Zahlungsarten" },
+  completeItemCover: { tr: "Kapak fotoğrafı", en: "Cover photo", de: "Titelbild" },
 };
 
 export const MONTH_ABBR_BY_LANG = {
