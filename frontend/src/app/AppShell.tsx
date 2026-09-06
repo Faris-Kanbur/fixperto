@@ -2419,27 +2419,58 @@ export function AppShell() {
         )}
         {screen === "mechanicDashboard" && !onboardingVisible && (
           <div className="w-full flex flex-col flex-1">
-            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 border-b border-gray-100 shadow-sm"><div className="w-full max-w-7xl mx-auto px-5 md:px-8 pt-6 pb-5">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-gray-500">{t("greetingHello")}{form.name ? `, ${form.name}` : ""} 🔧</span>
-                <div className="flex items-center gap-2.5">
-                  <NotifBell />
-                  <button onClick={() => setScreen("mechBrowse")} title={t("searchMechOrCarTitle")} className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-gray-100 transition"><Search size={15} /></button>
-                  <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("profile"); }} title={t("profileSettingsTitle")} className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center overflow-hidden text-sm hover:bg-gray-100 transition">{myProfile?.img || "🔧"}</button>
+            {/* ---- TAMİRCİ PANOSU BAŞLIĞI ----
+                Detay ve işletme profili sayfalarıyla AYNI tasarım dili: tam genişlikte degrade bant,
+                üzerine binen beyaz özet kartı, altında yapışkan alt-çizgili sekmeler.
+                Eskiden burada 5 adet 9 piksellik minik sekme vardı — telefon için tasarlanmıştı ve
+                geniş ekrana yayılınca okunamaz hâle geliyordu. */}
+            <div className="h-24 md:h-32 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
+              <div className="absolute top-4 right-4 md:right-8 z-10 flex items-center gap-2">
+                <NotifBell />
+                <button onClick={() => setScreen("mechBrowse")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Search size={16} /></button>
+                <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("profile"); }} title={t("profileSettingsTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
+              </div>
+            </div>
+            <div className="max-w-7xl mx-auto px-5 md:px-8">
+              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 flex items-center justify-center text-2xl md:text-3xl flex-shrink-0">{myProfile?.img || "🔧"}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-gray-400">{t("greetingHello")}{myProfile?.name ? `, ${myProfile.name}` : ""}</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate">{t("mechPanelTitle")}</h1>
+                  </div>
+                  {/* Özet sayaçlar: tamircinin panoyu açar açmaz görmesi gereken üç sayı. */}
+                  <div className="hidden sm:flex items-center gap-5 flex-shrink-0">
+                    {[
+                      { n: appointments.filter(a => isSameMechanicAppt(a) && a.status === "Onay Bekliyor").length, l: t("mechTabAppointments"), c: "text-rose-600" },
+                      { n: conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).length, l: t("mechTabMessages"), c: "text-gray-900" },
+                      { n: myQuoteOffers.length, l: t("tabLabelOffers"), c: "text-gray-900" },
+                    ].map((s, i) => (
+                      <div key={i} className="text-center">
+                        <p className={`text-xl font-bold leading-none ${s.c}`}>{s.n}</p>
+                        <p className="text-[11px] text-gray-400 mt-1">{s.l}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <h1 className="text-2xl font-bold mb-1 text-gray-900">{t("mechPanelTitle")}</h1>
-              <div className="grid grid-cols-5 gap-1 bg-gray-100 rounded-xl p-1 mt-3">
-                <button onClick={() => setMechTab("requests")} className={`py-1.5 rounded-lg text-[9px] font-medium transition ${mechTab === "requests" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}>{t("mechTabAppointments")}</button>
-                <button onClick={() => setMechTab("messages")} className={`py-1.5 rounded-lg text-[9px] font-medium transition ${mechTab === "messages" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}>{t("mechTabMessages")}</button>
-                <button onClick={() => setMechTab("market")} className={`py-1.5 rounded-lg text-[9px] font-medium transition ${mechTab === "market" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}>{t("navMarket")}</button>
-                <button onClick={() => setMechTab("favorites")} className={`py-1.5 rounded-lg text-[9px] font-medium transition flex items-center justify-center gap-0.5 ${mechTab === "favorites" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}><Heart size={10} /> {t("mechTabFavorites")}</button>
-                <button onClick={() => setMechTab("analytics")} className={`py-1.5 rounded-lg text-[9px] font-medium transition flex items-center justify-center gap-0.5 ${mechTab === "analytics" ? "bg-white text-rose-700 shadow-sm" : "text-gray-500"}`}><TrendingUp size={10} /> {t("mechTabAnalytics")}</button>
-              </div>
+            </div>
+            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6">
+              <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
+                {[
+                  { key: "requests", label: t("mechTabAppointments"), icon: Calendar },
+                  { key: "messages", label: t("mechTabMessages"), icon: MessageCircle },
+                  { key: "market", label: t("navMarket"), icon: Car },
+                  { key: "favorites", label: t("navFavorites"), icon: Heart },
+                  { key: "analytics", label: t("mechTabAnalytics"), icon: TrendingUp },
+                ].map((tb) => {
+                  const Icon = tb.icon; const active = mechTab === tb.key;
+                  return (<button key={tb.key} onClick={() => setMechTab(tb.key)} className={`px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-rose-600 border-rose-500" : "text-gray-500 border-transparent hover:text-rose-600 hover:border-rose-200"}`}><Icon size={14} /> {tb.label}</button>);
+                })}
               </div>
             </div>
             {mechTab === "requests" && (
-              <div className="flex-1 w-full max-w-5xl mx-auto px-5 py-4">
+              <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6">
                 <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
                   <button onClick={() => setMechReqView("active")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${mechReqView === "active" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}>{t("activeReqTab")} ({activeAppts.length})</button>
                   <button onClick={() => setMechReqView("quotes")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechReqView === "quotes" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><ClipboardList size={12} /> {t("quotesReqTab")} {myQuoteOffers.filter(o => o.status === "pending").length > 0 && (<span className="w-1.5 h-1.5 rounded-full bg-rose-600" />)}</button>
@@ -2447,21 +2478,21 @@ export function AppShell() {
                 </div>
                 {mechReqView === "active" && (<>
                   <div className="grid grid-cols-3 gap-2 mb-5 text-center">
-                    <div className="bg-gray-100 rounded-xl p-2"><p className="text-sm font-bold text-gray-700">{appointments.filter(a=>a.status==="Onay Bekliyor").length}</p><p className="text-[9px] text-gray-500">{t("statPending")}</p></div>
-                    <div className="bg-gray-100 rounded-xl p-2"><p className="text-sm font-bold text-gray-700">{appointments.filter(a=>a.status==="Sırada").length}</p><p className="text-[9px] text-gray-500">{t("statQueued")}</p></div>
-                    <div className="bg-rose-50 rounded-xl p-2"><p className="text-sm font-bold text-rose-600">{appointments.filter(a=>a.status==="Tamire Alındı").length}</p><p className="text-[9px] text-gray-500">{t("statInProgress")}</p></div>
+                    <div className="bg-gray-100 rounded-xl p-2"><p className="text-sm font-bold text-gray-700">{appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Onay Bekliyor").length}</p><p className="text-[10px] md:text-xs text-gray-500">{t("statPending")}</p></div>
+                    <div className="bg-gray-100 rounded-xl p-2"><p className="text-sm font-bold text-gray-700">{appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Sırada").length}</p><p className="text-[10px] md:text-xs text-gray-500">{t("statQueued")}</p></div>
+                    <div className="bg-rose-50 rounded-xl p-2"><p className="text-sm font-bold text-rose-600">{appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Tamire Alındı").length}</p><p className="text-[10px] md:text-xs text-gray-500">{t("statInProgress")}</p></div>
                   </div>
                   <div className="space-y-3">
                     {activeAppts.map(r => (
                       <div key={r.id} className="border border-gray-100 rounded-2xl p-4 shadow-sm">
-                        <div className="flex justify-between items-start mb-2"><div><div className="flex items-center gap-1.5"><h4 className="font-semibold text-gray-800 text-sm">{r.customer}</h4>{customerNoShowCount(r.ownerId) > 0 && (<span title={t("noShowHistoryTitle", { n: String(customerNoShowCount(r.ownerId)) })} className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold"><AlertTriangle size={9} /> {t("noShowBadge", { n: String(customerNoShowCount(r.ownerId)) })}</span>)}</div><p className="text-xs text-gray-400">{r.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div>
+                        <div className="flex justify-between items-start mb-2"><div><div className="flex items-center gap-1.5"><h4 className="font-semibold text-gray-800 text-sm">{r.customer}</h4>{customerNoShowCount(r.ownerId) > 0 && (<span title={t("noShowHistoryTitle", { n: String(customerNoShowCount(r.ownerId)) })} className="flex items-center gap-0.5 text-[10px] md:text-xs px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold"><AlertTriangle size={9} /> {t("noShowBadge", { n: String(customerNoShowCount(r.ownerId)) })}</span>)}</div><p className="text-xs text-gray-400">{r.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div>
                         <p className="text-xs text-gray-500 mb-3"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} /></p>
                         {r.issuePhotos && r.issuePhotos.length > 0 && (<div className="flex gap-1.5 mb-3">{r.issuePhotos.map((src, i) => (<img key={i} src={src} alt={t("issuePhotoAlt", { n: String(i + 1) })} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
                         <div className="flex items-center justify-between gap-3 text-xs text-gray-400 mb-3"><div className="flex items-center gap-3"><span className="flex items-center gap-1"><Calendar size={12} />{r.date}</span><span className="flex items-center gap-1"><Clock size={12} />{r.time}</span></div><button onClick={() => openReportForm("customer", `Randevu #${r.id} · ${r.customer}`, `"${r.customer}" müşterisini bildiriyorum`)} className="flex items-center gap-1 text-gray-300 hover:text-red-500 transition"><Flag size={11} /> {t("reportBtn")}</button></div>
                         {r.historyShareConsent === false ? (<p className="flex items-center gap-1 text-[11px] text-gray-300 mb-3"><Lock size={11} /> {t("historyShareDeclinedNotice")}</p>) : (() => { const past = appointments.filter(a => a.ownerId === r.ownerId && a.id !== r.id && ["Tamir Tamamlandı", "İptal Edildi", "Reddedildi", "Gelmedi"].includes(a.status) && a.historyShareConsent !== false && isSameMechanicAppt(a)); if (past.length === 0) return null; const isOpen = expandedCustomerHistory === r.id; return (
                           <div className="mb-3">
                             <button onClick={() => setExpandedCustomerHistory(isOpen ? null : r.id)} className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-rose-600 transition"><History size={11} /> {t("pastAppointmentsCount", { n: String(past.length) })} {isOpen ? t("hideLabel") : t("showLabel")} <ChevronRight size={11} className={`transition-transform ${isOpen ? "rotate-90" : ""}`} /></button>
-                            {isOpen && (<div className="mt-2 space-y-1.5 bg-gray-50 rounded-xl p-2.5">{past.map(p => (<div key={p.id} className="flex items-center justify-between text-[11px]"><span className="text-gray-500 truncate">{p.date} · <TranslatedText id={`appt-issue-${p.id}`} text={p.issue} fromLang={ownerLangFor(p.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></span><span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ml-2 ${statusColor(p.status)}`}>{apptStatusLabel(p.status, lang)}</span></div>))}</div>)}
+                            {isOpen && (<div className="mt-2 space-y-1.5 bg-gray-50 rounded-xl p-2.5">{past.map(p => (<div key={p.id} className="flex items-center justify-between text-[11px] md:text-xs"><span className="text-gray-500 truncate">{p.date} · <TranslatedText id={`appt-issue-${p.id}`} text={p.issue} fromLang={ownerLangFor(p.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></span><span className={`text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ml-2 ${statusColor(p.status)}`}>{apptStatusLabel(p.status, lang)}</span></div>))}</div>)}
                           </div>
                         ); })()}
                         {r.status === "Onay Bekliyor" && (<div className="flex gap-2"><button onClick={() => acceptAppt(r.id)} className="flex-1 bg-rose-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-rose-700 transition flex items-center justify-center gap-1"><ThumbsUp size={12} /> {t("acceptBtn")}</button><button onClick={() => rejectAppt(r.id)} className="flex-1 border border-gray-200 text-gray-500 text-xs py-2 rounded-xl font-medium hover:bg-gray-50 transition flex items-center justify-center gap-1"><ThumbsDown size={12} /> {t("rejectBtn")}</button></div>)}
@@ -2487,8 +2518,8 @@ export function AppShell() {
                           {o.status === "pending" && responding && (
                             <div className="bg-gray-50 rounded-xl p-3 space-y-2">
                               <div className="flex gap-2">
-                                <div className="flex-1"><label className="text-[9px] text-gray-400 block mb-0.5">{t("priceLabel")}</label><input type="number" min="0" value={quoteOfferForm.price} onChange={(e) => setQuoteOfferForm(f => ({ ...f, price: e.target.value }))} placeholder={t("pricePlaceholderExample")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
-                                <div className="w-24"><label className="text-[9px] text-gray-400 block mb-0.5">{t("durationDaysLabel")}</label><input type="number" min="0" value={quoteOfferForm.etaDays} onChange={(e) => setQuoteOfferForm(f => ({ ...f, etaDays: e.target.value }))} placeholder="1" className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
+                                <div className="flex-1"><label className="text-[10px] md:text-xs text-gray-400 block mb-0.5">{t("priceLabel")}</label><input type="number" min="0" value={quoteOfferForm.price} onChange={(e) => setQuoteOfferForm(f => ({ ...f, price: e.target.value }))} placeholder={t("pricePlaceholderExample")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
+                                <div className="w-24"><label className="text-[10px] md:text-xs text-gray-400 block mb-0.5">{t("durationDaysLabel")}</label><input type="number" min="0" value={quoteOfferForm.etaDays} onChange={(e) => setQuoteOfferForm(f => ({ ...f, etaDays: e.target.value }))} placeholder="1" className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
                               </div>
                               <textarea value={quoteOfferForm.note} onChange={(e) => setQuoteOfferForm(f => ({ ...f, note: e.target.value }))} rows={2} placeholder={t("noteOptionalPlaceholder")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white resize-none" />
                               {/* GERÇEK HATA DÜZELTMESİ: buton önceden `disabled` ile tamamen tıklanamaz hale geliyordu —
@@ -2520,7 +2551,7 @@ export function AppShell() {
                             <div className="flex items-center gap-2"><div className="w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center"><Calendar size={15} className="text-gray-400" /></div><div className="text-left"><p className="text-sm font-semibold text-gray-700">{date}</p><p className="text-[10px] text-gray-400">{t("completedAndRecordsCount", { done: String(completedCount), total: String(items.length) })}</p></div></div>
                             <ChevronRight size={14} className={`text-gray-300 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                           </button>
-                          {isOpen && (<div className="px-3 pb-3 border-t border-gray-50 pt-2 space-y-2">{items.map(r => (<div key={r.id} className="bg-white border border-gray-200 rounded-xl p-3"><div className="flex justify-between items-start mb-1"><h4 className="text-xs font-semibold text-gray-700">{r.customer}</h4><span className={`text-[9px] px-2 py-0.5 rounded-full font-medium ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div><p className="text-[11px] text-gray-400">{r.vehicle}</p><p className="text-[11px] text-gray-500 mt-1"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></p><div className="flex items-center justify-between mt-1"><p className="text-[10px] text-gray-300 flex items-center gap-1"><Clock size={10} />{r.time}</p>{r.status === "Tamir Tamamlandı" && (<button onClick={() => downloadAppointmentReceipt(r)} className="text-[10px] text-rose-600 font-medium flex items-center gap-0.5 hover:underline"><FileText size={10} /> {t("downloadReceiptBtn")}</button>)}</div></div>))}</div>)}
+                          {isOpen && (<div className="px-3 pb-3 border-t border-gray-50 pt-2 space-y-2">{items.map(r => (<div key={r.id} className="bg-white border border-gray-200 rounded-xl p-3"><div className="flex justify-between items-start mb-1"><h4 className="text-xs font-semibold text-gray-700">{r.customer}</h4><span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div><p className="text-[11px] text-gray-400">{r.vehicle}</p><p className="text-[11px] text-gray-500 mt-1"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></p><div className="flex items-center justify-between mt-1"><p className="text-[10px] text-gray-300 flex items-center gap-1"><Clock size={10} />{r.time}</p>{r.status === "Tamir Tamamlandı" && (<button onClick={() => downloadAppointmentReceipt(r)} className="text-[10px] text-rose-600 font-medium flex items-center gap-0.5 hover:underline"><FileText size={10} /> {t("downloadReceiptBtn")}</button>)}</div></div>))}</div>)}
                         </div>
                       );
                     })}
@@ -2536,10 +2567,10 @@ export function AppShell() {
                 yazarsa (sendMechMessage) o mesaj o BAŞKA tamirciymiş gibi araç sahibine gidiyordu —
                 gerçek bir kimlik karışıklığı/veri sızıntısı hatasıydı. Artık yalnızca kendi hesabımıza
                 ait satırlar listeleniyor. */}
-            {mechTab === "messages" && !mechConvo && (<div className="flex-1 w-full max-w-5xl mx-auto px-5 py-4 space-y-3">{conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-300 transition flex items-center gap-3"><div className="w-11 h-11 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={20} className="text-rose-600" /></div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{t("vehicleOwnerLabel")}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noMessagesYet")}</p>}</div>)}
-            {mechTab === "messages" && mechConvo && (<><div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"><button onClick={() => setMechActiveConvoId(null)} className="text-gray-400"><ChevronLeft size={18} /></button><span className="text-sm font-semibold text-gray-800">{t("vehicleOwnerChatTitle")}</span></div><div className="flex-1 w-full max-w-5xl mx-auto px-5 py-4 overflow-y-auto">{mechConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={myProfile.lang || "tr"} mine={m.sender === "mechanic"} />))}</div><div className="px-5 pb-6 pt-2 border-t border-gray-100 flex items-center gap-2"><input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder={t("replyInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" /><button onClick={() => sendMechMessage(mechChatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button></div></>)}
+            {mechTab === "messages" && !mechConvo && (<div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 space-y-3">{conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-300 transition flex items-center gap-3"><div className="w-11 h-11 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={20} className="text-rose-600" /></div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{t("vehicleOwnerLabel")}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noMessagesYet")}</p>}</div>)}
+            {mechTab === "messages" && mechConvo && (<><div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"><button onClick={() => setMechActiveConvoId(null)} className="text-gray-400"><ChevronLeft size={18} /></button><span className="text-sm font-semibold text-gray-800">{t("vehicleOwnerChatTitle")}</span></div><div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 overflow-y-auto">{mechConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={myProfile.lang || "tr"} mine={m.sender === "mechanic"} />))}</div><div className="px-5 pb-6 pt-2 border-t border-gray-100 flex items-center gap-2"><input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder={t("replyInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" /><button onClick={() => sendMechMessage(mechChatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button></div></>)}
             {mechTab === "market" && (
-              <div className="flex-1 w-full max-w-5xl mx-auto px-5 py-4 overflow-y-auto">
+              <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 overflow-y-auto">
                 <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
                   <button onClick={() => setMechListingsSubTab("cars")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 ${mechListingsSubTab === "cars" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Car size={13} /> {t("myCarListingsTab")}</button>
                   <button onClick={() => setMechListingsSubTab("jobs")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 ${mechListingsSubTab === "jobs" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Briefcase size={13} /> {t("myJobListingsTab")}</button>
@@ -2620,7 +2651,7 @@ export function AppShell() {
               </div>
             )}
             {mechTab === "favorites" && (
-              <div className="flex-1 w-full max-w-5xl mx-auto px-5 py-4 overflow-y-auto">
+              <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 overflow-y-auto">
                 {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
                   <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesYet")}</p><p className="text-gray-300 text-xs mt-1">{t("noFavoritesHint")}</p></div>
                 ) : (
@@ -2634,7 +2665,7 @@ export function AppShell() {
                     {savedSearches.map(s => (
                       <div key={s.id} className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
                         <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm truncate flex items-center gap-1.5">{s.name}<span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">{s.type === "jobs" ? t("savedSearchTypeJobs") : s.type === "mechanics" ? t("savedSearchTypeMechanics") : t("savedSearchTypeCars")}</span></p>
+                          <p className="font-semibold text-gray-800 text-sm truncate flex items-center gap-1.5">{s.name}<span className="text-[10px] md:text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">{s.type === "jobs" ? t("savedSearchTypeJobs") : s.type === "mechanics" ? t("savedSearchTypeMechanics") : t("savedSearchTypeCars")}</span></p>
                           <p className="text-[11px] text-gray-400 truncate">{[s.query, s.serviceQuery, s.locationQuery].filter(Boolean).join(" · ") || t("allFilterLabel")}</p>
                         </button>
                         <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
@@ -2719,7 +2750,7 @@ export function AppShell() {
                 }
               };
               return (
-                <div className="flex-1 w-full max-w-5xl mx-auto px-5 py-4 overflow-y-auto">
+                <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 overflow-y-auto">
                   <div className="flex bg-gray-100 rounded-xl p-1 mb-3">
                     <button onClick={() => setMechAnalyticsView("overview")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "overview" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><TrendingUp size={12} /> {t("analyticsOverviewTab")}</button>
                     <button onClick={() => setMechAnalyticsView("earnings")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "earnings" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Banknote size={12} /> {t("analyticsEarningsTab")}</button>
@@ -2739,9 +2770,9 @@ export function AppShell() {
                       <div className="bg-gray-100 rounded-xl p-3"><p className="text-lg font-bold text-gray-700">{total.toLocaleString("tr-TR")}₺</p><p className="text-[10px] text-gray-500 mt-0.5">{t("totalEarningsRow")}</p></div>
                     </div>
                     <div className="grid grid-cols-3 gap-2 mb-5">
-                      <div className="bg-green-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-green-600">{completedAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("cameLabel")}</p></div>
-                      <div className="bg-red-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-red-500">{cancelledAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("cancelledRejectedLabel")}</p></div>
-                      <div className="bg-amber-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-amber-600">{noShowAll.length}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("noShowBtn")}</p></div>
+                      <div className="bg-green-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-green-600">{completedAll.length}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("cameLabel")}</p></div>
+                      <div className="bg-red-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-red-500">{cancelledAll.length}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("cancelledRejectedLabel")}</p></div>
+                      <div className="bg-amber-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-amber-600">{noShowAll.length}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("noShowBtn")}</p></div>
                     </div>
                     <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
                       <div className="flex items-center justify-between mb-1"><h3 className="text-sm font-bold text-gray-800">{t("completionRateTitle")}</h3><span className="text-sm font-bold text-rose-600">%{completionRate}</span></div>
@@ -2768,8 +2799,8 @@ export function AppShell() {
                   </>)}
                   {mechAnalyticsView === "earnings" && (<>
                     <div className="grid grid-cols-2 gap-2 mb-5">
-                      <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{total.toLocaleString("tr-TR")}₺</p><p className="text-[9px] text-gray-500 mt-0.5">{t("totalEarningsRow")}</p></div>
-                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{completed.length}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("completedBookingsRow")}</p></div>
+                      <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{total.toLocaleString("tr-TR")}₺</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("totalEarningsRow")}</p></div>
+                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{completed.length}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("completedBookingsRow")}</p></div>
                     </div>
                     <h3 className="text-sm font-bold text-gray-800 mb-2.5">{t("topEarningServicesTitle")}</h3>
                     {topServices.length === 0 ? (
@@ -2834,7 +2865,7 @@ export function AppShell() {
                                   const iOffer = (myProfile?.services || []).some(sv => (sv.name || "").toLocaleLowerCase("tr-TR") === String(r.label || "").toLocaleLowerCase("tr-TR"));
                                   return (
                                     <div key={r.label} className="flex items-center justify-between text-[11px] py-1">
-                                      <span className="text-blue-900 truncate flex items-center gap-1.5">{r.label}{!iOffer && <span className="text-[9px] font-bold bg-white border border-blue-300 text-blue-700 rounded px-1.5 py-0.5">{t("mechDemandNotOffered")}</span>}</span>
+                                      <span className="text-blue-900 truncate flex items-center gap-1.5">{r.label}{!iOffer && <span className="text-[10px] md:text-xs font-bold bg-white border border-blue-300 text-blue-700 rounded px-1.5 py-0.5">{t("mechDemandNotOffered")}</span>}</span>
                                       <span className="font-bold text-blue-900">{r.n}</span>
                                     </div>
                                   );
@@ -2849,9 +2880,9 @@ export function AppShell() {
                         ) : (
                           <>
                             <div className="grid grid-cols-3 gap-2 mb-4">
-                              <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{rangeViews}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("analyticsVisitsLabel")}</p></div>
-                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{rangeConversions}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("analyticsConversionsLabel")}</p></div>
-                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">%{viewConvRate}</p><p className="text-[9px] text-gray-500 mt-0.5">{t("conversionRateLabel")}</p></div>
+                              <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{rangeViews}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("analyticsVisitsLabel")}</p></div>
+                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{rangeConversions}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("analyticsConversionsLabel")}</p></div>
+                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">%{viewConvRate}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("conversionRateLabel")}</p></div>
                             </div>
                             {stats.monthly.length > 0 && (
                               <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-5">
