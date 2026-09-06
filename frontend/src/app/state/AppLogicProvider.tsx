@@ -421,6 +421,25 @@ function useAppLogic() {
   const [customFeatureInput, setCustomFeatureInput] = useState("");
   const [showAllFeatureOptions, setShowAllFeatureOptions] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState(null);
+  // TAM SAYFA ARAÇ DETAYI: modal ("Hızlı Görüntüle") ile tam sayfa BİRLİKTE yaşıyor, bu yüzden
+  // ayrı bir kimlik tutuluyor. Tek bir state paylaşsalardı tam sayfaya geçince modal da açık
+  // kalırdı. Kart tıklaması tam sayfaya gider; modal artık yalnızca göz ikonuyla açılır.
+  const [listingPageId, setListingPageId] = useState(null);
+  const listingPageItem = listings.find((l) => l.id === listingPageId) || null;
+  const openListingPage = (id) => {
+    setSelectedListingId(null);   // modal açıksa kapat — ikisi aynı anda görünmesin
+    setListingPageId(id);
+    listingPageReturnRef.current = screen;
+    setScreen("listingDetail");
+  };
+  // Geri dönüşte kullanıcı geldiği sekmeye döner (araç arama, favoriler, galeri...) — sabit bir
+  // ekrana atmak, ilanı nereden açtıysa oraya dönme beklentisini bozardı.
+  const listingPageReturnRef = useRef(null);
+  const closeListingPage = () => {
+    setListingPageId(null);
+    setScreen(listingPageReturnRef.current || (role === "mechanic" ? "mechBrowse" : "owner"));
+    listingPageReturnRef.current = null;
+  };
   // İlan detay modalındaki fotoğraf galerisi için seçili küçük resim indeksi — yeni bir ilan
   // açıldığında sıfırlanır (bkz. aşağıdaki useEffect), aksi halde bir önceki ilanın 3. fotoğrafı
   // açıkken yeni ilana geçilince aynı indeks kalır ve dizi sınırını aşabilir.
@@ -848,7 +867,13 @@ function useAppLogic() {
   // render'da boş olabilir; ownerProfile'daki gibi güvenli bir varsayılan nesne veriyoruz ki tamirci
   // profil sayfası veri gelmeden önce açılırsa myProfile.xxx erişimleri çökmesin.
   const myProfile = mechanicsList.find(m => m.id === MY_MECHANIC_ID) || { id: MY_MECHANIC_ID, name: "", img: "🔧", lang: "tr", address: "", price: 0, services: [], staff: [], coverPhoto: null, bannerPreset: "blue", specialty: "", rating: 0, reviewList: [], iban: "", bankName: "", accountHolder: "" };
-  const selectedListing = listings.find(l => l.id === selectedListingId) || null;
+  // TEK "AKTİF İLAN" KAYNAĞI: teklif verme, satıcıya soru sorma ve bunların submit fonksiyonları
+  // (submitOffer / submitListingMsg / myPendingOfferOn) hep `selectedListing` üzerinden çalışıyor.
+  // Tam sayfa ilan görünümü eklenince bu akışların orada da çalışması gerekiyordu; her birini ayrı
+  // ayrı "sayfa mı modal mı" bilecek şekilde değiştirmek yerine aktif ilanı TEK yerde çözüyoruz.
+  // Modal hâlâ yalnızca selectedListingId ile açılıyor (bkz. AppShell), yani tam sayfadayken
+  // selectedListing dolu olsa bile modal açılmıyor.
+  const selectedListing = listings.find(l => l.id === (selectedListingId ?? listingPageId)) || null;
   useEffect(() => {
     if (!selectedListing) return;
     const isMine = isMyListing(selectedListing);
@@ -3057,6 +3082,20 @@ function useAppLogic() {
   const toggleDayOpen = (key) => setMechanicHours(h => { const next = { ...h, [key]: { ...h[key], open: !h[key].open } }; persistMechanicHours(next); return next; });
   const toggleSlotClosed = (key, slot) => setMechanicHours(h => { const closed = h[key].closedSlots.includes(slot); const next = { ...h, [key]: { ...h[key], closedSlots: closed ? h[key].closedSlots.filter(s => s !== slot) : [...h[key].closedSlots, slot] } }; persistMechanicHours(next); return next; });
   const addExtraSlot = (key, time) => { if (!time) return; setMechanicHours(h => { if (h[key].extraSlots.includes(time) || genSlots(h[key].start, h[key].end).includes(time)) return h; const next = { ...h, [key]: { ...h[key], extraSlots: [...h[key].extraSlots, time].sort() } }; persistMechanicHours(next); return next; }); };
+  // Bir ilanı düzenleme formunun beklediği şekle çevirir. Hem hızlı görüntüleme modalindeki hem de
+  // tam sayfadaki "Düzenle" butonu bunu kullanıyor — alan eşlemesi tek yerde dursun diye.
+  const sellPrefillFromListing = (l) => ({
+    brand: l.brand, model: l.model, year: l.year, km: l.km, price: l.price,
+    description: l.description, photo: l.photo, fuelType: l.fuelType, transmission: l.transmission,
+    power: l.power, firstReg: l.firstReg, color: l.color,
+    bodyType: l.bodyType || "", engineSize: l.engineSize || "", drivetrain: l.drivetrain || "",
+    ownerCount: l.ownerCount || "", paintedParts: l.paintedParts ?? "", changedParts: l.changedParts ?? "",
+    tradeIn: !!l.tradeIn, doorCount: l.doorCount || "", features: l.features || [], photos: l.photos || [],
+    seatCount: l.seatCount || "", fuelConsumption: l.fuelConsumption || "", co2Emission: l.co2Emission || "",
+    emissionClass: l.emissionClass || "", batteryCapacity: l.batteryCapacity || "", rangeKm: l.rangeKm || "",
+    city: l.city || "", negotiable: !!l.negotiable, inspectionReportUrl: l.inspectionReportUrl || "",
+    featured: !!l.featured, _vehicleId: l._vehicleId || null, _editingId: l.id,
+  });
   const openSellForm = (prefill) => { setSellForm(prefill || { brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", negotiable: false, inspectionReportUrl: "", featured: false, _vehicleId: null, _editingId: null }); setCustomFeatureInput(""); setShowAllFeatureOptions(false); setShowSellForm(true); };
   // "Aracımı Satışa Çıkar" tıklanınca: kayıtlı araç(lar)ı varsa hangisini satacağını sorar ve
   // seçilen aracın bilgilerini forma otomatik doldurur; kayıtlı aracı yoksa direkt boş form açar.
@@ -3993,6 +4032,7 @@ function useAppLogic() {
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
     detectedCountry,
+    listingPageId, listingPageItem, openListingPage, closeListingPage, sellPrefillFromListing,
     isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,

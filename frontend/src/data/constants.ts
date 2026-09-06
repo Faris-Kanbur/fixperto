@@ -40,6 +40,18 @@ export const LISTING_FEATURE_OPTIONS = [
   "Far Sensörü", "Hız Sabitleyici (Cruise Control)", "Bluetooth", "Navigasyon", "Alaşım Jant",
   "ABS", "ESP", "Yokuş Kalkış Desteği", "Şerit Takip Asistanı",
 ];
+// AutoScout24'ün ilan detayındaki "Ausstattung" bölümü donanımları düz bir liste olarak DEĞİL,
+// başlıklar altında gruplayarak gösteriyor (Komfort / Unterhaltung / Sicherheit / Extras) — 30+
+// donanımı tek bir yığın hâlinde okumak imkânsız olduğu için. Aynı gruplamayı biz de kullanıyoruz.
+// Buradaki listelerde OLMAYAN donanımlar (kullanıcının serbest metinle eklediği özel donanımlar
+// dahil) otomatik olarak "Diğer" grubuna düşer — bkz. ListingDetailPage groupedFeatures.
+export const LISTING_FEATURE_GROUPS = [
+  { key: "comfort", features: ["Klima", "Deri Döşeme", "Elektrikli Cam", "Elektrikli Ayna", "Isıtmalı Koltuk", "Sunroof/Cam Tavan", "Yağmur Sensörü", "Far Sensörü", "Hız Sabitleyici (Cruise Control)"] },
+  { key: "safety", features: ["ABS", "ESP", "Yokuş Kalkış Desteği", "Şerit Takip Asistanı", "Park Sensörü (Ön)", "Park Sensörü (Arka)", "Geri Görüş Kamerası", "Xenon/LED Far"] },
+  { key: "media", features: ["Bluetooth", "Navigasyon"] },
+  { key: "extras", features: ["Alaşım Jant"] },
+];
+
 export const EMPLOYMENT_TYPES = ["Tam Zamanlı", "Yarı Zamanlı", "Stajyer/Çırak", "Sözleşmeli"];
 export const EXPERIENCE_LEVELS = ["Deneyim Aranmıyor", "1-3 Yıl", "3-5 Yıl", "5+ Yıl"];
 

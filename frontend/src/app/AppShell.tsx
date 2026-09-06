@@ -1,6 +1,6 @@
 import { useApp } from "./state/AppLogicProvider";
 import { MONTH_ABBR_BY_LANG } from "../data/i18n";
-import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download, Scale, TrendingDown } from "lucide-react";
+import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download, Scale, TrendingDown, Maximize2 } from "lucide-react";
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
 import { generateAnalyticsPdf } from "../utils/analyticsReport";
@@ -22,6 +22,7 @@ import { LandingHome } from "../components/features/LandingHome";
 import { ShareButton } from "../components/features/ShareButton";
 import { TranslatedText } from "../components/features/TranslatedText";
 import { PhotoLightbox } from "../components/features/PhotoLightbox";
+import { ListingDetailPage } from "../components/features/ListingDetailPage";
 import {
   LEGAL_CONTENT, FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, BANNER_PRESETS,
   ONBOARDING_SLIDES, ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
@@ -51,7 +52,7 @@ export function AppShell() {
     setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, ownerSettings, setOwnerSettings, mechSettings,
     setMechSettings, notifLog, setNotifLog, ownerNotifSeenAt, setOwnerNotifSeenAt, mechNotifSeenAt, setMechNotifSeenAt, showNotifPanel,
     setShowNotifPanel, darkMode, setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
-    hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters, clearMechFilters,
+    hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters, clearMechFilters, openListingPage,
     listingFilters, setListingFilters, listingSort, setListingSort, userLocation, setUserLocation, locationStatus, setLocationStatus,
     notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours,
     setMechanicHours, query, setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery, sortBy, setSortBy, sortDir,
@@ -505,12 +506,15 @@ export function AppShell() {
           </div>
         </div>
       ); })()}
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" ? "max-w-none" : (screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" ? "max-w-none" : (screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
             max-w-7xl kapsayıcılarla yapılıyor. Haritadan açılan modal bu daldan geçmiyor. */}
         {/* Karşılama/tanıtım sayfası — siteye ilk giren herkesin gördüğü ekran (bkz. LandingHome.tsx) */}
         {screen === "landing" && <LandingHome />}
+        {/* Araç ilanının TAM SAYFA görünümü. Hızlı görüntüleme modali (selectedListingId) ayrı ve
+            hâlâ çalışıyor; ikisi aynı anda açılmasın diye openListingPage modali kapatıyor. */}
+        {screen === "listingDetail" && <ListingDetailPage />}
         {(screen === "login" || screen === "signup") && (
           <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
@@ -1796,6 +1800,12 @@ export function AppShell() {
               })()}
             </div>
             <div className="flex-1 overflow-y-auto p-5 md:p-8">
+              {/* HIZLI GÖRÜNTÜLEME → TAM SAYFA geçişi: bu modal aracın özetini gösteriyor; tüm
+                  teknik künye, donanım grupları, araç geçmişi ve fiyat değerlendirmesi tam sayfada.
+                  Bağlantı başlığın hemen üstünde, kullanıcı içeriği okumaya başlamadan görsün diye. */}
+              <button onClick={() => openListingPage(selectedListing.id)} className="mb-3 w-full flex items-center justify-center gap-1.5 bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-xs hover:bg-gray-800 transition">
+                <Maximize2 size={13} /> {t("viewFullPageBtn")}
+              </button>
               <h1 className="text-xl font-bold text-gray-800">{selectedListing.brand} {selectedListing.model}</h1>
               {selectedListing.city && <p className="text-gray-400 text-xs mt-1 flex items-center gap-1"><MapPin size={12} />{selectedListing.city}</p>}
               <div className="flex items-center gap-2 mt-1 flex-wrap">
