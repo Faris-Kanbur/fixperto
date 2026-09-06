@@ -196,10 +196,25 @@ function useAppLogic() {
   // desen (bkz. addCustomFeature): buton tıklanınca kutu açılır, isim girilip onaylanınca kapanır.
   const [showSaveSearchInput, setShowSaveSearchInput] = useState(false);
   const [saveSearchNameInput, setSaveSearchNameInput] = useState("");
-  // Karşılaştırma aracı: sadece bu oturum için geçerli, kalıcı depolamaya YAZILMIYOR (bkz.
-  // "En fazla 3 ilan" sınırı) — bir alışveriş sepeti gibi geçici bir seçim, sayfa yenilenince
-  // sıfırlanması kabul edilebilir/beklenen bir davranış.
-  const [compareListingIds, setCompareListingIds] = useState([]);
+  // Karşılaştırma aracı — KALICI (localStorage).
+  // Eskiden yalnızca oturum-içi state'ti ve "geçici bir seçim, yenilenince sıfırlanabilir" diye
+  // düşünülmüştü. Gerçek kullanımda bu YANLIŞ çıktı: karşılaştırma doğası gereği birden çok adımlı
+  // bir iş — kullanıcı 1. aracı seçiyor, detayına bakıyor, listeye dönüyor, 2. aracı seçiyor.
+  // Bu yolculukta sayfa yenilenmesi veya tarayıcının GERİ tuşu (uygulamada history entegrasyonu yok,
+  // geri tuşu SPA'yı baştan yüklüyor) seçimi sıfırlıyor ve kullanıcı en başa dönüyordu.
+  // Artık seçim tarayıcıda saklanıyor; çıkış yapınca temizleniyor (bkz. clearCompareListings).
+  const COMPARE_STORAGE_KEY = "fixperto_compare";
+  const [compareListingIds, setCompareListingIds] = useState(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(COMPARE_STORAGE_KEY) || "[]");
+      // Depodan gelen veriye asla güvenme: sadece sayı olan id'ler alınır. Adet sınırı ve "bu ilan
+      // hâlâ var mı" kontrolü, listings yüklendikten sonra aşağıdaki budama efektinde yapılıyor.
+      return Array.isArray(raw) ? raw.filter((x) => Number.isFinite(x)) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(COMPARE_STORAGE_KEY, JSON.stringify(compareListingIds)); } catch { /* depo kapalıysa sorun değil */ }
+  }, [compareListingIds]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const MAX_COMPARE_LISTINGS = 3;
   const toggleCompareListing = (id) => {
@@ -409,6 +424,18 @@ function useAppLogic() {
   const [expandedDay, setExpandedDay] = useState(null);
   const [newSlotTime, setNewSlotTime] = useState("");
   const [listings, setListings] = useState([]);
+  // Kalıcı karşılaştırma seçimini gerçek ilanlarla eşitle: silinmiş/yayından kaldırılmış bir ilanın
+  // id'si depoda kalmış olabilir — bu durumda çubuk "2 araç" yazıp tek araç gösterirdi. İlanlar
+  // yüklendikten sonra geçersiz id'ler ve sınırı aşan fazlalık atılıyor.
+  // Değişiklik yoksa AYNI dizi referansı döndürülüyor; aksi halde effect kendi kendini tetikleyip
+  // sonsuz döngüye girerdi.
+  useEffect(() => {
+    if (listings.length === 0) return; // henüz yüklenmedi — erken budama her şeyi silerdi
+    setCompareListingIds((ids) => {
+      const valid = ids.filter((id) => listings.some((l) => l.id === id && !l.adminRemoved)).slice(0, MAX_COMPARE_LISTINGS);
+      return valid.length === ids.length ? ids : valid;
+    });
+  }, [listings]);
   const [showSellForm, setShowSellForm] = useState(false);
   const [showSellVehiclePicker, setShowSellVehiclePicker] = useState(false);
   const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: "", negotiable: false, inspectionReportUrl: "", featured: false, _vehicleId: null, _editingId: null });
