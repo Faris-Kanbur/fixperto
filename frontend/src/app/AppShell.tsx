@@ -505,7 +505,10 @@ export function AppShell() {
           </div>
         </div>
       ); })()}
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" ? "max-w-none" : (screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" ? "max-w-none" : (screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+        {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
+            tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
+            max-w-7xl kapsayıcılarla yapılıyor. Haritadan açılan modal bu daldan geçmiyor. */}
         {/* Karşılama/tanıtım sayfası — siteye ilk giren herkesin gördüğü ekran (bkz. LandingHome.tsx) */}
         {screen === "landing" && <LandingHome />}
         {(screen === "login" || screen === "signup") && (
@@ -1724,12 +1727,16 @@ export function AppShell() {
         {(screen === "detail" || mapDetailOpen) && selectedMechanic && (
           mapDetailOpen ? (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4 overflow-y-auto" onClick={() => setMapDetailOpen(false)}>
-              <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg md:max-w-2xl my-auto max-h-[90vh] flex flex-col overflow-hidden">
+              <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg md:max-w-xl my-auto max-h-[90vh] flex flex-col overflow-hidden">
                 <MechDetailBody />
               </div>
             </div>
           ) : (
-            <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
+            /* TAM SAYFA: tamirci profili artık dar mobil kolonda değil, tarayıcının tüm genişliğini
+               kullanan bir web sayfası olarak render ediliyor (iç kapsayıcı max-w-7xl ile ortalanıyor,
+               bkz. MechDetailBody). Haritadan açılan modal ise dar kalıyor ve orada `compact` düzen
+               devreye giriyor. */
+            <div className="w-full flex flex-col flex-1">
               <MechDetailBody />
             </div>
           )
