@@ -324,6 +324,7 @@ export const api = {
     analyticsBreakdown: (field: string, days?: number): Promise<any[]> => request(`/api/analytics/breakdown?field=${encodeURIComponent(field)}${days ? `&days=${days}` : ""}`, { ...adminAuthOpts() }),
     analyticsSearches: (days?: number): Promise<any> => request(`/api/analytics/searches${days ? `?days=${days}` : ""}`, { ...adminAuthOpts() }),
     analyticsTimeseries: (days?: number): Promise<any[]> => request(`/api/analytics/timeseries?days=${days || 30}`, { ...adminAuthOpts() }),
+    analyticsTopTargets: (targetType: string, days?: number): Promise<any[]> => request(`/api/analytics/top-targets?targetType=${encodeURIComponent(targetType)}${days ? `&days=${days}` : ""}`, { ...adminAuthOpts() }),
     changeLog: (): Promise<AdminChangeLogEntry[]> => request("/api/admin/change-log", { ...adminAuthOpts() }),
     logChange: (entry: Partial<AdminChangeLogEntry>): Promise<{ id: number }> => request("/api/admin/change-log", { method: "POST", body: JSON.stringify(entry), ...adminAuthOpts() }),
     revertChange: (id: number | string): Promise<AdminChangeLogEntry> => request(`/api/admin/change-log/${id}`, { method: "PATCH", ...adminAuthOpts() }),

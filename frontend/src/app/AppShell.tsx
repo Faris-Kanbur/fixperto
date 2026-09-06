@@ -1010,6 +1010,51 @@ export function AppShell() {
                             <BreakdownList title="En Çok Aranan Terimler" rows={a.searches?.topQueries} icon={Search} />
                             <BreakdownList title="En Çok Aranan Şehirler" rows={a.searches?.topCities} icon={MapPin} />
                           </div>
+                          {/* TÜM OLAY SAYAÇLARI: toplanan her olay burada görünüyor. Bir olayı
+                              toplayıp panelde HİÇ göstermemek, veriyi sessizce çöpe atmakla aynı —
+                              kimse bakmadığı için bozulduğunu da fark edemezsin. */}
+                          <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                            <h3 className="text-sm font-bold text-gray-800 mb-3">Tüm Olaylar</h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2">
+                              {[
+                                ["Sayfa görüntüleme", o.totals?.pageViews], ["Arama", o.totals?.searches],
+                                ["Sonuçsuz arama", o.totals?.zeroResults], ["Filtre kullanımı", o.totals?.filters],
+                                ["Tamirci profili", o.totals?.mechanicViews], ["Araç ilanı", o.totals?.listingViews],
+                                ["İş ilanı", o.totals?.jobViews], ["İletişim başlatma", o.totals?.contacts],
+                                ["Mesaj", o.totals?.messages], ["Fiyat teklifi isteği", o.totals?.quotes],
+                                ["Araca teklif", o.totals?.offers], ["Randevu ekranı", o.totals?.appointmentsStarted],
+                                ["Randevu alındı", o.totals?.appointments], ["İlan verildi", o.totals?.listingsCreated],
+                                ["İş başvurusu", o.totals?.jobApplications], ["Kayıt", o.totals?.signups],
+                                ["Giriş", o.totals?.logins], ["Favori", o.totals?.favorites],
+                                ["Karşılaştırma", o.totals?.compares], ["Arama kaydetme", o.totals?.savedSearches],
+                              ].map(([label, val]) => (
+                                <div key={label as string} className="flex items-center justify-between gap-2 py-1 border-b border-gray-50">
+                                  <span className="text-xs text-gray-500 truncate">{label}</span>
+                                  <span className="text-sm font-bold text-gray-900">{Number(val || 0).toLocaleString("tr-TR")}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          {/* En çok görüntülenen tamirci ve ilanlar — hangi arzın ilgi çektiğini gösterir. */}
+                          {((a.topMechanics || []).length > 0 || (a.topListings || []).length > 0) && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {[["En Çok Görüntülenen Tamirciler", a.topMechanics, mechanicsList, (x) => x?.name],
+                                ["En Çok Görüntülenen Araçlar", a.topListings, listings, (x) => x && `${x.brand} ${x.model}`]].map(([title, rows, source, labelFn]: any) => (
+                                <div key={title} className="bg-white border border-gray-200 rounded-2xl p-4">
+                                  <h3 className="text-sm font-bold text-gray-800 mb-2.5">{title}</h3>
+                                  {(rows || []).length === 0 ? <p className="text-xs text-gray-400">Veri yok</p> : rows.map((r) => {
+                                    const item = source.find((x) => x.id === r.targetId);
+                                    return (
+                                      <div key={r.targetId} className="flex items-center justify-between gap-2 text-xs py-1.5 border-b border-gray-50 last:border-0">
+                                        <span className="text-gray-700 truncate">{labelFn(item) || `#${r.targetId}`}</span>
+                                        <span className="text-gray-500 flex-shrink-0">{r.views} görüntüleme · <span className="font-semibold text-gray-800">{r.uniqueVisitors}</span> tekil</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                           {/* ARZ AÇIĞI: ürün kararları ve tamirci daveti için en değerli tablo. */}
                           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
                             <h3 className="text-sm font-bold text-amber-900 mb-1 flex items-center gap-2"><AlertTriangle size={15} /> Sonuçsuz Aramalar — Arz Açığı</h3>

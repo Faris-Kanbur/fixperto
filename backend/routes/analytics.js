@@ -153,17 +153,30 @@ router.get("/overview", requireAdmin, (req, res) => {
     newVisitors: one(`SELECT COUNT(*) n FROM (SELECT visitorId FROM analytics_events WHERE name='session_start'${since(cutoff)} GROUP BY visitorId HAVING COUNT(*) = 1)`).n || 0,
     returningVisitors: one(`SELECT COUNT(*) n FROM (SELECT visitorId FROM analytics_events WHERE name='session_start'${since(cutoff)} GROUP BY visitorId HAVING COUNT(*) > 1)`).n || 0,
     funnel,
+    // TOPLANAN HER OLAYIN SAYACI. Panel bunların TAMAMINI gösteriyor (bkz. AppShell "Tüm Olaylar"
+    // tablosu) — bir olayı toplayıp panelde göstermemek, veriyi sessizce çöpe atmakla aynı şey:
+    // kimse bakmadığı için bozulduğunu da fark edemezsin.
     totals: {
+      pageViews,
       searches: countOf("search_performed"),
       zeroResults: countOf("search_zero_result"),
+      filters: countOf("filter_applied"),
       mechanicViews: countOf("mechanic_view"),
       listingViews: countOf("listing_view"),
+      jobViews: countOf("job_view"),
       contacts: countOf("contact_started"),
+      messages: countOf("message_sent"),
       quotes: countOf("quote_requested"),
       offers: countOf("offer_made"),
+      appointmentsStarted: countOf("appointment_started"),
       appointments: countOf("appointment_booked"),
-      signups: countOf("signup"),
       listingsCreated: countOf("listing_created"),
+      jobApplications: countOf("job_applied"),
+      signups: countOf("signup"),
+      logins: countOf("login"),
+      favorites: countOf("favorite_added"),
+      compares: countOf("compare_used"),
+      savedSearches: countOf("saved_search_created"),
     },
   });
 });

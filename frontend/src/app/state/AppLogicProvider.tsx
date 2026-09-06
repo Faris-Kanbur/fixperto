@@ -1648,9 +1648,11 @@ function useAppLogic() {
       api.admin.analyticsBreakdown("country", adminAnalyticsRange),
       api.admin.analyticsBreakdown("device", adminAnalyticsRange),
       api.admin.analyticsTimeseries(adminAnalyticsRange),
-    ]).then(([overview, searches, sources, countries, devices, series]) => {
+      api.admin.analyticsTopTargets("mechanic", adminAnalyticsRange),
+      api.admin.analyticsTopTargets("listing", adminAnalyticsRange),
+    ]).then(([overview, searches, sources, countries, devices, series, topMechanics, topListings]) => {
       if (cancelled) return;
-      setAdminAnalyticsData({ overview, searches, sources, countries, devices, series });
+      setAdminAnalyticsData({ overview, searches, sources, countries, devices, series, topMechanics, topListings });
     }).catch(() => {
       // Analitik uçları henüz veri toplamamışsa ya da backend eski sürümdeyse panel çökmemeli;
       // boş durum gösteriliyor.
