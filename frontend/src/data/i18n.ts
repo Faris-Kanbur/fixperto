@@ -1158,6 +1158,7 @@ export const T = {
   completeItemBrands: { tr: "Servis verdiğin markalar", en: "Brands serviced", de: "Betreute Marken" },
   completeItemPayment: { tr: "Ödeme yöntemleri", en: "Payment methods", de: "Zahlungsarten" },
   completeItemCover: { tr: "Kapak fotoğrafı", en: "Cover photo", de: "Titelbild" },
+  favoriteMechanicsLabel: { tr: "Favori Tamirciler", en: "Favourite Mechanics", de: "Favorisierte Werkstätten" },
 };
 
 export const MONTH_ABBR_BY_LANG = {

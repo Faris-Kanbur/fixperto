@@ -55,7 +55,7 @@ export function AppShell() {
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters, clearMechFilters, openListingPage,
     adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading, myMechanicAnalytics,
     listingFilters, setListingFilters, listingSort, setListingSort, userLocation, setUserLocation, locationStatus, setLocationStatus,
-    notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours,
+    notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, favoriteMechanicIds, mechanicsList, setMechanicsList, mechanicHours,
     setMechanicHours, query, setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery, sortBy, setSortBy, sortDir,
     setSortDir, showLocationPrompt, setShowLocationPrompt, selectedMechanicId, setSelectedMechanicId, mapDetailOpen, setMapDetailOpen, openMapDetail,
     selectedDate, setSelectedDate, selectedTime, setSelectedTime, problemDesc, setProblemDesc, problemPhotos, setProblemPhotos,
@@ -1685,7 +1685,22 @@ export function AppShell() {
               {ownerProfileTab === "favorites" && (
                 <>
                   <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
-                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Heart size={16} className="text-rose-500" /> {t("favoriteListingsLabel")}</h2>
+                  {/* GERÇEK HATA DÜZELTMESİ: favoriye eklenen TAMİRCİLER hiçbir ekranda listelenmiyordu —
+                    kalp doluyordu, veri kaydediliyordu ama kullanıcı bir daha o listeye ulaşamıyordu.
+                    Araç favorileriyle aynı yerde, ayrı bir başlık altında gösteriliyor. */}
+                {(() => {
+                  const favMechs = mechanicsList.filter(m => (favoriteMechanicIds || []).includes(m.id));
+                  if (favMechs.length === 0) return null;
+                  return (
+                    <div className="mb-8">
+                      <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}
+                      </div>
+                    </div>
+                  );
+                })()}
+                <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Heart size={16} className="text-rose-500" /> {t("favoriteListingsLabel")}</h2>
                   {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
                     <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesOwnerNote")}</p><p className="text-gray-300 text-xs mt-1">{t("favoritesHintNote")}</p></div>
                   ) : (
@@ -2418,7 +2433,11 @@ export function AppShell() {
           </>
         )}
         {screen === "mechanicDashboard" && !onboardingVisible && (
-          <div className="w-full flex flex-col flex-1">
+          <div className="w-full bg-gray-50 min-h-screen">
+            {/* NOT — GERÇEK HATA DÜZELTMESİ: burası eskiden `flex flex-col` idi. Flex kapsayıcının
+                DOĞRUDAN çocuğuna `mx-auto` verildiğinde (max-w-7xl mx-auto) öğe stretch'i bırakıp
+                İÇERİĞİNE GÖRE DARALIYOR ve ortalanıyor — başlık kartı bu yüzden koca sayfanın
+                ortasında minicik duruyordu. Blok akışına geçirince max-w-7xl gerçekten uygulanıyor. */}
             {/* ---- TAMİRCİ PANOSU BAŞLIĞI ----
                 Detay ve işletme profili sayfalarıyla AYNI tasarım dili: tam genişlikte degrade bant,
                 üzerine binen beyaz özet kartı, altında yapışkan alt-çizgili sekmeler.
@@ -2652,7 +2671,22 @@ export function AppShell() {
             )}
             {mechTab === "favorites" && (
               <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 overflow-y-auto">
-                {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
+                {/* GERÇEK HATA DÜZELTMESİ: favoriye eklenen TAMİRCİLER hiçbir ekranda listelenmiyordu —
+                    kalp doluyordu, veri kaydediliyordu ama kullanıcı bir daha o listeye ulaşamıyordu.
+                    Araç favorileriyle aynı yerde, ayrı bir başlık altında gösteriliyor. */}
+                {(() => {
+                  const favMechs = mechanicsList.filter(m => (favoriteMechanicIds || []).includes(m.id));
+                  if (favMechs.length === 0) return null;
+                  return (
+                    <div className="mb-8">
+                      <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}
+                      </div>
+                    </div>
+                  );
+                })()}
+                {listings.filter(l => favoriteIds.includes(l.id)).length === 0 && (favoriteMechanicIds || []).length > 0 ? null : listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
                   <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesYet")}</p><p className="text-gray-300 text-xs mt-1">{t("noFavoritesHint")}</p></div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
