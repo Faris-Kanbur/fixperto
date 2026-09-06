@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, createContext, useContext } from "react";
 import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, Menu, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2 } from "lucide-react";
 import { api } from "../../services/api/client";
+import { track, setAnalyticsContext } from "../../services/analytics";
 import { T, useT } from "../../data/i18n";
 import {
   BANNER_PRESETS, ONBOARDING_SLIDES, DAY_KEYS, DAY_LABELS, DAY_LABELS_FULL, JS_DAY_TO_KEY,
@@ -171,6 +172,7 @@ function useAppLogic() {
   // MİSAFİR GEZİNME: favori bir hesaba yazıldığı için giriş gerektiriyor — giriş yoksa popup açılır
   // ve giriş tamamlanınca bu işlem otomatik olarak çalışır (bkz. requireAuth).
   const toggleFavorite = (id) => requireAuth(() => {
+    track("favorite_added", { targetType: "listing", targetId: id });
     setFavoriteIds(f => {
       const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
       persist(api.owners.update(MY_OWNER_ID, { favoriteIds: next }), "Favori kaydedilemedi");
@@ -218,6 +220,7 @@ function useAppLogic() {
   const [showCompareModal, setShowCompareModal] = useState(false);
   const MAX_COMPARE_LISTINGS = 3;
   const toggleCompareListing = (id) => {
+    track("compare_used", { targetType: "listing", targetId: id });
     setCompareListingIds(ids => {
       if (ids.includes(id)) return ids.filter(x => x !== id);
       if (ids.length >= MAX_COMPARE_LISTINGS) {
@@ -454,6 +457,7 @@ function useAppLogic() {
   const [listingPageId, setListingPageId] = useState(null);
   const listingPageItem = listings.find((l) => l.id === listingPageId) || null;
   const openListingPage = (id) => {
+    track("listing_view", { targetType: "listing", targetId: id });
     setSelectedListingId(null);   // modal açıksa kapat — ikisi aynı anda görünmesin
     setListingPageId(id);
     listingPageReturnRef.current = screen;
@@ -1167,6 +1171,44 @@ function useAppLogic() {
   }, [jobListings, ownerProfile.email, myProfile?.email]);
   // activeListingFilterCount ile aynı desen: EMPTY_MECH_FILTERS ile karşılaştırarak otomatik sayılıyor,
   // böylece yeni bir tamirci filtresi eklendiğinde sayaç kendiliğinden doğru kalıyor.
+  // ---- ARAMA ANALİTİĞİ ----
+  // Arama olayı her tuş vuruşunda değil, kullanıcı yazmayı BIRAKTIKTAN sonra (600 ms) bir kez
+  // gönderiliyor. Aksi halde "bmw" yazan biri b/bm/bmw diye 3 ayrı arama olarak sayılır ve hem
+  // tablo şişer hem "en çok aranan terimler" listesi yarım kelimelerle dolar.
+  // Ayrıca SONUÇSUZ aramalar ayrı bir olayla işaretleniyor — bu, hangi şehir/hizmet için talep
+  // olup arz olmadığını gösteren en değerli ürün sinyali (yeni tamirci daveti, pazar açılışı).
+  const searchTrackTimerRef = useRef(null);
+  const lastTrackedSearchRef = useRef("");
+  useEffect(() => {
+    if (!hasSearched) return; // kullanıcı henüz arama yapmadıysa olay üretme
+    const mode = ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics";
+    const resultCount = mode === "cars" ? filteredListings.length : mode === "jobs" ? filteredJobs.length : filtered.length;
+    const payload = {
+      mode,
+      query: (query || "").trim().slice(0, 60),
+      city: (locationQuery || "").trim().slice(0, 60),
+      service: (serviceQuery || "").trim().slice(0, 60),
+      resultCount,
+    };
+    // Aynı kriter + aynı sonuç için tekrar olay gönderme (ör. başka bir state değişince effect
+    // yeniden çalışırsa) — yoksa tek bir arama defalarca sayılırdı.
+    const signature = JSON.stringify(payload);
+    if (signature === lastTrackedSearchRef.current) return;
+    if (!payload.query && !payload.city && !payload.service) return; // boş arama sayılmaz
+    clearTimeout(searchTrackTimerRef.current);
+    searchTrackTimerRef.current = setTimeout(() => {
+      lastTrackedSearchRef.current = signature;
+      track("search_performed", { meta: payload });
+      if (resultCount === 0) track("search_zero_result", { meta: payload });
+    }, 600);
+    return () => clearTimeout(searchTrackTimerRef.current);
+  }, [hasSearched, ownerMode, query, locationQuery, serviceQuery, filtered.length, filteredListings.length, filteredJobs.length]);
+  // Filtre kullanımı: kaç filtreyle arama yapıldığını bilmek, filtre setinin işe yarayıp
+  // yaramadığını gösterir (hiç kullanılmayan filtreler sadeleştirilebilir).
+  useEffect(() => {
+    const total = activeListingFilterCount + activeJobFilterCount;
+    if (total > 0) track("filter_applied", { meta: { mode: ownerMode, filterCount: total } });
+  }, [activeListingFilterCount, activeJobFilterCount]);
   const activeFilterCount = Object.keys(EMPTY_MECH_FILTERS).reduce((n, key) => {
     const cur = (filters as any)[key];
     const empty = (EMPTY_MECH_FILTERS as any)[key];
@@ -1241,7 +1283,10 @@ function useAppLogic() {
     setMechProfileTab("settings");
     setExpandedDay(JS_DAY_TO_KEY[new Date().getDay()]);
   };
-  const openDetail = (m, returnTo = undefined) => { setSelectedMechanicId(m.id); setDetailReturnScreen(returnTo || null); setScreen("detail"); };
+  const openDetail = (m, returnTo = undefined) => {
+    track("mechanic_view", { targetType: "mechanic", targetId: m.id });
+    setSelectedMechanicId(m.id); setDetailReturnScreen(returnTo || null); setScreen("detail");
+  };
   const rebookAppt = (a) => {
     const mech = mechanicsList.find(m => m.id === a.mechanicId) || mechanicsList.find(m => m.name === a.mechanicName);
     if (!mech) { setToast({ type: "info", text: "⚠️ Bu tamirci artık listede bulunamadı." }); return; }
@@ -1352,6 +1397,7 @@ function useAppLogic() {
   // teklif taslakları Promise.allSettled ile oluşturuluyor — kısmi başarısızlıkta başarılı olanlar
   // yine de state'e ekleniyor ve kullanıcı ayrı bir uyarı görüyor.
   const submitQuoteRequest = async () => {
+    track("quote_requested", { meta: { resultCount: quoteSelectedMechIds.length } });
     if (!quoteVehicleId || !quoteIssue.trim() || quoteSelectedMechIds.length === 0) return;
     const vehicle = vehicles.find(v => v.id === quoteVehicleId);
     const customerName = ownerProfile.name || form.name || "Siz";
@@ -1517,6 +1563,7 @@ function useAppLogic() {
     // anında isteniyor. Popup açıldığında alttaki ekran mount'lu kaldığı için form kaybolmuyor;
     // giriş biter bitmez bu fonksiyon aynı verilerle otomatik yeniden çağrılıyor.
     if (!ensureAuth(t("authGateReasonBooking"), () => callLatest("confirmBooking"))) return;
+    track("appointment_booked", { targetType: "mechanic", targetId: selectedMechanicId });
     const status = autoAccept ? "Sırada" : "Onay Bekliyor";
     const bookingVehicle = vehicles.find(v => v.id === selectedBookingVehicleId) || vehicles[0];
     const isPayableNow = bookingService && bookingService.fixed && !bookingService.other;
@@ -1566,6 +1613,7 @@ function useAppLogic() {
   // yapmış kullanıcı kendi keşif ekranına (mechBrowse), diğer herkes araç sahibi arama görünümüne
   // gider. mode: "mechanics" | "cars" | "jobs".
   const goToBrowse = (mode = "mechanics") => {
+    track("page_view", { meta: { mode } });
     setOwnerMode(mode);
     setOwnerTab("search");
     setHasSearched(true);
@@ -1578,6 +1626,37 @@ function useAppLogic() {
   // giriş/çıkış her durumda bir React state'ini de değiştirdiği için bu ifade her render'da güncel
   // değerle yeniden hesaplanıyor — bkz. constants.ts setMyOwnerId yorumu.)
   const isAuthed = MY_OWNER_ID != null || MY_MECHANIC_ID != null;
+  // ---- ADMİN ANALİTİK VERİSİ ----
+  // Yalnızca admin panelindeki Analitik sekmesi açıkken çekiliyor; her admin girişinde ya da her
+  // sekmede gereksiz sorgu atmıyoruz. Aralık değişince yeniden yükleniyor.
+  const [adminAnalyticsRange, setAdminAnalyticsRange] = useState(30);
+  const [adminAnalyticsData, setAdminAnalyticsData] = useState(null);
+  const [adminAnalyticsLoading, setAdminAnalyticsLoading] = useState(false);
+  useEffect(() => {
+    if (!adminAuthed || adminTab !== "analytics") return;
+    let cancelled = false;
+    setAdminAnalyticsLoading(true);
+    Promise.all([
+      api.admin.analyticsOverview(adminAnalyticsRange),
+      api.admin.analyticsSearches(adminAnalyticsRange),
+      api.admin.analyticsBreakdown("source", adminAnalyticsRange),
+      api.admin.analyticsBreakdown("country", adminAnalyticsRange),
+      api.admin.analyticsBreakdown("device", adminAnalyticsRange),
+      api.admin.analyticsTimeseries(adminAnalyticsRange),
+    ]).then(([overview, searches, sources, countries, devices, series]) => {
+      if (cancelled) return;
+      setAdminAnalyticsData({ overview, searches, sources, countries, devices, series });
+    }).catch(() => {
+      // Analitik uçları henüz veri toplamamışsa ya da backend eski sürümdeyse panel çökmemeli;
+      // boş durum gösteriliyor.
+      if (!cancelled) setAdminAnalyticsData(null);
+    }).finally(() => { if (!cancelled) setAdminAnalyticsLoading(false); });
+    return () => { cancelled = true; };
+  }, [adminAuthed, adminTab, adminAnalyticsRange]);
+
+  // ANALİTİK BAĞLAMI: analytics.ts React ağacının dışında olduğu için rol ve dili ona besliyoruz.
+  useEffect(() => { setAnalyticsContext({ role: isAuthed ? role : "guest", lang }); }, [role, lang, isAuthed]);
+
   const openAuthGate = (reason = "", step = "login") => {
     setAuthGateReason(reason);
     setAuthGateStep(step);
@@ -2392,7 +2471,11 @@ function useAppLogic() {
   // gönderir), submitLogin (e-posta+şifre doğrulanır, oturum HENÜZ verilmez — 2. faktör için e-postaya
   // kod gönderilir) ve submitOtpVerify (kod doğrulanınca gerçek oturum token'ı alınır ve kimlik
   // MY_OWNER_ID/MY_MECHANIC_ID'ye yazılır). Bkz. backend/routes/auth.js.
+  // submitRegister ile submitLogin aynı OTP ekranında birleşiyor; hangisinden gelindiğini
+  // ayırt edemezsek "kayıt" ile "giriş" olayları karışır ve büyüme metriği yanlış çıkar.
+  const authFlowWasSignupRef = useRef(false);
   const submitRegister = async () => {
+    authFlowWasSignupRef.current = true;
     if (!isValidEmail(form.email)) { setAuthError("Geçersiz e-posta adresi. Lütfen geçerli bir e-posta girin (örn. ad@ornek.com)."); return; }
     const phoneCheck = validatePhone(form.phone);
     if (!phoneCheck.valid) { setAuthError(phoneCheck.message); return; }
@@ -2448,6 +2531,9 @@ function useAppLogic() {
       const result = await api.auth.verifyOtp(pendingLoginTicket, otpCode.trim());
       setAuthLoading(false);
       const user = result.user;
+      // Kayıt mı giriş mi: pendingLoginTicket kayıt akışından geldiyse yeni kullanıcıdır.
+      track(authFlowWasSignupRef.current ? "signup" : "login", { meta: { step: user.role } });
+      authFlowWasSignupRef.current = false;
       if (user.role === "owner") setMyOwnerId(user.id); else setMyMechanicId(user.id);
       setRole(user.role);
       setSessionVersion((v) => v + 1);
@@ -2827,6 +2913,7 @@ function useAppLogic() {
     );
   };
   const openChatWithMechanic = (m, contextNote = undefined) => {
+    track("contact_started", { targetType: "mechanic", targetId: m?.id ?? null });
     // Sohbet bir hesaba bağlı olduğu için (mesajlar kalıcı bir sohbet kaydına yazılıyor) giriş
     // gerekiyor — giriş sonrası sohbet otomatik açılıyor.
     if (!ensureAuth(t("authGateReasonChat"), () => callLatest("openChatWithMechanic", m, contextNote))) return;
@@ -3332,6 +3419,7 @@ function useAppLogic() {
   // baktığı sekmeden (ownerMode) çıkarılır. seenIds kaydetme anında ZATEN eşleşenlerle doldurulur —
   // aksi halde kayıttan hemen sonra mevcut tüm eşleşmeler için bildirim yağardı.
   const saveCurrentSearch = (name, type = undefined) => {
+    track("saved_search_created");
     const trimmed = (name || "").trim();
     if (!trimmed) { setToast({ type: "info", text: t("savedSearchNameRequiredToast") }); return; }
     const searchType = SAVED_SEARCH_TYPES.includes(type) ? type : (ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics");
@@ -3421,6 +3509,7 @@ function useAppLogic() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listings, mechanicsList, jobListings, savedSearches.length, MY_OWNER_ID]);
   const submitListing = async (sellerType) => {
+    track("listing_created");
     const missingFields = [];
     if (!sellForm.brand?.trim()) missingFields.push("Marka");
     if (!sellForm.model?.trim()) missingFields.push("Model");
@@ -3637,6 +3726,7 @@ function useAppLogic() {
     // Misafir teklif tutarını yazabiliyor; giriş sadece "Teklif Ver" anında isteniyor (bkz.
     // confirmBooking'deki aynı desen) — giriş sonrası teklif aynı tutarla otomatik gönderiliyor.
     if (!ensureAuth(t("authGateReasonOffer"), () => callLatest("submitOffer"))) return;
+    track("offer_made", { targetType: "listing", targetId: selectedListing.id });
     const currency = listingCurrency(selectedListing.price);
     const buyerName = myBuyerName();
     const buyerId = myBuyerId();
@@ -3664,6 +3754,7 @@ function useAppLogic() {
     if (!listingMsg || !selectedListing) return;
     // Misafir sorusunu yazabiliyor; giriş sadece göndermeden hemen önce isteniyor.
     if (!ensureAuth(t("authGateReasonQuestion"), () => callLatest("submitListingMsg"))) return;
+    track("message_sent", { targetType: "listing", targetId: selectedListing.id });
     const senderName = ownerProfile.name || myProfile?.name || "Kullanıcı";
     const senderLang = role === "owner" ? ownerLang : (myProfile?.lang || "tr");
     const senderId = myBuyerId();
@@ -3764,6 +3855,7 @@ function useAppLogic() {
   const jobApplyInfoValid = jobApplyInfo.name.trim() && jobApplyPhoneCheck.valid && jobApplyEmailValid && jobApplyInfo.address.trim();
   const jobApplyReady = jobApplyInfoValid && jobApplyCv;
   const submitJobApplication = () => {
+    track("job_applied", { targetType: "job", targetId: selectedJobId });
     if (!jobApplyReady || !selectedJob) return;
     // Misafir başvuru formunu (ad, telefon, e-posta, adres, mesaj, CV) tamamen doldurabiliyor;
     // giriş yalnızca "Başvur" anında isteniyor ve giriş sonrası başvuru otomatik gönderiliyor.
@@ -4058,7 +4150,7 @@ function useAppLogic() {
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
-    detectedCountry,
+    detectedCountry, adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading,
     listingPageId, listingPageItem, openListingPage, closeListingPage, sellPrefillFromListing,
     isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,

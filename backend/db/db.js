@@ -281,6 +281,45 @@ CREATE TABLE IF NOT EXISTS broadcasts (
 -- Sohbet mesajı çevirilerinin sunucu tarafı önbelleği: aynı metin/dil çifti için gerçek çeviri
 -- servisine (bkz. backend/routes/translate.js) sadece bir kez gidilir — hem hız hem de ücretsiz
 -- servisin nadir istek sınırlarını aşmamak için önemli (bkz. "yavaşlatmasın" isteği).
+-- ==================== ANALİTİK ====================
+-- Tek, genel amaçlı olay tablosu. Her yeni özellik için ayrı tablo açmak yerine (profile_views ve
+-- share_events tarihsel olarak öyle doğdu) tüm davranış olayları buraya yazılıyor.
+--
+-- GİZLİLİK (bilinçli tasarım kararı): ham IP adresi HİÇBİR ZAMAN saklanmıyor. Ziyaretçi kimliği
+-- tarayıcıda üretilen rastgele bir dizedir (bkz. frontend analytics.ts) — kişiyi tanımlamaz,
+-- sunucuya kimlik bilgisi taşımaz, kullanıcı depoyu temizlediğinde sıfırlanır. Konum yalnızca
+-- ÜLKE düzeyinde ve saat diliminden çıkarılıyor (IP'den değil). Bu sayede toplanan veri KVKK/GDPR
+-- açısından "meşru menfaat" kapsamındaki toplu istatistik sınırında kalıyor.
+--
+-- name        : olay adı (search_performed, listing_view, appointment_booked, ...)
+-- visitorId   : anonim, kalıcı ziyaretçi dizesi (yeni/tekrar eden ziyaretçi ayrımı için)
+-- sessionId   : anonim oturum dizesi (30 dk hareketsizlikte yenilenir)
+-- targetType/targetId : olayın ilgili olduğu kayıt (mechanic/listing/job/appointment...)
+-- role        : olay anındaki rol (guest/owner/mechanic) — huniyi role göre ayırmak için
+-- source      : trafik kaynağı (utm_source ya da referrer alan adı; yoksa "direct")
+-- country/device/lang : sadece kaba kırılım için
+-- meta        : olaya özel serbest JSON (ör. arama terimi, sonuç sayısı) — kişisel veri YAZILMAZ
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  visitorId TEXT,
+  sessionId TEXT,
+  targetType TEXT,
+  targetId INTEGER,
+  role TEXT,
+  source TEXT,
+  country TEXT,
+  device TEXT,
+  lang TEXT,
+  meta TEXT DEFAULT '{}',
+  createdAt TEXT DEFAULT (datetime('now'))
+);
+-- Panel sorguları hep "şu tarihten sonra, şu olay adı" deseninde; bu iki indeks olmadan olay
+-- sayısı büyüdükçe admin paneli yavaşlar.
+CREATE INDEX IF NOT EXISTS idx_events_name_date ON analytics_events (name, createdAt);
+CREATE INDEX IF NOT EXISTS idx_events_target ON analytics_events (targetType, targetId, createdAt);
+CREATE INDEX IF NOT EXISTS idx_events_visitor ON analytics_events (visitorId);
+
 CREATE TABLE IF NOT EXISTS translation_cache (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   fromLang TEXT NOT NULL,

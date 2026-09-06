@@ -53,6 +53,7 @@ export function AppShell() {
     setMechSettings, notifLog, setNotifLog, ownerNotifSeenAt, setOwnerNotifSeenAt, mechNotifSeenAt, setMechNotifSeenAt, showNotifPanel,
     setShowNotifPanel, darkMode, setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters, clearMechFilters, openListingPage,
+    adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading,
     listingFilters, setListingFilters, listingSort, setListingSort, userLocation, setUserLocation, locationStatus, setLocationStatus,
     notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours,
     setMechanicHours, query, setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery, sortBy, setSortBy, sortDir,
@@ -910,7 +911,127 @@ export function AppShell() {
                 {adminTab === "analytics" && (
                   <div>
                     <h1 className="text-xl font-bold text-gray-900 mb-1">Analitik</h1>
-                    <p className="text-sm text-gray-500 mb-6">Büyüme, gelir ve bölgesel dağılım (son 6 ay, tahmini)</p>
+                    <p className="text-sm text-gray-500 mb-4">Ziyaretçi davranışı, dönüşüm hunisi ve talep sinyalleri</p>
+                    {/* ---- GERÇEK ZİYARETÇİ ANALİTİĞİ (analytics_events tablosundan) ----
+                        Aşağıdaki "Büyüme/Gelir" blokları hâlâ tahmini demo verisi; bu bölüm ise
+                        gerçekte toplanan anonim olaylardan geliyor. İkisi karışmasın diye ayrı
+                        başlıklar altında duruyor. */}
+                    <div className="flex items-center gap-2 mb-4 flex-wrap">
+                      {[{ v: 7, l: "7 gün" }, { v: 30, l: "30 gün" }, { v: 90, l: "90 gün" }, { v: 0, l: "Tümü" }].map(o => (
+                        <button key={o.v} onClick={() => setAdminAnalyticsRange(o.v)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${adminAnalyticsRange === o.v ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>{o.l}</button>
+                      ))}
+                      {adminAnalyticsLoading && <span className="text-xs text-gray-400">yükleniyor…</span>}
+                    </div>
+                    {!adminAnalyticsData ? (
+                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center mb-8">
+                        <TrendingUp size={28} className="mx-auto text-gray-300 mb-2" />
+                        <p className="text-sm font-semibold text-gray-700">Henüz ziyaretçi verisi yok</p>
+                        <p className="text-xs text-gray-400 mt-1">Siteyi kullanan ilk ziyaretçilerle birlikte bu bölüm dolmaya başlar.</p>
+                      </div>
+                    ) : (() => {
+                      const a = adminAnalyticsData;
+                      const o = a.overview || {};
+                      const funnelLabels = { visit: "Siteyi ziyaret etti", search: "Arama yaptı", view: "Profil/ilan görüntüledi", contact: "İletişime geçti", appointment: "Randevu aldı" };
+                      const top = o.funnel?.[0]?.count || 0;
+                      const maxSeries = Math.max(1, ...(a.series || []).map(d => d.visitors));
+                      const StatCard = ({ label, value, hint = null }) => (
+                        <div className="bg-white border border-gray-200 rounded-2xl p-4">
+                          <p className="text-[11px] text-gray-400 mb-1">{label}</p>
+                          <p className="text-2xl font-bold text-gray-900 leading-none">{Number(value || 0).toLocaleString("tr-TR")}</p>
+                          {hint && <p className="text-[11px] text-gray-400 mt-1">{hint}</p>}
+                        </div>
+                      );
+                      const BreakdownList = ({ title, rows, icon: Icon }) => (
+                        <div className="bg-white border border-gray-200 rounded-2xl p-4">
+                          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Icon size={14} className="text-rose-500" /> {title}</h3>
+                          {(!rows || rows.length === 0) ? <p className="text-xs text-gray-400">Veri yok</p> : (
+                            <div className="space-y-1.5">
+                              {rows.slice(0, 6).map(r => {
+                                const max = Math.max(1, ...rows.map(x => x.visitors ?? x.n));
+                                const val = r.visitors ?? r.n;
+                                return (
+                                  <div key={r.label} className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-600 w-28 truncate" title={r.label}>{r.label}</span>
+                                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.round((val / max) * 100)}%` }} /></div>
+                                    <span className="text-xs font-semibold text-gray-700 w-10 text-right">{val}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                      return (
+                        <div className="mb-8 space-y-4">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <StatCard label="Tekil ziyaretçi" value={o.visitors} hint={`${o.newVisitors || 0} yeni · ${o.returningVisitors || 0} tekrar`} />
+                            <StatCard label="Oturum" value={o.sessions} />
+                            <StatCard label="Arama" value={o.totals?.searches} hint={`${o.totals?.zeroResults || 0} sonuçsuz`} />
+                            <StatCard label="Randevu" value={o.totals?.appointments} />
+                          </div>
+                          {/* HUNİ: her adımda TEKİL ziyaretçi. Yüzdeler ilk adıma göre. */}
+                          <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><TrendingUp size={15} className="text-rose-500" /> Dönüşüm Hunisi</h3>
+                            <div className="space-y-2">
+                              {(o.funnel || []).map((step, i) => {
+                                const pct = top > 0 ? Math.round((step.count / top) * 100) : 0;
+                                const prev = i > 0 ? o.funnel[i - 1].count : null;
+                                const stepPct = prev ? Math.round((step.count / Math.max(1, prev)) * 100) : null;
+                                return (
+                                  <div key={step.key}>
+                                    <div className="flex items-center justify-between text-xs mb-1">
+                                      <span className="text-gray-600">{funnelLabels[step.key]}</span>
+                                      <span className="font-semibold text-gray-900">{step.count} <span className="text-gray-400 font-normal">({pct}%)</span>{stepPct != null && <span className="text-gray-400 font-normal"> · önceki adımdan {stepPct}%</span>}</span>
+                                    </div>
+                                    <div className="h-6 bg-gray-100 rounded-lg overflow-hidden"><div className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-lg" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          {/* Günlük ziyaretçi eğrisi */}
+                          {(a.series || []).length > 0 && (
+                            <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                              <h3 className="text-sm font-bold text-gray-800 mb-3">Günlük Ziyaretçi</h3>
+                              <div className="flex items-end gap-1 h-24">
+                                {a.series.map(d => (
+                                  <div key={d.day} className="flex-1 bg-rose-100 hover:bg-rose-300 rounded-t transition relative group" style={{ height: `${Math.max(4, (d.visitors / maxSeries) * 100)}%` }} title={`${d.day}: ${d.visitors} ziyaretçi, ${d.searches} arama, ${d.appointments} randevu`} />
+                                ))}
+                              </div>
+                              <div className="flex justify-between text-[10px] text-gray-400 mt-1.5"><span>{a.series[0]?.day}</span><span>{a.series[a.series.length - 1]?.day}</span></div>
+                            </div>
+                          )}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <BreakdownList title="Trafik Kaynağı" rows={a.sources} icon={Share2} />
+                            <BreakdownList title="Ülke" rows={a.countries} icon={Globe} />
+                            <BreakdownList title="Cihaz" rows={a.devices} icon={LayoutDashboard} />
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <BreakdownList title="En Çok Aranan Terimler" rows={a.searches?.topQueries} icon={Search} />
+                            <BreakdownList title="En Çok Aranan Şehirler" rows={a.searches?.topCities} icon={MapPin} />
+                          </div>
+                          {/* ARZ AÇIĞI: ürün kararları ve tamirci daveti için en değerli tablo. */}
+                          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                            <h3 className="text-sm font-bold text-amber-900 mb-1 flex items-center gap-2"><AlertTriangle size={15} /> Sonuçsuz Aramalar — Arz Açığı</h3>
+                            <p className="text-xs text-amber-700 mb-3">Kullanıcı aradı ama sonuç çıkmadı. Bu şehir/hizmetlerde tamirci eksiğin var.</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1.5">Terim</p>
+                                {(a.searches?.zeroResultQueries || []).length === 0 ? <p className="text-xs text-amber-600">Yok — her arama sonuç veriyor.</p> :
+                                  a.searches.zeroResultQueries.slice(0, 6).map(r => (<div key={r.label} className="flex justify-between text-xs py-0.5"><span className="text-amber-900 truncate">{r.label}</span><span className="font-bold text-amber-900">{r.n}</span></div>))}
+                              </div>
+                              <div>
+                                <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1.5">Şehir</p>
+                                {(a.searches?.zeroResultCities || []).length === 0 ? <p className="text-xs text-amber-600">Yok.</p> :
+                                  a.searches.zeroResultCities.slice(0, 6).map(r => (<div key={r.label} className="flex justify-between text-xs py-0.5"><span className="text-amber-900 truncate">{r.label}</span><span className="font-bold text-amber-900">{r.n}</span></div>))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    <h2 className="text-lg font-bold text-gray-900 mb-1 pt-2 border-t border-gray-200">Büyüme ve Gelir</h2>
+                    <p className="text-sm text-gray-500 mb-6">Son 6 ay, tahmini</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
                       <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center mb-3"><Banknote size={16} className="text-rose-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.estCommission.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Tahmini Platform Geliri (%{Math.round(PLATFORM_COMMISSION_RATE * 100)} komisyon)</p></div>
                       <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center mb-3"><TrendingUp size={16} className="text-rose-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.estGMV.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Tahmini İşlem Hacmi (GMV) · {adminRevenueStats.completedCount} tamamlanan randevu</p></div>

@@ -312,6 +312,12 @@ export const api = {
       setAdminToken(null);
     },
     stats: (): Promise<AdminStats> => request("/api/admin/stats", { ...adminAuthOpts() }),
+    // ANALİTİK: tüm okuma uçları admin token'ı ile korunuyor (bkz. backend/routes/analytics.js
+    // requireAdmin) — platformun tamamına ait davranış verisi rekabet açısından hassas.
+    analyticsOverview: (days?: number): Promise<any> => request(`/api/analytics/overview${days ? `?days=${days}` : ""}`, { ...adminAuthOpts() }),
+    analyticsBreakdown: (field: string, days?: number): Promise<any[]> => request(`/api/analytics/breakdown?field=${encodeURIComponent(field)}${days ? `&days=${days}` : ""}`, { ...adminAuthOpts() }),
+    analyticsSearches: (days?: number): Promise<any> => request(`/api/analytics/searches${days ? `?days=${days}` : ""}`, { ...adminAuthOpts() }),
+    analyticsTimeseries: (days?: number): Promise<any[]> => request(`/api/analytics/timeseries?days=${days || 30}`, { ...adminAuthOpts() }),
     changeLog: (): Promise<AdminChangeLogEntry[]> => request("/api/admin/change-log", { ...adminAuthOpts() }),
     logChange: (entry: Partial<AdminChangeLogEntry>): Promise<{ id: number }> => request("/api/admin/change-log", { method: "POST", body: JSON.stringify(entry), ...adminAuthOpts() }),
     revertChange: (id: number | string): Promise<AdminChangeLogEntry> => request(`/api/admin/change-log/${id}`, { method: "PATCH", ...adminAuthOpts() }),
