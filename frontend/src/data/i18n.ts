@@ -1022,6 +1022,13 @@ export const T = {
   savedSearchTypeCars: { tr: "İkinci el araç", en: "Used cars", de: "Gebrauchtwagen" },
   savedSearchTypeMechanics: { tr: "Tamirci", en: "Mechanics", de: "Werkstätten" },
   savedSearchTypeJobs: { tr: "İş ilanı", en: "Jobs", de: "Stellen" },
+  // Arama rehberi (boş/eksik kriter kombinasyonları — bkz. AppLogicProvider searchGuidance)
+  searchResultCount: { tr: "{n} sonuç", en: "{n} results", de: "{n} Ergebnisse" },
+  searchNoDataYet: { tr: "Bu kategoride henüz kayıt yok.", en: "There are no entries in this category yet.", de: "In dieser Kategorie gibt es noch keine Einträge." },
+  searchDidYouMean: { tr: "Bunu mu demek istediniz:", en: "Did you mean:", de: "Meinten Sie:" },
+  searchRelaxHint: { tr: "Aramanı biraz genişletmeyi dene:", en: "Try widening your search:", de: "Versuchen Sie, Ihre Suche zu erweitern:" },
+  searchRelaxRemove: { tr: "\"{label}: {value}\" kısıtını kaldır", en: "Remove \"{label}: {value}\"", de: "„{label}: {value}“ entfernen" },
+  searchRelaxCount: { tr: "{n} sonuç", en: "{n} results", de: "{n} Ergebnisse" },
 };
 
 export const MONTH_ABBR_BY_LANG = {

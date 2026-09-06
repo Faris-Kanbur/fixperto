@@ -980,10 +980,13 @@ function useAppLogic() {
     let list = jobListings.filter(j => j.status === "active");
     const q = query.toLowerCase();
     if (q) list = list.filter(j => j.title.toLowerCase().includes(q) || j.mechanicName.toLowerCase().includes(q) || j.skills.some(s => s.toLowerCase().includes(q)));
+    // GERÇEK HATA DÜZELTMESİ: iş ilanları sekmesinde arama çubuğunda "Konum" alanı gösteriliyordu
+    // ama filtrelemede HİÇ kullanılmıyordu — kullanıcı şehir yazsa da sonuç değişmiyordu.
+    if (locationQuery.trim()) list = list.filter(j => (j.location || "").toLocaleLowerCase("tr-TR").includes(locationQuery.trim().toLocaleLowerCase("tr-TR")));
     if (jobFilters.employmentType !== "all") list = list.filter(j => j.employmentType === jobFilters.employmentType);
     if (jobFilters.experienceLevel !== "all") list = list.filter(j => j.experienceLevel === jobFilters.experienceLevel);
     return list;
-  }, [jobListings, query, jobFilters]);
+  }, [jobListings, query, locationQuery, jobFilters]);
   const activeJobFilterCount = (jobFilters.employmentType !== "all" ? 1 : 0) + (jobFilters.experienceLevel !== "all" ? 1 : 0);
   const selectedJob = jobListings.find(j => j.id === selectedJobId) || null;
   const myReviews = useMemo(() => mechanicsList.flatMap(m => (m.reviewList || []).filter(r => r.mine).map(r => ({ ...r, mechanicId: m.id, mechanicName: m.name, mechanicImg: m.img }))), [mechanicsList]);
@@ -3654,6 +3657,100 @@ function useAppLogic() {
   const jobEmploymentColor = (type) => type === "Tam Zamanlı" ? "bg-rose-50 text-rose-600" : type === "Yarı Zamanlı" ? "bg-gray-100 text-gray-700" : type === "Stajyer/Çırak" ? "bg-green-50 text-green-600" : "bg-gray-50 text-gray-600";
   // LinkedIn tarzı iş ilanı kartı — pozisyon, işletme, konum, çalışma şekli/deneyim/maaş etiketleri
   // Tamirci profil detayı — normal "detail" ekranında tam sayfa, harita üzerinden açılınca ortalanmış modal içinde kullanılıyor. İçerik tek yerden geliyor, iki görünüm de senkron kalıyor.
+  // ---- ARAMA REHBERİ (boş/eksik kriter kombinasyonları) ----------------------------------------
+  // Karar: hiçbir alan doldurulmadığında ya da yalnızca bir kısmı doldurulduğunda kullanıcıyı
+  // ENGELLEYEN bir popup GÖSTERMİYORUZ (AutoScout24, Airbnb, sahibinden vb. de göstermez — boş arama
+  // "her şeyi göster" demektir). Bunun yerine:
+  //   1) Her kombinasyonda sonuç döndürüyoruz; hiçbir kriter yoksa tüm liste gösteriliyor.
+  //   2) Hangi kriterlerin aktif olduğu, tek tıkla kaldırılabilen rozetlerle ("çipler") görünüyor.
+  //   3) Sonuç SIFIR olduğunda, hangi kriteri kaldırırsan KAÇ sonuç çıkacağını hesaplayıp öneriyoruz
+  //      (ör. "Şehir kısıtını kaldır → 12 sonuç"), böylece kullanıcı deneme-yanılma yapmıyor.
+  //   4) Yazılan şehir hiçbir kayıtla eşleşmiyorsa, veri içindeki gerçek şehirlerden en yakınını
+  //      "Bunu mu demek istediniz?" olarak öneriyoruz (yazım hatası senaryosu).
+  // Tek istisna: kullanıcı "Yakınımda Ara" derse tarayıcının KONUM İZNİ istemi çıkar (bu bir
+  // engelleme değil, kullanıcının açıkça istediği bir izin adımı).
+  //
+  // NOT: bu fonksiyonlar bilerek useMemo DEĞİL — alt bileşenler render edilirken (provider gövdesi
+  // bittikten sonra) çağrılıyorlar, böylece daha aşağıda tanımlanan matchesSavedSearchCriteria /
+  // savedSearchSource'a TDZ hatası olmadan erişebiliyorlar. Veri kümesi küçük olduğu için maliyeti
+  // ihmal edilebilir.
+  const searchModeType = (mode) => (mode === "cars" ? "cars" : mode === "jobs" ? "jobs" : "mechanics");
+  const countSearchMatches = (type, criteria) => savedSearchSource(type).filter(x => matchesSavedSearchCriteria(x, { ...criteria, type })).length;
+  // O anki arama ekranındaki kriterleri tek bir nesnede toplar (kayıtlı arama şekliyle birebir aynı).
+  const currentSearchCriteria = (mode) => {
+    const type = searchModeType(mode);
+    return {
+      type,
+      query,
+      locationQuery,
+      serviceQuery: type === "mechanics" ? serviceQuery : "",
+      filters: type === "cars" ? listingFilters : type === "jobs" ? jobFilters : filters,
+    };
+  };
+  // Veri içinde gerçekten var olan şehirler (tamirci adresi / ilan şehri / iş ilanı konumu).
+  const knownCitiesFor = (type) => {
+    const raw = type === "cars" ? listings.map(l => l.city)
+      : type === "jobs" ? jobListings.map(j => j.location)
+      : mechanicsList.map(m => (m.address || "").split("/").pop());
+    return Array.from(new Set(raw.map(c => (c || "").trim()).filter(Boolean)));
+  };
+  // Basit benzerlik: normalize edilmiş metinlerde ortak önek uzunluğu + içerme kontrolü. Amaç tam bir
+  // yazım denetimi değil, "İstanbu" / "izmr" gibi yakın yazımlarda makul bir öneri sunmak.
+  const closestCity = (text, cities) => {
+    const norm = (s) => (s || "").toLocaleLowerCase("tr-TR").replace(/\s+/g, "");
+    const target = norm(text);
+    if (!target) return null;
+    let best = null; let bestScore = 0;
+    cities.forEach(city => {
+      const c = norm(city);
+      if (!c) return;
+      let common = 0;
+      while (common < c.length && common < target.length && c[common] === target[common]) common += 1;
+      const score = c.includes(target) || target.includes(c) ? Math.max(common, 3) : common;
+      if (score > bestScore) { bestScore = score; best = city; }
+    });
+    return bestScore >= 3 ? best : null;
+  };
+  // Arama ekranı için rehber verisi: aktif kriter çipleri, sıfır sonuçta gevşetme önerileri ve
+  // şehir yazım önerisi. UI tarafı bunu doğrudan render eder (bkz. BrowseHome.tsx).
+  const searchGuidance = (mode) => {
+    const type = searchModeType(mode);
+    const criteria = currentSearchCriteria(mode);
+    const total = countSearchMatches(type, criteria);
+    const chips = [];
+    if (query.trim()) chips.push({ key: "query", label: type === "cars" ? t("brandModelFieldLabel") : type === "jobs" ? t("positionFieldLabel") : t("brandFieldLabel"), value: query.trim(), clear: () => setQuery("") });
+    if (type === "mechanics" && serviceQuery.trim()) chips.push({ key: "service", label: t("serviceFieldLabel"), value: serviceQuery.trim(), clear: () => setServiceQuery("") });
+    if (locationQuery.trim()) chips.push({ key: "location", label: t("cityLabelShort"), value: locationQuery.trim(), clear: () => setLocationQuery("") });
+    const activeFilters = type === "cars" ? activeListingFilterCount : type === "jobs" ? activeJobFilterCount : activeFilterCount;
+    if (activeFilters > 0) chips.push({ key: "filters", label: t("filterBtn"), value: String(activeFilters), clear: () => (type === "cars" ? clearListingFilters() : type === "jobs" ? clearJobFilters() : setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" })) });
+
+    // Sıfır sonuç: her kriteri TEK TEK kaldırıp kaç sonuç çıkacağını hesapla, sadece gerçekten
+    // sonuç getirecek önerileri göster (sıfır getiren öneriyi göstermek kullanıcıyı yorar).
+    const relax = [];
+    if (total === 0) {
+      chips.forEach(chip => {
+        const without = { ...criteria };
+        if (chip.key === "query") without.query = "";
+        if (chip.key === "service") without.serviceQuery = "";
+        if (chip.key === "location") without.locationQuery = "";
+        if (chip.key === "filters") without.filters = type === "cars" ? EMPTY_LISTING_FILTERS : type === "jobs" ? { employmentType: "all", experienceLevel: "all" } : { priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" };
+        const count = countSearchMatches(type, without);
+        if (count > 0) relax.push({ key: chip.key, label: chip.label, value: chip.value, count, apply: chip.clear });
+      });
+      relax.sort((a, b) => b.count - a.count);
+    }
+    // Şehir yazım önerisi: şehir yazılmış ama o şehirde hiç kayıt yoksa en yakın gerçek şehri öner.
+    let citySuggestion = null;
+    if (locationQuery.trim()) {
+      const cities = knownCitiesFor(type);
+      const exact = cities.some(c => c.toLocaleLowerCase("tr-TR").includes(locationQuery.trim().toLocaleLowerCase("tr-TR")));
+      if (!exact) {
+        const guess = closestCity(locationQuery, cities);
+        if (guess) citySuggestion = { city: guess, apply: () => setLocationQuery(guess) };
+      }
+    }
+    return { type, total, chips, relax, citySuggestion, hasAnyCriteria: chips.length > 0 };
+  };
   // ---- Araç Ara / Tamirci Ara — hem owner hem mechanic tarafından paylaşılan arama görünümü ----
   // Giriş kapısı: kapılanan akışların HER RENDER'DAKİ güncel sürümü buraya yazılıyor. Giriş
   // tamamlandığında bekleyen işlem bu tablodan çağrılıyor (callLatest) — böylece işlem, misafirken
@@ -3740,7 +3837,7 @@ function useAppLogic() {
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
-    isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
+    isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,

@@ -6,6 +6,61 @@ import { MapPanel } from "./MapPanel";
 import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
 
+
+// ARAMA REHBERİ ÇUBUĞU — boş/eksik kriter kombinasyonlarında kullanıcıyı yönlendirir.
+// Karar (bkz. AppLogicProvider.tsx searchGuidance yorumu): hiçbir alan doldurulmasa bile ENGELLEYİCİ
+// popup göstermiyoruz; her zaman sonuç veriyoruz ve aktif kriterleri tek tıkla kaldırılabilir
+// rozetlerle gösteriyoruz. Sonuç sıfırsa, hangi kriteri kaldırınca kaç sonuç çıkacağını söylüyoruz.
+function SearchGuidanceBar({ mode }) {
+  const { t, searchGuidance } = useApp();
+  const g = searchGuidance(mode);
+  if (!g.hasAnyCriteria && g.total > 0) return null; // kriter yoksa ve sonuç varsa sessiz kal
+  return (
+    <div className="mb-3 flex items-center gap-2 flex-wrap">
+      {g.chips.map(chip => (
+        <span key={chip.key} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-xs font-medium pl-3 pr-1.5 py-1.5 rounded-full">
+          <span className="text-gray-400">{chip.label}:</span> {chip.value}
+          <button onClick={chip.clear} aria-label={t("clear")} className="w-5 h-5 rounded-full hover:bg-gray-200 flex items-center justify-center text-gray-500"><X size={11} /></button>
+        </span>
+      ))}
+      {g.hasAnyCriteria && <span className="text-xs text-gray-400">{t("searchResultCount", { n: String(g.total) })}</span>}
+    </div>
+  );
+}
+
+// SIFIR SONUÇ EKRANI — "sonuç yok" demekle bırakmıyoruz: hangi kriteri kaldırınca kaç sonuç
+// çıkacağını hesaplayıp tek tıkla uygulanabilir öneriler sunuyoruz; şehir yazımı hatalıysa
+// veri içindeki en yakın gerçek şehri öneriyoruz.
+function SearchEmptyState({ mode, emptyText }) {
+  const { t, searchGuidance } = useApp();
+  const g = searchGuidance(mode);
+  return (
+    <div className="col-span-full text-center py-12 px-4">
+      <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><SlidersHorizontal size={22} className="text-gray-400" /></div>
+      <p className="text-gray-700 text-sm font-semibold mb-1">{emptyText}</p>
+      {!g.hasAnyCriteria && <p className="text-gray-400 text-xs">{t("searchNoDataYet")}</p>}
+      {g.citySuggestion && (
+        <p className="text-sm text-gray-500 mt-2">
+          {t("searchDidYouMean")} <button onClick={g.citySuggestion.apply} className="font-bold text-rose-600 hover:underline">{g.citySuggestion.city}</button>
+        </p>
+      )}
+      {g.relax.length > 0 && (
+        <div className="mt-4 max-w-md mx-auto">
+          <p className="text-xs text-gray-400 mb-2">{t("searchRelaxHint")}</p>
+          <div className="flex flex-col gap-2">
+            {g.relax.map(r => (
+              <button key={r.key} onClick={r.apply} className="flex items-center justify-between gap-3 bg-white border border-gray-200 hover:border-gray-900 rounded-xl px-3.5 py-2.5 text-left transition">
+                <span className="text-sm text-gray-700 truncate">{t("searchRelaxRemove", { label: r.label, value: r.value })}</span>
+                <span className="text-xs font-bold text-rose-600 whitespace-nowrap">{t("searchRelaxCount", { n: String(r.count) })}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function BrowseHome({ theme = undefined }) {
   const {
     lang, setLang, t, screen, setScreen, role, setRole, showPass, setShowPass, forgotEmail, setForgotEmail, form, 
@@ -137,8 +192,9 @@ export function BrowseHome({ theme = undefined }) {
             </div>
             <p className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {t("mechanicsFoundSuffix")}</p>
           </div>
+          <SearchGuidanceBar mode="mechanics" />
           <div className="md:flex md:gap-6">
-            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{locationStatus === "loading" ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />) : filtered.map(m => (<MechCard key={m.id} m={m} onHover={setHoveredPinId} />))}{locationStatus !== "loading" && filtered.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">{t("noMechanicMatchNote")}</p>{(activeFilterCount > 0 || query.trim() || locationQuery.trim() || serviceQuery.trim()) && <button onClick={() => { setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" }); setQuery(""); setLocationQuery(""); setServiceQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">{t("clearFiltersBtn")}</button>}</div>)}</div></div>
+            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{locationStatus === "loading" ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />) : filtered.map(m => (<MechCard key={m.id} m={m} onHover={setHoveredPinId} />))}{locationStatus !== "loading" && filtered.length === 0 && (<SearchEmptyState mode="mechanics" emptyText={t("noMechanicMatchNote")} />)}</div></div>
             <div className="hidden md:block md:w-[42%] md:sticky md:top-4 md:self-start"><MapPanel className="h-[65vh]" items={filtered} onPick={openMapDetail} hoveredId={hoveredPinId} onHoverItem={setHoveredPinId} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /></div>
           </div>
         </div>
@@ -153,8 +209,9 @@ export function BrowseHome({ theme = undefined }) {
               </div>
             <p className="text-xs text-gray-400 whitespace-nowrap">{filteredListings.length} {t("listingsFoundSuffix")}</p>
           </div>
+          <SearchGuidanceBar mode="cars" />
           <div className="md:flex md:gap-6">
-            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative">{filteredListings.map(l => (<ListingCard key={l.id} l={l} onHover={setHoveredPinId} />))}{filteredListings.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">{t("noListingsMatchFilters")}</p>{(activeListingFilterCount > 0 || query.trim()) && <button onClick={() => { clearListingFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">{t("clearFiltersBtn")}</button>}</div>)}</div></div>
+            <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative">{filteredListings.map(l => (<ListingCard key={l.id} l={l} onHover={setHoveredPinId} />))}{filteredListings.length === 0 && (<SearchEmptyState mode="cars" emptyText={t("noListingsMatchFilters")} />)}</div></div>
             <div className="hidden md:block md:w-[42%] md:sticky md:top-4 md:self-start"><MapPanel className="h-[65vh]" items={filteredListings} onPick={(l) => setSelectedListingId(l.id)} hoveredId={hoveredPinId} onHoverItem={setHoveredPinId} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /></div>
           </div>
         </div>
@@ -164,7 +221,8 @@ export function BrowseHome({ theme = undefined }) {
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <p className="text-xs text-gray-400 whitespace-nowrap">{filteredJobs.length} {t("jobsFoundSuffix")}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{filteredJobs.map(j => (<JobCard key={j.id} j={j} />))}{filteredJobs.length === 0 && (<div className="col-span-full text-center py-10"><p className="text-gray-400 text-sm mb-3">{t("noJobsMatchFilters")}</p>{(activeJobFilterCount > 0 || query.trim()) && <button onClick={() => { clearJobFilters(); setQuery(""); }} className="text-rose-600 text-sm font-semibold hover:underline">{t("clearFiltersBtn")}</button>}</div>)}</div>
+          <SearchGuidanceBar mode="jobs" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{filteredJobs.map(j => (<JobCard key={j.id} j={j} />))}{filteredJobs.length === 0 && (<SearchEmptyState mode="jobs" emptyText={t("noJobsMatchFilters")} />)}</div>
         </div>
       )}
       {/* Alt bilgi: eski karşılama (hero + rol seçim) ekranı misafir gezinmeyle birlikte kaldırıldı;
