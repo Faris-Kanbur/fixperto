@@ -11,13 +11,14 @@ import {
   FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, LEGAL_CONTENT,
   ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_STATUS_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
   ADMIN_TICKET_PRIORITY_WEIGHT, ADMIN_TICKET_TYPE_DEFAULT_PRIORITY, TR_ASCII_MAP,
-  PLATFORM_COMMISSION_RATE, ADMIN_TREND_DATA, ADMIN_SLA_DAYS,
+  PLATFORM_COMMISSION_RATE, ADMIN_TREND_DATA, ADMIN_SLA_DAYS, TR_CITY_COORDS,
 } from "../../data/constants";
 import {
   jobStatusMeta, genSlots, getDaySlots, formatHoursText, parseListingPrice, isOpenNowByHoursText,
   priceLevel, haversineDistanceKm, isValidDateStr, isFixedPriceService, parsePriceNumber,
   listingCurrency, isValidEmail, validatePhone, computeReminders, mockTranslate, statusColor,
   isImgUrl, monthsBetween, initials, listingStatusMeta, slugifyForEmail, ticketDaysOpen, ticketSlaBreached,
+  parseDecimalField, listingMarketPriceTier,
 } from "../../utils/helpers";
 import { PriceLevelDots } from "../../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../../components/ui/MiniBarChart";
@@ -121,18 +122,36 @@ function useAppLogic() {
   const [mapPreviewItem, setMapPreviewItem] = useState(null);
   useEffect(() => { setHoveredPinId(null); setMapPreviewItem(null); }, [ownerMode]);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [filters, setFilters] = useState({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" });
+  // TAMİRCİ ARAMA FİLTRELERİ: eskiden yalnızca fiyat aralığı, puan, mesafe, marka ve hizmet vardı —
+  // yani bir müşterinin tamirci seçerken en çok baktığı kriterlerin (şu an açık mı, doğrulanmış mı,
+  // ne kadar hızlı dönüyor, kaç yorumu var, hangi ödemeyi kabul ediyor, sabit fiyat veriyor mu)
+  // hiçbiri filtrelenemiyordu. Bu set Google Haritalar / Yelp / AutoScout24 "Händler" filtrelerinden
+  // uyarlandı. EMPTY_LISTING_FILTERS ile aynı sözleşme: boş string / "all" / false / 0 = filtre kapalı.
+  const EMPTY_MECH_FILTERS = {
+    priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "",
+    maxPrice: "", openNow: false, verifiedOnly: false, maxResponse: "",
+    minReviews: "", paymentMethod: "", mechLang: "all", fixedPriceOnly: false,
+  };
+  const [filters, setFilters] = useState({ ...EMPTY_MECH_FILTERS });
   // İKİNCİ EL ARAÇ FİLTRELERİ (AutoScout24 deseninden genişletildi): eskiden yalnızca vites, yakıt,
   // fiyat, km ve yıl vardı. Gerçek bir araç pazarında alıcı kararını belirleyen alanların tamamı
   // artık filtrelenebiliyor — kasa tipi, çekiş, motor gücü, kapı/koltuk sayısı, renk, satıcı tipi
   // (sahibinden/galeriden), emisyon sınıfı, azami CO2, kaçıncı el, hasarsızlık (boya-değişen yok),
   // takas, pazarlık payı ve donanım listesi. Boş/"all" değerler o filtrenin kapalı olduğunu belirtir.
+  // 2. TUR GENİŞLETME (AutoScout24 filtre panelinin tamamı incelenerek): yarıçap (Umkreis), motor
+  // hacmi, yakıt tüketimi, elektrikli menzili, hasar kaydının SAYISAL üst sınırı (sadece "hasarsız"
+  // değil), ekspertiz raporu, fotoğraflı ilan, vitrin, ilan tarihi, satılanları gizle, doğrulanmış
+  // satıcı ve piyasa fiyat değerlendirmesi (Preisbewertung).
   const EMPTY_LISTING_FILTERS = {
     transmission: "all", fuelType: "all", bodyType: "all", drivetrain: "all",
     minPrice: "", maxPrice: "", minKm: "", maxKm: "", minYear: "", maxYear: "",
     minPower: "", maxPower: "", doorCount: "all", seatCount: "all", color: "",
     sellerType: "all", emissionClass: "all", maxCo2: "", maxOwnerCount: "",
     damageFree: false, tradeIn: false, negotiable: false, features: [] as string[],
+    maxDistance: 999, minEngine: "", maxEngine: "", maxFuelConsumption: "", minRange: "",
+    maxPaintedParts: "", maxChangedParts: "", hasInspectionReport: false, withPhotos: false,
+    featuredOnly: false, listedWithin: "all", hideSold: false, verifiedSeller: false,
+    priceRating: "all",
   };
   const [listingFilters, setListingFilters] = useState({ ...EMPTY_LISTING_FILTERS });
   const [listingSort, setListingSort] = useState("default");
@@ -877,6 +896,37 @@ function useAppLogic() {
     const w = wanted.trim().toLocaleLowerCase("tr-TR");
     return (services || []).some((s) => s.name.trim().toLocaleLowerCase("tr-TR") === w);
   };
+  // TEK DOĞRULUK KAYNAĞI: tamirci filtre kuralları eskiden `filtered`, `quoteFilteredMechanics` ve
+  // kayıtlı-arama eşleştiricisinde ÜÇ AYRI yerde elle kopyalanmıştı — geçmişte bu yüzden marka/hizmet
+  // filtreleri teklif listesinde hiç uygulanmıyordu. Artık üçü de bu tek fonksiyonu çağırıyor, yeni
+  // bir filtre eklendiğinde sadece burası güncelleniyor.
+  // Kural: bir tamircide o veri hiç yoksa (ör. paymentMethods boş) filtre onu ELEMİYOR mu? Hayır —
+  // kullanıcı açıkça "Havale kabul edenler" dediyse, kabul ettiği bilinmeyen bir tamirciyi göstermek
+  // yanıltıcı olur. Bu yüzden metin/liste eşleşmeli filtreler veri yoksa eler; SAYISAL üst sınırlar
+  // (maxResponse gibi) veri yoksa elemez (araç filtrelerindeki davranışla tutarlı).
+  const mechanicPassesFilters = (m, f) => {
+    if (f.priceTier === "cheap" && !(m.price <= PRICE_TIER_BREAKS[0])) return false;
+    if (f.priceTier === "mid" && !(m.price > PRICE_TIER_BREAKS[0] && m.price <= PRICE_TIER_BREAKS[1])) return false;
+    if (f.priceTier === "expensive" && !(m.price > PRICE_TIER_BREAKS[1])) return false;
+    if (f.minRating > 0 && !(m.rating >= f.minRating)) return false;
+    if (f.maxDistance < 999 && !(getEffectiveDistance(m) <= f.maxDistance)) return false;
+    if (f.brand && !(m.brandsServiced || []).includes(f.brand)) return false;
+    if (f.service && !serviceNameMatches(m.services, f.service)) return false;
+    // --- 2. tur: profesyonel tamirci filtreleri ---
+    if (f.maxPrice && !(Number(m.price) <= Number(f.maxPrice))) return false;
+    if (f.verifiedOnly && !m.verified) return false;
+    // "Şu an açık": isOpenNowByHoursText bilinmiyorsa null döner — saatleri girilmemiş bir tamirciyi
+    // "açık" saymak yanlış olur, bu yüzden yalnızca kesin true olanlar geçiyor.
+    if (f.openNow && isOpenNowByHoursText(m.hoursText) !== true) return false;
+    if (f.maxResponse && m.avgResponseMinutes != null && !(Number(m.avgResponseMinutes) <= Number(f.maxResponse))) return false;
+    if (f.minReviews && !(Number(m.reviews || 0) >= Number(f.minReviews))) return false;
+    if (f.paymentMethod && !(m.paymentMethods || []).includes(f.paymentMethod)) return false;
+    if (f.mechLang && f.mechLang !== "all" && m.lang !== f.mechLang) return false;
+    // "Sabit fiyatlı hizmet sunanlar": fiyat şeffaflığı filtresi — en az bir hizmetini sabit fiyatla
+    // ilan etmiş tamirciler ("Yağ değişimi 1.200₺" gibi), "fiyat için arayın" diyenler değil.
+    if (f.fixedPriceOnly && !(m.services || []).some(s => s.fixed && String(s.price || "").trim())) return false;
+    return true;
+  };
   const filtered = useMemo(() => {
     let list = mechanicsList.map(m => ({ ...m, effectiveDistance: getEffectiveDistance(m) }));
     // GERÇEK HATA DÜZELTMESİ: tamirci rolü, kendisiyle paylaşılan bu aynı arama ekranını
@@ -893,13 +943,7 @@ function useAppLogic() {
       const sq = serviceQuery.trim().toLocaleLowerCase("tr-TR");
       list = list.filter(m => (m.services || []).some(s => (s.name || "").toLocaleLowerCase("tr-TR").includes(sq)) || (m.specialty || "").toLocaleLowerCase("tr-TR").includes(sq));
     }
-    if (filters.priceTier === "cheap") list = list.filter(m => m.price <= PRICE_TIER_BREAKS[0]);
-    if (filters.priceTier === "mid") list = list.filter(m => m.price > PRICE_TIER_BREAKS[0] && m.price <= PRICE_TIER_BREAKS[1]);
-    if (filters.priceTier === "expensive") list = list.filter(m => m.price > PRICE_TIER_BREAKS[1]);
-    if (filters.minRating > 0) list = list.filter(m => m.rating >= filters.minRating);
-    if (filters.maxDistance < 999) list = list.filter(m => m.effectiveDistance <= filters.maxDistance);
-    if (filters.brand) list = list.filter(m => (m.brandsServiced || []).includes(filters.brand));
-    if (filters.service) list = list.filter(m => serviceNameMatches(m.services, filters.service));
+    list = list.filter(m => mechanicPassesFilters(m, filters));
     if (sortBy === "distance") list = [...list].sort((a, b) => sortDir === "asc" ? a.effectiveDistance - b.effectiveDistance : b.effectiveDistance - a.effectiveDistance);
     if (sortBy === "price") list = [...list].sort((a, b) => sortDir === "asc" ? a.price - b.price : b.price - a.price);
     if (sortBy === "rating") list = [...list].sort((a, b) => sortDir === "asc" ? a.rating - b.rating : b.rating - a.rating);
@@ -913,13 +957,7 @@ function useAppLogic() {
   const quoteFilteredMechanics = useMemo(() => {
     let list = mechanicsList.map(m => ({ ...m, effectiveDistance: getEffectiveDistance(m) }));
     if (quoteMechSearch.trim()) list = list.filter(m => m.name.toLowerCase().includes(quoteMechSearch.toLowerCase()) || m.specialty.toLowerCase().includes(quoteMechSearch.toLowerCase()));
-    if (filters.priceTier === "cheap") list = list.filter(m => m.price <= PRICE_TIER_BREAKS[0]);
-    if (filters.priceTier === "mid") list = list.filter(m => m.price > PRICE_TIER_BREAKS[0] && m.price <= PRICE_TIER_BREAKS[1]);
-    if (filters.priceTier === "expensive") list = list.filter(m => m.price > PRICE_TIER_BREAKS[1]);
-    if (filters.minRating > 0) list = list.filter(m => m.rating >= filters.minRating);
-    if (filters.maxDistance < 999) list = list.filter(m => m.effectiveDistance <= filters.maxDistance);
-    if (filters.brand) list = list.filter(m => (m.brandsServiced || []).includes(filters.brand));
-    if (filters.service) list = list.filter(m => serviceNameMatches(m.services, filters.service));
+    list = list.filter(m => mechanicPassesFilters(m, filters));
     if (sortBy === "distance") list = [...list].sort((a, b) => sortDir === "asc" ? a.effectiveDistance - b.effectiveDistance : b.effectiveDistance - a.effectiveDistance);
     if (sortBy === "price") list = [...list].sort((a, b) => sortDir === "asc" ? a.price - b.price : b.price - a.price);
     if (sortBy === "rating") list = [...list].sort((a, b) => sortDir === "asc" ? a.rating - b.rating : b.rating - a.rating);
@@ -955,6 +993,57 @@ function useAppLogic() {
     if (listingFilters.tradeIn) list = list.filter(l => !!l.tradeIn);
     if (listingFilters.negotiable) list = list.filter(l => !!l.negotiable);
     if (listingFilters.features?.length) list = list.filter(l => listingFilters.features.every(f => (l.features || []).includes(f)));
+    // ---- 2. TUR: AutoScout24 filtre panelinin kalan başlıkları ----
+    // Motor hacmi: engineSize serbest metin ("1.6", "2.0 TDI") — parseDecimalField ondalığı koruyor,
+    // parseListingPrice gibi noktayı atsaydı 1.6 → 16 olurdu.
+    if (listingFilters.minEngine) list = list.filter(l => { const v = parseDecimalField(l.engineSize); return v == null || v >= Number(listingFilters.minEngine); });
+    if (listingFilters.maxEngine) list = list.filter(l => { const v = parseDecimalField(l.engineSize); return v == null || v <= Number(listingFilters.maxEngine); });
+    if (listingFilters.maxFuelConsumption) list = list.filter(l => { const v = parseDecimalField(l.fuelConsumption); return v == null || v <= Number(listingFilters.maxFuelConsumption); });
+    if (listingFilters.minRange) list = list.filter(l => { const v = parseDecimalField(l.rangeKm); return v == null || v >= Number(listingFilters.minRange); });
+    // Hasar kaydı artık ikili (hasarsız/hepsi) değil, sayısal üst sınır olarak da filtrelenebiliyor —
+    // sahibinden.com/arabam.com'daki "boyalı/değişen parça" filtresinin karşılığı. Veri yoksa 0 kabul
+    // ediliyor (DB varsayılanı da 0), bu alanda "bilinmiyor" diye bir durum yok.
+    if (listingFilters.maxPaintedParts !== "") list = list.filter(l => Number(l.paintedParts || 0) <= Number(listingFilters.maxPaintedParts));
+    if (listingFilters.maxChangedParts !== "") list = list.filter(l => Number(l.changedParts || 0) <= Number(listingFilters.maxChangedParts));
+    if (listingFilters.hasInspectionReport) list = list.filter(l => !!String(l.inspectionReportUrl || "").trim());
+    if (listingFilters.withPhotos) list = list.filter(l => (l.photos || []).length > 0 || isImgUrl(l.photo));
+    if (listingFilters.featuredOnly) list = list.filter(l => !!l.featured);
+    // "Satılanları gizle": varsayılan olarak KAPALI çünkü satılmış ilanlar fiyat fikri vermek için
+    // değerli; ama alıcı sadece alınabilir araçları görmek isteyebilir (AutoScout24'te satılan ilan
+    // zaten listeden düşer, bizde geçmiş kalıyor).
+    if (listingFilters.hideSold) list = list.filter(l => l.status !== "sold");
+    if (listingFilters.listedWithin && listingFilters.listedWithin !== "all") {
+      const cutoff = Date.now() - Number(listingFilters.listedWithin) * 86400000;
+      // createdAt'i olmayan eski/backfill kayıtlar bu filtrede elenir — "son 24 saatte eklenenler"
+      // derken tarihi bilinmeyen bir ilanı göstermek sözü tutmamak olurdu.
+      list = list.filter(l => { const ts = Date.parse(l.createdAt || ""); return Number.isFinite(ts) && ts >= cutoff; });
+    }
+    if (listingFilters.verifiedSeller) {
+      const verifiedMechIds = new Set(mechanicsList.filter(m => m.verified).map(m => m.id));
+      list = list.filter(l => l.sellerType === "mechanic" && verifiedMechIds.has(l.sellerId));
+    }
+    // AutoScout24 "Preisbewertung": aynı marka+modeldeki diğer aktif ilanların medyanına göre
+    // "iyi fiyat" (>= %5 altında) veya "piyasa seviyesinde" ilanları süzer. Yeterli karşılaştırma
+    // verisi olmayan ilanlar (tier null) bu filtre açıkken gösterilmez — aksi halde "iyi fiyat"
+    // dediğimiz listede aslında değerlendirilmemiş ilanlar olurdu.
+    if (listingFilters.priceRating && listingFilters.priceRating !== "all") {
+      list = list.filter(l => {
+        const cmp = listingMarketPriceTier(l, listings);
+        if (!cmp) return false;
+        return listingFilters.priceRating === "below" ? cmp.tier === "below" : cmp.tier !== "above";
+      });
+    }
+    // Yarıçap (AutoScout24 "Umkreis"): araç ilanlarında lat/lng olmadığı için şehir adı
+    // TR_CITY_COORDS ile koordinata çevriliyor. Konum paylaşılmadıysa filtre uygulanmıyor (sessizce
+    // yanlış sonuç vermektense hiç uygulamamak doğru); şehri tabloda olmayan ilan ise yarıçap
+    // AÇIKKEN elenir, çünkü mesafesi bilinmiyor.
+    if (listingFilters.maxDistance < 999 && userLocation) {
+      list = list.filter(l => {
+        const c = TR_CITY_COORDS[(l.city || "").trim().toLocaleLowerCase("tr-TR")];
+        if (!c) return false;
+        return haversineDistanceKm(userLocation.lat, userLocation.lng, c.lat, c.lng) <= listingFilters.maxDistance;
+      });
+    }
     if (listingSort === "price") list = [...list].sort((a, b) => listingSortDir === "asc" ? parseListingPrice(a.price) - parseListingPrice(b.price) : parseListingPrice(b.price) - parseListingPrice(a.price));
     if (listingSort === "km") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.km) - Number(b.km) : Number(b.km) - Number(a.km));
     if (listingSort === "year") list = [...list].sort((a, b) => listingSortDir === "asc" ? Number(a.year) - Number(b.year) : Number(b.year) - Number(a.year));
@@ -965,7 +1054,7 @@ function useAppLogic() {
       list = [...list].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
     }
     return list;
-  }, [listings, query, locationQuery, listingFilters, listingSort, listingSortDir]);
+  }, [listings, mechanicsList, userLocation, query, locationQuery, listingFilters, listingSort, listingSortDir]);
   // Aktif filtre sayacı: "Filtrele (N)" rozetinde gösteriliyor. EMPTY_LISTING_FILTERS ile
   // karşılaştırarak hesaplanıyor — yeni bir filtre eklendiğinde burayı ayrıca güncellemek
   // gerekmiyor (eskiden her alan tek tek elle sayılıyordu ve yeni alanlar sayaca yansımıyordu).
@@ -1016,7 +1105,15 @@ function useAppLogic() {
     }
     return refs;
   }, [jobListings, ownerProfile.email, myProfile?.email]);
-  const activeFilterCount = (filters.priceTier !== "all" ? 1 : 0) + (filters.minRating > 0 ? 1 : 0) + (filters.maxDistance < 999 ? 1 : 0) + (filters.brand ? 1 : 0) + (filters.service ? 1 : 0);
+  // activeListingFilterCount ile aynı desen: EMPTY_MECH_FILTERS ile karşılaştırarak otomatik sayılıyor,
+  // böylece yeni bir tamirci filtresi eklendiğinde sayaç kendiliğinden doğru kalıyor.
+  const activeFilterCount = Object.keys(EMPTY_MECH_FILTERS).reduce((n, key) => {
+    const cur = (filters as any)[key];
+    const empty = (EMPTY_MECH_FILTERS as any)[key];
+    if (typeof empty === "boolean") return n + (cur ? 1 : 0);
+    return n + (cur !== empty && cur !== "" && cur != null ? 1 : 0);
+  }, 0);
+  const clearMechFilters = () => setFilters({ ...EMPTY_MECH_FILTERS });
   const nextDays = useMemo(() => { const days = []; const today = new Date(); for (let i = 0; i < 7; i++) { const d = new Date(today); d.setDate(today.getDate() + i); days.push(d); } return days; }, []);
   const isSameMechanicAppt = (a) => a.mechanicId === MY_MECHANIC_ID || (!a.mechanicId && a.mechanicName === myProfile?.name);
   // ÖNEMLİ: ownerId ile eşleştir, a.customer (isim) ile DEĞİL — customer alanı randevu oluşturulduğu
@@ -3068,6 +3165,34 @@ function useAppLogic() {
       if (f.tradeIn && !item.tradeIn) return false;
       if (f.negotiable && !item.negotiable) return false;
       if (f.features?.length && !f.features.every(x => (item.features || []).includes(x))) return false;
+      // 2. tur filtreler — filteredListings ile birebir aynı kurallar (sayaç/bildirim tutarlılığı).
+      if (f.minEngine) { const v = parseDecimalField(item.engineSize); if (v != null && v < Number(f.minEngine)) return false; }
+      if (f.maxEngine) { const v = parseDecimalField(item.engineSize); if (v != null && v > Number(f.maxEngine)) return false; }
+      if (f.maxFuelConsumption) { const v = parseDecimalField(item.fuelConsumption); if (v != null && v > Number(f.maxFuelConsumption)) return false; }
+      if (f.minRange) { const v = parseDecimalField(item.rangeKm); if (v != null && v < Number(f.minRange)) return false; }
+      if (f.maxPaintedParts !== "" && f.maxPaintedParts != null && Number(item.paintedParts || 0) > Number(f.maxPaintedParts)) return false;
+      if (f.maxChangedParts !== "" && f.maxChangedParts != null && Number(item.changedParts || 0) > Number(f.maxChangedParts)) return false;
+      if (f.hasInspectionReport && !String(item.inspectionReportUrl || "").trim()) return false;
+      if (f.withPhotos && !((item.photos || []).length > 0 || isImgUrl(item.photo))) return false;
+      if (f.featuredOnly && !item.featured) return false;
+      if (f.hideSold && item.status === "sold") return false;
+      if (f.listedWithin && f.listedWithin !== "all") {
+        const ts = Date.parse(item.createdAt || "");
+        if (!Number.isFinite(ts) || ts < Date.now() - Number(f.listedWithin) * 86400000) return false;
+      }
+      if (f.verifiedSeller) {
+        if (item.sellerType !== "mechanic") return false;
+        if (!mechanicsList.some(m => m.id === item.sellerId && m.verified)) return false;
+      }
+      if (f.priceRating && f.priceRating !== "all") {
+        const cmp = listingMarketPriceTier(item, listings);
+        if (!cmp) return false;
+        if (f.priceRating === "below" ? cmp.tier !== "below" : cmp.tier === "above") return false;
+      }
+      if (f.maxDistance != null && f.maxDistance < 999 && userLocation) {
+        const c = TR_CITY_COORDS[(item.city || "").trim().toLocaleLowerCase("tr-TR")];
+        if (!c || haversineDistanceKm(userLocation.lat, userLocation.lng, c.lat, c.lng) > f.maxDistance) return false;
+      }
       return true;
     }
     if (type === "mechanics") {
@@ -3079,17 +3204,10 @@ function useAppLogic() {
       if (loc && !(item.address || "").toLocaleLowerCase("tr-TR").includes(loc)) return false;
       const sq = (search.serviceQuery || "").trim().toLocaleLowerCase("tr-TR");
       if (sq && !((item.services || []).some(s => (s.name || "").toLocaleLowerCase("tr-TR").includes(sq)) || (item.specialty || "").toLocaleLowerCase("tr-TR").includes(sq))) return false;
-      if (f.priceTier === "cheap" && !(item.price <= PRICE_TIER_BREAKS[0])) return false;
-      if (f.priceTier === "mid" && !(item.price > PRICE_TIER_BREAKS[0] && item.price <= PRICE_TIER_BREAKS[1])) return false;
-      if (f.priceTier === "expensive" && !(item.price > PRICE_TIER_BREAKS[1])) return false;
-      if (f.minRating > 0 && !(item.rating >= f.minRating)) return false;
-      if (f.brand && !(item.brandsServiced || []).includes(f.brand)) return false;
-      if (f.service && !serviceNameMatches(item.services, f.service)) return false;
-      // Canlı listede (filtered) uygulanan ama burada eksik kalan iki kural — sayaç ile ekrandaki
-      // sonuç sayısı birebir aynı olsun diye eklendi:
-      //  1) mesafe filtresi (konum paylaşılmadıysa tahmini mesafe üzerinden),
-      //  2) tamirci rolündeki kullanıcının KENDİ profili sonuçlarda görünmez.
-      if (f.maxDistance != null && f.maxDistance < 999 && getEffectiveDistance(item) > f.maxDistance) return false;
+      // Filtre kuralları artık canlı listeyle (filtered) TEK bir fonksiyondan geliyor — eskiden burada
+      // elle kopyalanmıştı ve mesafe gibi kurallar unutulduğu için sayaç ekrandaki sonuçla uyuşmuyordu.
+      if (!mechanicPassesFilters(item, f)) return false;
+      // Tamirci rolündeki kullanıcının KENDİ profili sonuçlarda hiç görünmez (bkz. filtered).
       if (role === "mechanic" && MY_MECHANIC_ID != null && item.id === MY_MECHANIC_ID) return false;
       return true;
     }
@@ -3156,7 +3274,7 @@ function useAppLogic() {
       setJobFilters({ employmentType: "all", experienceLevel: "all", ...(search.filters || {}) });
     } else {
       setServiceQuery(search.serviceQuery || "");
-      setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "", ...(search.filters || {}) });
+      setFilters({ ...EMPTY_MECH_FILTERS, ...(search.filters || {}) });
     }
     setHasSearched(true);
     goToBrowse(type === "cars" ? "cars" : type === "jobs" ? "jobs" : "mechanics");
@@ -3405,23 +3523,10 @@ function useAppLogic() {
   // bu ilanın nerede durduğunu hesaplar. Anlamlı bir sinyal için en az 2 karşılaştırma ilanı arar;
   // yetersizse null döner (rozet hiç gösterilmez — az veriyle yanıltıcı "ucuz/pahalı" etiketi
   // basmaktansa sessiz kalmak daha doğru).
-  const listingPriceComparison = (listing) => {
-    if (!listing) return null;
-    const ownPrice = parsePriceNumber(listing.price);
-    if (!ownPrice) return null;
-    const samePrices = listings
-      .filter(l => l.id !== listing.id && !l.adminRemoved && l.status === "active" && l.brand === listing.brand && l.model === listing.model)
-      .map(l => parsePriceNumber(l.price))
-      .filter(p => p > 0)
-      .sort((a, b) => a - b);
-    if (samePrices.length < 2) return null;
-    const mid = Math.floor(samePrices.length / 2);
-    const median = samePrices.length % 2 === 0 ? (samePrices[mid - 1] + samePrices[mid]) / 2 : samePrices[mid];
-    if (!median) return null;
-    const diffPercent = Math.round(((ownPrice - median) / median) * 100);
-    const tier = diffPercent <= -5 ? "below" : diffPercent >= 5 ? "above" : "average";
-    return { diffPercent, tier, sampleSize: samePrices.length };
-  };
+  // Hesap artık helpers.ts'teki saf listingMarketPriceTier'da — böylece ilan detayındaki rozet ile
+  // "Fiyat değerlendirmesi" filtresi (listingFilters.priceRating) matematiksel olarak aynı kaynaktan
+  // besleniyor, ikisi birbirinden ayrı düşemiyor.
+  const listingPriceComparison = (listing) => listingMarketPriceTier(listing, listings);
   const submitOffer = () => {
     if (!offerAmount || !selectedListing) return;
     // Misafir teklif tutarını yazabiliyor; giriş sadece "Teklif Ver" anında isteniyor (bkz.
@@ -3733,7 +3838,7 @@ function useAppLogic() {
     if (type === "mechanics" && serviceQuery.trim()) chips.push({ key: "service", label: t("serviceFieldLabel"), value: serviceQuery.trim(), clear: () => setServiceQuery("") });
     if (locationQuery.trim()) chips.push({ key: "location", label: t("cityLabelShort"), value: locationQuery.trim(), clear: () => setLocationQuery("") });
     const activeFilters = type === "cars" ? activeListingFilterCount : type === "jobs" ? activeJobFilterCount : activeFilterCount;
-    if (activeFilters > 0) chips.push({ key: "filters", label: t("filterBtn"), value: String(activeFilters), clear: () => (type === "cars" ? clearListingFilters() : type === "jobs" ? clearJobFilters() : setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" })) });
+    if (activeFilters > 0) chips.push({ key: "filters", label: t("filterBtn"), value: String(activeFilters), clear: () => (type === "cars" ? clearListingFilters() : type === "jobs" ? clearJobFilters() : clearMechFilters()) });
 
     // Sıfır sonuç: her kriteri TEK TEK kaldırıp kaç sonuç çıkacağını hesapla, sadece gerçekten
     // sonuç getirecek önerileri göster (sıfır getiren öneriyi göstermek kullanıcıyı yorar).
@@ -3744,7 +3849,7 @@ function useAppLogic() {
         if (chip.key === "query") without.query = "";
         if (chip.key === "service") without.serviceQuery = "";
         if (chip.key === "location") without.locationQuery = "";
-        if (chip.key === "filters") without.filters = type === "cars" ? EMPTY_LISTING_FILTERS : type === "jobs" ? { employmentType: "all", experienceLevel: "all" } : { priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" };
+        if (chip.key === "filters") without.filters = type === "cars" ? EMPTY_LISTING_FILTERS : type === "jobs" ? { employmentType: "all", experienceLevel: "all" } : EMPTY_MECH_FILTERS;
         const count = countSearchMatches(type, without);
         if (count > 0) relax.push({ key: chip.key, label: chip.label, value: chip.value, count, apply: chip.clear });
       });
@@ -3823,7 +3928,7 @@ function useAppLogic() {
     requestNotifPermission, fireNotification, selectedMechanic, bookingServiceOptions, myProfile, selectedListing, allReminders, dismissedReminderKey,
     setDismissedReminderKey, browseScrollRef, heroCollapsed, setHeroCollapsed, goBookFromReminder, topReminder, notifiedReminderKeysRef, filtered,
     quoteFilteredMechanics, filteredListings, activeListingFilterCount, filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs,
-    activeFilterCount, nextDays, isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate,
+    activeFilterCount, clearMechFilters, nextDays, isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate,
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers, quoteOffersByRequestId, myQuoteRequests,

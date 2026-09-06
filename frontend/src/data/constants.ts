@@ -193,6 +193,53 @@ export const CAR_BRANDS = [
 export const PAYMENT_METHOD_OPTIONS = ["Nakit", "Kredi/Banka Kartı", "Havale/EFT", "Kapıda Ödeme"];
 export const LANG_LABELS = { tr: "Türkçe", en: "English", de: "Deutsch" };
 
+// ==================== GENİŞLETİLMİŞ FİLTRE SEÇENEKLERİ (AutoScout24 / sahibinden.com esinli) ====================
+// Araç ilanlarında yalnızca serbest metin bir "city" alanı var (tamircilerin aksine lat/lng YOK).
+// AutoScout24'teki "Umkreis" (yarıçap) filtresini araç aramasına da getirebilmek için şehir adını
+// koordinata çeviren küçük bir tablo tutuyoruz. Anahtarlar küçük harfe (tr-TR) normalize edilerek
+// aranır, bu yüzden "İstanbul"/"istanbul"/"İSTANBUL" hepsi eşleşir.
+export const TR_CITY_COORDS = {
+  "istanbul": { lat: 41.0082, lng: 28.9784 },
+  "ankara": { lat: 39.9334, lng: 32.8597 },
+  "izmir": { lat: 38.4237, lng: 27.1428 },
+  "bursa": { lat: 40.1826, lng: 29.0665 },
+  "antalya": { lat: 36.8969, lng: 30.7133 },
+  "konya": { lat: 37.8746, lng: 32.4932 },
+  "adana": { lat: 37.0000, lng: 35.3213 },
+  "gaziantep": { lat: 37.0662, lng: 37.3833 },
+  "mersin": { lat: 36.8121, lng: 34.6415 },
+  "kayseri": { lat: 38.7312, lng: 35.4787 },
+  "eskişehir": { lat: 39.7767, lng: 30.5206 },
+  "diyarbakır": { lat: 37.9144, lng: 40.2306 },
+  "samsun": { lat: 41.2867, lng: 36.3300 },
+  "denizli": { lat: 37.7765, lng: 29.0864 },
+  "şanlıurfa": { lat: 37.1591, lng: 38.7969 },
+  "malatya": { lat: 38.3552, lng: 38.3095 },
+  "trabzon": { lat: 41.0027, lng: 39.7168 },
+  "erzurum": { lat: 39.9000, lng: 41.2700 },
+  "van": { lat: 38.4891, lng: 43.4089 },
+  "sakarya": { lat: 40.7569, lng: 30.3783 },
+  "kocaeli": { lat: 40.8533, lng: 29.8815 },
+  "manisa": { lat: 38.6191, lng: 27.4289 },
+  "balıkesir": { lat: 39.6484, lng: 27.8826 },
+  "aydın": { lat: 37.8560, lng: 27.8416 },
+  "muğla": { lat: 37.2153, lng: 28.3636 },
+  "tekirdağ": { lat: 40.9833, lng: 27.5167 },
+  "hatay": { lat: 36.2025, lng: 36.1606 },
+  "elazığ": { lat: 38.6810, lng: 39.2264 },
+  "sivas": { lat: 39.7477, lng: 37.0179 },
+  "çanakkale": { lat: 40.1553, lng: 26.4142 },
+};
+
+// "İlan Tarihi" filtresi (sahibinden.com'daki karşılığı) — değerler GÜN cinsinden, "all" = sınırsız.
+export const LISTED_WITHIN_OPTIONS = ["1", "3", "7", "30"];
+// AutoScout24'teki "Preisbewertung" karşılığı — listingMarketPriceTier'in döndürdüğü tier değerleri.
+export const PRICE_RATING_OPTIONS = ["below", "average"];
+// Tamirci filtresi: "en geç kaç dakikada yanıt veriyor" (Mechanic.avgResponseMinutes).
+export const RESPONSE_TIME_OPTIONS = [15, 30, 60];
+// Tamirci filtresi: minimum yorum sayısı — tek yorumla oluşan 5.0 puanları elemek için.
+export const MIN_REVIEW_COUNT_OPTIONS = [5, 20, 50];
+
 export const FREE_QUOTE_MECH_LIMIT = 5;
 export const PREMIUM_QUOTE_MECH_LIMIT = 10;
 

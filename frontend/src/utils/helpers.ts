@@ -112,6 +112,41 @@ export function parseListingPrice(p) {
   return Number(String(p).replace(/[^\d]/g, "")) || 0;
 }
 
+// Serbest metin sayısal alanları ("1.6", "2.0 TDI", "6,5 l/100km", "77 kWh") tek bir ondalık sayıya
+// çevirir. parseListingPrice'tan farkı: burada ondalık ayırıcı KORUNUYOR (motor hacmi/yakıt tüketimi
+// gibi alanlarda 1.6 ile 16 arasındaki fark kritik). Türkçe virgüllü yazım da destekleniyor.
+export function parseDecimalField(v) {
+  if (v === null || v === undefined) return null;
+  const m = String(v).replace(",", ".").match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : null;
+}
+
+// AutoScout24'teki "Preisbewertung" (fiyat değerlendirmesi) mantığı: bir ilanın fiyatını AYNI
+// marka+modeldeki diğer aktif ilanların MEDYANIYLA karşılaştırır. Medyan seçilmesinin nedeni tek bir
+// uçuk fiyatlı ilanın ortalamayı bozmasını engellemek. En az 2 karşılaştırma ilanı yoksa null döner —
+// az veriyle "ucuz/pahalı" etiketi basmak yanıltıcı olurdu.
+// Not: bu fonksiyon saf (pure) ve modül seviyesinde tutuluyor; hem ilan detayındaki rozet hem de
+// filtreleme (listingFilters.priceRating) aynı kaynağı kullansın diye.
+export function listingMarketPriceTier(listing, allListings) {
+  if (!listing) return null;
+  const ownPrice = parseListingPrice(listing.price);
+  if (!ownPrice) return null;
+  const samePrices = (allListings || [])
+    .filter((l) => l.id !== listing.id && !l.adminRemoved && l.status === "active" && l.brand === listing.brand && l.model === listing.model)
+    .map((l) => parseListingPrice(l.price))
+    .filter((p) => p > 0)
+    .sort((a, b) => a - b);
+  if (samePrices.length < 2) return null;
+  const mid = Math.floor(samePrices.length / 2);
+  const median = samePrices.length % 2 === 0 ? (samePrices[mid - 1] + samePrices[mid]) / 2 : samePrices[mid];
+  if (!median) return null;
+  const diffPercent = Math.round(((ownPrice - median) / median) * 100);
+  const tier = diffPercent <= -5 ? "below" : diffPercent >= 5 ? "above" : "average";
+  return { diffPercent, tier, sampleSize: samePrices.length };
+}
+
 // Bir tamircinin hoursText/formatHoursText çıktısındaki 7 satırdan (Pzt..Paz sırasıyla), o günün ve
 // gerçek saatin (cihaz saati) durumuna göre "şu an açık mı" hesaplar. Bilinmiyorsa null döner.
 export function isOpenNowByHoursText(lines) {

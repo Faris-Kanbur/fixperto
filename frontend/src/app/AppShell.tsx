@@ -31,6 +31,7 @@ import {
   CAR_BRANDS, PAYMENT_METHOD_OPTIONS, LANG_LABELS, ATU_FIXED_CATALOG,
   BODY_TYPES, DRIVETRAIN_OPTIONS, DOOR_COUNT_OPTIONS, LISTING_FEATURE_OPTIONS,
   SEAT_COUNT_OPTIONS, EMISSION_CLASS_OPTIONS, ANALYTICS_RANGES,
+  LISTED_WITHIN_OPTIONS, RESPONSE_TIME_OPTIONS, MIN_REVIEW_COUNT_OPTIONS,
   FUEL_TYPE_LABELS_BY_LANG, TRANSMISSION_LABELS_BY_LANG, BODY_TYPE_LABELS_BY_LANG,
   DRIVETRAIN_LABELS_BY_LANG, EMPLOYMENT_TYPE_LABELS_BY_LANG, EXPERIENCE_LEVEL_LABELS_BY_LANG,
 } from "../data/constants";
@@ -50,7 +51,7 @@ export function AppShell() {
     setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, ownerSettings, setOwnerSettings, mechSettings,
     setMechSettings, notifLog, setNotifLog, ownerNotifSeenAt, setOwnerNotifSeenAt, mechNotifSeenAt, setMechNotifSeenAt, showNotifPanel,
     setShowNotifPanel, darkMode, setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
-    hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters,
+    hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters, clearMechFilters,
     listingFilters, setListingFilters, listingSort, setListingSort, userLocation, setUserLocation, locationStatus, setLocationStatus,
     notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, mechanicsList, setMechanicsList, mechanicHours,
     setMechanicHours, query, setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery, sortBy, setSortBy, sortDir,
@@ -2876,7 +2877,31 @@ export function AppShell() {
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Car size={13} /> {t("vehicleBrandLabel")}</h4>
                 <select value={filters.brand} onChange={(e) => setFilters(f => ({ ...f, brand: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allBrandsOption")}</option>{CAR_BRANDS.map(b => (<option key={b} value={b}>{b}</option>))}</select>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Wrench size={13} /> {t("serviceLabelFilter")}</h4>
-                <select value={filters.service} onChange={(e) => setFilters(f => ({ ...f, service: e.target.value }))} className="w-full mb-6 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allServicesOption")}</option>{ATU_FIXED_CATALOG.map(s => (<option key={s.name} value={s.name}>{s.name}</option>))}</select>
+                <select value={filters.service} onChange={(e) => setFilters(f => ({ ...f, service: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allServicesOption")}</option>{ATU_FIXED_CATALOG.map(s => (<option key={s.name} value={s.name}>{s.name}</option>))}</select>
+                {/* ---- Genişletilmiş tamirci filtreleri: kalite/güven ve hizmet/ödeme grupları ---- */}
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("mechFilterSectionQuality")}</p>
+                <div className="space-y-2 mb-5">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.openNow} onChange={(e) => setFilters(f => ({ ...f, openNow: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <Clock size={13} className="text-gray-400" /> {t("filterOpenNow")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.verifiedOnly} onChange={(e) => setFilters(f => ({ ...f, verifiedOnly: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <BadgeCheck size={13} className="text-gray-400" /> {t("filterVerifiedOnly")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.fixedPriceOnly} onChange={(e) => setFilters(f => ({ ...f, fixedPriceOnly: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <Tag size={13} className="text-gray-400" /> {t("filterFixedPriceOnly")}</label>
+                </div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Clock size={13} /> {t("maxResponseLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...RESPONSE_TIME_OPTIONS.map(n => ({ key: String(n), label: t("maxResponseOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, maxResponse: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.maxResponse) === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MessageCircle size={13} /> {t("minReviewsLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...MIN_REVIEW_COUNT_OPTIONS.map(n => ({ key: String(n), label: t("minReviewsOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, minReviews: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.minReviews) === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("mechFilterSectionService")}</p>
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("maxPriceLabel")}</h4>
+                    <input type="number" min="0" value={filters.maxPrice} onChange={(e) => setFilters(f => ({ ...f, maxPrice: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Globe size={13} /> {t("mechLangLabel")}</h4>
+                    <select value={filters.mechLang} onChange={(e) => setFilters(f => ({ ...f, mechLang: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{Object.entries(LANG_LABELS).map(([code, label]) => (<option key={code} value={code}>{label}</option>))}</select>
+                  </div>
+                </div>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("paymentMethodFilterLabel")}</h4>
+                <select value={filters.paymentMethod} onChange={(e) => setFilters(f => ({ ...f, paymentMethod: e.target.value }))} className="w-full mb-6 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allPaymentMethodsOption")}</option>{PAYMENT_METHOD_OPTIONS.map(p => (<option key={p} value={p}>{p}</option>))}</select>
               </>
             ) : ownerMode === "cars" ? (
               <>
@@ -2927,12 +2952,58 @@ export function AppShell() {
                     <input type="number" value={listingFilters.maxCo2} onChange={(e) => setListingFilters(f => ({ ...f, maxCo2: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
                   </div>
                 </div>
+                {/* ---- Motor & tüketim (AutoScout24: Leistung / Verbrauch / Elektro) ---- */}
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("filterSectionEngine")}</p>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Cog size={13} /> {t("engineSizeRangeLabel")}</h4>
+                <div className="flex gap-2 mb-5"><input type="number" step="0.1" min="0" placeholder={t("minPlaceholder")} value={listingFilters.minEngine} onChange={(e) => setListingFilters(f => ({ ...f, minEngine: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" step="0.1" min="0" placeholder={t("maxPlaceholder")} value={listingFilters.maxEngine} onChange={(e) => setListingFilters(f => ({ ...f, maxEngine: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <div className="grid grid-cols-2 gap-3 mb-2">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Fuel size={13} /> {t("maxFuelConsumptionLabel")}</h4>
+                    <input type="number" step="0.1" min="0" value={listingFilters.maxFuelConsumption} onChange={(e) => setListingFilters(f => ({ ...f, maxFuelConsumption: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Zap size={13} /> {t("minRangeLabel")}</h4>
+                    <input type="number" min="0" value={listingFilters.minRange} onChange={(e) => setListingFilters(f => ({ ...f, minRange: e.target.value }))} placeholder={t("minPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-400 mb-5 px-1">{t("minRangeHint")}</p>
+                {/* ---- Durum & geçmiş (AutoScout24: Garantie und Historie + TR hasar kaydı) ---- */}
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("filterSectionCondition")}</p>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><History size={13} /> {t("maxOwnerCountLabel")}</h4>
                 <input type="number" min="1" value={listingFilters.maxOwnerCount} onChange={(e) => setListingFilters(f => ({ ...f, maxOwnerCount: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                {/* Hasar kaydı artık ikili değil: "hasarsız" kısayolu duruyor ama alıcı "en fazla 2 boyalı
+                    parça olsun" gibi gerçekçi bir tolerans da verebiliyor (sahibinden.com deseni). */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("maxPaintedPartsLabel")}</h4>
+                    <select value={listingFilters.maxPaintedParts} onChange={(e) => setListingFilters(f => ({ ...f, maxPaintedParts: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("damagePartsAnyOption")}</option>{[0, 1, 2, 3, 5].map(n => (<option key={n} value={String(n)}>{n}</option>))}</select>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("maxChangedPartsLabel")}</h4>
+                    <select value={listingFilters.maxChangedParts} onChange={(e) => setListingFilters(f => ({ ...f, maxChangedParts: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("damagePartsAnyOption")}</option>{[0, 1, 2, 3, 5].map(n => (<option key={n} value={String(n)}>{n}</option>))}</select>
+                  </div>
+                </div>
                 <div className="space-y-2 mb-5">
                   <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.damageFree} onChange={(e) => setListingFilters(f => ({ ...f, damageFree: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("filterDamageFree")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.hasInspectionReport} onChange={(e) => setListingFilters(f => ({ ...f, hasInspectionReport: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <FileText size={13} className="text-gray-400" /> {t("filterHasInspectionReport")}</label>
                   <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.tradeIn} onChange={(e) => setListingFilters(f => ({ ...f, tradeIn: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("tradeInAvailableLabel")}</label>
                   <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.negotiable} onChange={(e) => setListingFilters(f => ({ ...f, negotiable: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("negotiableBadge")}</label>
+                </div>
+                {/* ---- Güven & ilan (AutoScout24: Preisbewertung / Verkäufer / Standort) ---- */}
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("filterSectionTrust")}</p>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("priceRatingLabel")}</h4>
+                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "below", label: `💚 ${t("priceRatingBelow")}` }, { key: "average", label: t("priceRatingAverage") }].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, priceRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.priceRating === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <p className="text-[11px] text-gray-400 mb-5 px-1">{t("priceRatingHint")}</p>
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MapPin size={13} /> {t("listingRadiusLabel")}</h4>
+                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 25, label: "< 25 km" }, { key: 50, label: "< 50 km" }, { key: 100, label: "< 100 km" }, { key: 250, label: "< 250 km" }].map(o => (<button key={o.key} onClick={() => { if (o.key !== 999 && !userLocation) requestLocation(); setListingFilters(f => ({ ...f, maxDistance: o.key })); }} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.maxDistance === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                {!userLocation && (<p className="text-[11px] text-gray-400 mb-5 flex items-center gap-1"><MapPin size={11} /> {t("listingRadiusNeedsLocation")}</p>)}
+                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><CalendarDays size={13} /> {t("listedWithinLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...LISTED_WITHIN_OPTIONS.map(n => ({ key: n, label: n === "1" ? t("listedWithinToday") : t("listedWithinOption", { n }) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, listedWithin: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.listedWithin === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="space-y-2 mb-5">
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.verifiedSeller} onChange={(e) => setListingFilters(f => ({ ...f, verifiedSeller: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <BadgeCheck size={13} className="text-gray-400" /> {t("filterVerifiedSeller")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.withPhotos} onChange={(e) => setListingFilters(f => ({ ...f, withPhotos: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <ImageIcon size={13} className="text-gray-400" /> {t("filterWithPhotos")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.featuredOnly} onChange={(e) => setListingFilters(f => ({ ...f, featuredOnly: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <Star size={13} className="text-gray-400" /> {t("filterFeaturedOnly")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.hideSold} onChange={(e) => setListingFilters(f => ({ ...f, hideSold: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("filterHideSold")}</label>
                 </div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Settings size={13} /> {t("filterFeaturesLabel")}</h4>
                 <div className="flex flex-wrap gap-1.5 mb-6">
@@ -2963,7 +3034,7 @@ export function AppShell() {
               <button onClick={() => setShowSaveSearchInput(true)} className="mb-4 w-full flex items-center justify-center gap-1.5 border border-dashed border-rose-300 text-rose-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-50 transition"><Bell size={14} /> {t("saveThisSearchBtn")}</button>
             )}
             <div className="flex gap-2">
-              <button onClick={() => ownerMode === "mechanics" ? (() => { setFilters({ priceTier: "all", minRating: 0, maxDistance: 999, brand: "", service: "" }); setQuery(""); setLocationQuery(""); setServiceQuery(""); })() : ownerMode === "cars" ? clearListingFilters() : clearJobFilters()} className="flex-1 border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("clear")}</button>
+              <button onClick={() => ownerMode === "mechanics" ? (() => { clearMechFilters(); setQuery(""); setLocationQuery(""); setServiceQuery(""); })() : ownerMode === "cars" ? clearListingFilters() : clearJobFilters()} className="flex-1 border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("clear")}</button>
               <button onClick={() => setShowFilterModal(false)} className={`flex-1 text-white py-3 rounded-2xl font-semibold text-sm transition ${ownerMode === "mechanics" ? "bg-rose-600 hover:bg-rose-700" : ownerMode === "cars" ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("apply")}</button>
             </div>
           </div>
