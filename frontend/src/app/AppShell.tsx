@@ -2489,22 +2489,39 @@ export function AppShell() {
               </div>
             </div>
             {mechTab === "requests" && (
-              <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6">
-                <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
-                  <button onClick={() => setMechReqView("active")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${mechReqView === "active" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}>{t("activeReqTab")} ({activeAppts.length})</button>
-                  <button onClick={() => setMechReqView("quotes")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechReqView === "quotes" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><ClipboardList size={12} /> {t("quotesReqTab")} {myQuoteOffers.filter(o => o.status === "pending").length > 0 && (<span className="w-1.5 h-1.5 rounded-full bg-rose-600" />)}</button>
-                  <button onClick={() => setMechReqView("history")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechReqView === "history" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Calendar size={12} /> {t("historyReqTab")}</button>
+              <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
+                {/* TASARIM NOTU: bu segment çubuğu eskiden `flex` + `flex-1` idi; telefonda doğru
+                    görünüyordu ama geniş ekranda 1280 piksele yayılıp ortasında 10 piksellik yazılar
+                    kalıyordu. Artık içeriğine göre daralan (inline-flex) gerçek bir segment kontrolü. */}
+                <div className="inline-flex bg-gray-100 rounded-2xl p-1 mb-6 max-w-full overflow-x-auto">
+                  {[
+                    { key: "active", label: `${t("activeReqTab")} (${activeAppts.length})`, icon: Wrench, dot: false },
+                    { key: "quotes", label: t("quotesReqTab"), icon: ClipboardList, dot: myQuoteOffers.filter(o => o.status === "pending").length > 0 },
+                    { key: "history", label: t("historyReqTab"), icon: Calendar, dot: false },
+                  ].map(sv => { const Icon = sv.icon; const on = mechReqView === sv.key; return (
+                    <button key={sv.key} onClick={() => setMechReqView(sv.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-rose-700" : "text-gray-500 hover:text-gray-800"}`}><Icon size={14} /> {sv.label}{sv.dot && <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />}</button>
+                  ); })}
                 </div>
                 {mechReqView === "active" && (<>
-                  <div className="grid grid-cols-3 gap-2 mb-5 text-center">
-                    <div className="bg-gray-100 rounded-xl p-2"><p className="text-sm font-bold text-gray-700">{appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Onay Bekliyor").length}</p><p className="text-[10px] md:text-xs text-gray-500">{t("statPending")}</p></div>
-                    <div className="bg-gray-100 rounded-xl p-2"><p className="text-sm font-bold text-gray-700">{appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Sırada").length}</p><p className="text-[10px] md:text-xs text-gray-500">{t("statQueued")}</p></div>
-                    <div className="bg-rose-50 rounded-xl p-2"><p className="text-sm font-bold text-rose-600">{appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Tamire Alındı").length}</p><p className="text-[10px] md:text-xs text-gray-500">{t("statInProgress")}</p></div>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-7">
+                    {[
+                      { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Onay Bekliyor").length, l: t("statPending"), icon: Clock, ring: "bg-amber-50 text-amber-600", num: "text-amber-600" },
+                      { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Sırada").length, l: t("statQueued"), icon: ClipboardList, ring: "bg-gray-100 text-gray-600", num: "text-gray-900" },
+                      { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Tamire Alındı").length, l: t("statInProgress"), icon: Wrench, ring: "bg-rose-50 text-rose-600", num: "text-rose-600" },
+                      { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Tamir Tamamlandı").length, l: t("statCompleted"), icon: CheckCircle2, ring: "bg-green-50 text-green-600", num: "text-green-600" },
+                    ].map((c, i) => { const Icon = c.icon; return (
+                      <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm flex items-center gap-3.5">
+                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${c.ring}`}><Icon size={18} /></div>
+                        <div className="min-w-0"><p className={`text-2xl font-bold leading-none ${c.num}`}>{c.n}</p><p className="text-xs text-gray-400 mt-1.5 truncate">{c.l}</p></div>
+                      </div>
+                    ); })}
                   </div>
-                  <div className="space-y-3">
+                  {/* TASARIM: randevu kartları eskiden tek sütunda alt alta 1280 piksel genişliyordu.
+                      Artık geniş ekranda 2, çok geniş ekranda 3 sütunlu okunabilir bir ızgara. */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">
                     {activeAppts.map(r => (
-                      <div key={r.id} className="border border-gray-100 rounded-2xl p-4 shadow-sm">
-                        <div className="flex justify-between items-start mb-2"><div><div className="flex items-center gap-1.5"><h4 className="font-semibold text-gray-800 text-sm">{r.customer}</h4>{customerNoShowCount(r.ownerId) > 0 && (<span title={t("noShowHistoryTitle", { n: String(customerNoShowCount(r.ownerId)) })} className="flex items-center gap-0.5 text-[10px] md:text-xs px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold"><AlertTriangle size={9} /> {t("noShowBadge", { n: String(customerNoShowCount(r.ownerId)) })}</span>)}</div><p className="text-xs text-gray-400">{r.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div>
+                      <div key={r.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                        <div className="flex justify-between items-start mb-2.5 gap-3"><div><div className="flex items-center gap-1.5"><h4 className="font-semibold text-gray-900 text-[15px]">{r.customer}</h4>{customerNoShowCount(r.ownerId) > 0 && (<span title={t("noShowHistoryTitle", { n: String(customerNoShowCount(r.ownerId)) })} className="flex items-center gap-0.5 text-[10px] md:text-xs px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold"><AlertTriangle size={9} /> {t("noShowBadge", { n: String(customerNoShowCount(r.ownerId)) })}</span>)}</div><p className="text-xs text-gray-400">{r.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div>
                         <p className="text-xs text-gray-500 mb-3"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} /></p>
                         {r.issuePhotos && r.issuePhotos.length > 0 && (<div className="flex gap-1.5 mb-3">{r.issuePhotos.map((src, i) => (<img key={i} src={src} alt={t("issuePhotoAlt", { n: String(i + 1) })} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
                         <div className="flex items-center justify-between gap-3 text-xs text-gray-400 mb-3"><div className="flex items-center gap-3"><span className="flex items-center gap-1"><Calendar size={12} />{r.date}</span><span className="flex items-center gap-1"><Clock size={12} />{r.time}</span></div><button onClick={() => openReportForm("customer", `Randevu #${r.id} · ${r.customer}`, `"${r.customer}" müşterisini bildiriyorum`)} className="flex items-center gap-1 text-gray-300 hover:text-red-500 transition"><Flag size={11} /> {t("reportBtn")}</button></div>
@@ -2518,18 +2535,18 @@ export function AppShell() {
                         {(r.status === "Sırada" || r.status === "Tamire Alındı") && (<div className="flex gap-2"><button onClick={() => r.status === "Tamire Alındı" ? setCompletingApptId(r.id) : advanceStatus(r.id)} className="flex-1 bg-rose-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-rose-700 transition">{r.status === "Sırada" ? t("takeInForRepairBtn") : t("completedSmsBtn")}</button>{r.status === "Sırada" && (<button onClick={() => markNoShow(r.id)} className="border border-gray-200 text-gray-500 text-xs py-2 px-3 rounded-xl font-medium hover:bg-gray-50 transition whitespace-nowrap">{t("noShowBtn")}</button>)}</div>)}
                       </div>
                     ))}
-                    {activeAppts.length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noPendingWorkNotice")}</p>}
                   </div>
+                  {activeAppts.length === 0 && (<div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-20"><Calendar size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noPendingWorkNotice")}</p></div>)}
                 </>)}
                 {mechReqView === "quotes" && (
-                  <div className="space-y-3">
-                    {myQuoteOffers.length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noQuoteRequestsNotice")}</p>}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">
+                    {myQuoteOffers.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-20"><ClipboardList size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noQuoteRequestsNotice")}</p></div>}
                     {myQuoteOffers.map(o => {
                       const req = quoteRequests.find(r => r.id === o.requestId);
                       if (!req) return null;
                       const responding = respondingQuoteOfferId === o.id;
                       return (
-                        <div key={o.id} className="border border-gray-100 rounded-2xl p-4 shadow-sm">
+                        <div key={o.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
                           <div className="flex justify-between items-start mb-2"><div><h4 className="font-semibold text-gray-800 text-sm">{req.customer}</h4><p className="text-xs text-gray-400">{req.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${o.status === "pending" ? "bg-amber-50 text-amber-600" : o.status === "submitted" ? "bg-rose-50 text-rose-600" : o.status === "accepted" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>{o.status === "pending" ? t("quoteStatusPending") : o.status === "submitted" ? t("quoteStatusSubmitted") : o.status === "accepted" ? t("quoteStatusAccepted") : o.status === "declined" ? t("quoteStatusDeclined") : t("quoteStatusLost")}</span></div>
                           <p className="text-xs text-gray-500 mb-3"><TranslatedText id={`quotereq-issue-${req.id}`} text={req.issue} fromLang={ownerLangFor(req.ownerId)} viewerLang={myProfile.lang || "tr"} /></p>
                           {req.photos && req.photos.length > 0 && (<div className="flex gap-1.5 mb-3">{req.photos.map((src, i) => (<img key={i} src={src} alt={t("issuePhotoAlt", { n: String(i + 1) })} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
@@ -2559,8 +2576,8 @@ export function AppShell() {
                   </div>
                 )}
                 {mechReqView === "history" && (
-                  <div className="space-y-2">
-                    {historyByDate.length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noHistoryYetNotice")}</p>}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+                    {historyByDate.length === 0 && <div className="lg:col-span-2 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-20"><History size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noHistoryYetNotice")}</p></div>}
                     {historyByDate.map(([date, items]) => {
                       const isOpen = historyExpandedDate === date;
                       const completedCount = items.filter(i => i.status === "Tamir Tamamlandı").length;
@@ -2586,24 +2603,87 @@ export function AppShell() {
                 yazarsa (sendMechMessage) o mesaj o BAŞKA tamirciymiş gibi araç sahibine gidiyordu —
                 gerçek bir kimlik karışıklığı/veri sızıntısı hatasıydı. Artık yalnızca kendi hesabımıza
                 ait satırlar listeleniyor. */}
-            {mechTab === "messages" && !mechConvo && (<div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 space-y-3">{conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-300 transition flex items-center gap-3"><div className="w-11 h-11 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={20} className="text-rose-600" /></div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{t("vehicleOwnerLabel")}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noMessagesYet")}</p>}</div>)}
-            {mechTab === "messages" && mechConvo && (<><div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2"><button onClick={() => setMechActiveConvoId(null)} className="text-gray-400"><ChevronLeft size={18} /></button><span className="text-sm font-semibold text-gray-800">{t("vehicleOwnerChatTitle")}</span></div><div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 overflow-y-auto">{mechConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={myProfile.lang || "tr"} mine={m.sender === "mechanic"} />))}</div><div className="px-5 pb-6 pt-2 border-t border-gray-100 flex items-center gap-2"><input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder={t("replyInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" /><button onClick={() => sendMechMessage(mechChatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button></div></>)}
+            {/* TASARIM: mesajlar eskiden telefon mantığıyla çalışıyordu — liste tüm sayfayı
+                kaplıyor, bir sohbete girince liste tamamen kayboluyordu. Masaüstünde artık
+                gerçek iki panelli posta kutusu düzeni: solda sohbetler, sağda seçili sohbet.
+                Mobilde (lg altı) eski "önce liste, sonra sohbet" davranışı korunuyor. */}
+            {mechTab === "messages" && (() => {
+              const myConvos = conversations.filter(c => c.mechanicId === MY_MECHANIC_ID);
+              return (
+                <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-5 items-start">
+                    {/* SOL: sohbet listesi */}
+                    <div className={`bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden ${mechConvo ? "hidden lg:block" : ""}`}>
+                      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                        <h3 className="font-bold text-gray-900 text-sm">{t("mechTabMessages")}</h3>
+                        <span className="text-xs text-gray-400">{myConvos.length}</span>
+                      </div>
+                      <div className="max-h-[62vh] overflow-y-auto divide-y divide-gray-50">
+                        {myConvos.map(c => {
+                          const last = c.messages[c.messages.length - 1];
+                          const on = mechActiveConvoId === c.id;
+                          return (
+                            <button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className={`w-full text-left px-5 py-4 transition flex items-center gap-3 ${on ? "bg-rose-50/70" : "hover:bg-gray-50"}`}>
+                              <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={18} className="text-rose-600" /></div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-gray-900 text-sm truncate">{t("vehicleOwnerLabel")}</h4>
+                                <p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesYet")}</p>
+                              </div>
+                              <ChevronRight size={15} className={`flex-shrink-0 ${on ? "text-rose-400" : "text-gray-300"}`} />
+                            </button>
+                          );
+                        })}
+                        {myConvos.length === 0 && (<div className="text-center py-16 px-5"><MessageCircle size={36} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noMessagesYet")}</p></div>)}
+                      </div>
+                    </div>
+                    {/* SAĞ: seçili sohbet */}
+                    <div className={`bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[62vh] ${mechConvo ? "" : "hidden lg:flex"}`}>
+                      {mechConvo ? (<>
+                        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
+                          <button onClick={() => setMechActiveConvoId(null)} aria-label={t("back")} className="text-gray-400 hover:text-gray-700 lg:hidden"><ChevronLeft size={18} /></button>
+                          <div className="w-9 h-9 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={16} className="text-rose-600" /></div>
+                          <span className="text-sm font-semibold text-gray-900">{t("vehicleOwnerChatTitle")}</span>
+                        </div>
+                        <div className="flex-1 px-5 py-5 overflow-y-auto max-h-[52vh] bg-gray-50/50">
+                          {mechConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={myProfile.lang || "tr"} mine={m.sender === "mechanic"} />))}
+                        </div>
+                        <div className="px-5 py-4 border-t border-gray-100 flex items-center gap-2">
+                          <input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder={t("replyInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
+                          <button onClick={() => sendMechMessage(mechChatInput)} aria-label={t("sendBtn")} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button>
+                        </div>
+                      </>) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-center px-8 py-20">
+                          <MessageCircle size={40} className="text-gray-200 mb-3" />
+                          <p className="text-gray-400 text-sm">{t("selectConversationHint")}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             {mechTab === "market" && (
-              <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 overflow-y-auto">
-                <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
-                  <button onClick={() => setMechListingsSubTab("cars")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 ${mechListingsSubTab === "cars" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Car size={13} /> {t("myCarListingsTab")}</button>
-                  <button onClick={() => setMechListingsSubTab("jobs")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 ${mechListingsSubTab === "jobs" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Briefcase size={13} /> {t("myJobListingsTab")}</button>
+              <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
+                <div className="inline-flex bg-gray-100 rounded-2xl p-1 mb-6">
+                  <button onClick={() => setMechListingsSubTab("cars")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "cars" ? "bg-white shadow-sm text-rose-700" : "text-gray-500 hover:text-gray-800"}`}><Car size={14} /> {t("myCarListingsTab")}</button>
+                  <button onClick={() => setMechListingsSubTab("jobs")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "jobs" ? "bg-white shadow-sm text-rose-700" : "text-gray-500 hover:text-gray-800"}`}><Briefcase size={14} /> {t("myJobListingsTab")}</button>
                 </div>
                 {mechListingsSubTab === "cars" && (() => {
                   const myCarListings = listings.filter(isMyListing);
                   const allSelected = myCarListings.length > 0 && gallerySelectedIds.length === myCarListings.length;
                   return (
                     <>
-                      <div className="flex items-center justify-between mb-1 gap-2">
-                        <p className="text-xs text-gray-400">{t("myListingsSub")}</p>
-                        {myProfile?.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 flex items-center gap-1 flex-shrink-0"><BadgeCheck size={11} /> {t("authorizedDealerBadge")}</span>}
+                      {/* TASARIM: başlık + birincil eylem tek satırda; tam sayfa genişliğinde
+                          uzayan dev buton yerine içeriğine göre daralan bir buton. */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <h2 className="text-lg font-bold text-gray-900">{t("myCarListingsTab")}</h2>
+                          <span className="text-sm text-gray-300">({myCarListings.length})</span>
+                          {myProfile?.verified && <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 flex items-center gap-1 flex-shrink-0"><BadgeCheck size={12} /> {t("authorizedDealerBadge")}</span>}
+                        </div>
+                        <button onClick={() => openSellForm(null)} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
                       </div>
-                      <button onClick={() => openSellForm(null)} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
+                      <p className="text-xs text-gray-400 -mt-3 mb-5">{t("myListingsSub")}</p>
                       {myCarListings.length === 0 ? (
                         <div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>
                       ) : (
@@ -2621,7 +2701,7 @@ export function AppShell() {
                               <button onClick={bulkDeleteSelectedListings} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-red-200 text-red-600 hover:bg-red-50 transition flex items-center gap-1"><Trash2 size={12} /> {t("galleryBulkDeleteBtn")}</button>
                             </div>
                           )}
-                          <div className="space-y-2">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">
                             {myCarListings.map(l => {
                               const days = listingDaysActive(l);
                               const stats = myListingsStats?.[l.id];
@@ -2629,7 +2709,7 @@ export function AppShell() {
                               const offerCount = (l.offers || []).filter(o => o.status !== "replaced").length;
                               const checked = gallerySelectedIds.includes(l.id);
                               return (
-                                <div key={l.id} className={`bg-white border rounded-2xl p-3 transition ${checked ? "border-rose-300 ring-1 ring-rose-100" : "border-gray-200"}`}>
+                                <div key={l.id} className={`bg-white border rounded-2xl p-4 shadow-sm transition ${checked ? "border-rose-300 ring-1 ring-rose-100" : "border-gray-100 hover:shadow-md"}`}>
                                   <div className="flex items-center gap-3">
                                     <input type="checkbox" checked={checked} onChange={() => toggleGallerySelect(l.id)} aria-label={t("gallerySelectAllBtn")} className="w-4 h-4 flex-shrink-0 accent-rose-600" />
                                     <button onClick={() => setSelectedListingId(l.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
@@ -2660,55 +2740,75 @@ export function AppShell() {
                   );
                 })()}
                 {mechListingsSubTab === "jobs" && (<>
-                  <p className="text-xs text-gray-400 mb-3">{t("jobListingsHint")}</p>
-                  <button onClick={() => openJobForm(null)} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("postNewJobBtn")}</button>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                    <h2 className="text-lg font-bold text-gray-900">{t("myJobListingsTab")}</h2>
+                    <button onClick={() => openJobForm(null)} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("postNewJobBtn")}</button>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-5">{t("jobListingsHint")}</p>
                   {/* ÖNEMLİ: mechanicId ile eşleştir — mechanicName (isim) ile eşleştirme, tamirci
                       işletme adını değiştirdiğinde kendi iş ilanlarının bu listeden tamamen
                       kaybolmasına (düzenleyememesine/kapatamamasına) yol açıyordu. */}
-                  {jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).length === 0 ? (<div className="text-center py-16"><Briefcase size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnJobListings")}</p></div>) : (<div className="space-y-3">{jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).map(j => (<JobCard key={j.id} j={j} />))}</div>)}
+                  {jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).length === 0 ? (<div className="text-center py-16"><Briefcase size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnJobListings")}</p></div>) : (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">{jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).map(j => (<JobCard key={j.id} j={j} />))}</div>)}
                 </>)}
               </div>
             )}
-            {mechTab === "favorites" && (
-              <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 overflow-y-auto">
-                {/* GERÇEK HATA DÜZELTMESİ: favoriye eklenen TAMİRCİLER hiçbir ekranda listelenmiyordu —
-                    kalp doluyordu, veri kaydediliyordu ama kullanıcı bir daha o listeye ulaşamıyordu.
-                    Araç favorileriyle aynı yerde, ayrı bir başlık altında gösteriliyor. */}
-                {(() => {
-                  const favMechs = mechanicsList.filter(m => (favoriteMechanicIds || []).includes(m.id));
-                  if (favMechs.length === 0) return null;
-                  return (
-                    <div className="mb-8">
-                      <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}
-                      </div>
+            {mechTab === "favorites" && (() => {
+              /* GERÇEK HATA DÜZELTMESİ: favoriye eklenen TAMİRCİLER hiçbir ekranda listelenmiyordu —
+                 kalp doluyordu, veri kaydediliyordu ama kullanıcı bir daha o listeye ulaşamıyordu.
+                 TASARIM: geniş ekranda favoriler solda ızgara, kayıtlı aramalar sağda yapışkan
+                 bir kenar sütununda; hepsi alt alta uzayan tek sütun değil. */
+              const favMechs = mechanicsList.filter(m => (favoriteMechanicIds || []).includes(m.id));
+              const favListings = listings.filter(l => favoriteIds.includes(l.id));
+              return (
+                <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+                    <div className="min-w-0 space-y-8">
+                      {favMechs.length > 0 && (
+                        <div>
+                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Wrench size={17} className="text-rose-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
+                            {favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}
+                          </div>
+                        </div>
+                      )}
+                      {favListings.length > 0 && (
+                        <div>
+                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Car size={17} className="text-rose-500" /> {t("favoriteListingsLabel")} <span className="text-gray-300 font-normal text-sm">({favListings.length})</span></h2>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">{favListings.map(l => (<ListingCard key={l.id} l={l} />))}</div>
+                        </div>
+                      )}
+                      {favMechs.length === 0 && favListings.length === 0 && (
+                        <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24">
+                          <Heart size={40} className="mx-auto text-gray-200 mb-3" />
+                          <p className="text-gray-400 text-sm">{t("noFavoritesYet")}</p>
+                          <p className="text-gray-300 text-xs mt-1">{t("noFavoritesHint")}</p>
+                        </div>
+                      )}
                     </div>
-                  );
-                })()}
-                {listings.filter(l => favoriteIds.includes(l.id)).length === 0 && (favoriteMechanicIds || []).length > 0 ? null : listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
-                  <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesYet")}</p><p className="text-gray-300 text-xs mt-1">{t("noFavoritesHint")}</p></div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
-                )}
-                <h2 className="font-bold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Bell size={16} className="text-rose-500" /> {t("savedSearchesLabel")}</h2>
-                {savedSearches.length === 0 ? (
-                  <div className="text-center py-10 bg-gray-50 rounded-2xl"><Bell size={32} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-xs">{t("noSavedSearchesNote")}</p></div>
-                ) : (
-                  <div className="space-y-2">
-                    {savedSearches.map(s => (
-                      <div key={s.id} className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
-                        <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm truncate flex items-center gap-1.5">{s.name}<span className="text-[10px] md:text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">{s.type === "jobs" ? t("savedSearchTypeJobs") : s.type === "mechanics" ? t("savedSearchTypeMechanics") : t("savedSearchTypeCars")}</span></p>
-                          <p className="text-[11px] text-gray-400 truncate">{[s.query, s.serviceQuery, s.locationQuery].filter(Boolean).join(" · ") || t("allFilterLabel")}</p>
-                        </button>
-                        <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
+                    <aside className="lg:sticky lg:top-20">
+                      <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5">
+                        <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm"><Bell size={15} className="text-rose-500" /> {t("savedSearchesLabel")} <span className="text-gray-300 font-normal">({savedSearches.length})</span></h2>
+                        {savedSearches.length === 0 ? (
+                          <div className="text-center py-8"><Bell size={28} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-xs">{t("noSavedSearchesNote")}</p></div>
+                        ) : (
+                          <div className="space-y-2">
+                            {savedSearches.map(s => (
+                              <div key={s.id} className="border border-gray-100 rounded-2xl p-3 flex items-center justify-between gap-2 hover:border-rose-200 transition">
+                                <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
+                                  <p className="font-semibold text-gray-800 text-sm truncate flex items-center gap-1.5">{s.name}<span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">{s.type === "jobs" ? t("savedSearchTypeJobs") : s.type === "mechanics" ? t("savedSearchTypeMechanics") : t("savedSearchTypeCars")}</span></p>
+                                  <p className="text-[11px] text-gray-400 truncate">{[s.query, s.serviceQuery, s.locationQuery].filter(Boolean).join(" · ") || t("allFilterLabel")}</p>
+                                </button>
+                                <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-1"><Trash2 size={14} /></button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    </aside>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              );
+            })()}
             {mechTab === "analytics" && (() => {
               const myAppts = appointments.filter(isSameMechanicAppt);
               const now = new Date();
@@ -2784,36 +2884,50 @@ export function AppShell() {
                 }
               };
               return (
-                <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 overflow-y-auto">
-                  <div className="flex bg-gray-100 rounded-xl p-1 mb-3">
-                    <button onClick={() => setMechAnalyticsView("overview")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "overview" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><TrendingUp size={12} /> {t("analyticsOverviewTab")}</button>
-                    <button onClick={() => setMechAnalyticsView("earnings")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "earnings" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Banknote size={12} /> {t("analyticsEarningsTab")}</button>
-                    <button onClick={() => setMechAnalyticsView("traffic")} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 ${mechAnalyticsView === "traffic" ? "bg-white shadow-sm text-rose-700" : "text-gray-400"}`}><Compass size={12} /> {t("analyticsTrafficTab")}</button>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-5 px-5">
-                      {ANALYTICS_RANGES.map(r => { const key = RANGE_LABEL_KEYS[r.key]; return (
-                        <button key={r.key} onClick={() => setAnalyticsRange(r.key)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold transition whitespace-nowrap ${analyticsRange === r.key ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t(key)}</button>
+                <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
+                  {/* TASARIM: üç ayrı tam-genişlik kontrol çubuğu (segment / aralık / PDF) alt alta
+                      duruyordu. Artık tek bir başlık satırında: solda segment, sağda PDF; altında
+                      zaman aralığı çipleri. */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div className="inline-flex bg-gray-100 rounded-2xl p-1 max-w-full overflow-x-auto">
+                      {[
+                        { key: "overview", label: t("analyticsOverviewTab"), icon: TrendingUp },
+                        { key: "earnings", label: t("analyticsEarningsTab"), icon: Banknote },
+                        { key: "traffic", label: t("analyticsTrafficTab"), icon: Compass },
+                      ].map(av => { const Icon = av.icon; const on = mechAnalyticsView === av.key; return (
+                        <button key={av.key} onClick={() => setMechAnalyticsView(av.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-rose-700" : "text-gray-500 hover:text-gray-800"}`}><Icon size={14} /> {av.label}</button>
                       ); })}
                     </div>
+                    <button onClick={handleDownloadPdf} className="border border-rose-200 text-rose-600 px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-50 transition flex items-center gap-2 flex-shrink-0"><Download size={15} /> {t("downloadPdfReportBtn")}</button>
                   </div>
-                  <button onClick={handleDownloadPdf} className="w-full mb-5 border border-rose-200 text-rose-600 py-2.5 rounded-xl font-semibold text-xs hover:bg-rose-50 transition flex items-center justify-center gap-1.5"><Download size={13} /> {t("downloadPdfReportBtn")}</button>
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 mb-6">
+                    {ANALYTICS_RANGES.map(r => { const key = RANGE_LABEL_KEYS[r.key]; return (
+                      <button key={r.key} onClick={() => setAnalyticsRange(r.key)} className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${analyticsRange === r.key ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t(key)}</button>
+                    ); })}
+                  </div>
                   {mechAnalyticsView === "overview" && (<>
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <div className="bg-rose-50 rounded-xl p-3"><p className="text-lg font-bold text-rose-600">{totalBooked}</p><p className="text-[10px] text-gray-500 mt-0.5">{t("totalBookingsLabel")}</p></div>
-                      <div className="bg-gray-100 rounded-xl p-3"><p className="text-lg font-bold text-gray-700">{total.toLocaleString("tr-TR")}₺</p><p className="text-[10px] text-gray-500 mt-0.5">{t("totalEarningsRow")}</p></div>
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
+                      {[
+                        { v: totalBooked, l: t("totalBookingsLabel"), icon: Calendar, ring: "bg-rose-50 text-rose-600", num: "text-rose-600" },
+                        { v: `${total.toLocaleString("tr-TR")}₺`, l: t("totalEarningsRow"), icon: Banknote, ring: "bg-gray-100 text-gray-600", num: "text-gray-900" },
+                        { v: completedAll.length, l: t("cameLabel"), icon: CheckCircle2, ring: "bg-green-50 text-green-600", num: "text-green-600" },
+                        { v: cancelledAll.length, l: t("cancelledRejectedLabel"), icon: X, ring: "bg-red-50 text-red-500", num: "text-red-500" },
+                        { v: noShowAll.length, l: t("noShowBtn"), icon: AlertTriangle, ring: "bg-amber-50 text-amber-600", num: "text-amber-600" },
+                      ].map((c, i) => { const Icon = c.icon; return (
+                        <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${c.ring}`}><Icon size={17} /></div>
+                          <p className={`text-2xl font-bold leading-none ${c.num}`}>{c.v}</p>
+                          <p className="text-xs text-gray-400 mt-2">{c.l}</p>
+                        </div>
+                      ); })}
                     </div>
-                    <div className="grid grid-cols-3 gap-2 mb-5">
-                      <div className="bg-green-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-green-600">{completedAll.length}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("cameLabel")}</p></div>
-                      <div className="bg-red-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-red-500">{cancelledAll.length}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("cancelledRejectedLabel")}</p></div>
-                      <div className="bg-amber-50 rounded-xl p-2.5 text-center"><p className="text-sm font-bold text-amber-600">{noShowAll.length}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("noShowBtn")}</p></div>
-                    </div>
-                    <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
                       <div className="flex items-center justify-between mb-1"><h3 className="text-sm font-bold text-gray-800">{t("completionRateTitle")}</h3><span className="text-sm font-bold text-rose-600">%{completionRate}</span></div>
                       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-rose-600 rounded-full" style={{ width: `${completionRate}%` }} /></div>
-                      <p className="text-[10px] text-gray-400 mt-1.5">{t("completedOfTotalNote", { completed: String(completedAll.length), total: String(totalBooked) })}</p>
+                      <p className="text-[11px] text-gray-400 mt-2">{t("completedOfTotalNote", { completed: String(completedAll.length), total: String(totalBooked) })}</p>
                     </div>
-                    <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
                       <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-bold text-gray-800">{t("customerSatisfactionTitle")}</h3><span className="flex items-center gap-1 text-sm font-bold text-gray-900"><Star size={14} className="fill-gray-900" />{formatNumber(avgRating, 1, "0.0")}</span></div>
                       {reviewList.length === 0 ? (
                         <p className="text-xs text-gray-400 text-center py-4">{t("noReviewsYetNotice")}</p>
@@ -2828,19 +2942,20 @@ export function AppShell() {
                           ))}
                         </div>
                       )}
-                      <p className="text-[10px] text-gray-300 mt-3">{t("basedOnReviewsNote", { n: String(reviewList.length) })}</p>
+                      <p className="text-[11px] text-gray-300 mt-3">{t("basedOnReviewsNote", { n: String(reviewList.length) })}</p>
+                    </div>
                     </div>
                   </>)}
                   {mechAnalyticsView === "earnings" && (<>
-                    <div className="grid grid-cols-2 gap-2 mb-5">
-                      <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{total.toLocaleString("tr-TR")}₺</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("totalEarningsRow")}</p></div>
-                      <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{completed.length}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("completedBookingsRow")}</p></div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+                      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3"><Banknote size={17} /></div><p className="text-2xl font-bold text-rose-600 leading-none">{total.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-400 mt-2">{t("totalEarningsRow")}</p></div>
+                      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center mb-3"><CheckCircle2 size={17} /></div><p className="text-2xl font-bold text-gray-900 leading-none">{completed.length}</p><p className="text-xs text-gray-400 mt-2">{t("completedBookingsRow")}</p></div>
                     </div>
-                    <h3 className="text-sm font-bold text-gray-800 mb-2.5">{t("topEarningServicesTitle")}</h3>
+                    <h3 className="text-base font-bold text-gray-900 mb-3">{t("topEarningServicesTitle")}</h3>
                     {topServices.length === 0 ? (
                       <div className="text-center py-14"><Banknote size={36} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noPaidWorkYet")}</p></div>
                     ) : (
-                      <div className="space-y-2">{topServices.map(([name, s]) => (<div key={name} className="flex items-center justify-between bg-white border border-gray-100 rounded-xl p-3 shadow-sm"><div className="min-w-0"><p className="text-xs font-semibold text-gray-800 truncate">{name}</p><p className="text-[10px] text-gray-400">{s.count} {t("transactionsCountSuffix")}</p></div><p className="text-sm font-bold text-rose-600 flex-shrink-0 ml-2">{s.total}₺</p></div>))}</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{topServices.map(([name, s]) => (<div key={name} className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div className="min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{name}</p><p className="text-[11px] text-gray-400 mt-0.5">{s.count} {t("transactionsCountSuffix")}</p></div><p className="text-base font-bold text-rose-600 flex-shrink-0 ml-2">{s.total}₺</p></div>))}</div>
                     )}
                     <p className="text-[10px] text-gray-300 mt-4 text-center">{t("basedOnCompletedJobsNote", { n: String(completed.length) })}</p>
                   </>)}
@@ -3024,11 +3139,23 @@ export function AppShell() {
                   </div>
                 </aside>
                 <div className="lg:col-span-2 lg:order-1">
-                <div className="bg-rose-100 rounded-xl p-3 mb-4 text-xs text-rose-800 flex items-center gap-2"><Pencil size={14} /> {t("changesApplyInstantly")}</div>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("basicInfoTitle")}</h3>
-                <div className="space-y-2 mb-5"><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} placeholder={t("phonePlaceholderExample")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><input value={myProfile.price} onChange={(e) => updateMyPriceField(e.target.value)} type="number" placeholder={t("priceTlPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-1.5"><Tag size={14} className="text-rose-500" /> {t("brandsServicedTitle")}</h3>
-                <p className="text-[11px] text-gray-400 mb-2 -mt-1">{t("brandsServicedHint")}</p>
+                <div className="bg-rose-50 border border-rose-100 rounded-2xl p-3.5 mb-5 text-xs text-rose-800 flex items-center gap-2"><Pencil size={14} /> {t("changesApplyInstantly")}</div>
+                {/* TASARIM: alanlar eskiden etiketsiz ve alt alta tek sütundu; sayfa genişleyince
+                    tek satırlık "İşletme adı" kutusu ekranın sonuna kadar uzuyordu. Artık bölüm
+                    kartı içinde, etiketli ve iki sütunlu — uzun alanlar (adres) tam satır. */}
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                  <h3 className="font-bold text-gray-900 text-base mb-4">{t("basicInfoTitle")}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("businessNamePlaceholder")}</span><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
+                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("specialtyPlaceholder")}</span><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
+                    <label className="block sm:col-span-2"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholder")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></div></label>
+                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample")}</span><div className="relative"><Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} placeholder={t("phonePlaceholderExample")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></div></label>
+                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("priceTlPlaceholder")}</span><input value={myProfile.price} onChange={(e) => updateMyPriceField(e.target.value)} type="number" placeholder={t("priceTlPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
+                  </div>
+                </div>
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> {t("brandsServicedTitle")}</h3>
+                <p className="text-xs text-gray-400 mb-4">{t("brandsServicedHint")}</p>
                 {/* Donanımdaki gibi: sabit CAR_BRANDS listesinde olmayan bir marka da serbest metin
                     olarak eklenebiliyor; 25 sabit marka + eklenenler tek ızgarada karmaşık
                     görünmesin diye seçilmemiş olanlar varsayılan olarak daraltılıp "+N tane daha"
@@ -3066,7 +3193,9 @@ export function AppShell() {
                     </div>
                   );
                 })()}
-                <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-1.5"><CreditCard size={14} className="text-rose-500" /> {t("paymentMethodsTitle")}</h3>
+                </div>
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><CreditCard size={16} className="text-rose-500" /> {t("paymentMethodsTitle")}</h3>
                 {(() => {
                   const selectedPayments = myProfile.paymentMethods || [];
                   const unselectedPayments = PAYMENT_METHOD_OPTIONS.filter(p => !selectedPayments.includes(p));
@@ -3093,9 +3222,11 @@ export function AppShell() {
                     </div>
                   );
                 })()}
-                <div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("servicesTitle")}</h3>{!showAddServiceForm && <button onClick={() => setShowAddServiceForm(true)} className="text-xs text-rose-700 font-medium flex items-center gap-1"><Plus size={14} /> {t("genericAddBtn")}</button>}</div>
-                <p className="text-[11px] text-gray-400 mb-2 -mt-1">{t("servicesFixedPriceHint")}</p>
-                <div className="space-y-2 mb-3 max-h-52 overflow-y-auto pr-0.5">{myProfile.services.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><input value={s.name} onChange={(e) => updateService(i, "name", e.target.value)} placeholder={t("servicePlaceholder")} className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><input value={s.price} onChange={(e) => updateService(i, "price", e.target.value)} placeholder={s.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-20 px-2 py-1.5 rounded-lg border text-xs ${s.fixed && !String(s.price || "").trim() ? "border-red-300" : "border-gray-200"}`} /><button onClick={() => toggleServiceFixed(i)} className={`flex-shrink-0 text-[10px] font-semibold px-2 py-1.5 rounded-lg whitespace-nowrap transition ${s.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{s.fixed ? t("fixedPriceBadge") : t("variableLabel")}</button><button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
+                </div>
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("servicesTitle")}</h3>{!showAddServiceForm && <button onClick={() => setShowAddServiceForm(true)} className="text-sm text-rose-700 font-semibold flex items-center gap-1 hover:text-rose-800"><Plus size={15} /> {t("genericAddBtn")}</button>}</div>
+                <p className="text-xs text-gray-400 mb-4">{t("servicesFixedPriceHint")}</p>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 mb-3 max-h-64 overflow-y-auto pr-0.5">{myProfile.services.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><input value={s.name} onChange={(e) => updateService(i, "name", e.target.value)} placeholder={t("servicePlaceholder")} className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><input value={s.price} onChange={(e) => updateService(i, "price", e.target.value)} placeholder={s.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-20 px-2 py-1.5 rounded-lg border text-xs ${s.fixed && !String(s.price || "").trim() ? "border-red-300" : "border-gray-200"}`} /><button onClick={() => toggleServiceFixed(i)} className={`flex-shrink-0 text-[10px] font-semibold px-2 py-1.5 rounded-lg whitespace-nowrap transition ${s.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{s.fixed ? t("fixedPriceBadge") : t("variableLabel")}</button><button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
                 {showAddServiceForm && (
                   <div className="bg-rose-100 border border-rose-200 rounded-xl p-3 mb-5">
                     <div className="flex items-center gap-2 mb-2">
@@ -3120,13 +3251,20 @@ export function AppShell() {
                     )}
                   </div>
                 )}
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("coverPhotoTitle")}</h3>
+                </div>
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><Camera size={16} className="text-rose-500" /> {t("coverPhotoTitle")}</h3>
                 <input ref={coverFileRef} type="file" accept="image/*" onChange={uploadCoverPhoto} className="hidden" />
-                {myProfile.coverPhoto ? (<div className="relative w-full h-28 rounded-2xl overflow-hidden mb-5"><img src={imgThumb(myProfile.coverPhoto, 700)} onError={imgFallbackHandler} alt={t("coverPhotoAlt")} className="w-full h-full object-cover" /><button onClick={() => coverFileRef.current?.click()} aria-label={t("changeCoverPhotoAria")} className="absolute top-2 right-12 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><Pencil size={14} /></button><button onClick={removeCoverPhoto} aria-label={t("removeCoverPhotoAria")} className="absolute top-2 right-2 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><X size={14} /></button></div>) : (<div className="mb-5"><div className="flex gap-2 mb-2">{Object.entries(BANNER_PRESETS).map(([key, grad]) => (<button key={key} onClick={() => updateMyField("bannerPreset", key)} className={`flex-1 h-14 rounded-xl bg-gradient-to-br ${grad} ${myProfile.bannerPreset === key ? "ring-2 ring-offset-2 ring-rose-600" : ""}`} />))}</div><button onClick={() => coverFileRef.current?.click()} className="w-full border-2 border-dashed border-rose-300 rounded-xl py-2.5 text-rose-600 text-xs font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><Camera size={14} /> {t("uploadOwnPhotoBtn")}</button></div>)}
-                <div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("team")}</h3><button onClick={addStaff} className="text-xs text-rose-700 font-medium flex items-center gap-1"><Plus size={14} /> {t("genericAddBtn")}</button></div>
-                <div className="space-y-3 mb-6">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-rose-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img src={s.emoji} alt={s.name || t("staffPhotoFallbackAlt")} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder={t("fullNamePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder={t("rolePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /></div><button onClick={() => removeStaff(i)} aria-label={t("removeStaffAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
-                <button onClick={saveMyProfile} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2 mb-2"><Save size={16} /> {t("save")}</button>
-                <button onClick={previewMyProfile} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition mb-5">{t("previewMyPageBtn")}</button>
+                {myProfile.coverPhoto ? (<div className="relative w-full h-40 md:h-48 rounded-2xl overflow-hidden"><img src={imgThumb(myProfile.coverPhoto, 700)} onError={imgFallbackHandler} alt={t("coverPhotoAlt")} className="w-full h-full object-cover" /><button onClick={() => coverFileRef.current?.click()} aria-label={t("changeCoverPhotoAria")} className="absolute top-2 right-12 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><Pencil size={14} /></button><button onClick={removeCoverPhoto} aria-label={t("removeCoverPhotoAria")} className="absolute top-2 right-2 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><X size={14} /></button></div>) : (<div><div className="flex gap-2 mb-3">{Object.entries(BANNER_PRESETS).map(([key, grad]) => (<button key={key} onClick={() => updateMyField("bannerPreset", key)} className={`flex-1 h-20 rounded-xl bg-gradient-to-br ${grad} ${myProfile.bannerPreset === key ? "ring-2 ring-offset-2 ring-rose-600" : ""}`} />))}</div><button onClick={() => coverFileRef.current?.click()} className="w-full border-2 border-dashed border-rose-300 rounded-xl py-2.5 text-rose-600 text-xs font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><Camera size={14} /> {t("uploadOwnPhotoBtn")}</button></div>)}
+                </div>
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={16} className="text-rose-500" /> {t("team")}</h3><button onClick={addStaff} className="text-sm text-rose-700 font-semibold flex items-center gap-1 hover:text-rose-800"><Plus size={15} /> {t("genericAddBtn")}</button></div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-rose-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img src={s.emoji} alt={s.name || t("staffPhotoFallbackAlt")} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder={t("fullNamePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder={t("rolePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /></div><button onClick={() => removeStaff(i)} aria-label={t("removeStaffAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
+                </div>
+                <div className="flex flex-wrap gap-3 mb-6">
+                  <button onClick={saveMyProfile} className="bg-rose-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
+                  <button onClick={previewMyProfile} className="border border-gray-200 text-gray-600 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("previewMyPageBtn")}</button>
+                </div>
                   {/* Mobilde tamamlanma kartı en altta — yapışkan sağ kolon yok. */}
                   <div className="lg:hidden bg-white border border-gray-200 rounded-2xl p-4 mb-4">
                     <div className="flex items-end justify-between mb-2">
@@ -3139,20 +3277,26 @@ export function AppShell() {
               </div>
               ); })()}
             {mechProfileTab === "offers" && (
-              <div className="w-full max-w-3xl mx-auto px-5 md:px-8 py-6">
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersMade")}</h3>
-                <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<button key={o.id} onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center hover:border-rose-200 transition"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("offerPendingSeenStatus") : t("offerPendingStatus")}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></button>))}
-                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">{t("noOffersMadeYet")}</p>}</div>
+              /* TASARIM: verilen ve alınan teklifler geniş ekranda yan yana iki sütun; kartlar
+                 okunabilir boyutta. Eskiden 10 piksellik yazılarla tek sütun alt alta uzuyordu. */
+              <div className="w-full max-w-6xl mx-auto px-5 md:px-8 py-6 md:py-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6">
+                <h3 className="font-bold text-gray-900 text-base mb-4">{t("offersMade")}</h3>
+                <div className="space-y-2.5">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<button key={o.id} onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left border border-gray-100 rounded-2xl p-3.5 flex justify-between items-center hover:border-rose-300 hover:shadow-sm transition"><div><p className="text-sm font-semibold text-gray-800">{o.listing.brand} {o.listing.model}</p><p className="text-xs text-gray-400 mt-0.5">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("offerPendingSeenStatus") : t("offerPendingStatus")}</p></div><span className="font-bold text-rose-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span></button>))}
+                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noOffersMadeYet")}</p>}</div>
                 {listings.filter(l => l.offers.some(o => o.status === "rejected" && (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name))).length > 0 && (
-                  <p className="text-[11px] text-gray-400 mb-4 -mt-3 flex items-start gap-1.5"><AlertTriangle size={12} className="flex-shrink-0 mt-0.5 text-amber-500" /> {t("rejectedOfferHint")}</p>
+                  <p className="text-[11px] text-gray-400 mt-4 flex items-start gap-1.5"><AlertTriangle size={12} className="flex-shrink-0 mt-0.5 text-amber-500" /> {t("rejectedOfferHint")}</p>
                 )}
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersReceived")}</h3>
-                <div className="space-y-2">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
-                  <div key={o.id} className="bg-white border border-gray-100 rounded-xl p-3">
-                    <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center mb-2"><div><p className="text-xs font-medium text-gray-700">{o.from}</p><p className="text-[10px] text-gray-400">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></button>
-                    {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>) : (<p className="text-[11px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>)}
+                </div>
+                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6">
+                <h3 className="font-bold text-gray-900 text-base mb-4">{t("offersReceived")}</h3>
+                <div className="space-y-2.5">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
+                  <div key={o.id} className="border border-gray-100 rounded-2xl p-3.5">
+                    <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center mb-2.5"><div><p className="text-sm font-semibold text-gray-800">{o.from}</p><p className="text-xs text-gray-400 mt-0.5">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-rose-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span></button>
+                    {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-xs py-2 rounded-xl font-semibold hover:bg-green-600 transition">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-xs py-2 rounded-xl font-semibold hover:bg-gray-50 transition">{t("reject")}</button></div>) : (<p className="text-xs text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>)}
                   </div>
-                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">{t("noOffersReceivedYet")}</p>}</div>
+                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noOffersReceivedYet")}</p>}</div>
+                </div>
               </div>
             )}
             {mechProfileTab === "settings" && (
