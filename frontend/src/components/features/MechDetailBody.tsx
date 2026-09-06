@@ -135,6 +135,8 @@ export function MechDetailBody() {
   //      yüzden `compact` ile tek kolona düşürülüyor. Tailwind'in lg: kırılımı VIEWPORT'a bakar,
   //      kapsayıcı genişliğine değil — büyük ekranda dar modal içinde lg: yine tetiklenirdi.
   const compact = mapDetailOpen;
+  // "Faydalı" oyu: araç sahipleri her zaman, tamirciler ise KENDİ profilleri dışında oy verebilir.
+  const canVoteHelpful = role === "owner" || (role === "mechanic" && selectedMechanic?.id !== MY_MECHANIC_ID);
   const dist = getEffectiveDistance(selectedMechanic);
   const openNow = mechanicOpenStatus(selectedMechanic);
   const hourLines = selectedMechanic.id === MY_MECHANIC_ID ? formatHoursText(mechanicHours, lang) : (selectedMechanic.hoursText || []);
@@ -461,7 +463,7 @@ export function MechDetailBody() {
                             </div>
                           ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-rose-600 font-semibold">{t("replyBtn")}</button>)
                         )}
-                        <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={role !== "owner"} className={`flex items-center gap-1.5 mt-3 pt-2.5 border-t border-gray-50 w-full ${role === "owner" ? "cursor-pointer" : "cursor-default"}`}>
+                        <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={canVoteHelpful === false} className={`flex items-center gap-1.5 mt-3 pt-2.5 border-t border-gray-50 w-full ${canVoteHelpful ? "cursor-pointer" : "cursor-default"}`}>
                           <ThumbsUp size={12} className={liked ? "text-rose-600 fill-rose-600" : "text-gray-300"} />
                           <span className={`text-[11px] ${liked ? "text-rose-600 font-semibold" : "text-gray-300"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
                         </button>
@@ -531,7 +533,7 @@ export function MechDetailBody() {
                         </div>
                       ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-rose-600 font-semibold">{t("replyBtn")}</button>)
                     )}
-                    <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={role !== "owner"} className={`flex items-center gap-1.5 mt-3 ${role === "owner" ? "cursor-pointer" : "cursor-default"}`}>
+                    <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={canVoteHelpful === false} className={`flex items-center gap-1.5 mt-3 ${canVoteHelpful ? "cursor-pointer" : "cursor-default"}`}>
                       <ThumbsUp size={14} className={liked ? "text-rose-600 fill-rose-600" : "text-gray-300"} />
                       <span className={`text-xs ${liked ? "text-rose-600 font-semibold" : "text-gray-400"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
                     </button>

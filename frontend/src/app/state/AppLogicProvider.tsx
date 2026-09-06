@@ -189,7 +189,10 @@ function useAppLogic() {
   // MİSAFİR GEZİNME: favori bir hesaba yazıldığı için giriş gerektiriyor — giriş yoksa popup açılır
   // ve giriş tamamlanınca bu işlem otomatik olarak çalışır (bkz. requireAuth).
   const toggleFavorite = (id) => requireAuth(() => {
-    track("favorite_added", { targetType: "listing", targetId: id });
+    // ANALİTİK DÜZELTMESİ: olay eskiden koşulsuz gönderiliyordu — favoriden ÇIKARMA da
+    // "favorite_added" olarak sayılıyor, panelde favori sayısını şişiriyordu. Yan etki
+    // bilerek updater'ın DIŞINDA: React güncelleyici fonksiyonu iki kez çağırabilir.
+    if (!favoriteIds.includes(id)) track("favorite_added", { targetType: "listing", targetId: id });
     setFavoriteIds(f => {
       const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
       persistMyPrefs({ favoriteIds: next }, "Favori kaydedilemedi");
@@ -201,6 +204,9 @@ function useAppLogic() {
   // yanlışlıkla ikisini de favoriye eklemiş gibi gösterirdi.
   const [favoriteMechanicIds, setFavoriteMechanicIds] = useState([]);
   const toggleFavoriteMechanic = (id) => requireAuth(() => {
+    // Araç favorileri izleniyordu ama TAMİRCİ favorileri hiç izlenmiyordu — panelde
+    // "kaç kişi bu tamirciyi favoriye ekledi" verisi bu yüzden hep boştu.
+    if (!favoriteMechanicIds.includes(id)) track("favorite_added", { targetType: "mechanic", targetId: id });
     setFavoriteMechanicIds(f => {
       const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
       persistMyPrefs({ favoriteMechanicIds: next }, "Favori kaydedilemedi");
@@ -265,10 +271,14 @@ function useAppLogic() {
   // yoksa (oturum kurulmadıysa) hiç optimistic güncelleme yapmadan önce açıkça uyarıyoruz, ve
   // backend isteği gerçekten başarısız olursa yerel sayaç geri alınıyor (önceden hep +1 kalıyordu).
   const toggleReviewHelpful = async (mechanicId, reviewId) => {
-    if (role !== "owner") return;
+    // GERÇEK HATA DÜZELTMESİ: burası `role !== "owner"` ile kapalıydı, oysa aşağıdaki kalıcılık
+    // kodunda tamirci dalı zaten yazılmıştı (ölü koddu) ve mechanics tablosunda likedReviewIds
+    // sütunu var. Tamirciler de başka tamircilerin yorumlarına "faydalı" diyebilir; yalnızca
+    // KENDİ profilindeki yoruma oy vermek engelleniyor (kendini öne çıkarma).
+    if (role === "mechanic" && mechanicId === MY_MECHANIC_ID) return;
     // MİSAFİR GEZİNME: eskiden burada sadece bir uyarı toast'ı gösteriliyordu; artık giriş popup'ı
     // açılıyor ve giriş sonrası beğeni otomatik uygulanıyor.
-    if (MY_OWNER_ID == null) { requireAuth(() => callLatest("toggleReviewHelpful", mechanicId, reviewId), t("authGateReasonReviewHelpful")); return; }
+    if (MY_OWNER_ID == null && MY_MECHANIC_ID == null) { requireAuth(() => callLatest("toggleReviewHelpful", mechanicId, reviewId), t("authGateReasonReviewHelpful")); return; }
     const key = `${mechanicId}:${reviewId}`;
     const alreadyLiked = likedReviewIds.includes(key);
     const mech = mechanicsList.find(m => m.id === mechanicId);
@@ -294,7 +304,7 @@ function useAppLogic() {
       // Rollback — istek gerçekten başarısız oldu, sayaç ekranda yanlış kalmasın.
       setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList: prevReviewList }));
       setLikedReviewIds(prevLiked);
-      setToast({ type: "info", text: `⚠️ Beğeni kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+      setToast({ type: "info", text: `⚠️ ${t("helpfulSaveFailedToast")}` });
     }
   };
   const [query, setQuery] = useState("");
@@ -2747,12 +2757,12 @@ function useAppLogic() {
     setVehicles(vs => vs.map(v => v.id !== vehicleId ? v : { ...v, customReminders })); setEditingReminderKind(null); setToast({ type: "info", text: "🗑️ Hatırlatma silindi." });
     persist(api.vehicles.update(vehicleId, { customReminders }), "Hatırlatma kaydedilemedi");
   };
-  const acceptAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Sırada" } : a)); persist(api.appointments.update(id, { status: "Sırada" }), "Randevu güncellenemedi"); fireSuccessPulse("Randevu kabul edildi ✅"); fireNotification("Randevunuz kabul edildi ✅", "Tamirci randevu talebinizi onayladı.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
-  const rejectAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Reddedildi" } : a)); persist(api.appointments.update(id, { status: "Reddedildi" }), "Randevu güncellenemedi"); setToast({ type: "info", text: "❌ Randevu reddedildi." }); fireNotification("Randevunuz reddedildi", "Tamirci bu randevu talebini kabul edemedi.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
-  const markNoShow = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Gelmedi", noShow: true } : a)); persist(api.appointments.update(id, { status: "Gelmedi", noShow: true }), "Randevu güncellenemedi"); setToast({ type: "info", text: "🚫 Müşteri gelmedi olarak işaretlendi." }); };
+  const acceptAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Sırada" } : a)); persist(api.appointments.update(id, { status: "Sırada" }), "Randevu güncellenemedi"); fireSuccessPulse(t("apptAcceptedToast")); fireNotification("Randevunuz kabul edildi ✅", "Tamirci randevu talebinizi onayladı.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
+  const rejectAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Reddedildi" } : a)); persist(api.appointments.update(id, { status: "Reddedildi" }), "Randevu güncellenemedi"); setToast({ type: "info", text: t("apptRejectedToast") }); fireNotification("Randevunuz reddedildi", "Tamirci bu randevu talebini kabul edemedi.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
+  const markNoShow = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Gelmedi", noShow: true } : a)); persist(api.appointments.update(id, { status: "Gelmedi", noShow: true }), "Randevu güncellenemedi"); setToast({ type: "info", text: t("noShowMarkedToast") }); };
   const advanceStatus = (id) => {
     let nextStatus = null;
-    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; const idx = TRACK_STATUSES_AUTO.indexOf(a.status); const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)]; nextStatus = next; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse("Tamir tamamlandı 🎉"); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } return { ...a, status: next }; }));
+    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; const idx = TRACK_STATUSES_AUTO.indexOf(a.status); const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)]; nextStatus = next; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse(t("repairCompletedToast")); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } return { ...a, status: next }; }));
     if (nextStatus) persist(api.appointments.update(id, { status: nextStatus }), "Randevu güncellenemedi");
   };
   // Tamiri "Tamamlandı" olarak işaretlerken, değişen parça varsa opsiyonel garanti süresi eklenebilir.
@@ -2948,13 +2958,13 @@ function useAppLogic() {
     const myTickets = mySupportTickets();
     return (
       <>
-        <button onClick={() => setTabFn(backTab)} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> Bilgilerime Dön</button>
-        <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><LifeBuoy size={16} className="text-rose-500" /> Yardım &amp; Destek</h2>
-        <p className="text-xs text-gray-400 mb-4">Bir sorun mu yaşıyorsun ya da bir şikayetin mi var? Buradan bize ulaşabilirsin.</p>
-        <button onClick={() => setShowNewTicketForm(true)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-5 flex items-center justify-center gap-2"><Plus size={15} /> Yeni Destek Talebi Oluştur</button>
-        <h3 className="text-sm font-semibold text-gray-800 mb-3">Taleplerim{myTickets.length > 0 ? ` (${myTickets.length})` : ""}</h3>
+        <button onClick={() => setTabFn(backTab)} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToMyInfoBtn")}</button>
+        <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><LifeBuoy size={16} className="text-rose-500" /> {t("helpAndSupportTitle")}</h2>
+        <p className="text-xs text-gray-400 mb-4">{t("helpAndSupportSub")}</p>
+        <button onClick={() => setShowNewTicketForm(true)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-5 flex items-center justify-center gap-2"><Plus size={15} /> {t("createSupportTicketBtn")}</button>
+        <h3 className="text-sm font-semibold text-gray-800 mb-3">{t("myTicketsTitle")}{myTickets.length > 0 ? ` (${myTickets.length})` : ""}</h3>
         {myTickets.length === 0 ? (
-          <div className="text-center py-10 bg-white border border-gray-200 rounded-2xl"><LifeBuoy size={32} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-sm">Henüz bir destek talebin yok.</p></div>
+          <div className="text-center py-10 bg-white border border-gray-200 rounded-2xl"><LifeBuoy size={32} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-sm">{t("noTicketsYetNotice")}</p></div>
         ) : (
           <div className="space-y-2">
             {myTickets.map(tk => (
@@ -2969,7 +2979,7 @@ function useAppLogic() {
                   <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
                     {tk.adminReplies.map((r, i) => (
                       <div key={i} className="bg-gray-50 rounded-xl p-2.5">
-                        <p className="text-[10px] font-semibold text-gray-500 mb-0.5">Fixperto Destek Ekibi · {r.date}</p>
+                        <p className="text-[10px] font-semibold text-gray-500 mb-0.5">{t("fixpertoSupportTeamLabel")} · {r.date}</p>
                         <p className="text-xs text-gray-700">{r.text}</p>
                       </div>
                     ))}
@@ -3209,19 +3219,19 @@ function useAppLogic() {
   const findMissingFixedPriceService = () => (myProfile?.services || []).find(s => s.fixed && !String(s.price || "").trim()) || null;
   const saveMyProfile = () => {
     const missing = findMissingFixedPriceService();
-    if (missing) { setToast({ type: "info", text: `⚠️ "${missing.name}" sabit fiyatlı işaretli ama fiyatı boş. Lütfen fiyat girin ya da "Değişken" olarak işaretleyin.` }); return; }
-    setToast({ type: "info", text: "✅ Profiliniz güncellendi." });
+    if (missing) { setToast({ type: "info", text: `⚠️ ${t("fixedPriceMissingToast", { name: missing.name })}` }); return; }
+    setToast({ type: "info", text: t("profileUpdatedToast") });  // metnin kendisinde zaten ✅ var
   };
   const previewMyProfile = () => {
     const missing = findMissingFixedPriceService();
-    if (missing) { setToast({ type: "info", text: `⚠️ Önizlemeden önce "${missing.name}" hizmetine bir fiyat girin ya da "Değişken" olarak işaretleyin.` }); return; }
+    if (missing) { setToast({ type: "info", text: `⚠️ ${t("fixedPriceMissingPreviewToast", { name: missing.name })}` }); return; }
     openDetail(myProfile, "mechProfilePage");
   };
   const tryAddService = () => {
     const name = newServiceForm.name.trim();
     if (!name) return;
     const fixed = newServiceForm.fixed;
-    if (fixed && !newServiceForm.price.trim()) { setToast({ type: "info", text: "⚠️ Sabit fiyatlı hizmetler için fiyat girmelisiniz." }); return; }
+    if (fixed && !newServiceForm.price.trim()) { setToast({ type: "info", text: `⚠️ ${t("fixedPriceRequiredToast")}` }); return; }
     const price = newServiceForm.price.trim();
     const isDup = (myProfile?.services || []).some(s => s.name.trim().toLocaleLowerCase("tr-TR") === name.toLocaleLowerCase("tr-TR"));
     if (isDup) { setDuplicateServiceWarning({ name, price, fixed }); return; }
@@ -4155,9 +4165,14 @@ function useAppLogic() {
   //
   // Modallar bilinçli olarak DIŞARIDA: her modal açılışını geçmişe yazmak, kullanıcının geri tuşuna
   // arka arkaya basmasını gerektirirdi. Modallar zaten kendi kapatma butonlarına sahip.
+  // NOT: mechListingsSubTab, mechActiveConvoId ve activeConvoId de burada — kardeş alt sekmeler
+  // (mechReqView/mechAnalyticsView) zaten izleniyordu, bunlar izlenmiyordu. Özellikle sohbet:
+  // telefonda bir sohbete girince liste yerini sohbete bırakıyor, geri tuşu ise kullanıcıyı
+  // listeye değil doğrudan Mesajlar sekmesinden dışarı atıyordu.
   const navSnapshot = {
     screen, ownerTab, ownerMode, ownerProfileTab,
-    mechTab, mechProfileTab, mechReqView, mechAnalyticsView,
+    mechTab, mechProfileTab, mechReqView, mechAnalyticsView, mechListingsSubTab,
+    mechActiveConvoId, activeConvoId,
     adminTab, selectedMechanicId, listingPageId, selectedListingId, selectedJobId,
   };
   const navKey = JSON.stringify(navSnapshot);
@@ -4198,6 +4213,8 @@ function useAppLogic() {
       setOwnerTab(snap.ownerTab); setOwnerMode(snap.ownerMode); setOwnerProfileTab(snap.ownerProfileTab);
       setMechTab(snap.mechTab); setMechProfileTab(snap.mechProfileTab);
       setMechReqView(snap.mechReqView); setMechAnalyticsView(snap.mechAnalyticsView);
+      setMechListingsSubTab(snap.mechListingsSubTab);
+      setMechActiveConvoId(snap.mechActiveConvoId); setActiveConvoId(snap.activeConvoId);
       setAdminTab(snap.adminTab);
       setSelectedMechanicId(snap.selectedMechanicId);
       setListingPageId(snap.listingPageId);
