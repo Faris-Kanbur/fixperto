@@ -214,9 +214,14 @@ export function ListingDetailPage() {
         <div className="max-w-7xl mx-auto px-5 md:px-8 py-3 flex items-center justify-between gap-3">
           <button onClick={closeListingPage} className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
           <div className="flex items-center gap-2">
-            {/* Kullanıcı tam sayfadayken hızlı görünüme de dönebilsin — iki katman arasında geçiş
-                tek yönlü olmasın diye. */}
-            <button onClick={() => setSelectedListingId(l.id)} className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-rose-600 border border-gray-200 px-3 py-2 rounded-full transition"><Eye size={13} /> {t("quickViewBtn")}</button>
+            {/* NOT: burada "Hızlı Görüntüle" butonu YOK. Hızlı görünüm, listede karttan ayrılmadan
+                bakmak içindir; kullanıcı zaten tam detay sayfasındayken aynı ilanı DAHA AZ bilgiyle
+                gösteren bir modal açmak geriye doğru bir adım olurdu. Geçiş tek yönlü: liste →
+                (göz ikonu) hızlı görünüm → "Tüm Detayları Gör" → bu sayfa. */}
+            {/* AutoScout24'te de ilan sayfasının üstünde "Merken / Teilen" (favori / paylaş) ikili
+                duruyor — favori butonu sadece aşağıdaki satıcı kartında kalmasın, sayfanın en
+                üstünde de erişilebilsin. */}
+            <button onClick={() => toggleFavorite(l.id)} aria-label={t("addToFavoritesAria")} className="w-9 h-9 rounded-full border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
             <ShareButton title={`${l.brand} ${l.model}`} text={`${l.brand} ${l.model} — ${l.price}`} path={`?listing=${l.id}`} onShare={(channel, refCode) => recordShare("listing", l.id, channel, refCode)} />
           </div>
         </div>
