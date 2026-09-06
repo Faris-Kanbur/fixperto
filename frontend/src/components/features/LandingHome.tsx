@@ -72,6 +72,9 @@ export function LandingHome() {
             <button onClick={() => goToBrowse("mechanics")} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition">{t("findMechanic")}</button>
             <button onClick={() => goToBrowse("cars")} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition">{t("findCar")}</button>
             <button onClick={() => goToBrowse("jobs")} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition">{t("jobListingsNavLabel")}</button>
+            {/* Çoklu fiyat teklifi, diğer ana gezinme bağlantılarıyla AYNI seviyede duruyor
+                (kullanıcı isteği) — vurgulu görünsün diye hafif arka planlı bir hap biçiminde. */}
+            <button onClick={openQuoteModal} title={t("landingQuoteCtaNote")} className="text-sm font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 whitespace-nowrap"><Users size={14} /> {t("landingQuoteCta")}</button>
           </nav>
           <div className="flex items-center gap-2 flex-shrink-0">
             <LangSwitch />
@@ -123,8 +126,9 @@ export function LandingHome() {
             {/* Filtrele: kullanıcı arama yapmadan ÖNCE de tüm filtreleri açıp öyle arayabilsin diye
                 (kullanıcı isteği) — modal, sonuç ekranındakiyle aynı filtre setini kullanır. */}
             <button onClick={() => setShowFilterModal(true)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 px-3.5 py-2 rounded-full hover:border-gray-900 transition relative"><SlidersHorizontal size={13} className="text-rose-600" /> {t("landingFilterBtn")}{activeFilterCount > 0 && <span className="ml-0.5 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] flex items-center justify-center">{activeFilterCount}</span>}</button>
-            {/* Çoklu fiyat teklifi: ana sayfada da olsun (kullanıcı isteği) */}
-            <button onClick={openQuoteModal} title={t("landingQuoteCtaNote")} className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 px-3.5 py-2 rounded-full hover:bg-rose-100 transition"><Users size={13} /> {t("landingQuoteCta")}</button>
+            {/* Çoklu fiyat teklifi masaüstünde üst gezinme çubuğunda (diğer bağlantılarla aynı
+                seviyede) duruyor; üst çubuk mobilde gizlendiği için burada SADECE mobilde gösteriliyor. */}
+            <button onClick={openQuoteModal} title={t("landingQuoteCtaNote")} className="md:hidden inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 px-3.5 py-2 rounded-full hover:bg-rose-100 transition"><Users size={13} /> {t("landingQuoteCta")}</button>
             <span className="text-xs text-gray-400 ml-1">{t("landingPopularPrefix")}</span>
             {popularServices.slice(0, 4).map(s => (
               <button key={s.name} onClick={() => searchService(s.name)} className="text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-100 px-3 py-1.5 rounded-full transition">{s.name}</button>
