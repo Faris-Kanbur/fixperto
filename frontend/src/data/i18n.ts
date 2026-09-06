@@ -23,7 +23,9 @@ export const T = {
   showMap: { tr: "Haritada Gör", en: "Show Map", de: "Karte Anzeigen" },
   bookNow: { tr: "Hemen Randevu Al", en: "Book Now", de: "Jetzt Buchen" },
   bookDirect: { tr: "Direkt Randevu Al", en: "Book Directly", de: "Direkt Buchen" },
-  sendMessage: { tr: "Mesaj Gönder / Fiyat Sor", en: "Send Message / Ask Price", de: "Nachricht Senden / Preis Fragen" },
+  // Tek satırda kalması gereken buton etiketi: eski hali ("Mesaj Gönder / Fiyat Sor") üç dilde de
+  // iki satıra taşıyordu, özellikle Almancada. Bölü işaretli çift eylem yerine tek ve net bir fiil.
+  sendMessage: { tr: "Mesaj Gönder", en: "Send Message", de: "Nachricht senden" },
   services: { tr: "Sunduğu Hizmetler", en: "Services Offered", de: "Angebotene Leistungen" },
   team: { tr: "Ekibimiz", en: "Our Team", de: "Unser Team" },
   reviews: { tr: "Müşteri Yorumları", en: "Customer Reviews", de: "Kundenbewertungen" },
