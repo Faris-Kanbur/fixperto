@@ -3085,11 +3085,19 @@ function useAppLogic() {
       if (f.minRating > 0 && !(item.rating >= f.minRating)) return false;
       if (f.brand && !(item.brandsServiced || []).includes(f.brand)) return false;
       if (f.service && !serviceNameMatches(item.services, f.service)) return false;
+      // Canlı listede (filtered) uygulanan ama burada eksik kalan iki kural — sayaç ile ekrandaki
+      // sonuç sayısı birebir aynı olsun diye eklendi:
+      //  1) mesafe filtresi (konum paylaşılmadıysa tahmini mesafe üzerinden),
+      //  2) tamirci rolündeki kullanıcının KENDİ profili sonuçlarda görünmez.
+      if (f.maxDistance != null && f.maxDistance < 999 && getEffectiveDistance(item) > f.maxDistance) return false;
+      if (role === "mechanic" && MY_MECHANIC_ID != null && item.id === MY_MECHANIC_ID) return false;
       return true;
     }
     // jobs
     if (item.status && item.status !== "active") return false;
-    if (q && !(`${item.title || ""} ${(item.skills || []).join(" ")}`.toLocaleLowerCase("tr-TR").includes(q))) return false;
+    // Canlı filtre (filteredJobs) başlık + İŞLETME ADI + becerilerde arıyor; buradaki eşleşme de
+    // birebir aynı olmalı, aksi halde "N sonuç" sayacı ekrandaki listeyle uyuşmuyordu.
+    if (q && !(`${item.title || ""} ${item.mechanicName || ""} ${(item.skills || []).join(" ")}`.toLocaleLowerCase("tr-TR").includes(q))) return false;
     if (loc && !(item.location || "").toLocaleLowerCase("tr-TR").includes(loc)) return false;
     if (f.employmentType && f.employmentType !== "all" && item.employmentType !== f.employmentType) return false;
     if (f.experienceLevel && f.experienceLevel !== "all" && item.experienceLevel !== f.experienceLevel) return false;
@@ -3716,7 +3724,10 @@ function useAppLogic() {
   const searchGuidance = (mode) => {
     const type = searchModeType(mode);
     const criteria = currentSearchCriteria(mode);
-    const total = countSearchMatches(type, criteria);
+    // Gösterilen sonuç sayısı, ekrandaki GERÇEK listeden alınıyor (yeniden hesaplamıyoruz) — böylece
+    // "N sonuç" her zaman kullanıcının gördüğü kart sayısıyla birebir aynı. Gevşetme önerilerindeki
+    // sayılar ise "bu kriteri kaldırsam kaç olurdu" hesabı olduğu için matcher ile hesaplanıyor.
+    const total = type === "cars" ? filteredListings.length : type === "jobs" ? filteredJobs.length : filtered.length;
     const chips = [];
     if (query.trim()) chips.push({ key: "query", label: type === "cars" ? t("brandModelFieldLabel") : type === "jobs" ? t("positionFieldLabel") : t("brandFieldLabel"), value: query.trim(), clear: () => setQuery("") });
     if (type === "mechanics" && serviceQuery.trim()) chips.push({ key: "service", label: t("serviceFieldLabel"), value: serviceQuery.trim(), clear: () => setServiceQuery("") });
