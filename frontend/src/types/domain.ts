@@ -73,6 +73,16 @@ export interface Mechanic {
   paymentMethods?: string[];
   /** İşletme telefon numarası — ilan detayındaki "Telefonla Ara" butonu için. */
   phone?: string;
+  /** Tamircinin KENDİ tercihleri — owners tablosundakilerle birebir aynı anlamda.
+   * Tamirci rolü de araç ilanı favoriliyor, başka tamircileri favoriliyor, arama kaydediyor ve
+   * yorum beğeniyor; bu alanlar olmadan bu özellikler tamirci hesabında hiç çalışmıyordu
+   * (bkz. AppLogicProvider persistMyPrefs).
+   * GÜVENLİK: toplu GET /api/mechanics yanıtında YOK (bkz. hydrate.js LIST_ONLY_SENSITIVE_FIELDS) —
+   * yalnızca kişinin kendi tekil kaydında döner, bu yüzden opsiyonel. */
+  favoriteIds?: number[];
+  favoriteMechanicIds?: number[];
+  likedReviewIds?: string[];
+  savedSearches?: any[];
   /** GÜVENLİK DÜZELTMESİ: backend artık bu alanı hiçbir yanıtta döndürmüyor (bkz. hydrate.js) —
    * tip burada sadece geriye dönük uyumluluk için opsiyonel olarak duruyor, runtime'da hep
    * undefined gelir. Şifre değiştirmek için api.owners/mechanics.verifyPassword + setPassword

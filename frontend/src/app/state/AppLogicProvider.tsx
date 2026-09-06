@@ -168,6 +168,23 @@ function useAppLogic() {
   const [userLocation, setUserLocation] = useState(null);
   const [locationStatus, setLocationStatus] = useState("idle");
   const [notifPermission, setNotifPermission] = useState(typeof Notification !== "undefined" ? Notification.permission : "unsupported");
+  // GERÇEK HATA DÜZELTMESİ — TEK YAZMA YOLU.
+  // Favoriler, yorum beğenisi, kayıtlı aramalar ve dil tercihi hep şu şekilde kaydediliyordu:
+  //     api.owners.update(MY_OWNER_ID, ...)
+  // Tamirci olarak giriş yapıldığında MY_OWNER_ID null'dır; istek /api/owners/null'a gidip
+  // başarısız oluyordu. Sonuç: tamirci hesabında favoriye ekleme, arama kaydetme, yorum beğenme
+  // ve dil tercihi kaydetme özelliklerinin HİÇBİRİ çalışmıyordu (arayüz bir an tepki verip
+  // eski hâline dönüyordu). Artık hangi hesapla giriş yapıldıysa O tablonun satırına yazıyoruz.
+  const persistMyPrefs = (patch, failMessage) => {
+    if (MY_OWNER_ID != null) return persist(api.owners.update(MY_OWNER_ID, patch), failMessage);
+    if (MY_MECHANIC_ID != null) {
+      // Tamircinin kendi kaydını yerel listede de güncelle — aksi halde sayfa yenilenene kadar
+      // eski değer görünürdü (owners tarafında bu iş ownersDirectory üzerinden yürüyor).
+      setMechanicsList((list) => list.map((m) => (m.id === MY_MECHANIC_ID ? { ...m, ...patch } : m)));
+      return persist(api.mechanics.update(MY_MECHANIC_ID, patch), failMessage);
+    }
+    // Misafir: buraya gelinmemeli (çağıranlar requireAuth/ensureAuth ile korunuyor) ama sessiz kal.
+  };
   const [favoriteIds, setFavoriteIds] = useState([]);
   // MİSAFİR GEZİNME: favori bir hesaba yazıldığı için giriş gerektiriyor — giriş yoksa popup açılır
   // ve giriş tamamlanınca bu işlem otomatik olarak çalışır (bkz. requireAuth).
@@ -175,7 +192,7 @@ function useAppLogic() {
     track("favorite_added", { targetType: "listing", targetId: id });
     setFavoriteIds(f => {
       const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
-      persist(api.owners.update(MY_OWNER_ID, { favoriteIds: next }), "Favori kaydedilemedi");
+      persistMyPrefs({ favoriteIds: next }, "Favori kaydedilemedi");
       return next;
     });
   }, t("authGateReasonFavorite"));
@@ -186,7 +203,7 @@ function useAppLogic() {
   const toggleFavoriteMechanic = (id) => requireAuth(() => {
     setFavoriteMechanicIds(f => {
       const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
-      persist(api.owners.update(MY_OWNER_ID, { favoriteMechanicIds: next }), "Favori kaydedilemedi");
+      persistMyPrefs({ favoriteMechanicIds: next }, "Favori kaydedilemedi");
       return next;
     });
   }, t("authGateReasonFavorite"));
@@ -263,9 +280,15 @@ function useAppLogic() {
     setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList }));
     setLikedReviewIds(nextLiked);
     try {
+      // persistMyPrefs gibi role duyarlı, ama burada geri-alma (rollback) için promise'in kendisi
+      // gerekiyor; bu yüzden hedef tablo doğrudan seçiliyor. Eskiden koşulsuz owners'a yazılıyordu
+      // ve tamirci hesabında beğeni her seferinde başarısız olup geri alınıyordu.
+      const prefsUpdate = MY_OWNER_ID != null
+        ? api.owners.update(MY_OWNER_ID, { likedReviewIds: nextLiked })
+        : api.mechanics.update(MY_MECHANIC_ID, { likedReviewIds: nextLiked });
       await Promise.all([
         api.mechanics.update(mechanicId, { reviewList }),
-        api.owners.update(MY_OWNER_ID, { likedReviewIds: nextLiked }),
+        prefsUpdate,
       ]);
     } catch (err) {
       // Rollback — istek gerçekten başarısız oldu, sayaç ekranda yanlış kalmasın.
@@ -627,6 +650,12 @@ function useAppLogic() {
           api.mechanics.get(MY_MECHANIC_ID).then((full) => {
             if (cancelled) return;
             setMechanicsList((list) => list.map((m) => (m.id === MY_MECHANIC_ID ? { ...m, ...full } : m)));
+            // Tercihler (favoriler/beğeniler/kayıtlı aramalar) tamirci için de artık kalıcı —
+            // owners tarafındaki ile aynı desen (bkz. persistMyPrefs).
+            if (full?.favoriteIds) setFavoriteIds(full.favoriteIds);
+            if (full?.favoriteMechanicIds) setFavoriteMechanicIds(full.favoriteMechanicIds);
+            if (full?.likedReviewIds) setLikedReviewIds(full.likedReviewIds);
+            if (full?.savedSearches) setSavedSearches(full.savedSearches);
           }).catch(() => { /* profil ayarları ekranı boş IBAN ile açılır, kritik değil */ });
         }
         if (MY_OWNER_ID != null) {
@@ -3481,7 +3510,7 @@ function useAppLogic() {
     const newSearch = { ...draft, seenListingIds: savedSearchSource(searchType).filter(x => matchesSavedSearchCriteria(x, draft)).map(x => x.id) };
     setSavedSearches(s => {
       const next = [...s, newSearch];
-      persist(api.owners.update(MY_OWNER_ID, { savedSearches: next }), "Arama kaydedilemedi");
+      persistMyPrefs({ savedSearches: next }, "Arama kaydedilemedi");
       return next;
     });
     setShowSaveSearchInput(false);
@@ -3491,7 +3520,7 @@ function useAppLogic() {
   const removeSavedSearch = (id) => {
     setSavedSearches(s => {
       const next = s.filter(x => x.id !== id);
-      persist(api.owners.update(MY_OWNER_ID, { savedSearches: next }), "Arama silinemedi");
+      persistMyPrefs({ savedSearches: next }, "Arama silinemedi");
       return next;
     });
     setToast({ type: "info", text: t("savedSearchRemovedToast") });
@@ -3545,7 +3574,7 @@ function useAppLogic() {
     });
     if (changed) {
       setSavedSearches(nextSearches);
-      persist(api.owners.update(MY_OWNER_ID, { savedSearches: nextSearches }), "Arama güncellenemedi");
+      persistMyPrefs({ savedSearches: nextSearches }, "Arama güncellenemedi");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listings, mechanicsList, jobListings, savedSearches.length, MY_OWNER_ID]);

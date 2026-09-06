@@ -48,6 +48,15 @@ CREATE TABLE IF NOT EXISTS mechanics (
   brandsServiced TEXT DEFAULT '[]',
   paymentMethods TEXT DEFAULT '[]',
   phone TEXT,
+  -- GERÇEK HATA DÜZELTMESİ: bu dört tercih sütunu önce SADECE owners tablosunda vardı. Ama tamirci
+  -- rolü de araç ilanlarına bakıp favoriliyor, diğer tamircileri favoriliyor, arama kaydediyor ve
+  -- yorum beğeniyor. Uygulama bu yazmaları körü körüne api.owners.update(MY_OWNER_ID, ...) ile
+  -- yapıyordu; tamirci girişinde MY_OWNER_ID null olduğu için istek /api/owners/null'a gidip
+  -- sessizce başarısız oluyordu — yani tamirci hesabında BU ÖZELLİKLERİN HİÇBİRİ çalışmıyordu.
+  favoriteIds TEXT DEFAULT '[]',
+  favoriteMechanicIds TEXT DEFAULT '[]',
+  likedReviewIds TEXT DEFAULT '[]',
+  savedSearches TEXT DEFAULT '[]',
   -- Owners tablosundaki password sütunuyla aynı gerekçeyle eklendi (bkz. o tablodaki yorum):
   -- tamirci profil ayarlarındaki "şifre değiştir" formu önceden mevcut şifreyi hiç doğrulamıyordu
   -- çünkü karşılaştırılacak gerçek bir sütun yoktu. Demo amaçlı düz metin — gerçek bir üretim
@@ -357,6 +366,10 @@ function ensureColumn(table, columnDef) {
   ["support_tickets", "resolvedDate TEXT"],
   ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
   ["support_tickets", "fromId INTEGER"],
+  ["mechanics", "favoriteIds TEXT DEFAULT '[]'"],
+  ["mechanics", "favoriteMechanicIds TEXT DEFAULT '[]'"],
+  ["mechanics", "likedReviewIds TEXT DEFAULT '[]'"],
+  ["mechanics", "savedSearches TEXT DEFAULT '[]'"],
   ["owners", "favoriteIds TEXT DEFAULT '[]'"],
   ["owners", "favoriteMechanicIds TEXT DEFAULT '[]'"],
   ["owners", "likedReviewIds TEXT DEFAULT '[]'"],

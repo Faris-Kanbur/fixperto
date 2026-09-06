@@ -2,7 +2,7 @@
 // rows back into the shape the frontend expects (parsed JSON, booleans instead
 // of 0/1) when reading, and back into TEXT when writing.
 const JSON_FIELDS = {
-  mechanics: ["hoursText", "services", "staff", "reviewList", "verificationDocs", "brandsServiced", "paymentMethods"],
+  mechanics: ["hoursText", "services", "staff", "reviewList", "verificationDocs", "brandsServiced", "paymentMethods", "favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches"],
   vehicles: ["reminderOverrides", "customReminders", "history"],
   owners: ["favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches"],
   listings: ["offers", "messages", "features", "photos"],
@@ -60,7 +60,9 @@ const SENSITIVE_FIELDS = {
 // Kendi profilini görüntüleyen kullanıcı (isSelfOrAdmin) hâlâ hydrate() ile TÜM alanları görüyor —
 // bu sadece BAŞKALARININ toplu/tekil genel görünümünden bu üç kişisel alanı gizliyor.
 const LIST_ONLY_SENSITIVE_FIELDS = {
-  mechanics: ["iban", "bankName", "accountHolder"],
+  // Tamircinin kendi favorileri/kayıtlı aramaları da owners tarafındaki ile aynı gerekçeyle toplu
+  // listede gizleniyor: bir tamircinin neyi favorilediği başka kullanıcıları ilgilendirmez.
+  mechanics: ["iban", "bankName", "accountHolder", "favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches"],
   owners: ["favoriteMechanicIds", "likedReviewIds", "savedSearches"],
 };
 
