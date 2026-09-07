@@ -2449,7 +2449,14 @@ export function AppShell() {
                 Eskiden burada 5 adet 9 piksellik minik sekme vardı — telefon için tasarlanmıştı ve
                 geniş ekrana yayılınca okunamaz hâle geliyordu. */}
             <div className="h-24 md:h-32 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
-              <div className="absolute top-4 right-4 md:right-8 z-10 flex items-center gap-2">
+              {/* GERÇEK HATA DÜZELTMESİ — bildirim paneli başlık kartının ARKASINDA açılıyordu.
+                  Bu kapsayıcı konumlandırılmış + z-index'li olduğu için KENDİ yığın bağlamını
+                  (stacking context) kuruyor: NotifBell'deki panelin dev z-index'i (9560) yalnızca
+                  bu bağlamın İÇİNDE geçerli, dışarıya karşı kapsayıcının z-index'i neyse o sayılıyor.
+                  Kapsayıcı z-10'du; başlık kartına da (bandın altında kalmasın diye) z-10 verince
+                  eşitlik oluştu ve DOM'da sonra gelen kart öne geçti. Artık z-40: kartın (z-10) ve
+                  yapışkan sekme çubuğunun (z-20) üstünde. */}
+              <div className="absolute top-4 right-4 md:right-8 z-40 flex items-center gap-2">
                 <NotifBell />
                 <button onClick={() => setScreen("mechBrowse")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Search size={16} /></button>
                 <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("settings"); }} title={t("tabLabelSettings")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
@@ -3401,7 +3408,7 @@ export function AppShell() {
                 yalnızca hesabı ve uygulamayı ilgilendiren ayarlar kaldı (bildirim, dil, görünüm,
                 ödeme bilgisi, şifre, hesap). Dişliye basınca tam olarak bu görünüyor. */}
             <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50 relative">
-              <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} aria-label={t("back")} className="absolute top-4 left-4 z-10 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
+              <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} aria-label={t("back")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
             </div>
             {/* Aynı katman hatası burada da vardı — bkz. panodaki uzun not. */}
             <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10">
