@@ -2455,7 +2455,14 @@ export function AppShell() {
                 <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("settings"); }} title={t("tabLabelSettings")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
               </div>
             </div>
-            <div className="max-w-7xl mx-auto px-5 md:px-8">
+            {/* GERÇEK HATA DÜZELTMESİ — `relative z-10` olmadan kart bandın ALTINDA kalıyordu.
+                Üstteki degrade bant `relative` (içindeki zil/arama/dişli düğmelerini absolute
+                konumlandırmak için). CSS boyama sırasında KONUMLANDIRILMIŞ bir eleman, DOM'da
+                kendisinden SONRA gelen konumlandırılmamış blokların üstüne çizilir — sıralama
+                değil konumlandırma belirliyor. Bu yüzden bant, `-mt-12` ile üstüne bindirdiğimiz
+                kartın ilk ~48 pikselini kapatıyordu: "Merhaba, <isim>" satırı hiç görünmüyor,
+                avatarın tepesi kesik duruyordu. Karta da konum verince doğru sıraya giriyor. */}
+            <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10">
               <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 flex items-center justify-center text-2xl md:text-3xl flex-shrink-0">{myProfile?.img || "🔧"}</div>
@@ -3396,7 +3403,8 @@ export function AppShell() {
             <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50 relative">
               <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} aria-label={t("back")} className="absolute top-4 left-4 z-10 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
             </div>
-            <div className="max-w-3xl mx-auto px-5 md:px-8">
+            {/* Aynı katman hatası burada da vardı — bkz. panodaki uzun not. */}
+            <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10">
               <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 text-gray-500"><Settings size={22} /></div>
                 <div className="min-w-0">
