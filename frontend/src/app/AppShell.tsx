@@ -512,7 +512,7 @@ export function AppShell() {
           </div>
         </div>
       ); })()}
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" ? "max-w-none" : (screen === "owner" && (ownerTab === "search" || ownerTab === "market")) || screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
             max-w-7xl kapsayıcılarla yapılıyor. Haritadan açılan modal bu daldan geçmiyor. */}
@@ -1545,53 +1545,176 @@ export function AppShell() {
             </div>
             {ownerTab === "search" ? <BrowseHome /> : (
               <div className="flex-1 overflow-y-auto">
-                {ownerTab === "market" && (<div className="px-5 py-4"><button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>{listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}</div>)}
-                {ownerTab === "favorites" && (
-                  <div className="px-5 py-4">
-                    {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
-                      <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesOwnerNote")}</p><p className="text-gray-300 text-xs mt-1">{t("favoritesHintNote")}</p></div>
+                {ownerTab === "market" && (
+                  <div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8">
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Tag size={17} className="text-rose-500" /> {t("myListingsHeading")} <span className="text-gray-300 font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
+                      <button onClick={startSellFlow} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
+                    </div>
+                    {listings.filter(isMyListing).length === 0 ? (
+                      <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                     )}
                   </div>
                 )}
-                {ownerTab === "chats" && (<div className="px-5 py-4 space-y-3">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noConvosYetNote")}</p>}</div>)}
-                {ownerTab === "appointments" && (<div className="px-5 py-4"><OwnerAppointmentsView /></div>)}
+                {ownerTab === "favorites" && (() => {
+                  // Favori TAMİRCİLER de burada: veri kaydediliyordu ama bu ekranda hiç
+                  // listelenmiyordu (aynı hata profil sayfasında da vardı, orada düzeltilmişti).
+                  const favMechs = mechanicsList.filter(m => (favoriteMechanicIds || []).includes(m.id));
+                  const favListings = listings.filter(l => favoriteIds.includes(l.id));
+                  return (
+                    <div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8 space-y-8">
+                      {favMechs.length > 0 && (
+                        <div>
+                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Wrench size={17} className="text-rose-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}</div>
+                        </div>
+                      )}
+                      {favListings.length > 0 && (
+                        <div>
+                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Car size={17} className="text-rose-500" /> {t("favoriteListingsLabel")} <span className="text-gray-300 font-normal text-sm">({favListings.length})</span></h2>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{favListings.map(l => (<ListingCard key={l.id} l={l} />))}</div>
+                        </div>
+                      )}
+                      {favMechs.length === 0 && favListings.length === 0 && (
+                        <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesYet")}</p><p className="text-gray-300 text-xs mt-1">{t("noFavoritesHint")}</p></div>
+                      )}
+                    </div>
+                  );
+                })()}
+                {ownerTab === "chats" && (<div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><MessageCircle size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noConvosYetNote")}</p></div>}</div>)}
+                {ownerTab === "appointments" && (<div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8"><OwnerAppointmentsView /></div>)}
               </div>
             )}
             <OwnerBottomNav />
           </>
         )}
         {screen === "ownerProfilePage" && (
-          <div className="max-w-md md:max-w-2xl xl:max-w-4xl mx-auto w-full flex flex-col flex-1">
-            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-100 shadow-sm">
-              <button onClick={() => { if (["applications", "myReviews", "support", "settings", "market", "favorites"].includes(ownerProfileTab)) setOwnerProfileTab("info"); else setScreen("owner"); }} className="flex items-center gap-1 text-gray-500 mb-3 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
-              <div className="flex items-center gap-3 mb-4"><div className="w-16 h-16 rounded-full bg-white shadow-sm border-2 border-white flex items-center justify-center overflow-hidden text-lg font-bold text-gray-700">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</div><div><h1 className="text-xl font-bold text-gray-900">{ownerProfile.name || t("ownerFallbackName")}</h1><p className="text-xs text-gray-500">{ownerProfile.email}</p></div></div>
-              <div className="grid grid-cols-5 gap-1 bg-gray-100 rounded-xl p-1 text-[9px] leading-tight">
-                <button onClick={() => setOwnerProfileTab("info")} className={`px-1 py-1.5 rounded-lg font-medium text-center transition ${ownerProfileTab === "info" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}>{t("myInfo")}</button>
-                <button onClick={() => { setOwnerProfileTab("vehicles"); setSelectedVehicleId(null); }} className={`relative px-1 py-1.5 rounded-lg font-medium text-center transition ${ownerProfileTab === "vehicles" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}>{t("myVehicles")}{allReminders.filter(r=>r.urgent).length > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-white flex items-center justify-center text-[8px]">{allReminders.filter(r=>r.urgent).length}</span>}</button>
-                <button onClick={() => setOwnerProfileTab("appts")} className={`px-1 py-1.5 rounded-lg font-medium text-center transition ${ownerProfileTab === "appts" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}>{t("appointments")}</button>
-                <button onClick={() => setOwnerProfileTab("chats")} className={`px-1 py-1.5 rounded-lg font-medium text-center transition ${ownerProfileTab === "chats" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}>{t("chats")}</button>
-                <button onClick={() => setOwnerProfileTab("offers")} className={`px-1 py-1.5 rounded-lg font-medium text-center transition ${ownerProfileTab === "offers" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}>{t("myOffers")}</button>
+          <div className="w-full bg-gray-50 min-h-screen">
+            {/* ---- ARAÇ SAHİBİ PANELİ (tam sayfa web düzeni) ----
+                Tamirci panosu ve araç/tamirci detay sayfalarıyla AYNI tasarım dili: tam genişlikte
+                degrade bant, üzerine binen beyaz özet kartı, yapışkan alt-çizgili sekme çubuğu,
+                max-w-7xl gövde. Ama içerik bu tarafa özgü: rozetler garaj/araç odaklı (araç sayısı,
+                yaklaşan bakım), Airbnb'nin "kartlar + bol beyaz alan" ritmi korunuyor.
+                ÖNCE: 4 kırılımlı dar mobil kolon (max-w-md), 5 adet 9 piksellik sekme ve alt
+                sayfalara "satır bağlantısı" ile inen bir menü vardı — telefonda mantıklı, geniş
+                ekranda hem okunmaz hem gereksiz derindi. Artık alt sayfalar gerçek sekme. */}
+            <div className="h-24 md:h-32 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
+              {/* KATMAN NOTU: bu kapsayıcı z-40 — aşağıdaki başlık kartı z-10 ve yapışkan sekme
+                  çubuğu z-20. Bildirim paneli buradan açıldığı için kartın üstünde kalmalı
+                  (tamirci tarafında tam tersi bir sıralama panelin kartın arkasında açılmasına
+                  yol açmıştı; tests/ui.test.mjs bu sırayı artık denetliyor). */}
+              <div className="absolute top-4 right-4 md:right-8 z-40 flex items-center gap-2">
+                <NotifBell />
+                <button onClick={() => setScreen("owner")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Search size={16} /></button>
+                <button onClick={() => setOwnerProfileTab("settings")} title={t("settingsLabel")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
+              </div>
+              <button onClick={() => setScreen("owner")} aria-label={t("back")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
+            </div>
+            <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10">
+              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6">
+                <div className="flex items-center gap-4">
+                  <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-rose-50 flex items-center justify-center text-2xl font-bold text-rose-600 overflow-hidden flex-shrink-0">
+                    {ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}
+                    <input ref={ownerPhotoRef} type="file" accept="image/*" onChange={ownerPhotoUpload} className="hidden" />
+                    <button onClick={() => ownerPhotoRef.current?.click()} aria-label={t("changePhotoBtn")} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={18} /></button>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate">{ownerProfile.name || t("ownerFallbackName")}</h1>
+                    <p className="text-sm text-gray-500 mt-0.5 truncate">{ownerProfile.email}</p>
+                  </div>
+                  {/* Garaj özeti: araç sahibinin paneli açar açmaz görmesi gereken üç sayı.
+                      Yaklaşan bakım varsa kırmızı — bu tarafın "bekleyen randevu" karşılığı. */}
+                  <div className="hidden sm:flex items-center gap-5 flex-shrink-0">
+                    {[
+                      { n: vehicles.length, l: t("myVehicles"), c: "text-gray-900" },
+                      { n: allReminders.filter(r => r.urgent).length, l: t("upcomingMaintenanceLabel"), c: allReminders.filter(r => r.urgent).length > 0 ? "text-rose-600" : "text-gray-900" },
+                      { n: appointments.filter(isMyOwnerAppt).length, l: t("appointments"), c: "text-gray-900" },
+                    ].map((x, i) => (
+                      <div key={i} className="text-center">
+                        <p className={`text-xl font-bold leading-none ${x.c}`}>{x.n}</p>
+                        <p className="text-[11px] text-gray-400 mt-1">{x.l}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              {ownerProfileTab === "info" && (<>
-                <div className="flex flex-col items-center mb-5"><div className="relative w-20 h-20 rounded-full bg-rose-50 flex items-center justify-center text-2xl font-bold text-rose-600 overflow-hidden mb-2">{ownerProfile.photo ? <img src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}<input ref={ownerPhotoRef} type="file" accept="image/*" onChange={ownerPhotoUpload} className="hidden" /><button onClick={() => ownerPhotoRef.current?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={18} /></button></div><button onClick={() => ownerPhotoRef.current?.click()} className="text-xs text-rose-600 font-medium">{t("changePhotoBtn")}</button><span className="text-[11px] text-gray-400 mt-1">{t("userNumberLabel", { id: String(MY_OWNER_ID) })}</span></div>
-                <div className="space-y-2 mb-5"><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder={t("fullNameShortPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={ownerProfile.email} onChange={(e) => updateMyOwnerField("email", e.target.value)} placeholder={t("emailPlaceholder")} type="email" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} placeholder={t("phonePlaceholderExample2")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><div className="relative"><MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder={t("addressPlaceholderShort")} className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div><p className="text-[11px] text-gray-400 px-1">{t("autofillJobAppsNote")}</p></div>
-                <button onClick={() => { if (ownerProfile.email && !isValidEmail(ownerProfile.email)) { setToast({ type: "info", text: t("invalidEmailAddrToast") }); return; } if (ownerProfile.phone) { const pc = validatePhone(ownerProfile.phone); if (!pc.valid) { setToast({ type: "info", text: `⚠️ ${pc.message}` }); return; } } setToast({ type: "info", text: t("profileUpdatedToast") }); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-7">{t("save")}</button>
-                <h3 className="hidden md:flex font-semibold text-gray-800 text-sm mb-3 items-center gap-2"><Tag size={15} className="text-gray-400" /> {t("myListingsHeading")}</h3>
-                <button onClick={() => setOwnerProfileTab("market")} className="hidden md:flex w-full items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Tag size={14} className="text-gray-400" /> {t("soldCarsLabel")}{listings.filter(isMyListing).length > 0 && <span className="text-xs text-gray-400">({listings.filter(isMyListing).length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <h3 className="hidden md:flex font-semibold text-gray-800 text-sm mb-3 items-center gap-2"><Heart size={15} className="text-gray-400" /> {t("favoritesHeadingShort")}</h3>
-                <button onClick={() => setOwnerProfileTab("favorites")} className="hidden md:flex w-full items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Heart size={14} className="text-gray-400" /> {t("favoriteListingsLabel")}{favoriteIds.length > 0 && <span className="text-xs text-gray-400">({favoriteIds.length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Briefcase size={15} className="text-gray-400" /> {t("careerHeading")}</h3>
-                <button onClick={() => setOwnerProfileTab("applications")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Briefcase size={14} className="text-gray-400" /> {t("myApplicationsLabel")}{myApplicationRefs.filter(r => r.role === "owner").length > 0 && <span className="text-xs text-gray-400">({myApplicationRefs.filter(r => r.role === "owner").length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Star size={15} className="text-gray-400" /> {t("myReviewsHeading")}</h3>
-                <button onClick={() => setOwnerProfileTab("myReviews")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Star size={14} className="text-gray-400" /> {t("reviewsIMadeLabel")}{myReviews.length > 0 && <span className="text-xs text-gray-400">({myReviews.length})</span>}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Settings size={15} className="text-gray-400" /> {t("appSectionHeading")}</h3>
-                <button onClick={() => setOwnerProfileTab("settings")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Settings size={14} className="text-gray-400" /> {t("settingsLabel")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                <button onClick={logoutUser} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LogOut size={14} className="text-gray-400" /> {t("logout")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-              </>)}
+            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6">
+              <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
+                {/* SEKME SIRASI — işin akışına göre: önce kendin ve garajın, sonra günlük iş
+                    (randevu → mesaj → teklif), sonra ikincil iş kolu (ilanlar) ve kaydedilenler. */}
+                {[
+                  { key: "info", label: t("myInfo"), icon: User, badge: 0 },
+                  { key: "vehicles", label: t("myVehicles"), icon: Car, badge: allReminders.filter(r => r.urgent).length },
+                  { key: "appts", label: t("appointments"), icon: Calendar, badge: 0 },
+                  { key: "chats", label: t("chats"), icon: MessageCircle, badge: 0 },
+                  { key: "offers", label: t("myOffers"), icon: Banknote, badge: 0 },
+                  { key: "market", label: t("myListingsHeading"), icon: Tag, badge: 0 },
+                  { key: "favorites", label: t("favorites"), icon: Heart, badge: 0 },
+                ].map((tb) => {
+                  const Icon = tb.icon;
+                  // Başvurularım / Yorumlarım / Ayarlar / Destek "Bilgilerim"in altındaki alt
+                  // sayfalar — oradayken sekme çubuğunda hiçbir şey seçili görünmezse kullanıcı
+                  // nerede olduğunu kaybediyor. Bu yüzden onlarda "Bilgilerim" seçili kalıyor.
+                  const active = ownerProfileTab === tb.key
+                    || (tb.key === "info" && ["applications", "myReviews", "settings", "support"].includes(ownerProfileTab));
+                  return (
+                    <button key={tb.key} onClick={() => { setOwnerProfileTab(tb.key); if (tb.key === "vehicles") setSelectedVehicleId(null); }} className={`relative px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-rose-600 border-rose-500" : "text-gray-500 border-transparent hover:text-rose-600 hover:border-rose-200"}`}>
+                      <Icon size={14} /> {tb.label}
+                      {tb.badge > 0 && <span className="ml-0.5 min-w-[16px] h-4 px-1 bg-rose-600 rounded-full text-white flex items-center justify-center text-[9px] font-bold">{tb.badge}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
+              {ownerProfileTab === "info" && (
+                /* Solda etiketli, iki sütunlu form kartı; sağda yapışkan "kısayollar" kartı.
+                   ÖNCE: alanlar etiketsiz alt alta ve altında 6 adet tam genişlik "satır
+                   bağlantısı" vardı (İlanlarım, Favoriler, Başvurularım…). Bunların çoğu artık
+                   üstteki sekme çubuğunda; burada yalnızca gerçekten ikincil olanlar kaldı. */
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+                  <div className="min-w-0">
+                    <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                      <h3 className="font-bold text-gray-900 text-base mb-4">{t("myInfo")}</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("fullNameShortPlaceholder")}</span><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder={t("fullNameShortPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("emailPlaceholder")}</span><input value={ownerProfile.email} onChange={(e) => updateMyOwnerField("email", e.target.value)} placeholder={t("emailPlaceholder")} type="email" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample2")}</span><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} placeholder={t("phonePlaceholderExample2")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholderShort")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder={t("addressPlaceholderShort")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></div></label>
+                      </div>
+                      <p className="text-[11px] text-gray-400 mt-3">{t("autofillJobAppsNote")}</p>
+                      <div className="flex flex-wrap items-center gap-3 mt-5">
+                        <button onClick={() => { if (ownerProfile.email && !isValidEmail(ownerProfile.email)) { setToast({ type: "info", text: t("invalidEmailAddrToast") }); return; } if (ownerProfile.phone) { const pc = validatePhone(ownerProfile.phone); if (!pc.valid) { setToast({ type: "info", text: `⚠️ ${pc.message}` }); return; } } setToast({ type: "info", text: t("profileUpdatedToast") }); }} className="bg-rose-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
+                        <span className="text-[11px] text-gray-400">{t("userNumberLabel", { id: String(MY_OWNER_ID) })}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <aside className="lg:sticky lg:top-20 space-y-4">
+                    <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5">
+                      <h3 className="font-bold text-gray-900 text-sm mb-3">{t("quickLinksTitle")}</h3>
+                      <div className="space-y-1.5">
+                        {[
+                          { key: "applications", icon: Briefcase, label: t("myApplicationsLabel"), n: myApplicationRefs.filter(r => r.role === "owner").length },
+                          { key: "myReviews", icon: Star, label: t("reviewsIMadeLabel"), n: myReviews.length },
+                          { key: "settings", icon: Settings, label: t("settingsLabel"), n: 0 },
+                        ].map(x => { const Icon = x.icon; return (
+                          <button key={x.key} onClick={() => setOwnerProfileTab(x.key)} className="w-full flex items-center justify-between rounded-2xl px-3.5 py-3 hover:bg-gray-50 transition">
+                            <span className="text-sm font-medium text-gray-700 flex items-center gap-2.5"><Icon size={15} className="text-gray-400" /> {x.label}{x.n > 0 && <span className="text-xs text-gray-400">({x.n})</span>}</span>
+                            <ChevronRight size={15} className="text-gray-300" />
+                          </button>
+                        ); })}
+                        <button onClick={logoutUser} className="w-full flex items-center justify-between rounded-2xl px-3.5 py-3 hover:bg-red-50 transition group">
+                          <span className="text-sm font-medium text-gray-700 group-hover:text-red-600 flex items-center gap-2.5"><LogOut size={15} className="text-gray-400 group-hover:text-red-500" /> {t("logout")}</span>
+                          <ChevronRight size={15} className="text-gray-300" />
+                        </button>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+              )}
               {ownerProfileTab === "settings" && (
                 <>
                   <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
@@ -1680,16 +1803,22 @@ export function AppShell() {
                 </>
               )}
               {ownerProfileTab === "market" && (
+                /* Artık üst sekmede olduğu için "Bilgilerime dön" bağlantısı kaldırıldı — sekmeden
+                   sekmeye geçerken geri bağlantısı göstermek kafa karıştırıcı olurdu. */
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
-                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> {t("soldCarsLabel")}</h2>
-                  <button onClick={startSellFlow} className="w-full mb-4 bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
-                  {listings.filter(isMyListing).length === 0 ? (<div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>) : (<div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>)}
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Tag size={17} className="text-rose-500" /> {t("myListingsHeading")} <span className="text-gray-300 font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
+                    <button onClick={startSellFlow} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
+                  </div>
+                  {listings.filter(isMyListing).length === 0 ? (
+                    <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>
+                  )}
                 </>
               )}
               {ownerProfileTab === "favorites" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
                   {/* GERÇEK HATA DÜZELTMESİ: favoriye eklenen TAMİRCİLER hiçbir ekranda listelenmiyordu —
                     kalp doluyordu, veri kaydediliyordu ama kullanıcı bir daha o listeye ulaşamıyordu.
                     Araç favorileriyle aynı yerde, ayrı bir başlık altında gösteriliyor. */}
@@ -1732,7 +1861,12 @@ export function AppShell() {
               {ownerProfileTab === "support" && renderSupportView("settings", setOwnerProfileTab)}
               {ownerProfileTab === "vehicles" && !selectedVehicle && (
                 <>
-                  <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="w-full mb-4 border-2 border-dashed border-rose-200 rounded-2xl py-3 flex items-center justify-center gap-2 text-rose-600 text-sm font-medium hover:bg-rose-50 transition"><Plus size={16} /> {t("addVehicle")}</button>
+                  {/* GARAJIM — başlık + birincil eylem tek satırda; araç kartları ızgarada.
+                      ÖNCE: tam genişlikte kesikli "araç ekle" kutusu ve alt alta tek sütun liste. */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Car size={17} className="text-rose-500" /> {t("myGarageTitle")} <span className="text-gray-300 font-normal text-sm">({vehicles.length})</span></h2>
+                  </div>
+                  <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="w-full sm:w-auto sm:px-6 mb-5 border-2 border-dashed border-rose-200 rounded-2xl py-3 flex items-center justify-center gap-2 text-rose-600 text-sm font-medium hover:bg-rose-50 transition"><Plus size={16} /> {t("addVehicle")}</button>
                   {showAddVehicle && (<div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4 space-y-2">
                     <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder={t("bookingBrandPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
                     <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
@@ -1748,7 +1882,7 @@ export function AppShell() {
                     <div><label className="text-[11px] text-gray-400">{t("insuranceEndLabel")}</label><input type="date" value={newVehicle.insuranceEnd} onChange={(e) => setNewVehicle({ ...newVehicle, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                     <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-rose-700 transition">{t("add")}</button>
                   </div>)}
-                  <div className="space-y-3">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-rose-600" /></div><div className="flex-1"><h3 className="font-semibold text-gray-800 text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-gray-400">{v.plate}{vListing && <span className="ml-2 text-rose-500">· {t("forSaleTag")}{vOfferCount > 0 ? ` · ${t("offerCountSuffixShort", { n: String(vOfferCount) })}` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-gray-300" /></button>); })}{vehicles.length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noVehiclesAddedNote")}</p>}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-rose-600" /></div><div className="flex-1"><h3 className="font-semibold text-gray-800 text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-gray-400">{v.plate}{vListing && <span className="ml-2 text-rose-500">· {t("forSaleTag")}{vOfferCount > 0 ? ` · ${t("offerCountSuffixShort", { n: String(vOfferCount) })}` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-gray-300" /></button>); })}{vehicles.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Car size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noVehiclesAddedNote")}</p></div>}
                   {listings.filter(l => isMyListing(l) && !vehicles.some(v => v.listingId === l.id)).length > 0 && (
                     <>
                       <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-1 flex items-center gap-2"><Tag size={15} className="text-gray-400" /> {t("soldOutsideRegisteredVehicleHeading")}</h3>
@@ -1898,7 +2032,7 @@ export function AppShell() {
                 </>
               ); })()}
               {ownerProfileTab === "appts" && <OwnerAppointmentsView />}
-              {ownerProfileTab === "chats" && (<div className="space-y-3">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noChatsShort")}</p>}</div>)}
+              {ownerProfileTab === "chats" && (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-300 transition flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><MessageCircle size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noChatsShort")}</p></div>}</div>)}
               {ownerProfileTab === "offers" && (<>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersMade")}</h3>
                 <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<div key={o.id} className="bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("pendingSeenStatus") : t("pendingStatus")}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>))}
