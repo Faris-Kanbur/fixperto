@@ -66,11 +66,25 @@ const LIST_ONLY_SENSITIVE_FIELDS = {
   owners: ["favoriteMechanicIds", "likedReviewIds", "savedSearches"],
 };
 
+// JSON sütunlarının tamamı DİZİ tutuyor; tek istisna vehicles.reminderOverrides (nesne).
+// Bu ayrım aşağıdaki boş-değer varsayılanı için gerekli.
+const JSON_OBJECT_FIELDS = new Set(["reminderOverrides"]);
+
 export function hydrate(table, row) {
   if (!row) return row;
   const out = { ...row };
   for (const f of JSON_FIELDS[table] || []) {
-    try { out[f] = JSON.parse(out[f] ?? "null"); } catch { /* leave as-is if malformed */ }
+    // GERÇEK HATA DÜZELTMESİ: burası `JSON.parse(out[f] ?? "null")` idi — sütun NULL olduğunda
+    // (ya da içeriği bozuksa) alan `null` olarak dönüyordu. Arayüz bu alanları koşulsuz dizi gibi
+    // kullanıyor (selectedMechanic.staff.map, mech.reviewList.filter, listing.offers.some ...),
+    // yani tek bir NULL sütun o ekranı komple çökertebiliyordu. Şema varsayılanları ('[]') çoğu
+    // satırı koruyor ama elle/eski göçlerle açılan satırlarda garanti yok. Sözleşmeyi burada
+    // netleştiriyoruz: dizi alanı her zaman dizi, nesne alanı her zaman nesne döner.
+    const fallback = JSON_OBJECT_FIELDS.has(f) ? {} : [];
+    try {
+      const parsed = JSON.parse(out[f] ?? "null");
+      out[f] = parsed == null ? fallback : parsed;
+    } catch { out[f] = fallback; }
   }
   for (const f of BOOL_FIELDS[table] || []) {
     out[f] = !!out[f];

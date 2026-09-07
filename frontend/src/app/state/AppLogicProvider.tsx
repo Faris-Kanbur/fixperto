@@ -17,7 +17,7 @@ import {
 } from "../../data/constants";
 import {
   jobStatusMeta, genSlots, getDaySlots, formatHoursText, parseListingPrice, isOpenNowByHoursText,
-  priceLevel, haversineDistanceKm, isValidDateStr, isFixedPriceService, parsePriceNumber,
+  priceLevel, haversineDistanceKm, isValidDateStr, isFixedPriceService, parsePriceNumber, lc,
   listingCurrency, isValidEmail, validatePhone, computeReminders, mockTranslate, statusColor,
   isImgUrl, monthsBetween, initials, listingStatusMeta, slugifyForEmail, ticketDaysOpen, ticketSlaBreached,
   parseDecimalField, listingMarketPriceTier, initialSiteLang, detectCountryCode, rememberSiteLang,
@@ -976,7 +976,7 @@ function useAppLogic() {
     const extras = ATU_FIXED_CATALOG.filter(c => !ownKeys.some(k => k.includes(c.matchKey) || c.matchKey.includes(k))).map(c => ({ name: SERVICE_BY_KEY[c.key] ? (SERVICE_BY_KEY[c.key][lang] || c.name) : c.name, price: c.price, other: false, fixed: true, fromCatalog: true, brandPriced: false }));
     const all = [...own, ...extras];
     const q = bookingServiceSearch.trim().toLocaleLowerCase("tr-TR");
-    return q ? all.filter(s => s.name.toLocaleLowerCase("tr-TR").includes(q)) : all;
+    return q ? all.filter(s => lc(s.name).includes(q)) : all;
   }, [selectedMechanic, bookingServiceSearch, vehicles, selectedBookingVehicleId, lang]);
   // Backend fetch is async now (bkz. yukarıdaki bootstrap useEffect), bu yüzden mechanicsList ilk
   // render'da boş olabilir; ownerProfile'daki gibi güvenli bir varsayılan nesne veriyoruz ki tamirci
@@ -1089,9 +1089,12 @@ function useAppLogic() {
     // ("Araç Bul" / mechBrowse) "diğer tamircileri keşfet" amacıyla kullanıyor — kendi profili
     // hiçbir zaman "diğer tamirci" olamayacağı için sonuçlardan çıkarılıyor.
     if (role === "mechanic") list = list.filter(m => m.id !== MY_MECHANIC_ID);
-    const q = query.toLowerCase().trim();
-    if (q) list = list.filter(m => m.name.toLowerCase().includes(q) || m.specialty.toLowerCase().includes(q) || (m.brandsServiced || []).some(b => b.toLowerCase().includes(q)));
-    if (locationQuery.trim()) list = list.filter(m => (m.address || "").toLowerCase().includes(locationQuery.trim().toLowerCase()));
+    // NOT: aşağıdaki alanların hepsi lc() ile okunuyor — name/specialty gibi sütunlar
+    // veritabanında NULL olabiliyor (bkz. helpers.ts → lc). Doğrudan .toLowerCase() çağırmak
+    // tek bir eksik kayıtta bütün arama ekranlarını çökertiyordu.
+    const q = lc(query).trim();
+    if (q) list = list.filter(m => lc(m.name).includes(q) || lc(m.specialty).includes(q) || (m.brandsServiced || []).some(b => lc(b).includes(q)));
+    if (locationQuery.trim()) list = list.filter(m => lc(m.address).includes(lc(locationQuery).trim()));
     // "Hizmet / Servis Ara" alanı: filters.service'ten farklı olarak birebir değil, KISMİ metin
     // eşleşmesi yapıyor (ör. "yağ" yazınca "Yağ Değişimi" hizmeti veren tüm tamirciler çıkar) —
     // hem tamircinin kendi girdiği hizmet adlarına hem de uzmanlık alanına (specialty) bakıyor.
@@ -1121,7 +1124,7 @@ function useAppLogic() {
   // teklif isteği gönderebiliyordu. Artık `filtered` ile birebir aynı filtre setini uyguluyor.
   const quoteFilteredMechanics = useMemo(() => {
     let list = mechanicsList.map(m => ({ ...m, effectiveDistance: getEffectiveDistance(m) }));
-    if (quoteMechSearch.trim()) list = list.filter(m => m.name.toLowerCase().includes(quoteMechSearch.toLowerCase()) || m.specialty.toLowerCase().includes(quoteMechSearch.toLowerCase()));
+    if (quoteMechSearch.trim()) { const qm = lc(quoteMechSearch).trim(); list = list.filter(m => lc(m.name).includes(qm) || lc(m.specialty).includes(qm)); }
     list = list.filter(m => mechanicPassesFilters(m, filters));
     if (sortBy === "distance") list = [...list].sort((a, b) => {
       // Mesafesi bilinmeyenler HER İKİ yönde de en sonda kalır. Infinity kullansaydık azalan
@@ -1138,8 +1141,11 @@ function useAppLogic() {
     return list;
   }, [quoteMechSearch, sortBy, sortDir, mechanicsList, filters, userLocation]);
   const filteredListings = useMemo(() => {
-    let list = listings.filter(l => !l.adminRemoved && `${l.brand} ${l.model}`.toLowerCase().includes(query.toLowerCase()));
-    if (locationQuery.trim()) list = list.filter(l => (l.city || "").toLowerCase().includes(locationQuery.trim().toLowerCase()));
+    // Şablon dizesi kullanılıyordu: `${null} ${null}` → "null null" (çökmüyordu ama "null"
+    // yazan bir arama sonuç veriyordu). lc() ile boş dizeye çevriliyor.
+    const lq = lc(query).trim();
+    let list = listings.filter(l => !l.adminRemoved && `${lc(l.brand)} ${lc(l.model)}`.includes(lq));
+    if (locationQuery.trim()) list = list.filter(l => lc(l.city).includes(lc(locationQuery).trim()));
     if (listingFilters.transmission !== "all") list = list.filter(l => l.transmission === listingFilters.transmission);
     if (listingFilters.fuelType !== "all") list = list.filter(l => l.fuelType === listingFilters.fuelType);
     if (listingFilters.minPrice) list = list.filter(l => parseListingPrice(l.price) >= Number(listingFilters.minPrice));
@@ -1241,8 +1247,8 @@ function useAppLogic() {
   }, 0);
   const filteredJobs = useMemo(() => {
     let list = jobListings.filter(j => j.status === "active");
-    const q = query.toLowerCase();
-    if (q) list = list.filter(j => j.title.toLowerCase().includes(q) || j.mechanicName.toLowerCase().includes(q) || j.skills.some(s => s.toLowerCase().includes(q)));
+    const q = lc(query).trim();
+    if (q) list = list.filter(j => lc(j.title).includes(q) || lc(j.mechanicName).includes(q) || (j.skills || []).some(s => lc(s).includes(q)));
     // GERÇEK HATA DÜZELTMESİ: iş ilanları sekmesinde arama çubuğunda "Konum" alanı gösteriliyordu
     // ama filtrelemede HİÇ kullanılmıyordu — kullanıcı şehir yazsa da sonuç değişmiyordu.
     if (locationQuery.trim()) list = list.filter(j => (j.location || "").toLocaleLowerCase("tr-TR").includes(locationQuery.trim().toLocaleLowerCase("tr-TR")));
@@ -2107,7 +2113,7 @@ function useAppLogic() {
     const q = adminUserSearch.trim().toLocaleLowerCase("tr-TR");
     return adminAllUsers.filter(u => {
       if (adminUserTypeFilter !== "all" && u.type !== adminUserTypeFilter) return false;
-      if (q && !(u.name.toLocaleLowerCase("tr-TR").includes(q) || u.email.toLocaleLowerCase("tr-TR").includes(q))) return false;
+      if (q && !(lc(u.name).includes(q) || lc(u.email).includes(q))) return false;
       return true;
     });
   }, [adminAllUsers, adminUserTypeFilter, adminUserSearch]);
@@ -2407,7 +2413,7 @@ function useAppLogic() {
       if (adminTicketStatusFilter !== "all" && tk.status !== adminTicketStatusFilter) return false;
       if (adminTicketTypeFilter !== "all" && tk.type !== adminTicketTypeFilter) return false;
       if (adminTicketPriorityFilter !== "all" && tk.priority !== adminTicketPriorityFilter) return false;
-      if (q && !(tk.subject.toLocaleLowerCase("tr-TR").includes(q) || tk.fromName.toLocaleLowerCase("tr-TR").includes(q))) return false;
+      if (q && !(lc(tk.subject).includes(q) || lc(tk.fromName).includes(q))) return false;
       return true;
     });
     return filtered.slice().sort((a, b) => {
@@ -3344,7 +3350,7 @@ function useAppLogic() {
     const fixed = newServiceForm.fixed;
     if (fixed && !newServiceForm.price.trim()) { setToast({ type: "info", text: `⚠️ ${t("fixedPriceRequiredToast")}` }); return; }
     const price = newServiceForm.price.trim();
-    const isDup = (myProfile?.services || []).some(s => s.name.trim().toLocaleLowerCase("tr-TR") === name.toLocaleLowerCase("tr-TR"));
+    const isDup = (myProfile?.services || []).some(s => lc(s.name).trim() === lc(name).trim());
     if (isDup) { setDuplicateServiceWarning({ name, price, fixed }); return; }
     finalizeAddService(name, price, fixed);
   };

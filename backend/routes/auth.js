@@ -97,7 +97,12 @@ authRouter.post("/register", async (req, res) => {
       // "—" olarak gösteriyor (bkz. frontend helpers.ts formatDistance).
       const stmt = db.prepare(`INSERT INTO mechanics (name, email, phone, specialty, lang, password, rating, reviews, price, verified, shareCount)
         VALUES (@name, @email, @phone, @specialty, 'tr', @password, 0, 0, 0, 0, 0)`);
-      const info = stmt.run({ name: cleanName, email: cleanEmail, phone: req.body.phone || null, specialty: req.body.specialty || null, password: hashed });
+      // GERÇEK HATA DÜZELTMESİ: `specialty` NULL kaydediliyordu. Arayüzdeki arama filtreleri bu
+      // alanı metin olarak işliyor (m.specialty.toLowerCase()) ve tek bir NULL kayıt "Cannot read
+      // properties of null" ile TÜM arama ekranlarını çökertiyordu — üstelik tamirci, araç ve iş
+      // ilanı aramaları aynı sorgu state'ini paylaştığı için üçü birden. Metin alanları için NULL
+      // yerine boş dize yazıyoruz (sayısal alanlar için aynı düzeltme yukarıda 0 ile yapılmıştı).
+      const info = stmt.run({ name: cleanName, email: cleanEmail, phone: req.body.phone || "", specialty: req.body.specialty || "", password: hashed });
       created = db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(info.lastInsertRowid);
     }
 

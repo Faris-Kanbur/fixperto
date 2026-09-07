@@ -482,6 +482,30 @@ try {
   `);
 } catch { /* sütun yoksa (çok eski şema) sessizce geç — ensureColumn zaten ekliyor */ }
 
+// Aynı sorunun METİN alanlarındaki hâli. Arayüzdeki arama/filtre kodu bu alanlara doğrudan
+// .toLowerCase() uyguluyordu; kayıt sırasında doldurulmayan (NULL kalan) tek bir alan
+// "Cannot read properties of null (reading 'toLowerCase')" ile tamirci/araç/ilan aramalarının
+// ÜÇÜNÜ birden çökertiyordu. Frontend artık lc() ile korunuyor (bkz. utils/helpers.ts) ama
+// veriyi de kaynağında temizliyoruz — NULL "bilinmiyor" değil, burada gerçekten "boş" demek.
+try {
+  db.exec(`
+    UPDATE mechanics SET name = '' WHERE name IS NULL;
+    UPDATE mechanics SET specialty = '' WHERE specialty IS NULL;
+    UPDATE mechanics SET address = '' WHERE address IS NULL;
+    UPDATE mechanics SET phone = '' WHERE phone IS NULL;
+    UPDATE mechanics SET lang = 'tr' WHERE lang IS NULL;
+    UPDATE owners SET name = '' WHERE name IS NULL;
+    UPDATE owners SET phone = '' WHERE phone IS NULL;
+    UPDATE owners SET address = '' WHERE address IS NULL;
+    UPDATE listings SET brand = '' WHERE brand IS NULL;
+    UPDATE listings SET model = '' WHERE model IS NULL;
+    UPDATE listings SET city = '' WHERE city IS NULL;
+    UPDATE job_listings SET title = '' WHERE title IS NULL;
+    UPDATE job_listings SET mechanicName = '' WHERE mechanicName IS NULL;
+    UPDATE job_listings SET location = '' WHERE location IS NULL;
+  `);
+} catch { /* sütun/tablo yoksa sessizce geç */ }
+
 // Tek seferlik backfill: createdAt sütunu yeni eklendiği için (yukarıdaki ensureColumn) var olan
 // (seed verisi dahil) ilanların hepsinde bu alan boş — tamirci galeri panelindeki "N gündür ilanda"
 // hesaplaması için hepsine şimdiki zamanı yazıyoruz (gerçek geçmiş tarih bilinmiyor, ama bundan sonra

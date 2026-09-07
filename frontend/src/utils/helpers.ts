@@ -463,3 +463,17 @@ export function ticketSlaBreached(tk) {
   if (tk.status === "resolved") return false;
   return ticketDaysOpen(tk) > (ADMIN_SLA_DAYS[tk.priority] || 5);
 }
+
+// ---------------------------------------------------------------------------------------------
+// lc() — arama/filtreleme için GÜVENLİ küçük harfe çevirme.
+// ---------------------------------------------------------------------------------------------
+// GERÇEK HATA DÜZELTMESİ: arama filtreleri alanlara doğrudan `.toLowerCase()` uyguluyordu
+// (m.name, m.specialty, j.title, j.mechanicName...). Bu alanlar veritabanında NULL olabiliyor —
+// örneğin kayıt sırasında uzmanlık alanı girilmeyen bir tamircide `specialty` NULL kalıyor.
+// Sonuç: "Cannot read properties of null (reading 'toLowerCase')" ile TÜM uygulama çöküyordu.
+// Üstelik tamirci/araç/iş listeleri aynı `query` state'ini paylaşan ayrı useMemo'lar olduğu için
+// tek bir NULL kayıt, araç veya ilan aramasını da çökertiyordu.
+// Türkçe'ye özgü i/İ dönüşümü için toLocaleLowerCase("tr-TR") kullanılıyor: "İSTANBUL" → "istanbul".
+export function lc(value) {
+  return String(value ?? "").toLocaleLowerCase("tr-TR");
+}
