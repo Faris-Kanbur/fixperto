@@ -1,11 +1,13 @@
 import { useApp } from "./state/AppLogicProvider";
 import { MONTH_ABBR_BY_LANG } from "../data/i18n";
-import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download, Scale, TrendingDown, Maximize2 } from "lucide-react";
+import { BookOpen, Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download, Scale, TrendingDown, Maximize2 } from "lucide-react";
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
 import { generateAnalyticsPdf } from "../utils/analyticsReport";
 import { LangSwitch } from "../components/features/LangSwitch";
 import { NotifBell } from "../components/features/NotifBell";
+import { SiteFooter } from "../components/features/SiteFooter";
+import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
 import { OwnerAppointmentsView } from "../components/features/OwnerAppointmentsView";
 import { ChatBubble } from "../components/features/ChatBubble";
@@ -117,7 +119,8 @@ export function AppShell() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    ownerSettingsTab, setOwnerSettingsTab, goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    ownerSettingsTab, setOwnerSettingsTab, adminBlogPosts, adminBlogForm, setAdminBlogForm, editBlogPost, cancelBlogEdit, saveBlogPost, deleteBlogPost,
+    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     serviceLabel, servicePriceForBrand, mechanicStartingPrice,
     servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
     servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,
@@ -512,7 +515,7 @@ export function AppShell() {
           </div>
         </div>
       ); })()}
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" || screen === "blog" || screen === "blogPost" || screen === "about" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
             max-w-7xl kapsayıcılarla yapılıyor. Haritadan açılan modal bu daldan geçmiyor. */}
@@ -603,7 +606,7 @@ export function AppShell() {
           </div>
         )}
         {screen === "adminDashboard" && adminAuthed && (() => {
-          const adminNavItems = [{ key: "dashboard", label: "Genel Bakış", icon: LayoutDashboard }, { key: "users", label: "Kullanıcılar", icon: Users }, { key: "tickets", label: "Destek Talepleri", icon: LifeBuoy }, { key: "analytics", label: "Analitik", icon: TrendingUp }, { key: "history", label: "Geçmiş", icon: History }];
+          const adminNavItems = [{ key: "dashboard", label: "Genel Bakış", icon: LayoutDashboard }, { key: "users", label: "Kullanıcılar", icon: Users }, { key: "tickets", label: "Destek Talepleri", icon: LifeBuoy }, { key: "analytics", label: "Analitik", icon: TrendingUp }, { key: "blog", label: "Blog", icon: BookOpen }, { key: "history", label: "Geçmiş", icon: History }];
           return (
           <div className="flex-1 flex flex-col md:flex-row min-h-0">
             <div className="hidden md:flex md:w-60 md:flex-shrink-0 bg-gray-900 text-white flex-col p-4">
@@ -1185,6 +1188,59 @@ export function AppShell() {
                     )}
                   </div>
                 )}
+                {/* ---- BLOG YÖNETİMİ ----
+                    Yazılar yalnızca buradan yazılıyor. Taslak/yayın ayrımı bilinçli: yarım kalmış
+                    bir yazı yayına çıkmasın, arama motoruna düşmesin. Gövde düz metin + "## "
+                    başlık işaretiyle yazılıyor (HTML değil) — panel ele geçirilse bile ziyaretçi
+                    tarayıcısında script çalıştırma yolu açılmasın diye (bkz. BlogPages.tsx). */}
+                {adminTab === "blog" && (
+                  <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-5 items-start">
+                    <div className="bg-white border border-gray-200 rounded-2xl p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold text-gray-800 text-sm">Yazılar <span className="text-gray-300 font-normal">({adminBlogPosts.length})</span></h3>
+                        {adminBlogForm.id && <button onClick={cancelBlogEdit} className="text-xs text-gray-400 hover:text-gray-700">Yeni yazı</button>}
+                      </div>
+                      {adminBlogPosts.length === 0 ? (
+                        <p className="text-center text-gray-400 text-sm py-12">Henüz yazı yok. Sağdaki formdan ilk yazını ekle.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {adminBlogPosts.map(post => (
+                            <div key={post.id} className={`border rounded-xl p-3 transition ${adminBlogForm.id === post.id ? "border-rose-300 bg-rose-50/40" : "border-gray-100"}`}>
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-gray-800 truncate">{post.title}</p>
+                                  <p className="text-[11px] text-gray-400 truncate">/blog/{post.slug}</p>
+                                </div>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${post.status === "published" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>{post.status === "published" ? "Yayında" : "Taslak"}</span>
+                              </div>
+                              <div className="flex items-center gap-3 mt-2 text-[11px]">
+                                <button onClick={() => editBlogPost(post)} className="text-rose-600 font-semibold hover:underline">Düzenle</button>
+                                <button onClick={() => deleteBlogPost(post)} className="text-gray-400 hover:text-red-500">Sil</button>
+                                <span className="text-gray-300 ml-auto flex items-center gap-1"><Eye size={11} /> {post.views || 0}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-white border border-gray-200 rounded-2xl p-4 xl:sticky xl:top-4">
+                      <h3 className="font-bold text-gray-800 text-sm mb-3">{adminBlogForm.id ? "Yazıyı düzenle" : "Yeni yazı"}</h3>
+                      <div className="space-y-2.5">
+                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Başlık</label><input value={adminBlogForm.title} onChange={(e) => setAdminBlogForm(f => ({ ...f, title: e.target.value }))} placeholder="Fren Balatası Ne Zaman Değişir?" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm" /></div>
+                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Özet <span className="text-gray-300">(arama sonucunda görünen açıklama)</span></label><textarea value={adminBlogForm.excerpt} onChange={(e) => setAdminBlogForm(f => ({ ...f, excerpt: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-none" /></div>
+                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Gövde <span className="text-gray-300">(boş satır = yeni paragraf, "## " = ara başlık)</span></label><textarea value={adminBlogForm.body} onChange={(e) => setAdminBlogForm(f => ({ ...f, body: e.target.value }))} rows={12} className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono leading-relaxed" /></div>
+                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Kapak görseli (URL)</label><input value={adminBlogForm.coverPhoto} onChange={(e) => setAdminBlogForm(f => ({ ...f, coverPhoto: e.target.value }))} placeholder="https://…" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm" /></div>
+                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Etiketler <span className="text-gray-300">(virgülle)</span></label><input value={adminBlogForm.tags} onChange={(e) => setAdminBlogForm(f => ({ ...f, tags: e.target.value }))} placeholder="fren, bakım, güvenlik" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm" /></div>
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <button onClick={() => saveBlogPost("draft")} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">Taslak kaydet</button>
+                        <button onClick={() => saveBlogPost("published")} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">Yayınla</button>
+                      </div>
+                      {adminBlogForm.id && <button onClick={cancelBlogEdit} className="w-full mt-2 text-xs text-gray-400 hover:text-gray-700">Vazgeç</button>}
+                    </div>
+                  </div>
+                )}
                 {adminTab === "history" && (
                   <div>
                     <h1 className="text-xl font-bold text-gray-900 mb-1">Değişiklik Geçmişi</h1>
@@ -1461,6 +1517,12 @@ export function AppShell() {
             )}
           </div>
           ); })()}
+        {/* ---- BLOG ve KURUMSAL SAYFALAR ----
+            Alt bilgideki bağlantıların indiği yerler. Blog SEO'nun asıl motoru; kurumsal sayfa
+            ise alt bilgideki Hakkımızda/Kariyer/Basın/SSS bağlantılarının ortak sade karşılığı. */}
+        {screen === "blog" && <BlogListPage />}
+        {screen === "blogPost" && <BlogPostPage />}
+        {screen === "about" && <AboutPage />}
         {screen === "owner" && !onboardingVisible && (
           <>
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">

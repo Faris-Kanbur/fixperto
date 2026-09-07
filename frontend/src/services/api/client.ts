@@ -1,4 +1,4 @@
-import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats, ProfileViewStats, ProfileViewAggregateStats, ProfileViewBulkStats, Broadcast, TranslateResult } from "../../types/domain";
+import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats, ProfileViewStats, ProfileViewAggregateStats, ProfileViewBulkStats, Broadcast, TranslateResult, BlogPost } from "../../types/domain";
 
 // Thin fetch wrapper around the Fixperto Express + SQLite backend. Set
 // VITE_API_URL in frontend/.env if the backend doesn't run on the default
@@ -280,6 +280,20 @@ export const api = {
   conversations: crud<Conversation>("conversations"),
   jobs: crud<JobListing>("jobs"),
   tickets: crud<SupportTicket>("tickets"),
+  // BLOG — herkese açık okuma (yalnızca yayınlanmış yazılar), yazma yönetici token'ı ister.
+  // Generic crud<>() kullanılmıyor çünkü tekil okuma id ile değil SLUG ile yapılıyor: kalıcı
+  // bağlantı /blog/fren-balatasi-ne-zaman-degisir gibi okunur olsun diye (SEO ve paylaşım).
+  blog: {
+    list: (opts?: RequestOptions): Promise<BlogPost[]> => request("/api/blog", opts),
+    bySlug: (slug: string, opts?: RequestOptions): Promise<BlogPost> => request(`/api/blog/${encodeURIComponent(slug)}`, opts),
+    adminList: (opts?: RequestOptions): Promise<BlogPost[]> => request("/api/blog/admin/all", opts),
+    create: (body: Partial<BlogPost>, opts?: RequestOptions): Promise<BlogPost> =>
+      request("/api/blog", { method: "POST", body: JSON.stringify(body), ...opts }),
+    update: (id: number | string, body: Partial<BlogPost>, opts?: RequestOptions): Promise<BlogPost> =>
+      request(`/api/blog/${id}`, { method: "PATCH", body: JSON.stringify(body), ...opts }),
+    remove: (id: number | string, opts?: RequestOptions): Promise<{ ok: true }> =>
+      request(`/api/blog/${id}`, { method: "DELETE", ...opts }),
+  },
   // quote-requests/quote-offers backend'de artık generic CRUD değil (bkz.
   // backend/routes/quotes.js) — crud<>() ile aynı temel GET/POST/PATCH/DELETE'i korurken,
   // durum geçişlerini (kabul/iptal/reddet) atomik olarak yapan özel uç noktalar ekleniyor.

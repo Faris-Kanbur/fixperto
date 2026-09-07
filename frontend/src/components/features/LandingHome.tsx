@@ -1,5 +1,6 @@
 import { useApp } from "../../app/state/AppLogicProvider";
 import { MechCard } from "./MechCard";
+import { SiteFooter } from "./SiteFooter";
 import { ListingCard } from "./ListingCard";
 import { LangSwitch } from "./LangSwitch";
 import { ATU_FIXED_CATALOG } from "../../data/constants";
@@ -331,52 +332,11 @@ export function LandingHome() {
       </section>
 
       {/* ---- Alt bilgi (footer) ---- */}
-      <footer className="bg-gray-50 border-t border-gray-100 mt-auto">
-        <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-            <div className="col-span-2 md:col-span-1">
-              <button onClick={scrollToTop} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 mb-3 hover:opacity-80 transition">
-                <div className="w-7 h-7 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={14} className="text-white" /></div>
-                <span className="text-base font-extrabold tracking-tight text-gray-900">Fix<span className="text-rose-600">perto</span></span>
-              </button>
-              <p className="text-xs text-gray-500 leading-relaxed">{t("landingFooterAbout")}</p>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-900 mb-2.5">{t("landingFooterExplore")}</p>
-              <ul className="space-y-1.5">
-                <li><button onClick={() => goToBrowse("mechanics")} className="text-xs text-gray-500 hover:text-gray-900 transition">{t("findMechanic")}</button></li>
-                <li><button onClick={() => goToBrowse("cars")} className="text-xs text-gray-500 hover:text-gray-900 transition">{t("findCar")}</button></li>
-                <li><button onClick={() => goToBrowse("jobs")} className="text-xs text-gray-500 hover:text-gray-900 transition">{t("jobListingsNavLabel")}</button></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-900 mb-2.5">{t("landingFooterServices")}</p>
-              <ul className="space-y-1.5">
-                {popularServices.slice(0, 5).map(s => (
-                  <li key={s.name}><button onClick={() => searchService(s.name)} className="text-xs text-gray-500 hover:text-gray-900 transition text-left">{s.name}</button></li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-900 mb-2.5">{t("landingFooterAccount")}</p>
-              <ul className="space-y-1.5">
-                <li><button onClick={() => openAuthGate("", "login")} className="text-xs text-gray-500 hover:text-gray-900 transition">{t("authGateLoginTab")}</button></li>
-                <li><button onClick={() => openAuthGate("", "signup")} className="text-xs text-gray-500 hover:text-gray-900 transition">{t("authGateSignupTab")}</button></li>
-                <li><span className="text-xs text-gray-400">{jobListings.length} {t("jobsFoundSuffix")}</span></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-200 pt-5 flex flex-col items-center gap-2.5">
-            <div className="flex items-center gap-2">
-              <Globe size={13} className="text-gray-400" />
-              <LangSwitch />
-            </div>
-            {/* Gizli admin girişi: eski karşılama ekranındaki desen korunuyor (© yazısına tıklama). */}
-            <p className="text-xs text-gray-400">© 2026 <span data-a11y-exempt="gizli yönetici girişi — bilinçli olarak duyurulmuyor" onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
-            <p className="text-[9px] text-gray-300">{t("allRightsReserved")}</p>
-          </div>
-        </div>
-      </footer>
+      {/* Karşılama sayfasının kendi alt bilgisi kaldırıldı: aynı bağlantılar iki farklı yerde
+          bakım gerektiriyordu ve birbirinden ayrı düşüyordu. Artık site genelinde TEK bir
+          SiteFooter var (bkz. components/features/SiteFooter.tsx) — kurumsal, iki taraf için
+          ayrı sütunlar, yasal metinler ve SEO amaçlı popüler arama blokları orada. */}
+      <SiteFooter />
     </div>
   );
 }

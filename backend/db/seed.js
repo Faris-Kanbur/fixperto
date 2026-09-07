@@ -191,6 +191,46 @@ export function seedIfEmpty() {
     insertMany(JOB_LISTINGS);
   }
 
+  // BLOG — SEO'nun asıl motoru. Örnek yazılar gerçek arama niyetlerine karşılık geliyor
+  // ("fren balatası ne zaman değişir" gibi), yani doldurma metin değil; yayına alındığında
+  // gerçekten aranan sorulara cevap veriyor. Yönetici panelinden düzenlenebilir/silinebilir.
+  if (isEmpty("blog_posts")) {
+    const stmt = db.prepare(`INSERT INTO blog_posts (slug,title,excerpt,body,coverPhoto,tags,author,lang,status,publishedAt,views,createdAt)
+    VALUES (@slug,@title,@excerpt,@body,@coverPhoto,@tags,@author,@lang,@status,@publishedAt,@views,@createdAt)`);
+    const now = new Date().toISOString();
+    const posts = [
+      {
+        slug: "fren-balatasi-ne-zaman-degisir",
+        title: "Fren Balatası Ne Zaman Değişir? 5 Uyarı İşareti",
+        excerpt: "Fren balatası ortalama 30.000–50.000 km'de biter ama asıl belirleyici sürüş tarzınız. İşte servise gitme vaktinin geldiğini gösteren işaretler.",
+        body: "Fren balatası, frene bastığınızda diske sürtünerek aracı yavaşlatan sarf malzemesidir. Ortalama ömrü 30.000–50.000 km arasında değişir; şehir içi dur-kalk trafiği bu süreyi belirgin biçimde kısaltır.\n\n## 1. Metalik cızırtı sesi\nBalataların çoğunda, kalınlık kritik seviyeye indiğinde diske değip ses çıkaran bir metal uyarı dili bulunur. Bu ses \"yakında\" değil, \"şimdi\" demektir.\n\n## 2. Fren pedalının derinleşmesi\nPedal eskisinden daha aşağı iniyorsa balata incelmiş ya da hidrolikte hava olabilir.\n\n## 3. Direksiyonun titremesi\nFren sırasında titreme genelde balatadan çok disk yüzeyinin bozulduğunu gösterir; bu durumda ikisi birlikte değerlendirilmelidir.\n\n## 4. Aracın bir tarafa çekmesi\nBir taraftaki balata diğerinden hızlı aşındığında araç frende yana çeker. Bu bir denge sorunudur ve tek taraf değişimi genelde doğru çözüm değildir.\n\n## 5. Gösterge paneli uyarısı\nBalata sensörü olan araçlarda uyarı lambası doğrudan yanar.\n\n## Maliyet ne kadar?\nFiyat markaya göre ciddi biçimde değişir: aynı işlem bir Alman premium modelde, bir B segment araca göre iki-üç kat tutabilir. Fixperto'da tamirciler hizmetlerini marka bazında fiyatlandırabildiği için, kendi aracınızı seçtiğinizde size özel fiyatı görürsünüz.",
+        coverPhoto: null,
+        tags: JSON.stringify(["fren", "bakım", "güvenlik"]),
+        author: "Fixperto", lang: "tr", status: "published", publishedAt: now, views: 0, createdAt: now,
+      },
+      {
+        slug: "periyodik-bakim-nedir-nelere-bakilir",
+        title: "Periyodik Bakım Nedir, Serviste Tam Olarak Nelere Bakılır?",
+        excerpt: "Periyodik bakım sadece yağ değişimi değil. Hangi işlemler yapılmalı, hangi aralıkla ve fatura kalemleri ne anlama geliyor?",
+        body: "Periyodik bakım, üreticinin belirlediği km veya süre aralıklarında yapılan planlı kontrol ve değişim işlemlerinin bütünüdür. \"Sadece yağ değişimi\" sanılması, en sık karşılaşılan yanlış anlamadır.\n\n## Küçük bakımda ne yapılır?\nMotor yağı ve yağ filtresi değişimi, hava ve polen filtresi kontrolü, sıvı seviyeleri, lastik ve fren gözlemi.\n\n## Büyük bakımda ne eklenir?\nYakıt filtresi, buji, fren hidroliği, şanzıman yağı ve triger kayışı gibi daha uzun aralıklı kalemler devreye girer.\n\n## Aralıklar\nÜretici kitapçığı esastır; genel eğilim benzinli araçlarda 10.000–15.000 km, dizelde 15.000–20.000 km'dir. Yılda az kilometre yapıyorsanız süre şartı (genelde 12 ay) km'den önce dolar.\n\n## Faturayı okumak\nİşçilik ve parça ayrı kalemlerdir. Sabit fiyatlı bir hizmet alıyorsanız bu ikisinin dahil olup olmadığını randevu öncesinde netleştirin — Fixperto'da sabit fiyatlı hizmetler randevu ekranında açıkça işaretlidir.",
+        coverPhoto: null,
+        tags: JSON.stringify(["bakım", "periyodik bakım", "maliyet"]),
+        author: "Fixperto", lang: "tr", status: "published", publishedAt: now, views: 0, createdAt: now,
+      },
+      {
+        slug: "ikinci-el-araba-alirken-ekspertiz",
+        title: "İkinci El Araba Alırken Ekspertizde Nelere Bakılır?",
+        excerpt: "Boya ölçümü, şase kontrolü, motor testi... Ekspertiz raporunu okumayı bilmek pazarlıkta en güçlü kozunuz.",
+        body: "İkinci el alımda ekspertiz, aracın geçmişini satıcının anlattığından bağımsız olarak görmenin tek yoludur.\n\n## Boya ve kaporta\nHer panelin boya kalınlığı mikron cinsinden ölçülür. Orijinal değerin belirgin üstü, o panelin boyandığını gösterir. Tek panel boya sıradan bir park çiziği olabilir; ancak yan yana birden çok panel, kaza şüphesi demektir.\n\n## Şase ve karoser\nŞasede düzeltme, kesme veya kaynak izi en kritik bulgudur. Bu, fiyatı doğrudan etkiler ve çoğu alıcı için baştan eleme sebebidir.\n\n## Motor ve şanzıman\nArıza kodu okuması, kompresyon ve kaçak kontrolü, şanzımanın vites geçişleri.\n\n## Km tutarlılığı\nSayaçtaki değer ile servis kayıtları ve parça aşınması birbirini doğrulamalıdır.\n\n## Raporu pazarlıkta kullanmak\nRapordaki her bulgunun bir onarım maliyeti karşılığı vardır. Fixperto'da ilanlara ekspertiz raporu bağlantısı eklenebiliyor; raporu olan ilanlar alıcı için baştan daha şeffaftır.",
+        coverPhoto: null,
+        tags: JSON.stringify(["ikinci el", "ekspertiz", "satın alma"]),
+        author: "Fixperto", lang: "tr", status: "published", publishedAt: now, views: 0, createdAt: now,
+      },
+    ];
+    const insertMany = db.transaction((rows) => { for (const p of rows) stmt.run(p); });
+    insertMany(posts);
+  }
+
   if (isEmpty("support_tickets")) {
     const stmt = db.prepare(`INSERT INTO support_tickets (id,type,priority,status,fromType,fromName,subject,description,relatedNote,createdDate,adminNote,refunded)
     VALUES (@id,@type,@priority,@status,@fromType,@fromName,@subject,@description,@relatedNote,@createdDate,@adminNote,@refunded)`);

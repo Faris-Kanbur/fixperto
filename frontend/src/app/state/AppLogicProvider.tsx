@@ -130,6 +130,13 @@ function useAppLogic() {
   // Ayarlar artık araç sahibinde de AYRI bir ekran (screen === "ownerSettings"), tıpkı tamirci
   // tarafındaki gibi. Kendi alt durumu var: "settings" | "support".
   const [ownerSettingsTab, setOwnerSettingsTab] = useState("settings");
+  // ---- BLOG ----------------------------------------------------------------------------------
+  // Yayınlanmış yazılar herkese açık; oturum gerekmiyor. Liste bir kez çekiliyor, tekil yazı
+  // slug ile ayrıca çekiliyor (gövde metni listede taşınmıyor — liste hafif kalsın).
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [blogSlug, setBlogSlug] = useState(null);
+  const [blogPost, setBlogPost] = useState(null);
+  const [blogLoading, setBlogLoading] = useState(false);
   const [showMapMobile, setShowMapMobile] = useState(false);
   const [hoveredPinId, setHoveredPinId] = useState(null);
   const [mapPreviewItem, setMapPreviewItem] = useState(null);
@@ -4294,10 +4301,89 @@ function useAppLogic() {
   // (mechReqView/mechAnalyticsView) zaten izleniyordu, bunlar izlenmiyordu. Özellikle sohbet:
   // telefonda bir sohbete girince liste yerini sohbete bırakıyor, geri tuşu ise kullanıcıyı
   // listeye değil doğrudan Mesajlar sekmesinden dışarı atıyordu.
+  // Blog listesi: blog ekranlarına ilk girişte bir kez çekiliyor.
+  useEffect(() => {
+    if (screen !== "blog" && screen !== "blogPost") return;
+    if (blogPosts.length > 0) return;
+    let cancelled = false;
+    api.blog.list().then((rows) => { if (!cancelled) setBlogPosts(rows || []); }).catch(() => { /* blog kritik değil, sessiz geç */ });
+    return () => { cancelled = true; };
+  }, [screen, blogPosts.length]);
+
+  // Tekil yazı: slug değiştikçe. Yazı bulunamazsa (silinmiş/taslağa alınmış) null kalıyor ve
+  // ekran "bulunamadı" mesajı gösteriyor — boş beyaz sayfa değil.
+  useEffect(() => {
+    if (!blogSlug) { setBlogPost(null); return; }
+    let cancelled = false;
+    setBlogLoading(true);
+    api.blog.bySlug(blogSlug)
+      .then((post) => { if (!cancelled) setBlogPost(post); })
+      .catch(() => { if (!cancelled) setBlogPost(null); })
+      .finally(() => { if (!cancelled) setBlogLoading(false); });
+    return () => { cancelled = true; };
+  }, [blogSlug]);
+
+  const openBlogPost = (slug) => { setBlogSlug(slug); setScreen("blogPost"); };
+  const openBlog = () => { setBlogSlug(null); setScreen("blog"); };
+
+  // ---- YÖNETİCİ: blog yazımı ------------------------------------------------------------------
+  // Yazılar yalnızca yönetici panelinden yazılıyor; herkese açık uçlar sadece YAYINLANMIŞ
+  // olanları döndürüyor (bkz. backend/routes/blog.js). Taslak kaydedip sonra yayına almak
+  // mümkün — yarım kalmış bir yazının arama motoruna düşmesi istenmez.
+  const [adminBlogPosts, setAdminBlogPosts] = useState([]);
+  const EMPTY_BLOG_FORM = { id: null, title: "", excerpt: "", body: "", coverPhoto: "", tags: "", status: "draft" };
+  const [adminBlogForm, setAdminBlogForm] = useState(EMPTY_BLOG_FORM);
+  const loadAdminBlogPosts = () => {
+    api.blog.adminList().then((rows) => setAdminBlogPosts(rows || [])).catch(() => setAdminBlogPosts([]));
+  };
+  useEffect(() => { if (screen === "adminDashboard" && adminTab === "blog") loadAdminBlogPosts(); }, [screen, adminTab]);
+  const editBlogPost = (post) => setAdminBlogForm({
+    id: post.id, title: post.title || "", excerpt: post.excerpt || "", body: post.body || "",
+    coverPhoto: post.coverPhoto || "", tags: (post.tags || []).join(", "), status: post.status || "draft",
+  });
+  const cancelBlogEdit = () => setAdminBlogForm(EMPTY_BLOG_FORM);
+  const saveBlogPost = async (status) => {
+    const title = adminBlogForm.title.trim();
+    if (!title) { setToast({ type: "info", text: `⚠️ ${t("blogTitleRequired")}` }); return; }
+    const payload = {
+      title,
+      excerpt: adminBlogForm.excerpt.trim(),
+      body: adminBlogForm.body,
+      coverPhoto: adminBlogForm.coverPhoto.trim() || null,
+      // Etiketler virgülle giriliyor; boşlar ayıklanıyor ki "a,,b" üç etiket sanılmasın.
+      tags: adminBlogForm.tags.split(",").map((x) => x.trim()).filter(Boolean),
+      status: status || adminBlogForm.status,
+    };
+    try {
+      if (adminBlogForm.id) await api.blog.update(adminBlogForm.id, payload);
+      else await api.blog.create(payload);
+      cancelBlogEdit();
+      loadAdminBlogPosts();
+      // Herkese açık liste de tazelensin — yeni yazı ziyaretçi tarafında hemen görünsün.
+      api.blog.list().then((rows) => setBlogPosts(rows || [])).catch(() => { /* sessiz */ });
+      setToast({ type: "info", text: payload.status === "published" ? t("blogPublishedToast") : t("blogDraftSavedToast") });
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ ${err?.message || t("blogSaveFailed")}` });
+    }
+  };
+  const deleteBlogPost = (post) => setConfirmDialog({
+    title: t("blogDeleteConfirmTitle"),
+    body: t("blogDeleteConfirmBody", { title: post.title }),
+    confirmLabel: t("deleteBtnShort"),
+    onConfirm: async () => {
+      try {
+        await api.blog.remove(post.id);
+        if (adminBlogForm.id === post.id) cancelBlogEdit();
+        loadAdminBlogPosts();
+        api.blog.list().then((rows) => setBlogPosts(rows || [])).catch(() => { /* sessiz */ });
+      } catch (err) { setToast({ type: "info", text: `⚠️ ${err?.message || t("blogSaveFailed")}` }); }
+    },
+  });
+
   const navSnapshot = {
     screen, ownerTab, ownerMode, ownerProfileTab,
     mechTab, mechProfileTab, mechReqView, mechAnalyticsView, mechListingsSubTab,
-    mechActiveConvoId, activeConvoId, ownerSettingsTab,
+    mechActiveConvoId, activeConvoId, ownerSettingsTab, blogSlug,
     adminTab, selectedMechanicId, listingPageId, selectedListingId, selectedJobId,
   };
   const navKey = JSON.stringify(navSnapshot);
@@ -4340,7 +4426,7 @@ function useAppLogic() {
       setMechReqView(snap.mechReqView); setMechAnalyticsView(snap.mechAnalyticsView);
       setMechListingsSubTab(snap.mechListingsSubTab);
       setMechActiveConvoId(snap.mechActiveConvoId); setActiveConvoId(snap.activeConvoId);
-      setOwnerSettingsTab(snap.ownerSettingsTab);
+      setOwnerSettingsTab(snap.ownerSettingsTab); setBlogSlug(snap.blogSlug);
       setAdminTab(snap.adminTab);
       setSelectedMechanicId(snap.selectedMechanicId);
       setListingPageId(snap.listingPageId);
@@ -4420,7 +4506,9 @@ function useAppLogic() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    ownerSettingsTab, setOwnerSettingsTab, goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    ownerSettingsTab, setOwnerSettingsTab, blogPosts, setBlogPosts, blogPost, blogSlug, blogLoading, openBlogPost, openBlog,
+    adminBlogPosts, adminBlogForm, setAdminBlogForm, editBlogPost, cancelBlogEdit, saveBlogPost, deleteBlogPost,
+    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     serviceLabel, serviceCategoryOf, servicePriceForBrand, mechanicStartingPrice, saveServices,
     servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
     servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,

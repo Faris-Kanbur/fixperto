@@ -1,12 +1,14 @@
 import express from "express";
 import cors from "cors";
 import { seedIfEmpty } from "./db/seed.js";
+import { db } from "./db/db.js";
 import { makeCrudRouter } from "./routes/makeCrudRouter.js";
 import adminRouter from "./routes/admin.js";
 import shareEventsRouter from "./routes/shareEvents.js";
 import profileViewsRouter from "./routes/profileViews.js";
 import translateRouter from "./routes/translate.js";
 import analyticsRouter from "./routes/analytics.js";
+import blogRouter from "./routes/blog.js";
 import { quoteRequestsRouter, quoteOffersRouter } from "./routes/quotes.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { authRouter } from "./routes/auth.js";
@@ -111,6 +113,35 @@ app.use("/api/share-events", shareEventsRouter);
 app.use("/api/profile-views", profileViewsRouter);
 app.use("/api/translate", translateRouter);
 app.use("/api/analytics", analyticsRouter);
+app.use("/api/blog", blogRouter);
+
+// ---- sitemap.xml ------------------------------------------------------------------------------
+// Arama motoru botları siteyi taramaya buradan başlar. Yayınlanmış her blog yazısı ve sabit
+// sayfalar listeleniyor; taslaklar YOK (yayınlanmamış içerik indekslenmemeli).
+// SITE_URL ayarlanmadıysa localhost kullanılıyor — gerçek alan adı .env'den gelmeli.
+app.get("/sitemap.xml", (req, res) => {
+  const base = (process.env.SITE_URL || "http://localhost:5173").replace(/\/$/, "");
+  const esc = (u) => String(u).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  let posts = [];
+  try { posts = db.prepare("SELECT slug, publishedAt FROM blog_posts WHERE status = 'published'").all(); } catch { posts = []; }
+  const urls = [
+    { loc: `${base}/`, priority: "1.0" },
+    { loc: `${base}/blog`, priority: "0.8" },
+    ...posts.map((p) => ({ loc: `${base}/blog/${p.slug}`, lastmod: p.publishedAt, priority: "0.7" })),
+  ];
+  res.type("application/xml").send(
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+    urls.map((u) => `  <url><loc>${esc(u.loc)}</loc>${u.lastmod ? `<lastmod>${esc(String(u.lastmod).slice(0, 10))}</lastmod>` : ""}<priority>${u.priority}</priority></url>`).join("\n") +
+    `\n</urlset>\n`
+  );
+});
+
+// robots.txt — botlara neyin taranabilir olduğunu ve sitemap'in yerini söyler.
+// /api/ bilinçli olarak kapalı: JSON uçlarının arama sonuçlarında çıkmasının hiçbir faydası yok.
+app.get("/robots.txt", (req, res) => {
+  const base = (process.env.SITE_URL || "http://localhost:5173").replace(/\/$/, "");
+  res.type("text/plain").send(`User-agent: *\nDisallow: /api/\nAllow: /\n\nSitemap: ${base}/sitemap.xml\n`);
+});
 // GÜVENLİK DÜZELTMESİ (bu denetimde bulundu): authScope hiç verilmediği için POST/PATCH/DELETE
 // TAMAMEN açıktı — giriş yapmamış herhangi biri, admin paneli hiç kullanmadan doğrudan API'ye
 // istek atarak sahte "Fixperto Duyurusu" oluşturabilir/değiştirebilir/silebilirdi (frontend'de

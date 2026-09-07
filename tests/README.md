@@ -16,6 +16,7 @@ yalnızca bozulanın ayrıntısını basar. Amaç: düzenli koşabilmek ama çı
 | `i18n` | Eksik/çift anahtar, eksik dil, `{yer tutucu}` uyumsuzluğu |
 | `ui` | Katman (z-index) sırası, banda binen kart, ikon düğmelerde erişilebilir ad |
 | `null-güvenliği` | Veri alanlarında korumasız `.toLowerCase()`/`.trim()` vb. |
+| `blog` | Slug üretimi/benzersizleştirme, taslak görünürlüğü, yayın tarihi, etiketler |
 
 Ayrıca `tsc --noEmit` ve her backend dosyası için `node --check` çalışır.
 

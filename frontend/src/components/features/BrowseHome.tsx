@@ -1,6 +1,7 @@
 import { Plus, X, SlidersHorizontal, Map as MapIcon } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { MechCard } from "./MechCard";
+import { SiteFooter } from "./SiteFooter";
 import { SkeletonCard } from "./SkeletonCard";
 import { MapPanel } from "./MapPanel";
 import { ListingCard } from "./ListingCard";
@@ -227,9 +228,14 @@ export function BrowseHome({ theme = undefined }) {
       )}
       {/* Alt bilgi: eski karşılama (hero + rol seçim) ekranı misafir gezinmeyle birlikte kaldırıldı;
           oradaki gizli admin girişi (© Fixperto yazısına tıklama) burada korunuyor. */}
-      <div className="mt-auto pt-6 pb-6 border-t border-gray-100 flex flex-col items-center gap-1">
-        <p className="text-sm text-gray-400">© 2026 <span data-a11y-exempt="gizli yönetici girişi — bilinçli olarak duyurulmuyor" onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
-        <p className="text-[9px] text-gray-200">{t("allRightsReserved")}</p>
+      {/* Arama ekranının alt bilgisi artık site geneliyle aynı bileşen. Gizli yönetici girişi
+          (© Fixperto yazısına tıklama) bu satırda korunuyor — SiteFooter'ın telif satırında değil,
+          çünkü orası her sayfada görünüyor ve kolayca keşfedilir hale gelirdi. */}
+      <div className="mt-auto">
+        <SiteFooter />
+        <div className="text-center pb-4">
+          <span data-a11y-exempt="gizli yönetici girişi — bilinçli olarak duyurulmuyor" onClick={() => setScreen("adminLogin")} className="text-[9px] text-gray-200 cursor-pointer select-none">{t("allRightsReserved")}</span>
+        </div>
       </div>
     </div>
   );

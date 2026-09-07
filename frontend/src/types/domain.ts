@@ -489,3 +489,22 @@ export interface TranslateResult {
 }
 
 export type UserRole = "owner" | "mechanic" | "admin" | null;
+
+/** Blog yazısı — SEO içerik motoru (bkz. backend/routes/blog.js). */
+export interface BlogPost {
+  id: number;
+  /** Kalıcı bağlantının insan-okur parçası; yayınlandıktan sonra DEĞİŞTİRİLMEMELİ
+   *  (değişirse paylaşılmış her bağlantı kırılır ve arama sıralaması sıfırlanır). */
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  coverPhoto?: string | null;
+  tags: string[];
+  author: string;
+  lang: string;
+  status: "draft" | "published";
+  publishedAt?: string | null;
+  views?: number;
+  createdAt?: string;
+}

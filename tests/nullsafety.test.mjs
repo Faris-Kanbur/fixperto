@@ -32,6 +32,7 @@ const ALLOW = new Set([
   "adminEditForm.newPassword", "newReminderForm.title", "reviewForm.comment",
   "newTicketForm.relatedNote", "jobForm.requirements", "jobForm.skills",
   "jobApplyInfo.address", "paymentForm.cardNumber",
+  "adminBlogForm.title", "adminBlogForm.excerpt", "adminBlogForm.coverPhoto", "adminBlogForm.tags",
   // appt.time zaten bir satır önce `if (appt.time)` ile korunuyor.
   "appt.time",
 ]);

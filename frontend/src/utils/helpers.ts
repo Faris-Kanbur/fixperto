@@ -477,3 +477,56 @@ export function ticketSlaBreached(tk) {
 export function lc(value) {
   return String(value ?? "").toLocaleLowerCase("tr-TR");
 }
+
+// ---------------------------------------------------------------------------------------------
+// setPageMeta — sayfa başlığı ve arama motoru / paylaşım meta etiketleri
+// ---------------------------------------------------------------------------------------------
+// Bu uygulama tek sayfalık (SPA): tarayıcı hiçbir zaman yeni bir HTML belgesi yüklemiyor, bu
+// yüzden <title> ve <meta> etiketleri ekran değiştikçe ELLE güncellenmeli. Aksi halde her sayfa
+// aynı başlıkla görünür — hem tarayıcı sekmesinde hem WhatsApp/X paylaşım önizlemesinde.
+//
+// DÜRÜST SINIR: sunucu tarafı render (SSR) olmadığı için, JavaScript çalıştırmayan basit botlar
+// bu etiketleri göremez. Googlebot JS çalıştırır, ama sosyal medya önizleme botlarının çoğu
+// çalıştırmaz. Tam çözüm ön-render/SSR gerektirir; bu fonksiyon o adıma kadar doğru olanı yapıyor.
+const upsertMeta = (selector, attrs) => {
+  if (typeof document === "undefined") return;
+  let el = document.head.querySelector(selector);
+  if (!el) {
+    el = document.createElement(selector.startsWith("link") ? "link" : "meta");
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
+    document.head.appendChild(el);
+    return;
+  }
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
+};
+
+export function setPageMeta({ title, description, image, canonicalPath, jsonLd }: {
+  title?: string; description?: string; image?: string | null; canonicalPath?: string; jsonLd?: unknown;
+} = {}) {
+  if (typeof document === "undefined") return;
+  const full = title ? `${title} · Fixperto` : "Fixperto";
+  document.title = full;
+  if (description) {
+    upsertMeta('meta[name="description"]', { name: "description", content: description });
+    upsertMeta('meta[property="og:description"]', { property: "og:description", content: description });
+  }
+  upsertMeta('meta[property="og:title"]', { property: "og:title", content: full });
+  upsertMeta('meta[property="og:type"]', { property: "og:type", content: jsonLd ? "article" : "website" });
+  if (image) upsertMeta('meta[property="og:image"]', { property: "og:image", content: image });
+  upsertMeta('meta[name="twitter:card"]', { name: "twitter:card", content: image ? "summary_large_image" : "summary" });
+  if (canonicalPath && typeof window !== "undefined") {
+    upsertMeta('link[rel="canonical"]', { rel: "canonical", href: `${window.location.origin}${canonicalPath}` });
+    upsertMeta('meta[property="og:url"]', { property: "og:url", content: `${window.location.origin}${canonicalPath}` });
+  }
+  // JSON-LD: arama motoruna "bu bir makale, yazarı şu, yayın tarihi bu" diye yapılandırılmış
+  // veri verir — zengin sonuç (rich result) görünümünün ön koşulu.
+  const existing = document.getElementById("fixperto-jsonld");
+  if (existing) existing.remove();
+  if (jsonLd) {
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "fixperto-jsonld";
+    script.textContent = JSON.stringify(jsonLd);
+    document.head.appendChild(script);
+  }
+}

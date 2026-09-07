@@ -179,6 +179,27 @@ CREATE TABLE IF NOT EXISTS listings (
   createdAt TEXT
 );
 
+-- BLOG / İÇERİK
+-- Amaç SEO: pazar yerleri (AutoScout24'ün "Magazin"i gibi) arama trafiğini içerikle çekiyor.
+-- slug insan-okur ve BENZERSİZ: kalıcı bağlantı ondan üretiliyor (/blog/fren-balatasi-ne-zaman).
+-- status = draft | published — taslaklar herkese açık uçtan HİÇ dönmüyor (bkz. routes/blog.js).
+CREATE TABLE IF NOT EXISTS blog_posts (
+  id INTEGER PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  excerpt TEXT DEFAULT '',
+  body TEXT DEFAULT '',
+  coverPhoto TEXT,
+  tags TEXT DEFAULT '[]',
+  author TEXT DEFAULT 'Fixperto',
+  lang TEXT DEFAULT 'tr',
+  status TEXT DEFAULT 'draft',
+  publishedAt TEXT,
+  views INTEGER DEFAULT 0,
+  createdAt TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_blog_status_date ON blog_posts(status, publishedAt DESC);
+
 CREATE TABLE IF NOT EXISTS job_listings (
   id INTEGER PRIMARY KEY,
   mechanicId INTEGER REFERENCES mechanics(id),
