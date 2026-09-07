@@ -18,6 +18,7 @@ function makeApp(initial) {
 }
 
 const base = { screen: "mechanicDashboard", mechTab: "requests", mechProfileTab: "settings", mechListingsSubTab: "cars", mechActiveConvoId: null };
+const ownerBase = { screen: "ownerProfilePage", ownerProfileTab: "info", ownerSettingsTab: "settings" };
 
 // Sekme gezinme + geri
 let a = makeApp(base);
@@ -60,5 +61,19 @@ a.back(); eq(a.get().mechTab, "profile", "geri → Profil sekmesi");
 a = makeApp(base);
 a.go({ mechTab: "market" }); const n = a.len(); a.go({ mechTab: "market" });
 eq(a.len(), n, "aynı sekmeye tekrar tıklamak geçmişi şişirmiyor");
+
+// Araç sahibi: Ayarlar AYRI bir ekran (tamirci tarafındaki gibi) — sekme değil.
+// Profil sekmesi → Ayarlar → Destek → geri geri geri zinciri bozulmamalı.
+let o = makeApp(ownerBase);
+o.go({ ownerProfileTab: "vehicles" });
+o.go({ screen: "ownerSettings", ownerSettingsTab: "settings" });
+eq(o.get().screen, "ownerSettings", "dişli → ayrı Ayarlar ekranı");
+o.go({ ownerSettingsTab: "support" });
+eq(o.back(), "OK", "destekten geri");
+eq(o.get().ownerSettingsTab, "settings", "geri → Ayarlar");
+eq(o.back(), "OK", "ayarlardan geri");
+eq(o.get(), { screen: "ownerProfilePage", ownerProfileTab: "vehicles", ownerSettingsTab: "settings" }, "geri → profil, Araçlarım sekmesi korunuyor");
+eq(o.back(), "OK", "bir daha geri");
+eq(o.get().ownerProfileTab, "info", "geri → Bilgilerim");
 
 report("gezinme");

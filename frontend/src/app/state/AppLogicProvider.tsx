@@ -127,6 +127,9 @@ function useAppLogic() {
   const [darkMode, setDarkMode] = useState(false);
   const ownerPhotoRef = useRef(null);
   const [ownerProfileTab, setOwnerProfileTab] = useState("info");
+  // Ayarlar artık araç sahibinde de AYRI bir ekran (screen === "ownerSettings"), tıpkı tamirci
+  // tarafındaki gibi. Kendi alt durumu var: "settings" | "support".
+  const [ownerSettingsTab, setOwnerSettingsTab] = useState("settings");
   const [showMapMobile, setShowMapMobile] = useState(false);
   const [hoveredPinId, setHoveredPinId] = useState(null);
   const [mapPreviewItem, setMapPreviewItem] = useState(null);
@@ -4136,7 +4139,8 @@ function useAppLogic() {
         break;
       case "supportTicket":
         if (forMechanic) { setScreen("mechProfilePage"); setMechProfileTab("support"); }
-        else { setScreen("ownerProfilePage"); setOwnerProfileTab("support"); }
+        // Destek de artık ayrı Ayarlar ekranının altında (ownerSettings/support).
+        else { setScreen("ownerSettings"); setOwnerSettingsTab("support"); }
         break;
       case "ownMechanicReviews":
         setSelectedMechanicId(MY_MECHANIC_ID); setDetailReturnScreen("mechProfilePage"); setScreen("detail");
@@ -4293,7 +4297,7 @@ function useAppLogic() {
   const navSnapshot = {
     screen, ownerTab, ownerMode, ownerProfileTab,
     mechTab, mechProfileTab, mechReqView, mechAnalyticsView, mechListingsSubTab,
-    mechActiveConvoId, activeConvoId,
+    mechActiveConvoId, activeConvoId, ownerSettingsTab,
     adminTab, selectedMechanicId, listingPageId, selectedListingId, selectedJobId,
   };
   const navKey = JSON.stringify(navSnapshot);
@@ -4336,6 +4340,7 @@ function useAppLogic() {
       setMechReqView(snap.mechReqView); setMechAnalyticsView(snap.mechAnalyticsView);
       setMechListingsSubTab(snap.mechListingsSubTab);
       setMechActiveConvoId(snap.mechActiveConvoId); setActiveConvoId(snap.activeConvoId);
+      setOwnerSettingsTab(snap.ownerSettingsTab);
       setAdminTab(snap.adminTab);
       setSelectedMechanicId(snap.selectedMechanicId);
       setListingPageId(snap.listingPageId);
@@ -4415,7 +4420,7 @@ function useAppLogic() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    ownerSettingsTab, setOwnerSettingsTab, goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     serviceLabel, serviceCategoryOf, servicePriceForBrand, mechanicStartingPrice, saveServices,
     servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
     servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,

@@ -117,7 +117,7 @@ export function AppShell() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    ownerSettingsTab, setOwnerSettingsTab, goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     serviceLabel, servicePriceForBrand, mechanicStartingPrice,
     servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
     servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,
@@ -512,7 +512,7 @@ export function AppShell() {
           </div>
         </div>
       ); })()}
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
             max-w-7xl kapsayıcılarla yapılıyor. Haritadan açılan modal bu daldan geçmiyor. */}
@@ -1590,6 +1590,75 @@ export function AppShell() {
             <OwnerBottomNav />
           </>
         )}
+        {/* ---- ARAÇ SAHİBİ AYARLARI (ayrı ekran) ----
+            Tamirci tarafındaki Ayarlar ekranıyla birebir aynı desen. Önce bunlar "Bilgilerim"in
+            ALTINDA açılıyordu: sekme çubuğu hâlâ görünüyor ama hiçbir sekme seçili değil, üstelik
+            içerik sekmelerden biri değil — nerede olduğun belirsiz kalıyordu. Artık kendi ekranı:
+            sade başlık, geri düğmesi, dar okunur kolon. Sekme çubuğu yok çünkü burada sekme yok. */}
+        {screen === "ownerSettings" && (
+          <div className="w-full bg-gray-50 min-h-screen">
+            <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50 relative">
+              <button onClick={() => { if (ownerSettingsTab === "support") setOwnerSettingsTab("settings"); else setScreen("ownerProfilePage"); }} aria-label={t("back")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
+            </div>
+            <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10">
+              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 text-gray-500"><Settings size={22} /></div>
+                <div className="min-w-0">
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">{ownerSettingsTab === "support" ? t("helpAndSupportTitle") : t("settingsLabel")}</h1>
+                  <p className="text-sm text-gray-400 mt-0.5 truncate">{ownerProfile.name || t("ownerFallbackName")}</p>
+                </div>
+              </div>
+            </div>
+            <div className="max-w-3xl mx-auto px-5 md:px-8 py-6 md:py-8">
+              {ownerSettingsTab === "settings" && (
+                <>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-500" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
+                  {(() => {
+                    const notifOpts = [{ key: "notifyAppointments", label: t("notifApptUpdatesLabel") }, { key: "notifyOffers", label: t("notifOfferResultsLabel") }, { key: "notifyMessages", label: t("notifMessagesLabel") }];
+                    const allNotifsOn = notifOpts.every(opt => ownerSettings[opt.key]);
+                    const toggleAllNotifs = () => {
+                      setOwnerSettings(s => ({ ...s, ...Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])) }));
+                      if (!allNotifsOn && notifPermission !== "granted") requestNotifPermission();
+                    };
+                    return (
+                      <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
+                        <div className="flex items-center justify-between"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("notifBellTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? t("notifPermDeniedHint") : allNotifsOn ? t("allNotifTypesOnHint") : t("dontMissApptUpdatesHint")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
+                        <button onClick={() => setOwnerNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 hover:text-gray-700 transition"><span>{t("showNotifTypesBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
+                        {ownerNotifDetailsOpen && (
+                          <div className="mt-3 space-y-2.5">
+                            {notifOpts.map(opt => (
+                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setOwnerSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm">{t("siteLanguage")}</h4><LangSwitch /></div>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-rose-500" /> {t("messagingLanguageTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{t("ownerMessagingLangHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setOwnerLang(l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${ownerLang === l ? "bg-white text-rose-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className="text-rose-500" /> {t("appearanceDarkModeTitle")}</h4><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
+                  <button onClick={() => setOwnerAccountOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Lock size={15} className="text-gray-400" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${ownerAccountOpen ? "rotate-90" : ""}`} /></button>
+                  {ownerAccountOpen && (<>
+                    <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordTitle")}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                    <button onClick={() => setOwnerSettingsTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
+                    <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                    <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                  </>)}
+                  <div className="mt-3" />
+                  <button onClick={() => setOwnerDangerZoneOpen(o => !o)} className="w-full flex items-center justify-between py-2 text-xs text-gray-400 hover:text-gray-600 transition"><span>{t("dangerZoneBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerDangerZoneOpen ? "rotate-90" : ""}`} /></button>
+                  {ownerDangerZoneOpen && (
+                    <div className="border border-red-100 bg-red-50/50 rounded-2xl p-4 mt-1">
+                      <p className="text-xs text-gray-500 mb-3">{t("ownerDeleteAccountWarningNote")}</p>
+                      <button onClick={() => { setShowDeleteAccountModal(true); setDeleteConfirmText(""); }} className="w-full text-red-500 border border-red-200 py-2.5 rounded-xl font-medium text-xs hover:bg-red-100 transition">{t("deleteMyAccountBtn")}</button>
+                    </div>
+                  )}
+                </>
+              )}
+              {ownerSettingsTab === "support" && renderSupportView("settings", setOwnerSettingsTab)}
+            </div>
+          </div>
+        )}
         {screen === "ownerProfilePage" && (
           <div className="w-full bg-gray-50 min-h-screen">
             {/* ---- ARAÇ SAHİBİ PANELİ (tam sayfa web düzeni) ----
@@ -1608,7 +1677,7 @@ export function AppShell() {
               <div className="absolute top-4 right-4 md:right-8 z-40 flex items-center gap-2">
                 <NotifBell />
                 <button onClick={() => setScreen("owner")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Search size={16} /></button>
-                <button onClick={() => setOwnerProfileTab("settings")} title={t("settingsLabel")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
+                <button onClick={() => { setScreen("ownerSettings"); setOwnerSettingsTab("settings"); }} title={t("settingsLabel")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
               </div>
               <button onClick={() => setScreen("owner")} aria-label={t("back")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
             </div>
@@ -1659,7 +1728,7 @@ export function AppShell() {
                   // sayfalar — oradayken sekme çubuğunda hiçbir şey seçili görünmezse kullanıcı
                   // nerede olduğunu kaybediyor. Bu yüzden onlarda "Bilgilerim" seçili kalıyor.
                   const active = ownerProfileTab === tb.key
-                    || (tb.key === "info" && ["applications", "myReviews", "settings", "support"].includes(ownerProfileTab));
+                    || (tb.key === "info" && ["applications", "myReviews"].includes(ownerProfileTab));
                   return (
                     <button key={tb.key} onClick={() => { setOwnerProfileTab(tb.key); if (tb.key === "vehicles") setSelectedVehicleId(null); }} className={`relative px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-rose-600 border-rose-500" : "text-gray-500 border-transparent hover:text-rose-600 hover:border-rose-200"}`}>
                       <Icon size={14} /> {tb.label}
@@ -1699,9 +1768,9 @@ export function AppShell() {
                         {[
                           { key: "applications", icon: Briefcase, label: t("myApplicationsLabel"), n: myApplicationRefs.filter(r => r.role === "owner").length },
                           { key: "myReviews", icon: Star, label: t("reviewsIMadeLabel"), n: myReviews.length },
-                          { key: "settings", icon: Settings, label: t("settingsLabel"), n: 0 },
+                          { key: "__settings", icon: Settings, label: t("settingsLabel"), n: 0 },
                         ].map(x => { const Icon = x.icon; return (
-                          <button key={x.key} onClick={() => setOwnerProfileTab(x.key)} className="w-full flex items-center justify-between rounded-2xl px-3.5 py-3 hover:bg-gray-50 transition">
+                          <button key={x.key} onClick={() => { if (x.key === "__settings") { setScreen("ownerSettings"); setOwnerSettingsTab("settings"); } else setOwnerProfileTab(x.key); }} className="w-full flex items-center justify-between rounded-2xl px-3.5 py-3 hover:bg-gray-50 transition">
                             <span className="text-sm font-medium text-gray-700 flex items-center gap-2.5"><Icon size={15} className="text-gray-400" /> {x.label}{x.n > 0 && <span className="text-xs text-gray-400">({x.n})</span>}</span>
                             <ChevronRight size={15} className="text-gray-300" />
                           </button>
@@ -1714,53 +1783,6 @@ export function AppShell() {
                     </div>
                   </aside>
                 </div>
-              )}
-              {ownerProfileTab === "settings" && (
-                <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
-                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Settings size={16} className="text-rose-500" /> {t("settingsLabel")}</h2>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-500" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
-                  {(() => {
-                    const notifOpts = [{ key: "notifyAppointments", label: t("notifApptUpdatesLabel") }, { key: "notifyOffers", label: t("notifOfferResultsLabel") }, { key: "notifyMessages", label: t("notifMessagesLabel") }];
-                    const allNotifsOn = notifOpts.every(opt => ownerSettings[opt.key]);
-                    const toggleAllNotifs = () => {
-                      setOwnerSettings(s => ({ ...s, ...Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])) }));
-                      if (!allNotifsOn && notifPermission !== "granted") requestNotifPermission();
-                    };
-                    return (
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
-                        <div className="flex items-center justify-between"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("notifBellTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? t("notifPermDeniedHint") : allNotifsOn ? t("allNotifTypesOnHint") : t("dontMissApptUpdatesHint")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
-                        <button onClick={() => setOwnerNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 hover:text-gray-700 transition"><span>{t("showNotifTypesBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
-                        {ownerNotifDetailsOpen && (
-                          <div className="mt-3 space-y-2.5">
-                            {notifOpts.map(opt => (
-                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setOwnerSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm">{t("siteLanguage")}</h4><LangSwitch /></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-rose-500" /> {t("messagingLanguageTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{t("ownerMessagingLangHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setOwnerLang(l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${ownerLang === l ? "bg-white text-rose-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className="text-rose-500" /> {t("appearanceDarkModeTitle")}</h4><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
-                  <button onClick={() => setOwnerAccountOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Lock size={15} className="text-gray-400" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${ownerAccountOpen ? "rotate-90" : ""}`} /></button>
-                  {ownerAccountOpen && (<>
-                    <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordTitle")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setOwnerProfileTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                  </>)}
-                  <div className="mt-3" />
-                  <button onClick={() => setOwnerDangerZoneOpen(o => !o)} className="w-full flex items-center justify-between py-2 text-xs text-gray-400 hover:text-gray-600 transition"><span>{t("dangerZoneBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerDangerZoneOpen ? "rotate-90" : ""}`} /></button>
-                  {ownerDangerZoneOpen && (
-                    <div className="border border-red-100 bg-red-50/50 rounded-2xl p-4 mt-1">
-                      <p className="text-xs text-gray-500 mb-3">{t("ownerDeleteAccountWarningNote")}</p>
-                      <button onClick={() => { setShowDeleteAccountModal(true); setDeleteConfirmText(""); }} className="w-full text-red-500 border border-red-200 py-2.5 rounded-xl font-medium text-xs hover:bg-red-100 transition">{t("deleteMyAccountBtn")}</button>
-                    </div>
-                  )}
-                </>
               )}
               {ownerProfileTab === "applications" && (
                 <>
@@ -1858,7 +1880,6 @@ export function AppShell() {
                   )}
                 </>
               )}
-              {ownerProfileTab === "support" && renderSupportView("settings", setOwnerProfileTab)}
               {ownerProfileTab === "vehicles" && !selectedVehicle && (
                 <>
                   {/* GARAJIM — başlık + birincil eylem tek satırda; araç kartları ızgarada.
