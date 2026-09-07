@@ -4130,13 +4130,15 @@ function useAppLogic() {
         setScreen("ownerProfilePage"); setOwnerProfileTab("vehicles"); setSelectedVehicleId(target.id);
         break;
       case "workingHours":
-        setScreen("mechProfilePage"); setMechProfileTab("settings");
+        // Çalışma saatleri Ayarlar'dan Profil sekmesine taşındı (müşteriye görünen bilgi).
+        setScreen("mechanicDashboard"); setMechTab("profile");
         break;
       case "myApplications":
         setScreen("ownerProfilePage"); setOwnerProfileTab("applications");
         break;
       case "myOffers":
-        if (forMechanic) { setScreen("mechProfilePage"); setMechProfileTab("offers"); }
+        // Teklifler artık ayrı bir ekranda değil, tamirci panosunun sekmesinde.
+        if (forMechanic) { setScreen("mechanicDashboard"); setMechTab("offers"); }
         else { setScreen("ownerProfilePage"); setOwnerProfileTab("offers"); }
         break;
       default: break;

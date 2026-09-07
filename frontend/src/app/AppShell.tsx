@@ -2396,7 +2396,7 @@ export function AppShell() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <button onClick={() => setScreen("mechanicDashboard")} className="text-sm font-semibold text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-full transition whitespace-nowrap">{t("backToDashboardBtn")}</button>
-                  <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("profile"); }} title={t("profileSettingsTitle")} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-lg">{myProfile?.img || "🔧"}</button>
+                  <button onClick={() => { setScreen("mechanicDashboard"); setMechTab("profile"); }} title={t("tabLabelProfile")} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-lg">{myProfile?.img || "🔧"}</button>
                 </div>
               </div>
               <div className="max-w-7xl mx-auto w-full relative">
@@ -2452,7 +2452,7 @@ export function AppShell() {
               <div className="absolute top-4 right-4 md:right-8 z-10 flex items-center gap-2">
                 <NotifBell />
                 <button onClick={() => setScreen("mechBrowse")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Search size={16} /></button>
-                <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("profile"); }} title={t("profileSettingsTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
+                <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("settings"); }} title={t("tabLabelSettings")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
               </div>
             </div>
             <div className="max-w-7xl mx-auto px-5 md:px-8">
@@ -2487,6 +2487,12 @@ export function AppShell() {
                   { key: "market", label: t("navMarket"), icon: Car },
                   { key: "favorites", label: t("navFavorites"), icon: Heart },
                   { key: "analytics", label: t("mechTabAnalytics"), icon: TrendingUp },
+                  // TAŞINDI: Profil ve Teklifler eskiden ayrı bir "işletme paneli" ekranındaydı
+                  // (dişli → mechProfilePage → kendi sekme çubuğu). İki katmanlı sekme yapısı
+                  // gereksizdi; tamircinin günlük kullandığı her şey artık tek çubukta. Dişli
+                  // yalnızca gerçek ayarlara (bildirim, dil, ödeme bilgisi, hesap) götürüyor.
+                  { key: "profile", label: t("tabLabelProfile"), icon: Pencil },
+                  { key: "offers", label: t("tabLabelOffers"), icon: Banknote },
                 ].map((tb) => {
                   const Icon = tb.icon; const active = mechTab === tb.key;
                   return (<button key={tb.key} onClick={() => setMechTab(tb.key)} className={`px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-rose-600 border-rose-500" : "text-gray-500 border-transparent hover:text-rose-600 hover:border-rose-200"}`}><Icon size={14} /> {tb.label}</button>);
@@ -3065,46 +3071,7 @@ export function AppShell() {
                 </div>
               );
             })()}
-          </div>
-        )}
-        {screen === "mechProfilePage" && myProfile && (
-          <div className="w-full bg-gray-50 min-h-screen">
-            {/* ---- TAM SAYFA İŞLETME PANELİ ----
-                Tasarım dili araç/tamirci DETAY sayfalarıyla aynı: tam genişlikte renkli bir üst
-                bant, üzerine binen beyaz profil kartı, yapışkan sekme çubuğu ve max-w-7xl gövde.
-                Eskiden bu ekran dar bir mobil kolondu; geniş ekranda tek sütun form absürt
-                görünüyordu. Formlar artık sol kolonda KARTLARA bölünmüş, sağda yapışkan bir
-                "profil tamamlama" kartı var. */}
-            <div className="h-28 md:h-36 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
-              <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} className="absolute top-4 left-4 z-10 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
-              <button onClick={previewMyProfile} className="absolute top-4 right-4 z-10 flex items-center gap-1.5 bg-white/95 backdrop-blur text-gray-700 text-xs font-semibold px-3.5 py-2.5 rounded-full shadow-sm hover:text-rose-600 transition"><Eye size={14} /> {t("previewProfileBtn")}</button>
-            </div>
-            <div className="max-w-7xl mx-auto px-5 md:px-8">
-              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-12 md:-mt-14 p-5 md:p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 flex items-center justify-center text-3xl md:text-4xl flex-shrink-0 overflow-hidden">{myProfile.img || "🔧"}</div>
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate flex items-center gap-2">{myProfile.name || t("myBusinessFallback")}{myProfile.verified && <BadgeCheck size={18} className="text-rose-500 flex-shrink-0" />}</h1>
-                    <p className="text-sm text-gray-500 mt-0.5 truncate">{myProfile.specialty || t("profileSettingsTitle")}</p>
-                    <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500 flex-wrap">
-                      <span className="flex items-center gap-1 font-semibold text-gray-900"><Star size={12} className="fill-gray-900" />{formatNumber(myProfile.rating, 1, "0.0")}<span className="font-normal text-gray-400">({myProfile.reviews || 0})</span></span>
-                      {myProfile.address && <span className="flex items-center gap-1 truncate max-w-[220px]"><MapPin size={12} />{myProfile.address}</span>}
-                      <span className="flex items-center gap-1"><Wrench size={12} />{(myProfile.services || []).length} {t("servicesTitle").toLocaleLowerCase("tr-TR")}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* Yapışkan sekme çubuğu — detay sayfasındaki bölüm navigasyonuyla aynı desen. */}
-            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6">
-              <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
-                {[{ key: "profile", label: t("tabLabelProfile"), icon: Pencil }, { key: "offers", label: t("tabLabelOffers"), icon: Banknote }, { key: "settings", label: t("tabLabelSettings"), icon: Settings }].map((tb) => {
-                  const Icon = tb.icon; const active = mechProfileTab === tb.key;
-                  return (<button key={tb.key} onClick={() => setMechProfileTab(tb.key)} className={`px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-rose-600 border-rose-500" : "text-gray-500 border-transparent hover:text-rose-600 hover:border-rose-200"}`}><Icon size={14} /> {tb.label}</button>);
-                })}
-              </div>
-            </div>
-            {mechProfileTab === "profile" && (() => {
+            {mechTab === "profile" && (() => {
               // PROFİL TAMAMLANMA — sağdaki yapışkan kart. Bu bir "süsleme" değil: tamirciye somut
               // olarak neyi eksik bıraktığını ve neden önemli olduğunu söylüyor. Alanlar aramada
               // gerçekten kullanılan alanlarla birebir aynı (marka filtresi, ödeme filtresi vb.).
@@ -3386,7 +3353,7 @@ export function AppShell() {
                 </div>
               </div>
               ); })()}
-            {mechProfileTab === "offers" && (
+            {mechTab === "offers" && (
               /* TASARIM: verilen ve alınan teklifler geniş ekranda yan yana iki sütun; kartlar
                  okunabilir boyutta. Eskiden 10 piksellik yazılarla tek sütun alt alta uzuyordu. */
               <div className="w-full max-w-6xl mx-auto px-5 md:px-8 py-6 md:py-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -3409,6 +3376,28 @@ export function AppShell() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+        {screen === "mechProfilePage" && myProfile && (
+          <div className="w-full bg-gray-50 min-h-screen">
+            {/* ---- AYARLAR ----
+                SADELEŞTİRİLDİ: bu ekran eskiden "işletme paneli"ydi ve içinde Profil / Teklifler /
+                Ayarlar diye ÜÇÜNCÜ bir sekme çubuğu vardı — panonun kendi sekme çubuğunun altında
+                ikinci bir katman. Profil ve Teklifler artık panonun ana sekme çubuğunda; burada
+                yalnızca hesabı ve uygulamayı ilgilendiren ayarlar kaldı (bildirim, dil, görünüm,
+                ödeme bilgisi, şifre, hesap). Dişliye basınca tam olarak bu görünüyor. */}
+            <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50 relative">
+              <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} aria-label={t("back")} className="absolute top-4 left-4 z-10 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
+            </div>
+            <div className="max-w-3xl mx-auto px-5 md:px-8">
+              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 text-gray-500"><Settings size={22} /></div>
+                <div className="min-w-0">
+                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">{mechProfileTab === "support" ? t("helpAndSupportTitle") : t("tabLabelSettings")}</h1>
+                  <p className="text-sm text-gray-400 mt-0.5 truncate">{myProfile.name || t("myBusinessFallback")}</p>
+                </div>
+              </div>
+            </div>
             {mechProfileTab === "settings" && (
               <div className="w-full max-w-3xl mx-auto px-5 md:px-8 py-6">
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={() => setAutoAccept(!autoAccept)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
