@@ -4076,7 +4076,9 @@ function useAppLogic() {
     const applicants = job.applicants.map(a => a.id === applicantId ? { ...a, status: "rejected" } : a);
     setJobListings(js => js.map(j => j.id === jobId ? { ...j, applicants } : j));
     persist(api.jobs.update(jobId, { applicants }), "Başvuru kaydedilemedi");
-    const firstName = applicant.name.trim().split(" ")[0] || applicant.name;
+    // applicant.name JSON sütunundan geliyor — eski/eksik kayıtlarda boş olabilir.
+    const applicantName = String(applicant.name ?? "").trim();
+    const firstName = applicantName.split(" ")[0] || applicantName;
     const rejectionText = `Merhaba ${firstName},\n\n"${job.title}" pozisyonuna gösterdiğiniz ilgi için teşekkür ederiz. Başvurunuzu özenle değerlendirdik, ancak bu pozisyon için şu anda sizinle ilerleyemeyeceğimizi üzülerek bildiririz.\n\nBu karar yeteneklerinizle değil, mevcut ihtiyaçlarımızla ilgilidir. İş arayışınızda size başarılar diler, ileride tekrar bir araya gelebilmeyi umarız.\n\nSaygılarımızla,\n${myProfile.name}`;
     // Not: önceden bu mesaj setConversations ile sadece React state'ine yazılıyor, backend'e HİÇ
     // persist edilmiyordu — sayfa yenilenince ret bildirim mesajı sessizce kayboluyordu. Aşağıda hem

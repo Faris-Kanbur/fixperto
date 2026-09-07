@@ -372,7 +372,7 @@ export function LandingHome() {
               <LangSwitch />
             </div>
             {/* Gizli admin girişi: eski karşılama ekranındaki desen korunuyor (© yazısına tıklama). */}
-            <p className="text-xs text-gray-400">© 2026 <span onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
+            <p className="text-xs text-gray-400">© 2026 <span data-a11y-exempt="gizli yönetici girişi — bilinçli olarak duyurulmuyor" onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
             <p className="text-[9px] text-gray-300">{t("allRightsReserved")}</p>
           </div>
         </div>

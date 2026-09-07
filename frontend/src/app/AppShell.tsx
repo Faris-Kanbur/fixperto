@@ -309,7 +309,7 @@ export function AppShell() {
                     {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
                   </div>
                   <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
-                  <p className="text-center text-xs text-gray-400 mt-3"><span onClick={cancelOtpVerify} className="text-rose-500 font-medium cursor-pointer hover:underline">{t("otpBackToLogin")}</span></p>
+                  <p className="text-center text-xs text-gray-400 mt-3"><button onClick={cancelOtpVerify} className="text-rose-500 font-medium hover:underline">{t("otpBackToLogin")}</button></p>
                 </>
               )}
             </div>
@@ -538,7 +538,7 @@ export function AppShell() {
                     submitRegister / backend/routes/auth.js). Şifre alanı sadece GİRİŞ ekranında var. */}
                 {screen === "signup" && (<p className="text-xs text-gray-400 leading-relaxed">{t("signupPasswordNote")}</p>)}
                 {screen === "login" && (<div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>)}
-                {screen === "login" && (<p onClick={() => setScreen("forgotPassword")} className="text-xs text-rose-500 text-right cursor-pointer hover:underline">{t("forgotPasswordLink")}</p>)}
+                {screen === "login" && (<button onClick={() => setScreen("forgotPassword")} className="text-xs text-rose-500 hover:underline block ml-auto">{t("forgotPasswordLink")}</button>)}
                 {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
                 {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
               </div>
@@ -559,7 +559,7 @@ export function AppShell() {
                 {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
               </div>
               <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm mt-6 transition ${roleBtn} ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
-              <p className="text-center text-xs text-gray-400 mt-4"><span onClick={cancelOtpVerify} className="text-rose-500 font-medium cursor-pointer hover:underline">{t("otpBackToLogin")}</span></p>
+              <p className="text-center text-xs text-gray-400 mt-4"><button onClick={cancelOtpVerify} className="text-rose-500 font-medium hover:underline">{t("otpBackToLogin")}</button></p>
             </div>
           </div>
         )}
@@ -573,7 +573,7 @@ export function AppShell() {
               <p className="text-sm text-gray-500 mb-4">{t("forgotPasswordBody")}</p>
               <div className="relative mb-4"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder={t("emailAddressPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" /></div>
               <button disabled={!forgotEmail} onClick={() => setScreen("resetSent")} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm transition ${forgotEmail ? "bg-rose-600 hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("sendResetLinkBtn")}</button>
-              <p className="text-center text-xs text-gray-400 mt-4">{t("rememberedPasswordNote")} <span onClick={() => setScreen("login")} className="text-rose-500 font-medium cursor-pointer hover:underline">{t("logInLink")}</span></p>
+              <p className="text-center text-xs text-gray-400 mt-4">{t("rememberedPasswordNote")} <button onClick={() => setScreen("login")} className="text-rose-500 font-medium hover:underline">{t("logInLink")}</button></p>
             </div>
           </div>
         )}

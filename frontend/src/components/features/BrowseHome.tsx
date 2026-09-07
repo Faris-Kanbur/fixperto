@@ -228,7 +228,7 @@ export function BrowseHome({ theme = undefined }) {
       {/* Alt bilgi: eski karşılama (hero + rol seçim) ekranı misafir gezinmeyle birlikte kaldırıldı;
           oradaki gizli admin girişi (© Fixperto yazısına tıklama) burada korunuyor. */}
       <div className="mt-auto pt-6 pb-6 border-t border-gray-100 flex flex-col items-center gap-1">
-        <p className="text-sm text-gray-400">© 2026 <span onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
+        <p className="text-sm text-gray-400">© 2026 <span data-a11y-exempt="gizli yönetici girişi — bilinçli olarak duyurulmuyor" onClick={() => setScreen("adminLogin")} className="font-bold text-rose-600 cursor-pointer select-none">{t("appName")}</span></p>
         <p className="text-[9px] text-gray-200">{t("allRightsReserved")}</p>
       </div>
     </div>
