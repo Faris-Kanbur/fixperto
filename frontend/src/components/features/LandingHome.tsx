@@ -51,6 +51,13 @@ export function LandingHome() {
     .sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.comment?.length || 0) - (a.comment?.length || 0))
     .slice(0, 3);
 
+  // Logo tıklaması: zaten karşılama sayfasındayız, sayfanın başına dön.
+  // smooth davranışı desteklenmeyen/azaltılmış hareket tercihi olan ortamlarda da güvenli:
+  // scrollTo nesne imzasını desteklemeyen eski tarayıcılarda sessizce klasik çağrıya düşüyor.
+  const scrollToTop = () => {
+    try { window.scrollTo({ top: 0, behavior: "smooth" }); }
+    catch { window.scrollTo(0, 0); }
+  };
   const runSearch = () => goToBrowse("mechanics");
   const searchService = (name) => { setServiceQuery(name); goToBrowse("mechanics"); };
   const searchCity = (city) => { setLocationQuery(city); goToBrowse("mechanics"); };
@@ -64,10 +71,12 @@ export function LandingHome() {
       {/* ---- Üst gezinme çubuğu ---- */}
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100">
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Zaten ana sayfadayız — logo başka bir sayfaya değil, sayfanın en üstüne götürüyor
+              (web'de logonun beklenen davranışı: "beni başa döndür"). */}
+          <button onClick={scrollToTop} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition">
             <div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div>
             <span className="text-lg font-extrabold tracking-tight text-gray-900">Fix<span className="text-rose-600">perto</span></span>
-          </div>
+          </button>
           <nav className="hidden md:flex items-center gap-6">
             <button onClick={() => goToBrowse("mechanics")} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition">{t("findMechanic")}</button>
             <button onClick={() => goToBrowse("cars")} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition">{t("findCar")}</button>
@@ -326,10 +335,10 @@ export function LandingHome() {
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-3">
+              <button onClick={scrollToTop} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 mb-3 hover:opacity-80 transition">
                 <div className="w-7 h-7 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={14} className="text-white" /></div>
                 <span className="text-base font-extrabold tracking-tight text-gray-900">Fix<span className="text-rose-600">perto</span></span>
-              </div>
+              </button>
               <p className="text-xs text-gray-500 leading-relaxed">{t("landingFooterAbout")}</p>
             </div>
             <div>

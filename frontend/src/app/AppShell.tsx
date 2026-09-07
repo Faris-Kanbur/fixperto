@@ -117,7 +117,7 @@ export function AppShell() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     serviceLabel, servicePriceForBrand, mechanicStartingPrice,
     servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
     servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,
@@ -1472,7 +1472,7 @@ export function AppShell() {
                 </div>
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
-                <div className="flex items-center gap-2 flex-shrink-0"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></div>
+                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></button>
                 {/* GÜVENLİK/UX DÜZELTMESİ (kullanıcı geri bildirimi): bu "Tamirci Ara / Araç Ara / İş
                     İlanları" hızlı-arama sekmeleri sadece keşif (search) ekranında anlamlı — önceden
                     ownerTab ne olursa olsun (ör. Randevularım) hep görünüyordu, sadece "aktif" vurgusu
@@ -2387,7 +2387,7 @@ export function AppShell() {
                 <button onClick={() => setScreen("mechanicDashboard")} className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1"><ChevronLeft size={14}/> {t("backToDashboardBtn")}</button>
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
-                <div className="flex items-center gap-2 flex-shrink-0"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></div>
+                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></button>
                 <div className="flex items-center gap-8">
                   {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: t("jobListingsNavLabel"), icon: Briefcase }].map(tab => {
                     const Icon = tab.icon; const active = ownerMode === tab.key;

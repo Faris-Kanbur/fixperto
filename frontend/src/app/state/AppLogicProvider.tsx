@@ -1718,6 +1718,16 @@ function useAppLogic() {
   // çıkış yapan ya da bir akıştan çıkan kullanıcı da oraya dönüyor (rol "owner" görünümünde kalıyor
   // ama kimlik temizlendiği için misafir sayılıyor, bkz. isAuthed).
   const goHome = () => { setScreen("landing"); setRole("owner"); setSelectedMechanicId(null); setDetailReturnScreen(null); setSelectedDate(null); setSelectedTime(null); setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true); setSelectedBookingVehicleId(null); setBookingService(null); setPaymentForm({ method: "card", cardNumber: "", expiry: "", cvc: "" }); setForm({ name: "", email: "", phone: "", password: "" }); setOwnerTab("search"); setOwnerMode("mechanics"); setActiveConvoId(null); setMechActiveConvoId(null); setMechTab("requests"); setSelectedJobId(null); setSelectedListingId(null); setMapDetailOpen(false); setShowMapMobile(false); };
+  // Logo tıklaması → karşılama (ana) sayfası.
+  // goHome() BİLEREK kullanılmıyor: o fonksiyon çıkış akışı için yazıldı ve role'ü "owner"a
+  // sıfırlıyor. Giriş yapmış bir tamirci logoya bastığında kendini araç sahibi rolünde bulmamalı;
+  // sadece ana sayfaya dönmeli, oturumu ve rolü aynı kalmalı. Açık kalan seçim/harita durumlarını
+  // temizliyoruz ki geri dönüşte yarım kalmış bir detay ekranı açılmasın.
+  const goToLandingPage = () => {
+    setScreen("landing");
+    setSelectedMechanicId(null); setSelectedListingId(null); setListingPageId(null); setSelectedJobId(null);
+    setMapDetailOpen(false); setShowMapMobile(false); setDetailReturnScreen(null);
+  };
   const chooseRole = (r) => { setRole(r); setScreen("login"); };
   // Karşılama sayfasından (ve her yerden) gerçek arama/sonuç ekranına geçiş. Tamirci rolüyle giriş
   // yapmış kullanıcı kendi keşif ekranına (mechBrowse), diğer herkes araç sahibi arama görünümüne
@@ -4397,7 +4407,7 @@ function useAppLogic() {
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
-    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     serviceLabel, serviceCategoryOf, servicePriceForBrand, mechanicStartingPrice, saveServices,
     servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
     servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,
