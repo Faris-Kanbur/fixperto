@@ -42,7 +42,7 @@ const parseTags = (row) => ({ ...row, tags: (() => { try { return JSON.parse(row
 // Taslaklar hiçbir koşulda buradan dönmüyor; yönetici listesi ayrı uçta (/admin/all).
 router.get("/", (req, res) => {
   const rows = db.prepare(
-    `SELECT id, slug, title, excerpt, coverPhoto, tags, author, lang, publishedAt, views
+    `SELECT id, slug, title, excerpt, coverPhoto, tags, author, lang, publishedAt, views, relatedServiceKey
        FROM blog_posts WHERE status = 'published' ORDER BY publishedAt DESC, id DESC`
   ).all();
   res.json(rows.map(parseTags));
@@ -62,7 +62,7 @@ router.get("/:slug", (req, res) => {
 });
 
 // ---- YÖNETİCİ: yazma ---------------------------------------------------------------------------
-const writable = ["title", "excerpt", "body", "coverPhoto", "author", "lang", "status"];
+const writable = ["title", "excerpt", "body", "coverPhoto", "author", "lang", "status", "relatedServiceKey"];
 
 router.post("/", requireAdmin, (req, res) => {
   const title = String(req.body?.title || "").trim();
@@ -70,8 +70,8 @@ router.post("/", requireAdmin, (req, res) => {
   const now = new Date().toISOString();
   const status = req.body?.status === "published" ? "published" : "draft";
   const info = db.prepare(
-    `INSERT INTO blog_posts (slug, title, excerpt, body, coverPhoto, tags, author, lang, status, publishedAt, views, createdAt)
-     VALUES (@slug, @title, @excerpt, @body, @coverPhoto, @tags, @author, @lang, @status, @publishedAt, 0, @createdAt)`
+    `INSERT INTO blog_posts (slug, title, excerpt, body, coverPhoto, tags, author, lang, status, publishedAt, views, relatedServiceKey, createdAt)
+     VALUES (@slug, @title, @excerpt, @body, @coverPhoto, @tags, @author, @lang, @status, @publishedAt, 0, @relatedServiceKey, @createdAt)`
   ).run({
     slug: uniqueSlug(slugify(req.body?.slug || title)),
     title,
@@ -81,6 +81,7 @@ router.post("/", requireAdmin, (req, res) => {
     tags: JSON.stringify(Array.isArray(req.body?.tags) ? req.body.tags : []),
     author: String(req.body?.author || "Fixperto"),
     lang: String(req.body?.lang || "tr"),
+    relatedServiceKey: req.body?.relatedServiceKey || null,
     status,
     publishedAt: status === "published" ? now : null,
     createdAt: now,

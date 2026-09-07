@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Calendar, Eye, BookOpen, Wrench, Search } fr
 import { useApp } from "../../app/state/AppLogicProvider";
 import { setPageMeta, isImgUrl, imgThumb, imgFallbackHandler } from "../../utils/helpers";
 import { SiteFooter } from "./SiteFooter";
+import { SERVICE_BY_KEY } from "../../data/constants";
 
 /**
  * BLOG — SEO içerik motoru.
@@ -103,6 +104,11 @@ export function BlogListPage() {
                     <h3 className="font-bold text-gray-900 mb-2 leading-snug">{p.title}</h3>
                     <p className="text-sm text-gray-500 leading-relaxed line-clamp-3 flex-1">{p.excerpt}</p>
                     <p className="text-[11px] text-gray-400 mt-3 flex items-center gap-1.5"><Calendar size={11} /> {fmtDate(p.publishedAt, lang)}</p>
+                    {/* Hizmet rozeti: yazının hangi işe bağlı olduğunu listede de gösterir —
+                        okuyucu daha yazıya girmeden aradığı konuyu tanıyabilsin. */}
+                    {SERVICE_BY_KEY[p.relatedServiceKey] && (
+                      <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600"><Wrench size={11} /> {SERVICE_BY_KEY[p.relatedServiceKey][lang] || SERVICE_BY_KEY[p.relatedServiceKey].tr}</span>
+                    )}
                   </div>
                 </button>
               ))}
@@ -125,7 +131,29 @@ export function BlogListPage() {
 }
 
 export function BlogPostPage() {
-  const { t, lang, blogPost, blogPosts, blogLoading, openBlog, openBlogPost, goToBrowse } = useApp();
+  const { t, lang, blogPost, blogPosts, blogLoading, openBlog, openBlogPost, goToBrowse, openMechanicsForService } = useApp();
+
+  // BLOG → FİLTRELENMİŞ USTA LİSTESİ
+  // Yazının bağlı olduğu hizmet varsa, genel "tamirci ara" yerine O İŞİ YAPAN ustaların
+  // filtrelenmiş listesini açan bir kart gösteriliyor. Okuma niyetiyle gelen ziyaretçinin
+  // arama niyetine geçtiği yer burası — jantla ilgili yazıyı okuyan, tek tıkla jant
+  // düzeltme yapan ustaları görüyor.
+  const svc = blogPost?.relatedServiceKey ? SERVICE_BY_KEY[blogPost.relatedServiceKey] : null;
+  const svcLabel = svc ? (svc[lang] || svc.tr) : null;
+  const ServiceCta = ({ compact = false }) => {
+    if (!svc) return null;
+    return (
+      <div className={`bg-rose-50 border border-rose-100 rounded-2xl ${compact ? "p-4" : "p-5 md:p-6"} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
+        <div className="min-w-0">
+          <p className="font-bold text-gray-900 flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("blogServiceCtaTitle", { service: svcLabel })}</p>
+          <p className="text-sm text-gray-500 mt-0.5">{t("blogServiceCtaBody")}</p>
+        </div>
+        <button onClick={() => openMechanicsForService(blogPost.relatedServiceKey)} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+          {t("blogServiceCtaBtn")} <ChevronRight size={15} />
+        </button>
+      </div>
+    );
+  };
 
   useEffect(() => {
     if (!blogPost) return;
@@ -186,16 +214,21 @@ export function BlogPostPage() {
                 <img src={imgThumb(blogPost.coverPhoto, 1200)} onError={imgFallbackHandler} alt={blogPost.title} className="w-full h-56 md:h-72 object-cover rounded-2xl mb-6" />
               )}
               <p className="text-base text-gray-600 leading-relaxed mb-6 font-medium">{blogPost.excerpt}</p>
+              {/* Üstteki kart: okuyucu yazının tamamını okumadan da aradığı ustaya ulaşabilsin.
+                  Arama sonucundan gelen çoğu ziyaretçi zaten cevabı biliyor, sadece usta arıyor. */}
+              <div className="mb-8"><ServiceCta compact /></div>
               {renderBody(blogPost.body)}
+              {/* Alttaki kart: yazıyı sonuna kadar okuyan için — asıl dönüşüm burada oluyor. */}
+              <div className="mt-8"><ServiceCta /></div>
             </article>
 
-            <div className="mt-6 bg-white border border-gray-100 rounded-3xl shadow-sm p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {!svc && <div className="mt-6 bg-white border border-gray-100 rounded-3xl shadow-sm p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h3 className="font-bold text-gray-900">{t("blogCtaTitle")}</h3>
                 <p className="text-sm text-gray-500 mt-0.5">{t("blogCtaBody")}</p>
               </div>
               <button onClick={() => goToBrowse("mechanics")} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Search size={15} /> {t("findMechanic")}</button>
-            </div>
+            </div>}
 
             {related.length > 0 && (
               <div className="mt-8">

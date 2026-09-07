@@ -196,6 +196,7 @@ CREATE TABLE IF NOT EXISTS blog_posts (
   status TEXT DEFAULT 'draft',
   publishedAt TEXT,
   views INTEGER DEFAULT 0,
+  relatedServiceKey TEXT,
   createdAt TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_blog_status_date ON blog_posts(status, publishedAt DESC);
@@ -387,6 +388,10 @@ function ensureColumn(table, columnDef) {
   ["support_tickets", "resolvedDate TEXT"],
   ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
   ["support_tickets", "fromId INTEGER"],
+  // Blog yazısını bir HİZMETE bağlar (SERVICE_CATALOG anahtarı). Yazının sonundaki "bu işi
+  // yapan ustaları gör" bağlantısı bu anahtarla filtrelenmiş tamirci listesini açıyor —
+  // içerikten aramaya giden köprü. Yazı bir hizmete bağlı değilse NULL.
+  ["blog_posts", "relatedServiceKey TEXT"],
   ["mechanics", "favoriteIds TEXT DEFAULT '[]'"],
   ["mechanics", "favoriteMechanicIds TEXT DEFAULT '[]'"],
   ["mechanics", "likedReviewIds TEXT DEFAULT '[]'"],

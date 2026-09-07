@@ -56,4 +56,49 @@ const parseTags = (raw) => String(raw || "").split(",").map((x) => x.trim()).fil
 eq(parseTags("fren, , bakım ,"), ["fren", "bakım"], "boş etiketler ayıklanıyor");
 eq(parseTags(""), [], "boş girdi boş dizi");
 
+// BLOG → FİLTRELENMİŞ USTA LİSTESİ: yazının hizmet anahtarı, tamirci filtresine doğru
+// uygulanmalı ve önceki aramadan kalan filtreler TEMİZLENMELİ (aksi halde blogdan gelen
+// okuyucu, farkında olmadığı bir mesafe/puan filtresi yüzünden boş liste görürdü).
+const SERVICE_BY_KEY = { rim_repair: { tr: "Jant Onarımı", en: "Rim Refurbishment" }, ac_service: { tr: "Klima Bakımı", en: "A/C Service" } };
+const EMPTY_MECH_FILTERS = { service: "", brand: "", minRating: 0, maxDistance: 999, priceTier: "all", verifiedOnly: false };
+const openMechanicsForService = (key, prevFilters, city = null) => {
+  const item = SERVICE_BY_KEY[key];
+  if (!item) return { filters: prevFilters, screen: "owner", matched: false };
+  return { filters: { ...EMPTY_MECH_FILTERS, service: item.tr }, locationQuery: city || "", screen: "owner", matched: true };
+};
+const dirty = { service: "Egzoz Değişimi", brand: "BMW", minRating: 4.5, maxDistance: 5, priceTier: "cheap", verifiedOnly: true };
+const r = openMechanicsForService("rim_repair", dirty);
+eq(r.filters.service, "Jant Onarımı", "hizmet filtresi katalogdaki Türkçe adla uygulanıyor");
+eq(r.filters.brand, "", "önceki marka filtresi temizlendi");
+eq(r.filters.maxDistance, 999, "önceki mesafe filtresi temizlendi");
+eq(r.filters.minRating, 0, "önceki puan filtresi temizlendi");
+eq(r.locationQuery, "", "şehir verilmediyse konum boş");
+eq(openMechanicsForService("rim_repair", dirty, "İstanbul").locationQuery, "İstanbul", "şehir verilirse uygulanıyor");
+eq(openMechanicsForService("olmayan_anahtar", dirty).matched, false, "bilinmeyen anahtar filtre uygulamıyor (çökmüyor)");
+
+// Filtre eşleşmesi katalog anahtarı üzerinden üç dilde çalışmalı: tamirci hizmeti Türkçe
+// eklemiş olsa da, arayüzü İngilizce olan ziyaretçi aynı ustayı bulmalı.
+const terms = (s) => { const it = SERVICE_BY_KEY[s.key]; return (it ? [s.name, it.tr, it.en] : [s.name]).filter(Boolean).map(x => x.toLocaleLowerCase("tr-TR")); };
+const matches = (services, wanted) => services.some(s => terms(s).includes(wanted.trim().toLocaleLowerCase("tr-TR")));
+const mech = [{ key: "rim_repair", name: "Jant Onarımı" }];
+eq(matches(mech, "Jant Onarımı"), true, "Türkçe filtre değeri eşleşiyor");
+eq(matches(mech, "Rim Refurbishment"), true, "İngilizce karşılığı da eşleşiyor");
+eq(matches(mech, "Klima Bakımı"), false, "ilgisiz hizmet eşleşmiyor");
+
+// Seed içeriği ile hizmet kataloğu tutarlılığı — GERÇEK dosyalar okunuyor.
+// Yanlış bir anahtar yazılırsa buton sessizce genel aramaya düşer; kullanıcı fark etmez.
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const seedSrc = readFileSync(join(ROOT, "backend/db/blogSeed.js"), "utf8");
+const catSrc = readFileSync(join(ROOT, "frontend/src/data/constants.ts"), "utf8");
+const validKeys = new Set([...catSrc.matchAll(/\{ key: "([a-z_]+)", tr:/g)].map((m) => m[1]));
+const usedKeys = [...seedSrc.matchAll(/relatedServiceKey: "([a-z_]+)"/g)].map((m) => m[1]);
+eq(usedKeys.filter((k) => !validKeys.has(k)), [], "blog yazılarındaki hizmet anahtarları katalogda var");
+const seedSlugs = [...seedSrc.matchAll(/slug: "([a-z0-9-]+)"/g)].map((m) => m[1]);
+eq(seedSlugs.filter((x, i) => seedSlugs.indexOf(x) !== i), [], "başlangıç yazılarında tekrar eden slug yok");
+eq(seedSlugs.length > 10, true, `başlangıç içeriği yeterli (${seedSlugs.length} yazı)`);
+eq(seedSlugs.every((x) => /^[a-z0-9-]+$/.test(x)), true, "tüm slug'lar URL-güvenli");
+
 report("blog");

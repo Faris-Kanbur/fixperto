@@ -4323,6 +4323,26 @@ function useAppLogic() {
     return () => { cancelled = true; };
   }, [blogSlug]);
 
+  // BLOG → FİLTRELENMİŞ TAMİRCİ LİSTESİ
+  // Yazının sonundaki "bu işi yapan ustaları gör" bağlantısı buraya bağlı. Katalog anahtarını
+  // (ör. "rim_repair") alıp tamirci filtresine hizmet olarak uyguluyor ve arama ekranını açıyor.
+  // Filtre değeri katalogdaki TÜRKÇE ad: serviceNameMatches katalog anahtarıyla üç dili birden
+  // karşılaştırdığı için arayüz dili ne olursa olsun doğru tamirciler çıkıyor.
+  // Diğer filtreler bilinçli olarak SIFIRLANIYOR — okuyucu blogdan geldiğinde, daha önce
+  // yaptığı bir aramadan kalan mesafe/puan filtresi sonucu sessizce daraltmasın.
+  const openMechanicsForService = (serviceKey, city = null) => {
+    const item = SERVICE_BY_KEY[serviceKey];
+    if (!item) { goToBrowse("mechanics"); return; }
+    track("search_performed", { meta: { source: "blog", service: item.tr } });
+    setQuery("");
+    setServiceQuery("");
+    setLocationQuery(city || "");
+    setFilters({ ...EMPTY_MECH_FILTERS, service: item.tr });
+    setHasSearched(true);
+    setOwnerMode("mechanics");
+    setOwnerTab("search");
+    setScreen(role === "mechanic" && MY_MECHANIC_ID != null ? "mechBrowse" : "owner");
+  };
   const openBlogPost = (slug) => { setBlogSlug(slug); setScreen("blogPost"); };
   const openBlog = () => { setBlogSlug(null); setScreen("blog"); };
 
@@ -4331,7 +4351,7 @@ function useAppLogic() {
   // olanları döndürüyor (bkz. backend/routes/blog.js). Taslak kaydedip sonra yayına almak
   // mümkün — yarım kalmış bir yazının arama motoruna düşmesi istenmez.
   const [adminBlogPosts, setAdminBlogPosts] = useState([]);
-  const EMPTY_BLOG_FORM = { id: null, title: "", excerpt: "", body: "", coverPhoto: "", tags: "", status: "draft" };
+  const EMPTY_BLOG_FORM = { id: null, title: "", excerpt: "", body: "", coverPhoto: "", tags: "", status: "draft", relatedServiceKey: "" };
   const [adminBlogForm, setAdminBlogForm] = useState(EMPTY_BLOG_FORM);
   const loadAdminBlogPosts = () => {
     api.blog.adminList().then((rows) => setAdminBlogPosts(rows || [])).catch(() => setAdminBlogPosts([]));
@@ -4340,6 +4360,7 @@ function useAppLogic() {
   const editBlogPost = (post) => setAdminBlogForm({
     id: post.id, title: post.title || "", excerpt: post.excerpt || "", body: post.body || "",
     coverPhoto: post.coverPhoto || "", tags: (post.tags || []).join(", "), status: post.status || "draft",
+    relatedServiceKey: post.relatedServiceKey || "",
   });
   const cancelBlogEdit = () => setAdminBlogForm(EMPTY_BLOG_FORM);
   const saveBlogPost = async (status) => {
@@ -4353,6 +4374,8 @@ function useAppLogic() {
       // Etiketler virgülle giriliyor; boşlar ayıklanıyor ki "a,,b" üç etiket sanılmasın.
       tags: adminBlogForm.tags.split(",").map((x) => x.trim()).filter(Boolean),
       status: status || adminBlogForm.status,
+      // Boş seçim NULL olarak gitmeli: "" yazmak "bağlı ama adı boş bir hizmet" anlamına gelirdi.
+      relatedServiceKey: adminBlogForm.relatedServiceKey || null,
     };
     try {
       if (adminBlogForm.id) await api.blog.update(adminBlogForm.id, payload);
@@ -4507,6 +4530,7 @@ function useAppLogic() {
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
     ownerSettingsTab, setOwnerSettingsTab, blogPosts, setBlogPosts, blogPost, blogSlug, blogLoading, openBlogPost, openBlog,
+    openMechanicsForService,
     adminBlogPosts, adminBlogForm, setAdminBlogForm, editBlogPost, cancelBlogEdit, saveBlogPost, deleteBlogPost,
     goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
     serviceLabel, serviceCategoryOf, servicePriceForBrand, mechanicStartingPrice, saveServices,

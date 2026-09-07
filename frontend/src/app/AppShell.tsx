@@ -1231,6 +1231,17 @@ export function AppShell() {
                         <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Özet <span className="text-gray-300">(arama sonucunda görünen açıklama)</span></label><textarea value={adminBlogForm.excerpt} onChange={(e) => setAdminBlogForm(f => ({ ...f, excerpt: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-none" /></div>
                         <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Gövde <span className="text-gray-300">(boş satır = yeni paragraf, "## " = ara başlık)</span></label><textarea value={adminBlogForm.body} onChange={(e) => setAdminBlogForm(f => ({ ...f, body: e.target.value }))} rows={12} className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono leading-relaxed" /></div>
                         <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Kapak görseli (URL)</label><input value={adminBlogForm.coverPhoto} onChange={(e) => setAdminBlogForm(f => ({ ...f, coverPhoto: e.target.value }))} placeholder="https://…" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm" /></div>
+                        <div>
+                          <label className="text-[11px] font-medium text-gray-500 block mb-1">Bağlı hizmet <span className="text-gray-300">(yazının sonundaki "ustaları gör" bağlantısı bu hizmeti filtreler)</span></label>
+                          <select value={adminBlogForm.relatedServiceKey} onChange={(e) => setAdminBlogForm(f => ({ ...f, relatedServiceKey: e.target.value }))} className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white">
+                            <option value="">— Yok (genel yazı) —</option>
+                            {SERVICE_CATALOG.map(cat => (
+                              <optgroup key={cat.key} label={cat.tr}>
+                                {cat.items.map(it => (<option key={it.key} value={it.key}>{it.tr}</option>))}
+                              </optgroup>
+                            ))}
+                          </select>
+                        </div>
                         <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Etiketler <span className="text-gray-300">(virgülle)</span></label><input value={adminBlogForm.tags} onChange={(e) => setAdminBlogForm(f => ({ ...f, tags: e.target.value }))} placeholder="fren, bakım, güvenlik" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm" /></div>
                       </div>
                       <div className="flex gap-2 mt-4">
