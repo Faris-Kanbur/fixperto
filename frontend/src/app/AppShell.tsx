@@ -2482,17 +2482,24 @@ export function AppShell() {
             <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6">
               <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
                 {[
+                  // SEKME SIRASI — işin akışına göre, rastgele değil:
+                  //   1) Profil     → "kim olduğum": müşterinin gördüğü vitrin, hizmetler, saatler
+                  //   2) Randevular → bugünkü iş
+                  //   3) Mesajlar   → gelen müşteriyle iletişim
+                  //   4) Teklifler  → işe/paraya dönüşen adım
+                  //   5) İlanlarım  → araç ve iş ilanları (ikincil iş kolu)
+                  //   6) Favoriler  → kaydedilenler, aciliyeti yok
+                  //   7) Analiz     → en sonda: geriye dönük özet/rapor
+                  // Önce kendini kur, sonra günlük işi çevir, en sonda sonuca bak.
+                  // NOT: açılış sekmesi yine Randevular — pano açılınca tamircinin görmesi gereken
+                  // şey bugünkü işi, kendi profili değil (bkz. mechTab varsayılanı).
+                  { key: "profile", label: t("tabLabelProfile"), icon: Pencil },
                   { key: "requests", label: t("mechTabAppointments"), icon: Calendar },
                   { key: "messages", label: t("mechTabMessages"), icon: MessageCircle },
+                  { key: "offers", label: t("tabLabelOffers"), icon: Banknote },
                   { key: "market", label: t("navMarket"), icon: Car },
                   { key: "favorites", label: t("navFavorites"), icon: Heart },
                   { key: "analytics", label: t("mechTabAnalytics"), icon: TrendingUp },
-                  // TAŞINDI: Profil ve Teklifler eskiden ayrı bir "işletme paneli" ekranındaydı
-                  // (dişli → mechProfilePage → kendi sekme çubuğu). İki katmanlı sekme yapısı
-                  // gereksizdi; tamircinin günlük kullandığı her şey artık tek çubukta. Dişli
-                  // yalnızca gerçek ayarlara (bildirim, dil, ödeme bilgisi, hesap) götürüyor.
-                  { key: "profile", label: t("tabLabelProfile"), icon: Pencil },
-                  { key: "offers", label: t("tabLabelOffers"), icon: Banknote },
                 ].map((tb) => {
                   const Icon = tb.icon; const active = mechTab === tb.key;
                   return (<button key={tb.key} onClick={() => setMechTab(tb.key)} className={`px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-rose-600 border-rose-500" : "text-gray-500 border-transparent hover:text-rose-600 hover:border-rose-200"}`}><Icon size={14} /> {tb.label}</button>);
