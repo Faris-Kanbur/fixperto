@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, createContext, useContext } from "react";
 import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, Menu, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2 } from "lucide-react";
 import { api, setUnauthorizedHandler } from "../../services/api/client";
+import { validateFields, VEHICLE_FIELD_RULES, LISTING_FIELD_RULES } from "../../utils/validation";
 import { track, setAnalyticsContext } from "../../services/analytics";
 import { T, useT } from "../../data/i18n";
 import {
@@ -410,6 +411,11 @@ function useAppLogic() {
   const [showMaintenanceHistory, setShowMaintenanceHistory] = useState(false);
   useEffect(() => { setShowMaintenanceHistory(false); }, [selectedVehicleId]);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
+  // Randevu ekranında eklenen aracın garaja kaydedilip kaydedilmeyeceği. Varsayılan AÇIK: kişi
+  // zaten aracını yazdı, bir dahaki randevuda tekrar yazmak zorunda kalmamalı. Ama seçim
+  // kullanıcının: tek seferlik bir araç (ör. başkasının aracını servise götürüyor) garajını
+  // kirletmemeli.
+  const [saveVehicleToGarage, setSaveVehicleToGarage] = useState(true);
   const [newVehicle, setNewVehicle] = useState({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "" });
   const [editingReminderKind, setEditingReminderKind] = useState(null);
   const [reminderEditForm, setReminderEditForm] = useState({ enabled: true, customDate: "", leadDays: "" });
@@ -2845,11 +2851,21 @@ function useAppLogic() {
     setNotifLog([]); setOwnerNotifSeenAt(0); setMechNotifSeenAt(0);
     goHome();
   };
+  // Doğrulama sonucunu kullanıcının diline çevirip toast olarak gösterir.
+  // Tek yerde: aksi halde her form kendi mesaj metnini uydururdu (bkz. utils/validation.ts).
+  const showFieldProblem = (problem) => {
+    const name = String(problem?.field ?? "");
+    const fieldLabel = t(`field${name.slice(0, 1).toUpperCase()}${name.slice(1)}`);
+    setToast({ type: "info", text: `⚠️ ${t(problem.key, { field: fieldLabel, ...(problem.params || {}) })}` });
+  };
+
   const addVehicle = async () => {
     if (!newVehicle.brand || !newVehicle.model) return;
-    if (newVehicle.lastInspection && !isValidDateStr(newVehicle.lastInspection)) { setToast({ type: "info", text: "⚠️ Geçersiz Son Muayene tarihi." }); return; }
-    if (newVehicle.lastMaintenance && !isValidDateStr(newVehicle.lastMaintenance)) { setToast({ type: "info", text: "⚠️ Geçersiz Son Bakım tarihi." }); return; }
-    if (newVehicle.insuranceEnd && !isValidDateStr(newVehicle.insuranceEnd)) { setToast({ type: "info", text: "⚠️ Geçersiz Sigorta Bitiş tarihi." }); return; }
+    // MANTIK DENETİMİ: eskiden yalnızca "bu metin tarihe çevrilebiliyor mu" bakılıyordu, bu yüzden
+    // sigorta bitişine 2099 yazılabiliyordu (kullanıcı bildirdi). Artık her alan kendi anlamına
+    // göre denetleniyor.
+    const problem = validateFields(newVehicle, VEHICLE_FIELD_RULES);
+    if (problem) { showFieldProblem(problem); return; }
     // Marka KAYDEDİLİRKEN listedeki resmi yazımına çevriliyor. Seçici zaten listeden seçtiriyor
     // ama "Diğer" kutusuna elle "bmw" yazılabilir; bu normalleştirme olmasa o araç tamircinin
     // "BMW" fiyat anahtarıyla eşleşmez ve kişi kendi markasının fiyatını göremezdi.
@@ -2858,6 +2874,16 @@ function useAppLogic() {
     // gerçek id'yi döndürünce yerel geçici id'yi onunla değiştiriyoruz.
     const tempId = Date.now();
     setVehicles(vs => [...vs, { id: tempId, ...draft }]);
+    // KAYDETME TERCİHİ: kutu işaretli değilse araç yalnızca bu oturumda (bu randevu için)
+    // yaşıyor; backend'e hiç gitmiyor. Kullanıcı yine de randevusunu tamamlayabiliyor.
+    if (!saveVehicleToGarage) {
+      setNewVehicle({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "" });
+      setShowAddVehicle(false);
+      if (screen === "booking") setSelectedBookingVehicleId(tempId);
+      if (showQuoteModal) setQuoteVehicleId(tempId);
+      setToast({ type: "info", text: t("vehicleNotSavedNotice") });
+      return;
+    }
     setNewVehicle({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "" }); setShowAddVehicle(false);
     if (screen === "booking") setSelectedBookingVehicleId(tempId); if (showQuoteModal) setQuoteVehicleId(tempId);
     // "Araç eklendi" başarı mesajı yalnızca backend isteği gerçekten başarılı olduktan sonra
@@ -2876,7 +2902,12 @@ function useAppLogic() {
       setToast({ type: "info", text: `⚠️ Araç kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
   };
+  // Araç düzenleme de aynı kurallardan geçiyor. Denetimi BURAYA koyduk çünkü düzenleme formu
+  // doğrudan bu fonksiyonu çağırıyor; kuralı yalnızca formda tutsaydık başka bir çağıran
+  // (ör. ileride toplu düzenleme) denetimi atlardı.
   const updateVehicleFields = (id, updates) => {
+    const vProblem = validateFields(updates, VEHICLE_FIELD_RULES);
+    if (vProblem) { showFieldProblem(vProblem); return; }
     // Marka güncelleniyorsa resmi yazımına çevir (bkz. addVehicle'daki aynı gerekçe): araç
     // düzenleme formundan "Diğer" ile elle yazılan marka da fiyat anahtarlarıyla eşleşsin.
     const patch = "brand" in (updates || {}) ? { ...updates, brand: canonicalBrand(updates.brand) } : updates;
@@ -3851,6 +3882,10 @@ function useAppLogic() {
     if (!String(sellForm.km ?? "").trim()) missingFields.push("Kilometre");
     if (!sellForm.price?.trim()) missingFields.push("Fiyat");
     if (missingFields.length > 0) { setToast({ type: "info", text: `⚠️ Eksik bilgiler var: ${missingFields.join(", ")}. Lütfen doldurun.` }); return; }
+    // İlan alanlarının MANTIK denetimi (yıl, km, fiyat, güç, hacim, kapı/koltuk, tüketim…).
+    // Eskiden yalnızca "boş mu" bakılıyordu; 9.000.000 km ya da 1899 model kabul ediliyordu.
+    const listingProblem = validateFields(sellForm, LISTING_FIELD_RULES);
+    if (listingProblem) { showFieldProblem(listingProblem); return; }
     // Misafir ilan formunun tamamını (fotoğraflar dâhil) doldurabiliyor; giriş sadece "Yayınla"
     // anında isteniyor ve giriş sonrası ilan aynı verilerle otomatik yayınlanıyor.
     if (!ensureAuth(t("authGateReasonSellListing"), () => callLatest("submitListing", sellerType))) return;
@@ -4651,6 +4686,7 @@ function useAppLogic() {
     rescheduleDate, setRescheduleDate, rescheduleTime, setRescheduleTime, vehicles, setVehicles, selectedVehicleId, setSelectedVehicleId,
     selectedVehicle, showMaintenanceHistory, setShowMaintenanceHistory, showAddVehicle, setShowAddVehicle, newVehicle, setNewVehicle, editingReminderKind,
     setEditingReminderKind, reminderEditForm, setReminderEditForm, showAddReminderForm, setShowAddReminderForm, newReminderForm, setNewReminderForm, showEditVehicle,
+    saveVehicleToGarage, setSaveVehicleToGarage,
     setShowEditVehicle, editVehicleForm, setEditVehicleForm, appointments, setAppointments, autoAccept, setAutoAccept, toast,
     setToast, successPulse, setSuccessPulse, showOnboarding, setShowOnboarding, onboardStep, setOnboardStep, showDayFullPrompt,
     setShowDayFullPrompt, dayFullNotified, setDayFullNotified, completingApptId, setCompletingApptId, warrantyDaysForm, setWarrantyDaysForm, replyingReviewId,

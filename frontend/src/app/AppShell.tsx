@@ -11,6 +11,7 @@ import { BrandMark, PageTopBar } from "../components/features/BrandMark";
 import { BrandSelect, ModelSelect } from "../components/features/BrandSelect";
 import { BookingCalendar } from "../components/features/BookingCalendar";
 import { WelcomeTour } from "../components/features/WelcomeTour";
+import { OwnerChatsPanel } from "../components/features/OwnerChatsPanel";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
 import { OwnerAppointmentsView } from "../components/features/OwnerAppointmentsView";
@@ -192,7 +193,7 @@ export function AppShell() {
     jobEmploymentColor,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
-    isAuthed, requireAuth, requireAuthForTab, openQuoteModal, toggleAddVehicle, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate,
+    isAuthed, requireAuth, requireAuthForTab, openQuoteModal, toggleAddVehicle, saveVehicleToGarage, setSaveVehicleToGarage, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate,
   } = useApp();
   return (
     <div className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-gray-50"}`}>
@@ -1685,7 +1686,8 @@ export function AppShell() {
                     </div>
                   );
                 })()}
-                {ownerTab === "chats" && (<div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><MessageCircle size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noConvosYetNote")}</p></div>}</div>)}
+                {/* Mesajlar: tamirci tarafındaki gibi iki panelli — bkz. OwnerChatsPanel.tsx */}
+                {ownerTab === "chats" && <OwnerChatsPanel />}
                 {ownerTab === "appointments" && (<div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8"><OwnerAppointmentsView /></div>)}
               </div>
             )}
@@ -2613,6 +2615,13 @@ export function AppShell() {
                           <input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
                           <input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
                         </div>
+                        {/* KAYDETME SORUSU: randevu için yazılan araç garaja kaydedilsin mi?
+                            Varsayılan işaretli — aynı aracı her randevuda yeniden yazmak anlamsız.
+                            Kapatma seçeneği duruyor: tek seferlik bir araç garajı kirletmesin. */}
+                        <label className="mt-3 flex items-start gap-2.5 bg-white border border-gray-200 rounded-xl p-3 cursor-pointer">
+                          <input type="checkbox" checked={saveVehicleToGarage} onChange={(e) => setSaveVehicleToGarage(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
+                          <span className="text-xs text-gray-600"><span className="font-semibold text-gray-800">{t("saveVehicleToGarageLabel")}</span><br />{t("saveVehicleToGarageHint")}</span>
+                        </label>
                         <button onClick={addVehicle} className="mt-2 bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-700 transition">{t("addVehicle")}</button>
                       </div>
                     )}
