@@ -686,7 +686,14 @@ function useAppLogic() {
           // çekip listedeki kendi kaydımızın üzerine yazıyoruz.
           api.mechanics.get(MY_MECHANIC_ID).then((full) => {
             if (cancelled) return;
-            setMechanicsList((list) => list.map((m) => (m.id === MY_MECHANIC_ID ? { ...m, ...full } : m)));
+            // GERÇEK HATA DÜZELTMESİ (kullanıcı bildirdi): burada yalnızca `map` vardı. Yeni kayıt
+            // olan tamirci, herkese açık liste ondan ÖNCE çekildiği için `mechanicsList` içinde
+            // yoktu; map hiçbir şeyle eşleşmiyor ve profil sessizce boş kalıyordu. Kullanıcı
+            // girdiği bilgileri ancak sayfayı yeniledikten (liste yeniden çekildikten) sonra
+            // görüyordu. Kayıt listede yoksa artık ekleniyor.
+            setMechanicsList((list) => (list.some((m) => m.id === MY_MECHANIC_ID)
+              ? list.map((m) => (m.id === MY_MECHANIC_ID ? { ...m, ...full } : m))
+              : [...list, full]));
             // Tercihler (favoriler/beğeniler/kayıtlı aramalar) tamirci için de artık kalıcı —
             // owners tarafındaki ile aynı desen (bkz. persistMyPrefs).
             if (full?.favoriteIds) setFavoriteIds(full.favoriteIds);
@@ -700,6 +707,14 @@ function useAppLogic() {
           // MY_OWNER_ID henüz null iken (girişsiz) çekildiği için burada tek kayıttan tazeliyoruz.
           api.owners.get(MY_OWNER_ID).then((full) => {
             if (cancelled) return;
+            // Tamirci tarafındaki ile AYNI hata: yeni kayıt olan araç sahibi ownersDirectory'de
+            // yoktu, bu yüzden ownerProfile boş nesneye düşüyor ve kişi kendi adını/telefonunu
+            // ancak yenilemeden sonra görüyordu.
+            if (full?.id != null) {
+              setOwnersDirectory((list) => (list.some((o) => o.id === full.id)
+                ? list.map((o) => (o.id === full.id ? { ...o, ...full } : o))
+                : [...list, full]));
+            }
             if (full?.favoriteIds) setFavoriteIds(full.favoriteIds);
             if (full?.favoriteMechanicIds) setFavoriteMechanicIds(full.favoriteMechanicIds);
             if (full?.likedReviewIds) setLikedReviewIds(full.likedReviewIds);
@@ -2787,11 +2802,17 @@ function useAppLogic() {
         if (user.role === "owner") setOwnerTab("search");
       }
       if (pendingOnboarding) {
-        // Kayıt sonrası kullanıcı KENDİ ANA EKRANINDA başlamalı: turu kapattığında arkasında
-        // anlamlı bir sayfa bulsun. Yukarıdaki auth-gate dalı tamirciyi arama ekranına
-        // yönlendiriyor; bu yeni kayıt için doğru değil, o yüzden burada eziyoruz.
-        setScreen(user.role === "owner" ? "owner" : "mechanicDashboard");
-        if (user.role === "owner") setOwnerTab("search");
+        // KAYIT SONRASI: ANA SAYFA + karşılama turu.
+        // Yaşanan hata (kullanıcı bildirdi): tamirci olarak kayıt olan kişi panelin PROFİL
+        // sekmesinde açılıyordu. Sebep, sekmelerin (mechTab/ownerTab) sayfa yenilemede korunmak
+        // üzere sessionStorage'dan geri yüklenmesiydi — kayıttan önceki gezinmeden kalan sekme
+        // yeni kullanıcının karşısına çıkıyordu. Yeni bir hesabın "kaldığı yer" yoktur.
+        // Bu yüzden hem ekran hem sekmeler başlangıç durumuna alınıyor ve kullanıcı ANA SAYFADA
+        // bırakılıyor: tur kapanınca arkasında sitenin ana sayfası duruyor (turun bulanık arka
+        // planı da bu sayede anlamlı bir görüntü gösteriyor).
+        setScreen("landing");
+        setOwnerTab("search"); setOwnerMode("mechanics"); setOwnerProfileTab("info");
+        setMechTab("requests"); setMechProfileTab("profile");
         setOnboardStep(0); setShowOnboarding(true); setPendingOnboarding(false);
       }
       // Bildirimler varsayılan olarak açık sayılsın diye: tarayıcı henüz sorulmadıysa girişte hemen soruyoruz.

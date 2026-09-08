@@ -13,7 +13,7 @@ import {
   LISTING_FEATURE_GROUPS, FUEL_TYPE_LABELS_BY_LANG, TRANSMISSION_LABELS_BY_LANG,
   BODY_TYPE_LABELS_BY_LANG, DRIVETRAIN_LABELS_BY_LANG,
 } from "../../data/constants";
-import { isImgUrl, imgThumb, imgFallbackHandler, listingStatusMeta, vocabLabel } from "../../utils/helpers";
+import { isImgUrl, imgThumb, imgFallbackHandler, listingStatusMeta, vocabLabel, safeHref } from "../../utils/helpers";
 import { PageTopBar } from "./BrandMark";
 
 /**
@@ -209,8 +209,8 @@ export function ListingDetailPage() {
         <button onClick={() => toggleFavorite(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${fav ? "border-rose-200 bg-rose-50 text-rose-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}><Heart size={14} className={fav ? "fill-rose-600" : ""} /> {t("favoriteLabel")}</button>
         <button onClick={() => toggleCompareListing(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${inCompare ? "border-rose-200 bg-rose-50 text-rose-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}><Scale size={14} /> {t("compareBtnLabel")}</button>
       </div>
-      {l.inspectionReportUrl && (
-        <a href={l.inspectionReportUrl} target="_blank" rel="noreferrer" className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 py-2.5 rounded-xl hover:bg-emerald-100 transition"><FileText size={13} /> {t("inspectionReportAvailableLabel")}</a>
+      {safeHref(l.inspectionReportUrl) && (
+        <a href={safeHref(l.inspectionReportUrl)} target="_blank" rel="noreferrer" className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 py-2.5 rounded-xl hover:bg-emerald-100 transition"><FileText size={13} /> {t("inspectionReportAvailableLabel")}</a>
       )}
     </div>
   );
