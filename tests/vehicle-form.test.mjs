@@ -51,4 +51,26 @@ const provider = read("app/state/AppLogicProvider.tsx");
 ok(/const toggleAddVehicle = \(\) => \{[\s\S]*?requireAuth\(/.test(provider), "araç ekleme requireAuth ile kapılanıyor");
 eq((shell.match(/setShowAddVehicle\(!showAddVehicle\)/g) || []).length, 0, "kapılanmamış doğrudan açma kalmadı");
 
+// --- OTURUM ARTIK VERİTABANINDA (backend yeniden başlayınca çıkış yapılmıyor) -----------------
+// Yaşanan hata: oturum token'ları yalnızca sunucu belleğindeydi. `node --watch` her dosya
+// kaydında yeniden başlattığı için geliştirme sırasında sürekli, canlıda ise her dağıtımda
+// herkes sessizce çıkmış oluyordu. Arayüz bunu fark etmediği için kullanıcı "giriş yapmış"
+// görünürken her işlemde 401 alıyordu.
+const authSrc = readFileSync(join(SRC, "..", "..", "backend", "utils", "auth.js"), "utf8");
+ok(/CREATE TABLE IF NOT EXISTS sessions/.test(authSrc), "oturumlar sessions tablosunda tutuluyor");
+ok(/createHash\("sha256"\)/.test(authSrc), "token'ın kendisi değil SHA-256 özeti saklanıyor");
+eq((authSrc.match(/activeSessions\.(set|get|delete)/g) || []).length, 0, "bellek içi oturum haritası kalmadı");
+ok(/SESSION_TTL_MS/.test(authSrc), "7 günlük ömür sınırı duruyor");
+// Dairesel import kontrolü: db.js artık auth.js'i import ETMEMELİ (auth.js db'yi import ediyor).
+const dbSrc = readFileSync(join(SRC, "..", "..", "backend", "db", "db.js"), "utf8");
+eq(/from "\.\.\/utils\/auth\.js"/.test(dbSrc), false, "db.js auth.js'i import etmiyor (dairesel import yok)");
+
+// --- 401 alınca arayüz gerçekten çıkış durumuna geçiyor ---------------------------------------
+const client = readFileSync(join(SRC, "services", "api", "client.ts"), "utf8");
+ok(/if \(res\.status === 401\) handleUnauthorized\(path\)/.test(client), "401 merkezi olarak ele alınıyor");
+ok(/path\.startsWith\("\/api\/admin"\)/.test(client), "admin 401'i kullanıcı oturumunu düşürmüyor");
+ok(/api\/auth\/login/.test(client), "yanlış şifre (login 401) oturum düştü sayılmıyor");
+const providerSrc = readFileSync(join(SRC, "app", "state", "AppLogicProvider.tsx"), "utf8");
+ok(/setUnauthorizedHandler\(\(\) => \{/.test(providerSrc), "uygulama 401 işleyicisini kaydediyor");
+
 report("araç formu");

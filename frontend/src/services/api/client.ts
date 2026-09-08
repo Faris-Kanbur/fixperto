@@ -106,6 +106,27 @@ function setSession(token: string | null, role: SessionRole | null) {
   persistSessionToStorage();
 }
 
+/**
+ * 401 (oturum geçersiz) MERKEZİ ELE ALMA.
+ * Yaşanan hata: sunucu oturumu geçersiz olduğunda (ör. backend yeniden başladı) arayüz bunu HİÇ
+ * fark etmiyordu. Kullanıcı "giriş yapmış" görünüyor, her işlemde "Oturumunuz sona ermiş" uyarısı
+ * alıyor ama giriş ekranına da düşmüyordu — çıkışı olmayan bir döngü. Artık ilk 401'de yerel
+ * oturum temizleniyor ve uygulama haberdar ediliyor (giriş kapısını açıyor).
+ */
+type UnauthorizedHandler = () => void;
+let onUnauthorized: UnauthorizedHandler | null = null;
+export function setUnauthorizedHandler(fn: UnauthorizedHandler | null) { onUnauthorized = fn; }
+
+function handleUnauthorized(path: string) {
+  // Admin uç noktaları AYRI bir token kullanıyor; oradaki 401 kullanıcının oturumunu ilgilendirmez.
+  if (path.startsWith("/api/admin")) return;
+  // Giriş/OTP denemesindeki 401 "yanlış şifre" demek, "oturum düştü" değil — kapıyı açmaya gerek yok.
+  if (path.startsWith("/api/auth/login") || path.startsWith("/api/auth/verify-otp")) return;
+  if (!sessionToken) return; // zaten misafir
+  setSession(null, null);
+  try { onUnauthorized?.(); } catch { /* uygulama tarafı hata verirse istek akışını bozma */ }
+}
+
 interface RequestOptions extends RequestInit {
   /** true ise ağ hatasında (backend'e hiç ulaşılamadıysa) otomatik olarak 1 kez tekrar dener. */
   retryOnNetworkError?: boolean;
@@ -161,6 +182,7 @@ async function request(path: string, options: RequestOptions = {}) {
     if (!res.ok) {
       const body = await res.json().catch(() => ({} as any));
       const backendMessage: string | undefined = body?.error;
+      if (res.status === 401) handleUnauthorized(path);
       if (DEV) console.error(`[api] ${method} ${url} -> ${res.status}`, backendMessage || "(no error body)");
       throw new ApiError(friendlyMessageForStatus(res.status, backendMessage), {
         status: res.status,

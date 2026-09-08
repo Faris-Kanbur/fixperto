@@ -981,6 +981,7 @@ export const T = {
   authGateReasonSellListing: { tr: "İlanınızı yayınlamak için giriş yapın", en: "Sign in to publish your listing", de: "Melden Sie sich an, um Ihre Anzeige zu veröffentlichen" },
   authGateReasonQuote: { tr: "Fiyat teklifi istemek için giriş yapın", en: "Sign in to request quotes", de: "Melden Sie sich an, um Angebote anzufordern" },
   authGateReasonAddVehicle: { tr: "Aracınızı kaydetmek için giriş yapın", en: "Sign in to save your vehicle", de: "Melden Sie sich an, um Ihr Fahrzeug zu speichern" },
+  authGateReasonExpired: { tr: "Oturumunuz sona erdi — devam etmek için tekrar giriş yapın", en: "Your session expired — sign in again to continue", de: "Ihre Sitzung ist abgelaufen — bitte erneut anmelden" },
   comboNoMatchHint: { tr: "Eşleşme yok — yazdığınız değer kullanılacak", en: "No match — your text will be used", de: "Keine Treffer — Ihre Eingabe wird verwendet" },
   modelPickBrandFirst: { tr: "Önce marka seçin ya da modeli yazın", en: "Pick a brand first, or type the model", de: "Zuerst Marke wählen oder Modell eingeben" },
   authGateReasonReview: { tr: "Değerlendirme yapmak için giriş yapın", en: "Sign in to leave a review", de: "Melden Sie sich an, um zu bewerten" },

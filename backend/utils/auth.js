@@ -1,14 +1,26 @@
 import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
+import { db } from "../db/db.js";
+import { looksHashed } from "./passwordFormat.js";
 
 // GÜVENLİK: uygulamanın önceki hâlinde owner/mechanic için gerçek bir oturum/kimlik doğrulama
 // katmanı yoktu (bkz. REFACTOR_REPORT.md bölüm 9 madde 2, ve bu oturumdaki önceki güvenlik
 // düzeltmeleri) — "giriş" sadece decoratifti, backend hiçbir isteğin gerçekten kimden geldiğini
 // bilmiyordu. Bu dosya, admin paneli için zaten kurulmuş olan token deseni (bkz.
 // backend/routes/admin.js) owner/mechanic'e genişletilmiş hâlidir: rastgele, tahmin edilemez bir
-// token üretilip SADECE sunucu belleğinde tutulur (kalıcı depoya/DB'ye YAZILMAZ) — sunucu yeniden
-// başladığında tüm oturumlar geçersiz olur, bu kasıtlı bir tercih (XSS ile çalınmış bir token'ın
-// süresiz geçerli kalmaması).
+// token üretilir.
+//
+// OTURUMLAR NEDEN ARTIK VERİTABANINDA:
+// Önceki hâlde token'lar yalnızca sunucu belleğindeydi. Gerekçesi "çalınmış token süresiz geçerli
+// kalmasın" idi, ama sonucu şu oldu: sunucunun HER yeniden başlayışında herkes sessizce çıkış
+// yapmış oluyordu. Geliştirmede `node --watch` her dosya kaydında yeniden başlattığı için bu
+// dakikada bir yaşanıyordu; canlıda da her dağıtım (deploy) tüm kullanıcıları atacaktı. Üstelik
+// arayüz bunu fark etmiyor, kullanıcı "giriş yapmış" görünürken her isteği 401 alıyordu.
+//
+// Çözüm token'ın KENDİSİNİ değil, SHA-256 ÖZETİNİ saklamak. Veritabanı sızsa bile özetlerden
+// kullanılabilir token üretilemez (şifrelerde bcrypt kullanmamızla aynı mantık; burada bcrypt
+// gereksiz çünkü token zaten 256 bitlik rastgele bir değer, sözlük saldırısına açık değil).
+// 7 günlük ömür aynen duruyor, yani "süresiz geçerli token" endişesi TTL ile karşılanıyor.
 const BCRYPT_ROUNDS = 10;
 
 export async function hashPassword(plain) {
@@ -20,9 +32,7 @@ export async function verifyPassword(plain, hash) {
   return bcrypt.compare(plain, hash);
 }
 
-export function looksHashed(value) {
-  return typeof value === "string" && /^\$2[aby]\$/.test(value);
-}
+export { looksHashed };
 
 // Kayıt sırasında kullanıcıya e-posta ile gönderilecek otomatik şifre. Karışık büyük/küçük harf +
 // rakam, karışıklığa yol açabilecek karakterler (0/O, 1/l/I) çıkarılmış.
@@ -43,9 +53,16 @@ export function generateToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-// role -> Map<token, { id, role }>. Tek bir Map yeterli ama role'ü value içinde tutmak
-// middleware'de "bu token hangi role için geçerli" kontrolünü basitleştiriyor.
-const activeSessions = new Map(); // token -> { id, role, createdAt }
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sessions (
+    tokenHash TEXT PRIMARY KEY,
+    userId    INTEGER NOT NULL,
+    role      TEXT NOT NULL,
+    createdAt INTEGER NOT NULL
+  );
+`);
+
+const hashToken = (token) => crypto.createHash("sha256").update(String(token)).digest("hex");
 
 // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): oturumların hiçbir SÜRE SINIRI yoktu —
 // `createdAt` yazılıyordu ama hiç okunmuyordu. Yani bir kez üretilen token, sunucu yeniden
@@ -54,20 +71,28 @@ const activeSessions = new Map(); // token -> { id, role, createdAt }
 // sabit bir ömrü var ve süresi dolmuş kayıtlar hem okuma anında hem de periyodik olarak temizleniyor.
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 gün
 
+const insertSession = db.prepare("INSERT OR REPLACE INTO sessions (tokenHash, userId, role, createdAt) VALUES (?, ?, ?, ?)");
+const selectSession = db.prepare("SELECT userId, role, createdAt FROM sessions WHERE tokenHash = ?");
+const deleteSession = db.prepare("DELETE FROM sessions WHERE tokenHash = ?");
+const deleteExpired = db.prepare("DELETE FROM sessions WHERE createdAt < ?");
+
 export function createSession(id, role) {
   const token = generateToken();
-  activeSessions.set(token, { id, role, createdAt: Date.now() });
+  insertSession.run(hashToken(token), id, role, Date.now());
   return token;
 }
 
 export function getSession(token) {
-  const session = activeSessions.get(token);
-  if (!session) return null;
-  if (Date.now() - session.createdAt > SESSION_TTL_MS) {
-    activeSessions.delete(token);
+  if (!token) return null;
+  const tokenHash = hashToken(token);
+  const row = selectSession.get(tokenHash);
+  if (!row) return null;
+  if (Date.now() - row.createdAt > SESSION_TTL_MS) {
+    deleteSession.run(tokenHash);
     return null;
   }
-  return session;
+  // Dönen nesne eskisiyle aynı biçimde: çağıranlar (requireSession, resolveActor) değişmedi.
+  return { id: row.userId, role: row.role, createdAt: row.createdAt };
 }
 
 // Süresi dolmuş oturumları periyodik olarak bellekten at (yukarıdaki tembel temizlik, bir daha hiç
@@ -75,15 +100,12 @@ export function getSession(token) {
 // Node sürecinin kapanmasını engellemiyor.
 const SESSION_SWEEP_MS = 60 * 60 * 1000; // saatte bir
 const sweepTimer = setInterval(() => {
-  const now = Date.now();
-  for (const [token, session] of activeSessions) {
-    if (now - session.createdAt > SESSION_TTL_MS) activeSessions.delete(token);
-  }
+  deleteExpired.run(Date.now() - SESSION_TTL_MS);
 }, SESSION_SWEEP_MS);
 if (typeof sweepTimer.unref === "function") sweepTimer.unref();
 
 export function destroySession(token) {
-  activeSessions.delete(token);
+  if (token) deleteSession.run(hashToken(token));
 }
 
 export function extractBearerToken(req) {

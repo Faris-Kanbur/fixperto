@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, createContext, useContext } from "react";
 import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, Menu, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2 } from "lucide-react";
-import { api } from "../../services/api/client";
+import { api, setUnauthorizedHandler } from "../../services/api/client";
 import { track, setAnalyticsContext } from "../../services/analytics";
 import { T, useT } from "../../data/i18n";
 import {
@@ -731,6 +731,22 @@ function useAppLogic() {
     });
     return () => { cancelled = true; };
   }, []);
+
+  // OTURUM DÜŞTÜĞÜNDE (401) UYGULAMAYI GERÇEKTEN ÇIKIŞ DURUMUNA AL.
+  // Yaşanan hata: sunucudaki oturum geçersizleşince (backend yeniden başlaması, süre dolması)
+  // arayüz hâlâ "giriş yapılmış" gibi davranıyordu. Kullanıcı araç eklemeye çalışıyor,
+  // "Oturumunuz sona ermiş" uyarısını alıyor, ama giriş ekranı da açılmadığı için yapabileceği
+  // hiçbir şey yoktu. Artık kimlik temizleniyor ve giriş kapısı açılıyor.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setMyOwnerId(null); setMyMechanicId(null);
+      setRole("owner");
+      setSessionVersion((v) => v + 1);
+      setToast({ type: "info", text: "🔒 Oturumunuz sona erdi, lütfen tekrar giriş yapın." });
+      openAuthGate(t("authGateReasonExpired"));
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [t]);
 
   // Arka planda backend'e kalıcı hale getirme yardımcı fonksiyonu: yerel state güncellemesi
   // senkron/anında kalsın diye (mevcut UX bozulmasın), API çağrısı ARKA PLANDA yapılır.

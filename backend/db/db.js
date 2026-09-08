@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import bcrypt from "bcryptjs";
-import { looksHashed } from "../utils/auth.js";
+import { looksHashed } from "../utils/passwordFormat.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = process.env.FIXPERTO_DB_PATH || path.join(__dirname, "fixperto.sqlite");
