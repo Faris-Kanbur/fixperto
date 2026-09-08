@@ -51,6 +51,58 @@ import {
 
 // AppShell: eskiden App.jsx'in return(...) bloğuydu. Tüm state/handler'lar
 // artık useApp() üzerinden context'ten geliyor; JSX ve görünüm AYNI.
+/**
+ * GERÇEK HATA DÜZELTMESİ — yardımcı bileşenler MODÜL DÜZEYİNDE tanımlı olmalı.
+ * Bunlar eskiden ana bileşenin İÇİNDE tanımlıydı. Her render'da yeni bir fonksiyon üretiliyordu;
+ * React bunu "başka bir bileşen türü" sayıp altındaki tüm ağacı SÖKÜP YENİDEN KURUYORDU.
+ * Görünen sonuç: randevu ekranında gün ya da saat seçince sayfa en üste zıplıyordu (DOM baştan
+ * kurulunca kaydırma konumu ve odak sıfırlanır), takvimin kendi durumu da her seferinde
+ * sıfırlanıyordu. Tanım dışarı alınınca bileşen türü sabit kalıyor ve React yalnızca değişen
+ * kısmı güncelliyor.
+ */
+const SectionCard = ({ step, icon: Icon, title, hint = null, children }) => (
+  <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+    <div className="flex items-start gap-3 mb-4">
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold ${step.done ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+        {step.done ? <Check size={16} /> : step.n}
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-bold text-gray-900 text-base flex items-center gap-2 whitespace-nowrap"><Icon size={16} className="text-rose-500 flex-shrink-0" /> {title}</h3>
+        {hint && <p className="text-xs text-gray-400 mt-1 leading-relaxed">{hint}</p>}
+      </div>
+    </div>
+    {children}
+  </div>
+);
+
+const StatCard = ({ label, value, hint = null }) => (
+  <div className="bg-white border border-gray-200 rounded-2xl p-4">
+    <p className="text-[11px] text-gray-400 mb-1">{label}</p>
+    <p className="text-2xl font-bold text-gray-900 leading-none">{Number(value || 0).toLocaleString("tr-TR")}</p>
+    {hint && <p className="text-[11px] text-gray-400 mt-1">{hint}</p>}
+  </div>
+);
+const BreakdownList = ({ title, rows, icon: Icon }) => (
+  <div className="bg-white border border-gray-200 rounded-2xl p-4">
+    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Icon size={14} className="text-rose-500" /> {title}</h3>
+    {(!rows || rows.length === 0) ? <p className="text-xs text-gray-400">Veri yok</p> : (
+      <div className="space-y-1.5">
+        {rows.slice(0, 6).map(r => {
+          const max = Math.max(1, ...rows.map(x => x.visitors ?? x.n));
+          const val = r.visitors ?? r.n;
+          return (
+            <div key={r.label} className="flex items-center gap-2">
+              <span className="text-xs text-gray-600 w-28 truncate" title={r.label}>{r.label}</span>
+              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.round((val / max) * 100)}%` }} /></div>
+              <span className="text-xs font-semibold text-gray-700 w-10 text-right">{val}</span>
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+);
+
 export function AppShell() {
   const {
     lang, setLang, t, screen, setScreen, role, setRole, showPass,
@@ -957,33 +1009,6 @@ export function AppShell() {
                       const funnelLabels = { visit: "Siteyi ziyaret etti", search: "Arama yaptı", view: "Profil/ilan görüntüledi", contact: "İletişime geçti", appointment: "Randevu aldı" };
                       const top = o.funnel?.[0]?.count || 0;
                       const maxSeries = Math.max(1, ...(a.series || []).map(d => d.visitors));
-                      const StatCard = ({ label, value, hint = null }) => (
-                        <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                          <p className="text-[11px] text-gray-400 mb-1">{label}</p>
-                          <p className="text-2xl font-bold text-gray-900 leading-none">{Number(value || 0).toLocaleString("tr-TR")}</p>
-                          {hint && <p className="text-[11px] text-gray-400 mt-1">{hint}</p>}
-                        </div>
-                      );
-                      const BreakdownList = ({ title, rows, icon: Icon }) => (
-                        <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Icon size={14} className="text-rose-500" /> {title}</h3>
-                          {(!rows || rows.length === 0) ? <p className="text-xs text-gray-400">Veri yok</p> : (
-                            <div className="space-y-1.5">
-                              {rows.slice(0, 6).map(r => {
-                                const max = Math.max(1, ...rows.map(x => x.visitors ?? x.n));
-                                const val = r.visitors ?? r.n;
-                                return (
-                                  <div key={r.label} className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-600 w-28 truncate" title={r.label}>{r.label}</span>
-                                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.round((val / max) * 100)}%` }} /></div>
-                                    <span className="text-xs font-semibold text-gray-700 w-10 text-right">{val}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
                       return (
                         <div className="mb-8 space-y-4">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -2558,20 +2583,6 @@ export function AppShell() {
             && (!bookingService.fixed || bookingService.other
                 || parsePriceNumber(bookingService.price) <= EXPENSIVE_SERVICE_THRESHOLD || approveExpensiveService);
 
-          const SectionCard = ({ step, icon: Icon, title, hint = null, children }) => (
-            <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
-              <div className="flex items-start gap-3 mb-4">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold ${step.done ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
-                  {step.done ? <Check size={16} /> : step.n}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-gray-900 text-base flex items-center gap-2 whitespace-nowrap"><Icon size={16} className="text-rose-500 flex-shrink-0" /> {title}</h3>
-                  {hint && <p className="text-xs text-gray-400 mt-1 leading-relaxed">{hint}</p>}
-                </div>
-              </div>
-              {children}
-            </div>
-          );
 
           return (
           <div className="w-full bg-gray-50 min-h-screen">

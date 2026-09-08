@@ -140,7 +140,10 @@ export function BlogPostPage() {
   // düzeltme yapan ustaları görüyor.
   const svc = blogPost?.relatedServiceKey ? SERVICE_BY_KEY[blogPost.relatedServiceKey] : null;
   const svcLabel = svc ? (svc[lang] || svc.tr) : null;
-  const ServiceCta = ({ compact = false }) => {
+  // BİLEŞEN DEĞİL, JSX döndüren düz bir fonksiyon. Bileşen olarak tanımlansaydı her render'da
+  // yeni bir tür üretir ve React alttaki ağacı söküp yeniden kurardı (bkz. AppShell'deki
+  // aynı düzeltme). Kapanıştan svc/blogPost okuduğu için modül düzeyine de taşınamıyor.
+  const serviceCta = (compact = false) => {
     if (!svc) return null;
     return (
       <div className={`bg-rose-50 border border-rose-100 rounded-2xl ${compact ? "p-4" : "p-5 md:p-6"} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
@@ -215,10 +218,10 @@ export function BlogPostPage() {
               <p className="text-base text-gray-600 leading-relaxed mb-6 font-medium">{blogPost.excerpt}</p>
               {/* Üstteki kart: okuyucu yazının tamamını okumadan da aradığı ustaya ulaşabilsin.
                   Arama sonucundan gelen çoğu ziyaretçi zaten cevabı biliyor, sadece usta arıyor. */}
-              <div className="mb-8"><ServiceCta compact /></div>
+              <div className="mb-8">{serviceCta(true)}</div>
               {renderBody(blogPost.body)}
               {/* Alttaki kart: yazıyı sonuna kadar okuyan için — asıl dönüşüm burada oluyor. */}
-              <div className="mt-8"><ServiceCta /></div>
+              <div className="mt-8">{serviceCta()}</div>
             </article>
 
             {!svc && <div className="mt-6 bg-white border border-gray-100 rounded-3xl shadow-sm p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

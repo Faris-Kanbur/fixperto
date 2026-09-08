@@ -19,6 +19,15 @@ import {
 // ÖNEMLİ: buradaki her sayı/kart GERÇEK veriden geliyor (mechanicsList, listings, adminStats) —
 // sahte/dummy içerik yok. Arama alanları da uygulamanın gerçek arama state'ini (query /
 // locationQuery / serviceQuery) besliyor, "Ara" denince kullanıcı doğrudan sonuç ekranına düşüyor.
+/**
+ * Modül düzeyinde tanımlı — bkz. AppShell.tsx'teki aynı düzeltmenin gerekçesi: bileşeni ana
+ * bileşenin içinde tanımlamak, her render'da yeni bir tür üretip alttaki ağacı söküp yeniden
+ * kurmaya yol açıyor (kaydırma konumu, odak ve alt bileşen durumu kayboluyor).
+ */
+const SectionLabel = ({ icon: Icon, children }) => (
+  <p className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide uppercase text-rose-600 bg-rose-50 px-3 py-1.5 rounded-full mb-3"><Icon size={12} /> {children}</p>
+);
+
 export function LandingHome() {
   const {
     t, mechanicsList, listings, jobListings, adminStats, isAuthed, openAuthGate,
@@ -63,9 +72,6 @@ export function LandingHome() {
   const searchService = (name) => { setServiceQuery(name); goToBrowse("mechanics"); };
   const searchCity = (city) => { setLocationQuery(city); goToBrowse("mechanics"); };
 
-  const SectionLabel = ({ icon: Icon, children }) => (
-    <p className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide uppercase text-rose-600 bg-rose-50 px-3 py-1.5 rounded-full mb-3"><Icon size={12} /> {children}</p>
-  );
 
   return (
     <div className="flex-1 flex flex-col bg-white">

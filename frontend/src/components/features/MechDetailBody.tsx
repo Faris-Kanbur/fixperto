@@ -12,6 +12,24 @@ import { BANNER_PRESETS, MY_MECHANIC_ID, LANG_LABELS } from "../../data/constant
 import { formatHoursText, isImgUrl, imgThumb, imgFallbackHandler, formatDistanceKm, brandPriceFor } from "../../utils/helpers";
 import { REVIEW_TIME_LABELS_BY_LANG } from "../../data/i18n";
 
+/**
+ * Modül düzeyinde tanımlı — bkz. AppShell.tsx'teki aynı düzeltmenin gerekçesi: bileşeni ana
+ * bileşenin içinde tanımlamak, her render'da yeni bir tür üretip alttaki ağacı söküp yeniden
+ * kurmaya yol açıyor (kaydırma konumu, odak ve alt bileşen durumu kayboluyor).
+ */
+const Section = ({ id, icon: Icon, title, count = null, action = null, children }) => (
+  <section id={id} className="scroll-mt-24">
+    <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+      <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2">
+        <span className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-rose-600" /></span>
+        {title}{count != null && <span className="text-gray-300 font-normal text-sm">({count})</span>}
+      </h2>
+      {action}
+    </div>
+    {children}
+  </section>
+);
+
 export function MechDetailBody() {
   const [coverBroken, setCoverBroken] = useState(false);
   // "Tümünü Gör" — çoklu teklif modaline benzer, tam ekran yorum listesi. Sadece bu bileşene
@@ -184,18 +202,6 @@ export function MechDetailBody() {
   ].filter(Boolean);
 
   // Bölüm başlığı — tüm bölümlerde aynı tipografi/aralık kullanılsın diye tek yerde tanımlı.
-  const Section = ({ id, icon: Icon, title, count = null, action = null, children }) => (
-    <section id={id} className="scroll-mt-24">
-      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-        <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2">
-          <span className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-rose-600" /></span>
-          {title}{count != null && <span className="text-gray-300 font-normal text-sm">({count})</span>}
-        </h2>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
 
   const bookingCard = (
     <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-lg shadow-gray-100">

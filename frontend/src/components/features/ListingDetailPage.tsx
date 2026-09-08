@@ -33,6 +33,32 @@ import { PageTopBar } from "./BrandMark";
  *   Verkäufer           → Satıcı kartı (sağda yapışkan)
  * Finansman/leasing/sigorta bölümleri bilinçli olarak alınmadı — Fixperto bir kredi aracısı değil.
  */
+/**
+ * Modül düzeyinde tanımlı — bkz. AppShell.tsx'teki aynı düzeltmenin gerekçesi: bileşeni ana
+ * bileşenin içinde tanımlamak, her render'da yeni bir tür üretip alttaki ağacı söküp yeniden
+ * kurmaya yol açıyor (kaydırma konumu, odak ve alt bileşen durumu kayboluyor).
+ */
+const Section = ({ id, icon: Icon, title, children }) => (
+  <section id={id} className="scroll-mt-24">
+    <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+      <span className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-rose-600" /></span>
+      {title}
+    </h2>
+    {children}
+  </section>
+);
+
+const SpecTable = ({ items }) => (
+  <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden grid grid-cols-1 sm:grid-cols-2">
+    {items.map((r, i) => (
+      <div key={r.label} className={`flex items-center justify-between gap-3 px-4 py-3 text-sm border-gray-100 ${i % 2 === 0 ? "sm:border-r" : ""} ${i < items.length - (items.length % 2 === 0 ? 2 : 1) ? "border-b" : "border-b sm:border-b-0"}`}>
+        <span className="text-gray-500">{r.label}</span>
+        <span className="font-semibold text-gray-900 text-right">{r.value}</span>
+      </div>
+    ))}
+  </div>
+);
+
 export function ListingDetailPage() {
   const [photoIdx, setPhotoIdx] = useState(0);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
@@ -124,28 +150,9 @@ export function ListingDetailPage() {
     { icon: Users, label: t("sellerTypeLabel"), value: l.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner") },
   ];
 
-  const Section = ({ id, icon: Icon, title, children }) => (
-    <section id={id} className="scroll-mt-24">
-      <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-        <span className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-rose-600" /></span>
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
 
   // Teknik tabloları iki sütunlu, zebra çizgili bir "künye" olarak basar — AutoScout24'ün
   // Basisdaten/Technische Daten bloklarındaki okuma deseni.
-  const SpecTable = ({ items }) => (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden grid grid-cols-1 sm:grid-cols-2">
-      {items.map((r, i) => (
-        <div key={r.label} className={`flex items-center justify-between gap-3 px-4 py-3 text-sm border-gray-100 ${i % 2 === 0 ? "sm:border-r" : ""} ${i < items.length - (items.length % 2 === 0 ? 2 : 1) ? "border-b" : "border-b sm:border-b-0"}`}>
-          <span className="text-gray-500">{r.label}</span>
-          <span className="font-semibold text-gray-900 text-right">{r.value}</span>
-        </div>
-      ))}
-    </div>
-  );
 
   const sellerCard = (
     <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-lg shadow-gray-100">

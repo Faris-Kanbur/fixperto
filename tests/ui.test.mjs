@@ -156,4 +156,24 @@ for (const f of files) {
 }
 eq(freeBrandInputs, [], "araç markası serbest metin değil, BrandSelect listesinden seçilmeli");
 
+// --- KURAL 8: bileşen, başka bir bileşenin İÇİNDE tanımlanmamalı -------------------------------
+// Yaşanan hata (kullanıcı bildirdi): randevu ekranında gün ya da saat seçince sayfa en üste
+// zıplıyordu. Sebep tasarım değil, React'in uzlaştırma kuralıydı: yardımcı bileşen (SectionCard)
+// ana bileşenin içinde tanımlıydı, yani her render'da YENİ bir fonksiyon oluyordu. React yeni
+// fonksiyonu "başka bir bileşen türü" sayar ve altındaki tüm ağacı söküp yeniden kurar —
+// kaydırma konumu, odak ve alt bileşenlerin kendi durumu (takvimin görünen haftası gibi) gider.
+// Girintili bir satırda büyük harfle başlayan bileşen tanımı = modül düzeyinde değil.
+const nestedComponents = [];
+for (const f of files) {
+  f.lines.forEach((line, i) => {
+    if (isComment(line)) return;
+    // Girinti var (modül düzeyinde değil) + Büyük harfle başlıyor + JSX döndüren ok fonksiyonu
+    if (/^\s+const [A-Z][A-Za-z0-9]* = \(\{[^}]*\}\)\s*(:[^=]*)?=>\s*\(?$/.test(line)
+        || /^\s+const [A-Z][A-Za-z0-9]* = \(\{[^}]*\}\)\s*=>\s*\(\s*$/.test(line)) {
+      nestedComponents.push(`${f.rel}:${i + 1}`);
+    }
+  });
+}
+eq(nestedComponents, [], "bileşenler modül düzeyinde tanımlanmalı (iç tanım = her render'da yeniden kurulan ağaç)");
+
 report("ui");

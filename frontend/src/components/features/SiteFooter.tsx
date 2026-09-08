@@ -22,6 +22,22 @@ import { LangSwitch } from "./LangSwitch";
  * ileride sunucu tarafı render ya da ön-render gerekir. Backend'e sitemap.xml ve robots.txt
  * eklendi (bkz. backend/server.js) — bu, o adım atılana kadarki en faydalı parça.
  */
+/**
+ * Modül düzeyinde tanımlı — bkz. AppShell.tsx'teki aynı düzeltmenin gerekçesi: bileşeni ana
+ * bileşenin içinde tanımlamak, her render'da yeni bir tür üretip alttaki ağacı söküp yeniden
+ * kurmaya yol açıyor (kaydırma konumu, odak ve alt bileşen durumu kayboluyor).
+ */
+const Col = ({ title, icon: Icon, children }) => (
+  <div>
+    <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><Icon size={15} className="text-rose-500" /> {title}</h3>
+    <ul className="space-y-2">{children}</ul>
+  </div>
+);
+
+const Item = ({ onClick, children }) => (
+  <li><button onClick={onClick} className="text-sm text-gray-500 hover:text-rose-600 transition text-left">{children}</button></li>
+);
+
 export function SiteFooter() {
   const {
     t, lang, setScreen, goToBrowse, setLocationQuery, setServiceQuery, setQuery,
@@ -42,15 +58,6 @@ export function SiteFooter() {
   const searchCity = (c) => { setLocationQuery(cityLabel(c)); setServiceQuery(""); setQuery(""); goToBrowse("mechanics"); };
   const searchService = (s) => { setServiceQuery(s[lang] || s.tr); setLocationQuery(""); setQuery(""); goToBrowse("mechanics"); };
 
-  const Col = ({ title, icon: Icon, children }) => (
-    <div>
-      <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><Icon size={15} className="text-rose-500" /> {title}</h3>
-      <ul className="space-y-2">{children}</ul>
-    </div>
-  );
-  const Item = ({ onClick, children }) => (
-    <li><button onClick={onClick} className="text-sm text-gray-500 hover:text-rose-600 transition text-left">{children}</button></li>
-  );
 
   return (
     <footer className="w-full bg-white border-t border-gray-100 mt-12">
