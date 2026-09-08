@@ -15,9 +15,14 @@ import { ONBOARDING_SLIDES } from "../../data/constants";
  * "Fixperto nedir" sorusunun cevabı olarak sabit durur, SAĞ taraf adım adım değişir. Böylece
  * kullanıcı hangi adımda olursa olsun markayı ve vaadi görmeye devam ediyor.
  *
- * Arka plan bilerek daha ŞEFFAF (bg-gray-950/55 + hafif bulanıklık): tamamen karartmak, altta
- * duran sitenin varlığını siliyordu; hafif şeffaflık "bunun arkasında gerçek bir site var"
- * hissini koruyor ve pencere daha hafif görünüyor.
+ * ARKA PLAN: koyu bir perde değil, ŞEFFAF + BULANIK bir katman (bg-gray-900/25 + backdrop-blur-md).
+ * Amaç kullanıcının arkasındaki gerçek sayfayı seçebilmesi — "bu pencerenin arkasında beni
+ * bekleyen bir site var" hissi. Düz koyu perde bunu siliyor ve tanıtımı ağırlaştırıyordu.
+ *
+ * ÖNEMLİ EŞLİK EDEN DÜZELTME (AppShell): bu bulanıklığın bir anlamı olması için ARKADAKİ EKRANIN
+ * GERÇEKTEN RENDER EDİLMESİ gerekiyor. Eskiden ana ekranlar `&& !onboardingVisible` ile tur
+ * açıkken hiç çizilmiyordu; bulanıklaştırılacak bir şey olmadığı için arka plan boş gri
+ * görünüyordu. O koşul kaldırıldı.
  *
  * Ayrıca ESKİDE OLMAYAN İKİ ŞEY: geri adım (yanlışlıkla ileri basan geri dönebilsin) ve Escape
  * ile kapatma. Bir tanıtım penceresi kullanıcıyı hapsetmemeli.
@@ -45,7 +50,7 @@ export function WelcomeTour() {
 
   return (
     <div
-      className="fixed inset-0 w-screen h-screen bg-gray-950/55 backdrop-blur-[3px] z-[200] flex items-center justify-center p-4 md:p-6 overflow-y-auto"
+      className="fixed inset-0 w-screen h-screen bg-gray-900/25 backdrop-blur-md z-[200] flex items-center justify-center p-4 md:p-6 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label={t("onboardWelcomeTitle")}

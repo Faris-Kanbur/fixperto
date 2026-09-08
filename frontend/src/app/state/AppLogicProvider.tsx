@@ -429,9 +429,15 @@ function useAppLogic() {
   const [warrantyDaysForm, setWarrantyDaysForm] = useState("");
   const [replyingReviewId, setReplyingReviewId] = useState(null);
   const [replyDraft, setReplyDraft] = useState("");
-  // Onboarding sadece ilk kayıt (signup) sırasında bir kereliğine gösterilir — normal girişte (login) tekrar açılmaz.
-  // Gösterildiğinde, kullanıcı giriş/kayıt yaptıktan sonra kendi ana ekranında (araç sahibi "owner" ya da tamirci "mechanicDashboard") modal olarak açılır.
-  const onboardingVisible = showOnboarding && (screen === "owner" || screen === "mechanicDashboard");
+  // Onboarding sadece ilk kayıt (signup) sırasında bir kereliğine gösterilir — normal girişte
+  // (login) tekrar açılmaz.
+  //
+  // GERÇEK HATA DÜZELTMESİ (kullanıcı bildirdi): burada eskiden ekran koşulu vardı
+  // (`screen === "owner" || screen === "mechanicDashboard"`). Tamirci olarak kayıt olan kullanıcı,
+  // kayıt akışı onu tamirci arama ekranına (mechBrowse) bıraktığı için turu HİÇ görmüyordu; tur
+  // ancak günler sonra panele girdiğinde karşısına çıkıyordu. Karşılama turu kayıt anında
+  // görünmeli; hangi ekranda olduğu turun görünürlüğünü belirlememeli.
+  const onboardingVisible = showOnboarding;
   // Onboarding modalı açıkken arka planın (ev ekranının) kaymasını/kaydırılmasını engelle —
   // aksi halde yarı saydam arka plan üzerinden arkadaki içerik kayarken görünüp karışık/bozuk görünüyordu.
   useEffect(() => {
@@ -2780,7 +2786,14 @@ function useAppLogic() {
         setScreen(user.role === "owner" ? "owner" : "mechanicDashboard");
         if (user.role === "owner") setOwnerTab("search");
       }
-      if (pendingOnboarding) { setOnboardStep(0); setShowOnboarding(true); setPendingOnboarding(false); }
+      if (pendingOnboarding) {
+        // Kayıt sonrası kullanıcı KENDİ ANA EKRANINDA başlamalı: turu kapattığında arkasında
+        // anlamlı bir sayfa bulsun. Yukarıdaki auth-gate dalı tamirciyi arama ekranına
+        // yönlendiriyor; bu yeni kayıt için doğru değil, o yüzden burada eziyoruz.
+        setScreen(user.role === "owner" ? "owner" : "mechanicDashboard");
+        if (user.role === "owner") setOwnerTab("search");
+        setOnboardStep(0); setShowOnboarding(true); setPendingOnboarding(false);
+      }
       // Bildirimler varsayılan olarak açık sayılsın diye: tarayıcı henüz sorulmadıysa girişte hemen soruyoruz.
       if (typeof Notification !== "undefined" && Notification.permission === "default") { requestNotifPermission(); }
     } catch (err) {

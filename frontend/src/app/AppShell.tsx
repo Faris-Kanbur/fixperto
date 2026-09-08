@@ -1561,7 +1561,10 @@ export function AppShell() {
         {screen === "blog" && <BlogListPage />}
         {screen === "blogPost" && <BlogPostPage />}
         {screen === "about" && <AboutPage />}
-        {screen === "owner" && !onboardingVisible && (
+        {/* NOT: burada eskiden `&& !onboardingVisible` vardı — karşılama turu açıkken ana ekran
+            hiç render edilmiyordu, bu yüzden turun arkası boş gri görünüyordu. Artık sayfa
+            duruyor; tur onun üstünde bulanık bir katmanla açılıyor. */}
+        {screen === "owner" && (
           <>
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-3 max-w-7xl mx-auto w-full relative md:hidden">
@@ -2813,7 +2816,7 @@ export function AppShell() {
             <BrowseHome />
           </>
         )}
-        {screen === "mechanicDashboard" && !onboardingVisible && (
+        {screen === "mechanicDashboard" && (
           <div className="w-full bg-gray-50 min-h-screen">
             {/* NOT — GERÇEK HATA DÜZELTMESİ: burası eskiden `flex flex-col` idi. Flex kapsayıcının
                 DOĞRUDAN çocuğuna `mx-auto` verildiğinde (max-w-7xl mx-auto) öğe stretch'i bırakıp

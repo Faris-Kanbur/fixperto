@@ -4,7 +4,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { eq, report } from "./_harness.mjs";
+import { eq, ok, report } from "./_harness.mjs";
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "frontend", "src");
 const walk = (d) => readdirSync(d).flatMap(f => {
@@ -175,5 +175,22 @@ for (const f of files) {
   });
 }
 eq(nestedComponents, [], "bileşenler modül düzeyinde tanımlanmalı (iç tanım = her render'da yeniden kurulan ağaç)");
+
+// --- KURAL 9: karşılama turu ekrana bağlanmamalı, arkasındaki sayfa gizlenmemeli --------------
+// Yaşanan iki hata (kullanıcı bildirdi):
+//  1) Turun görünürlüğü ekran adına bağlıydı. Tamirci olarak kayıt olan kullanıcı arama ekranına
+//     bırakıldığı için turu hiç görmüyor, tur ancak panele girdiğinde karşısına çıkıyordu.
+//  2) Tur açıkken ana ekranlar hiç render edilmiyordu; bulanıklaştırılacak bir şey olmadığı için
+//     turun arkası boş gri görünüyordu.
+const providerFile = files.find((f) => f.rel.endsWith("AppLogicProvider.tsx"));
+const shellFile = files.find((f) => f.rel.endsWith("AppShell.tsx"));
+const providerText = providerFile.lines.join("\n");
+const shellText = shellFile.lines.join("\n");
+const onboardLine = providerText.split("\n").find((l) => l.includes("const onboardingVisible ="));
+eq(/screen ===/.test(onboardLine || ""), false, "tur görünürlüğü ekran adına bağlı değil");
+eq(/&& !onboardingVisible &&/.test(shellText), false, "tur açıkken arkadaki ekran gizlenmiyor (bulanıklık için gerekli)");
+// Kayıt sonrası kendi ana ekranına gitmeli — tur kapanınca anlamlı bir sayfa bulsun.
+const onboardBlock = providerText.slice(providerText.indexOf("if (pendingOnboarding)"), providerText.indexOf("if (pendingOnboarding)") + 500);
+ok(/setScreen\(user\.role === "owner" \? "owner" : "mechanicDashboard"\)/.test(onboardBlock), "kayıt sonrası rolün ana ekranına gidiliyor");
 
 report("ui");
