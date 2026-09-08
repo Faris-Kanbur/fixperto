@@ -4422,6 +4422,21 @@ function useAppLogic() {
     // görmeli, uzun bir sayfada aşağıdan yukarı süzülmeyi izlemek zorunda kalmamalı.
     try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); }
     catch { window.scrollTo(0, 0); }
+    // İKİNCİ HATA (ilk düzeltme tek başına yetmiyordu): bazı ekranlar pencereyi değil, KENDİ
+    // iç kapsayıcılarını kaydırıyor (`flex-1 overflow-y-auto`). Bu ekranlarda window.scrollTo
+    // hiçbir şey yapmıyor ve sayfa yine ortasından açılıyordu. Kaydırılmış durumdaki tüm iç
+    // kapsayıcıları da sıfırlıyoruz — sadece scrollTop > 0 olanlara dokunuluyor, gereksiz
+    // düzen hesabı tetiklenmesin diye.
+    // requestAnimationFrame: React DOM'u yeni ekranla değiştirdikten SONRA çalışsın; aynı karede
+    // sıfırlarsak eski ekranın kapsayıcısını sıfırlamış oluruz, yenisi kaydırılmış kalır.
+    const reset = () => {
+      document.querySelectorAll(".overflow-y-auto").forEach((el) => {
+        if (el instanceof HTMLElement && el.scrollTop > 0) el.scrollTop = 0;
+      });
+    };
+    reset();
+    const raf = requestAnimationFrame(reset);
+    return () => cancelAnimationFrame(raf);
   }, [screen, selectedMechanicId, listingPageId, blogSlug, ownerTab, mechTab, ownerProfileTab, mechProfileTab, ownerSettingsTab]);
 
   const navSnapshot = {

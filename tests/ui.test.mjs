@@ -101,4 +101,41 @@ for (const b of blocks) {
 }
 eq([...new Set(trapped)], [], "iki sütunlu düzen kullanan ekranlar tam genişlikte olmalı (lg: viewport'a bakar)");
 
+// --- KURAL 6: her kullanıcı ekranında logo bulunmalı ------------------------------------------
+// Logo web'de kullanıcının en güvendiği kaçış yolu: "kaybolduysam logoya basar, başa dönerim".
+// Bu kural olmadan yeni bir ekran eklendiğinde logo eklemeyi unutmak çok kolay — nitekim ilk
+// turda 8 ekranda eksik kalmıştı. Yönetici ekranları kapsam dışı (ayrı bir uygulama bölümü).
+const screenBlocks = [];
+{
+  const re2 = /\{screen === "(\w+)" &&|\{\(screen === "(\w+)" \|\| screen === "(\w+)"\)/g;
+  // `{(screen === "login" || screen === "signup") &&` biçiminde İKİ ekran AYNI bloğu paylaşıyor;
+  // ikisini de aynı gövdeye bağlamazsak ikincisi "logosuz" görünür (yanlış alarm).
+  let mm, prev2 = null;
+  while ((mm = re2.exec(shell)) !== null) {
+    const names = mm[1] ? [mm[1]] : [mm[2], mm[3]].filter(Boolean);
+    if (prev2) for (const n of prev2.names) screenBlocks.push({ name: n, body: shell.slice(prev2.idx, mm.index) });
+    prev2 = { names, idx: mm.index };
+  }
+  if (prev2) for (const n of prev2.names) screenBlocks.push({ name: n, body: shell.slice(prev2.idx) });
+}
+// Alt bileşene devreden ekranlar: logo o bileşende aranıyor.
+const DELEGATES = { LandingHome: "LandingHome.tsx", ListingDetailPage: "ListingDetailPage.tsx", BlogListPage: "BlogPages.tsx", BlogPostPage: "BlogPages.tsx", AboutPage: "BlogPages.tsx" };
+const hasBrand = (text) => /BrandMark|PageTopBar|Fix<span/.test(text);
+const componentSrc = {};
+for (const f of files) componentSrc[f.rel.split("/").pop()] = f.lines.join("\n");
+const noLogo = [];
+const seenScreens = new Set();
+for (const b of screenBlocks) {
+  if (seenScreens.has(b.name) || b.name.startsWith("admin")) continue;
+  seenScreens.add(b.name);
+  let ok2 = hasBrand(b.body);
+  if (!ok2) {
+    for (const [comp, file] of Object.entries(DELEGATES)) {
+      if (b.body.includes(`<${comp}`) && hasBrand(componentSrc[file] || "")) { ok2 = true; break; }
+    }
+  }
+  if (!ok2) noLogo.push(b.name);
+}
+eq(noLogo, [], "her kullanıcı ekranında Fixperto logosu bulunmalı (ana sayfaya dönüş yolu)");
+
 report("ui");

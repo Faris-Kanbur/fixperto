@@ -526,7 +526,10 @@ export function AppShell() {
             hâlâ çalışıyor; ikisi aynı anda açılmasın diye openListingPage modali kapatıyor. */}
         {screen === "listingDetail" && <ListingDetailPage />}
         {(screen === "login" || screen === "signup") && (
-          <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
+          <div className="flex-1 flex flex-col w-full">
+            {/* Giriş/kayıt ekranlarında logo standarttır: kullanıcı vazgeçip siteye dönebilmeli. */}
+            <div className="max-w-md mx-auto w-full px-5 pt-5"><BrandMark /></div>
+            <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
               <div className="mb-4"><button onClick={goHome} className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button></div>
               <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Wrench size={28} className="text-rose-600" /></div><h1 className="text-2xl font-bold tracking-tight text-gray-900">{t("appName")}</h1><p className="text-xs text-gray-500 -mt-1">{role === "mechanic" ? t("mechanicRole") : t("ownerRole")}</p></div>
@@ -549,9 +552,12 @@ export function AppShell() {
               <button disabled={authLoading} onClick={screen === "login" ? submitLogin : submitRegister} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm mt-6 transition ${roleBtn} ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : (screen === "login" ? t("login") : t("signup"))}</button>
             </div>
           </div>
+          </div>
         )}
         {screen === "loginOtp" && (
           <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
+            {/* Logo: kullanıcı doğrulama akışının ortasında sıkışmasın, siteye dönebilsin. */}
+            <div className="w-full px-5 pt-5"><BrandMark /></div>
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
               <div className="mb-4"><button onClick={cancelOtpVerify} className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button></div>
               <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Lock size={28} className="text-rose-600" /></div><h1 className="text-xl font-bold tracking-tight text-gray-900">{t("otpTitle")}</h1><p className="text-xs text-gray-500">{t("otpSubtitle")}</p></div>
@@ -569,6 +575,8 @@ export function AppShell() {
         )}
         {screen === "forgotPassword" && (
           <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
+            {/* Logo: kullanıcı doğrulama akışının ortasında sıkışmasın, siteye dönebilsin. */}
+            <div className="w-full px-5 pt-5"><BrandMark /></div>
             <div className="bg-white text-gray-900 px-5 pt-6 pb-6 border-b border-gray-200 shadow-sm">
               <button onClick={() => setScreen("login")} className="flex items-center gap-1 text-gray-500 mb-4 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
               <div className="flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center"><Lock size={22} className="text-rose-600" /></div><div><h1 className="text-lg font-bold text-gray-900">{t("forgotPasswordTitle")}</h1><p className="text-xs text-gray-500">{t("forgotPasswordSubtitle")}</p></div></div>
@@ -582,7 +590,10 @@ export function AppShell() {
           </div>
         )}
         {screen === "resetSent" && (
-          <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full px-6 py-10 text-center">
+          <div className="flex-1 flex flex-col w-full">
+            {/* Logo: kullanıcı doğrulama akışının ortasında sıkışmasın, siteye dönebilsin. */}
+            <div className="max-w-md mx-auto w-full px-5 pt-5"><BrandMark /></div>
+            <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full px-6 py-10 text-center">
             <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-4"><Mail size={36} className="text-rose-500" /></div>
             <h2 className="text-lg font-bold text-gray-800 mb-2">{t("checkYourEmailTitle")}</h2>
             <p className="text-sm text-gray-500 mb-1">{t("ifRegisteredNote", { email: forgotEmail })}</p>
@@ -590,6 +601,7 @@ export function AppShell() {
             <div className="bg-gray-100 rounded-xl p-3 text-xs text-gray-700 mb-6 flex items-start gap-2 text-left"><Bell size={14} className="flex-shrink-0 mt-0.5" /> {t("resetDemoNote")}</div>
             <button onClick={() => setScreen("login")} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2">{t("backToLoginBtn")}</button>
             <button onClick={() => setScreen("forgotPassword")} className="text-xs text-gray-400 hover:text-gray-600">{t("didntGetEmailBtn")}</button>
+          </div>
           </div>
         )}
         {screen === "adminLogin" && (
@@ -2485,7 +2497,10 @@ export function AppShell() {
           </div>
         </>); })()}
         {screen === "chat" && activeConvo && (
-          <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
+          <div className="w-full flex flex-col flex-1">
+            {/* Logo sohbette de var: kullanıcı yazışmanın ortasındayken ana sayfaya dönebilmeli. */}
+            <PageTopBar onBack={() => setScreen("owner")} />
+            <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
             <div className="bg-white text-gray-900 px-5 pt-6 pb-4 border-b border-gray-200 shadow-sm"><button onClick={() => setScreen("owner")} className="flex items-center gap-1 text-gray-500 mb-3 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button><div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="text-2xl bg-rose-50 rounded-xl w-11 h-11 flex items-center justify-center">{activeConvo.mechanicImg}</div><h1 className="text-base font-bold text-gray-900">{activeConvo.mechanicName}</h1></div><select value={ownerLang} onChange={(e) => setOwnerLang(e.target.value)} className="bg-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1 border-none outline-none"><option className="text-black" value="tr">🇹🇷 TR</option><option className="text-black" value="en">🇬🇧 EN</option><option className="text-black" value="de">🇩🇪 DE</option></select></div></div>
             <div className="flex-1 px-5 py-4 overflow-y-auto">{activeConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={ownerLang} mine={m.sender === "owner"} />))}</div>
             {activeConvo.messages.length > 0 && activeConvo.messages[activeConvo.messages.length - 1].isRejectionNotice ? (
@@ -2505,6 +2520,7 @@ export function AppShell() {
               }} className="w-full mb-3 bg-rose-50 text-rose-600 text-xs font-medium py-2 rounded-xl hover:bg-rose-100 transition flex items-center justify-center gap-1"><Calendar size={14} /> {t("bookWithThisMechanic")}</button></div>
               <div className="px-5 pb-6 pt-2 border-t border-gray-100 flex items-center gap-2"><input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition flex-shrink-0"><ImageIcon size={18} /></button><input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendOwnerMessageWithReply(chatInput); }} placeholder={t("chatInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" /><button onClick={() => sendOwnerMessageWithReply(chatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button></div>
             </>)}
+          </div>
           </div>
         )}
         {screen === "booking" && selectedMechanic && (() => {
@@ -2745,7 +2761,7 @@ export function AppShell() {
           </div>
           );
         })()}
-        {screen === "confirmed" && (<div className="max-w-md mx-auto w-full flex-1 px-5 py-10 flex flex-col items-center text-center"><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4"><Check size={40} className="text-green-500" /></div><h2 className="text-lg font-bold text-gray-800 mb-1">{autoAccept ? t("appointmentConfirmedTitle") : t("appointmentRequestSentTitle")}</h2><button onClick={() => { setScreen("owner"); setOwnerTab("appointments"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2 mt-4">{t("viewMyAppointmentBtn")}</button><button onClick={goHome} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button></div>)}
+        {screen === "confirmed" && (<div className="w-full flex-1 flex flex-col"><PageTopBar /><div className="max-w-md mx-auto w-full flex-1 px-5 py-10 flex flex-col items-center text-center"><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4"><Check size={40} className="text-green-500" /></div><h2 className="text-lg font-bold text-gray-800 mb-1">{autoAccept ? t("appointmentConfirmedTitle") : t("appointmentRequestSentTitle")}</h2><button onClick={() => { setScreen("owner"); setOwnerTab("appointments"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2 mt-4">{t("viewMyAppointmentBtn")}</button><button onClick={goHome} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button></div></div>)}
         {screen === "mechBrowse" && (
           <>
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">

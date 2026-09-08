@@ -14,6 +14,7 @@ import {
   BODY_TYPE_LABELS_BY_LANG, DRIVETRAIN_LABELS_BY_LANG,
 } from "../../data/constants";
 import { isImgUrl, imgThumb, imgFallbackHandler, listingStatusMeta, vocabLabel } from "../../utils/helpers";
+import { PageTopBar } from "./BrandMark";
 
 /**
  * TAM SAYFA ARAÇ İLANI — AutoScout24 / mobile.de / sahibinden.com ilan detay sayfalarının bölüm
@@ -208,7 +209,11 @@ export function ListingDetailPage() {
   );
 
   return (
-    <div className="w-full bg-gray-50 min-h-screen pb-24 lg:pb-8">
+    <>
+      {/* Logo bu sayfada da olsun: kullanıcı ilanın ortasındayken tek tıkla ana sayfaya
+          dönebilmeli. Geri oku ilan listesine, logo ana sayfaya götürüyor. */}
+      <PageTopBar onBack={closeListingPage} />
+      <div className="w-full bg-gray-50 min-h-screen pb-24 lg:pb-8">
       {/* ---- ÜST ÇUBUK ---- */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-5 md:px-8 py-3 flex items-center justify-between gap-3">
@@ -383,5 +388,6 @@ export function ListingDetailPage() {
         </div>
       )}
     </div>
+  </>
   );
 }

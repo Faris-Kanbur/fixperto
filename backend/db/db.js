@@ -508,6 +508,42 @@ try {
   `);
 } catch { /* sütun yoksa (çok eski şema) sessizce geç — ensureColumn zaten ekliyor */ }
 
+// BLOG İÇERİĞİ TAZELEME — tek seferlik.
+// GERÇEK SORUN: seed yalnızca tablo BOŞKEN çalışıyor (isEmpty). Blog daha önce 3 yazıyla
+// eklendiği için, sonradan yazılan 13 anahtar-kelime odaklı yazı, kapak görselleri ve
+// `relatedServiceKey` bağlantıları MEVCUT veritabanlarına hiç gelmiyordu — kullanıcı hâlâ eski
+// üç yazıyı görselsiz görüyordu. Burada tohum içeriğini slug üzerinden eşleştirip eksik
+// alanları tamamlıyor, olmayan yazıları ekliyoruz.
+// ELLE YAZILAN İÇERİĞE DOKUNULMUYOR: yalnızca slug'ı tohum listesinde olan satırlar
+// güncelleniyor ve yalnızca BOŞ olan alanlar dolduruluyor. Yönetici panelinden yazılmış ya da
+// düzenlenmiş bir yazı bu yüzden ezilmiyor.
+try {
+  const { BLOG_SEED_POSTS } = await import("./blogSeed.js");
+  const existing = new Map(db.prepare("SELECT id, slug, coverPhoto, relatedServiceKey FROM blog_posts").all().map((r) => [r.slug, r]));
+  const insert = db.prepare(`INSERT INTO blog_posts (slug,title,excerpt,body,coverPhoto,tags,author,lang,status,publishedAt,views,relatedServiceKey,createdAt)
+    VALUES (@slug,@title,@excerpt,@body,@coverPhoto,@tags,@author,@lang,@status,@publishedAt,0,@relatedServiceKey,@createdAt)`);
+  const patchCover = db.prepare("UPDATE blog_posts SET coverPhoto = ? WHERE id = ? AND (coverPhoto IS NULL OR coverPhoto = '')");
+  const patchService = db.prepare("UPDATE blog_posts SET relatedServiceKey = ? WHERE id = ? AND (relatedServiceKey IS NULL OR relatedServiceKey = '')");
+  const now = Date.now();
+  db.transaction(() => {
+    BLOG_SEED_POSTS.forEach((post, i) => {
+      const row = existing.get(post.slug);
+      const publishedAt = new Date(now - i * 86400000).toISOString();
+      if (!row) {
+        insert.run({
+          slug: post.slug, title: post.title, excerpt: post.excerpt, body: post.body,
+          coverPhoto: post.coverPhoto || null, tags: JSON.stringify(post.tags || []),
+          author: "Fixperto", lang: "tr", status: "published", publishedAt,
+          relatedServiceKey: post.relatedServiceKey || null, createdAt: publishedAt,
+        });
+        return;
+      }
+      if (post.coverPhoto) patchCover.run(post.coverPhoto, row.id);
+      if (post.relatedServiceKey) patchService.run(post.relatedServiceKey, row.id);
+    });
+  })();
+} catch { /* blogSeed yoksa ya da tablo eski şemadaysa sessizce geç — blog kritik değil */ }
+
 // Aynı sorunun METİN alanlarındaki hâli. Arayüzdeki arama/filtre kodu bu alanlara doğrudan
 // .toLowerCase() uyguluyordu; kayıt sırasında doldurulmayan (NULL kalan) tek bir alan
 // "Cannot read properties of null (reading 'toLowerCase')" ile tamirci/araç/ilan aramalarının
