@@ -1,4 +1,4 @@
-import { DAY_KEYS, DAY_LABELS, DAY_LABELS_BY_LANG, CLOSED_LABEL_BY_LANG, APPT_STATUS_LABELS_BY_LANG, TODAY, LEGAL_TIRE_RULES, DICT_TR_EN, DICT_EN_TR, ADMIN_SLA_DAYS, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS, PRICE_LEVEL_BREAKS, TR_ASCII_MAP } from "../data/constants.js";
+import { DAY_KEYS, DAY_LABELS, DAY_LABELS_BY_LANG, CLOSED_LABEL_BY_LANG, APPT_STATUS_LABELS_BY_LANG, TODAY, LEGAL_TIRE_RULES, DICT_TR_EN, DICT_EN_TR, ADMIN_SLA_DAYS, FIXED_PRICE_KEYWORDS, VARIABLE_PRICE_KEYWORDS, PRICE_LEVEL_BREAKS, TR_ASCII_MAP, CAR_BRANDS } from "../data/constants.js";
 
 // `t` opsiyonel: verilmezse (eski çağrılar) geriye dönük uyumluluk için sabit Türkçe metin döner.
 export function jobStatusMeta(status, t) {
@@ -476,6 +476,34 @@ export function ticketSlaBreached(tk) {
 // Türkçe'ye özgü i/İ dönüşümü için toLocaleLowerCase("tr-TR") kullanılıyor: "İSTANBUL" → "istanbul".
 export function lc(value) {
   return String(value ?? "").toLocaleLowerCase("tr-TR");
+}
+
+/** Serbest yazılmış markayı listedeki resmi yazımına çevirir ("bmw " → "BMW"). Listede yoksa aynen döner. */
+export function canonicalBrand(value) {
+  const v = String(value ?? "").trim();
+  if (!v) return "";
+  return CAR_BRANDS.find((b) => lc(b) === lc(v)) || v;
+}
+
+/**
+ * Bir hizmetin BELİRLİ BİR MARKA için girilmiş fiyatını döndürür; yoksa null.
+ *
+ * Neden düz `s.brandPrices[brand]` yetmiyor: eşleşme metin eşitliğine dayanıyor. Marka seçimi
+ * listeye çekilmeden önce kaydedilmiş araçlarda marka "bmw", "Bmw" ya da " BMW " gibi duruyor
+ * olabilir; bunlar tamircinin "BMW" anahtarıyla eşleşmez ve müşteri sessizce yanlış (varsayılan)
+ * fiyatı görür. Bu yüzden önce birebir, sonra tr-TR küçük harf karşılaştırmasıyla arıyoruz —
+ * yani ESKİ kayıtlar da düzeltme gerektirmeden doğru fiyata bağlanıyor.
+ *
+ * Boş string bir fiyat DEĞİLDİR: tamirci markayı listeye ekleyip fiyatı boş bırakmış olabilir;
+ * o durumda varsayılan fiyata düşmek doğrudur.
+ */
+export function brandPriceFor(service, brand) {
+  const bp = service?.brandPrices;
+  if (!bp || !brand) return null;
+  const has = (v) => v != null && String(v).trim() !== "";
+  if (has(bp[brand])) return String(bp[brand]);
+  const key = Object.keys(bp).find((k) => lc(k) === lc(brand));
+  return key != null && has(bp[key]) ? String(bp[key]) : null;
 }
 
 // ---------------------------------------------------------------------------------------------

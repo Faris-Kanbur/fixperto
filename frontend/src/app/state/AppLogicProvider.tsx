@@ -21,6 +21,7 @@ import {
   listingCurrency, isValidEmail, validatePhone, computeReminders, mockTranslate, statusColor,
   isImgUrl, monthsBetween, initials, listingStatusMeta, slugifyForEmail, ticketDaysOpen, ticketSlaBreached,
   parseDecimalField, listingMarketPriceTier, initialSiteLang, detectCountryCode, rememberSiteLang,
+  brandPriceFor, canonicalBrand,
 } from "../../utils/helpers";
 import { PriceLevelDots } from "../../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../../components/ui/MiniBarChart";
@@ -966,8 +967,8 @@ function useAppLogic() {
   const bookingServiceOptions = useMemo(() => {
     const bookingVehicleBrand = (vehicles.find(v => v.id === selectedBookingVehicleId) || vehicles[0])?.brand || null;
     const priceFor = (s) => {
-      const override = bookingVehicleBrand ? s?.brandPrices?.[bookingVehicleBrand] : null;
-      const raw = (override != null && String(override).trim() !== "") ? String(override) : String(s?.price ?? "");
+      const override = brandPriceFor(s, bookingVehicleBrand);
+      const raw = override != null ? override : String(s?.price ?? "");
       // Tamirci artık sadece rakam giriyor (₺ arayüzde ekleniyor); randevu ekranı ise fiyatı
       // hazır metin olarak basıyor — para birimini burada ekliyoruz ki "800" değil "800₺" görünsün.
       return raw.trim() === "" ? "" : (/[₺€$]/.test(raw) ? raw : `${raw}₺`);
@@ -980,7 +981,7 @@ function useAppLogic() {
       name: labelFor(s), price: priceFor(s), other: false,
       fixed: s.fixed !== undefined ? !!s.fixed : isFixedPriceService(s.name),
       fromCatalog: false,
-      brandPriced: !!(bookingVehicleBrand && s?.brandPrices?.[bookingVehicleBrand]),
+      brandPriced: brandPriceFor(s, bookingVehicleBrand) != null,
     }));
     const ownKeys = (selectedMechanic?.services || []).map(s => (s.name || "").toLocaleLowerCase("tr-TR"));
     const extras = ATU_FIXED_CATALOG.filter(c => !ownKeys.some(k => k.includes(c.matchKey) || c.matchKey.includes(k))).map(c => ({ name: SERVICE_BY_KEY[c.key] ? (SERVICE_BY_KEY[c.key][lang] || c.name) : c.name, price: c.price, other: false, fixed: true, fromCatalog: true, brandPriced: false }));
@@ -2323,7 +2324,7 @@ function useAppLogic() {
         </div>
         {expanded && (
           <div className="mt-2.5 pt-2.5 border-t border-gray-200 grid grid-cols-2 gap-2">
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Marka</label><input value={l.brand} onChange={(e) => updateListingField(l.id, "brand", e.target.value)} {...trackInputProps("listing", l.id, "brand", l.brand)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
+            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Marka</label><input value={l.brand} onChange={(e) => updateListingField(l.id, "brand", e.target.value)} {...trackInputProps("listing", l.id, "brand", l.brand)} data-brand-freetext="admin" className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
             <div><label className="text-[10px] text-gray-400 mb-0.5 block">Model</label><input value={l.model} onChange={(e) => updateListingField(l.id, "model", e.target.value)} {...trackInputProps("listing", l.id, "model", l.model)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
             <div><label className="text-[10px] text-gray-400 mb-0.5 block">Yıl</label><input value={l.year} onChange={(e) => updateListingField(l.id, "year", e.target.value)} {...trackInputProps("listing", l.id, "year", l.year)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
             <div><label className="text-[10px] text-gray-400 mb-0.5 block">Kilometre</label><input value={l.km} onChange={(e) => updateListingField(l.id, "km", e.target.value)} {...trackInputProps("listing", l.id, "km", l.km)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
@@ -2736,7 +2737,10 @@ function useAppLogic() {
     if (newVehicle.lastInspection && !isValidDateStr(newVehicle.lastInspection)) { setToast({ type: "info", text: "⚠️ Geçersiz Son Muayene tarihi." }); return; }
     if (newVehicle.lastMaintenance && !isValidDateStr(newVehicle.lastMaintenance)) { setToast({ type: "info", text: "⚠️ Geçersiz Son Bakım tarihi." }); return; }
     if (newVehicle.insuranceEnd && !isValidDateStr(newVehicle.insuranceEnd)) { setToast({ type: "info", text: "⚠️ Geçersiz Sigorta Bitiş tarihi." }); return; }
-    const draft = { ownerId: MY_OWNER_ID, ...newVehicle, year: newVehicle.year || "—", listingId: null, reminderOverrides: {}, customReminders: [], history: [] };
+    // Marka KAYDEDİLİRKEN listedeki resmi yazımına çevriliyor. Seçici zaten listeden seçtiriyor
+    // ama "Diğer" kutusuna elle "bmw" yazılabilir; bu normalleştirme olmasa o araç tamircinin
+    // "BMW" fiyat anahtarıyla eşleşmez ve kişi kendi markasının fiyatını göremezdi.
+    const draft = { ownerId: MY_OWNER_ID, ...newVehicle, brand: canonicalBrand(newVehicle.brand), year: newVehicle.year || "—", listingId: null, reminderOverrides: {}, customReminders: [], history: [] };
     // Önce iyimser (optimistic) bir yerel kayıt gösteriyoruz ki UI anında tepki versin; backend
     // gerçek id'yi döndürünce yerel geçici id'yi onunla değiştiriyoruz.
     const tempId = Date.now();
@@ -2759,7 +2763,13 @@ function useAppLogic() {
       setToast({ type: "info", text: `⚠️ Araç kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
   };
-  const updateVehicleFields = (id, updates) => { setVehicles(vs => vs.map(v => v.id === id ? { ...v, ...updates } : v)); persist(api.vehicles.update(id, updates), "Araç güncellenemedi"); };
+  const updateVehicleFields = (id, updates) => {
+    // Marka güncelleniyorsa resmi yazımına çevir (bkz. addVehicle'daki aynı gerekçe): araç
+    // düzenleme formundan "Diğer" ile elle yazılan marka da fiyat anahtarlarıyla eşleşsin.
+    const patch = "brand" in (updates || {}) ? { ...updates, brand: canonicalBrand(updates.brand) } : updates;
+    setVehicles(vs => vs.map(v => v.id === id ? { ...v, ...patch } : v));
+    persist(api.vehicles.update(id, patch), "Araç güncellenemedi");
+  };
   // Araç silme — daha önce hiç yoktu (kullanıcı bildirdi). removeListing ile aynı desen:
   // önce iyimser (optimistic) yerel kaldırma (UI anında tepki versin), arka planda backend silme
   // isteği (persist — başarısız olursa toast ile haber verilir). Silinen araca bağlı bir ilan
@@ -3260,8 +3270,8 @@ function useAppLogic() {
   // Bir hizmetin BELİRLİ BİR MARKA için fiyatı. brandPrices'ta karşılığı yoksa varsayılan fiyat.
   // ATU'nun yaptığı da tam olarak bu: marka seçilmeden fiyat gösterilmiyor.
   const servicePriceForBrand = (svc, brand) => {
-    const override = brand ? svc?.brandPrices?.[brand] : null;
-    return (override != null && String(override).trim() !== "") ? String(override) : String(svc?.price ?? "");
+    const override = brandPriceFor(svc, brand);
+    return override != null ? override : String(svc?.price ?? "");
   };
   // Tamircinin "başlangıç fiyatı": listelediği TÜM fiyatların (varsayılan + marka bazlı) en düşüğü.
   // Eskiden tamirciye elle yazdırılan "saatlik ücret" alanı vardı — uydurma bir sayıydı, hiçbir
@@ -3738,8 +3748,11 @@ function useAppLogic() {
       // yeniden etiketliyoruz — bkz. listing.lang alanı, TranslatedText ile ilan açıklaması/
       // Sorular sekmesi çevirisi için kullanılıyor.
       const editLang = role === "owner" ? ownerLang : (myProfile?.lang || "tr");
-      const patch = { ...patchFields, lang: editLang };
-      setListings(l => l.map(x => x.id === sellForm._editingId ? { ...x, ...sellForm, lang: editLang } : x));
+      // Marka resmi yazımına çevriliyor: alıcı marka filtresini CAR_BRANDS listesinden seçiyor,
+      // "bmw" diye kaydedilmiş bir ilan o filtrede hiç görünmezdi. Yerel (iyimser) güncelleme de
+      // aynı `patch` nesnesini kullanıyor ki ekranda görünen ile kaydedilen birbirinden ayrışmasın.
+      const patch = { ...patchFields, brand: canonicalBrand(patchFields.brand), lang: editLang };
+      setListings(l => l.map(x => x.id === sellForm._editingId ? { ...x, ...patch } : x));
       persist(api.listings.update(sellForm._editingId, patch), "İlan kaydedilemedi");
       setToast({ type: "info", text: "✅ İlan güncellendi." });
       if (before) {
@@ -3769,7 +3782,7 @@ function useAppLogic() {
       const { _editingId, _vehicleId, ...formFields } = sellForm;
       // Açıklama metninin hangi dilde yazıldığını satıcının güncel diline göre etiketliyoruz —
       // bkz. patch.lang yorum notu yukarıda.
-      const draft = { sellerName, sellerType, sellerId, ...formFields, vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang, createdAt: new Date().toISOString() };
+      const draft = { sellerName, sellerType, sellerId, ...formFields, brand: canonicalBrand(formFields.brand), vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang, createdAt: new Date().toISOString() };
       // Form ve "yayınlandı" mesajı yalnızca ilan gerçekten kaydedildikten sonra kapatılıp
       // gösteriliyor — istek başarısız olursa kullanıcı formda kalır, girdiği bilgiler kaybolmaz.
       try {

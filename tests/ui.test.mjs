@@ -138,4 +138,22 @@ for (const b of screenBlocks) {
 }
 eq(noLogo, [], "her kullanıcı ekranında Fixperto logosu bulunmalı (ana sayfaya dönüş yolu)");
 
+// --- KURAL 7: araç markası serbest metin kutusuyla girilmemeli --------------------------------
+// Yaşanan hata: tamirci fiyatları MARKA anahtarıyla (CAR_BRANDS'ten seçerek) giriyor, araç sahibi
+// ise markayı elle yazıyordu. "bmw" yazan kişi "BMW" anahtarıyla eşleşmiyor ve randevu ekranında
+// kendi markasının fiyatını göremiyordu — bozukluk görünür değildi, sadece yanlış fiyat gösteriyordu.
+// Kural: marka alanı BrandSelect (liste) üzerinden girilmeli.
+const freeBrandInputs = [];
+for (const f of files) {
+  f.lines.forEach((line, i) => {
+    if (isComment(line)) return;
+    // <input ... value={X.brand} ...>  — modele bağlı serbest metin marka kutusu
+    // Bilinçli istisna: yönetici paneli ham kaydı düzeltiyor (yanlış girilmiş markayı elle
+    // temizlemek için serbest metin gerekli). İstisna açıkça işaretli olmalı ki sessizce yayılmasın.
+    if (line.includes('data-brand-freetext="admin"')) return;
+    if (/<input[^>]*value=\{[A-Za-z0-9_.]*\.brand\}/.test(line)) freeBrandInputs.push(`${f.rel}:${i + 1}`);
+  });
+}
+eq(freeBrandInputs, [], "araç markası serbest metin değil, BrandSelect listesinden seçilmeli");
+
 report("ui");

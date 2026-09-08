@@ -210,6 +210,7 @@ export const T = {
   customFeaturePlaceholder: { tr: "Listede yok mu? Kendi donanımını yaz…", en: "Not in the list? Add your own…", de: "Nicht in der Liste? Eigene Ausstattung hinzufügen…" },
   addCustomFeatureAria: { tr: "Donanımı ekle", en: "Add feature", de: "Ausstattung hinzufügen" },
   customBrandPlaceholder: { tr: "Listede yok mu? Kendi markanı yaz…", en: "Not in the list? Add your own brand…", de: "Nicht in der Liste? Eigene Marke hinzufügen…" },
+  brandOtherOption: { tr: "Diğer (listede yok)", en: "Other (not listed)", de: "Andere (nicht aufgeführt)" },
   addCustomBrandAria: { tr: "Markayı ekle", en: "Add brand", de: "Marke hinzufügen" },
   customPaymentPlaceholder: { tr: "Listede yok mu? Kendi ödeme yöntemini yaz…", en: "Not in the list? Add your own payment method…", de: "Nicht in der Liste? Eigene Zahlungsmethode hinzufügen…" },
   addCustomPaymentAria: { tr: "Ödeme yöntemini ekle", en: "Add payment method", de: "Zahlungsmethode hinzufügen" },

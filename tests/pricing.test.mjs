@@ -3,9 +3,25 @@
 import { eq, report } from "./_harness.mjs";
 
 const parsePriceNumber = (p) => parseInt(String(p || "").replace(/[^\d]/g, ""), 10) || 0;
+const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
+const CAR_BRANDS_SAMPLE = ["BMW", "Toyota", "Mercedes-Benz", "Citroën", "Tofaş"];
+// helpers.ts → brandPriceFor / canonicalBrand ile AYNI mantık.
+const brandPriceFor = (service, brand) => {
+  const bp = service?.brandPrices;
+  if (!bp || !brand) return null;
+  const has = (v) => v != null && String(v).trim() !== "";
+  if (has(bp[brand])) return String(bp[brand]);
+  const key = Object.keys(bp).find((k) => lc(k) === lc(brand));
+  return key != null && has(bp[key]) ? String(bp[key]) : null;
+};
+const canonicalBrand = (value) => {
+  const v = String(value ?? "").trim();
+  if (!v) return "";
+  return CAR_BRANDS_SAMPLE.find((b) => lc(b) === lc(v)) || v;
+};
 const servicePriceForBrand = (svc, brand) => {
-  const o = brand ? svc?.brandPrices?.[brand] : null;
-  return (o != null && String(o).trim() !== "") ? String(o) : String(svc?.price ?? "");
+  const o = brandPriceFor(svc, brand);
+  return o != null ? o : String(svc?.price ?? "");
 };
 const startingPriceFromServices = (services) => {
   const nums = [];
@@ -42,5 +58,23 @@ eq(startingPriceFromServices([]), null, "hiç hizmet yok → null");
 eq(startingPriceFromServices([{ price: "350₺" }, { price: "600₺" }]), 350, "eski '350₺' biçimi okunuyor");
 eq(mechanicStartingPrice({ services: [], price: 400 }), 400, "hizmet yoksa eski price korunuyor");
 eq(mechanicStartingPrice({ services: [door], price: 400 }), 50, "hizmet varsa türetilen fiyat kazanıyor");
+
+// --- MARKA EŞLEŞMESİ: elle yazılmış eski araç kayıtları da doğru fiyatı görmeli --------------
+// GERÇEK HATA: marka seçici gelmeden önce araç sahibi markayı elle yazıyordu. "bmw" yazan kişi
+// tamircinin "BMW" anahtarıyla eşleşmiyor, kendi markasının fiyatı yerine varsayılanı görüyordu.
+// Aşağıdaki testler bu düzeltmeyi kilitliyor — eski kayıtlar için de geçerli olmalı.
+eq(servicePriceForBrand(door, "bmw"), "100", "küçük harf 'bmw' → BMW fiyatı");
+eq(servicePriceForBrand(door, "  BMW  "), "80", "boşluklu ham metin normalize EDİLMEDEN eşleşmez (kayıt anında temizleniyor)");
+eq(servicePriceForBrand(door, canonicalBrand("  bmw ")), "100", "kayıt anında normalize edilen marka eşleşiyor");
+eq(canonicalBrand("mercedes-benz"), "Mercedes-Benz", "listedeki resmi yazıma çevriliyor");
+eq(canonicalBrand("citroën"), "Citroën", "aksanlı marka adı korunuyor");
+eq(canonicalBrand("TOFAŞ"), "Tofaş", "tr-TR büyük/küçük harf (İ/ı) doğru");
+eq(canonicalBrand("Togg"), "Togg", "listede olmayan marka aynen kalıyor (seçim zorunlu değil)");
+eq(canonicalBrand(""), "", "boş marka boş kalıyor");
+eq(canonicalBrand(null), "", "null marka çökmüyor");
+eq(brandPriceFor({ price: "300" }, "BMW"), null, "marka fiyatı yoksa null (varsayılana düşer)");
+eq(brandPriceFor(door, null), null, "marka seçilmemişse null");
+// Eski (hatalı) davranışın gerçekten hatalı olduğunu kanıtla: düz nesne erişimi eşleşmiyordu.
+eq(door.brandPrices["bmw"], undefined, "kanıt: düz anahtar erişimi 'bmw' ile eşleşmiyordu");
 
 report("fiyatlandırma");

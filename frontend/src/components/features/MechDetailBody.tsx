@@ -9,7 +9,7 @@ import { ListingCard } from "./ListingCard";
 import { JobCard } from "./JobCard";
 import { TranslatedText } from "./TranslatedText";
 import { BANNER_PRESETS, MY_MECHANIC_ID, LANG_LABELS } from "../../data/constants";
-import { formatHoursText, isImgUrl, imgThumb, imgFallbackHandler, formatDistanceKm } from "../../utils/helpers";
+import { formatHoursText, isImgUrl, imgThumb, imgFallbackHandler, formatDistanceKm, brandPriceFor } from "../../utils/helpers";
 import { REVIEW_TIME_LABELS_BY_LANG } from "../../data/i18n";
 
 export function MechDetailBody() {
@@ -357,7 +357,7 @@ export function MechDetailBody() {
                 // dönemi); yenilerde yalnızca rakam. İki durumu da doğru gösteriyoruz.
                 const raw = String(servicePriceForBrand(s, priceBrand) || "").trim();
                 const shown = raw === "" ? "" : (/[₺€$]/.test(raw) ? raw : `${raw}₺`);
-                const isBrandPrice = !!(priceBrand && s.brandPrices?.[priceBrand]);
+                const isBrandPrice = brandPriceFor(s, priceBrand) != null;
                 return (
                   <div key={s.key || `c-${i}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50/70 transition">
                     <span className="text-sm text-gray-700 flex items-center gap-2 min-w-0">
