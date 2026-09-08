@@ -734,6 +734,34 @@ function useAppLogic() {
     return () => { cancelled = true; };
   }, [sessionVersion]);
 
+  // ==================== YÖNETİCİ PANELİNE GİRİŞ ====================
+  // SORUN: panelin tek girişi, arama ekranının en altındaki neredeyse görünmez bir yazıydı.
+  // Site sahibi bile bulamıyordu (kullanıcı bildirdi) — üstelik alt bilginin İÇİNDE de aynı
+  // metin var, tıklanan çoğunlukla o oluyordu ve hiçbir şey olmuyordu.
+  //
+  // İki güvenilir yol eklendi. İkisi de menülerde DUYURULMUYOR (sıradan ziyaretçi rastlamasın)
+  // ama site sahibi için kesin çalışıyor:
+  //   1) Adres çubuğuna #admin yazmak  → localhost:5173/#admin
+  //   2) Klavye kısayolu Ctrl/Cmd + Shift + A
+  //
+  // NOT: bunlar bir güvenlik önlemi DEĞİL, sadece keşfedilebilirliği azaltıyor. Asıl koruma
+  // yönetici şifresi ve ayrı token (bkz. backend/routes/admin.js).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const openAdmin = () => { setScreen("adminLogin"); };
+    const checkHash = () => { if (window.location.hash.toLowerCase() === "#admin") openAdmin(); };
+    checkHash();
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "A" || e.key === "a")) {
+        e.preventDefault();
+        openAdmin();
+      }
+    };
+    window.addEventListener("hashchange", checkHash);
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("hashchange", checkHash); window.removeEventListener("keydown", onKey); };
+  }, []);
+
   // GERÇEK OTURUM SİSTEMİ: sayfa açıldığında localStorage'da geçerli bir oturum token'ı varsa
   // (bkz. client.ts SESSION_STORAGE_KEY) onu /api/auth/me ile doğrula ve kimliği geri yükle —
   // aksi halde her sayfa yenilemesinde kullanıcı tekrar giriş yapmak zorunda kalırdı. Token artık

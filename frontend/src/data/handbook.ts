@@ -690,6 +690,16 @@ Yeni bir özellik ya da düzeltme, testsiz eklenmez. Tercihen düzeltmeden ÖNCE
         title: "14.1 Sekmeler ve yetki",
         body: `Sekmeler: Genel Bakış, Kullanıcılar, Destek Talepleri, Analitik, Blog, Geçmiş, El Kitabı.
 
+## Panele nasıl girilir
+Menülerde bağlantısı YOK. İki yol var:
+1) Adres çubuğuna #admin eklemek (ör. localhost:5173/#admin)
+2) Klavye kısayolu: Ctrl/Cmd + Shift + A
+
+Ayrıca arama ekranının en altında, alt bilginin ALTINDA soluk bir metin de aynı ekranı açıyor. Bu ilk yöntemdi ama site sahibi bile bulamadı: alt bilginin İÇİNDE de aynı metin var ve tıklanan çoğunlukla o oluyordu. Kısayol ve adres yöntemi bu yüzden eklendi.
+
+## Bu bir güvenlik önlemi değil
+Girişin gizli olması yalnızca tesadüfen bulunmasını zorlaştırır. Asıl koruma yönetici şifresi ve ayrı token'dır. Canlıda ortam değişkenleri ayarlanmazsa admin girişi tamamen kapalıdır (fail closed).
+
 ## Ayrı kimlik
 Yönetici oturumu kullanıcı oturumundan tamamen bağımsızdır; kendi token'ıyla çalışır. Bu yüzden yönetici uçlarından gelen 401 kullanıcı oturumunu DÜŞÜRMEZ.
 

@@ -66,6 +66,7 @@ for (const topic of [
   "i18n", "safeHref", "analitik", "sitemap", "test", "bilinen sınır",
   // yönetici
   "yönetici panel", "destek talep", "değişiklik geçmişi", "geri alma",
+  "panele nasıl girilir", "#admin", "shift + a",
   // kullanıcı araçları
   "bildirim", "hatırlatma", "favori", "kayıtlı arama", "karşılaştırma",
   "değerlendirme", "paylaşım",
@@ -101,5 +102,11 @@ const tabKeys = [...(navLine || "").matchAll(/key: "(\w+)"/g)].map((m) => m[1]);
 ok(tabKeys.length >= 6, "yönetici sekmeleri okunabildi");
 const undocumentedTabs = tabKeys.filter((k) => !tabTopics[k] || !bookLower.includes(lc(tabTopics[k])));
 eq(undocumentedTabs, [], "her yönetici sekmesi el kitabında anlatılıyor");
+
+// Yönetici paneline giriş yolları KODDA da olmalı — belgede yazıp koda koymamak daha kötü.
+const provider = readFileSync(join(SRC, "app", "state", "AppLogicProvider.tsx"), "utf8");
+ok(/window\.location\.hash[\s\S]{0,80}#admin/.test(provider), "adres çubuğu (#admin) ile giriş kodda var");
+ok(/e\.shiftKey && \(e\.key === "A" \|\| e\.key === "a"\)/.test(provider), "klavye kısayolu kodda var");
+ok(/hashchange/.test(provider), "hash sonradan değişirse de yakalanıyor");
 
 report("el kitabı");
