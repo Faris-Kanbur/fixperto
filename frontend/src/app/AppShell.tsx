@@ -14,6 +14,8 @@ import { WelcomeTour } from "../components/features/WelcomeTour";
 import { OwnerChatsPanel } from "../components/features/OwnerChatsPanel";
 import { HandbookPanel } from "../components/features/HandbookPanel";
 import { SavedSearchList } from "../components/features/SavedSearchList";
+import { CareersPage } from "../components/features/CareersPage";
+import { AdminCareersPanel } from "../components/features/AdminCareersPanel";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
 import { OwnerAppointmentsView } from "../components/features/OwnerAppointmentsView";
@@ -559,7 +561,7 @@ export function AppShell() {
       )}
       {/* Karşılama turu — bkz. WelcomeTour.tsx (iki panelli, markalı, geniş düzen). */}
       {onboardingVisible && <WelcomeTour />}
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" || screen === "blog" || screen === "blogPost" || screen === "about" || screen === "booking" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" || screen === "blog" || screen === "blogPost" || screen === "about" || screen === "careers" || screen === "booking" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
             max-w-7xl kapsayıcılarla yapılıyor. Haritadan açılan modal bu daldan geçmiyor. */}
@@ -568,6 +570,8 @@ export function AppShell() {
         {/* Araç ilanının TAM SAYFA görünümü. Hızlı görüntüleme modali (selectedListingId) ayrı ve
             hâlâ çalışıyor; ikisi aynı anda açılmasın diye openListingPage modali kapatıyor. */}
         {screen === "listingDetail" && <ListingDetailPage />}
+        {/* Kariyer: Fixperto'nun kendi açık pozisyonları — ilanlar yönetici panelinden giriliyor. */}
+        {screen === "careers" && <CareersPage />}
         {(screen === "login" || screen === "signup") && (
           <div className="flex-1 flex flex-col w-full">
             {/* Giriş/kayıt ekranlarında logo standarttır: kullanıcı vazgeçip siteye dönebilmeli. */}
@@ -662,7 +666,7 @@ export function AppShell() {
           </div>
         )}
         {screen === "adminDashboard" && adminAuthed && (() => {
-          const adminNavItems = [{ key: "dashboard", label: "Genel Bakış", icon: LayoutDashboard }, { key: "users", label: "Kullanıcılar", icon: Users }, { key: "tickets", label: "Destek Talepleri", icon: LifeBuoy }, { key: "analytics", label: "Analitik", icon: TrendingUp }, { key: "blog", label: "Blog", icon: BookOpen }, { key: "history", label: "Geçmiş", icon: History }, { key: "handbook", label: "El Kitabı", icon: BookOpen }];
+          const adminNavItems = [{ key: "dashboard", label: "Genel Bakış", icon: LayoutDashboard }, { key: "users", label: "Kullanıcılar", icon: Users }, { key: "tickets", label: "Destek Talepleri", icon: LifeBuoy }, { key: "analytics", label: "Analitik", icon: TrendingUp }, { key: "blog", label: "Blog", icon: BookOpen }, { key: "history", label: "Geçmiş", icon: History }, { key: "careers", label: "Kariyer", icon: Briefcase }, { key: "handbook", label: "El Kitabı", icon: BookOpen }];
           return (
           <div className="flex-1 flex flex-col md:flex-row min-h-0">
             <div className="hidden md:flex md:w-60 md:flex-shrink-0 bg-gray-900 text-white flex-col p-4">
@@ -1283,6 +1287,7 @@ export function AppShell() {
                 )}
                 {/* EL KİTABI: sitenin nasıl çalıştığı ve hangi standartlara göre tasarlandığı.
                     Bölüm → sayfa hiyerarşisi + arama. Bkz. data/handbook.ts ve HandbookPanel.tsx. */}
+                {adminTab === "careers" && <AdminCareersPanel />}
                 {adminTab === "handbook" && <HandbookPanel />}
                 {adminTab === "history" && (
                   <div>

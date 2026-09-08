@@ -23,6 +23,7 @@ yalnızca bozulanın ayrıntısını basar. Amaç: düzenli koşabilmek ama çı
 | `doğrulama` | Alanların MANTIK denetimi: tarih aralıkları, km/yıl/güç/kapı sınırları, kuralların forma bağlı olması |
 | `el kitabı` | Belge yapısı, zorunlu konular, bilinen sınırların yazılmış olması ve KAPSAM: her bileşenin el kitabında geçmesi |
 | `alt bilgi bağlantıları` | Footer hedefleri anlamlı mı, eylem bağlantıları eylemi yapıyor mu, kaydırma sıfırlanıyor mu |
+| `kariyer` | Kariyer ilanlarının yetkisi, taslak/yayın ayrımı, tamirci ilanlarından ayrılığı |
 
 Ayrıca `tsc --noEmit` ve her backend dosyası için `node --check` çalışır.
 

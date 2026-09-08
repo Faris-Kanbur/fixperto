@@ -13,9 +13,12 @@ const footer = read("frontend/src/components/features/SiteFooter.tsx");
 
 // --- Vaat edilen içerik gerçekten var mı -------------------------------------------------------
 // "Kariyer" ve "Basın" ikisi de Hakkımızda'ya gidiyordu; olmayan sayfayı vaat eden bağlantı,
-// hiç bağlantı olmamasından kötüdür.
-eq(/footerCareers/.test(footer), false, "olmayan Kariyer sayfasına bağlantı yok");
+// hiç bağlantı olmamasından kötüdür. "Basın" hâlâ yok, kaldırıldı. "Kariyer" ise GERÇEK bir
+// sayfaya kavuştu; kural artık "bağlantı olmasın" değil, "kendi sayfasına gitsin".
 eq(/footerPress/.test(footer), false, "olmayan Basın sayfasına bağlantı yok");
+const careerBlock = footer.slice(footer.indexOf("footerCareers") - 200, footer.indexOf("footerCareers"));
+ok(/setScreen\("careers"\)/.test(careerBlock), "Kariyer bağlantısı Kariyer sayfasını açıyor");
+eq(/setScreen\("about"\)>\{t\("footerCareers"\)/.test(footer), false, "Kariyer artık Hakkımızda'ya gitmiyor");
 
 // SSS gerçek bir SSS bölümüne gidiyor (düz Hakkımızda'ya değil).
 ok(/setAboutSection\("faq"\)/.test(footer), "SSS bağlantısı SSS bölümünü hedefliyor");

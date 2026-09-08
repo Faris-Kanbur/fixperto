@@ -632,6 +632,12 @@ Türkçe karakterler ASCII'ye çevrilir, benzersizleştirilir ve başlık deği�
 ## SEO altyapısı
 sitemap.xml, robots.txt ve yazı sayfalarında JSON-LD var.
 
+## Kariyer sayfası
+Alt bilgideki "Kariyer" bağlantısı gerçek bir sayfaya gidiyor: açık pozisyonlar, ekip değerleri ve
+başvuru e-postası. İlanlar yönetici panelinden giriliyor, yani ilan açmak için kod değişmiyor.
+Açık pozisyon yokken sayfa boş kalmıyor — "doğru kişi için ilan beklemiyoruz" mesajı ve iletişim
+adresi gösteriliyor, çünkü kariyer sayfasına giren kişi bir sonraki adımı arıyor.
+
 ## Alt bilgi (footer) kuralı
 Alt bilgideki her bağlantı GERÇEK bir hedefe gitmeli. "Kariyer" ve "Basın" bağlantıları ikisi de
 Hakkımızda sayfasına gidiyordu; olmayan bir sayfayı vaat eden bağlantı, hiç bağlantı olmamasından
@@ -663,10 +669,13 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 12 test takımı.
+tsc tip denetimi + her backend dosyasının sözdizimi + 15 test takımı.
 
 ## Takımlar
-arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama.
+arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer.
+
+## Belgeyi canlı tutan takım
+"el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.
 
 ## Neden kaynak dosyaları tarıyor
 Bu ortamda tarayıcı yok. UI kuralları gerçek kaynak dosyalar üzerinde statik olarak denetleniyor. Bu, gerçek bir tarayıcı testinin yerini tutmaz ama tsc'nin göremediği hata sınıflarını yakalar.
@@ -723,8 +732,51 @@ Aynı kimlik sistemini paylaşsalardı, bir kullanıcı hesabının ele geçiril
 Yönetici verileri (değişiklik günlüğü, analitik) yalnızca yönetici girişi BAŞARILI olduktan sonra çekilir. Eskiden uygulama açılışında herkes için koşulsuz çağrılıyordu.`,
       },
       {
+        id: "adminCalisma",
+        title: "14.2 Panel nasıl çalışır",
+        body: `Panel, sitenin geri kalanıyla AYNI uygulamanın içinde ama ayrı bir dünyadır: ayrı kimlik, ayrı token, ayrı veri çekme zamanı.
+
+## Giriş ve oturum
+Yönetici e-posta + şifre ile giriş yapar (iki adımlı doğrulama YOK — bu hesap tek kişilik ve e-posta kutusuna bağımlı olmaması tercih edildi). Başarılı girişte backend bir yönetici token'ı üretir; token tarayıcının sekme belleğinde (sessionStorage) tutulur, yani sekme kapanınca oturum biter. Bu bilinçli: yönetici oturumunun günlerce açık kalması, ortak kullanılan bir bilgisayarda ciddi risk olurdu.
+
+## İstekler nasıl imzalanır
+Yönetici uçlarına giden her istek Authorization başlığına yönetici token'ını ekler. Bu ekleme API katmanında, uç nokta tanımının içinde yapılır — çağıran ekranın her seferinde hatırlaması gerekmez. Eskiden çağıran taraf ekliyordu ve unutulan bir yer sessizce 401 alan bir ekran demekti.
+
+## Veri ne zaman çekilir
+Yönetici verileri (değişiklik günlüğü, analitik, kariyer ilanları, blog taslakları) uygulama açılışında DEĞİL, yalnızca yönetici girişi başarılı olduktan sonra çekilir. Aksi halde her ziyaretçi için yetkisiz istekler gidip 401 dönerdi.
+
+## Kullanıcı oturumundan bağımsız
+Yönetici token'ından gelen 401, kullanıcı oturumunu DÜŞÜRMEZ. Bu ayrım kodda açıkça yazılı; olmasaydı panelde süresi dolan bir token, siteyi gezen kullanıcıyı da çıkışa zorlardı.
+
+## Sekmeler ne yapar
+Genel Bakış: sayılar ve son hareketler. Kullanıcılar: araç sahipleri, tamirciler, ilanlar ve iş ilanları üzerinde düzenleme/askıya alma. Destek Talepleri: gelen talepler, öncelik ve SLA. Analitik: ziyaretçi, arama ve dönüşüm raporları. Blog: yazı ekleme ve yayınlama. Kariyer: Fixperto'nun kendi iş ilanları. Geçmiş: panelden yapılan her değişikliğin kaydı ve geri alma. El Kitabı: bu belge.
+
+## Yazma işlemleri kayda geçer
+Panelden yapılan alan değişiklikleri "Geçmiş" sekmesine yazılır: hangi kayıt, hangi alan, eski ve yeni değer. Panel başkasının verisini değiştirdiği için bu kayıt olmadan yetki güvenli sayılmaz.
+
+## Taslak/yayın ayrımı
+Blog yazıları ve kariyer ilanları TASLAK olarak doğar; yayına almak ayrı ve bilinçli bir tıklamadır. Yarım kalmış bir içeriğin kazayla yayına çıkması, boş bir sayfadan daha kötüdür.`,
+      },
+      {
+        id: "adminKariyer",
+        title: "14.3 Kariyer ilanları",
+        body: `Fixperto'nun KENDİ açık pozisyonları panelden açılıp kapatılır; kod değiştirmeye gerek yok. Yayındaki ilanlar sitedeki Kariyer sayfasında görünür.
+
+## Tamirci iş ilanlarından farkı
+İki ayrı tablo, iki ayrı ekran. Buradaki ilanların işvereni Fixperto; tamircilerin açtığı ilanlar iş ilanları aramasında duruyor. Aynı tabloda tutmak her sorguda "kim işveren" ayrımı yapmayı gerektirir ve tamirci ilanları listesine şirket ilanlarının karışma riskini taşırdı.
+
+## Alanlar
+Başlık, birim, konum, çalışma şekli (tam zamanlı / yarı zamanlı / staj / uzaktan), kısa özet, ilan metni, başvuru e-postası, yayın durumu.
+
+## Başvuru neden e-posta
+Site içi başvuru formu bilinçli olarak YOK. Özgeçmiş saklamak kişisel veri sorumluluğu doğurur; bu ölçekte e-posta yeterli ve dürüst bir çözüm.
+
+## Silme onaylı
+Silme geri alınamaz olduğu için onay penceresinden geçer — uygulamanın geri kalanıyla aynı kural.`,
+      },
+      {
         id: "adminKullanici",
-        title: "14.2 Kullanıcı ve içerik yönetimi",
+        title: "14.4 Kullanıcı ve içerik yönetimi",
         body: `Araç sahipleri, tamirciler, ilanlar ve iş ilanları panelden düzenlenebilir, askıya alınabilir ya da kaldırılabilir.
 
 ## Kaldırma yumuşak
@@ -738,7 +790,7 @@ Panelde araç markası yazarak süzülen listeden DEĞİL serbest metinle düzen
       },
       {
         id: "adminTicket",
-        title: "14.3 Destek talepleri",
+        title: "14.5 Destek talepleri",
         body: `Kullanıcılar ve tamirciler destek talebi açar; panelde tür, öncelik ve durum ile yönetilir.
 
 ## Öncelik
@@ -752,7 +804,7 @@ Talebin sahibi isimle değil KİMLİKLE tutulur. Eskiden isim eşleşmesi kullan
       },
       {
         id: "adminGecmis",
-        title: "14.4 Değişiklik geçmişi ve geri alma",
+        title: "14.6 Değişiklik geçmişi ve geri alma",
         body: `Panelden yapılan her alan değişikliği kaydedilir: hangi kayıt, hangi alan, eski ve yeni değer.
 
 ## Geri alma

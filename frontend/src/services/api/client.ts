@@ -316,6 +316,20 @@ export const api = {
     remove: (id: number | string, opts?: RequestOptions): Promise<{ ok: true }> =>
       request(`/api/blog/${id}`, { method: "DELETE", ...opts }),
   },
+  // Fixperto'nun kendi iş ilanları (Kariyer). Okuma herkese açık (yalnızca yayınlananlar),
+  // yazma yönetici token'ıyla — blog ile aynı desen.
+  careers: {
+    list: (opts?: RequestOptions): Promise<any[]> => request("/api/careers", opts),
+    // Yönetici uçları admin token'ını KENDİ ekliyor: çağıran her yerde adminAuthOpts()
+    // yazmayı unutmak, sessizce 401 alan bir ekran demekti.
+    adminList: (opts?: RequestOptions): Promise<any[]> => request("/api/careers/admin/all", { ...adminAuthOpts(), ...opts }),
+    create: (body: any, opts?: RequestOptions): Promise<any> =>
+      request("/api/careers", { method: "POST", body: JSON.stringify(body), ...adminAuthOpts(), ...opts }),
+    update: (id: number | string, body: any, opts?: RequestOptions): Promise<any> =>
+      request(`/api/careers/${id}`, { method: "PATCH", body: JSON.stringify(body), ...adminAuthOpts(), ...opts }),
+    remove: (id: number | string, opts?: RequestOptions): Promise<null> =>
+      request(`/api/careers/${id}`, { method: "DELETE", ...adminAuthOpts(), ...opts }),
+  },
   // quote-requests/quote-offers backend'de artık generic CRUD değil (bkz.
   // backend/routes/quotes.js) — crud<>() ile aynı temel GET/POST/PATCH/DELETE'i korurken,
   // durum geçişlerini (kabul/iptal/reddet) atomik olarak yapan özel uç noktalar ekleniyor.

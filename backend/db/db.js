@@ -201,6 +201,24 @@ CREATE TABLE IF NOT EXISTS blog_posts (
 );
 CREATE INDEX IF NOT EXISTS idx_blog_status_date ON blog_posts(status, publishedAt DESC);
 
+-- KARİYER: Fixperto'nun KENDİ iş ilanları. Tamircilerin açtığı ilanlardan (job_listings) AYRI:
+-- farklı işveren, farklı okuyucu, farklı yönetim ekranı. Aynı tabloda tutmak, her sorguda
+-- "kim işveren" ayrımı yapmayı gerektirir ve tamirci ilanları listesine şirket ilanlarının
+-- karışma riskini taşırdı.
+CREATE TABLE IF NOT EXISTS career_posts (
+  id INTEGER PRIMARY KEY,
+  title TEXT NOT NULL,
+  department TEXT DEFAULT '',
+  location TEXT DEFAULT '',
+  employmentType TEXT DEFAULT 'full_time',
+  summary TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  applyEmail TEXT DEFAULT 'kariyer@fixperto.com',
+  status TEXT DEFAULT 'draft',
+  createdAt TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_career_status ON career_posts(status, createdAt DESC);
+
 CREATE TABLE IF NOT EXISTS job_listings (
   id INTEGER PRIMARY KEY,
   mechanicId INTEGER REFERENCES mechanics(id),

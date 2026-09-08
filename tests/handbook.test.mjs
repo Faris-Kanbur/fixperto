@@ -48,6 +48,8 @@ const COVERAGE = {
   TranslatedText: "TranslatedText",
   SavedSearchList: "kayıtlı arama",
   TestimonialCarousel: "değerlendirme şeridi",
+  CareersPage: "kariyer",
+  AdminCareersPanel: "kariyer ilanları",
 };
 const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
 const bookLower = lc(handbookSrc);
@@ -98,7 +100,7 @@ eq(/dangerouslySetInnerHTML/.test(panel), false, "el kitabı içeriği HTML olar
 
 // Yönetici panelindeki her sekme el kitabında anılmalı.
 const tabTopics = { dashboard: "genel bakış", users: "kullanıcı", tickets: "destek talep",
-  analytics: "analitik", blog: "blog", history: "değişiklik geçmişi", handbook: "el kitabı" };
+  analytics: "analitik", blog: "blog", history: "değişiklik geçmişi", handbook: "el kitabı", careers: "kariyer ilanları" };
 const navLine = shell.split("\n").find((l) => l.includes("const adminNavItems"));
 const tabKeys = [...(navLine || "").matchAll(/key: "(\w+)"/g)].map((m) => m[1]);
 ok(tabKeys.length >= 6, "yönetici sekmeleri okunabildi");
@@ -110,5 +112,12 @@ const provider = readFileSync(join(SRC, "app", "state", "AppLogicProvider.tsx"),
 ok(/window\.location\.hash[\s\S]{0,80}#admin/.test(provider), "adres çubuğu (#admin) ile giriş kodda var");
 ok(/e\.shiftKey && \(e\.key === "A" \|\| e\.key === "a"\)/.test(provider), "klavye kısayolu kodda var");
 ok(/hashchange/.test(provider), "hash sonradan değişirse de yakalanıyor");
+
+// Belgede yazan test takımı SAYISI gerçekle uyuşmalı — eskimiş bir sayı, belgeye olan güveni
+// tümüyle bitirir ("burada 12 yazıyor ama 15 varsa başka neler eski?").
+const suiteFiles = readdirSync(join(ROOT, "tests")).filter((f) => f.endsWith(".test.mjs"));
+const statedMatch = handbookSrc.match(/(\d+) test takımı/);
+ok(statedMatch, "el kitabında takım sayısı yazıyor");
+eq(Number(statedMatch?.[1]), suiteFiles.length, `belgedeki takım sayısı gerçekle uyuşuyor (${suiteFiles.length})`);
 
 report("el kitabı");

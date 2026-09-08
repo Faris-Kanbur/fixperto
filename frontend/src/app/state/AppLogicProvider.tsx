@@ -414,6 +414,9 @@ function useAppLogic() {
   // eskiden düz Hakkımızda'ya gidiyordu ve orada SSS diye bir şey yoktu — kullanıcı vaat edilen
   // içeriği bulamıyordu.
   const [aboutSection, setAboutSection] = useState<string | null>(null);
+  // Kariyer ilanları: yalnızca Kariyer sayfası açıldığında bir kez çekiliyor. Ana sayfa
+  // açılışını bu veriyle yavaşlatmanın anlamı yok — kimse her ziyarette kariyer sayfasına girmiyor.
+  const [careerPosts, setCareerPosts] = useState([]);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
   // Randevu ekranında eklenen aracın garaja kaydedilip kaydedilmeyeceği. Varsayılan AÇIK: kişi
   // zaten aracını yazdı, bir dahaki randevuda tekrar yazmak zorunda kalmamalı. Ama seçim
@@ -4539,6 +4542,14 @@ function useAppLogic() {
   // (mechReqView/mechAnalyticsView) zaten izleniyordu, bunlar izlenmiyordu. Özellikle sohbet:
   // telefonda bir sohbete girince liste yerini sohbete bırakıyor, geri tuşu ise kullanıcıyı
   // listeye değil doğrudan Mesajlar sekmesinden dışarı atıyordu.
+  useEffect(() => {
+    if (screen !== "careers") return;
+    if (careerPosts.length > 0) return;
+    let cancelled = false;
+    api.careers.list().then((rows) => { if (!cancelled) setCareerPosts(rows || []); }).catch(() => { /* kariyer kritik değil */ });
+    return () => { cancelled = true; };
+  }, [screen, careerPosts.length]);
+
   // Blog listesi: blog ekranlarına ilk girişte bir kez çekiliyor.
   useEffect(() => {
     if (screen !== "blog" && screen !== "blogPost") return;
@@ -4756,7 +4767,7 @@ function useAppLogic() {
     rescheduleDate, setRescheduleDate, rescheduleTime, setRescheduleTime, vehicles, setVehicles, selectedVehicleId, setSelectedVehicleId,
     selectedVehicle, showMaintenanceHistory, setShowMaintenanceHistory, showAddVehicle, setShowAddVehicle, newVehicle, setNewVehicle, editingReminderKind,
     setEditingReminderKind, reminderEditForm, setReminderEditForm, showAddReminderForm, setShowAddReminderForm, newReminderForm, setNewReminderForm, showEditVehicle,
-    saveVehicleToGarage, setSaveVehicleToGarage, aboutSection, setAboutSection,
+    saveVehicleToGarage, setSaveVehicleToGarage, aboutSection, setAboutSection, careerPosts, setCareerPosts,
     setShowEditVehicle, editVehicleForm, setEditVehicleForm, appointments, setAppointments, autoAccept, setAutoAccept, toast,
     setToast, successPulse, setSuccessPulse, showOnboarding, setShowOnboarding, onboardStep, setOnboardStep, showDayFullPrompt,
     setShowDayFullPrompt, dayFullNotified, setDayFullNotified, completingApptId, setCompletingApptId, warrantyDaysForm, setWarrantyDaysForm, replyingReviewId,

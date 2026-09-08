@@ -574,7 +574,7 @@ export function setPageMeta({ title, description, image, canonicalPath, jsonLd }
 const NAV_SESSION_KEY = "fixperto_nav";
 
 // Herkesin görebildiği ekranlar.
-const NAV_PUBLIC_SCREENS = ["landing", "owner", "detail", "listingDetail", "blog", "blogPost", "about"];
+const NAV_PUBLIC_SCREENS = ["landing", "owner", "detail", "listingDetail", "blog", "blogPost", "about", "careers"];
 // Yalnızca oturum varsa geri yüklenen ekranlar.
 const NAV_AUTH_SCREENS = ["mechanicDashboard", "mechProfilePage", "mechBrowse", "ownerProfilePage", "ownerSettings"];
 // Bilerek geri YÜKLENMEYEN ekranlar (listede olmayan her şey zaten elenir):

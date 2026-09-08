@@ -9,6 +9,7 @@ import profileViewsRouter from "./routes/profileViews.js";
 import translateRouter from "./routes/translate.js";
 import analyticsRouter from "./routes/analytics.js";
 import blogRouter from "./routes/blog.js";
+import careersRouter from "./routes/careers.js";
 import { quoteRequestsRouter, quoteOffersRouter } from "./routes/quotes.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { authRouter } from "./routes/auth.js";
@@ -132,6 +133,7 @@ app.use("/api/profile-views", profileViewsRouter);
 app.use("/api/translate", translateRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/blog", blogRouter);
+app.use("/api/careers", careersRouter);
 
 // ---- sitemap.xml ------------------------------------------------------------------------------
 // Arama motoru botları siteyi taramaya buradan başlar. Yayınlanmış her blog yazısı ve sabit

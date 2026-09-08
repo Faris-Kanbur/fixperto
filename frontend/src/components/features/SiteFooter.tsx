@@ -95,6 +95,7 @@ export function SiteFooter() {
           <Col title={t("footerCompany")} icon={BookOpen}>
             <Item onClick={() => setScreen("blog")}>{t("blogTitle")}</Item>
             <Item onClick={() => setScreen("about")}>{t("footerAbout")}</Item>
+            <Item onClick={() => setScreen("careers")}>{t("footerCareers")}</Item>
             <Item onClick={() => setShowNewTicketForm(true)}>{t("footerContact")}</Item>
           </Col>
 

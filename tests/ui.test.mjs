@@ -119,7 +119,7 @@ const screenBlocks = [];
   if (prev2) for (const n of prev2.names) screenBlocks.push({ name: n, body: shell.slice(prev2.idx) });
 }
 // Alt bileşene devreden ekranlar: logo o bileşende aranıyor.
-const DELEGATES = { LandingHome: "LandingHome.tsx", ListingDetailPage: "ListingDetailPage.tsx", BlogListPage: "BlogPages.tsx", BlogPostPage: "BlogPages.tsx", AboutPage: "BlogPages.tsx" };
+const DELEGATES = { LandingHome: "LandingHome.tsx", ListingDetailPage: "ListingDetailPage.tsx", BlogListPage: "BlogPages.tsx", BlogPostPage: "BlogPages.tsx", AboutPage: "BlogPages.tsx", CareersPage: "CareersPage.tsx" };
 const hasBrand = (text) => /BrandMark|PageTopBar|Fix<span/.test(text);
 const componentSrc = {};
 for (const f of files) componentSrc[f.rel.split("/").pop()] = f.lines.join("\n");
