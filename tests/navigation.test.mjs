@@ -76,4 +76,42 @@ eq(o.get(), { screen: "ownerProfilePage", ownerProfileTab: "vehicles", ownerSett
 eq(o.back(), "OK", "bir daha geri");
 eq(o.get().ownerProfileTab, "info", "geri → Bilgilerim");
 
+// --- SAYFA YENİLEME: bulunulan ekran korunmalı --------------------------------------------
+// Yaşanan hata: yönlendirici olmadığı için F5 kullanıcıyı HER ZAMAN ana sayfaya atıyordu.
+// Aşağıdaki model helpers.ts readNavSession ile aynı kuralları uyguluyor.
+const NAV_PUBLIC = ["landing", "owner", "detail", "listingDetail", "blog", "blogPost", "about"];
+const NAV_AUTH = ["mechanicDashboard", "mechProfilePage", "mechBrowse", "ownerProfilePage", "ownerSettings"];
+const restore = (snap, hasSession) => {
+  if (!snap || typeof snap !== "object") return null;
+  let screen = snap.screen;
+  if (screen === "booking") screen = snap.selectedMechanicId != null ? "detail" : "landing";
+  if (!NAV_PUBLIC.includes(screen) && !NAV_AUTH.includes(screen)) return null;
+  if (NAV_AUTH.includes(screen) && !hasSession) return null;
+  if (screen === "detail" && snap.selectedMechanicId == null) screen = "landing";
+  if (screen === "listingDetail" && snap.listingPageId == null) screen = "landing";
+  if (screen === "blogPost" && !snap.blogSlug) screen = "blog";
+  const out = { ...snap, screen };
+  if (!hasSession) { out.role = "owner"; if (out.ownerTab && out.ownerTab !== "search") out.ownerTab = "search"; }
+  return out;
+};
+
+eq(restore({ screen: "detail", selectedMechanicId: 7 }, false).screen, "detail", "tamirci sayfası yenilemede korunuyor");
+eq(restore({ screen: "blogPost", blogSlug: "jant-tamiri" }, false).screen, "blogPost", "blog yazısı korunuyor");
+eq(restore({ screen: "mechanicDashboard" }, true).screen, "mechanicDashboard", "oturum varsa tamirci paneli korunuyor");
+eq(restore({ screen: "mechanicDashboard" }, false), null, "oturum yoksa hesap ekranı geri yüklenmiyor");
+eq(restore({ screen: "login" }, false), null, "yarım kalan giriş akışı geri yüklenmiyor");
+eq(restore({ screen: "chat", activeConvoId: 3 }, true), null, "anlık ekran (sohbet) geri yüklenmiyor");
+eq(restore({ screen: "adminDashboard" }, true), null, "yönetici paneli tahminle açılmıyor");
+eq(restore({ screen: "booking", selectedMechanicId: 7 }, true).screen, "detail", "randevu formu → tamirci sayfası (seçimler saklanmıyor)");
+eq(restore({ screen: "booking", selectedMechanicId: null }, true).screen, "landing", "tamircisiz randevu → ana sayfa");
+eq(restore({ screen: "detail", selectedMechanicId: null }, false).screen, "landing", "kimliksiz detay → boş sayfa yerine ana sayfa");
+eq(restore({ screen: "listingDetail", listingPageId: null }, false).screen, "landing", "kimliksiz ilan → ana sayfa");
+eq(restore({ screen: "blogPost", blogSlug: null }, false).screen, "blog", "yazısız blogPost → blog listesi");
+eq(restore({ screen: "owner", ownerTab: "appointments" }, false).ownerTab, "search", "misafirde hesap sekmesi aramaya düşüyor");
+eq(restore({ screen: "owner", ownerTab: "appointments" }, true).ownerTab, "appointments", "oturum varsa sekme korunuyor");
+eq(restore({ screen: "owner", role: "mechanic" }, false).role, "owner", "oturum yoksa rol misafire çekiliyor");
+eq(restore(null, true), null, "kayıt yoksa null");
+eq(restore("bozuk", true), null, "bozuk kayıt çökmüyor");
+eq(restore({ screen: "hicboylebirekranyok" }, true), null, "bilinmeyen ekran adı reddediliyor");
+
 report("gezinme");

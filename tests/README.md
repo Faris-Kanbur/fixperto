@@ -17,6 +17,7 @@ yalnızca bozulanın ayrıntısını basar. Amaç: düzenli koşabilmek ama çı
 | `ui` | Katman (z-index) sırası, banda binen kart, ikon düğmelerde erişilebilir ad |
 | `null-güvenliği` | Veri alanlarında korumasız `.toLowerCase()`/`.trim()` vb. |
 | `blog` | Slug üretimi/benzersizleştirme, taslak görünürlüğü, yayın tarihi, etiketler |
+| `randevu takvimi` | Çalışma saatleri metninden slot üretimi, geçmiş/dolu saatler, ay ızgarası |
 
 Ayrıca `tsc --noEmit` ve her backend dosyası için `node --check` çalışır.
 

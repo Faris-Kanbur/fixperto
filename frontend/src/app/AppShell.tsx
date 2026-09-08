@@ -9,6 +9,7 @@ import { NotifBell } from "../components/features/NotifBell";
 import { SiteFooter } from "../components/features/SiteFooter";
 import { BrandMark, PageTopBar } from "../components/features/BrandMark";
 import { BrandSelect } from "../components/features/BrandSelect";
+import { BookingCalendar } from "../components/features/BookingCalendar";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
 import { OwnerAppointmentsView } from "../components/features/OwnerAppointmentsView";
@@ -2653,24 +2654,17 @@ export function AppShell() {
                     </div>
                   </SectionCard>
 
-                  {/* 3) TARİH & SAAT */}
+                  {/* 3) TARİH & SAAT — ay takvimi + günün bölümlerine ayrılmış saatler.
+                      Eski hâli 7 günlük yatay bir şeritti: bir hafta sonrasına randevu alınamıyordu
+                      ve 20+ saat düğmesi tek yığın hâlinde duruyordu. Bkz. BookingCalendar. */}
                   <SectionCard step={steps[2]} icon={Calendar} title={t("bookingSelectDateTime")}>
-                    <div className="flex gap-2 mb-4 overflow-x-auto pb-1">{nextDays.map((d, i) => { const isSel = selectedDate?.toDateString() === d.toDateString(); const open = isDayOpenForMechanic(selectedMechanic, d); return (
-                      <button key={i} disabled={!open} onClick={() => { setSelectedDate(d); setSelectedTime(null); }} className={`flex-shrink-0 w-16 py-2.5 rounded-2xl border text-center transition ${!open ? "border-gray-100 text-gray-300 cursor-not-allowed" : isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-700 hover:border-rose-300"}`}>
-                        <p className="text-[11px] leading-tight">{(DAY_LABELS_BY_LANG[lang] || DAY_LABELS)[(d.getDay() + 6) % 7]}</p>
-                        <p className="text-lg font-bold leading-tight">{d.getDate()}</p>
-                      </button>
-                    ); })}</div>
-                    {!selectedDate ? (
-                      <p className="text-sm text-gray-400 py-2">{t("bookingPickDayFirst")}</p>
-                    ) : (
-                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                        {slotsForDate(selectedMechanic, selectedDate).length === 0 && <p className="text-sm text-gray-400 col-span-full py-2">{t("noSlotsForDay")}</p>}
-                        {slotsForDate(selectedMechanic, selectedDate).map(slot => (
-                          <button key={slot} onClick={() => setSelectedTime(slot)} className={`py-2.5 rounded-xl border text-sm font-semibold transition ${selectedTime === slot ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-700 hover:border-rose-300"}`}>{slot}</button>
-                        ))}
-                      </div>
-                    )}
+                    <BookingCalendar
+                      mechanic={selectedMechanic}
+                      selectedDate={selectedDate}
+                      onSelectDate={setSelectedDate}
+                      selectedTime={selectedTime}
+                      onSelectTime={setSelectedTime}
+                    />
                   </SectionCard>
 
                   {/* 4) SORUN AÇIKLAMASI */}

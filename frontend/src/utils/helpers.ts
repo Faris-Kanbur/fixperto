@@ -558,3 +558,130 @@ export function setPageMeta({ title, description, image, canonicalPath, jsonLd }
     document.head.appendChild(script);
   }
 }
+
+// ==================== SAYFA YENİLEMEDE BULUNULAN EKRANI KORUMA ====================
+// SORUN: uygulamada URL yönlendiricisi yok; tüm gezinme React state'inde tutuluyor. Bu yüzden
+// F5 / yenile tuşu kullanıcıyı her zaman ana sayfaya atıyordu — bir tamircinin profilini
+// okurken sayfayı tazeleyen kişi baştan başlıyordu.
+//
+// ÇÖZÜM: gezinme durumunu sessionStorage'a yazıp açılışta geri okuyoruz. localStorage DEĞİL,
+// sessionStorage: kapsam SEKME bazında olmalı. localStorage kullanılsaydı, kullanıcının haftalar
+// önce açtığı bir ekran yepyeni bir sekmede karşısına çıkardı — beklenen davranış bu değil.
+//
+// Bu bir yönlendirici (router) DEĞİL: adres çubuğu hâlâ değişmiyor, dolayısıyla bağlantı
+// paylaşarak derin sayfa açılamıyor. Gerçek çözüm URL tabanlı yönlendirme; bu ise onu beklerken
+// kullanıcının canını yakan asıl sorunu (yenilemede her şeyi kaybetmek) gideriyor.
+const NAV_SESSION_KEY = "fixperto_nav";
+
+// Herkesin görebildiği ekranlar.
+const NAV_PUBLIC_SCREENS = ["landing", "owner", "detail", "listingDetail", "blog", "blogPost", "about"];
+// Yalnızca oturum varsa geri yüklenen ekranlar.
+const NAV_AUTH_SCREENS = ["mechanicDashboard", "mechProfilePage", "mechBrowse", "ownerProfilePage", "ownerSettings"];
+// Bilerek geri YÜKLENMEYEN ekranlar (listede olmayan her şey zaten elenir):
+//   login/signup/loginOtp/forgotPassword/resetSent → yarım kalmış kimlik akışı; tazelenince
+//     baştan başlaması doğru.
+//   chat/confirmed → anlık ekranlar; içerikleri (aktif sohbet, yeni randevu özeti) kalıcı değil.
+//   adminLogin/adminDashboard → yönetici oturumu ayrı token'a bağlı, tahminle açılmamalı.
+//   booking → tarih/saat/hizmet seçimleri saklanmıyor; boş bir randevu formuna düşürmek yerine
+//     kullanıcıyı tamircinin sayfasına geri bırakıyoruz.
+
+export function writeNavSession(snapshot) {
+  try { window.sessionStorage.setItem(NAV_SESSION_KEY, JSON.stringify(snapshot)); } catch { /* özel mod / kota — gezinme çalışmaya devam etsin */ }
+}
+
+/** Açılışta geri yüklenecek gezinme durumu; geri yüklenemiyorsa null (ana sayfa). */
+export function readNavSession(hasSession) {
+  let snap = null;
+  try {
+    const raw = window.sessionStorage.getItem(NAV_SESSION_KEY);
+    if (!raw) return null;
+    snap = JSON.parse(raw);
+  } catch { return null; }
+  if (!snap || typeof snap !== "object") return null;
+
+  let screen = snap.screen;
+  // Randevu formu: seçimler saklanmadığı için tamircinin sayfasına düşürülüyor.
+  if (screen === "booking") screen = snap.selectedMechanicId != null ? "detail" : "landing";
+  if (!NAV_PUBLIC_SCREENS.includes(screen) && !NAV_AUTH_SCREENS.includes(screen)) return null;
+  if (NAV_AUTH_SCREENS.includes(screen) && !hasSession) return null;
+  // Kimliği kaybolmuş derin ekranlar: boş sayfa göstermektense ana sayfaya düş.
+  if (screen === "detail" && snap.selectedMechanicId == null) screen = "landing";
+  if (screen === "listingDetail" && snap.listingPageId == null) screen = "landing";
+  if (screen === "blogPost" && !snap.blogSlug) screen = "blog";
+
+  const out = { ...snap, screen };
+  // Oturum yoksa rol her zaman "owner"; ayrıca hesap sekmeleri misafire açılmamalı.
+  if (!hasSession) { out.role = "owner"; if (out.ownerTab && out.ownerTab !== "search") out.ownerTab = "search"; }
+  return out;
+}
+
+// ==================== TAMİRCİNİN GERÇEK ÇALIŞMA SAATLERİNDEN RANDEVU SAATLERİ ====================
+// SORUN: randevu ekranı, kendi hesabımız dışındaki HER tamirci için saatleri 09:00-18:00 diye
+// sabit üretiyordu. Yani profilinde "Cmt: 09:00-14:00, Paz: Kapalı" yazan bir tamirciye pazar
+// günü saat 17:30'a randevu verilebiliyordu. Müşteri kapalı bir dükkâna gidiyordu.
+//
+// Bu tamircilerin saatleri `hoursText` alanında METİN olarak duruyor
+// (["Pzt: 09:00-18:00", ..., "Paz: Kapalı"]). Aşağıdaki fonksiyon o metni okuyup gerçek slotlara
+// çeviriyor. Diziyi ETİKETE göre değil SIRAYA göre okuyoruz (0=Pazartesi): etiketler dile göre
+// değişebilir ("Pzt"/"Mon"/"Mo"), sıra değişmez.
+//
+// Öğle arası gibi çok aralıklı satırlar ("09:00-12:00, 13:00-18:00") destekleniyor.
+export function slotsFromHoursLine(line) {
+  const text = String(line ?? "");
+  const ranges = text.match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/g) || [];
+  const out = [];
+  for (const r of ranges) {
+    const [start, end] = r.split("-").map((x) => x.trim());
+    for (const s of genSlots(start, end)) if (!out.includes(s)) out.push(s);
+  }
+  return out.sort();
+}
+
+/** Verilen tarihte, hoursText'e göre randevu verilebilecek saatler. hoursText yoksa null döner. */
+export function slotsFromHoursText(hoursText, date) {
+  if (!Array.isArray(hoursText) || hoursText.length === 0) return null;
+  // JS'te getDay(): 0=Pazar. Bizim dizimiz Pazartesi ile başlıyor.
+  const idx = (date.getDay() + 6) % 7;
+  const line = hoursText[idx];
+  if (line === undefined) return null;
+  return slotsFromHoursLine(line);
+}
+
+/**
+ * Bir saat diliminin GEÇMİŞTE kalıp kalmadığı. Bugüne randevu alınırken saat 17:00'de 09:00'ı
+ * seçebilmek anlamsızdı — üstelik tamirci tarafında geçmiş saatli randevu olarak görünüyordu.
+ * `leadMinutes`: en erken kaç dakika sonrasına randevu verilebilir (yolda geçen süre payı).
+ */
+export function isSlotInPast(date, slot, now = new Date(), leadMinutes = 60) {
+  if (!date || !slot) return false;
+  const sameDay = date.getFullYear() === now.getFullYear()
+    && date.getMonth() === now.getMonth()
+    && date.getDate() === now.getDate();
+  if (date < new Date(now.getFullYear(), now.getMonth(), now.getDate())) return true;
+  if (!sameDay) return false;
+  const [h, m] = String(slot).split(":").map(Number);
+  const slotMinutes = h * 60 + m;
+  return slotMinutes < now.getHours() * 60 + now.getMinutes() + leadMinutes;
+}
+
+/** Saat dilimini günün bölümüne ayırır — uzun slot listesi böyle okunabilir hale geliyor. */
+export function slotPeriod(slot) {
+  const h = Number(String(slot).split(":")[0]);
+  if (h < 12) return "morning";
+  if (h < 17) return "afternoon";
+  return "evening";
+}
+
+/**
+ * Ay görünümü için hücreler: ayın günleri + baştaki boşluklar (Pazartesi ile başlayan ızgara).
+ * Boş hücreler null olarak döner.
+ */
+export function monthGrid(year, month) {
+  const first = new Date(year, month, 1);
+  const lead = (first.getDay() + 6) % 7; // Pazartesi = 0
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
+  return cells;
+}

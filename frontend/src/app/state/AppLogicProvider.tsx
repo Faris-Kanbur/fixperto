@@ -15,13 +15,22 @@ import {
   ADMIN_TICKET_PRIORITY_WEIGHT, ADMIN_TICKET_TYPE_DEFAULT_PRIORITY, TR_ASCII_MAP,
   PLATFORM_COMMISSION_RATE, ADMIN_TREND_DATA, ADMIN_SLA_DAYS, TR_CITY_COORDS,
 } from "../../data/constants";
+
+// SAYFA YENİLEMEDE EKRANI KORUMA — bkz. utils/helpers.ts readNavSession.
+// MODÜL DÜZEYİNDE, bir kez okunuyor. Bilerek useState içinde değil: ilk render'ın DOĞRU ekranla
+// başlaması gerekiyor, aksi halde ana sayfa bir kare görünüp sonra atlıyor (göze çarpan sıçrama).
+const RESTORED_NAV = (() => {
+  try { return readNavSession(api.auth.hasStoredSession()); } catch { return null; }
+})();
+const nav0 = (key, fallback) => (RESTORED_NAV && RESTORED_NAV[key] !== undefined ? RESTORED_NAV[key] : fallback);
 import {
   jobStatusMeta, genSlots, getDaySlots, formatHoursText, parseListingPrice, isOpenNowByHoursText,
   priceLevel, haversineDistanceKm, isValidDateStr, isFixedPriceService, parsePriceNumber, lc,
   listingCurrency, isValidEmail, validatePhone, computeReminders, mockTranslate, statusColor,
   isImgUrl, monthsBetween, initials, listingStatusMeta, slugifyForEmail, ticketDaysOpen, ticketSlaBreached,
   parseDecimalField, listingMarketPriceTier, initialSiteLang, detectCountryCode, rememberSiteLang,
-  brandPriceFor, canonicalBrand,
+  brandPriceFor, canonicalBrand, readNavSession, writeNavSession,
+  slotsFromHoursText, isSlotInPast,
 } from "../../utils/helpers";
 import { PriceLevelDots } from "../../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../../components/ui/MiniBarChart";
@@ -71,8 +80,8 @@ function useAppLogic() {
   // çıkan tamirciler, hizmetler, araç pazarı, nasıl çalışır, yorumlar. Arama yapınca ya da bir
   // bağlantıya tıklayınca gerçek sonuç ekranına (screen "owner"/"mechBrowse") geçiyor. Giriş yapan
   // kullanıcı ise doğrudan kendi paneline yönleniyor (bkz. submitOtpVerify / oturum geri yükleme).
-  const [screen, setScreen] = useState("landing");
-  const [role, setRole] = useState("owner");
+  const [screen, setScreen] = useState(() => nav0("screen", "landing"));
+  const [role, setRole] = useState(() => nav0("role", "owner"));
   const [showPass, setShowPass] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
@@ -112,8 +121,8 @@ function useAppLogic() {
   // çalışan sürüm her zaman taze verilerle çalışıyor.
   const latestFnsRef = useRef<Record<string, (...args: any[]) => any>>({});
   const callLatest = (name, ...args) => latestFnsRef.current[name]?.(...args);
-  const [ownerTab, setOwnerTab] = useState("search");
-  const [ownerMode, setOwnerMode] = useState("mechanics");
+  const [ownerTab, setOwnerTab] = useState(() => nav0("ownerTab", "search"));
+  const [ownerMode, setOwnerMode] = useState(() => nav0("ownerMode", "mechanics"));
   const [ownerSettings, setOwnerSettings] = useState({ smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true });
   // Tamirci tarafının kendi bildirim tercihleri — hepsi varsayılan olarak açık.
   const [mechSettings, setMechSettings] = useState({ notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyJobApplications: true });
@@ -127,15 +136,15 @@ function useAppLogic() {
   // aynı paylaşılan state'e erişip açıp kapatabiliyor.
   const [darkMode, setDarkMode] = useState(false);
   const ownerPhotoRef = useRef(null);
-  const [ownerProfileTab, setOwnerProfileTab] = useState("info");
+  const [ownerProfileTab, setOwnerProfileTab] = useState(() => nav0("ownerProfileTab", "info"));
   // Ayarlar artık araç sahibinde de AYRI bir ekran (screen === "ownerSettings"), tıpkı tamirci
   // tarafındaki gibi. Kendi alt durumu var: "settings" | "support".
-  const [ownerSettingsTab, setOwnerSettingsTab] = useState("settings");
+  const [ownerSettingsTab, setOwnerSettingsTab] = useState(() => nav0("ownerSettingsTab", "settings"));
   // ---- BLOG ----------------------------------------------------------------------------------
   // Yayınlanmış yazılar herkese açık; oturum gerekmiyor. Liste bir kez çekiliyor, tekil yazı
   // slug ile ayrıca çekiliyor (gövde metni listede taşınmıyor — liste hafif kalsın).
   const [blogPosts, setBlogPosts] = useState([]);
-  const [blogSlug, setBlogSlug] = useState(null);
+  const [blogSlug, setBlogSlug] = useState(() => nav0("blogSlug", null));
   const [blogPost, setBlogPost] = useState(null);
   const [blogLoading, setBlogLoading] = useState(false);
   const [showMapMobile, setShowMapMobile] = useState(false);
@@ -329,7 +338,7 @@ function useAppLogic() {
   // "Filtrele" düğmesi ilk arama yapılmadan gösterilmiyor (kullanıcı isteği): karşılama sayfasından
   // ya da arama çubuğundan bir arama tetiklendiğinde true olur ve sonuç ekranındaki filtre/kaydet
   // araçları görünür hâle gelir.
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(() => nav0("hasSearched", false));
   const [sortBy, setSortBy] = useState("distance");
   const [sortDir, setSortDir] = useState("asc");
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
@@ -338,7 +347,7 @@ function useAppLogic() {
   // rahatsız ediliyordu. Bu bayrak bir kez "Şimdi Değil" denince true olur, o oturum boyunca
   // modal bir daha kendiliğinden açılmaz (kullanıcı yine de "Konumumu Kullan" ayarını elle açabilir).
   const [locationPromptDismissed, setLocationPromptDismissed] = useState(false);
-  const [selectedMechanicId, setSelectedMechanicId] = useState(null);
+  const [selectedMechanicId, setSelectedMechanicId] = useState(() => nav0("selectedMechanicId", null));
   const [mapDetailOpen, setMapDetailOpen] = useState(false);
   const openMapDetail = (m) => { setSelectedMechanicId(m.id); setMapDetailOpen(true); };
   const [selectedDate, setSelectedDate] = useState(null);
@@ -439,13 +448,13 @@ function useAppLogic() {
   const fileInputRef = useRef(null);
   const [mechActiveConvoId, setMechActiveConvoId] = useState(null);
   const [mechChatInput, setMechChatInput] = useState("");
-  const [mechTab, setMechTab] = useState("requests");
-  const [mechProfileTab, setMechProfileTab] = useState("profile");
+  const [mechTab, setMechTab] = useState(() => nav0("mechTab", "requests"));
+  const [mechProfileTab, setMechProfileTab] = useState(() => nav0("mechProfileTab", "profile"));
   const [showAddServiceForm, setShowAddServiceForm] = useState(false);
   const [newServiceForm, setNewServiceForm] = useState({ name: "", price: "", fixed: false, fixedTouched: false });
   const [duplicateServiceWarning, setDuplicateServiceWarning] = useState(null);
-  const [mechReqView, setMechReqView] = useState("active");
-  const [mechAnalyticsView, setMechAnalyticsView] = useState("overview");
+  const [mechReqView, setMechReqView] = useState(() => nav0("mechReqView", "active"));
+  const [mechAnalyticsView, setMechAnalyticsView] = useState(() => nav0("mechAnalyticsView", "overview"));
   const [expandedCustomerHistory, setExpandedCustomerHistory] = useState(null);
   const [historyExpandedDate, setHistoryExpandedDate] = useState(null);
   const [ownerApptView, setOwnerApptView] = useState("active");
@@ -499,7 +508,7 @@ function useAppLogic() {
   // TAM SAYFA ARAÇ DETAYI: modal ("Hızlı Görüntüle") ile tam sayfa BİRLİKTE yaşıyor, bu yüzden
   // ayrı bir kimlik tutuluyor. Tek bir state paylaşsalardı tam sayfaya geçince modal da açık
   // kalırdı. Kart tıklaması tam sayfaya gider; modal artık yalnızca göz ikonuyla açılır.
-  const [listingPageId, setListingPageId] = useState(null);
+  const [listingPageId, setListingPageId] = useState(() => nav0("listingPageId", null));
   const listingPageItem = listings.find((l) => l.id === listingPageId) || null;
   const openListingPage = (id) => {
     track("listing_view", { targetType: "listing", targetId: id });
@@ -541,7 +550,7 @@ function useAppLogic() {
   const [jobApplyInfo, setJobApplyInfo] = useState({ name: "", phone: "", email: "", address: "" });
   const [myApplications, setMyApplications] = useState([]);
   const cvFileRef = useRef(null);
-  const [mechListingsSubTab, setMechListingsSubTab] = useState("cars");
+  const [mechListingsSubTab, setMechListingsSubTab] = useState(() => nav0("mechListingsSubTab", "cars"));
   // ---- Admin (site sahibi) paneli state'i ----
   const [adminAuthed, setAdminAuthed] = useState(false);
   const [adminForm, setAdminForm] = useState({ email: "", password: "" });
@@ -710,10 +719,15 @@ function useAppLogic() {
       if (cancelled || !user) return;
       if (user.role === "owner") setMyOwnerId(user.id); else setMyMechanicId(user.id);
       setRole(user.role);
-      setScreen(user.role === "owner" ? "owner" : "mechanicDashboard");
+      // Sayfa yenilendiyse kullanıcı zaten bir ekranda duruyordu; onu panele geri fırlatmak
+      // yenileme düzeltmesini boşa çıkarırdı. Sadece geri yüklenecek ekran YOKSA panele git.
+      if (!RESTORED_NAV) setScreen(user.role === "owner" ? "owner" : "mechanicDashboard");
       setSessionVersion((v) => v + 1);
     }).catch(() => {
-      if (!cancelled) api.auth.clearSession();
+      if (cancelled) return;
+      api.auth.clearSession();
+      // Token geçersizmiş: oturum varsayarak geri yüklediğimiz hesap ekranında kalmamalıyız.
+      if (RESTORED_NAV) { setScreen("landing"); setRole("owner"); }
     });
     return () => { cancelled = true; };
   }, []);
@@ -1384,15 +1398,44 @@ function useAppLogic() {
     list.forEach(a => { if (!map[a.date]) map[a.date] = []; map[a.date].push(a); });
     return Object.entries(map);
   }, [appointments, role, ownerProfile.name, myProfile?.name]);
+  // GERÇEK HATA DÜZELTMESİ: burası eskiden kendi hesabımız DIŞINDAKİ her tamirci için saatleri
+  // sabit 09:00-18:00 üretiyordu. Profilinde "Paz: Kapalı" yazan tamirciye pazar günü randevu
+  // verilebiliyordu — müşteri kapalı dükkâna gidiyordu. Artık tamircinin ilan ettiği çalışma
+  // saatleri (hoursText) okunuyor; saatini hiç girmemiş tamircilerde eski varsayılan korunuyor.
   function slotsForDate(mechanic, date) {
     if (!mechanic) return [];
-    if (mechanic.id !== MY_MECHANIC_ID) return genSlots("09:00", "18:00");
+    if (mechanic.id !== MY_MECHANIC_ID) {
+      const parsed = slotsFromHoursText(mechanic.hoursText, date);
+      return parsed === null ? genSlots("09:00", "18:00") : parsed;
+    }
     const key = JS_DAY_TO_KEY[date.getDay()];
     const dayCfg = mechanicHours[key];
     if (!dayCfg.open) return [];
     return getDaySlots(dayCfg).filter(s => !dayCfg.closedSlots.includes(s));
   }
-  const isDayOpenForMechanic = (mechanic, date) => { if (!mechanic || mechanic.id !== MY_MECHANIC_ID) return true; return mechanicHours[JS_DAY_TO_KEY[date.getDay()]].open; };
+  const isDayOpenForMechanic = (mechanic, date) => {
+    if (!mechanic) return false;
+    if (mechanic.id !== MY_MECHANIC_ID) return slotsForDate(mechanic, date).length > 0;
+    return mechanicHours[JS_DAY_TO_KEY[date.getDay()]].open;
+  };
+  // Randevu takvimi için: her saat dilimi + DURUMU. Ayrı bir fonksiyon, çünkü "saat var mı"
+  // sorusu ile "bu saat alınabilir mi" sorusu farklı: dolu ve geçmiş saatler listede GÖRÜNMELİ
+  // (ekranın boş kalmaması ve kişinin dükkânın yoğun olduğunu görmesi için) ama seçilememeli.
+  const bookableSlots = (mechanic, date) => {
+    if (!mechanic || !date) return [];
+    const dayKey = date.toDateString();
+    const taken = new Set(
+      appointments
+        .filter(a => a.mechanicId === mechanic.id && !["İptal Edildi", "Reddedildi"].includes(a.status))
+        .filter(a => a.dateISO && new Date(a.dateISO).toDateString() === dayKey)
+        .map(a => a.time)
+    );
+    return slotsForDate(mechanic, date).map(time => ({
+      time,
+      taken: taken.has(time),
+      past: isSlotInPast(date, time),
+    }));
+  };
   // Bir tamircinin (kendi hesabımız ya da ilan listesindeki herhangi biri) şu an açık mı kapalı mı olduğunu döner.
   const mechanicOpenStatus = (m) => { if (!m) return null; const lines = m.id === MY_MECHANIC_ID ? formatHoursText(mechanicHours, lang) : m.hoursText; return isOpenNowByHoursText(lines); };
   // Bugün için tüm randevu saatleri dolduysa tamirciye bildirim gönder + yeni saat eklemek isteyip
@@ -4496,6 +4539,10 @@ function useAppLogic() {
     navIndexRef.current = nextIndex;
     try { window.history.pushState({ fx: nextIndex }, ""); } catch { /* yut */ }
   }, [navKey]);
+  // Yenilemede geri yüklemek için aynı durumu sessionStorage'a da yazıyoruz. Geçmiş yığınından
+  // AYRI tutuluyor: role/hasSearched geçmişe yazılsaydı, sadece arama yapmak bile geri tuşuna
+  // basılacak yeni bir adım üretirdi — burada ise ekranı doğru kurmak için gerekliler.
+  useEffect(() => { writeNavSession({ ...navSnapshot, role, hasSearched }); }, [navKey, role, hasSearched]);
   useEffect(() => {
     const onPop = (e) => {
       const idx = e.state?.fx;
@@ -4573,7 +4620,7 @@ function useAppLogic() {
     requestNotifPermission, fireNotification, selectedMechanic, bookingServiceOptions, myProfile, selectedListing, allReminders, dismissedReminderKey,
     setDismissedReminderKey, browseScrollRef, heroCollapsed, setHeroCollapsed, goBookFromReminder, topReminder, notifiedReminderKeysRef, filtered,
     quoteFilteredMechanics, filteredListings, activeListingFilterCount, filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs,
-    activeFilterCount, clearMechFilters, nextDays, isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate,
+    activeFilterCount, clearMechFilters, nextDays, isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate, bookableSlots,
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers, quoteOffersByRequestId, myQuoteRequests,
