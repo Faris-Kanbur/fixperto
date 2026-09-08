@@ -8,7 +8,7 @@ import { LangSwitch } from "../components/features/LangSwitch";
 import { NotifBell } from "../components/features/NotifBell";
 import { SiteFooter } from "../components/features/SiteFooter";
 import { BrandMark, PageTopBar } from "../components/features/BrandMark";
-import { BrandSelect } from "../components/features/BrandSelect";
+import { BrandSelect, ModelSelect } from "../components/features/BrandSelect";
 import { BookingCalendar } from "../components/features/BookingCalendar";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
@@ -192,7 +192,7 @@ export function AppShell() {
     jobEmploymentColor,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
-    isAuthed, requireAuth, requireAuthForTab, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate,
+    isAuthed, requireAuth, requireAuthForTab, openQuoteModal, toggleAddVehicle, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate,
   } = useApp();
   return (
     <div className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-gray-50"}`}>
@@ -489,12 +489,12 @@ export function AppShell() {
                 <label className="text-xs font-semibold text-gray-700 mb-1.5 block">{t("vehicleFieldLabel")}</label>
                 <div className="flex flex-wrap gap-1.5">
                   {vehicles.map(v => (<button key={v.id} onClick={() => setQuoteVehicleId(v.id)} className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition ${quoteVehicleId === v.id ? "bg-rose-600 text-white border-rose-600" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>{v.brand} {v.model} ({v.plate})</button>))}
-                  <button onClick={() => setShowAddVehicle(!showAddVehicle)} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border border-dashed transition ${showAddVehicle ? "bg-rose-50 border-rose-300 text-rose-600" : "border-gray-300 text-gray-500 hover:border-rose-300 hover:text-rose-600"}`}><Plus size={12} /> {t("addAnotherVehicleBtn")}</button>
+                  <button onClick={toggleAddVehicle} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border border-dashed transition ${showAddVehicle ? "bg-rose-50 border-rose-300 text-rose-600" : "border-gray-300 text-gray-500 hover:border-rose-300 hover:text-rose-600"}`}><Plus size={12} /> {t("addAnotherVehicleBtn")}</button>
                 </div>
                 {(vehicles.length === 0 || showAddVehicle) && (
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mt-2 space-y-2">
-                    <BrandSelect compact value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b })} />
-                    <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" />
+                    <BrandSelect compact value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b, model: "" })} />
+                    <ModelSelect compact brand={newVehicle.brand} value={newVehicle.model} onChange={(m) => setNewVehicle({ ...newVehicle, model: m })} />
                     <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
                     <button onClick={addVehicle} disabled={!newVehicle.brand || !newVehicle.model} className={`w-full py-2 rounded-lg text-xs font-semibold transition ${newVehicle.brand && newVehicle.model ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("bookingAddAndSelect")}</button>
                   </div>
@@ -2004,10 +2004,10 @@ export function AppShell() {
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                     <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Car size={17} className="text-rose-500" /> {t("myGarageTitle")} <span className="text-gray-300 font-normal text-sm">({vehicles.length})</span></h2>
                   </div>
-                  <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="w-full sm:w-auto sm:px-6 mb-5 border-2 border-dashed border-rose-200 rounded-2xl py-3 flex items-center justify-center gap-2 text-rose-600 text-sm font-medium hover:bg-rose-50 transition"><Plus size={16} /> {t("addVehicle")}</button>
+                  <button onClick={toggleAddVehicle} className="w-full sm:w-auto sm:px-6 mb-5 border-2 border-dashed border-rose-200 rounded-2xl py-3 flex items-center justify-center gap-2 text-rose-600 text-sm font-medium hover:bg-rose-50 transition"><Plus size={16} /> {t("addVehicle")}</button>
                   {showAddVehicle && (<div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4 space-y-2">
-                    <BrandSelect value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b })} />
-                    <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                    <BrandSelect value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b, model: "" })} />
+                    <ModelSelect brand={newVehicle.brand} value={newVehicle.model} onChange={(m) => setNewVehicle({ ...newVehicle, model: m })} />
                     <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                     <select value={newVehicle.country} onChange={(e) => setNewVehicle({ ...newVehicle, country: e.target.value, city: "" })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="tr">🇹🇷 {t("countryTurkeyLabel")}</option><option value="de">🇩🇪 {t("countryGermanyLabel")}</option></select>
                     {newVehicle.country === "de" ? (
@@ -2055,7 +2055,7 @@ export function AppShell() {
                   {showEditVehicle && editVehicleForm && (
                     <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5 space-y-2">
                       <h3 className="font-semibold text-gray-800 text-sm mb-1">{t("editVehicleInfoTitle")}</h3>
-                      <div className="flex gap-2 items-start"><BrandSelect className="w-1/2" value={editVehicleForm.brand} onChange={(b) => setEditVehicleForm({ ...editVehicleForm, brand: b })} /><input value={editVehicleForm.model} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      <div className="flex gap-2 items-start"><BrandSelect className="w-1/2" value={editVehicleForm.brand} onChange={(b) => setEditVehicleForm({ ...editVehicleForm, brand: b, model: "" })} /><ModelSelect className="w-1/2" brand={editVehicleForm.brand} value={editVehicleForm.model} onChange={(m) => setEditVehicleForm({ ...editVehicleForm, model: m })} /></div>
                       <div className="flex gap-2"><input value={editVehicleForm.year} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={editVehicleForm.plate} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                       <select value={editVehicleForm.country} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, country: e.target.value, city: "" })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="tr">🇹🇷 {t("countryTurkeyLabel")}</option><option value="de">🇩🇪 {t("countryGermanyLabel")}</option></select>
                       {editVehicleForm.country === "de" ? (
@@ -2615,12 +2615,12 @@ export function AppShell() {
                         ); })}
                       </div>
                     ) : null}
-                    <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5"><Plus size={15} /> {t("addVehicle")}</button>
+                    <button onClick={toggleAddVehicle} className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5"><Plus size={15} /> {t("addVehicle")}</button>
                     {(vehicles.length === 0 || showAddVehicle) && (
                       <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 mt-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <BrandSelect value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b })} />
-                          <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                          <BrandSelect value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b, model: "" })} />
+                          <ModelSelect brand={newVehicle.brand} value={newVehicle.model} onChange={(m) => setNewVehicle({ ...newVehicle, model: m })} />
                           <input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
                           <input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
                         </div>
@@ -4098,7 +4098,7 @@ export function AppShell() {
             <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Tag size={18} className="text-rose-600" /> {sellForm._editingId ? t("editListing") : t("sellFormTitle")}</h3><button onClick={() => setShowSellForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <div className="flex justify-center mb-4"><div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-4xl overflow-hidden">{isImgUrl(sellForm.photo) ? <img src={imgThumb(sellForm.photo, 200)} onError={imgFallbackHandler} alt={t("vehiclePhotoAlt")} className="w-full h-full object-cover" /> : sellForm.photo}<input ref={sellPhotoRef} type="file" accept="image/*" onChange={sellPhotoUpload} className="hidden" /><button onClick={() => sellPhotoRef.current?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={20} /></button></div></div>
             <div className="space-y-2">
-              <div className="flex gap-2 items-start"><BrandSelect className="w-1/2" value={sellForm.brand} onChange={(b) => setSellForm({ ...sellForm, brand: b })} /><input value={sellForm.model} onChange={(e) => setSellForm({ ...sellForm, model: e.target.value })} placeholder={t("modelRequiredPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+              <div className="flex gap-2 items-start"><BrandSelect className="w-1/2" value={sellForm.brand} onChange={(b) => setSellForm({ ...sellForm, brand: b, model: "" })} /><ModelSelect className="w-1/2" brand={sellForm.brand} value={sellForm.model} onChange={(m) => setSellForm({ ...sellForm, model: m })} /></div>
               <div className="flex gap-2"><input value={sellForm.year} onChange={(e) => setSellForm({ ...sellForm, year: e.target.value })} placeholder={t("yearRequiredPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.km} onChange={(e) => setSellForm({ ...sellForm, km: e.target.value })} placeholder={t("kmRequiredPlaceholder")} type="number" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
               <input value={sellForm.price} onChange={(e) => setSellForm({ ...sellForm, price: e.target.value })} placeholder={t("priceRequiredPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
               <p className="text-[10px] text-gray-300 px-1">{t("requiredFieldsNote")}</p>

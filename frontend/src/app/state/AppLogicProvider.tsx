@@ -1894,6 +1894,14 @@ function useAppLogic() {
   // Çoklu fiyat teklifi akışı, kullanıcının KAYITLI ARAÇLARI üzerinden çalıştığı için (misafirin
   // aracı yok) modal açılırken kapılanıyor — diğer akışlardaki "son adımda sor" deseninden farkı bu.
   const openQuoteModal = () => requireAuth(() => setShowQuoteModal(true), t("authGateReasonQuote"));
+  // Araç ekleme de kapılanıyor. Araç kişinin HESABINA kaydediliyor (vehicles.ownerId); oturum
+  // yokken kaydedilecek bir yer yok. Eskiden misafir formu baştan sona doldurup "Araç Ekle"ye
+  // basıyor, istek sessizce boşa gidiyordu — emek boşa gitmesin diye giriş EN BAŞTA isteniyor.
+  // Kapatma yönü kapılanmıyor: açık formu kapatmak için giriş sormak anlamsız olurdu.
+  const toggleAddVehicle = () => {
+    if (showAddVehicle) { setShowAddVehicle(false); return; }
+    requireAuth(() => setShowAddVehicle(true), t("authGateReasonAddVehicle"));
+  };
   // Hesap alanları (Randevularım, Araçlarım, Mesajlar, Profil, Favoriler...) tamamen kişisel veri
   // gösterdiği için misafire açılmıyor; sekmeye tıklanınca giriş popup'ı çıkıyor ve giriş sonrası
   // kullanıcı istediği sekmeye otomatik geçiyor.
@@ -4654,7 +4662,7 @@ function useAppLogic() {
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
     detectedCountry, myMechanicAnalytics, adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading,
     listingPageId, listingPageItem, openListingPage, closeListingPage, sellPrefillFromListing,
-    isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
+    isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, toggleAddVehicle, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,

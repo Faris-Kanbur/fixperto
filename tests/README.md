@@ -18,6 +18,7 @@ yalnızca bozulanın ayrıntısını basar. Amaç: düzenli koşabilmek ama çı
 | `null-güvenliği` | Veri alanlarında korumasız `.toLowerCase()`/`.trim()` vb. |
 | `blog` | Slug üretimi/benzersizleştirme, taslak görünürlüğü, yayın tarihi, etiketler |
 | `randevu takvimi` | Çalışma saatleri metninden slot üretimi, geçmiş/dolu saatler, ay ızgarası |
+| `araç formu` | Marka/model listesi bütünlüğü, yazarak süzme, marka→model temizleme, araç ekleme kapısı |
 
 Ayrıca `tsc --noEmit` ve her backend dosyası için `node --check` çalışır.
 
