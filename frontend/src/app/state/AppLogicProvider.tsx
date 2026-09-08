@@ -989,6 +989,18 @@ function useAppLogic() {
     const q = bookingServiceSearch.trim().toLocaleLowerCase("tr-TR");
     return q ? all.filter(s => lc(s.name).includes(q)) : all;
   }, [selectedMechanic, bookingServiceSearch, vehicles, selectedBookingVehicleId, lang]);
+  // ARAÇ DEĞİŞİNCE SEÇİLİ HİZMETİN FİYATI DA TAZELENİR.
+  // Yakalanan hata: hizmet seçildiğinde fiyatı bir ANLIK KOPYA olarak saklanıyor. Kişi önce
+  // hizmeti seçip sonra aracını değiştirdiğinde alttaki liste yeni markanın fiyatlarına
+  // güncelleniyordu ama sağdaki özet kartı (ve kaydedilen randevu) eski markanın fiyatında
+  // kalıyordu — yani ekranda aynı hizmet için iki farklı rakam görünebiliyordu.
+  useEffect(() => {
+    if (screen !== "booking" || !bookingService || bookingService.other) return;
+    const fresh = bookingServiceOptions.find(s => s.name === bookingService.name);
+    // Arama kutusu yüzünden liste filtrelenmişse hizmet bulunamayabilir; o durumda dokunmuyoruz.
+    if (!fresh || fresh.price === bookingService.price) return;
+    setBookingService(bs => (bs ? { ...bs, price: fresh.price, fixed: fresh.fixed } : bs));
+  }, [screen, bookingServiceOptions, bookingService]);
   // Backend fetch is async now (bkz. yukarıdaki bootstrap useEffect), bu yüzden mechanicsList ilk
   // render'da boş olabilir; ownerProfile'daki gibi güvenli bir varsayılan nesne veriyoruz ki tamirci
   // profil sayfası veri gelmeden önce açılırsa myProfile.xxx erişimleri çökmesin.

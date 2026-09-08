@@ -77,4 +77,24 @@ eq(brandPriceFor(door, null), null, "marka seçilmemişse null");
 // Eski (hatalı) davranışın gerçekten hatalı olduğunu kanıtla: düz nesne erişimi eşleşmiyordu.
 eq(door.brandPrices["bmw"], undefined, "kanıt: düz anahtar erişimi 'bmw' ile eşleşmiyordu");
 
+// --- SEÇİLİ HİZMET, ARAÇ DEĞİŞİNCE TAZELENİR ------------------------------------------------
+// Yakalanan hata: hizmet seçilince fiyatı anlık kopya olarak saklanıyor. Kişi önce hizmeti seçip
+// sonra aracını değiştirince liste yeni markaya göre güncelleniyor ama ÖZET KARTI eski fiyatta
+// kalıyordu. Aşağıdaki model AppLogicProvider'daki tazeleme etkisinin aynısı.
+const refreshSelected = (selected, options) => {
+  if (!selected || selected.other) return selected;
+  const fresh = options.find((s) => s.name === selected.name);
+  if (!fresh || fresh.price === selected.price) return selected;
+  return { ...selected, price: fresh.price, fixed: fresh.fixed };
+};
+const bmwList = [{ name: "Kaporta", price: "100₺", fixed: true }];
+const toyotaList = [{ name: "Kaporta", price: "50₺", fixed: true }];
+const picked = { name: "Kaporta", price: "100₺", other: false, fixed: true };
+eq(refreshSelected(picked, toyotaList).price, "50₺", "araç değişince seçili hizmetin fiyatı tazeleniyor");
+eq(refreshSelected(picked, bmwList), picked, "fiyat aynıysa nesne değişmiyor (sonsuz döngü olmaz)");
+eq(refreshSelected(refreshSelected(picked, toyotaList), toyotaList).price, "50₺", "tazeleme tekrarlanabilir (kararlı)");
+eq(refreshSelected(picked, []), picked, "liste arama ile filtrelenmişse dokunulmuyor");
+eq(refreshSelected({ name: "Diğer", price: null, other: true }, toyotaList).price, null, "'Diğer' seçimi fiyatsız kalıyor");
+eq(refreshSelected(null, toyotaList), null, "hiç seçim yoksa çökmüyor");
+
 report("fiyatlandırma");
