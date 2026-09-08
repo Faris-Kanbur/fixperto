@@ -13,13 +13,13 @@ const SRC = join(ROOT, "frontend", "src");
 const handbookSrc = readFileSync(join(SRC, "data", "handbook.ts"), "utf8");
 
 // --- Yapı bütünlüğü ---------------------------------------------------------------------------
-const sections = [...handbookSrc.matchAll(/^\s{4}id: "([a-z-]+)",\n\s{4}title: "([^"]+)",\n\s{4}summary: "([^"]*)"/gm)]
+const sections = [...handbookSrc.matchAll(/^\s{4}id: "([a-z0-9-]+)",\n\s{4}title: "([^"]+)",\n\s{4}summary: "([^"]*)"/gm)]
   .map((m) => ({ id: m[1], title: m[2], summary: m[3] }));
-const pages = [...handbookSrc.matchAll(/^\s{8}id: "([a-z-]+)",\n\s{8}title: "([^"]+)",\n\s{8}body: `/gm)]
+const pages = [...handbookSrc.matchAll(/^\s{8}id: "([a-z0-9-]+)",\n\s{8}title: "([^"]+)",\n\s{8}body: `/gm)]
   .map((m) => ({ id: m[1], title: m[2] }));
 
-ok(sections.length >= 10, `en az 10 bölüm var (${sections.length})`);
-ok(pages.length >= 20, `en az 20 sayfa var (${pages.length})`);
+ok(sections.length >= 20, `en az 20 bölüm var (${sections.length})`);
+ok(pages.length >= 35, `en az 35 sayfa var (${pages.length})`);
 
 const dupSections = sections.map((s) => s.id).filter((id, i, a) => a.indexOf(id) !== i);
 eq(dupSections, [], "bölüm kimlikleri benzersiz");
@@ -58,9 +58,23 @@ eq(uncovered, [], "her bileşenin el kitabında karşılığı var (yeni bileşe
 
 // --- Zorunlu konular ---------------------------------------------------------------------------
 // Bunlar sitenin "nasıl çalışıyor" sorusunun cevabı; biri kaybolursa el kitabı işlevini yitirir.
+// "Hiçbir şeyi atlama" kuralının somut hâli: sitenin her ana alanı el kitabında geçmeli.
+// Bu liste bir kontrol listesidir — yeni bir alan eklenirse buraya da eklenir.
 for (const topic of [
+  // temel
   "oturum", "auth gate", "randevu", "marka bazlı fiyat", "doğrulama", "geri/ileri",
   "i18n", "safeHref", "analitik", "sitemap", "test", "bilinen sınır",
+  // yönetici
+  "yönetici panel", "destek talep", "değişiklik geçmişi", "geri alma",
+  // kullanıcı araçları
+  "bildirim", "hatırlatma", "favori", "kayıtlı arama", "karşılaştırma",
+  "değerlendirme", "paylaşım",
+  // hesap
+  "ayarlar", "şifre değiştirme", "hesap silme", "çıkış",
+  // teknik
+  "hydrate", "göç", "tek kapı", "iyimser güncelleme",
+  // yerel
+  "konum", "harita", "kış lastiği",
 ]) {
   ok(bookLower.includes(lc(topic)), `el kitabı "${topic}" konusunu içeriyor`);
 }
@@ -78,5 +92,14 @@ ok(/adminTab === "handbook" && <HandbookPanel \/>/.test(shell), "sekme paneli re
 const panel = readFileSync(join(SRC, "components", "features", "HandbookPanel.tsx"), "utf8");
 ok(/lc\(p\.body\)\.includes\(q\)/.test(panel), "arama gövdede de arıyor (sadece başlıkta değil)");
 eq(/dangerouslySetInnerHTML/.test(panel), false, "el kitabı içeriği HTML olarak basılmıyor");
+
+// Yönetici panelindeki her sekme el kitabında anılmalı.
+const tabTopics = { dashboard: "genel bakış", users: "kullanıcı", tickets: "destek talep",
+  analytics: "analitik", blog: "blog", history: "değişiklik geçmişi", handbook: "el kitabı" };
+const navLine = shell.split("\n").find((l) => l.includes("const adminNavItems"));
+const tabKeys = [...(navLine || "").matchAll(/key: "(\w+)"/g)].map((m) => m[1]);
+ok(tabKeys.length >= 6, "yönetici sekmeleri okunabildi");
+const undocumentedTabs = tabKeys.filter((k) => !tabTopics[k] || !bookLower.includes(lc(tabTopics[k])));
+eq(undocumentedTabs, [], "her yönetici sekmesi el kitabında anlatılıyor");
 
 report("el kitabı");

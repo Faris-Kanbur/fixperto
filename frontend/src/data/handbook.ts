@@ -681,13 +681,293 @@ Yeni bir özellik ya da düzeltme, testsiz eklenmez. Tercihen düzeltmeden ÖNCE
 
   // ==========================================================================================
   {
+    id: "admin",
+    title: "14. Yönetici Paneli",
+    summary: "Site sahibinin ekranı: kullanıcılar, talepler, analitik, değişiklik geçmişi.",
+    pages: [
+      {
+        id: "adminGenel",
+        title: "14.1 Sekmeler ve yetki",
+        body: `Sekmeler: Genel Bakış, Kullanıcılar, Destek Talepleri, Analitik, Blog, Geçmiş, El Kitabı.
+
+## Ayrı kimlik
+Yönetici oturumu kullanıcı oturumundan tamamen bağımsızdır; kendi token'ıyla çalışır. Bu yüzden yönetici uçlarından gelen 401 kullanıcı oturumunu DÜŞÜRMEZ.
+
+## Neden ayrı
+Aynı kimlik sistemini paylaşsalardı, bir kullanıcı hesabının ele geçirilmesi yönetici yetkisine giden bir yol açardı.
+
+## Veri çekme zamanı
+Yönetici verileri (değişiklik günlüğü, analitik) yalnızca yönetici girişi BAŞARILI olduktan sonra çekilir. Eskiden uygulama açılışında herkes için koşulsuz çağrılıyordu.`,
+      },
+      {
+        id: "adminKullanici",
+        title: "14.2 Kullanıcı ve içerik yönetimi",
+        body: `Araç sahipleri, tamirciler, ilanlar ve iş ilanları panelden düzenlenebilir, askıya alınabilir ya da kaldırılabilir.
+
+## Kaldırma yumuşak
+İlanlar silinmez, adminRemoved işaretiyle listelerden çıkarılır. Böylece yanlışlıkla yapılan bir kaldırma geri alınabilir ve geçmiş kayıtlar (teklifler, mesajlar) yetim kalmaz.
+
+## Marka alanı serbest
+Panelde araç markası yazarak süzülen listeden DEĞİL serbest metinle düzenlenir. Bilinçli bir istisna: yönetici yanlış girilmiş bir kaydı temizliyor olabilir. İstisna kodda açıkça işaretli ve testte tanımlı.
+
+## Öne çıkarma
+İlanları öne çıkarma yönetici tarafından da açılıp kapatılabilir.`,
+      },
+      {
+        id: "adminTicket",
+        title: "14.3 Destek talepleri",
+        body: `Kullanıcılar ve tamirciler destek talebi açar; panelde tür, öncelik ve durum ile yönetilir.
+
+## Öncelik
+Talep türüne göre varsayılan bir öncelik atanır, yönetici değiştirebilir.
+
+## SLA
+Belirlenen gün sayısını aşan açık talepler işaretlenir; panelde "gecikmiş" olarak görünür.
+
+## Kim açtı
+Talebin sahibi isimle değil KİMLİKLE tutulur. Eskiden isim eşleşmesi kullanılıyordu ve aynı adı taşıyan bir tamirciyle araç sahibi karışabiliyordu.`,
+      },
+      {
+        id: "adminGecmis",
+        title: "14.4 Değişiklik geçmişi ve geri alma",
+        body: `Panelden yapılan her alan değişikliği kaydedilir: hangi kayıt, hangi alan, eski ve yeni değer.
+
+## Geri alma
+Bir değişiklik geri alınabilir. Ancak aynı alan sonradan tekrar değiştiyse geri alma İŞLEMİ REDDEDİLİR — yoksa daha yeni bir düzenleme sessizce ezilirdi. Bu, gerçek bir hatanın düzeltmesidir.
+
+## Neden kayıt tutuyoruz
+Panelde yapılan bir düzenleme kullanıcının verisini değiştiriyor. "Bunu kim, ne zaman değiştirdi" sorusunun cevabı olmadan bu yetki güvenli değil.`,
+      },
+    ],
+  },
+
+  // ==========================================================================================
+  {
+    id: "bildirim",
+    title: "15. Bildirimler ve Hatırlatmalar",
+    summary: "Zil ikonu, tarayıcı bildirimleri, bakım hatırlatmaları.",
+    pages: [
+      {
+        id: "bildirimAkis",
+        title: "15.1 Bildirimler",
+        body: `Her bildirim iki yerde birden var: uygulama içi zil ikonunda kayıtlı, ve tarayıcı izni verilmişse sistem bildirimi olarak.
+
+## Neden ikisi birden
+Tarayıcı izni verilmemişse bildirim tamamen kaybolmamalı. Zil ikonundaki kayıt her durumda tutulur.
+
+## Kategoriler
+Randevu, teklif, mesaj, başvuru ve duyuru. Kullanıcı ayarlardan kategorileri tek tek kapatabilir; kapalı kategoride hiç bildirim üretilmez.
+
+## Tıklayınca nereye
+Her bildirim bir hedef taşır (randevu, teklif, sohbet, ilan, duyuru). Tıklanınca doğru ekran ve doğru SEKME açılır. Randevu bildirimi aktif randevular sekmesini açar — kullanıcı en son "geçmiş" sekmesine bakmış olsa bile.
+
+## Kapasite
+Zil listesi son 40 kayıtla sınırlıdır; sınırsız büyüyen bir liste belleği tüketirdi.`,
+      },
+      {
+        id: "hatirlatma",
+        title: "15.2 Bakım hatırlatmaları",
+        body: `Aracın muayene, bakım ve sigorta tarihlerinden hatırlatmalar türetilir.
+
+## Türetilmiş, elle girilmez
+Kullanıcı ayrı bir "hatırlatma" kaydı oluşturmaz; tarihleri girer, sistem yaklaşan işleri hesaplar. Kullanıcı isterse tek tek hatırlatmaları kapatabilir ya da kendi hatırlatmasını ekleyebilir.
+
+## Tarihlerin doğruluğu şart
+Bu yüzden tarih alanları mantık denetiminden geçer (bkz. Veri Doğrulama). 2099 tarihli bir sigorta, hatırlatma sistemini de anlamsız kılardı.
+
+## Tekrar bildirim yok
+Aynı hatırlatma için ikinci kez bildirim gönderilmez; gönderilen anahtarlar akılda tutulur.`,
+      },
+    ],
+  },
+
+  // ==========================================================================================
+  {
+    id: "karar",
+    title: "16. Favoriler, Karşılaştırma ve Değerlendirmeler",
+    summary: "Kullanıcının karar vermesine yardım eden araçlar.",
+    pages: [
+      {
+        id: "favori",
+        title: "16.1 Favoriler ve kayıtlı aramalar",
+        body: `Hem araç ilanları hem TAMİRCİLER favorilenebilir. Favoriler hesapla birlikte kalıcıdır; cihaz değişince kaybolmaz.
+
+## Fiyat düşünce haber
+Favorilenen bir ilanın fiyatı düşerse favorileyen kullanıcılara ayrı, daha dikkat çekici bir bildirim gider. Fiyat artışı da bildirilir ama vurgusuz.
+
+## Kayıtlı aramalar
+Bir filtre kombinasyonu isimle kaydedilir ve tek tıkla geri yüklenir.
+
+## Giriş gerekiyor
+İkisi de hesaba yazıldığı için misafirken kapılanır.`,
+      },
+      {
+        id: "karsilastirma",
+        title: "16.2 Karşılaştırma aracı",
+        body: `Birden çok araç ilanı seçilip yan yana karşılaştırılabilir.
+
+## Yüzen çubuk
+Seçim yapıldıkça ekranın altında bir çubuk birikir; kullanıcı listeyi gezmeye devam edebilir.
+
+## Ne karşılaştırılıyor
+Fiyat, yıl, kilometre, yakıt, vites, güç ve öne çıkan donanım. Amaç kullanıcıyı sekme arasında gidip gelmekten kurtarmak.`,
+      },
+      {
+        id: "yorumlar",
+        title: "16.3 Değerlendirmeler",
+        body: `Araç sahibi tamamlanan bir işten sonra tamirciyi puanlayıp yorum yazabilir; fotoğraf ekleyebilir.
+
+## Kime yazıldığı
+Yorum tamirciye KİMLİKLE bağlanır. Eskiden isimle eşleştiriliyordu; aynı adı taşıyan iki tamirci olduğunda yorum yanlış profile düşüyordu.
+
+## Faydalı oyu
+Yorumlar "faydalı" olarak işaretlenebilir; oy hesapla birlikte kalıcıdır.
+
+## Tamircinin cevabı
+Tamirci bir yoruma tek seferlik cevap yazabilir.
+
+## Puan ortalaması
+Tamircinin puanı yorumlardan hesaplanır, elle girilmez.`,
+      },
+      {
+        id: "paylasim",
+        title: "16.4 Paylaşım",
+        body: `Tamirci profilleri, ilanlar ve iş ilanları paylaşılabilir.
+
+## Yerel paylaşım menüsü
+Cihaz destekliyorsa sistemin kendi paylaşım penceresi açılır; desteklemiyorsa bağlantı panoya kopyalanır.
+
+## Yeni sekme açılmıyor
+Paylaşım penceresi target="_blank" ile açılırsa arkada boş, hiç kapanmayan bir sekme kalıyordu.
+
+## Sayaç
+Paylaşım sayısı kayda geçer ve tamircinin analiz ekranında görünür.`,
+      },
+    ],
+  },
+
+  // ==========================================================================================
+  {
+    id: "ayarlar",
+    title: "17. Ayarlar ve Hesap",
+    summary: "Profil, tercihler, şifre, hesap silme.",
+    pages: [
+      {
+        id: "ayarSayfa",
+        title: "17.1 Ayarlar sayfası",
+        body: `Ayarlar hem araç sahibi hem tamirci için AYRI BİR SAYFA olarak açılır, profil bilgilerinin altında değil.
+
+## Neden ayrı sayfa
+Ayarları profil bilgilerinin altına gömmek, kullanıcının aradığı şeyi bulamamasına yol açıyordu.
+
+## İçerik
+Dil, bildirim kategorileri, konum kullanımı, otomatik randevu kabulü (tamirci), yasal metinler, destek ve hesap işlemleri.`,
+      },
+      {
+        id: "hesap",
+        title: "17.2 Şifre ve hesap silme",
+        body: `## Şifre değiştirme
+Mevcut şifre SUNUCUYA sorularak doğrulanır. Eskiden istemcide saklanan bir değerle karşılaştırılıyordu; şifreler artık API'den hiç dönmediği için bu zaten çalışmıyordu.
+
+## Hesap silme
+Onay ister ve geri alınamaz olduğu açıkça yazılır.
+
+## Çıkış
+Çıkışta oturum sunucudan da düşürülür ve özel veri listeleri (araçlar, randevular, sohbetler) yerel olarak boşaltılır. Sadece ekran değiştirmek yetmez; veriler bellekte kalırsa bir sonraki kullanıcı onları görebilirdi.`,
+      },
+    ],
+  },
+
+  // ==========================================================================================
+  {
+    id: "veri",
+    title: "18. Veri Modeli ve API Katmanı",
+    summary: "Tablolar, kimlik alanları, HTTP istemcisi.",
+    pages: [
+      {
+        id: "tablolar",
+        title: "18.1 Tablolar",
+        body: `owners, mechanics, vehicles, appointments, listings, jobs, conversations, quote_requests, quote_offers, tickets, blog_posts, sessions, analytics_events, translation_cache.
+
+## Kimlik alanları
+Sahiplik her zaman kimlikle kurulur: vehicles.ownerId, appointments.ownerId/mechanicId, listings.sellerId/buyerId. Görünen ad (sellerName gibi) yalnızca gösterim içindir; filtre ve yetki kararlarında KULLANILMAZ.
+
+## İç içe veriler
+Hizmetler, çalışma saatleri, yorumlar, teklifler gibi listeler JSON metin olarak saklanır ve okunurken nesneye çevrilir (hydrate). SQLite'ta ayrı tablo açmanın maliyeti bu ölçekte gerekmiyordu.
+
+## Göç (migration)
+Şema değişiklikleri açılışta uygulanır: eksik sütunlar eklenir, boş kalan alanlar doldurulur, bozuk NULL değerler onarılır. Mevcut veriler silinmez.
+
+## Alan gizleme
+API çıktısı hydrate katmanından geçer. Şifre hiçbir zaman dönmez; IBAN/banka bilgileri toplu listede dönmez, yalnızca tamircinin kendi kaydında görünür.`,
+      },
+      {
+        id: "istemci",
+        title: "18.2 API istemcisi",
+        body: `Tüm HTTP çağrıları tek bir dosyadan geçer (services/api/client.ts).
+
+## Neden tek kapı
+Oturum token'ının her isteğe eklenmesi, hata mesajlarının kullanıcı diline çevrilmesi ve 401 davranışı tek yerde tanımlı. Yüzlerce çağrı sitesine tekrar tekrar yazmak yerine.
+
+## Hata mesajları
+HTTP durum kodları anlaşılır cümlelere çevrilir. Sunucuya hiç ulaşılamadığında (backend kapalı) ayrı bir mesaj gösterilir.
+
+## Tekrarlanan istekler
+Aynı anda giden aynı GET isteği tekilleştirilir.
+
+## Başlık birleştirme
+Varsayılan başlıklar ile çağrıya özel başlıklar GERÇEKTEN birleştirilir. Eskiden çağrıya özel başlık verildiğinde Content-Type siliniyor ve sunucu gövdeyi hiç ayrıştıramıyordu.
+
+## İyimser güncelleme
+Çoğu yazma işleminde arayüz anında güncellenir, istek arka planda gider. Başarısız olursa kullanıcıya bildirilir ve mümkün olan yerlerde değişiklik geri alınır.`,
+      },
+    ],
+  },
+
+  // ==========================================================================================
+  {
+    id: "konum",
+    title: "19. Konum, Harita ve Yerel Kurallar",
+    summary: "Mesafe hesabı, harita, ülkeye göre değişen kurallar.",
+    pages: [
+      {
+        id: "mesafe",
+        title: "19.1 Konum ve mesafe",
+        body: `## İzin isteme
+Konum izni kendiliğinden istenmez; kullanıcı mesafeye dayalı bir şey yapmak istediğinde sorulur ve reddedilirse bir daha üst üste sorulmaz.
+
+## İzin yoksa
+Şehir adından koordinat tablosuyla TAHMİNİ mesafe hesaplanır ve bunun tahmin olduğu ekranda yazılır. Sessizce yanlış bir sayı göstermek, hiç göstermemekten kötüdür.
+
+## Harita
+Tamirci konumları harita panelinde gösterilir; bir işaretçiye tıklanınca o tamircinin özeti açılır. Yol tarifi bağlantısı tamircinin KİMLİĞİNDEN üretilir, isminden değil.`,
+      },
+      {
+        id: "yerel",
+        title: "19.2 Ülkeye göre kurallar",
+        body: `Site Türkiye ve Almanya kullanıcılarını hedefliyor; bazı kurallar ülkeye göre değişir.
+
+## Kış lastiği
+Almanya'da kış lastiği zorunluluğu hava koşullarına bağlıdır; Türkiye'de belirli tarihler arasında ve araç sınıfına göre zorunludur. Araç kaydındaki ülke/şehir bilgisine göre doğru kural gösterilir.
+
+## Dil ve para birimi
+Açılış dili cihazın saat diliminden tahmin edilir. Fiyatlar ilanın ülkesine göre ₺ veya € ile gösterilir.
+
+## Şehir listeleri
+Almanya için sabit bir şehir listesi, Türkiye için serbest metin + koordinat tablosu kullanılır.`,
+      },
+    ],
+  },
+
+  // ==========================================================================================
+  {
     id: "calisma",
-    title: "14. Çalışma Düzeni",
+    title: "20. Çalışma Düzeni",
     summary: "Kurulum, komutlar, bakım kuralları.",
     pages: [
       {
         id: "komut",
-        title: "14.1 Çalıştırma",
+        title: "20.1 Çalıştırma",
         body: `İki ayrı terminal gerekir.
 
 Backend: cd backend && npm install && npm run dev (http://localhost:4000)
@@ -702,7 +982,7 @@ backend/db klasöründeki SQLite dosyası. Şema değişiklikleri açılışta g
       },
       {
         id: "bakim",
-        title: "14.2 Bakım kuralları",
+        title: "20.2 Bakım kuralları",
         body: `## El kitabı güncel tutulur
 Yeni bir özellik eklendiğinde ya da davranış değiştiğinde ilgili sayfa AYNI COMMIT'te güncellenir. Bu kural teste bağlı: components/features altındaki her bileşen el kitabında geçmek zorunda.
 
