@@ -516,7 +516,7 @@ export function AppShell() {
           </div>
         </div>
       ); })()}
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" || screen === "blog" || screen === "blogPost" || screen === "about" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" || screen === "blog" || screen === "blogPost" || screen === "about" || screen === "booking" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
             max-w-7xl kapsayıcılarla yapılıyor. Haritadan açılan modal bu daldan geçmiyor. */}
@@ -2546,9 +2546,9 @@ export function AppShell() {
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold ${step.done ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
                   {step.done ? <Check size={16} /> : step.n}
                 </div>
-                <div className="min-w-0">
-                  <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Icon size={16} className="text-rose-500" /> {title}</h3>
-                  {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-gray-900 text-base flex items-center gap-2 whitespace-nowrap"><Icon size={16} className="text-rose-500 flex-shrink-0" /> {title}</h3>
+                  {hint && <p className="text-xs text-gray-400 mt-1 leading-relaxed">{hint}</p>}
                 </div>
               </div>
               {children}
@@ -2568,7 +2568,10 @@ export function AppShell() {
                   {/* 1) ARAÇ */}
                   <SectionCard step={steps[0]} icon={Car} title={t("bookingSelectVehicle")} hint={t("bookingVehicleHint")}>
                     {vehicles.length === 0 && !showAddVehicle ? (
-                      <p className="text-sm text-gray-500 mb-3">{t("bookingNoVehicles")}</p>
+                      <div className="bg-rose-50 border border-rose-100 rounded-2xl px-4 py-3 mb-3 flex items-start gap-2.5">
+                        <Car size={16} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-gray-600">{t("bookingNoVehicles")}</p>
+                      </div>
                     ) : vehicles.length > 0 ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                         {vehicles.map(v => { const isSel = selectedBookingVehicleId === v.id; return (
@@ -2585,14 +2588,14 @@ export function AppShell() {
                     ) : null}
                     <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5"><Plus size={15} /> {t("addVehicle")}</button>
                     {(vehicles.length === 0 || showAddVehicle) && (
-                      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 mt-3 space-y-2">
-                        <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder={t("bookingBrandPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
-                        <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
-                        <div className="flex gap-2">
-                          <input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
-                          <input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 mt-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder={t("bookingBrandPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                          <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                          <input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                          <input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
                         </div>
-                        <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-700 transition">{t("addVehicle")}</button>
+                        <button onClick={addVehicle} className="mt-2 bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-700 transition">{t("addVehicle")}</button>
                       </div>
                     )}
                     {brandUnsupported && (
@@ -2696,7 +2699,7 @@ export function AppShell() {
 
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       {!bookingService ? (
-                        <p className="text-sm text-gray-400">{t("paymentSelectServiceFirst")}</p>
+                        <p className="text-sm text-gray-400">{t("bookingSelectServiceForPrice")}</p>
                       ) : bookingService.other || !bookingService.fixed ? (
                         <>
                           <div className="flex justify-between items-baseline"><span className="text-sm text-gray-500">{t("bookingSummaryPrice")}</span><span className="text-base font-bold text-gray-900">{t("priceUponInspectionLabel")}</span></div>

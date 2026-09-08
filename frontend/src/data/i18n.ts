@@ -1205,6 +1205,7 @@ export const T = {
   noSlotsForDay: { tr: "Bu gün için uygun saat yok.", en: "No available times for this day.", de: "Keine freien Zeiten an diesem Tag." },
   bookingSummaryVehicle: { tr: "Araç", en: "Vehicle", de: "Fahrzeug" },
   bookingSummaryWhen: { tr: "Randevu", en: "Appointment", de: "Termin" },
+  bookingSelectServiceForPrice: { tr: "Tutarı görmek için önce bir hizmet seç.", en: "Select a service to see the price.", de: "Wählen Sie eine Leistung, um den Preis zu sehen." },
   bookingSummaryPrice: { tr: "Tutar", en: "Total", de: "Betrag" },
   bookingPriceForBrand: { tr: "{brand} için fiyat", en: "Price for {brand}", de: "Preis für {brand}" },
   bookingAcceptedPayments: { tr: "Kabul edilen ödeme yöntemleri", en: "Accepted payment methods", de: "Akzeptierte Zahlungsarten" },

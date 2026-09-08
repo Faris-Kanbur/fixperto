@@ -74,4 +74,31 @@ for (const { rel, lines } of files) {
 }
 eq(clickableIssues, [], "tıklanabilir görünen öğe klavyeyle erişilebilir olmalı (role=\"button\" ya da <button>)");
 
+// --- KURAL 5: iki sütunlu ekran dar kapsayıcıya hapsedilmemeli ---------------------------------
+// Yaşanan hata: randevu ekranı `lg:grid-cols-[1fr_380px]` ile iki sütunlu tasarlandı ama kabuk
+// onu `max-w-2xl` (672px) ile sınırlıyordu. Tailwind kırılımları KAPSAYICIYA değil VIEWPORT'a
+// bakar — geniş ekranda `lg:` tetiklenip 672 pikselin içinde iki sütun açtı ve sol sütun
+// okunamaz hâle geldi. Kural: iki sütunlu/yapışkan düzen kullanan ekran tam genişlikte olmalı.
+const shellLine = shell.split("\n").find((l) => l.includes('shadow-xl flex flex-col')) || "";
+const fullWidthScreens = new Set([...shellLine.matchAll(/screen === "(\w+)"/g)]
+  .map((m) => m[1])
+  .slice(0, shellLine.indexOf('max-w-none') > -1
+    ? [...shellLine.matchAll(/screen === "(\w+)"/g)].filter((m) => m.index < shellLine.indexOf('max-w-none')).length
+    : 0));
+// Ekran bloklarını kabaca ayır: {screen === "X" && ... bir sonraki {screen === öncesine kadar
+const blocks = [];
+const re = /\{screen === "(\w+)" &&/g;
+let m2, prev = null;
+while ((m2 = re.exec(shell)) !== null) {
+  if (prev) blocks.push({ name: prev.name, body: shell.slice(prev.idx, m2.index) });
+  prev = { name: m2[1], idx: m2.index };
+}
+if (prev) blocks.push({ name: prev.name, body: shell.slice(prev.idx) });
+const trapped = [];
+for (const b of blocks) {
+  const twoCol = /lg:grid-cols-\[|lg:sticky/.test(b.body);
+  if (twoCol && !fullWidthScreens.has(b.name)) trapped.push(b.name);
+}
+eq([...new Set(trapped)], [], "iki sütunlu düzen kullanan ekranlar tam genişlikte olmalı (lg: viewport'a bakar)");
+
 report("ui");
