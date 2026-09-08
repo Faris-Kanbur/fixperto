@@ -12,6 +12,7 @@ import { BrandSelect, ModelSelect } from "../components/features/BrandSelect";
 import { BookingCalendar } from "../components/features/BookingCalendar";
 import { WelcomeTour } from "../components/features/WelcomeTour";
 import { OwnerChatsPanel } from "../components/features/OwnerChatsPanel";
+import { HandbookPanel } from "../components/features/HandbookPanel";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
 import { OwnerAppointmentsView } from "../components/features/OwnerAppointmentsView";
@@ -660,7 +661,7 @@ export function AppShell() {
           </div>
         )}
         {screen === "adminDashboard" && adminAuthed && (() => {
-          const adminNavItems = [{ key: "dashboard", label: "Genel Bakış", icon: LayoutDashboard }, { key: "users", label: "Kullanıcılar", icon: Users }, { key: "tickets", label: "Destek Talepleri", icon: LifeBuoy }, { key: "analytics", label: "Analitik", icon: TrendingUp }, { key: "blog", label: "Blog", icon: BookOpen }, { key: "history", label: "Geçmiş", icon: History }];
+          const adminNavItems = [{ key: "dashboard", label: "Genel Bakış", icon: LayoutDashboard }, { key: "users", label: "Kullanıcılar", icon: Users }, { key: "tickets", label: "Destek Talepleri", icon: LifeBuoy }, { key: "analytics", label: "Analitik", icon: TrendingUp }, { key: "blog", label: "Blog", icon: BookOpen }, { key: "history", label: "Geçmiş", icon: History }, { key: "handbook", label: "El Kitabı", icon: BookOpen }];
           return (
           <div className="flex-1 flex flex-col md:flex-row min-h-0">
             <div className="hidden md:flex md:w-60 md:flex-shrink-0 bg-gray-900 text-white flex-col p-4">
@@ -1279,6 +1280,9 @@ export function AppShell() {
                     </div>
                   </div>
                 )}
+                {/* EL KİTABI: sitenin nasıl çalıştığı ve hangi standartlara göre tasarlandığı.
+                    Bölüm → sayfa hiyerarşisi + arama. Bkz. data/handbook.ts ve HandbookPanel.tsx. */}
+                {adminTab === "handbook" && <HandbookPanel />}
                 {adminTab === "history" && (
                   <div>
                     <h1 className="text-xl font-bold text-gray-900 mb-1">Değişiklik Geçmişi</h1>
