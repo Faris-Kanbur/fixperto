@@ -1,6 +1,7 @@
 import { useApp } from "../../app/state/AppLogicProvider";
 import { MechCard } from "./MechCard";
 import { SiteFooter } from "./SiteFooter";
+import { TestimonialCarousel } from "./TestimonialCarousel";
 import { ListingCard } from "./ListingCard";
 import { LangSwitch } from "./LangSwitch";
 import { ATU_FIXED_CATALOG } from "../../data/constants";
@@ -59,7 +60,8 @@ export function LandingHome() {
     .flatMap(m => (m.reviewList || []).map(r => ({ ...r, mechanicName: m.name, mechanicImg: m.img })))
     .filter(r => (r.comment || "").length > 40)
     .sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.comment?.length || 0) - (a.comment?.length || 0))
-    .slice(0, 3);
+    // Sabit 3 yerine daha fazlası: şerit akıyor, hep aynı üç yorumu göstermek vitrin değil dekor olurdu.
+    .slice(0, 12);
 
   // Logo tıklaması: zaten karşılama sayfasındayız, sayfanın başına dön.
   // smooth davranışı desteklenmeyen/azaltılmış hareket tercihi olan ortamlarda da güvenli:
@@ -306,22 +308,7 @@ export function LandingHome() {
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 mb-2">{t("landingTestimonialsTitle")}</h2>
             <p className="text-gray-500 text-sm">{t("landingTestimonialsSubtitle")}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {testimonials.map((r, i) => (
-              <div key={`${r.mechanicName}-${r.id ?? i}`} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col">
-                <Quote size={18} className="text-rose-200 mb-2" />
-                <p className="text-sm text-gray-600 leading-relaxed flex-1">{r.comment}</p>
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-base flex-shrink-0">{r.avatar || "👤"}</div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-gray-900 truncate">{r.name}</p>
-                    <p className="text-[11px] text-gray-400 truncate">{r.mechanicImg} {r.mechanicName}</p>
-                  </div>
-                  <div className="ml-auto flex items-center gap-0.5 flex-shrink-0">{[1, 2, 3, 4, 5].map(n => (<Star key={n} size={11} className={n <= (r.rating || 0) ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"} />))}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TestimonialCarousel items={testimonials} />
         </section>
       )}
 

@@ -41,7 +41,8 @@ const Item = ({ onClick, children }) => (
 export function SiteFooter() {
   const {
     t, lang, setScreen, goToBrowse, setLocationQuery, setServiceQuery, setQuery,
-    setLegalModalTopic, setShowNewTicketForm, setOwnerProfileTab, isAuthed,
+    setLegalModalTopic, setShowNewTicketForm, isAuthed, role, setRole,
+    setMechTab, setMechListingsSubTab, openSellForm, setAboutSection,
   } = useApp();
 
   // Popüler şehirler: koordinat tablosundaki ilk 8 şehir (mesafe hesabında zaten kullanılıyor,
@@ -76,25 +77,30 @@ export function SiteFooter() {
             <Item onClick={() => goToBrowse("mechanics")}>{t("findMechanic")}</Item>
             <Item onClick={() => goToBrowse("cars")}>{t("findCar")}</Item>
             <Item onClick={() => goToBrowse("jobs")}>{t("jobListingsNavLabel")}</Item>
-            <Item onClick={() => { setScreen("owner"); setOwnerProfileTab("market"); }}>{t("sellMyCar")}</Item>
+            <Item onClick={() => openSellForm(null)}>{t("sellMyCar")}</Item>
           </Col>
 
           <Col title={t("footerForMechanics")} icon={Wrench}>
-            <Item onClick={() => setScreen(isAuthed ? "mechanicDashboard" : "login")}>{t("footerMechanicSignup")}</Item>
-            <Item onClick={() => goToBrowse("jobs")}>{t("footerPostJob")}</Item>
+            <Item onClick={() => {
+              if (isAuthed && role === "mechanic") { setScreen("mechanicDashboard"); setMechTab("profile"); return; }
+              setRole("mechanic"); setScreen("signup");
+            }}>{t("footerMechanicSignup")}</Item>
+            <Item onClick={() => {
+              if (isAuthed && role === "mechanic") { setScreen("mechanicDashboard"); setMechTab("market"); setMechListingsSubTab("jobs"); return; }
+              setRole("mechanic"); setScreen("signup");
+            }}>{t("footerPostJob")}</Item>
             <Item onClick={() => setScreen("blog")}>{t("footerMechanicGuide")}</Item>
           </Col>
 
           <Col title={t("footerCompany")} icon={BookOpen}>
             <Item onClick={() => setScreen("blog")}>{t("blogTitle")}</Item>
             <Item onClick={() => setScreen("about")}>{t("footerAbout")}</Item>
-            <Item onClick={() => setScreen("about")}>{t("footerCareers")}</Item>
-            <Item onClick={() => setScreen("about")}>{t("footerPress")}</Item>
+            <Item onClick={() => setShowNewTicketForm(true)}>{t("footerContact")}</Item>
           </Col>
 
           <Col title={t("footerSupport")} icon={LifeBuoy}>
             <Item onClick={() => setShowNewTicketForm(true)}>{t("footerContact")}</Item>
-            <Item onClick={() => setScreen("about")}>{t("footerFaq")}</Item>
+            <Item onClick={() => { setScreen("about"); setAboutSection("faq"); }}>{t("footerFaq")}</Item>
             <Item onClick={() => setLegalModalTopic("terms")}>{t("termsOfUseBtn")}</Item>
             <Item onClick={() => setLegalModalTopic("privacy")}>{t("privacyPolicyBtn")}</Item>
           </Col>

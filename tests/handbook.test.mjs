@@ -46,6 +46,8 @@ const COVERAGE = {
   PhotoLightbox: "fotoğraf", ShareButton: "paylaş", SiteFooter: "alt bilgi",
   SkeletonCard: "boş durum", StatusTracker: "randevu", WelcomeTour: "karşılama",
   TranslatedText: "TranslatedText",
+  SavedSearchList: "kayıtlı arama",
+  TestimonialCarousel: "değerlendirme şeridi",
 };
 const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
 const bookLower = lc(handbookSrc);

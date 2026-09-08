@@ -632,6 +632,19 @@ Türkçe karakterler ASCII'ye çevrilir, benzersizleştirilir ve başlık deği�
 ## SEO altyapısı
 sitemap.xml, robots.txt ve yazı sayfalarında JSON-LD var.
 
+## Alt bilgi (footer) kuralı
+Alt bilgideki her bağlantı GERÇEK bir hedefe gitmeli. "Kariyer" ve "Basın" bağlantıları ikisi de
+Hakkımızda sayfasına gidiyordu; olmayan bir sayfayı vaat eden bağlantı, hiç bağlantı olmamasından
+kötüdür — kaldırıldılar. "SSS" artık Hakkımızda sayfasındaki gerçek SSS bölümüne kaydırıyor.
+Eylem bağlantıları da eylemi yapıyor: "Aracımı sat" ilan formunu açıyor (eskiden hiçbir şey
+olmuyordu), "İş ilanı ver" ilan verme ekranını açıyor (eskiden iş ilanlarına BAKMA ekranını
+açıyordu), "Tamirci olarak katıl" giriş yapmış bir araç sahibini tamirci paneline yollamıyor.
+
+## Bağlantıdan sonra sayfa başa alınır
+Alt bilgideki bir bağlantı yalnızca arama modunu değiştirdiğinde (araç ↔ iş ilanı) sayfa başa
+alınmıyordu; kullanıcı alt bilgide kalıp "hiçbir şey olmadı" sanıyordu. Kaydırma sıfırlaması artık
+mod ve alt sekme değişimlerini de kapsıyor.
+
 ## BİLİNEN SINIR
 Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş değildir.`,
       },
@@ -806,7 +819,9 @@ Aynı hatırlatma için ikinci kez bildirim gönderilmez; gönderilen anahtarlar
 Favorilenen bir ilanın fiyatı düşerse favorileyen kullanıcılara ayrı, daha dikkat çekici bir bildirim gider. Fiyat artışı da bildirilir ama vurgusuz.
 
 ## Kayıtlı aramalar
-Bir filtre kombinasyonu isimle kaydedilir ve tek tıkla geri yüklenir.
+Bir filtre kombinasyonu isimle kaydedilir ve tek tıkla geri yüklenir. Kaydedilen arama DÜZENLENEBİLİR: adı satır içinde değiştirilebilir, kriterleri "şu anki filtrelerimle güncelle" ile tazelenebilir. Eskiden yalnızca uygula/sil vardı; adını yanlış yazan kişi aramayı silip baştan kurmak zorundaydı ve sildiği anda "yeni eşleşme" takibi de sıfırlanıyordu — bir sonraki açılışta eski ilanların hepsi yeni sanılırdı.
+
+Kriter güncelleme düğmesi YALNIZCA arama ekranında görünür; profil sayfasında "şu anki filtre" diye bir bağlam yok, orada göstermek yanıltıcı olurdu.
 
 ## Giriş gerekiyor
 İkisi de hesaba yazıldığı için misafirken kapılanır.`,
@@ -837,7 +852,10 @@ Yorumlar "faydalı" olarak işaretlenebilir; oy hesapla birlikte kalıcıdır.
 Tamirci bir yoruma tek seferlik cevap yazabilir.
 
 ## Puan ortalaması
-Tamircinin puanı yorumlardan hesaplanır, elle girilmez.`,
+Tamircinin puanı yorumlardan hesaplanır, elle girilmez.
+
+## Ana sayfadaki değerlendirme şeridi
+"Kullanıcılar ne diyor?" bölümü gerçek yorumlardan beslenir ve AKAN bir şerittir: en fazla 12 yorum, kendiliğinden ilerliyor, fare üzerine gelince duruyor, oklarla ve dokunmatik kaydırmayla da gezilebiliyor. Eskiden sabit üç karttı; her ziyarette aynı üç metni göstermek vitrin değil dekordu ve "gerçek yorumlar" iddiasını zayıflatıyordu. "Hareketi azalt" tercihi olan kullanıcıda otomatik ilerleme çalışmaz, şerit yalnızca elle kaydırılır.`,
       },
       {
         id: "paylasim",

@@ -255,8 +255,19 @@ export function BlogPostPage() {
 
 /** Hakkımızda / Kariyer / Basın / SSS — alt bilgideki kurumsal bağlantıların indiği sade sayfa. */
 export function AboutPage() {
-  const { t, setShowNewTicketForm } = useApp();
+  const { t, setShowNewTicketForm, aboutSection, setAboutSection } = useApp();
   useEffect(() => { setPageMeta({ title: t("aboutTitle"), description: t("aboutBody"), canonicalPath: "/hakkimizda" }); }, [t]);
+  // Alt bilgideki "SSS" bağlantısı doğrudan SSS bölümüne kaydırıyor. Sayfanın en üstünde bırakıp
+  // "aşağıda bir yerde" demek, vaat edilen içeriği bulamamakla aynı şey.
+  useEffect(() => {
+    if (aboutSection !== "faq") return;
+    const raf = requestAnimationFrame(() => {
+      document.getElementById("about-faq")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setAboutSection(null);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [aboutSection, setAboutSection]);
+  const faqs = [1, 2, 3, 4, 5, 6].map((n) => ({ q: t(`faqQ${n}`), a: t(`faqA${n}`) }));
   return (
     <div className="w-full bg-gray-50 min-h-screen flex flex-col">
       <PageTopBar />
@@ -269,6 +280,22 @@ export function AboutPage() {
             <h2 className="font-bold text-gray-900 mb-2">{t("aboutContactTitle")}</h2>
             <p className="text-sm text-gray-500 mb-4">{t("aboutPageComingSoon")}</p>
             <button onClick={() => setShowNewTicketForm(true)} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("footerContact")}</button>
+          </div>
+        </div>
+
+        {/* ---- SSS: alt bilgideki "SSS" bağlantısının gerçek hedefi ---- */}
+        <div id="about-faq" className="scroll-mt-20 bg-white border border-gray-100 rounded-3xl shadow-sm p-6 md:p-8 mt-5">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">{t("faqTitle")}</h2>
+          <div className="divide-y divide-gray-100">
+            {faqs.map((f, i) => (
+              <details key={i} className="py-3 group">
+                <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-semibold text-gray-800">
+                  {f.q}
+                  <ChevronRight size={15} className="text-gray-300 flex-shrink-0 transition group-open:rotate-90" />
+                </summary>
+                <p className="text-sm text-gray-500 leading-relaxed mt-2">{f.a}</p>
+              </details>
+            ))}
           </div>
         </div>
       </div>

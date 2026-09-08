@@ -13,6 +13,7 @@ import { BookingCalendar } from "../components/features/BookingCalendar";
 import { WelcomeTour } from "../components/features/WelcomeTour";
 import { OwnerChatsPanel } from "../components/features/OwnerChatsPanel";
 import { HandbookPanel } from "../components/features/HandbookPanel";
+import { SavedSearchList } from "../components/features/SavedSearchList";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
 import { OwnerAppointmentsView } from "../components/features/OwnerAppointmentsView";
@@ -1975,21 +1976,7 @@ export function AppShell() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   )}
                   <h2 className="font-bold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Bell size={16} className="text-rose-500" /> {t("savedSearchesLabel")}</h2>
-                  {savedSearches.length === 0 ? (
-                    <div className="text-center py-10 bg-gray-50 rounded-2xl"><Bell size={32} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-xs">{t("noSavedSearchesNote")}</p></div>
-                  ) : (
-                    <div className="space-y-2">
-                      {savedSearches.map(s => (
-                        <div key={s.id} className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm">
-                          <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
-                            <p className="font-semibold text-gray-800 text-sm truncate">{s.name}</p>
-                            <p className="text-[11px] text-gray-400 truncate">{[s.query, s.locationQuery].filter(Boolean).join(" · ") || t("allFilterLabel")}</p>
-                          </button>
-                          <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <SavedSearchList />
                 </>
               )}
               {ownerProfileTab === "vehicles" && !selectedVehicle && (
@@ -3212,21 +3199,7 @@ export function AppShell() {
                     <aside className="lg:sticky lg:top-20">
                       <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5">
                         <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm"><Bell size={15} className="text-rose-500" /> {t("savedSearchesLabel")} <span className="text-gray-300 font-normal">({savedSearches.length})</span></h2>
-                        {savedSearches.length === 0 ? (
-                          <div className="text-center py-8"><Bell size={28} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-xs">{t("noSavedSearchesNote")}</p></div>
-                        ) : (
-                          <div className="space-y-2">
-                            {savedSearches.map(s => (
-                              <div key={s.id} className="border border-gray-100 rounded-2xl p-3 flex items-center justify-between gap-2 hover:border-rose-200 transition">
-                                <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
-                                  <p className="font-semibold text-gray-800 text-sm truncate flex items-center gap-1.5">{s.name}<span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">{s.type === "jobs" ? t("savedSearchTypeJobs") : s.type === "mechanics" ? t("savedSearchTypeMechanics") : t("savedSearchTypeCars")}</span></p>
-                                  <p className="text-[11px] text-gray-400 truncate">{[s.query, s.serviceQuery, s.locationQuery].filter(Boolean).join(" · ") || t("allFilterLabel")}</p>
-                                </button>
-                                <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-1"><Trash2 size={14} /></button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        <SavedSearchList showUpdate compact />
                       </div>
                     </aside>
                   </div>

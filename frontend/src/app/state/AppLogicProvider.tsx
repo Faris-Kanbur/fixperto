@@ -410,6 +410,10 @@ function useAppLogic() {
   const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId) || null;
   const [showMaintenanceHistory, setShowMaintenanceHistory] = useState(false);
   useEffect(() => { setShowMaintenanceHistory(false); }, [selectedVehicleId]);
+  // Hakkımızda sayfası açılırken hangi bölüme kaydırılacağı. Alt bilgideki "SSS" bağlantısı
+  // eskiden düz Hakkımızda'ya gidiyordu ve orada SSS diye bir şey yoktu — kullanıcı vaat edilen
+  // içeriği bulamıyordu.
+  const [aboutSection, setAboutSection] = useState<string | null>(null);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
   // Randevu ekranında eklenen aracın garaja kaydedilip kaydedilmeyeceği. Varsayılan AÇIK: kişi
   // zaten aracını yazdı, bir dahaki randevuda tekrar yazmak zorunda kalmamalı. Ama seçim
@@ -3840,6 +3844,44 @@ function useAppLogic() {
     setSaveSearchNameInput("");
     setToast({ type: "info", text: t("savedSearchSavedToast", { name: trimmed }) });
   };
+  // KAYITLI ARAMAYI DÜZENLEME.
+  // Eskiden yalnızca "uygula" ve "sil" vardı: adını yanlış yazan ya da kriterleri değişen kişi
+  // aramayı silip baştan kurmak zorundaydı — ve sildiği anda "yeni eşleşme" takibi de sıfırlanıyordu.
+  const renameSavedSearch = (id, name) => {
+    const trimmed = String(name || "").trim();
+    if (!trimmed) { setToast({ type: "info", text: t("savedSearchNameRequiredToast") }); return; }
+    setSavedSearches(list => {
+      const next = list.map(x => (x.id === id ? { ...x, name: trimmed } : x));
+      persistMyPrefs({ savedSearches: next }, "Arama güncellenemedi");
+      return next;
+    });
+    setToast({ type: "info", text: t("savedSearchUpdatedToast") });
+  };
+
+  // Kayıtlı aramanın KRİTERLERİNİ o anki filtrelerle değiştirir ("bu aramayı şu anki aramamla
+  // güncelle"). seenListingIds da yeniden hesaplanıyor: yeni kriterlere zaten uyan kayıtlar
+  // "yeni eşleşme" sayılıp kullanıcıyı gereksiz bildirime boğmasın.
+  const updateSavedSearchToCurrent = (id) => {
+    setSavedSearches(list => {
+      const target = list.find(x => x.id === id);
+      if (!target) return list;
+      const type = target.type || "cars";
+      const activeFilters = type === "cars" ? { ...listingFilters } : type === "jobs" ? { ...jobFilters } : { ...filters };
+      const updated = {
+        ...target,
+        query,
+        locationQuery,
+        serviceQuery: type === "mechanics" ? serviceQuery : "",
+        filters: activeFilters,
+      };
+      updated.seenListingIds = savedSearchSource(type).filter(x => matchesSavedSearchCriteria(x, updated)).map(x => x.id);
+      const next = list.map(x => (x.id === id ? updated : x));
+      persistMyPrefs({ savedSearches: next }, "Arama güncellenemedi");
+      return next;
+    });
+    setToast({ type: "info", text: t("savedSearchCriteriaUpdatedToast") });
+  };
+
   const removeSavedSearch = (id) => {
     setSavedSearches(s => {
       const next = s.filter(x => x.id !== id);
@@ -4629,7 +4671,7 @@ function useAppLogic() {
     reset();
     const raf = requestAnimationFrame(reset);
     return () => cancelAnimationFrame(raf);
-  }, [screen, selectedMechanicId, listingPageId, blogSlug, ownerTab, mechTab, ownerProfileTab, mechProfileTab, ownerSettingsTab]);
+  }, [screen, selectedMechanicId, listingPageId, blogSlug, ownerTab, ownerMode, mechTab, mechListingsSubTab, ownerProfileTab, mechProfileTab, ownerSettingsTab]);
 
   const navSnapshot = {
     screen, ownerTab, ownerMode, ownerProfileTab,
@@ -4714,7 +4756,7 @@ function useAppLogic() {
     rescheduleDate, setRescheduleDate, rescheduleTime, setRescheduleTime, vehicles, setVehicles, selectedVehicleId, setSelectedVehicleId,
     selectedVehicle, showMaintenanceHistory, setShowMaintenanceHistory, showAddVehicle, setShowAddVehicle, newVehicle, setNewVehicle, editingReminderKind,
     setEditingReminderKind, reminderEditForm, setReminderEditForm, showAddReminderForm, setShowAddReminderForm, newReminderForm, setNewReminderForm, showEditVehicle,
-    saveVehicleToGarage, setSaveVehicleToGarage,
+    saveVehicleToGarage, setSaveVehicleToGarage, aboutSection, setAboutSection,
     setShowEditVehicle, editVehicleForm, setEditVehicleForm, appointments, setAppointments, autoAccept, setAutoAccept, toast,
     setToast, successPulse, setSuccessPulse, showOnboarding, setShowOnboarding, onboardStep, setOnboardStep, showDayFullPrompt,
     setShowDayFullPrompt, dayFullNotified, setDayFullNotified, completingApptId, setCompletingApptId, warrantyDaysForm, setWarrantyDaysForm, replyingReviewId,
@@ -4776,7 +4818,7 @@ function useAppLogic() {
     myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, clearGallerySelection, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
-    savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
+    savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, renameSavedSearch, updateSavedSearchToCurrent, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
     detectedCountry, myMechanicAnalytics, adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading,
     listingPageId, listingPageItem, openListingPage, closeListingPage, sellPrefillFromListing,
     isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, toggleAddVehicle, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
