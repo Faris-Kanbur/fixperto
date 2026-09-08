@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { PageTopBar } from "./BrandMark";
 import { PriceLevelDots } from "../ui/PriceLevelDots";
 import { BadgeCheck, Banknote, Briefcase, Calendar, Car, ChevronLeft, ChevronRight, Clock, CreditCard, Flag, Globe, Heart, MapPin, MessageCircle, Navigation, Phone, Star, Tag, ThumbsUp, Users, Wrench as ToolIcon, X, Zap } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
@@ -200,8 +201,10 @@ export function MechDetailBody() {
     <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-lg shadow-gray-100">
       <div className="flex items-end justify-between gap-2 mb-1">
         <div>
-          <p className="text-[11px] text-gray-400 font-medium">{t("mechHourlyRateLabel")}</p>
-          <p className="text-2xl font-bold text-gray-900 leading-tight">{selectedMechanic.price}<span className="text-base font-semibold text-gray-400">₺</span></p>
+          <p className="text-[11px] text-gray-400 font-medium">{t("mechStartingFromLabel")}</p>
+          {/* Türetilmiş başlangıç fiyatı: tamircinin hizmet listesindeki EN DÜŞÜK fiyat
+              (marka bazlı fiyatlar dahil). Hiç fiyatlı hizmet yoksa rakam yerine "—". */}
+          <p className="text-2xl font-bold text-gray-900 leading-tight">{mechanicStartingPrice(selectedMechanic) > 0 ? <>{mechanicStartingPrice(selectedMechanic).toLocaleString("tr-TR")}<span className="text-base font-semibold text-gray-400">₺</span></> : <span className="text-lg text-gray-400">—</span>}</p>
         </div>
         <span className="flex items-center gap-1 text-sm font-semibold text-gray-900"><Star size={14} className="fill-gray-900" />{selectedMechanic.rating}<span className="text-gray-400 font-normal text-xs">({selectedMechanic.reviews})</span></span>
       </div>
@@ -233,6 +236,10 @@ export function MechDetailBody() {
 
   return (
     <div className={compact ? "flex flex-col min-h-0 overflow-y-auto" : "w-full bg-gray-50 min-h-screen pb-24 lg:pb-0"}>
+      {/* Üst çubuk yalnızca TAM SAYFA modda: haritadan açılan dar modalda (compact) yer kaplardı
+          ve modalın kendi kapatma düğmesi zaten var. Logo burada da olsun ki kullanıcı detay
+          sayfasının ortasındayken bile tek tıkla ana sayfaya dönebilsin. */}
+      {!compact && <PageTopBar onBack={goBack} />}
       {/* ---- KAPAK ---- Airbnb'deki geniş görsel bandı; üstte yüzen aksiyonlar, altta profil kartı
            görselin üzerine biniyor (fizyoterapistimibul'daki uzman kartı yerleşimi). */}
       <div className="relative">
@@ -526,8 +533,8 @@ export function MechDetailBody() {
       {!compact && isVisitor && (
         <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 flex items-center gap-3">
           <div className="flex-shrink-0">
-            <p className="text-[10px] text-gray-400 leading-none mb-0.5">{t("mechHourlyRateLabel")}</p>
-            <p className="text-base font-bold text-gray-900 leading-none">{selectedMechanic.price}₺</p>
+            <p className="text-[10px] text-gray-400 leading-none mb-0.5">{t("mechStartingFromLabel")}</p>
+            <p className="text-base font-bold text-gray-900 leading-none">{mechanicStartingPrice(selectedMechanic) > 0 ? `${mechanicStartingPrice(selectedMechanic).toLocaleString("tr-TR")}₺` : "—"}</p>
           </div>
           <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
           <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="flex-1 bg-rose-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Calendar size={16} /> {t("bookNow")}</button>

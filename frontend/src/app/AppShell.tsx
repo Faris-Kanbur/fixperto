@@ -7,6 +7,7 @@ import { generateAnalyticsPdf } from "../utils/analyticsReport";
 import { LangSwitch } from "../components/features/LangSwitch";
 import { NotifBell } from "../components/features/NotifBell";
 import { SiteFooter } from "../components/features/SiteFooter";
+import { BrandMark, PageTopBar } from "../components/features/BrandMark";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
 import { OwnerAppointmentsView } from "../components/features/OwnerAppointmentsView";
@@ -37,13 +38,13 @@ import {
   LISTED_WITHIN_OPTIONS, RESPONSE_TIME_OPTIONS, MIN_REVIEW_COUNT_OPTIONS,
   FUEL_TYPE_LABELS_BY_LANG, TRANSMISSION_LABELS_BY_LANG, BODY_TYPE_LABELS_BY_LANG,
   DRIVETRAIN_LABELS_BY_LANG, EMPLOYMENT_TYPE_LABELS_BY_LANG, EXPERIENCE_LEVEL_LABELS_BY_LANG,
-  SERVICE_CATALOG,
+  SERVICE_CATALOG, DAY_LABELS, DAY_LABELS_BY_LANG,
 } from "../data/constants";
 import {
   ticketSlaBreached, ticketDaysOpen, initials, isValidEmail, validatePhone,
   computeReminders, isImgUrl, listingStatusMeta, isValidDateStr, listingCurrency,
   jobStatusMeta, parsePriceNumber, isFixedPriceService, statusColor, getDaySlots, dayClosingTime,
-  imgFallbackHandler, imgThumb, apptStatusLabel, vocabLabel, formatDistanceKm, formatNumber,
+  imgFallbackHandler, imgThumb, apptStatusLabel, vocabLabel, formatDistanceKm, formatNumber, lc,
 } from "../utils/helpers";
 
 // AppShell: eskiden App.jsx'in return(...) bloğuydu. Tüm state/handler'lar
@@ -1671,6 +1672,7 @@ export function AppShell() {
         {screen === "ownerSettings" && (
           <div className="w-full bg-gray-50 min-h-screen">
             <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50 relative">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40"><BrandMark size="sm" /></div>
               <button onClick={() => { if (ownerSettingsTab === "support") setOwnerSettingsTab("settings"); else setScreen("ownerProfilePage"); }} aria-label={t("back")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
             </div>
             <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10">
@@ -1743,6 +1745,9 @@ export function AppShell() {
                 sayfalara "satır bağlantısı" ile inen bir menü vardı — telefonda mantıklı, geniş
                 ekranda hem okunmaz hem gereksiz derindi. Artık alt sayfalar gerçek sekme. */}
             <div className="h-24 md:h-32 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
+              {/* Logo panolarda da var: kullanıcı hangi ekranda olursa olsun tek tıkla ana
+                  sayfaya dönebilmeli — web'de logonun en temel işlevi bu. */}
+              <div className="absolute top-4 left-4 md:left-8 z-40"><BrandMark /></div>
               {/* KATMAN NOTU: bu kapsayıcı z-40 — aşağıdaki başlık kartı z-10 ve yapışkan sekme
                   çubuğu z-20. Bildirim paneli buradan açıldığı için kartın üstünde kalmalı
                   (tamirci tarafında tam tersi bir sıralama panelin kartın arkasında açılmasına
@@ -2502,110 +2507,241 @@ export function AppShell() {
             </>)}
           </div>
         )}
-        {screen === "booking" && selectedMechanic && (
-          <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
-            <div className="bg-white text-gray-900 px-5 pt-6 pb-5 border-b border-gray-200 shadow-sm"><button onClick={() => setScreen(selectedMechanic ? "detail" : "owner")} className="flex items-center gap-1 text-gray-500 mb-3 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button><h1 className="text-lg font-bold text-gray-900">{t("bookingTitle")}</h1></div>
-            <div className="flex-1 px-5 md:px-8 py-4 md:grid md:grid-cols-2 md:gap-8">
-              <div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Car size={16} /> {t("bookingSelectVehicle")}</h3>
-              {vehicles.length === 0 && !showAddVehicle ? (
-                <div className="bg-gray-100 rounded-xl p-3 mb-3 text-xs text-gray-700">{t("bookingNoVehicles")}</div>
-              ) : vehicles.length > 0 ? (
-                <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-                  {vehicles.map(v => { const isSel = selectedBookingVehicleId === v.id; return (<button key={v.id} onClick={() => setSelectedBookingVehicleId(v.id)} className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition ${isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}><Car size={14} className="flex-shrink-0" /><div><p className="text-xs font-semibold leading-tight whitespace-nowrap">{v.brand} {v.model}</p><p className={`text-[10px] leading-tight ${isSel ? "text-rose-100" : "text-gray-400"}`}>{v.plate}</p></div></button>); })}
-                  <button onClick={() => setShowAddVehicle(!showAddVehicle)} className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-dashed text-xs font-medium transition ${showAddVehicle ? "bg-rose-50 border-rose-300 text-rose-600" : "border-gray-300 text-gray-500 hover:border-rose-300 hover:text-rose-600"}`}><Plus size={14} /> {t("bookingAddVehicle")}</button>
+        {screen === "booking" && selectedMechanic && (() => {
+          /* ---- RANDEVU OLUŞTUR (tam sayfa web düzeni) ----
+             Tasarım dili sitenin geri kalanıyla aynı: üst çubuk + max-w-7xl gövde + solda
+             numaralı adımlar, sağda YAPIŞKAN özet kartı. Bu düzen Airbnb ve Booking'in
+             rezervasyon ekranlarından tanıdık — kullanıcı seçim yaparken ne seçtiğini ve
+             ne ödeyeceğini sürekli görüyor. Ama içerik bize özgü: adımlar araç → hizmet →
+             tarih olarak sıralı, çünkü ARAÇ seçimi hizmet fiyatlarını belirliyor.
+
+             ÜÇ ÖNEMLİ DEĞİŞİKLİK:
+             1) Araç seçimi artık fiyatı belirliyor. Tamirci hizmetleri marka bazında
+                fiyatlandırabiliyor; müşteri aracını seçince liste O MARKANIN fiyatlarıyla
+                geliyor. Önceden müşteri kendi markasının fiyatını aramak zorundaydı.
+             2) Ödeme adımı kaldırıldı. Randevu alırken kart bilgisi istemek gereksiz bir
+                sürtünmeydi; iş yapılmadan para alınmıyor. Tamircinin KABUL ETTİĞİ ödeme
+                yöntemleri bilgi olarak özet kartında duruyor.
+             3) "Saatlik işçilik" gitti — uydurma bir sayıydı (bkz. hizmet fiyatlandırması). */
+          const bookingVehicle = vehicles.find(v => v.id === selectedBookingVehicleId) || null;
+          const vehicleBrand = bookingVehicle?.brand || null;
+          // Tamirci bu markaya bakıyor mu? Bakmıyorsa uyar — müşteri boşuna gelmesin.
+          const brandsServed = selectedMechanic.brandsServiced || [];
+          const brandUnsupported = !!(vehicleBrand && brandsServed.length > 0
+            && !brandsServed.some(b => lc(b) === lc(vehicleBrand)));
+          const payMethods = selectedMechanic.paymentMethods || [];
+          const steps = [
+            { n: 1, label: t("bookingSelectVehicle"), done: !!selectedBookingVehicleId || vehicles.length === 0 },
+            { n: 2, label: t("bookingSelectService"), done: !!bookingService },
+            { n: 3, label: t("bookingSelectDateTime"), done: !!selectedDate && !!selectedTime },
+          ];
+          const ready = selectedDate && selectedTime && bookingService
+            && (vehicles.length === 0 || selectedBookingVehicleId)
+            && (!bookingService.fixed || bookingService.other
+                || parsePriceNumber(bookingService.price) <= EXPENSIVE_SERVICE_THRESHOLD || approveExpensiveService);
+
+          const SectionCard = ({ step, icon: Icon, title, hint = null, children }) => (
+            <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+              <div className="flex items-start gap-3 mb-4">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold ${step.done ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+                  {step.done ? <Check size={16} /> : step.n}
                 </div>
-              ) : null}
-              {(vehicles.length === 0 || showAddVehicle) && (
-                <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-3 space-y-2">
-                  <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder={t("bookingBrandPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                  <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                  <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                  <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-rose-700 transition">{t("bookingAddAndSelect")}</button>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Icon size={16} className="text-rose-500" /> {title}</h3>
+                  {hint && <p className="text-xs text-gray-400 mt-0.5">{hint}</p>}
                 </div>
-              )}
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2 mt-3"><Calendar size={16} /> {t("bookingSelectDate")}</h3>
-              <div className="flex gap-2 mb-5 overflow-x-auto pb-1">{nextDays.map((d, i) => { const isSel = selectedDate?.toDateString() === d.toDateString(); const open = isDayOpenForMechanic(selectedMechanic, d); return (<button key={i} disabled={!open} onClick={() => setSelectedDate(d)} className={`flex-shrink-0 w-14 py-2 rounded-xl border text-center transition ${!open ? "opacity-30 cursor-not-allowed" : isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}><p className="text-[10px]">{d.toLocaleDateString("tr-TR", { weekday: "short" })}</p><p className="text-sm font-bold">{d.getDate()}</p></button>); })}</div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Clock size={16} /> {t("bookingSelectTime")}</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mb-5">{selectedDate ? slotsForDate(selectedMechanic, selectedDate).map(tm => (<button key={tm} onClick={() => setSelectedTime(tm)} className={`py-2 rounded-xl border text-sm font-medium transition ${selectedTime === tm ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>{tm}</button>)) : <p className="col-span-3 md:col-span-4 text-xs text-gray-400 text-center py-4">{t("bookingSelectDateFirst")}</p>}{selectedDate && slotsForDate(selectedMechanic, selectedDate).length === 0 && <p className="col-span-3 md:col-span-4 text-xs text-gray-400 text-center py-4">{t("bookingClosedDay")}</p>}</div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><ToolIcon size={16} /> {t("bookingSelectService")}</h3>
-              <div className="relative mb-2">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input value={bookingServiceSearch} onChange={(e) => setBookingServiceSearch(e.target.value)} placeholder={t("bookingServiceSearchPlaceholder")} className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
               </div>
-              <div className="flex flex-col gap-2 mb-5 max-h-64 overflow-y-auto pr-0.5">
-                {bookingServiceOptions.length === 0 && (<p className="text-xs text-gray-400 text-center py-3">{t("noServiceMatch", { query: bookingServiceSearch })}</p>)}
-                {bookingServiceOptions.map((s, i) => {
-                  const isSel = bookingService && !bookingService.other && bookingService.name === s.name;
-                  return (
-                    <button key={i} onClick={() => setBookingService({ name: s.name, price: s.price, other: false, fixed: s.fixed })} className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-left transition ${isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>
-                      <span className="text-xs font-medium flex items-center gap-1.5 min-w-0"><ToolIcon size={12} className={`flex-shrink-0 ${isSel ? "text-white" : "text-rose-400"}`} /><span className="truncate">{s.name}{s.fromCatalog && <span className={`block text-[9px] font-normal ${isSel ? "text-rose-100" : "text-gray-400"}`}>{t("fromCatalogLabel")}</span>}</span></span>
-                      <span className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${isSel ? "bg-white/20 text-white" : s.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{s.fixed ? t("fixedPriceBadge") : t("variablePriceBadge")}</span>
-                        {String(s.price || "").trim() && <span className="text-xs font-bold whitespace-nowrap">{s.price}</span>}
-                      </span>
-                    </button>
-                  );
-                })}
-                <button onClick={() => setBookingService({ name: t("otherServiceLabel"), price: null, other: true, fixed: false })} className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border text-left transition ${bookingService?.other ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>
-                  <span className="text-xs font-medium">{t("otherServiceLabel")}</span>
-                  <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${bookingService?.other ? "bg-white/20 text-white" : "bg-gray-100 text-gray-700"}`}>{t("determinedAfterRepair")}</span>
-                </button>
-              </div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("problemDescLabel")}</h3>
-              <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} placeholder={t("problemDescPlaceholder")} className="w-full border border-gray-200 rounded-xl p-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none" rows={3} />
-              <div className="flex items-center gap-2 flex-wrap mb-1 md:mb-0">
-                <input ref={problemPhotoRef} type="file" accept="image/*" onChange={addProblemPhoto} className="hidden" />
-                {problemPhotos.map((src, i) => (
-                  <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
-                    <img src={src} alt={t("vehiclePhotoAlt")} className="w-full h-full object-cover" />
-                    <button onClick={() => removeProblemPhoto(i)} aria-label={t("removePhotoAria")} className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center"><X size={10} className="text-white" /></button>
-                  </div>
-                ))}
-                <button onClick={() => problemPhotoRef.current?.click()} className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-rose-300 hover:text-rose-500 transition flex-shrink-0"><Camera size={16} /><span className="text-[9px] mt-0.5">{t("addPhotoLabel")}</span></button>
-              </div>
-              <p className="text-[11px] text-gray-400 mt-1.5">{t("problemPhotoHint")}</p>
-              <label className="flex items-start gap-2.5 mt-3 bg-gray-50 rounded-xl p-3 cursor-pointer">
-                <input type="checkbox" checked={shareHistoryConsent} onChange={(e) => setShareHistoryConsent(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
-                <span className="text-xs text-gray-600"><span className="font-medium text-gray-800">{t("historyShareConsentTitle")}</span> {t("historyShareConsentDesc")}</span>
-              </label>
-              </div>
-              <div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2 mt-1 md:mt-0"><Banknote size={16} /> {t("paymentSectionTitle")}</h3>
-              {!bookingService ? (
-                <div className="bg-gray-100 rounded-2xl p-4 mb-3 text-xs text-gray-700">{t("paymentSelectServiceFirst")}</div>
-              ) : bookingService.other || !bookingService.fixed ? (
-                <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-3">
-                  <div className="flex justify-between items-center mb-2"><span className="text-xs text-gray-500">{t("serviceLabel")}</span><span className="text-sm font-semibold text-gray-800 text-right">{bookingService.name}</span></div>
-                  <p className="text-xs text-gray-500 leading-relaxed bg-white rounded-xl p-3 border border-gray-200">{t("noFixedPriceNotice")} <b>{t("onSiteAfterRepair")}</b> {t("paymentWillBeMadeSuffix")}</p>
-                </div>
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-3">
-                  <div className="flex justify-between items-center mb-3"><span className="text-xs text-gray-500">{bookingService.name}</span><span className="text-lg font-bold text-gray-800">{bookingService.price}</span></div>
-                  <div className="flex gap-2 mb-3">
-                    <button onClick={() => setPaymentForm(f => ({ ...f, method: "card" }))} className={`flex-1 py-2 rounded-xl text-xs font-medium border transition ${paymentForm.method === "card" ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600"}`}>{t("payNowOption")}</button>
-                    <button onClick={() => setPaymentForm(f => ({ ...f, method: "onsite" }))} className={`flex-1 py-2 rounded-xl text-xs font-medium border transition ${paymentForm.method === "onsite" ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-600"}`}>{t("payOnSiteOption")}</button>
-                  </div>
-                  {paymentForm.method === "card" && (
-                    <div className="space-y-2">
-                      <input value={paymentForm.cardNumber} onChange={(e) => setPaymentForm(f => ({ ...f, cardNumber: e.target.value }))} placeholder={t("cardNumberPlaceholder")} maxLength={19} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                      <div className="flex gap-2"><input value={paymentForm.expiry} onChange={(e) => setPaymentForm(f => ({ ...f, expiry: e.target.value }))} placeholder={t("expiryPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={paymentForm.cvc} onChange={(e) => setPaymentForm(f => ({ ...f, cvc: e.target.value }))} placeholder={t("cvcPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+              {children}
+            </div>
+          );
+
+          return (
+          <div className="w-full bg-gray-50 min-h-screen">
+            <PageTopBar onBack={() => setScreen(detailReturnScreen || "detail")} />
+            <div className="max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{t("bookingTitle")}</h1>
+              <p className="text-sm text-gray-500 mb-6">{t("bookingSubtitle", { name: selectedMechanic.name })}</p>
+
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
+                {/* ---- SOL: adımlar ---- */}
+                <div className="min-w-0">
+                  {/* 1) ARAÇ */}
+                  <SectionCard step={steps[0]} icon={Car} title={t("bookingSelectVehicle")} hint={t("bookingVehicleHint")}>
+                    {vehicles.length === 0 && !showAddVehicle ? (
+                      <p className="text-sm text-gray-500 mb-3">{t("bookingNoVehicles")}</p>
+                    ) : vehicles.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                        {vehicles.map(v => { const isSel = selectedBookingVehicleId === v.id; return (
+                          <button key={v.id} onClick={() => setSelectedBookingVehicleId(v.id)} className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-700 hover:border-rose-300"}`}>
+                            <Car size={18} className="flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold leading-tight truncate">{v.brand} {v.model}</p>
+                              <p className={`text-xs leading-tight ${isSel ? "text-rose-100" : "text-gray-400"}`}>{v.plate}</p>
+                            </div>
+                            {isSel && <Check size={16} className="ml-auto flex-shrink-0" />}
+                          </button>
+                        ); })}
+                      </div>
+                    ) : null}
+                    <button onClick={() => setShowAddVehicle(!showAddVehicle)} className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5"><Plus size={15} /> {t("addVehicle")}</button>
+                    {(vehicles.length === 0 || showAddVehicle) && (
+                      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 mt-3 space-y-2">
+                        <input value={newVehicle.brand} onChange={(e) => setNewVehicle({ ...newVehicle, brand: e.target.value })} placeholder={t("bookingBrandPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                        <input value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} placeholder={t("bookingModelPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                        <div className="flex gap-2">
+                          <input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                          <input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                        </div>
+                        <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-700 transition">{t("addVehicle")}</button>
+                      </div>
+                    )}
+                    {brandUnsupported && (
+                      <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 flex items-start gap-2"><AlertTriangle size={13} className="flex-shrink-0 mt-0.5" /> {t("bookingBrandNotServed", { brand: vehicleBrand, name: selectedMechanic.name })}</p>
+                    )}
+                  </SectionCard>
+
+                  {/* 2) HİZMET — fiyatlar seçilen aracın markasına göre */}
+                  <SectionCard step={steps[1]} icon={ToolIcon} title={t("bookingSelectService")}
+                    hint={vehicleBrand ? t("bookingServiceBrandHint", { brand: vehicleBrand }) : t("bookingServiceNoBrandHint")}>
+                    <div className="relative mb-3">
+                      <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input value={bookingServiceSearch} onChange={(e) => setBookingServiceSearch(e.target.value)} placeholder={t("bookingServiceSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" />
                     </div>
-                  )}
-                  <p className="text-[10px] text-gray-400 mt-3 flex items-start gap-1"><Lock size={11} className="flex-shrink-0 mt-0.5" /> {t("demoPaymentNotice")}</p>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 max-h-[26rem] overflow-y-auto pr-0.5">
+                      {bookingServiceOptions.length === 0 && (<p className="text-sm text-gray-400 text-center py-6 xl:col-span-2">{t("noServiceMatch", { q: bookingServiceSearch })}</p>)}
+                      {bookingServiceOptions.map((s, i) => {
+                        const isSel = bookingService && !bookingService.other && bookingService.name === s.name;
+                        return (
+                          <button key={i} onClick={() => setBookingService({ name: s.name, price: s.price, other: false, fixed: s.fixed })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 hover:border-rose-300"}`}>
+                            <span className="text-sm font-medium flex items-center gap-2 min-w-0">
+                              <ToolIcon size={13} className={`flex-shrink-0 ${isSel ? "text-white" : "text-rose-400"}`} />
+                              <span className="truncate">{s.name}</span>
+                            </span>
+                            <span className="flex items-center gap-2 flex-shrink-0">
+                              {/* Marka rozeti: bu fiyatın SENİN aracın için olduğunu açıkça söyler. */}
+                              {s.brandPriced && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isSel ? "bg-white/20 text-white" : "bg-rose-50 text-rose-600"}`}>{vehicleBrand}</span>}
+                              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${isSel ? "bg-white/20 text-white" : s.fixed ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>{s.fixed ? t("fixedPriceBadge") : t("variableLabel")}</span>
+                              {String(s.price || "").trim() && <span className="text-sm font-bold whitespace-nowrap">{s.price}</span>}
+                            </span>
+                          </button>
+                        );
+                      })}
+                      <button onClick={() => setBookingService({ name: t("otherServiceLabel"), price: null, other: true, fixed: false })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${bookingService?.other ? "bg-rose-600 border-rose-600 text-white" : "border-dashed border-gray-300 hover:border-rose-300"}`}>
+                        <span className="text-sm font-medium">{t("otherServiceLabel")}</span>
+                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${bookingService?.other ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>{t("variableLabel")}</span>
+                      </button>
+                    </div>
+                  </SectionCard>
+
+                  {/* 3) TARİH & SAAT */}
+                  <SectionCard step={steps[2]} icon={Calendar} title={t("bookingSelectDateTime")}>
+                    <div className="flex gap-2 mb-4 overflow-x-auto pb-1">{nextDays.map((d, i) => { const isSel = selectedDate?.toDateString() === d.toDateString(); const open = isDayOpenForMechanic(selectedMechanic, d); return (
+                      <button key={i} disabled={!open} onClick={() => { setSelectedDate(d); setSelectedTime(null); }} className={`flex-shrink-0 w-16 py-2.5 rounded-2xl border text-center transition ${!open ? "border-gray-100 text-gray-300 cursor-not-allowed" : isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-700 hover:border-rose-300"}`}>
+                        <p className="text-[11px] leading-tight">{(DAY_LABELS_BY_LANG[lang] || DAY_LABELS)[(d.getDay() + 6) % 7]}</p>
+                        <p className="text-lg font-bold leading-tight">{d.getDate()}</p>
+                      </button>
+                    ); })}</div>
+                    {!selectedDate ? (
+                      <p className="text-sm text-gray-400 py-2">{t("bookingPickDayFirst")}</p>
+                    ) : (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+                        {slotsForDate(selectedMechanic, selectedDate).length === 0 && <p className="text-sm text-gray-400 col-span-full py-2">{t("noSlotsForDay")}</p>}
+                        {slotsForDate(selectedMechanic, selectedDate).map(slot => (
+                          <button key={slot} onClick={() => setSelectedTime(slot)} className={`py-2.5 rounded-xl border text-sm font-semibold transition ${selectedTime === slot ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-700 hover:border-rose-300"}`}>{slot}</button>
+                        ))}
+                      </div>
+                    )}
+                  </SectionCard>
+
+                  {/* 4) SORUN AÇIKLAMASI */}
+                  <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                    <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><FileText size={16} className="text-rose-500" /> {t("problemDescLabel")}</h3>
+                    <p className="text-xs text-gray-400 mb-4">{t("problemPhotoHint")}</p>
+                    <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} placeholder={t("problemDescPlaceholder")} rows={4} className="w-full px-3.5 py-3 rounded-2xl border border-gray-200 text-sm resize-none mb-3 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <input ref={problemPhotoRef} type="file" accept="image/*" onChange={addProblemPhoto} className="hidden" />
+                      {problemPhotos.map((src, i) => (
+                        <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                          <img src={src} alt={t("vehiclePhotoAlt")} className="w-full h-full object-cover" />
+                          <button onClick={() => removeProblemPhoto(i)} aria-label={t("removePhotoAria")} className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full text-white flex items-center justify-center"><X size={11} /></button>
+                        </div>
+                      ))}
+                      <button onClick={() => problemPhotoRef.current?.click()} aria-label={t("addPhotoAria")} className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-rose-300 hover:text-rose-500 transition"><Camera size={18} /></button>
+                    </div>
+                    <label className="flex items-start gap-2.5 mt-4 bg-gray-50 rounded-2xl p-3.5 cursor-pointer">
+                      <input type="checkbox" checked={shareHistoryConsent} onChange={(e) => setShareHistoryConsent(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
+                      <span className="text-xs text-gray-600"><span className="font-semibold text-gray-800">{t("historyShareConsentTitle")}</span> {t("historyShareConsentDesc")}</span>
+                    </label>
+                  </div>
                 </div>
-              )}
-              {bookingService?.fixed && !bookingService.other && parsePriceNumber(bookingService.price) > EXPENSIVE_SERVICE_THRESHOLD && (
-                <label className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl p-3 mt-3 cursor-pointer">
-                  <input type="checkbox" checked={approveExpensiveService} onChange={(e) => setApproveExpensiveService(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
-                  <span className="text-xs text-gray-700">{t("expensiveServiceConfirmPrefix")} <strong>{bookingService.price}</strong> {t("expensiveServiceConfirmSuffix")}</span>
-                </label>
-              )}
-              <button disabled={!selectedDate || !selectedTime || !bookingService || (vehicles.length > 0 && !selectedBookingVehicleId) || (bookingService?.fixed && !bookingService.other && paymentForm.method === "card" && paymentForm.cardNumber.trim().length < 12) || (bookingService?.fixed && !bookingService.other && parsePriceNumber(bookingService.price) > EXPENSIVE_SERVICE_THRESHOLD && !approveExpensiveService)} onClick={confirmBooking} className={`w-full py-3 rounded-2xl font-semibold text-sm transition mt-3 ${selectedDate && selectedTime && bookingService && (vehicles.length === 0 || selectedBookingVehicleId) && (!bookingService.fixed || bookingService.other || paymentForm.method === "onsite" || paymentForm.cardNumber.trim().length >= 12) && (!bookingService?.fixed || bookingService.other || parsePriceNumber(bookingService.price) <= EXPENSIVE_SERVICE_THRESHOLD || approveExpensiveService) ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("confirmBookingBtn")}</button>
+
+                {/* ---- SAĞ: yapışkan özet ---- */}
+                <aside className="lg:sticky lg:top-20">
+                  <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6">
+                    <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-100">
+                      <div className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                        {isImgUrl(selectedMechanic.img) ? <img src={imgThumb(selectedMechanic.img, 100)} onError={imgFallbackHandler} alt={selectedMechanic.name} className="w-full h-full object-cover" /> : selectedMechanic.img}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-gray-900 truncate">{selectedMechanic.name}</p>
+                        <p className="text-xs text-gray-400 flex items-center gap-1"><Star size={11} className="fill-gray-400" />{formatNumber(selectedMechanic.rating, 1, "0.0")} · {selectedMechanic.reviews || 0}</p>
+                      </div>
+                    </div>
+
+                    <dl className="space-y-2.5 text-sm">
+                      <div className="flex justify-between gap-3"><dt className="text-gray-400">{t("bookingSummaryVehicle")}</dt><dd className="font-medium text-gray-800 text-right min-w-0 truncate">{bookingVehicle ? `${bookingVehicle.brand} ${bookingVehicle.model}` : "—"}</dd></div>
+                      <div className="flex justify-between gap-3"><dt className="text-gray-400">{t("serviceLabel")}</dt><dd className="font-medium text-gray-800 text-right min-w-0 truncate">{bookingService?.name || "—"}</dd></div>
+                      <div className="flex justify-between gap-3"><dt className="text-gray-400">{t("bookingSummaryWhen")}</dt><dd className="font-medium text-gray-800 text-right">{selectedDate && selectedTime ? `${selectedDate.toLocaleDateString(lang === "de" ? "de-DE" : lang === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long" })} · ${selectedTime}` : "—"}</dd></div>
+                    </dl>
+
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      {!bookingService ? (
+                        <p className="text-sm text-gray-400">{t("paymentSelectServiceFirst")}</p>
+                      ) : bookingService.other || !bookingService.fixed ? (
+                        <>
+                          <div className="flex justify-between items-baseline"><span className="text-sm text-gray-500">{t("bookingSummaryPrice")}</span><span className="text-base font-bold text-gray-900">{t("priceUponInspectionLabel")}</span></div>
+                          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{t("noFixedPriceNotice")}</p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-baseline">
+                            <span className="text-sm text-gray-500">{t("bookingSummaryPrice")}</span>
+                            <span className="text-2xl font-bold text-rose-600">{bookingService.price}</span>
+                          </div>
+                          {vehicleBrand && <p className="text-[11px] text-gray-400 mt-1">{t("bookingPriceForBrand", { brand: vehicleBrand })}</p>}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Tamircinin kabul ettiği ödeme yöntemleri — SEÇİM DEĞİL, bilgi.
+                        Ödeme iş bitince yerinde yapılıyor; müşteri hangi yöntemlerin
+                        geçerli olduğunu önceden bilsin diye burada. */}
+                    {payMethods.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5"><Banknote size={13} className="text-gray-400" /> {t("bookingAcceptedPayments")}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {payMethods.map(m => (<span key={m} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{m}</span>))}
+                        </div>
+                        <p className="text-[11px] text-gray-400 mt-2">{t("bookingPayAtShopNote")}</p>
+                      </div>
+                    )}
+
+                    {bookingService?.fixed && !bookingService.other && parsePriceNumber(bookingService.price) > EXPENSIVE_SERVICE_THRESHOLD && (
+                      <label className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl p-3 mt-4 cursor-pointer">
+                        <input type="checkbox" checked={approveExpensiveService} onChange={(e) => setApproveExpensiveService(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
+                        <span className="text-xs text-gray-700">{t("expensiveServiceConfirmPrefix")} <strong>{bookingService.price}</strong> {t("expensiveServiceConfirmSuffix")}</span>
+                      </label>
+                    )}
+
+                    <button disabled={!ready} onClick={confirmBooking} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition mt-5 ${ready ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("confirmBookingBtn")}</button>
+                    {!ready && <p className="text-[11px] text-gray-400 text-center mt-2">{t("bookingCompleteStepsNote")}</p>}
+                  </div>
+                </aside>
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
         {screen === "confirmed" && (<div className="max-w-md mx-auto w-full flex-1 px-5 py-10 flex flex-col items-center text-center"><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4"><Check size={40} className="text-green-500" /></div><h2 className="text-lg font-bold text-gray-800 mb-1">{autoAccept ? t("appointmentConfirmedTitle") : t("appointmentRequestSentTitle")}</h2><button onClick={() => { setScreen("owner"); setOwnerTab("appointments"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2 mt-4">{t("viewMyAppointmentBtn")}</button><button onClick={goHome} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button></div>)}
         {screen === "mechBrowse" && (
           <>
@@ -2677,6 +2813,7 @@ export function AppShell() {
                 Eskiden burada 5 adet 9 piksellik minik sekme vardı — telefon için tasarlanmıştı ve
                 geniş ekrana yayılınca okunamaz hâle geliyordu. */}
             <div className="h-24 md:h-32 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
+              <div className="absolute top-4 left-4 md:left-8 z-40"><BrandMark /></div>
               {/* GERÇEK HATA DÜZELTMESİ — bildirim paneli başlık kartının ARKASINDA açılıyordu.
                   Bu kapsayıcı konumlandırılmış + z-index'li olduğu için KENDİ yığın bağlamını
                   (stacking context) kuruyor: NotifBell'deki panelin dev z-index'i (9560) yalnızca
@@ -3636,6 +3773,7 @@ export function AppShell() {
                 yalnızca hesabı ve uygulamayı ilgilendiren ayarlar kaldı (bildirim, dil, görünüm,
                 ödeme bilgisi, şifre, hesap). Dişliye basınca tam olarak bu görünüyor. */}
             <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50 relative">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40"><BrandMark size="sm" /></div>
               <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} aria-label={t("back")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
             </div>
             {/* Aynı katman hatası burada da vardı — bkz. panodaki uzun not. */}

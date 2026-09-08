@@ -14,11 +14,18 @@
  * markaya, şehre ve hasara göre gerçekten değişiyor; kesin rakam yazmak hem yanıltıcı
  * olur hem de kısa sürede eskirdi.
  */
+// Kapak görseli: konuya göre etiketlenmiş stok fotoğraf. `lock` parametresi görselin
+// SABİT kalmasını sağlıyor — olmasaydı her sayfa yenilemesinde farklı bir fotoğraf gelir,
+// yazının kimliği oturmazdı. Not: bunlar üretilmiş görsel değil, konuya göre seçilmiş stok
+// fotoğraflardır; bu ortamda görsel üretme aracım yok.
+const cover = (tags, lock) => `https://loremflickr.com/1200/700/${tags}?lock=${lock}`;
+
 export const BLOG_SEED_POSTS = [
   {
     slug: "jant-tamiri-kac-para-jant-duzeltme-rehberi",
     title: "Jant Tamiri Kaç Para? Çizik, Ezik ve Çatlak İçin Yol Haritası",
     excerpt: "Jant çizildi, kaldırıma vurdu ya da hava kaçırıyor. Hangi hasar tamir edilir, hangisi jantı çöpe atar? Fiyatı belirleyen şeyler ve tamirciye gitmeden önce bilmen gerekenler.",
+    coverPhoto: cover("car,wheel,rim", 101),
     tags: ["jant", "lastik", "tamir"],
     relatedServiceKey: "rim_repair",
     body: `Kaldırıma sürttün, rögar kapağına girdin ya da jantın kenarı zamanla kavlamaya başladı. İlk soru hep aynı: tamir edilir mi, ne kadar tutar?
@@ -66,6 +73,7 @@ Titreme, hava kaçağı ya da gözle görülür ezik varsa erteleme. Jant lasti�
     slug: "klima-sogutmuyor-nedenleri",
     title: "Araç Klimasi Soğutmuyor: 6 Neden ve Gaz Dolumu Ne Zaman Gerekir?",
     excerpt: "Klima üflüyor ama serinletmiyor mu? Her sorun gaz eksikliği değil. Önce nedenini anlayın, gereksiz gaz dolumuna para vermeyin.",
+    coverPhoto: cover("car,air,conditioning", 102),
     tags: ["klima", "bakım", "yaz"],
     relatedServiceKey: "ac_service",
     body: `Klimanın soğutmaması ilk sıcak günde fark edilir ve akla gelen ilk çözüm "gaz doldurayım" olur. Oysa gaz eksikliği nedenlerden yalnızca biridir — üstelik gaz kendiliğinden bitmez, kaçak varsa biter.
@@ -110,6 +118,7 @@ Klimayı en soğuk kademede, iç hava sirkülasyonu açık şekilde çalıştır
     slug: "motor-ariza-isigi-yandi-ne-yapmali",
     title: "Motor Arıza Işığı (Check Engine) Yandı: Ne Yapmalı, Yola Devam Edilir mi?",
     excerpt: "Sarı motor ikonu yandığında panik gereksiz ama görmezden gelmek pahalı. Işığın sabit mi yanıp sönen mi olduğu her şeyi değiştirir.",
+    coverPhoto: cover("car,dashboard,warning", 103),
     tags: ["motor", "arıza", "gösterge"],
     relatedServiceKey: "engine_diag",
     body: `Gösterge panelindeki sarı motor sembolü, aracın kendi kendini izleyen sisteminin (OBD) bir sapma yakaladığını söyler. Tek başına "motor bozuldu" demek değildir — ama "bir şeye bak" demektir.
@@ -149,6 +158,7 @@ Cihaza takıp kod okumak dakikalar sürer; asıl iş o kodun hangi parçayı iş
     slug: "direksiyon-titriyor-rot-balans",
     title: "Direksiyon Titriyor: Rot mu, Balans mı, Fren mi?",
     excerpt: "Titremenin hangi hızda ve hangi anda olduğu, sorunun nerede olduğunu söyler. Üç farklı titreme, üç farklı iş.",
+    coverPhoto: cover("car,steering,wheel", 104),
     tags: ["rot balans", "süspansiyon", "lastik"],
     relatedServiceKey: "wheel_alignment",
     body: `Direksiyon titremesi tek bir arıza değil, bir belirtidir. Doğru yere bakmak için titremenin **ne zaman** olduğuna dikkat etmek gerekir.
@@ -186,6 +196,7 @@ Bozuk rot ayarı lastiği hızla ve düzensiz aşındırır. Birkaç bin kilomet
     slug: "aku-bitti-mi-belirtileri-omru",
     title: "Akü Bitti mi? 5 Belirti ve Akü Ömrü Gerçekte Kaç Yıl?",
     excerpt: "Sabah çalışmayan araç her zaman akü demek değil. Aküyü değiştirmeden önce bakılması gerekenler ve ömrü kısaltan alışkanlıklar.",
+    coverPhoto: cover("car,battery,engine", 105),
     tags: ["akü", "elektrik", "kış"],
     relatedServiceKey: "battery",
     body: `Akü, aracın en sessiz sarf malzemesidir: yıllarca sorun çıkarmaz, sonra bir sabah hiç uyarmadan bırakır. Ama aslında uyarır — sadece belirtileri fark etmek gerekir.
@@ -224,6 +235,7 @@ Kapasite (Ah) ve marş akımı (CCA) değerleri araç üreticisinin belirlediği
     slug: "triger-kayisi-ne-zaman-degisir",
     title: "Triger Kayışı Ne Zaman Değişir? Kopunca Ne Olur?",
     excerpt: "Triger, ertelenince en pahalıya patlayan bakımdır. Değişim aralığı, kopmanın sonucu ve set halinde değişimin neden şart olduğu.",
+    coverPhoto: cover("car,engine,belt", 106),
     tags: ["triger", "motor", "periyodik bakım"],
     relatedServiceKey: "timing_belt",
     body: `Triger kayışı, motorun üst ve alt kısmını senkronize eden parçadır. Görevi basit ama kritiktir: pistonlar ile supapların birbirine çarpmadan çalışmasını sağlar.
@@ -260,6 +272,7 @@ Bu üç soru, işin doğru yapılıp yapılmadığını anlamanın en pratik yol
     slug: "arac-muayenesinden-gecmek-icin-kontrol-listesi",
     title: "Araç Muayenesinden Geçmek İçin Kontrol Listesi",
     excerpt: "Muayeneden kalmaların büyük kısmı basit ve ucuz sebeplerden. Randevudan önce yarım saatte yapabileceğin kontroller.",
+    coverPhoto: cover("car,inspection,garage", 107),
     tags: ["muayene", "kontrol", "yasal"],
     relatedServiceKey: "pre_inspection",
     body: `Muayeneden kalmak çoğu zaman ciddi bir arızadan değil, önceden bakılsa dakikalar süren şeylerden kaynaklanır. Randevudan önceki yarım saat, ikinci kez sıraya girmekten çok daha ucuzdur.
@@ -306,6 +319,7 @@ Muayene öncesi kontrol, bir ustanın 20–30 dakikada yaptığı bir iştir ve 
     slug: "yag-degisimi-kac-kmde-yapilir",
     title: "Yağ Değişimi Kaç Km'de Yapılır? 10.000 mi, 15.000 mi?",
     excerpt: "Tek bir doğru rakam yok. Motor tipi, yağ sınıfı ve nasıl kullandığın aralığı değiştiriyor. Süre şartını atlamak en sık yapılan hata.",
+    coverPhoto: cover("car,oil,change", 108),
     tags: ["yağ değişimi", "periyodik bakım", "motor"],
     relatedServiceKey: "oil_change",
     body: `"Kaç kilometrede bir yağ değişir?" sorusunun tek cevabı yok, çünkü aralığı üç şey birlikte belirliyor: motor, yağ ve kullanım biçimi.
@@ -350,6 +364,7 @@ Birkaç gün yağ seviyesini ve altında damlama olup olmadığını kontrol et.
     slug: "debriyaj-kaciriyor-belirtileri",
     title: "Debriyaj Kaçırıyor mu? Belirtileri ve Ömrünü Uzatan Alışkanlıklar",
     excerpt: "Devir yükseliyor ama araç hızlanmıyorsa debriyaj kaçırıyordur. Test etmenin basit yolu ve değişimde nelere dikkat etmeli.",
+    coverPhoto: cover("car,gearbox,transmission", 109),
     tags: ["debriyaj", "şanzıman", "sürüş"],
     relatedServiceKey: "clutch",
     body: `Debriyaj, motorun gücünü şanzımana ileten sürtünme elemanıdır. Balata gibi bir sarf malzemesidir ve ömrü büyük ölçüde sürüş alışkanlığına bağlıdır.
@@ -389,6 +404,7 @@ Debriyaj seti bir bütündür: balata, baskı ve rulman birlikte değişir. Şan
     slug: "kis-lastigi-ne-zaman-takilir",
     title: "Kış Lastiği Ne Zaman Takılır? 7 Derece Kuralı ve Diş Derinliği",
     excerpt: "Takvim değil sıcaklık belirler. 7 derece kuralı, diş derinliği sınırları ve lastik saklamanın doğru yolu.",
+    coverPhoto: cover("car,winter,tire", 110),
     tags: ["lastik", "kış", "güvenlik"],
     relatedServiceKey: "tire_change",
     body: `Kış lastiği kararını takvim değil sıcaklık verir. Yaygın kural şudur: ortalama hava sıcaklığı **7 °C'nin altına** düştüğünde yaz lastiğinin kauçuğu sertleşir ve yol tutuşu kar olmasa bile azalır.
@@ -426,6 +442,7 @@ Lastik değişiminden sonra balans alınmalıdır. Alınmazsa belirli hızlarda 
     slug: "dpf-partikul-filtresi-temizligi",
     title: "DPF (Partikül Filtresi) Dolu Uyarısı: Temizlik mi, Değişim mi?",
     excerpt: "Dizel araçlarda en pahalı sürprizlerden biri. Filtre neden dolar, şehir içi kullanım neden hızlandırır ve iptal etmek neden kötü fikir?",
+    coverPhoto: cover("car,exhaust,diesel", 111),
     tags: ["dpf", "dizel", "egzoz"],
     relatedServiceKey: "dpf_clean",
     body: `Dizel partikül filtresi (DPF), egzozdaki kurumu tutan bir süzgeçtir. Zamanla dolar ve kendini temizler; bu işleme **rejenerasyon** denir.
@@ -467,6 +484,7 @@ DPF sorununun altında çoğu zaman başka bir arıza yatar. Yalnızca filtreyi 
     slug: "cam-catlagi-tamiri-mi-degisim-mi",
     title: "Ön Cam Çatlağı: Tamir mi Edilir, Değişmesi mi Gerekir?",
     excerpt: "Taş sıçradı, küçük bir yıldız oluştu. Hangi boyuta kadar tamir edilir, neden beklememek gerekir ve sürüş asistanı olan araçlarda ek adım nedir?",
+    coverPhoto: cover("car,windshield,glass", 112),
     tags: ["cam", "kaporta", "güvenlik"],
     relatedServiceKey: "glass_repair",
     body: `Ön cama taş sıçraması yaygındır ve ilk andaki küçük iz genelde tamir edilebilir. Sorun, beklemekle büyümesidir.
@@ -508,6 +526,7 @@ Kalibrasyon yapılmazsa sistem yanlış çalışabilir — üstelik bu, gösterg
     slug: "tamirci-icin-musteri-bulma-rehberi",
     title: "Tamirciler İçin: Dijitalde Müşteri Bulmanın 6 Yolu",
     excerpt: "İşletmen iyi iş çıkarıyor ama yeni müşteri hep tanıdıktan geliyorsa, dijital görünürlükte eksik var demektir. Somut ve uygulanabilir adımlar.",
+    coverPhoto: cover("car,mechanic,workshop", 113),
     tags: ["tamirci", "işletme", "dijital"],
     relatedServiceKey: null,
     body: `Servis işinde iş kalitesi tek başına yetmiyor: müşteri seni bulamıyorsa iyi iş çıkarman görünmez kalıyor. Aşağıdakiler pazarlama teorisi değil, doğrudan uygulanabilir adımlar.

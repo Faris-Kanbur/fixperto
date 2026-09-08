@@ -1694,10 +1694,14 @@ function useAppLogic() {
     const bookingVehicle = vehicles.find(v => v.id === selectedBookingVehicleId) || vehicles[0];
     const isPayableNow = bookingService && bookingService.fixed && !bookingService.other;
     const servicePrice = isPayableNow ? parsePriceNumber(bookingService.price) : 0;
-    const paymentMethod = isPayableNow ? paymentForm.method : "onsite";
+    // ÖDEME ADIMI KALDIRILDI: randevu alırken kart bilgisi istemek gereksiz bir sürtünmeydi —
+    // iş yapılmadan para alınmıyor, tutar da çoğu zaman ekspertiz sonrası netleşiyor. Ödeme
+    // artık her zaman "yerinde" (onsite); tamircinin KABUL ETTİĞİ ödeme yöntemleri ise
+    // profilinde ve randevu özetinde bilgi olarak gösteriliyor.
+    const paymentMethod = "onsite";
     if (servicePrice > EXPENSIVE_SERVICE_THRESHOLD && !approveExpensiveService) { setToast({ type: "info", text: "⚠️ Lütfen devam etmeden önce tutarı onayladığınızı işaretleyin." }); return; }
     const issueText = bookingService ? `${bookingService.name}${problemDesc ? " — " + problemDesc : ""}` : (problemDesc || "Belirtilmedi");
-    const draft = { ownerId: MY_OWNER_ID, customer: ownerProfile.name || form.name || "Siz", mechanicName: selectedMechanic.name, mechanicImg: selectedMechanic.img, mechanicId: selectedMechanic.id, vehicle: bookingVehicle ? `${bookingVehicle.brand} ${bookingVehicle.model} (${bookingVehicle.plate})` : "Araç seçilmedi", date: selectedDate?.toLocaleDateString("tr-TR", { day: "numeric", month: "long" }), dateISO: selectedDate ? selectedDate.toISOString() : null, time: selectedTime, status, autoAccepted: autoAccept, issue: issueText, issuePhotos: problemPhotos, paymentMethod, depositPaid: paymentMethod === "card" ? servicePrice : 0, servicePrice, reviewed: false, noShow: false, historyShareConsent: shareHistoryConsent };
+    const draft = { ownerId: MY_OWNER_ID, customer: ownerProfile.name || form.name || "Siz", mechanicName: selectedMechanic.name, mechanicImg: selectedMechanic.img, mechanicId: selectedMechanic.id, vehicle: bookingVehicle ? `${bookingVehicle.brand} ${bookingVehicle.model} (${bookingVehicle.plate})` : "Araç seçilmedi", date: selectedDate?.toLocaleDateString("tr-TR", { day: "numeric", month: "long" }), dateISO: selectedDate ? selectedDate.toISOString() : null, time: selectedTime, status, autoAccepted: autoAccept, issue: issueText, issuePhotos: problemPhotos, paymentMethod, depositPaid: 0, servicePrice, reviewed: false, noShow: false, historyShareConsent: shareHistoryConsent };
     // ÖNEMLİ: ekran geçişi ("confirmed") ve formu temizleyen tüm setXxx çağrıları artık API isteği
     // başarıyla tamamlandıktan SONRA, try bloğunun içinde yapılıyor. Önceden bunlar await'ten önce
     // tetikleniyordu; istek başarısız olursa kullanıcı randevusu hiç kaydedilmemişken sahte bir
@@ -4402,6 +4406,23 @@ function useAppLogic() {
       } catch (err) { setToast({ type: "info", text: `⚠️ ${err?.message || t("blogSaveFailed")}` }); }
     },
   });
+
+  // ---- SAYFA GEÇİŞİNDE EN ÜSTE KAYDIR --------------------------------------------------------
+  // GERÇEK HATA DÜZELTMESİ: bu bir tek-sayfa uygulaması (SPA). Tarayıcı yeni belge yüklemediği
+  // için kaydırma konumu ekran değişince OLDUĞU YERDE kalıyor. Sonuç: alt bilgideki bir
+  // bağlantıya tıklayınca yeni sayfa açılıyor ama kullanıcı hâlâ sayfanın dibinde — üstelik
+  // alt bilgiyi görmeye devam ettiği için "bir şey olmadı" sanıyor. Aynı sebeple tamirci
+  // detayına girince sayfanın ortası görünüyordu.
+  // Gerçek tarayıcı davranışını taklit ediyoruz: yeni sayfa = en üstten başla. GERİ/İLERİ
+  // tuşuyla gelinen durumlarda da en üste alıyoruz; kaydırma konumunu ekran bazında geri
+  // yüklemek ayrı bir iş ve yarım yapılırsa daha kafa karıştırıcı olur.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // "auto": yumuşak kaydırma burada istenmez — kullanıcı yeni sayfanın en üstünü ANINDA
+    // görmeli, uzun bir sayfada aşağıdan yukarı süzülmeyi izlemek zorunda kalmamalı.
+    try { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); }
+    catch { window.scrollTo(0, 0); }
+  }, [screen, selectedMechanicId, listingPageId, blogSlug, ownerTab, mechTab, ownerProfileTab, mechProfileTab, ownerSettingsTab]);
 
   const navSnapshot = {
     screen, ownerTab, ownerMode, ownerProfileTab,

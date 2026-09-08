@@ -1,9 +1,10 @@
 import { useEffect } from "react";
-import { ChevronLeft, ChevronRight, Calendar, Eye, BookOpen, Wrench, Search } from "lucide-react";
+import { ChevronRight, Calendar, Eye, BookOpen, Wrench, Search } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { setPageMeta, isImgUrl, imgThumb, imgFallbackHandler } from "../../utils/helpers";
 import { SiteFooter } from "./SiteFooter";
 import { SERVICE_BY_KEY } from "../../data/constants";
+import { PageTopBar } from "./BrandMark";
 
 /**
  * BLOG — SEO içerik motoru.
@@ -41,7 +42,7 @@ function renderBody(body) {
 }
 
 export function BlogListPage() {
-  const { t, lang, blogPosts, openBlogPost, goToLandingPage, goToBrowse } = useApp();
+  const { t, lang, blogPosts, openBlogPost, goToBrowse } = useApp();
 
   useEffect(() => {
     setPageMeta({ title: t("blogTitle"), description: t("blogSubtitle"), canonicalPath: "/blog" });
@@ -51,9 +52,8 @@ export function BlogListPage() {
 
   return (
     <div className="w-full bg-gray-50 min-h-screen flex flex-col">
-      <div className="h-24 md:h-32 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
-        <button onClick={goToLandingPage} aria-label={t("backToHomeBtn")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
-      </div>
+      <PageTopBar />
+      <div className="h-20 md:h-28 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100" />
       <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10 w-full">
         <div className="relative bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center flex-shrink-0 text-rose-600"><BookOpen size={22} /></div>
@@ -179,9 +179,8 @@ export function BlogPostPage() {
 
   return (
     <div className="w-full bg-gray-50 min-h-screen flex flex-col">
-      <div className="h-20 md:h-24 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
-        <button onClick={openBlog} aria-label={t("blogBackToList")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
-      </div>
+      <PageTopBar onBack={openBlog} right={<button onClick={openBlog} className="text-sm font-semibold text-gray-500 hover:text-rose-600 transition hidden sm:block">{t("blogBackToList")}</button>} />
+      <div className="h-16 md:h-20 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100" />
 
       <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10 w-full flex-1">
         {blogLoading && !blogPost ? (
@@ -253,13 +252,12 @@ export function BlogPostPage() {
 
 /** Hakkımızda / Kariyer / Basın / SSS — alt bilgideki kurumsal bağlantıların indiği sade sayfa. */
 export function AboutPage() {
-  const { t, goToLandingPage, setShowNewTicketForm } = useApp();
+  const { t, setShowNewTicketForm } = useApp();
   useEffect(() => { setPageMeta({ title: t("aboutTitle"), description: t("aboutBody"), canonicalPath: "/hakkimizda" }); }, [t]);
   return (
     <div className="w-full bg-gray-50 min-h-screen flex flex-col">
-      <div className="h-24 md:h-28 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
-        <button onClick={goToLandingPage} aria-label={t("backToHomeBtn")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
-      </div>
+      <PageTopBar />
+      <div className="h-20 md:h-24 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100" />
       <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10 w-full flex-1">
         <div className="relative bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 p-6 md:p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-3">{t("aboutTitle")}</h1>

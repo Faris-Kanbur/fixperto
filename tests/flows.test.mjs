@@ -67,4 +67,52 @@ const daySlots = (day) => day.open ? genSlots(day.start, day.end).filter(s => !d
 eq(daySlots({ open: false, start: "09:00", end: "11:00", closedSlots: [] }), [], "kapalı gün slot vermiyor");
 eq(daySlots({ open: true, start: "09:00", end: "11:00", closedSlots: ["09:30"] }), ["09:00", "10:00", "10:30"], "öğle arası slotu düşüyor");
 
+// ---- 7) RANDEVU: araç markası hizmet fiyatlarını belirlemeli ---------------------------------
+// Kullanıcı şikâyeti: "10 farklı marka için lastik fiyatı görüp kendi markamınkini aramak."
+// Artık araç seçilince liste O MARKANIN fiyatlarıyla geliyor.
+const priceFor = (svc, brand) => {
+  const o = brand ? svc?.brandPrices?.[brand] : null;
+  const raw = (o != null && String(o).trim() !== "") ? String(o) : String(svc?.price ?? "");
+  return raw.trim() === "" ? "" : (/[₺€$]/.test(raw) ? raw : `${raw}₺`);
+};
+const buildOptions = (services, vehicleBrand) => services.map(s => ({
+  name: s.name, price: priceFor(s, vehicleBrand), fixed: !!s.fixed,
+  brandPriced: !!(vehicleBrand && s?.brandPrices?.[vehicleBrand]),
+}));
+const mechServices = [
+  { name: "Lastik Değişimi", price: "600", fixed: true, brandPrices: { BMW: "1400", Toyota: "700" } },
+  { name: "Yağ Değişimi", price: "500", fixed: true, brandPrices: {} },
+];
+eq(buildOptions(mechServices, "BMW").map(o => o.price), ["1400₺", "500₺"], "BMW seçilince lastik BMW fiyatıyla, marka fiyatı olmayan hizmet varsayılanla");
+eq(buildOptions(mechServices, "Toyota").map(o => o.price), ["700₺", "500₺"], "Toyota seçilince Toyota fiyatı");
+eq(buildOptions(mechServices, null).map(o => o.price), ["600₺", "500₺"], "araç seçilmemişse varsayılan fiyatlar");
+eq(buildOptions(mechServices, "BMW").map(o => o.brandPriced), [true, false], "marka rozeti yalnızca gerçekten marka fiyatı olanda");
+eq(buildOptions(mechServices, "Fiat").map(o => o.price), ["600₺", "500₺"], "listede olmayan marka varsayılana düşüyor");
+
+// Randevu onay koşulu: araç + hizmet + tarih + saat. Ödeme adımı KALDIRILDI, koşula girmemeli.
+const canConfirm = ({ vehicles, vehicleId, service, date, time, approvedExpensive }) => {
+  if (!date || !time || !service) return false;
+  if (vehicles > 0 && !vehicleId) return false;
+  if (service.fixed && !service.other && service.priceNum > 5000 && !approvedExpensive) return false;
+  return true;
+};
+const svc = { fixed: true, other: false, priceNum: 700 };
+eq(canConfirm({ vehicles: 2, vehicleId: 1, service: svc, date: "d", time: "10:00" }), true, "tüm adımlar tamamsa onaylanabilir");
+eq(canConfirm({ vehicles: 2, vehicleId: null, service: svc, date: "d", time: "10:00" }), false, "aracı olan kullanıcı araç seçmeden onaylayamaz");
+eq(canConfirm({ vehicles: 0, vehicleId: null, service: svc, date: "d", time: "10:00" }), true, "hiç aracı yoksa araç şartı aranmaz");
+eq(canConfirm({ vehicles: 1, vehicleId: 1, service: svc, date: null, time: "10:00" }), false, "tarih yoksa onaylanamaz");
+eq(canConfirm({ vehicles: 1, vehicleId: 1, service: { ...svc, priceNum: 9000 }, date: "d", time: "10:00" }), false, "yüksek tutar onaylanmadan geçemez");
+eq(canConfirm({ vehicles: 1, vehicleId: 1, service: { ...svc, priceNum: 9000 }, date: "d", time: "10:00", approvedExpensive: true }), true, "onaylanınca geçiyor");
+
+// Ödeme: randevuda seçim yok, her zaman yerinde ödeme ve kapora alınmıyor.
+const buildAppt = (service) => ({ paymentMethod: "onsite", depositPaid: 0, servicePrice: service.fixed ? service.priceNum : 0 });
+eq(buildAppt(svc), { paymentMethod: "onsite", depositPaid: 0, servicePrice: 700 }, "randevu yerinde ödeme ile oluşuyor, kapora yok");
+
+// Marka uyarısı: tamirci o markaya bakmıyorsa uyarılmalı (ama engellenmemeli).
+const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
+const brandUnsupported = (served, brand) => !!(brand && served.length > 0 && !served.some(b => lc(b) === lc(brand)));
+eq(brandUnsupported(["BMW", "Audi"], "Toyota"), true, "bakılmayan marka uyarı veriyor");
+eq(brandUnsupported(["BMW", "Audi"], "bmw"), false, "büyük/küçük harf farkı uyarı üretmiyor");
+eq(brandUnsupported([], "Toyota"), false, "marka listesi boşsa uyarı yok (bilgi eksik, suçlama değil)");
+
 report("akışlar");
