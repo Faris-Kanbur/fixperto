@@ -4225,7 +4225,10 @@ function useAppLogic() {
     switch (target.type) {
       case "appointment":
         if (forMechanic) { setScreen("mechanicDashboard"); setMechTab("requests"); }
-        else { setScreen("owner"); setOwnerTab("appointments"); }
+        // Alt sekmeyi de AKTİF'e alıyoruz. Yaşanan hata: ownerApptView kullanıcının en son
+        // baktığı sekmede kalıyordu; bir kez "Geçmiş"e bakmış olan, yeni randevusunun
+        // bildirimine tıklayınca geçmiş randevular listesine düşüyor ve randevusunu bulamıyordu.
+        else { setScreen("owner"); setOwnerTab("appointments"); setOwnerApptView("active"); }
         break;
       case "quoteOwner":
         setScreen("owner"); setOwnerTab("appointments"); setOwnerApptView("quotes");

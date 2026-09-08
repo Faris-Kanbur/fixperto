@@ -1,8 +1,11 @@
 export const BANNER_PRESETS = { blue: "from-gray-50 to-gray-100", orange: "from-rose-50 to-rose-100", green: "from-gray-100 to-gray-200" };
+// Karşılama turu adımları. Metinler artık BURADA DEĞİL i18n'de (titleKey/descKey): eskiden sabit
+// Türkçe yazılıydı, yani site İngilizce/Almanca'ya alınsa bile karşılama ekranı Türkçe kalıyordu —
+// üstelik kullanıcının gördüğü İLK ekran orasıydı.
 export const ONBOARDING_SLIDES = [
-  { icon: "🔧", grad: "from-gray-950 to-rose-700", title: "Fixperto'ya Hoş Geldiniz", desc: "Güvenilir tamircileri bulun, randevu alın ve aracınızı tek bir yerden takip edin." },
-  { icon: "🚗", grad: "from-rose-600 to-rose-800", title: "Araç Sahibiyseniz", desc: "Yakınınızdaki tamircileri karşılaştırın, sabit fiyatlı hizmetlerde önceden ödeme yapın, aracınızı satışa çıkarın ve akıllı bakım hatırlatmaları alın." },
-  { icon: "🛠️", grad: "from-rose-600 to-rose-600", title: "Tamirciyseniz", desc: "Randevu taleplerini yönetin, hizmet ve fiyatlarınızı belirleyin, iş ilanı verin ve müşterilerinizle sohbet edin." },
+  { icon: "🔧", grad: "from-gray-950 via-gray-900 to-rose-800", titleKey: "onboardWelcomeTitle", descKey: "onboardWelcomeDesc" },
+  { icon: "🚗", grad: "from-rose-600 to-rose-900", titleKey: "onboardOwnerTitle", descKey: "onboardOwnerDesc" },
+  { icon: "🛠️", grad: "from-rose-500 to-rose-700", titleKey: "onboardMechTitle", descKey: "onboardMechDesc" },
 ];
 export const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 export const DAY_LABELS = { mon: "Pzt", tue: "Sal", wed: "Çar", thu: "Per", fri: "Cum", sat: "Cmt", sun: "Paz" };

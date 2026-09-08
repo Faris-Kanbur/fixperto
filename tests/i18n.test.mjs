@@ -69,4 +69,17 @@ for (const f of files) {
 }
 eq(placeholderMismatch, [], "i18n: {yer tutucu} isimleri çağrılarla uyuşmalı");
 
+// --- KARŞILAMA TURU: metinler i18n'de olmalı ---------------------------------------------------
+// Yaşanan hata: ONBOARDING_SLIDES içindeki başlık/açıklama sabit Türkçe yazılıydı. Site
+// İngilizce/Almanca'ya alınsa bile kullanıcının gördüğü İLK ekran Türkçe kalıyordu.
+const constantsSrc = readFileSync(join(SRC, "data", "constants.ts"), "utf8");
+const slidesBlock = constantsSrc.slice(
+  constantsSrc.indexOf("export const ONBOARDING_SLIDES = ["),
+  constantsSrc.indexOf("];", constantsSrc.indexOf("export const ONBOARDING_SLIDES = [")),
+);
+eq(/\btitle:\s*"/.test(slidesBlock), false, "slaytlarda sabit başlık metni yok");
+eq(/\bdesc:\s*"/.test(slidesBlock), false, "slaytlarda sabit açıklama metni yok");
+eq((slidesBlock.match(/titleKey:/g) || []).length, 3, "her slaytın titleKey'i var");
+eq((slidesBlock.match(/descKey:/g) || []).length, 3, "her slaytın descKey'i var");
+
 report("i18n");

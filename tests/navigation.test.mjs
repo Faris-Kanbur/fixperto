@@ -1,5 +1,10 @@
 // GEZİNME — tarayıcı geri/ileri tuşları (AppLogicProvider'daki history yığınının kopyası).
-import { eq, report } from "./_harness.mjs";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { eq, ok, report } from "./_harness.mjs";
+
+const SRC_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "frontend", "src");
 
 function makeApp(initial) {
   let state = { ...initial };
@@ -113,5 +118,16 @@ eq(restore({ screen: "owner", role: "mechanic" }, false).role, "owner", "oturum 
 eq(restore(null, true), null, "kayıt yoksa null");
 eq(restore("bozuk", true), null, "bozuk kayıt çökmüyor");
 eq(restore({ screen: "hicboylebirekranyok" }, true), null, "bilinmeyen ekran adı reddediliyor");
+
+// --- "Randevumu Görüntüle" AKTİF randevuları açmalı -------------------------------------------
+// Yaşanan hata (kullanıcı bildirdi): ownerApptView kullanıcının en son baktığı sekmede kalıyordu.
+// Bir kez "Geçmiş"e bakan kişi, yeni randevusunu almasının hemen ardından "Randevumu Görüntüle"ye
+// basınca GEÇMİŞ randevular listesine düşüyor ve az önce aldığı randevuyu göremiyordu.
+const shellSrc = readFileSync(join(SRC_DIR, "app", "AppShell.tsx"), "utf8");
+const confirmBtn = shellSrc.slice(shellSrc.indexOf('viewMyAppointmentBtn') - 400, shellSrc.indexOf('viewMyAppointmentBtn'));
+ok(/setOwnerApptView\("active"\)/.test(confirmBtn), "onay ekranındaki buton aktif randevuları açıyor");
+const providerSrc2 = readFileSync(join(SRC_DIR, "app", "state", "AppLogicProvider.tsx"), "utf8");
+const apptCase = providerSrc2.slice(providerSrc2.indexOf('case "appointment":'), providerSrc2.indexOf('case "quoteOwner"'));
+ok(/setOwnerApptView\("active"\)/.test(apptCase), "randevu bildirimine tıklayınca da aktif sekme açılıyor");
 
 report("gezinme");

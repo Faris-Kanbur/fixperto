@@ -10,6 +10,7 @@ import { SiteFooter } from "../components/features/SiteFooter";
 import { BrandMark, PageTopBar } from "../components/features/BrandMark";
 import { BrandSelect, ModelSelect } from "../components/features/BrandSelect";
 import { BookingCalendar } from "../components/features/BookingCalendar";
+import { WelcomeTour } from "../components/features/WelcomeTour";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
 import { OwnerAppointmentsView } from "../components/features/OwnerAppointmentsView";
@@ -30,7 +31,7 @@ import { PhotoLightbox } from "../components/features/PhotoLightbox";
 import { ListingDetailPage } from "../components/features/ListingDetailPage";
 import {
   LEGAL_CONTENT, FREE_QUOTE_MECH_LIMIT, PREMIUM_QUOTE_MECH_LIMIT, BANNER_PRESETS,
-  ONBOARDING_SLIDES, ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
+  ADMIN_TICKET_TYPE_LABELS, ADMIN_TICKET_PRIORITY_LABELS,
   ADMIN_SLA_DAYS, ADMIN_TREND_DATA, PLATFORM_COMMISSION_RATE, DE_CITIES, TODAY_STR,
   REMINDER_KIND_LABELS, TRANSMISSIONS, FUEL_TYPES, EMPLOYMENT_TYPES, EXPERIENCE_LEVELS,
   MY_MECHANIC_ID, MY_OWNER_ID, DAY_KEYS, DAY_LABELS_FULL, DAY_LABELS_FULL_BY_LANG, SHARE_CHANNEL_LABELS,
@@ -554,22 +555,8 @@ export function AppShell() {
           </div>
         </div>
       )}
-      {onboardingVisible && (() => { const slide = ONBOARDING_SLIDES[onboardStep]; const isLast = onboardStep === ONBOARDING_SLIDES.length - 1; return (
-        <div className="fixed inset-0 w-screen h-screen bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden my-auto">
-            <div className={`bg-gradient-to-br ${slide.grad} px-6 pt-8 pb-10 text-center relative`}>
-              <button onClick={() => setShowOnboarding(false)} aria-label={t("skipTourAria")} className="absolute top-3 right-3 text-white/80 hover:text-white p-2 -m-1 text-xs font-medium">{t("skipBtn")}</button>
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-3">{slide.icon}</div>
-              <h2 className="text-white font-bold text-lg">{slide.title}</h2>
-            </div>
-            <div className="px-6 py-5">
-              <p className="text-sm text-gray-600 leading-relaxed mb-5 min-h-[60px]">{slide.desc}</p>
-              <div className="flex items-center justify-center gap-1.5 mb-5">{ONBOARDING_SLIDES.map((_, i) => (<div key={i} className={`h-1.5 rounded-full transition-all ${i === onboardStep ? "w-6 bg-rose-600" : "w-1.5 bg-gray-200"}`} />))}</div>
-              <button onClick={() => { if (isLast) setShowOnboarding(false); else setOnboardStep(s => s + 1); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{isLast ? t("letsStartBtn") : t("nextBtn")}</button>
-            </div>
-          </div>
-        </div>
-      ); })()}
+      {/* Karşılama turu — bkz. WelcomeTour.tsx (iki panelli, markalı, geniş düzen). */}
+      {onboardingVisible && <WelcomeTour />}
       <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" || screen === "blog" || screen === "blogPost" || screen === "about" || screen === "booking" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
@@ -2767,7 +2754,7 @@ export function AppShell() {
           </div>
           );
         })()}
-        {screen === "confirmed" && (<div className="w-full flex-1 flex flex-col"><PageTopBar /><div className="max-w-md mx-auto w-full flex-1 px-5 py-10 flex flex-col items-center text-center"><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4"><Check size={40} className="text-green-500" /></div><h2 className="text-lg font-bold text-gray-800 mb-1">{autoAccept ? t("appointmentConfirmedTitle") : t("appointmentRequestSentTitle")}</h2><button onClick={() => { setScreen("owner"); setOwnerTab("appointments"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2 mt-4">{t("viewMyAppointmentBtn")}</button><button onClick={goHome} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button></div></div>)}
+        {screen === "confirmed" && (<div className="w-full flex-1 flex flex-col"><PageTopBar /><div className="max-w-md mx-auto w-full flex-1 px-5 py-10 flex flex-col items-center text-center"><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4"><Check size={40} className="text-green-500" /></div><h2 className="text-lg font-bold text-gray-800 mb-1">{autoAccept ? t("appointmentConfirmedTitle") : t("appointmentRequestSentTitle")}</h2><button onClick={() => { setScreen("owner"); setOwnerTab("appointments"); setOwnerApptView("active"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2 mt-4">{t("viewMyAppointmentBtn")}</button><button onClick={goHome} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button></div></div>)}
         {screen === "mechBrowse" && (
           <>
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
