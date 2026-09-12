@@ -539,6 +539,12 @@ Terimin yanına küçük bir "?" dairesi konur; üstüne gelince ya da tıklanı
 ## Neden tarayıcının title balonu yetmedi
 title ~1 saniye gecikmeyle çıkar, biçimlenemez ve DOKUNMATİK cihazlarda hiç çıkmaz. Kendi balonumuz anında açılır, "?" işaretine dokunulduğunda telefonda da okunur.
 
+## Balon sayfanın İÇİNDE değil, üstünde durur
+İlk sürümde balon, "?" işaretinin yanındaki kapsayıcıda absolute olarak duruyordu ve iki şekilde bozuluyordu: (1) overflow: hidden/auto olan her ata onu KIRPIYOR — randevu ekranındaki hizmet listesi, tamirci sayfasındaki hizmet kutusu tam da böyleydi, metnin bir kısmı görünmüyordu; (2) z-index yalnızca kendi yığın bağlamında geçerli olduğu için, yeni yığın bağlamı açan bir ata (yapışkan başlık, dönüşümlü kart) balonu komşu metnin ARKASINDA bırakıyordu. Artık balon React portalıyla doğrudan body altına basılıyor ve "?" işaretinin ekran koordinatına fixed olarak konumlanıyor. Body'nin altındaki hiçbir overflow onu kıramaz, hiçbir ata onu gömemez.
+
+## Konum kuralları
+Üstte yer yoksa balon alta açılır; sağa/sola taşarsa ekran içine çekilir; genişlik dar ekranda pencereye göre daralır; uzun kelimeler bölünür ve satır sayısı kısıtlanmaz — metnin TAMAMI okunabilmeli. Sayfa kaydırılınca ya da pencere boyutlanınca balon kapanır: fixed konum bayatlar, balon ait olmadığı bir yerde asılı kalırdı.
+
 ## İki biçim
 Varsayılan biçim gerçek bir düğmedir: klavyeyle sekmeyle gezilir, odaklanınca açılır. "inline" biçimi ise başka bir düğmenin İÇİNDE kullanılır (ör. randevu ekranındaki hizmet satırının kendisi bir düğmedir) — iç içe düğme geçersiz HTML'dir ve tıklamalar birbirine karışır, bu yüzden orada odaklanamayan bir span basılır ve erişilebilirlik için title korunur.
 

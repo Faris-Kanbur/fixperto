@@ -94,6 +94,29 @@ ok(/aria-label=\{label\}/.test(infoTip), "ipucunun erişilebilir adı var");
 ok(/onFocus=/.test(infoTip) && /onBlur=/.test(infoTip), "klavye odağıyla da açılıyor");
 ok(/onClick=/.test(infoTip), "dokunmatik için tıklamayla da açılıyor");
 ok(/role="tooltip"/.test(infoTip), "balon tooltip rolüyle işaretli");
+
+// YAŞANAN HATA (kullanıcı bildirdi): "bazen yazının arkasında kalıyor, metin okunmuyor".
+// Balon, absolute olarak komşu kapsayıcının içindeydi: overflow'lu her ata onu KIRPIYOR
+// (randevu hizmet listesi max-h + overflow-y-auto, tamirci hizmet kutusu overflow-hidden) ve
+// yeni bir yığın bağlamı açan her ata onu komşu metnin ARKASINDA bırakıyordu.
+ok(/createPortal\(/.test(infoTip), "balon portalla body'ye basılıyor (overflow kırpması biter)");
+ok(/document\.body,/.test(infoTip), "portalın hedefi body");
+ok(/position: "fixed"/.test(infoTip), "balon ekran koordinatına sabitleniyor");
+ok(/getBoundingClientRect\(\)/.test(infoTip), "konum '?' işaretinin gerçek yerinden hesaplanıyor");
+ok(/z-\[95\]/.test(infoTip), "balon en üst katmanda");
+eq(/absolute z-30 bottom-full/.test(infoTip), false, "eski absolute konumlandırma kaldırıldı");
+// Metnin TAMAMI okunabilmeli: ekrandan taşmamalı, uzun kelime bölünmeli, satır kısıtı olmamalı.
+ok(/Math\.min\(TIP_MAX_W, window\.innerWidth - EDGE \* 2\)/.test(infoTip), "genişlik dar ekrana uyduruluyor");
+ok(/Math\.max\(EDGE, Math\.min\(left, window\.innerWidth - width - EDGE\)\)/.test(infoTip), "sağa/sola taşma ekran içine çekiliyor");
+ok(/const below = r\.top < estH \+ TIP_GAP/.test(infoTip), "üstte yer yoksa balon alta açılıyor");
+ok(/break-words/.test(infoTip), "uzun kelimeler bölünüyor");
+eq(/line-clamp|truncate|max-h-/.test(infoTip), false, "balon metni kırpılmıyor");
+// Fixed konum kaydırınca bayatlar; balon kapanmalı (iç kapsayıcı kaydırması dahil → capture).
+ok(/addEventListener\("scroll", close, true\)/.test(infoTip), "kaydırınca balon kapanıyor");
+ok(/addEventListener\("resize", close\)/.test(infoTip), "pencere boyutlanınca balon kapanıyor");
+ok(/removeEventListener\("scroll", close, true\)/.test(infoTip), "dinleyiciler temizleniyor");
+// Seçili (koyu zeminli) satırda da okunur kalmalı.
+ok(/border-current/.test(infoTip), "'?' işareti rengini bulunduğu yerden alıyor");
 // KURAL 8: bileşen modül düzeyinde tanımlı olmalı (render içinde değil).
 ok(/^export function InfoTip/m.test(infoTip), "InfoTip modül düzeyinde tanımlı");
 

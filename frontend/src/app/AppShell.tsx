@@ -2652,7 +2652,7 @@ export function AppShell() {
                                 {/* Değişken fiyat araç sahibine hiçbir şey anlatmıyordu: "peki ne kadar
                                     tutacak, şimdi para mı ödeyeceğim?" Balon bunu cevaplıyor. Satırın
                                     kendisi bir <button> olduğu için iç içe düğme olmayan inline biçim. */}
-                                {!s.fixed && <InfoTip inline text={t("variablePriceTip")} label={t("infoTipAria")} side="left" />}
+                                {!s.fixed && <InfoTip inline text={t("variablePriceTip")} label={t("infoTipAria")} />}
                               </span>
                               {String(s.price || "").trim() && <span className="text-sm font-bold whitespace-nowrap">{s.price}</span>}
                             </span>
@@ -3655,7 +3655,7 @@ export function AppShell() {
                             <div className="flex-shrink-0 flex items-center rounded-lg bg-gray-100 p-0.5" role="group" aria-label={t("fixedPriceHelpTitle")}>
                               <button onClick={() => setServiceFixed(i, true)} aria-pressed={!!s.fixed} title={t("fixedPriceHelpTitle")} className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap transition ${s.fixed ? "bg-white text-green-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("fixedLabelShort")}</button>
                               <button onClick={() => setServiceFixed(i, false)} aria-pressed={!s.fixed} title={t("fixedPriceHelpTitle")} className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap transition flex items-center gap-1 ${!s.fixed ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("variableLabel")}</button>
-                              <span className="px-1 text-gray-400"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} side="left" /></span>
+                              <span className="px-1 text-gray-400"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} /></span>
                             </div>
                             <button onClick={() => setBrandPriceEditKey(open ? null : (s.key || `custom-${i}`))} className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1 ${bpCount > 0 ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}><Tag size={12} /> {bpCount > 0 ? t("brandPriceCountLabel", { n: String(bpCount) }) : t("brandPriceAddLabel")}</button>
                             <button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-1"><Trash2 size={15} /></button>
@@ -3694,7 +3694,7 @@ export function AppShell() {
                       <div className="w-full mb-2 flex items-center gap-1 rounded-xl bg-gray-100 p-0.5" role="group" aria-label={t("fixedPriceHelpTitle")}>
                         <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: true, fixedTouched: true }))} aria-pressed={!!newServiceForm.fixed} className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg transition ${newServiceForm.fixed ? "bg-white text-green-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("fixedPricePrepayNote")}</button>
                         <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: false, fixedTouched: true }))} aria-pressed={!newServiceForm.fixed} className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg transition ${!newServiceForm.fixed ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("variablePriceAfterNote")}</button>
-                        <span className="px-1 text-gray-400"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} side="left" /></span>
+                        <span className="px-1 text-gray-400"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} /></span>
                       </div>
                       {newServiceForm.fixed && !newServiceForm.price.trim() && (<p className="text-[11px] text-red-500 mb-2 -mt-1">{t("fixedPriceRequiredWarning")}</p>)}
                       {duplicateServiceWarning ? (
