@@ -166,8 +166,16 @@ export function MechDetailBody() {
   // Puan dağılımı: 5→1 yıldız için kaç yorum geldiğini sayar (Airbnb/Google tarzı çubuk grafik).
   const ratingBuckets = [5, 4, 3, 2, 1].map((star) => ({ star, count: reviewList.filter((r) => Math.round(r.rating) === star).length }));
   const SERVICE_PREVIEW = 6;
+  // "Tümünü gör" açıldığında liste OLDUĞU GİBİ uzuyordu. 50 hizmeti olan bir tamircide sayfa
+  // metrelerce uzuyor, altındaki çalışma saatleri ve yorumlar erişilemez hâle geliyordu. Açık
+  // hâlde de bir tavan var: 10 satır gösteriliyor, gerisi kutunun KENDİ İÇİNDE kaydırılıyor.
+  // Neden 10: telefon ekranında bile bir liste olduğu anlaşılacak kadar uzun, sayfayı ele
+  // geçirmeyecek kadar kısa. Kapalı hâldeki 6 önizleme sayısı değişmedi.
+  const SERVICE_SCROLL_ROWS = 10;
+  const SERVICE_ROW_PX = 45;   // px-4 py-3 + 13px metin satırı ≈ 45px
   const services = selectedMechanic.services || [];
   const visibleServices = showAllServices ? services : services.slice(0, SERVICE_PREVIEW);
+  const servicesScroll = showAllServices && services.length > SERVICE_SCROLL_ROWS;
   // MARKA BAZLI FİYAT: tamirci bazı işler için markaya göre farklı fiyat girmiş olabilir
   // (aynı kapı tamiri BMW'de başka, Toyota'da başka). ATU'da da akış aynı: önce marka seçiliyor,
   // fiyat ona göre gösteriliyor. Burada müşteri markasını seçince tüm liste o markaya göre
@@ -361,7 +369,10 @@ export function MechDetailBody() {
                 </div>
               </div>
             )}
-            <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 overflow-hidden">
+            <div
+              className={`bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 ${servicesScroll ? "overflow-y-auto" : "overflow-hidden"}`}
+              style={servicesScroll ? { maxHeight: SERVICE_SCROLL_ROWS * SERVICE_ROW_PX } : undefined}
+            >
               {visibleServices.map((s, i) => {
                 // Eski kayıtlarda fiyat "350₺" gibi para birimiyle yazılmış olabilir (serbest metin
                 // dönemi); yenilerde yalnızca rakam. İki durumu da doğru gösteriyoruz.
@@ -383,6 +394,11 @@ export function MechDetailBody() {
                 );
               })}
             </div>
+            {/* Kaydırma kutusunun varlığı görünür olmalı: kullanıcı listenin bittiğini sanıp
+                aşağı kaydırmayı denemeyebilir. */}
+            {servicesScroll && (
+              <p className="text-[11px] text-gray-400 mt-2">{t("mechServicesScrollNote", { shown: String(SERVICE_SCROLL_ROWS), total: String(services.length) })}</p>
+            )}
             {services.length > SERVICE_PREVIEW && (
               <button onClick={() => setShowAllServices((v) => !v)} className="mt-3 text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1">
                 {showAllServices ? t("mechShowLess") : t("mechShowAllServices", { n: String(services.length) })}

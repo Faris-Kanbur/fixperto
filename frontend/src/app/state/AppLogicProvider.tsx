@@ -104,6 +104,25 @@ function useAppLogic() {
   const [authLoading, setAuthLoading] = useState(false);
   const [sessionVersion, setSessionVersion] = useState(0);
   const [pendingOnboarding, setPendingOnboarding] = useState(false);
+  /**
+   * "PANELE DÖN" ve "AYARLAR" — giriş yapmış kullanıcının kendi alanına dönüş yolu.
+   * -------------------------------------------------------------------------------------------
+   * YAŞANAN HATA (kullanıcı bildirdi): ana sayfanın üst çubuğunda giriş yapmış kullanıcıya
+   * "Ara" (Suchen) yazan bir düğme çıkıyordu — adı boşsa etiket olarak arama sekmesinin adı
+   * kullanılıyordu. Zaten ana sayfadaki arama kutusunun üstünde duran birine "Ara" demek hiçbir
+   * şey kazandırmıyor; asıl eksik olan, kullanıcının KENDİ paneline ve ayarlarına dönebilmesiydi.
+   *
+   * Hedef role göre değişiyor ve tek yerde duruyor: tamirci paneli ile araç sahibi panosu ayrı
+   * ekranlar; bu seçimi her üst çubukta yeniden yazmak, birinin er geç yanlış ekrana gitmesi demek.
+   */
+  const goToMyPanel = () => {
+    if (role === "mechanic" && MY_MECHANIC_ID != null) { setScreen("mechanicDashboard"); return; }
+    setScreen("owner");
+  };
+  const goToMySettings = () => {
+    if (role === "mechanic" && MY_MECHANIC_ID != null) { setScreen("mechProfilePage"); setMechProfileTab("settings"); return; }
+    setScreen("ownerSettings"); setOwnerSettingsTab("settings");
+  };
   // ---- Giriş kapısı (auth gate) ----------------------------------------------------------------
   // Misafir gezinme deseninin ikinci yarısı: korumalı bir işleme kalkışıldığında tam sayfa bir giriş
   // ekranına GİTMİYORUZ (bu, kullanıcının o ana kadar doldurduğu formu/açtığı ilanı kaybettirirdi) —
@@ -4872,7 +4891,7 @@ function useAppLogic() {
     isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, toggleAddVehicle, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
-    openJobApplyForm, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
+    openJobApplyForm, goToMyPanel, goToMySettings, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
     roleBtn, goToNotifTarget,
     jobEmploymentColor,
   };

@@ -122,4 +122,32 @@ for (const key of ["fixedPricePrepayNote"]) {
   eq(/önceden ödeyebilir|pay in advance|im Voraus bezahlen/i.test(line), false, `${key} kaldırılan ön ödemeden söz etmiyor`);
 }
 
+// --- UZUN HİZMET LİSTESİ: "tümünü gör" sayfayı metrelerce uzatmıyor ----------------------------
+// Yaşanan hata (kullanıcı bildirdi): 6 hizmet gösterilip "tümünü gör" deniyordu; 50 hizmeti olan
+// bir tamircide liste olduğu gibi açılıyor, altındaki çalışma saatleri ve yorumlar erişilemez
+// hâle geliyordu. Açık hâlde 10 satır görünüyor, gerisi kutunun KENDİ İÇİNDE kaydırılıyor.
+ok(/const SERVICE_PREVIEW = 6;/.test(detail), "kapalı önizleme 6 hizmet");
+ok(/const SERVICE_SCROLL_ROWS = 10;/.test(detail), "açık hâlde 10 satır tavanı var");
+ok(/const servicesScroll = showAllServices && services\.length > SERVICE_SCROLL_ROWS;/.test(detail),
+  "kaydırma yalnızca 10'dan fazla hizmet varken devreye giriyor");
+ok(/maxHeight: SERVICE_SCROLL_ROWS \* SERVICE_ROW_PX/.test(detail), "yükseklik satır sayısından hesaplanıyor");
+ok(/servicesScroll \? "overflow-y-auto" : "overflow-hidden"/.test(detail), "tavan aşılınca kutu kendi içinde kayıyor");
+ok(/mechServicesScrollNote/.test(detail), "kaydırılabildiği kullanıcıya yazıyla da bildiriliyor");
+
+// Sınır davranışı: 10 ve altı hizmette kaydırma kutusu AÇILMAMALI — gereksiz bir kutu, düz
+// listeden daha kötüdür. Sabiti ve koşulu kaynaktan okuyup gerçekten çalıştırıyoruz.
+const rowsConst = Number((detail.match(/const SERVICE_SCROLL_ROWS = (\d+);/) || [])[1]);
+const condLine = detail.slice(detail.indexOf("const servicesScroll ="));
+const scrollOn = new Function("showAllServices", "services", "SERVICE_SCROLL_ROWS",
+  `${condLine.slice(0, condLine.indexOf("\n") + 1)} return servicesScroll;`);
+const check = (n, open) => scrollOn(open, { length: n }, rowsConst);
+eq(rowsConst, 10, "tavan 10 satır");
+eq(check(10, true), false, "tam 10 hizmette kaydırma yok");
+eq(check(11, true), true, "11 hizmette kaydırma var");
+eq(check(50, false), false, "liste kapalıyken kaydırma yok");
+
+const i18nScrollLine = i18n.split("\n").find((l) => l.trim().startsWith("mechServicesScrollNote:")) || "";
+for (const lang of ["tr:", "en:", "de:"]) ok(i18nScrollLine.includes(lang), `kaydırma notu ${lang} dilinde var`);
+ok(/\{shown\}/.test(i18nScrollLine) && /\{total\}/.test(i18nScrollLine), "notta görünen/toplam sayıları yer tutucudan geliyor");
+
 report("hizmet fiyatı");

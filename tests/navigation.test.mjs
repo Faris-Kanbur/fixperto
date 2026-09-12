@@ -130,4 +130,29 @@ const providerSrc2 = readFileSync(join(SRC_DIR, "app", "state", "AppLogicProvide
 const apptCase = providerSrc2.slice(providerSrc2.indexOf('case "appointment":'), providerSrc2.indexOf('case "quoteOwner"'));
 ok(/setOwnerApptView\("active"\)/.test(apptCase), "randevu bildirimine tıklayınca da aktif sekme açılıyor");
 
+// --- ANA SAYFA ÜST ÇUBUĞU: "Ara" düğmesi yerine panel + ayarlar ---------------------------------
+// Yaşanan hata (kullanıcı bildirdi): giriş yapmış kullanıcıya ana sayfanın üst çubuğunda "Ara"
+// (Suchen) yazan bir düğme çıkıyordu — adı boş olanlarda etiket olarak arama sekmesinin adı
+// (navSearch) kullanılıyordu. Zaten arama kutusunun üstünde duran birine "Ara" demek anlamsızdı;
+// asıl eksik olan kendi paneline ve ayarlarına dönebilmekti.
+const landing = readFileSync(join(SRC_DIR, "components", "features", "LandingHome.tsx"), "utf8");
+eq(/navSearch/.test(landing), false, "ana sayfa üst çubuğunda 'Ara' etiketi kalmadı");
+ok(/onClick=\{goToMyPanel\}/.test(landing), "üst çubukta panele dönüş var");
+ok(/onClick=\{goToMySettings\}/.test(landing), "üst çubukta ayarlar var");
+ok(/aria-label=\{t\("settingsLabel"\)\}/.test(landing), "ayarlar düğmesinin erişilebilir adı var");
+ok(/\{isAuthed \? \(/.test(landing), "bu iki yol yalnızca giriş yapmışlara gösteriliyor");
+
+// Hedef ROLE göre değişiyor ve tek yerde duruyor — her üst çubukta yeniden yazılırsa biri
+// er geç yanlış ekrana gider.
+const panelFn = providerSrc2.slice(providerSrc2.indexOf("const goToMyPanel = () => {"), providerSrc2.indexOf("const goToMySettings"));
+ok(panelFn.length > 0, "goToMyPanel tanımlı");
+ok(/role === "mechanic"/.test(panelFn) && /setScreen\("mechanicDashboard"\)/.test(panelFn), "tamirci kendi paneline gidiyor");
+ok(/setScreen\("owner"\)/.test(panelFn), "araç sahibi kendi panosuna gidiyor");
+const setFn = providerSrc2.slice(providerSrc2.indexOf("const goToMySettings = () => {"), providerSrc2.indexOf("const goToMySettings = () => {") + 500);
+ok(/setMechProfileTab\("settings"\)/.test(setFn), "tamirci ayarları doğru sekmeye gidiyor");
+ok(/setScreen\("ownerSettings"\)/.test(setFn), "araç sahibi ayar ekranına gidiyor");
+const i18nSrc = readFileSync(join(SRC_DIR, "data", "i18n.ts"), "utf8");
+const panelLine = i18nSrc.split("\n").find((l) => l.trim().startsWith("backToPanelBtn:")) || "";
+for (const lang of ["tr:", "en:", "de:"]) ok(panelLine.includes(lang), `panele dön etiketi ${lang} dilinde var`);
+
 report("gezinme");

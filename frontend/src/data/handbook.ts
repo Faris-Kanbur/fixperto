@@ -262,6 +262,9 @@ Sabit fiyatlı hizmetler önceden bilinen tutarlıdır; değişkenler ekspertiz 
 ## Sabit / Değişken seçimi tek düğme DEĞİL
 Eskiden tek bir düğme vardı ve üzerinde MEVCUT durum yazıyordu. "Değişken" yazan düğmeye basmak "değişkeni seç" değil "sabite geçir" demekti; fiyat vermek istemeyen tamirci "Değişken"e bastığında "önce bir fiyat girin" uyarısı alıyordu — yani uyarı, kullanıcının niyetinin TAM TERSİNİ engelliyordu. Artık iki ayrı seçenek var. "Değişken" her zaman serbesttir, hiçbir rakam gerektirmez; uyarı yalnızca tamirci açıkça "Sabit" dediğinde çıkar, çünkü rakamsız sabit fiyat müşteriye hiçbir şey anlatmaz.
 
+## Uzun hizmet listesi sayfayı ele geçirmez
+Tamirci sayfasında kapalı hâlde 6 hizmet gösterilir. "Tümünü gör" listeyi OLDUĞU GİBİ açıyordu; 50 hizmeti olan bir tamircide sayfa metrelerce uzuyor, altındaki çalışma saatleri ve yorumlar pratikte erişilemez hâle geliyordu. Artık açık hâlde de bir tavan var: 10 satır görünür, gerisi kutunun KENDİ İÇİNDE kaydırılır. 10 ve altı hizmette kaydırma kutusu hiç açılmaz — gereksiz bir kutu, düz listeden kötüdür. Kaydırılabildiği ayrıca yazıyla da söylenir ("{total} hizmetten {shown} tanesi görünüyor"), çünkü kullanıcı listenin bittiğini sanıp kaydırmayı denemeyebilir.
+
 ## Fiyatsız hizmet gizlenmez
 Değişken işaretlenmiş ve fiyatı boş bir hizmet, araç sahibinin randevu ekranındaki listede GÖRÜNÜR — yanında "Değişken" rozeti ve rozetin yanında "?" ipucu ile. Hizmeti listeden çıkarmak, tamirciyi "uydurma bir rakam yaz" ile "bu işi hiç sunmuyormuş gibi görün" arasında seçime zorlardı.
 
@@ -455,6 +458,20 @@ Tek sayfa uygulamasında yeni belge yüklenmediği için tarayıcı kaydırma ko
 
 ## İç kapsayıcılar
 Bazı ekranlar pencereyi değil kendi overflow-y-auto kapsayıcılarını kaydırır. Onlar da sıfırlanır ve bu, React DOM'u değiştirdikten SONRA yapılır.`,
+      },
+      {
+        id: "ustcubuk",
+        title: "7.3 Ana sayfa üst çubuğu",
+        body: `Üst çubuk giriş yapmamış ve yapmış kullanıcıya FARKLI şeyler gösterir; ikisinin ihtiyacı aynı değil.
+
+## Misafir
+"Giriş yap" ve "Kayıt ol". Aradığı şey hesabına girmek ya da hesap açmak.
+
+## Giriş yapmış kullanıcı
+"Panele dön" ve "Ayarlar". Eskiden burada "Ara" (Suchen) yazan tek bir düğme vardı: etiket kullanıcının adından geliyordu, adı boş olanlarda arama sekmesinin adına düşüyordu. Zaten ana sayfadaki arama kutusunun üstünde duran birine "Ara" demek hiçbir şey kazandırmıyordu; asıl eksik olan kullanıcının kendi alanına dönebilmesiydi.
+
+## Hedef role göre değişir ve TEK yerde durur
+goToMyPanel / goToMySettings (AppLogicProvider). Tamirci → tamirci paneli ve profil ayarları sekmesi; araç sahibi → panosu ve ayar ekranı. Bu seçimi her üst çubukta yeniden yazmak, birinin er geç yanlış ekrana gitmesi demekti.`,
       },
     ],
   },

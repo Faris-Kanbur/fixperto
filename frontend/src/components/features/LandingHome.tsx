@@ -7,7 +7,7 @@ import { LangSwitch } from "./LangSwitch";
 import { ATU_FIXED_CATALOG } from "../../data/constants";
 import {
   Search, MapPin, Star, Wrench, Car, Briefcase, BadgeCheck, ChevronRight, Navigation,
-  Shield, Zap, SlidersHorizontal, Calendar, MessageCircle, LifeBuoy, Users, Quote, Globe,
+  Shield, Zap, SlidersHorizontal, Calendar, MessageCircle, LifeBuoy, Users, Quote, Globe, LayoutGrid, Settings,
 } from "lucide-react";
 
 // MİSAFİR KARŞILAMA SAYFASI (landing)
@@ -33,7 +33,7 @@ export function LandingHome() {
   const {
     t, mechanicsList, listings, jobListings, adminStats, isAuthed, openAuthGate,
     query, setQuery, locationQuery, setLocationQuery, serviceQuery, setServiceQuery,
-    goToBrowse, setScreen, requestLocation, ownerProfile,
+    goToBrowse, setScreen, requestLocation, ownerProfile, goToMyPanel, goToMySettings,
     setShowFilterModal, activeFilterCount, openQuoteModal, setSortBy, setSortDir,
   } = useApp();
 
@@ -100,7 +100,18 @@ export function LandingHome() {
               kullandığı, üst çubuğu kalabalıklaştırmayan yerleşim. */}
           <div className="flex items-center gap-2 flex-shrink-0">
             {isAuthed ? (
-              <button onClick={() => goToBrowse("mechanics")} className="text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-full transition whitespace-nowrap">{ownerProfile?.name ? ownerProfile.name.split(" ")[0] : t("navSearch")}</button>
+              /* KALDIRILDI: burada giriş yapmış kullanıcıya "Ara" (Suchen) yazan bir düğme vardı —
+                 adı boş olanlarda etiket olarak arama sekmesinin adı kullanılıyordu. Zaten ana
+                 sayfadaki arama kutusunun üstünde duran birine "Ara" demek hiçbir şey kazandırmıyor.
+                 Yerine kullanıcının gerçekten ihtiyaç duyduğu iki yol kondu: kendi paneli ve ayarlar. */
+              <>
+                <button onClick={goToMyPanel} className="text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-full transition whitespace-nowrap flex items-center gap-1.5">
+                  <LayoutGrid size={14} /> {t("backToPanelBtn")}
+                </button>
+                <button onClick={goToMySettings} title={t("settingsLabel")} aria-label={t("settingsLabel")} className="w-9 h-9 rounded-full border border-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center transition flex-shrink-0">
+                  <Settings size={16} />
+                </button>
+              </>
             ) : (
               <>
                 <button onClick={() => openAuthGate("", "login")} className="text-sm font-semibold text-gray-700 hover:text-gray-900 px-3 py-2 rounded-full hover:bg-gray-100 transition whitespace-nowrap">{t("authGateLoginTab")}</button>
