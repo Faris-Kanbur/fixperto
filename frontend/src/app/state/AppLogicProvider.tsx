@@ -3547,11 +3547,25 @@ function useAppLogic() {
   const removeService = (idx) => {
     saveServices(myProfile.services.filter((_, i) => i !== idx));
   };
-  const toggleServiceFixed = (idx) => {
+  /**
+   * SABİT / DEĞİŞKEN seçimi.
+   * -------------------------------------------------------------------------------------------
+   * YAŞANAN HATA (kullanıcı bildirdi): tek bir düğme vardı ve ÜZERİNDE MEVCUT DURUM yazıyordu.
+   * Yani "Değişken" yazan düğmeye basmak "değişken seç" değil "sabite geçir" demekti — tamirci
+   * fiyat vermek istemediği için "Değişken"e bastığında "önce bir fiyat girin" uyarısı alıyordu.
+   * Uyarı teknik olarak doğru yerdeydi ama kullanıcının niyetinin TAM TERSİNİ engelliyordu.
+   *
+   * Artık iki ayrı seçenek var (bkz. AppShell hizmet satırı) ve fonksiyon hedef durumu alıyor:
+   *  - Değişken: HER ZAMAN serbest. Fiyat istemiyorsa tamirci hiçbir şey girmek zorunda değil.
+   *  - Sabit: bir tutar gerektirir — "sabit fiyat" deyip rakam vermemek müşteriye hiçbir şey
+   *    anlatmaz. Burada uyarı kalıyor ama artık yalnızca tamirci AÇIKÇA "Sabit" dediğinde çıkıyor.
+   */
+  const setServiceFixed = (idx, fixed) => {
     const svc = myProfile?.services?.[idx];
     if (!svc) return;
-    if (!svc.fixed && !String(svc.price || "").trim()) { setToast({ type: "info", text: "⚠️ Sabit fiyat işaretlemeden önce bu hizmete bir fiyat girin." }); return; }
-    updateService(idx, "fixed", !svc.fixed);
+    if (!!svc.fixed === !!fixed) return;
+    if (fixed && !String(svc.price || "").trim()) { setToast({ type: "info", text: `⚠️ ${t("fixedNeedsPriceToast")}` }); return; }
+    updateService(idx, "fixed", !!fixed);
   };
   const finalizeAddService = (name, price, fixed) => {
     // Katalogda olmayan bir iş: key'siz, serbest metin hizmet. Bu yüzden çevrilemez —
@@ -4841,7 +4855,7 @@ function useAppLogic() {
     ownerSettingsTab, setOwnerSettingsTab, blogPosts, setBlogPosts, blogPost, blogSlug, blogLoading, openBlogPost, openBlog,
     openMechanicsForService,
     adminBlogPosts, adminBlogForm, setAdminBlogForm, editBlogPost, cancelBlogEdit, saveBlogPost, deleteBlogPost,
-    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, setServiceFixed, finalizeAddService,
     serviceLabel, serviceCategoryOf, servicePriceForBrand, mechanicStartingPrice, saveServices,
     servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
     servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,

@@ -158,7 +158,7 @@ export function BrowseHome({ theme = undefined }) {
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, 
     openHelpInfo, mySupportTickets, submitSupportTicket, openReportForm, renderSupportView, openChatWithMechanic, 
     openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply, 
-    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, 
+    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, setServiceFixed, 
     finalizeAddService, findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, 
     cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff, updateStaffField, removeStaff, 
     staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm, 

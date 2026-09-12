@@ -259,6 +259,12 @@ Aynı iş markaya göre farklı tutabilir (kapı tamiri BMW'de başka, Toyota'da
 ## Sabit ve değişken fiyat
 Sabit fiyatlı hizmetler önceden bilinen tutarlıdır; değişkenler ekspertiz sonrası netleşir. Sabit işaretlenip fiyatı boş bırakılan bir hizmet kaydedilemez.
 
+## Sabit / Değişken seçimi tek düğme DEĞİL
+Eskiden tek bir düğme vardı ve üzerinde MEVCUT durum yazıyordu. "Değişken" yazan düğmeye basmak "değişkeni seç" değil "sabite geçir" demekti; fiyat vermek istemeyen tamirci "Değişken"e bastığında "önce bir fiyat girin" uyarısı alıyordu — yani uyarı, kullanıcının niyetinin TAM TERSİNİ engelliyordu. Artık iki ayrı seçenek var. "Değişken" her zaman serbesttir, hiçbir rakam gerektirmez; uyarı yalnızca tamirci açıkça "Sabit" dediğinde çıkar, çünkü rakamsız sabit fiyat müşteriye hiçbir şey anlatmaz.
+
+## Fiyatsız hizmet gizlenmez
+Değişken işaretlenmiş ve fiyatı boş bir hizmet, araç sahibinin randevu ekranındaki listede GÖRÜNÜR — yanında "Değişken" rozeti ve rozetin yanında "?" ipucu ile. Hizmeti listeden çıkarmak, tamirciyi "uydurma bir rakam yaz" ile "bu işi hiç sunmuyormuş gibi görün" arasında seçime zorlardı.
+
 ## Düzeltilen yanlış açıklama
 Hizmet ekranındaki yardım metni "sabit fiyatlı hizmetler araç sahiplerine ÖNCEDEN ÖDEME seçeneğiyle gösterilir" diyordu. Randevudaki ödeme adımı kaldırıldığı için (bkz. 3.4) bu cümle olmayan bir özelliği anlatıyordu — tamirci, müşterinin parayı peşin yatırdığını sanabilirdi. Metin gerçeğe çevrildi: sabit fiyat, araç sahibine randevu alırken KESİN tutar olarak gösterilir, tahsilat serviste yapılır; fiyat değişkense işaretlenmez ve "başlangıç fiyatı" olarak görünür.
 
@@ -505,6 +511,26 @@ Escape ile kapanmalı; kullanıcıyı içeride hapsetmemeli.
 
 Bu üç kural testte denetleniyor.`,
       },
+      {
+        id: "ipucu",
+        title: "8.4 Bilgi baloncuğu (\"?\" ipucu)",
+        body: `Arayüzdeki bazı terimler kendi başına hiçbir şey anlatmıyor: "Değişken fiyat" ne demek, şimdi para mı ödeyeceğim? "Diğer markalar" bir marka listesi mi, varsayılan fiyat mı? Bu soruların cevabını ekrana uzun uzun yazmak listeyi boğar, hiç yazmamak kullanıcıyı tahmine bırakır.
+
+## Desen
+Terimin yanına küçük bir "?" dairesi konur; üstüne gelince ya da tıklanınca birkaç cümlelik koyu bir balon çıkar. Bileşen: components/features/InfoTip.tsx. Metin daima i18n'den gelir, üç dilde yazılır.
+
+## Neden tarayıcının title balonu yetmedi
+title ~1 saniye gecikmeyle çıkar, biçimlenemez ve DOKUNMATİK cihazlarda hiç çıkmaz. Kendi balonumuz anında açılır, "?" işaretine dokunulduğunda telefonda da okunur.
+
+## İki biçim
+Varsayılan biçim gerçek bir düğmedir: klavyeyle sekmeyle gezilir, odaklanınca açılır. "inline" biçimi ise başka bir düğmenin İÇİNDE kullanılır (ör. randevu ekranındaki hizmet satırının kendisi bir düğmedir) — iç içe düğme geçersiz HTML'dir ve tıklamalar birbirine karışır, bu yüzden orada odaklanamayan bir span basılır ve erişilebilirlik için title korunur.
+
+## Nerede kullanılıyor
+Randevu ekranında "Değişken" rozetinin yanında, tamircinin hizmet satırındaki Sabit/Değişken seçiminde ve tamirci profilinde "Markaya göre fiyat" başlığında ("Diğer markalar" ne demek).
+
+## Kural
+İpucu, eksik tasarımın yaması değildir. Etiketin kendisi anlaşılır yazılabiliyorsa önce o düzeltilir; balon yalnızca gerçekten bir kavramın açıklanması gerektiğinde eklenir.`,
+      },
     ],
   },
 
@@ -698,10 +724,10 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 16 test takımı.
+tsc tip denetimi + her backend dosyasının sözdizimi + 17 test takımı.
 
 ## Takımlar
-arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon.
+arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı.
 
 ## Belgeyi canlı tutan takım
 "el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.

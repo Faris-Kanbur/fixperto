@@ -450,7 +450,8 @@ export const T = {
   variableLabel: { tr: "Değişken", en: "Variable", de: "Variabel" },
   removeServiceAria: { tr: "Hizmeti sil", en: "Remove service", de: "Leistung entfernen" },
   newServiceNamePlaceholder: { tr: "Yeni hizmet adı", en: "New service name", de: "Neuer Leistungsname" },
-  fixedPricePrepayNote: { tr: "✓ Sabit Fiyat (müşteri önceden ödeyebilir)", en: "✓ Fixed Price (customer can pay in advance)", de: "✓ Festpreis (Kunde kann im Voraus bezahlen)" },
+  // DÜZELTİLDİ: "müşteri önceden ödeyebilir" — randevuda ödeme adımı kaldırıldı, böyle bir şey yok.
+  fixedPricePrepayNote: { tr: "Sabit Fiyat (tutar önceden belli)", en: "Fixed Price (amount known up front)", de: "Festpreis (Betrag steht vorab fest)" },
   variablePriceAfterNote: { tr: "Değişken Fiyat (ödeme tamirden sonra)", en: "Variable Price (payment after repair)", de: "Variabler Preis (Zahlung nach Reparatur)" },
   fixedPriceRequiredWarning: { tr: "Sabit fiyatlı hizmetler için fiyat girmelisiniz.", en: "You must enter a price for fixed-price services.", de: "Für Leistungen mit Festpreis müssen Sie einen Preis angeben." },
   duplicateServiceWarningText: { tr: '"{name}" zaten hizmetler listenizde var. Yine de eklemek istiyor musunuz?', en: '"{name}" is already in your services list. Add it anyway?', de: '"{name}" ist bereits in Ihrer Leistungsliste. Trotzdem hinzufügen?' },
@@ -1346,7 +1347,8 @@ export const T = {
   brandPriceEmptyMeansDefault: { tr: "Boş bırakılan marka = varsayılan fiyat.", en: "Empty brand = default price.", de: "Leeres Feld = Standardpreis." },
   brandPriceNoBrandsNote: { tr: "Yukarıdan baktığın markaları seçersen burada tam listen çıkar.", en: "Select the brands you service above to see your full list here.", de: "Wählen Sie oben Ihre Marken aus, um hier Ihre vollständige Liste zu sehen." },
   brandPriceClearBtn: { tr: "Marka fiyatlarını temizle", en: "Clear brand prices", de: "Markenpreise löschen" },
-  fixedPriceHelpTitle: { tr: "Sabit fiyat: müşteri randevu alırken ödeyebilir. Değişken: iş sonrası belirlenir.", en: "Fixed: the customer can pay when booking. Variable: determined after the job.", de: "Festpreis: Zahlung bei Buchung möglich. Variabel: nach der Arbeit." },
+  // DÜZELTİLDİ: burada da kaldırılan ön ödeme özelliği anlatılıyordu ("randevu alırken ödeyebilir").
+  fixedPriceHelpTitle: { tr: "Sabit fiyat: tutar önceden belli, randevuda kesin fiyat olarak görünür. Değişken: iş görüldükten sonra belirlenir.", en: "Fixed price: the amount is known up front and shown as a firm price when booking. Variable: determined after the job is inspected.", de: "Festpreis: Der Betrag steht vorab fest und wird bei der Buchung als verbindlicher Preis angezeigt. Variabel: wird nach der Begutachtung festgelegt." },
   serviceCatalogTitle: { tr: "Hizmet Kataloğu", en: "Service Catalog", de: "Leistungskatalog" },
   serviceCatalogSub: { tr: "Sunduğun hizmetleri işaretle. İstediğin kadar seçebilirsin.", en: "Tick the services you offer. Select as many as you like.", de: "Wählen Sie Ihre Leistungen aus. Beliebig viele möglich." },
   serviceCatalogSearchPlaceholder: { tr: "Hizmet ara (ör. balata, klima, egzoz)…", en: "Search services (e.g. brakes, A/C, exhaust)…", de: "Leistung suchen (z. B. Bremsen, Klima, Auspuff)…" },
@@ -1356,6 +1358,13 @@ export const T = {
   serviceCatalogDoneBtn: { tr: "Tamam", en: "Done", de: "Fertig" },
   brandPricesOnDetailTitle: { tr: "Markaya göre fiyat", en: "Price by brand", de: "Preis nach Marke" },
   otherBrandsLabel: { tr: "Diğer markalar", en: "Other brands", de: "Andere Marken" },
+  // "?" ipucu balonları (bkz. components/features/InfoTip.tsx).
+  infoTipAria: { tr: "Bu ne demek?", en: "What does this mean?", de: "Was bedeutet das?" },
+  variablePriceTip: { tr: "Bu işin fiyatı araca ve arızaya göre değişiyor. Tamirci aracı görmeden kesin tutar veremiyor; fiyat kontrolden sonra netleşir ve size bildirilir. Randevu almak için ödeme yapmanız gerekmez.", en: "The price of this job depends on the vehicle and the fault. The mechanic can't quote a firm amount before seeing the car; the price is set after the inspection and shared with you. No payment is required to book.", de: "Der Preis dieser Arbeit hängt vom Fahrzeug und vom Defekt ab. Die Werkstatt kann ohne Begutachtung keinen festen Betrag nennen; der Preis wird danach festgelegt und Ihnen mitgeteilt. Für die Buchung ist keine Zahlung nötig." },
+  otherBrandsTip: { tr: "Tamircinin fiyat girdiği markalar ayrı ayrı listelenir. \"Diğer markalar\", listede adı geçmeyen tüm araçlar için geçerli olan varsayılan fiyatları gösterir. Kendi markanızı seçerseniz varsa ona özel fiyatı görürsünüz.", en: "Brands the mechanic priced separately are listed individually. \"Other brands\" shows the default prices that apply to every vehicle not on that list. Pick your own brand to see its specific price, if there is one.", de: "Marken mit eigenem Preis werden einzeln aufgeführt. \"Andere Marken\" zeigt die Standardpreise für alle übrigen Fahrzeuge. Wählen Sie Ihre Marke, um einen eventuellen Sonderpreis zu sehen." },
+  // Sabit fiyat bir TUTAR gerektirir; "Değişken" ise hiçbir şey gerektirmez (bkz. setServiceFixed).
+  fixedNeedsPriceToast: { tr: "Sabit fiyat bir tutar gerektirir. Fiyat alanına bir rakam yazın ya da hizmeti \"Değişken\" bırakın.", en: "A fixed price needs an amount. Enter a number in the price field, or leave the service as \"Variable\".", de: "Ein Festpreis braucht einen Betrag. Geben Sie eine Zahl ein oder lassen Sie die Leistung auf \"Variabel\"." },
+  fixedLabelShort: { tr: "Sabit", en: "Fixed", de: "Fest" },
   startingPriceLabel: { tr: "Başlangıç fiyatın", en: "Your starting price", de: "Ihr Startpreis" },
   startingPriceHint: { tr: "Hizmet listendeki en düşük fiyattan otomatik hesaplanır — elle girmene gerek yok.", en: "Calculated automatically from the lowest price in your service list.", de: "Wird automatisch aus dem niedrigsten Preis Ihrer Leistungsliste berechnet." },
   favoriteMechanicsLabel: { tr: "Favori Tamirciler", en: "Favourite Mechanics", de: "Favorisierte Werkstätten" },

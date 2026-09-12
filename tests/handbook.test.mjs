@@ -50,6 +50,7 @@ const COVERAGE = {
   TestimonialCarousel: "değerlendirme şeridi",
   CareersPage: "kariyer",
   AdminCareersPanel: "kariyer ilanları",
+  InfoTip: "bilgi baloncuğu",
 };
 const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
 const bookLower = lc(handbookSrc);

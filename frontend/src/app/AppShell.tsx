@@ -4,6 +4,7 @@ import { BookOpen, Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, Us
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
 import { generateAnalyticsPdf } from "../utils/analyticsReport";
+import { InfoTip } from "../components/features/InfoTip";
 import { LangSwitch } from "../components/features/LangSwitch";
 import { NotifBell } from "../components/features/NotifBell";
 import { SiteFooter } from "../components/features/SiteFooter";
@@ -180,7 +181,7 @@ export function AppShell() {
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
     ownerSettingsTab, setOwnerSettingsTab, adminBlogPosts, adminBlogForm, setAdminBlogForm, editBlogPost, cancelBlogEdit, saveBlogPost, deleteBlogPost,
-    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed, finalizeAddService,
+    goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, setServiceFixed, finalizeAddService,
     serviceLabel, servicePriceForBrand, mechanicStartingPrice,
     servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
     servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,
@@ -2646,7 +2647,13 @@ export function AppShell() {
                             <span className="flex items-center gap-2 flex-shrink-0">
                               {/* Marka rozeti: bu fiyatın SENİN aracın için olduğunu açıkça söyler. */}
                               {s.brandPriced && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isSel ? "bg-white/20 text-white" : "bg-rose-50 text-rose-600"}`}>{vehicleBrand}</span>}
-                              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${isSel ? "bg-white/20 text-white" : s.fixed ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>{s.fixed ? t("fixedPriceBadge") : t("variableLabel")}</span>
+                              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 ${isSel ? "bg-white/20 text-white" : s.fixed ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>
+                                {s.fixed ? t("fixedPriceBadge") : t("variableLabel")}
+                                {/* Değişken fiyat araç sahibine hiçbir şey anlatmıyordu: "peki ne kadar
+                                    tutacak, şimdi para mı ödeyeceğim?" Balon bunu cevaplıyor. Satırın
+                                    kendisi bir <button> olduğu için iç içe düğme olmayan inline biçim. */}
+                                {!s.fixed && <InfoTip inline text={t("variablePriceTip")} label={t("infoTipAria")} side="left" />}
+                              </span>
                               {String(s.price || "").trim() && <span className="text-sm font-bold whitespace-nowrap">{s.price}</span>}
                             </span>
                           </button>
@@ -3640,7 +3647,16 @@ export function AppShell() {
                               <input value={s.price} onChange={(e) => updateService(i, "price", e.target.value.replace(/[^0-9]/g, ""))} placeholder={s.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-28 pl-2.5 pr-6 py-1.5 rounded-lg border text-sm ${s.fixed && !String(s.price || "").trim() ? "border-red-300" : "border-gray-200"}`} />
                               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">₺</span>
                             </div>
-                            <button onClick={() => toggleServiceFixed(i)} title={t("fixedPriceHelpTitle")} className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition ${s.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>{s.fixed ? t("fixedPriceBadge") : t("variableLabel")}</button>
+                            {/* SABİT / DEĞİŞKEN — iki ayrı seçenek.
+                                Eskiden tek düğmeydi ve üzerinde MEVCUT durum yazıyordu: "Değişken"
+                                yazan düğmeye basan tamirci aslında "sabit yap" komutu veriyor ve
+                                "önce fiyat girin" uyarısı alıyordu. Niyetin tam tersi. Artık
+                                "Değişken" her zaman serbest, uyarı yalnızca "Sabit" seçilince çıkar. */}
+                            <div className="flex-shrink-0 flex items-center rounded-lg bg-gray-100 p-0.5" role="group" aria-label={t("fixedPriceHelpTitle")}>
+                              <button onClick={() => setServiceFixed(i, true)} aria-pressed={!!s.fixed} title={t("fixedPriceHelpTitle")} className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap transition ${s.fixed ? "bg-white text-green-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("fixedLabelShort")}</button>
+                              <button onClick={() => setServiceFixed(i, false)} aria-pressed={!s.fixed} title={t("fixedPriceHelpTitle")} className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap transition flex items-center gap-1 ${!s.fixed ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("variableLabel")}</button>
+                              <span className="px-1 text-gray-400"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} side="left" /></span>
+                            </div>
                             <button onClick={() => setBrandPriceEditKey(open ? null : (s.key || `custom-${i}`))} className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1 ${bpCount > 0 ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}><Tag size={12} /> {bpCount > 0 ? t("brandPriceCountLabel", { n: String(bpCount) }) : t("brandPriceAddLabel")}</button>
                             <button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-1"><Trash2 size={15} /></button>
                           </div>
@@ -3673,7 +3689,13 @@ export function AppShell() {
                         <input autoFocus value={newServiceForm.name} onChange={(e) => { const val = e.target.value; setNewServiceForm(f => ({ ...f, name: val, fixed: f.fixedTouched ? f.fixed : isFixedPriceService(val) })); setDuplicateServiceWarning(null); }} placeholder={t("newServiceNamePlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white" />
                         <input value={newServiceForm.price} onChange={(e) => setNewServiceForm(f => ({ ...f, price: e.target.value.replace(/[^0-9]/g, "") }))} placeholder={newServiceForm.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-24 px-3 py-2 rounded-xl border text-sm bg-white ${newServiceForm.fixed && !newServiceForm.price.trim() ? "border-red-300" : "border-gray-200"}`} />
                       </div>
-                      <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: !f.fixed, fixedTouched: true }))} className={`w-full mb-2 text-[11px] font-semibold py-2 rounded-xl transition ${newServiceForm.fixed ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>{newServiceForm.fixed ? t("fixedPricePrepayNote") : t("variablePriceAfterNote")}</button>
+                      {/* Hizmet satırındakiyle AYNI desen: iki ayrı seçenek. Burada da tek düğme vardı ve
+                          üzerinde mevcut durum yazıyordu — hangi düğmeye basınca ne olacağı belirsizdi. */}
+                      <div className="w-full mb-2 flex items-center gap-1 rounded-xl bg-gray-100 p-0.5" role="group" aria-label={t("fixedPriceHelpTitle")}>
+                        <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: true, fixedTouched: true }))} aria-pressed={!!newServiceForm.fixed} className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg transition ${newServiceForm.fixed ? "bg-white text-green-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("fixedPricePrepayNote")}</button>
+                        <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: false, fixedTouched: true }))} aria-pressed={!newServiceForm.fixed} className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg transition ${!newServiceForm.fixed ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("variablePriceAfterNote")}</button>
+                        <span className="px-1 text-gray-400"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} side="left" /></span>
+                      </div>
                       {newServiceForm.fixed && !newServiceForm.price.trim() && (<p className="text-[11px] text-red-500 mb-2 -mt-1">{t("fixedPriceRequiredWarning")}</p>)}
                       {duplicateServiceWarning ? (
                         <div className="bg-white border border-gray-300 rounded-xl p-3 mb-2">

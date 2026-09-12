@@ -98,7 +98,7 @@ export function ChatBubble({ msg, viewerLang, mine }) {
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, 
     openHelpInfo, mySupportTickets, submitSupportTicket, openReportForm, renderSupportView, openChatWithMechanic, 
     openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply, 
-    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, toggleServiceFixed,
+    toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, setServiceFixed,
     translationCache, translateMessage,
     finalizeAddService, findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, 
     cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff, updateStaffField, removeStaff, 
