@@ -27,7 +27,7 @@ const nav0 = (key, fallback) => (RESTORED_NAV && RESTORED_NAV[key] !== undefined
 import {
   jobStatusMeta, genSlots, getDaySlots, formatHoursText, parseListingPrice, isOpenNowByHoursText,
   priceLevel, haversineDistanceKm, isValidDateStr, isFixedPriceService, parsePriceNumber, lc,
-  listingCurrency, isValidEmail, validatePhone, computeReminders, mockTranslate, statusColor,
+  listingCurrency, isValidEmail, validatePhone, validateVin, normalizeVin, computeReminders, mockTranslate, statusColor,
   isImgUrl, monthsBetween, initials, listingStatusMeta, slugifyForEmail, ticketDaysOpen, ticketSlaBreached,
   parseDecimalField, listingMarketPriceTier, initialSiteLang, detectCountryCode, rememberSiteLang,
   brandPriceFor, canonicalBrand, readNavSession, writeNavSession,
@@ -442,7 +442,11 @@ function useAppLogic() {
   // kullanıcının: tek seferlik bir araç (ör. başkasının aracını servise götürüyor) garajını
   // kirletmemeli.
   const [saveVehicleToGarage, setSaveVehicleToGarage] = useState(true);
-  const [newVehicle, setNewVehicle] = useState({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "" });
+  // vin/vinShared: ARACIN KENDİ kimliği. İsteğe bağlı; girilirse servis geçmişi sahibe değil
+  // araca bağlanıyor ve araç el değiştirdiğinde yeni sahip aynı numarayla geçmişi görebiliyor
+  // (bkz. backend/routes/vehicleHistory.js). vinShared varsayılan açık: numarayı girmenin tek
+  // amacı zaten bu, ama kullanıcı tek tıkla kapatabiliyor.
+  const [newVehicle, setNewVehicle] = useState({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "", vin: "", vinShared: true });
   const [editingReminderKind, setEditingReminderKind] = useState(null);
   const [reminderEditForm, setReminderEditForm] = useState({ enabled: true, customDate: "", leadDays: "" });
   const [showAddReminderForm, setShowAddReminderForm] = useState(false);
@@ -533,7 +537,7 @@ function useAppLogic() {
   }, [listings]);
   const [showSellForm, setShowSellForm] = useState(false);
   const [showSellVehiclePicker, setShowSellVehiclePicker] = useState(false);
-  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: "", negotiable: false, inspectionReportUrl: "", featured: false, _vehicleId: null, _editingId: null });
+  const [sellForm, setSellForm] = useState({ brand: "", model: "", year: "", km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: "", negotiable: false, inspectionReportUrl: "", featured: false, vin: "", showHistory: false, _vehicleId: null, _editingId: null });
   const sellPhotoRef = useRef(null);
   // Donanım (features) listesi: sabit LISTING_FEATURE_OPTIONS'a ek olarak kullanıcı kendi
   // donanımını da yazıp ekleyebiliyor (customFeatureInput). Seçilmemiş seçenekler sayısı
@@ -710,6 +714,9 @@ function useAppLogic() {
         setQuoteRequests(quoteRequestsRes);
         setQuoteOffers(quoteOffersRes);
         setConversations(conversationsRes);
+        // Aracın şasi numarasına bağlı servis kayıtları (kendi dönemim / kendi yaptığım işler).
+        // Ayrı bir istek: bu veri sahiplikten bağımsız bir tabloda duruyor (bkz. vehicle_history).
+        api.vehicleHistory.mine().then((rows) => { if (!cancelled) setMyHistoryRecords(rows); }).catch(() => {});
         if (MY_MECHANIC_ID != null) {
           // GÜVENLİK DÜZELTMESİ: `iban`/`bankName`/`accountHolder` artık toplu tamirci listesinde
           // (GET /api/mechanics) dönmüyor (bkz. backend/db/hydrate.js) — bu alanlar sadece tamircinin
@@ -837,6 +844,51 @@ function useAppLogic() {
       if (typeof window !== "undefined" && (import.meta as any)?.env?.DEV) console.error("[persist]", failMessage, err);
       setToast({ type: "info", text: `⚠️ ${failMessage}: ${err?.message || "Sunucuya kaydedilemedi."}` });
     });
+  };
+
+  /**
+   * ARACIN GEÇMİŞİ (şasi/VIN numarasına bağlı).
+   * -------------------------------------------------------------------------------------------
+   * NEDEN: bakım geçmişi bugüne kadar araç SAHİBİNE bağlıydı. Araç satılınca eski sahip onu
+   * garajından siliyor, geçmiş de onunla yok oluyordu — oysa geçmiş arabaya ait. Artık isteğe
+   * bağlı bir şasi numarası girilirse, o araçta Fixperto üzerinden yapılan ve TAMAMLANAN işler
+   * araca bağlı kalıcı bir kayda yazılıyor; yeni sahip aynı numarayı kendi aracına girdiğinde
+   * geçmişi görüyor. Aynı sorgu tamirci için de açık: aracı ilk kez gören usta, geçmiş işleri
+   * görerek daha doğru teşhis koyabiliyor.
+   *
+   * Gizlilik: sorgulama sonucunda eski sahibin adı/telefonu/plakası ve ödenen tutar DÖNMEZ
+   * (bkz. backend). Kayıtlar yalnızca o dönemin sahibi paylaşıma açık bıraktıysa görünür.
+   */
+  // Randevu tamamlama penceresinde tamircinin elle yazdığı şasi numarası.
+  const [completeVinInput, setCompleteVinInput] = useState("");
+  const [vinLookup, setVinLookup] = useState({ vin: "", loading: false, records: null, hiddenCount: 0, error: "" });
+  const [myHistoryRecords, setMyHistoryRecords] = useState([]);
+  const refreshMyHistory = () => {
+    if (MY_OWNER_ID == null && MY_MECHANIC_ID == null) { setMyHistoryRecords([]); return; }
+    api.vehicleHistory.mine().then(setMyHistoryRecords).catch(() => setMyHistoryRecords([]));
+  };
+  const lookupVin = async (rawVin) => {
+    const check = validateVin(rawVin);
+    if (!check.valid || !check.normalized) {
+      setVinLookup({ vin: rawVin, loading: false, records: null, hiddenCount: 0, error: check.message || t("vinRequiredForLookup") });
+      return;
+    }
+    setVinLookup({ vin: check.normalized, loading: true, records: null, hiddenCount: 0, error: "" });
+    try {
+      const res = await api.vehicleHistory.lookup(check.normalized);
+      setVinLookup({ vin: check.normalized, loading: false, records: res.records || [], hiddenCount: res.hiddenCount || 0, error: "" });
+    } catch (err) {
+      setVinLookup({ vin: check.normalized, loading: false, records: null, hiddenCount: 0, error: err?.message || t("vinLookupFailed") });
+    }
+  };
+  const clearVinLookup = () => setVinLookup({ vin: "", loading: false, records: null, hiddenCount: 0, error: "" });
+  // Paylaşım iznini değiştirmek iki yere birden yazılıyor: aracın kendi kaydına (ileride
+  // oluşacak kayıtlar için) ve o VIN'e ait MEVCUT kayıtlara (geçmişe dönük olarak).
+  const setVehicleHistoryShared = (vehicle, shared) => {
+    if (!vehicle?.vin) return;
+    setVehicles(vs => vs.map(v => v.id === vehicle.id ? { ...v, vinShared: shared } : v));
+    persist(api.vehicles.update(vehicle.id, { vinShared: shared }), "Paylaşım tercihi kaydedilemedi");
+    persist(api.vehicleHistory.setShared(vehicle.vin, shared).then(refreshMyHistory), "Paylaşım tercihi kaydedilemedi");
   };
 
   // ShareButton'da (mekanik profili, araç ilanı, iş ilanı) gerçek bir paylaşım eylemi olduğunda
@@ -2963,10 +3015,15 @@ function useAppLogic() {
     // göre denetleniyor.
     const problem = validateFields(newVehicle, VEHICLE_FIELD_RULES);
     if (problem) { showFieldProblem(problem); return; }
+    // Şasi numarası isteğe bağlı ama girildiyse GERÇEK olmalı: bu numara aracın kalıcı geçmiş
+    // kaydının anahtarı. Yanlış/uydurma bir numara, araç el değiştirdiğinde geçmişin
+    // bulunamaması demek (bkz. utils/helpers.ts validateVin).
+    const vinCheck = validateVin(newVehicle.vin);
+    if (!vinCheck.valid) { setToast({ type: "info", text: `⚠️ ${vinCheck.message}` }); return; }
     // Marka KAYDEDİLİRKEN listedeki resmi yazımına çevriliyor. Seçici zaten listeden seçtiriyor
     // ama "Diğer" kutusuna elle "bmw" yazılabilir; bu normalleştirme olmasa o araç tamircinin
     // "BMW" fiyat anahtarıyla eşleşmez ve kişi kendi markasının fiyatını göremezdi.
-    const draft = { ownerId: MY_OWNER_ID, ...newVehicle, brand: canonicalBrand(newVehicle.brand), year: newVehicle.year || "—", listingId: null, reminderOverrides: {}, customReminders: [], history: [] };
+    const draft = { ownerId: MY_OWNER_ID, ...newVehicle, vin: vinCheck.normalized || null, brand: canonicalBrand(newVehicle.brand), year: newVehicle.year || "—", listingId: null, reminderOverrides: {}, customReminders: [], history: [] };
     // Önce iyimser (optimistic) bir yerel kayıt gösteriyoruz ki UI anında tepki versin; backend
     // gerçek id'yi döndürünce yerel geçici id'yi onunla değiştiriyoruz.
     const tempId = Date.now();
@@ -2974,14 +3031,14 @@ function useAppLogic() {
     // KAYDETME TERCİHİ: kutu işaretli değilse araç yalnızca bu oturumda (bu randevu için)
     // yaşıyor; backend'e hiç gitmiyor. Kullanıcı yine de randevusunu tamamlayabiliyor.
     if (!saveVehicleToGarage) {
-      setNewVehicle({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "" });
+      setNewVehicle({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "", vin: "", vinShared: true });
       setShowAddVehicle(false);
       if (screen === "booking") setSelectedBookingVehicleId(tempId);
       if (showQuoteModal) setQuoteVehicleId(tempId);
       setToast({ type: "info", text: t("vehicleNotSavedNotice") });
       return;
     }
-    setNewVehicle({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "" }); setShowAddVehicle(false);
+    setNewVehicle({ brand: "", model: "", year: "", plate: "", country: "tr", city: "", tireType: "mevsimlik", lastInspection: "", lastMaintenance: "", insuranceEnd: "", vin: "", vinShared: true }); setShowAddVehicle(false);
     if (screen === "booking") setSelectedBookingVehicleId(tempId); if (showQuoteModal) setQuoteVehicleId(tempId);
     // "Araç eklendi" başarı mesajı yalnızca backend isteği gerçekten başarılı olduktan sonra
     // gösteriliyor. İstek başarısız olursa hem yanlış bir "başarılı" mesajı görülmesin hem de
@@ -3005,6 +3062,11 @@ function useAppLogic() {
   const updateVehicleFields = (id, updates) => {
     const vProblem = validateFields(updates, VEHICLE_FIELD_RULES);
     if (vProblem) { showFieldProblem(vProblem); return; }
+    if ("vin" in (updates || {})) {
+      const vinCheck = validateVin(updates.vin);
+      if (!vinCheck.valid) { setToast({ type: "info", text: `⚠️ ${vinCheck.message}` }); return; }
+      updates = { ...updates, vin: vinCheck.normalized || null };
+    }
     // Marka güncelleniyorsa resmi yazımına çevir (bkz. addVehicle'daki aynı gerekçe): araç
     // düzenleme formundan "Diğer" ile elle yazılan marka da fiyat anahtarlarıyla eşleşsin.
     const patch = "brand" in (updates || {}) ? { ...updates, brand: canonicalBrand(updates.brand) } : updates;
@@ -3082,10 +3144,25 @@ function useAppLogic() {
   };
   // Tamiri "Tamamlandı" olarak işaretlerken, değişen parça varsa opsiyonel garanti süresi eklenebilir.
   // Garanti bitiş tarihi hem randevu kartında gösterilir hem de (plaka eşleşirse) aracın hatırlatmalarına eklenir.
-  const completeApptWithWarranty = (warrantyDays) => {
+  const completeApptWithWarranty = (warrantyDays, vinInput = "") => {
     const id = completingApptId;
     if (!id) return;
     advanceStatus(id);
+    /**
+     * ARACIN KALICI GEÇMİŞİNE İŞLEME.
+     * -----------------------------------------------------------------------------------------
+     * İş tamamlandığında, aracın şasi numarası biliniyorsa bu iş araca bağlı kalıcı kayda
+     * yazılıyor (bkz. backend/routes/vehicleHistory.js). İki yol var: tamirci numarayı elle
+     * yazar ya da araç sahibi numarayı garajında bir kez girdiyse sunucu kendisi eşleştirir.
+     * Numara hiçbir yerde yoksa istek 400 döner ve SESSİZCE geçiyoruz — şasi numarası isteğe
+     * bağlı bir alan, olmaması bir hata değil ve tamirciyi ilgilendiren bir şey de değil.
+     */
+    const vinCheck = validateVin(vinInput);
+    if (vinInput && !vinCheck.valid) { setToast({ type: "info", text: `⚠️ ${vinCheck.message}` }); return; }
+    setCompleteVinInput("");
+    api.vehicleHistory.record({ appointmentId: id, vin: vinCheck.normalized || undefined })
+      .then(() => { refreshMyHistory(); setToast({ type: "info", text: t("vehicleHistoryRecordedToast") }); })
+      .catch(() => { /* şasi numarası yok ya da kayıt zaten var: sessiz geç */ });
     const days = parseInt(warrantyDays, 10);
     if (days > 0) {
       const appt = appointments.find(a => a.id === id);
@@ -3806,7 +3883,11 @@ function useAppLogic() {
     setShowSellVehiclePicker(false);
     const existingListing = listings.find(l => l.id === v.listingId);
     if (existingListing) { openSellForm({ ...existingListing, _vehicleId: v.id, _editingId: existingListing.id }); return; }
-    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", negotiable: false, inspectionReportUrl: "", featured: false, _vehicleId: v.id, _editingId: null });
+    openSellForm({ brand: v.brand, model: v.model, year: v.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", bodyType: "", engineSize: "", drivetrain: "", ownerCount: "", paintedParts: "", changedParts: "", tradeIn: false, doorCount: "", features: [], photos: [], seatCount: "", fuelConsumption: "", co2Emission: "", emissionClass: "", batteryCapacity: "", rangeKm: "", city: role === "owner" ? (ownerProfile.city || "") : "", negotiable: false, inspectionReportUrl: "", featured: false,
+      // Şasi numarası garajdaki araçtan geliyor: satıcı "bakım geçmişini göster" derse ilan bu
+      // numara üzerinden doğrulanmış kayıtlara bağlanıyor. Numara yoksa seçenek de kapalı kalır.
+      vin: v.vin || "", showHistory: false,
+      _vehicleId: v.id, _editingId: null });
   };
   const pickOtherCarToSell = () => { setShowSellVehiclePicker(false); openSellForm(null); };
   // GERÇEK HATA DÜZELTMESİ (ilan fotoğrafları): önceden hem kapak hem galeri fotoğrafları
@@ -4141,12 +4222,18 @@ function useAppLogic() {
     // Eskiden yalnızca "boş mu" bakılıyordu; 9.000.000 km ya da 1899 model kabul ediliyordu.
     const listingProblem = validateFields(sellForm, LISTING_FIELD_RULES);
     if (listingProblem) { showFieldProblem(listingProblem); return; }
+    // "Bakım geçmişini göster" seçeneği yalnızca şasi numarası varsa anlamlı: kayıtlar o numaraya
+    // bağlı. Numara olmadan seçeneği açık bırakmak, ilanda hiç görünmeyecek bir vaat olurdu.
+    const listingVin = validateVin(sellForm.vin);
+    if (sellForm.vin && !listingVin.valid) { setToast({ type: "info", text: `⚠️ ${listingVin.message}` }); return; }
+    if (sellForm.showHistory && !listingVin.normalized) { setToast({ type: "info", text: `⚠️ ${t("listingNeedsVinForHistory")}` }); return; }
     // Misafir ilan formunun tamamını (fotoğraflar dâhil) doldurabiliyor; giriş sadece "Yayınla"
     // anında isteniyor ve giriş sonrası ilan aynı verilerle otomatik yayınlanıyor.
     if (!ensureAuth(t("authGateReasonSellListing"), () => callLatest("submitListing", sellerType))) return;
     if (sellForm._editingId) {
       const before = listings.find(x => x.id === sellForm._editingId);
-      const { _editingId, _vehicleId, ...patchFields } = sellForm;
+      const { _editingId, _vehicleId, ...rawPatchFields } = sellForm;
+      const patchFields = { ...rawPatchFields, vin: listingVin.normalized || null, showHistory: !!rawPatchFields.showHistory && !!listingVin.normalized };
       // Açıklama metni bu düzenlemede değiştiyse, hangi dilde yazıldığını güncel dile göre
       // yeniden etiketliyoruz — bkz. listing.lang alanı, TranslatedText ile ilan açıklaması/
       // Sorular sekmesi çevirisi için kullanılıyor.
@@ -4185,7 +4272,7 @@ function useAppLogic() {
       const { _editingId, _vehicleId, ...formFields } = sellForm;
       // Açıklama metninin hangi dilde yazıldığını satıcının güncel diline göre etiketliyoruz —
       // bkz. patch.lang yorum notu yukarıda.
-      const draft = { sellerName, sellerType, sellerId, ...formFields, brand: canonicalBrand(formFields.brand), vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang, createdAt: new Date().toISOString() };
+      const draft = { sellerName, sellerType, sellerId, ...formFields, vin: listingVin.normalized || null, showHistory: !!formFields.showHistory && !!listingVin.normalized, brand: canonicalBrand(formFields.brand), vehicleId: _vehicleId || null, status: "active", px: 20 + Math.random() * 60, py: 20 + Math.random() * 60, offers: [], messages: [], lang: sellerType === "mechanic" ? (myProfile?.lang || "tr") : ownerLang, createdAt: new Date().toISOString() };
       // Form ve "yayınlandı" mesajı yalnızca ilan gerçekten kaydedildikten sonra kapatılıp
       // gösteriliyor — istek başarısız olursa kullanıcı formda kalır, girdiği bilgiler kaybolmaz.
       try {
@@ -5019,7 +5106,9 @@ function useAppLogic() {
     isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, toggleAddVehicle, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
-    openJobApplyForm, goToMyPanel, goToMySettings, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
+    openJobApplyForm, goToMyPanel, goToMySettings,
+    vinLookup, lookupVin, clearVinLookup, myHistoryRecords, refreshMyHistory, setVehicleHistoryShared,
+    completeVinInput, setCompleteVinInput, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
     roleBtn, goToNotifTarget,
     jobEmploymentColor,
   };

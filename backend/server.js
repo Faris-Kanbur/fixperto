@@ -7,6 +7,7 @@ import adminRouter from "./routes/admin.js";
 import shareEventsRouter from "./routes/shareEvents.js";
 import profileViewsRouter from "./routes/profileViews.js";
 import translateRouter from "./routes/translate.js";
+import vehicleHistoryRouter from "./routes/vehicleHistory.js";
 import analyticsRouter from "./routes/analytics.js";
 import blogRouter from "./routes/blog.js";
 import careersRouter from "./routes/careers.js";
@@ -131,6 +132,8 @@ app.use("/api/admin", adminRouter);
 app.use("/api/share-events", shareEventsRouter);
 app.use("/api/profile-views", profileViewsRouter);
 app.use("/api/translate", translateRouter);
+// Aracın şasi numarasına bağlı, sahipten bağımsız servis geçmişi (bkz. routes/vehicleHistory.js).
+app.use("/api/vehicle-history", vehicleHistoryRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/blog", blogRouter);
 app.use("/api/careers", careersRouter);

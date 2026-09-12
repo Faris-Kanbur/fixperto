@@ -441,5 +441,19 @@ export const api = {
   // aynı sunucuya ~6 eşzamanlı bağlantı sınırı yüzünden çeviriyi görünür şekilde yavaşlatıyordu.
   translateBatch: (items: { id: string; text: string; from: string }[], to: string): Promise<{ results: Record<string, string>; failed?: string[]; cached?: boolean }> =>
     request("/api/translate/batch", { method: "POST", body: JSON.stringify({ items, to }) }),
+  // ARACIN GEÇMİŞİ (şasi/VIN numarasına bağlı, sahipten bağımsız) — bkz. backend/routes/vehicleHistory.js.
+  // Sorgulama POST: şasi numarası bir URL'de (adres çubuğunda, sunucu kayıtlarında, tarayıcı
+  // geçmişinde) görünmemeli — aracı tanımlayan bir veri ve GET sorgu dizesi her yerde loglanır.
+  vehicleHistory: {
+    lookup: (vin: string): Promise<{ vin: string; records: any[]; hiddenCount: number }> =>
+      request("/api/vehicle-history/lookup", { method: "POST", body: JSON.stringify({ vin }) }),
+    mine: (): Promise<any[]> => request("/api/vehicle-history/mine"),
+    record: (data: { vin: string; appointmentId: number; serviceText?: string; km?: number }): Promise<any> =>
+      request("/api/vehicle-history", { method: "POST", body: JSON.stringify(data) }),
+    setShared: (vin: string, shared: boolean): Promise<{ ok: boolean; updated: number }> =>
+      request("/api/vehicle-history/share", { method: "POST", body: JSON.stringify({ vin, shared }) }),
+    forListing: (listingId: number | string): Promise<{ records: any[]; shown: boolean; unverified?: boolean }> =>
+      request(`/api/vehicle-history/listing/${listingId}`),
+  },
   health: (): Promise<{ ok: boolean; service: string }> => request("/api/health"),
 };

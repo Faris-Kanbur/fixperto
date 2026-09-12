@@ -124,6 +124,37 @@ CREATE TABLE IF NOT EXISTS appointments (
   createdAt TEXT DEFAULT (datetime('now'))
 );
 
+-- ARACIN KENDİ GEÇMİŞİ (VIN/şasi numarasına bağlı).
+-- ---------------------------------------------------------------------------------------------
+-- NEDEN AYRI TABLO: bakım geçmişi bugüne kadar ARAÇ SAHİBİNE bağlıydı (vehicles.history, bir
+-- kullanıcının kendi kaydı). Araç el değiştirince eski sahip aracı hesabından siliyor ve geçmiş
+-- onunla birlikte yok oluyordu — oysa geçmiş ARABAYA ait, sahibine değil. Bu tablo kaydı aracın
+-- şasi numarasına bağlıyor: satılsa da, eski sahip hesabını kapatsa da kayıt duruyor.
+--
+-- SADECE DOĞRULANABİLİR KAYIT: buraya yalnızca Fixperto üzerinden alınmış ve TAMAMLANMIŞ bir
+-- randevudan doğan iş girer (appointmentId + mechanicId ile). Kullanıcının kendi elle yazdığı
+-- notlar (vehicles.history) buraya GİRMEZ — alıcıya "doğrulanmış geçmiş" diye gösterilen şey
+-- gerçekten platformda gerçekleşmiş olmalı, yoksa ilanda işe yaramaz bir güven etiketi olur.
+--
+-- ownerId: işin yapıldığı DÖNEMDEKİ sahip. Paylaşım iznini yalnızca o dönemin sahibi kendi
+-- kayıtları için değiştirebilir (bkz. routes/vehicleHistory.js).
+CREATE TABLE IF NOT EXISTS vehicle_history (
+  id INTEGER PRIMARY KEY,
+  vin TEXT NOT NULL,
+  ownerId INTEGER,
+  mechanicId INTEGER,
+  mechanicName TEXT,
+  appointmentId INTEGER,
+  serviceDate TEXT,
+  serviceText TEXT,
+  km INTEGER,
+  warrantyEndDate TEXT,
+  shared INTEGER DEFAULT 1,
+  createdAt TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_vehicle_history_vin ON vehicle_history(vin);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_vehicle_history_appt ON vehicle_history(appointmentId);
+
 CREATE TABLE IF NOT EXISTS conversations (
   id INTEGER PRIMARY KEY,
   -- Sohbetin iki tarafı: tamirci (mechanicId) ve araç sahibi (ownerId). ownerId güvenlik
@@ -403,6 +434,15 @@ function ensureColumn(table, columnDef) {
   ["appointments", "noShow INTEGER DEFAULT 0"],
   ["appointments", "historyShareConsent INTEGER DEFAULT 1"],
   ["appointments", "warrantyEndDate TEXT"],
+  // Şasi (VIN) numarası — İSTEĞE BAĞLI. Girilirse aracın servis geçmişi sahibine değil ARACA
+  // bağlanır ve araç el değiştirdiğinde yeni sahip bu numarayla geçmişi görebilir.
+  ["vehicles", "vin TEXT"],
+  // Sahibin açık izni: bu araca ait doğrulanmış kayıtlar VIN'i bilen sonraki sahibe/alıcıya
+  // gösterilsin mi. Varsayılan açık, çünkü VIN'i girmenin tek amacı zaten bu; ama kapatılabilir.
+  ["vehicles", "vinShared INTEGER DEFAULT 1"],
+  // İlanda "bakım geçmişini göster" seçeneği ve ilanın bağlı olduğu VIN.
+  ["listings", "vin TEXT"],
+  ["listings", "showHistory INTEGER DEFAULT 0"],
   ["support_tickets", "resolvedDate TEXT"],
   ["support_tickets", "adminReplies TEXT DEFAULT '[]'"],
   ["support_tickets", "fromId INTEGER"],

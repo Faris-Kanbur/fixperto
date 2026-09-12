@@ -9,6 +9,7 @@ import { ShareButton } from "./ShareButton";
 import { PhotoLightbox } from "./PhotoLightbox";
 import { ListingCard } from "./ListingCard";
 import { TranslatedText } from "./TranslatedText";
+import { ListingHistorySection } from "./VehicleHistoryPanel";
 import {
   LISTING_FEATURE_GROUPS, FUEL_TYPE_LABELS_BY_LANG, TRANSMISSION_LABELS_BY_LANG,
   BODY_TYPE_LABELS_BY_LANG, DRIVETRAIN_LABELS_BY_LANG,
@@ -368,6 +369,11 @@ export function ListingDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{sims.map((s) => (<ListingCard key={s.id} l={s} />))}</div>
             </Section>
           )}
+
+          {/* DOĞRULANMIŞ SERVİS GEÇMİŞİ — satıcı "bakım geçmişini göster" dediyse ve araca bağlı
+              gerçek kayıtlar varsa görünür. Alıcı için en güçlü güven işareti: bu satırlar
+              satıcının yazdığı bir metin değil, platformda gerçekten yapılmış işler. */}
+          <ListingHistorySection listingId={l.id} />
 
           {!mine && (
             <button onClick={() => openReportForm("listing", `İlan #${l.id} · ${l.brand} ${l.model}`, `"${l.brand} ${l.model}" ilanı hakkında şikayetim var`)} className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition py-2"><Flag size={12} /> {t("reportListingBtn")}</button>

@@ -363,6 +363,28 @@ const DE_LANDLINE = /^[2-9]\d{5,11}$/;
  * Girilen metni +E.164 biçimine çevirir. Ülke kodu yoksa `defaultCountry` ("tr" | "de") kullanılır.
  * Dönüş: { ok, e164, country } ya da { ok: false, reason }.
  */
+/**
+ * ŞASİ (VIN) NUMARASI — isteğe bağlı ama girilirse GERÇEK olmalı.
+ * ---------------------------------------------------------------------------------------------
+ * Standart VIN 17 hane, harf+rakamdan oluşur ve I/O/Q harflerini İÇERMEZ (1 ve 0 ile karışmasın
+ * diye). Eski/özel araçlarda daha kısa şasi numaraları da var, bu yüzden 11-17 arasını kabul
+ * ediyoruz. Bu denetim olmadan kullanıcı plakasını ya da rastgele bir şey yazar, o numara aracın
+ * kalıcı geçmiş kaydının anahtarı olur ve araç el değiştirdiğinde geçmiş bulunamaz.
+ * Sunucuda AYNI kural tekrar uygulanıyor (bkz. backend/routes/vehicleHistory.js) — istemci
+ * denetimi kolaylık, sunucu denetimi güvenliktir.
+ */
+const VIN_RE = /^[A-HJ-NPR-Z0-9]{11,17}$/;
+export function normalizeVin(raw) {
+  return String(raw ?? "").trim().toUpperCase().replace(/[\s-]/g, "");
+}
+export function validateVin(raw) {
+  const v = normalizeVin(raw);
+  if (!v) return { valid: true, normalized: "" };   // boş bırakmak serbest: alan zorunlu değil
+  if (/[IOQ]/.test(v)) return { valid: false, message: "Şasi numarasında I, O ve Q harfleri bulunmaz — 1 ve 0 ile karıştırmış olabilirsiniz." };
+  if (!VIN_RE.test(v)) return { valid: false, message: "Şasi numarası 11-17 karakter olmalı ve yalnızca harf/rakam içermeli." };
+  return { valid: true, normalized: v };
+}
+
 export function normalizePhone(raw, defaultCountry = "tr") {
   // Boşluk, parantez, tire, nokta ve baştaki "00" gibi yazım alışkanlıklarını temizliyoruz —
   // kullanıcıyı biçim konusunda eğitmek yerine biçimi biz düzeltiyoruz.

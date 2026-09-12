@@ -16,7 +16,9 @@ const BOOL_FIELDS = {
   mechanics: ["verified"],
   appointments: ["autoAccepted", "reviewed", "noShow", "historyShareConsent", "depositRefunded"],
   support_tickets: ["refunded"],
-  listings: ["tradeIn", "negotiable", "featured", "adminRemoved"],
+  listings: ["tradeIn", "negotiable", "featured", "adminRemoved", "showHistory"],
+  vehicles: ["vinShared"],
+  vehicle_history: ["shared"],
 };
 
 // GÜVENLİK DÜZELTMESİ: `password` sütunu owners/mechanics tablolarında düz metin olarak

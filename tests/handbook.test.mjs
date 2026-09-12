@@ -51,6 +51,7 @@ const COVERAGE = {
   CareersPage: "kariyer",
   AdminCareersPanel: "kariyer ilanları",
   InfoTip: "bilgi baloncuğu",
+  VehicleHistoryPanel: "şasi",
 };
 const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
 const bookLower = lc(handbookSrc);

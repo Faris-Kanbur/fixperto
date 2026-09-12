@@ -172,6 +172,10 @@ export interface Vehicle {
   reminderOverrides: Record<string, unknown>;
   customReminders: unknown[];
   history: MaintenanceRecord[];
+  // ŞASİ (VIN) NUMARASI — isteğe bağlı. Girilirse servis geçmişi sahibe değil ARACA bağlanır
+  // ve araç el değiştirdiğinde yeni sahip bu numarayla geçmişi görebilir.
+  vin?: string;
+  vinShared?: boolean;
 }
 
 export type AppointmentStatus = "Sırada" | "Tamire Alındı" | "Tamir Tamamlandı" | string;

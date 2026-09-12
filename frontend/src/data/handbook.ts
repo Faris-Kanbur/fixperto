@@ -765,10 +765,10 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 18 test takımı.
+tsc tip denetimi + her backend dosyasının sözdizimi + 19 test takımı.
 
 ## Takımlar
-arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri.
+arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi.
 
 ## Belgeyi canlı tutan takım
 "el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.
@@ -1069,6 +1069,8 @@ Onay ister ve geri alınamaz olduğu açıkça yazılır.
 Sahiplik her zaman kimlikle kurulur: vehicles.ownerId, appointments.ownerId/mechanicId, listings.sellerId/buyerId. Görünen ad (sellerName gibi) yalnızca gösterim içindir; filtre ve yetki kararlarında KULLANILMAZ.
 
 ## İç içe veriler
+vehicle_history tablosu diğerlerinden farklı çalışır: kayıt bir KULLANICIYA değil, aracın şasi numarasına bağlıdır (bkz. 21. bölüm) — araç el değiştirse, eski sahip hesabını kapatsa bile kayıt durur.
+
 Hizmetler, çalışma saatleri, yorumlar, teklifler gibi listeler JSON metin olarak saklanır ve okunurken nesneye çevrilir (hydrate). SQLite'ta ayrı tablo açmanın maliyeti bu ölçekte gerekmiyordu.
 
 ## Göç (migration)
@@ -1170,6 +1172,68 @@ Bir davranış "neden böyle" sorusunu doğuruyorsa, cevabı ya kod yorumunda ya
 
 ## Bilinen sınırlar gizlenmez
 Yapılmamış ya da yarım kalan şeyler "Bilinen riskler" ve ilgili sayfalarda açıkça yazılır.`,
+      },
+    ],
+  },
+  // ==========================================================================================
+  {
+    id: "aracgecmisi",
+    title: "21. Aracın Geçmişi (Şasi/VIN)",
+    summary: "Servis geçmişini sahibe değil ARACA bağlamak; paylaşım izni ve gizlilik.",
+    pages: [
+      {
+        id: "neden",
+        title: "21.1 Neden araca bağlı",
+        body: `Bakım geçmişi bugüne kadar araç SAHİBİNE bağlıydı (vehicles.history, kullanıcının kendi kaydı). Araç el değiştirince eski sahip onu garajından siliyor ve geçmiş onunla birlikte yok oluyordu. Oysa geçmiş arabaya ait: yeni sahip için de, o arabaya ilk kez bakacak usta için de en değerli bilgi bu.
+
+## Çözüm: isteğe bağlı şasi numarası
+Araç eklerken ya da sonradan düzenlerken bir şasi (VIN) numarası girilebilir. ZORUNLU DEĞİL. Girildiğinde, o araçta Fixperto üzerinden yapılan ve TAMAMLANAN işler bu numaraya bağlı kalıcı bir kayda (vehicle_history) yazılır. Araç satıldığında yeni sahip aynı numarayı kendi aracına girdiğinde ya da sorgulama panelinden aratınca geçmişi görür.
+
+## Yalnızca DOĞRULANABİLİR kayıt
+Bu kayda sadece platformda gerçekten gerçekleşmiş, tamamlanmış randevulardan doğan işler girer; kullanıcının elle yazdığı notlar girmez. "Doğrulanmış geçmiş" etiketi, arkasında gerçek bir randevu olmadığı sürece hiçbir şey ifade etmezdi.
+
+## Numara doğrulanır
+Standart VIN 17 hane, harf+rakam, ve I/O/Q harflerini içermez (1 ve 0 ile karışmasın diye). 11-17 arası kabul ediliyor (eski/özel şasi numaraları). Denetim hem istemcide hem sunucuda var: istemci kolaylık, sunucu güvenliktir. Bu denetim olmasa kullanıcı plakasını yazar, numara kalıcı kaydın anahtarı olur ve araç el değiştirdiğinde geçmiş bulunamazdı.
+
+## Kayıt nasıl oluşur
+Tamirci randevuyu "tamamlandı" yaptığında. Şasi numarasını elle yazabilir (aracı fiziksel olarak görüyor) ya da hiç yazmaz: araç sahibi numarayı garajında bir kez girdiyse SUNUCU plakadan eşleştirip kendisi bulur. Tamirci araç sahibinin garajını göremez, bu eşleştirme yalnızca sunucuda yapılır. Randevu başına tek kayıt (UNIQUE index).`,
+      },
+      {
+        id: "vinizin",
+        title: "21.2 Paylaşım izni ve gizlilik",
+        body: `Şasi numarası YARI-AÇIK bir veridir: ön camın altında yazar, ilanlarda paylaşılır. "Numarayı bilen her şeyi görür" demek araç geçmişini sızdırmak olurdu. Dört kural birlikte çalışıyor.
+
+## 1) İzin şart
+Kayıt, ancak o dönemin sahibi paylaşıma açık bıraktıysa başkasına görünür. İzin kaydın ait olduğu DÖNEMİN sahibine aittir: sonraki sahip, kendinden önceki dönemin iznini değiştiremez. Varsayılan açık, çünkü numarayı girmenin tek amacı zaten bu; ama araç sayfasındaki tek anahtarla kapatılabilir ve kapatma geçmişe dönük çalışır.
+
+## 2) Kimlik şart
+Sorgulama için giriş yapmış olmak gerekir (araç sahibi ya da tamirci). Anonim bir betik VIN taraması yapamaz.
+
+## 3) Hız sınırı
+Kimlik de yetmez: saatte sınırlı sayıda sorgu. Amaç, elindeki VIN listesiyle toplu veri toplamayı ekonomik olmaktan çıkarmak.
+
+## 4) Kişisel veri dönmez
+Yanıt yalnızca "ne zaman, hangi işletmede, ne yapıldı" (varsa km ve garanti) içerir. Eski sahibin adı, telefonu, plakası ve ödediği tutar ASLA dönmez — bunlar aracın değil bir KİŞİNİN verisidir ve alıcıyı ilgilendirmez.
+
+## Gizlenen kayıt sayısı söylenir
+Sorgulama sonucunda kaç kaydın paylaşıma kapalı olduğu yazılır. Alıcı "geçmiş yok" ile "geçmiş paylaşılmamış" arasındaki farkı bilmeli; yoksa eksik bilgiyi temiz geçmiş sanır.`,
+      },
+      {
+        id: "nerede",
+        title: "21.3 Nerede kullanılıyor",
+        body: `## Araç satışında
+İlan formunda "Bakım geçmişini ilanda göster" seçeneği var. Açıksa ilan sayfasında "doğrulanmış servis geçmişi" bölümü çıkar. Seçenek yalnızca şasi numarası girilmişse çalışır — numara olmadan açık bırakmak, ilanda hiç görünmeyecek bir vaat olurdu.
+
+GÜVENLİK: satıcı ilana RASTGELE bir numara yazıp başkasının aracının geçmişini yayımlayamaz. Numaranın satıcıyla gerçek bir bağı olmalı: ya araç şu anda onun garajında kayıtlı, ya da o numaraya ait kayıtların sahibi kendisi. İkisi de yoksa geçmiş gösterilmez.
+
+## Randevu alırken
+"Bu tamircinin geçmiş randevularımı görmesine izin veriyorum" kutusu (varsayılan açık, kapatılabilir). Tamirci, izin verilmişse müşterinin kendisindeki geçmiş randevularını görür; izin verilmemişse yerinde bir kilit simgesi ve açıklama çıkar.
+
+## Sorgulama paneli
+Araç sahibinin garaj sekmesinde ve tamircinin randevular sekmesinde AYNI panel var: şasi numarasını gir, paylaşıma açık kayıtları gör. Araç sahibi için kullanım: ikinci el araç aldı. Tamirci için: tamirhanesine ilk kez gelen aracın geçmişini görmek teşhisi doğrudan etkiler.
+
+## BİLİNEN SINIR
+Bu bir "araç sorgu" servisi değildir: yalnızca Fixperto üzerinden yapılmış işleri bilir. Hasar kaydı, kilometre doğrulama ya da resmi tescil verisi burada yoktur ve öyleymiş gibi sunulmaz.`,
       },
     ],
   },

@@ -5,6 +5,7 @@ import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
 import { generateAnalyticsPdf } from "../utils/analyticsReport";
 import { InfoTip } from "../components/features/InfoTip";
+import { VinLookupPanel, VerifiedHistoryList } from "../components/features/VehicleHistoryPanel";
 import { LangSwitch } from "../components/features/LangSwitch";
 import { NotifBell } from "../components/features/NotifBell";
 import { SiteFooter } from "../components/features/SiteFooter";
@@ -167,7 +168,7 @@ export function AppShell() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers,
-    confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
+    confirmBooking, goHome, chooseRole, completeVinInput, setCompleteVinInput, myHistoryRecords, setVehicleHistoryShared, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
     adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats, viewStats, myProfileViewStats, listingViewStats, listingFavoriteCount,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
@@ -394,16 +395,21 @@ export function AppShell() {
         </div>
       )}
       {completingApptId && (
-        <div className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); }}>
+        <div className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); setCompleteVinInput(""); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
             <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center mb-3"><CheckCircle2 size={22} className="text-green-600" /></div>
             <h3 className="font-bold text-gray-900 text-base mb-1">{t("completeApptModalTitle")}</h3>
             <p className="text-sm text-gray-500 mb-3">{t("completeApptModalBody")}</p>
             <label className="text-xs font-medium text-gray-600 mb-1 block">{t("warrantyDaysLabel")}</label>
-            <input type="number" min="0" value={warrantyDaysForm} onChange={(e) => setWarrantyDaysForm(e.target.value)} placeholder={t("warrantyDaysPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm mb-4" />
+            <input type="number" min="0" value={warrantyDaysForm} onChange={(e) => setWarrantyDaysForm(e.target.value)} placeholder={t("warrantyDaysPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm mb-3" />
+            {/* Şasi numarası: tamirci aracı fiziksel olarak görüyor. Yazarsa bu iş aracın kalıcı
+                geçmişine işlenir. Araç sahibi numarayı garajında zaten girdiyse boş bırakılabilir —
+                sunucu plakadan eşleştirip kendisi buluyor (bkz. routes/vehicleHistory.js). */}
+            <label className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">{t("vinLabel")} <span className="text-gray-300">({t("vinOptional")})</span><InfoTip text={t("mechVinPrompt")} label={t("infoTipAria")} /></label>
+            <input value={completeVinInput} onChange={(e) => setCompleteVinInput(e.target.value.toUpperCase())} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide mb-4" />
             <div className="flex gap-2">
-              <button onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
-              <button onClick={() => completeApptWithWarranty(warrantyDaysForm)} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("completeApptBtn")}</button>
+              <button onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); setCompleteVinInput(""); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
+              <button onClick={() => completeApptWithWarranty(warrantyDaysForm, completeVinInput)} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("completeApptBtn")}</button>
             </div>
           </div>
         </div>
@@ -1989,6 +1995,9 @@ export function AppShell() {
                 <>
                   {/* GARAJIM — başlık + birincil eylem tek satırda; araç kartları ızgarada.
                       ÖNCE: tam genişlikte kesikli "araç ekle" kutusu ve alt alta tek sütun liste. */}
+                  {/* İKİNCİ EL ARAÇ ALDIYSA: şasi numarasıyla aracın geçmişini sorgulayabilir.
+                      Kayıtlar araca bağlı olduğu için önceki sahibin izin verdiği işler görünür. */}
+                  <div className="mb-5"><VinLookupPanel /></div>
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                     <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Car size={17} className="text-rose-500" /> {t("myGarageTitle")} <span className="text-gray-300 font-normal text-sm">({vehicles.length})</span></h2>
                   </div>
@@ -2006,6 +2015,22 @@ export function AppShell() {
                     <select value={newVehicle.tireType} onChange={(e) => setNewVehicle({ ...newVehicle, tireType: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="mevsimlik">{t("seasonalTireOption")}</option><option value="allseason">{t("allSeasonTireOption")}</option></select>
                     <div><label className="text-[11px] text-gray-400">{t("lastInspectionLabel")}</label><input type="date" value={newVehicle.lastInspection} onChange={(e) => setNewVehicle({ ...newVehicle, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                     <div><label className="text-[11px] text-gray-400">{t("insuranceEndLabel")}</label><input type="date" value={newVehicle.insuranceEnd} onChange={(e) => setNewVehicle({ ...newVehicle, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                    {/* ŞASİ (VIN) NUMARASI — isteğe bağlı. Girilirse aracın servis geçmişi sahibe
+                        değil ARACA bağlanır: araç satıldığında geçmiş kaybolmaz, yeni sahip aynı
+                        numarayla görebilir (bkz. backend/routes/vehicleHistory.js). */}
+                    <div>
+                      <label className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                        {t("vinLabel")} <span className="text-gray-300">({t("vinOptional")})</span>
+                        <InfoTip text={t("vinTip")} label={t("infoTipAria")} />
+                      </label>
+                      <input value={newVehicle.vin} onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide" />
+                      {String(newVehicle.vin || "").trim() && (
+                        <label className="flex items-start gap-2 mt-2 cursor-pointer">
+                          <input type="checkbox" checked={newVehicle.vinShared} onChange={(e) => setNewVehicle({ ...newVehicle, vinShared: e.target.checked })} className="mt-0.5 w-4 h-4 accent-rose-600" />
+                          <span className="text-[11px] text-gray-500 leading-relaxed">{t("vinShareLabel")}{!newVehicle.vinShared && <span className="block text-gray-400 mt-0.5">{t("vinShareOffNote")}</span>}</span>
+                        </label>
+                      )}
+                    </div>
                     <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-rose-700 transition">{t("add")}</button>
                   </div>)}
                   <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-rose-600" /></div><div className="flex-1"><h3 className="font-semibold text-gray-800 text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-gray-400">{v.plate}{vListing && <span className="ml-2 text-rose-500">· {t("forSaleTag")}{vOfferCount > 0 ? ` · ${t("offerCountSuffixShort", { n: String(vOfferCount) })}` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-gray-300" /></button>); })}{vehicles.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Car size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noVehiclesAddedNote")}</p></div>}
@@ -2040,6 +2065,24 @@ export function AppShell() {
                 <>
                   <button onClick={() => setSelectedVehicleId(null)} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToVehiclesBtn")}</button>
                   <div className="bg-rose-50 rounded-2xl p-4 mb-5 flex items-center gap-3"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center"><Car size={26} className="text-rose-600" /></div><div className="flex-1"><h2 className="font-bold text-gray-800">{selectedVehicle.brand} {selectedVehicle.model}</h2><p className="text-xs text-gray-500">{selectedVehicle.year} · {selectedVehicle.plate}</p></div><button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} aria-label={t("editVehicleAria")} className="text-rose-600 p-2 -m-2"><Pencil size={16} /></button><button onClick={() => setConfirmDialog({ title: t("deleteVehicleConfirmTitle"), body: t("deleteVehicleConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => removeVehicle(selectedVehicle.id) })} aria-label={t("deleteVehicleAria")} className="text-red-400 hover:text-red-600 p-2 -m-2"><Trash2 size={16} /></button></div>
+                  {/* ARACIN DOĞRULANMIŞ GEÇMİŞİ + PAYLAŞIM ANAHTARI.
+                      Kayıtlar şasi numarasına bağlı: araç satıldığında yeni sahip aynı numarayla
+                      görebilir. Paylaşımı kapatmak yalnızca BU sahibin dönemindeki kayıtları
+                      etkiler (bkz. backend/routes/vehicleHistory.js). */}
+                  {String(selectedVehicle.vin || "").trim() && (() => {
+                    const vinRecords = myHistoryRecords.filter((r) => r.vin === selectedVehicle.vin);
+                    return (
+                      <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
+                        <h3 className="font-semibold text-gray-800 text-sm mb-1 flex items-center gap-2">{t("vehicleHistoryVerifiedTitle")}<InfoTip text={t("vinTip")} label={t("infoTipAria")} /></h3>
+                        <p className="text-[11px] text-gray-400 mb-3 font-mono tracking-wide">{selectedVehicle.vin}</p>
+                        <VerifiedHistoryList records={vinRecords} emptyText={t("vinLookupEmpty")} />
+                        <label className="flex items-start gap-2 mt-3 cursor-pointer">
+                          <input type="checkbox" checked={selectedVehicle.vinShared !== false} onChange={(e) => setVehicleHistoryShared(selectedVehicle, e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600" />
+                          <span className="text-[11px] text-gray-500 leading-relaxed">{t("vinShareLabel")}{selectedVehicle.vinShared === false && <span className="block text-gray-400 mt-0.5">{t("vinShareOffNote")}</span>}</span>
+                        </label>
+                      </div>
+                    );
+                  })()}
                   {showEditVehicle && editVehicleForm && (
                     <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5 space-y-2">
                       <h3 className="font-semibold text-gray-800 text-sm mb-1">{t("editVehicleInfoTitle")}</h3>
@@ -2055,6 +2098,12 @@ export function AppShell() {
                       <div><label className="text-[11px] text-gray-400">{t("lastInspectionLabel")}</label><input type="date" value={editVehicleForm.lastInspection || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                       <div><label className="text-[11px] text-gray-400">{t("lastMaintenanceLabel")}</label><input type="date" value={editVehicleForm.lastMaintenance || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastMaintenance: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                       <div><label className="text-[11px] text-gray-400">{t("insuranceEndLabel")}</label><input type="date" value={editVehicleForm.insuranceEnd || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      {/* ŞASİ (VIN) NUMARASI — sonradan da eklenebilir. Girildiği andan itibaren
+                          Fixperto üzerinden yapılan işler araca bağlanır. */}
+                      <div>
+                        <label className="text-[11px] text-gray-400 flex items-center gap-1.5">{t("vinLabel")} <span className="text-gray-300">({t("vinOptional")})</span><InfoTip text={t("vinTip")} label={t("infoTipAria")} /></label>
+                        <input value={editVehicleForm.vin || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide" />
+                      </div>
                       <div className="flex gap-2 pt-1"><button onClick={() => setShowEditVehicle(false)} className="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm">{t("cancel")}</button><button onClick={() => { if (editVehicleForm.lastInspection && !isValidDateStr(editVehicleForm.lastInspection)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastInspectionLabel") }) }); return; } if (editVehicleForm.lastMaintenance && !isValidDateStr(editVehicleForm.lastMaintenance)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastMaintenanceLabel") }) }); return; } if (editVehicleForm.insuranceEnd && !isValidDateStr(editVehicleForm.insuranceEnd)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("insuranceEndLabel") }) }); return; } updateVehicleFields(selectedVehicle.id, editVehicleForm); setShowEditVehicle(false); setToast({ type: "info", text: t("vehicleInfoUpdatedToast") }); }} className="flex-1 bg-rose-600 text-white py-2 rounded-xl text-sm font-medium">{t("save")}</button></div>
                     </div>
                   )}
@@ -2913,6 +2962,10 @@ export function AppShell() {
             </div>
             {mechTab === "requests" && (
               <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
+                {/* TAMİRCİ İÇİN ŞASİ SORGULAMA: tamirhaneye ilk kez gelen bir aracın geçmişini
+                    görmek teşhisi doğrudan etkiler ("bu balata 6 ay önce değişmiş"). Araç sahibi
+                    paylaşıma açık bıraktıysa kayıtlar görünür; kişisel bilgi dönmez. */}
+                <div className="mb-6"><VinLookupPanel /></div>
                 {/* TASARIM NOTU: bu segment çubuğu eskiden `flex` + `flex-1` idi; telefonda doğru
                     görünüyordu ama geniş ekranda 1280 piksele yayılıp ortasında 10 piksellik yazılar
                     kalıyordu. Artık içeriğine göre daralan (inline-flex) gerçek bir segment kontrolü. */}
@@ -4170,6 +4223,15 @@ export function AppShell() {
                   <label className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:text-rose-500 hover:border-rose-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
                 )}
               </div>
+              {/* BAKIM GEÇMİŞİNİ İLANDA GÖSTER — aracın şasi numarasına bağlı, Fixperto üzerinden
+                  yapılmış gerçek servis kayıtları ilanda görünür. Kişisel bilgiler (ad, telefon,
+                  plaka, ödenen tutar) gösterilmez; bkz. backend/routes/vehicleHistory.js. */}
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("vehicleHistoryVerifiedTitle")}</p>
+              <input value={sellForm.vin || ""} onChange={(e) => setSellForm({ ...sellForm, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} aria-label={t("vinLabel")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide" />
+              <label className="flex items-start gap-2 cursor-pointer px-1">
+                <input type="checkbox" checked={!!sellForm.showHistory} onChange={(e) => setSellForm({ ...sellForm, showHistory: e.target.checked })} className="mt-0.5 w-4 h-4 accent-rose-600" />
+                <span className="text-[11px] text-gray-500 leading-relaxed"><span className="font-semibold text-gray-700">{t("listingShowHistoryLabel")}</span> {t("listingShowHistoryDesc")}</span>
+              </label>
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("marketingSection")}</p>
               <input value={sellForm.inspectionReportUrl || ""} onChange={(e) => setSellForm({ ...sellForm, inspectionReportUrl: e.target.value })} placeholder={t("inspectionReportPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
               <button type="button" onClick={() => setSellForm({ ...sellForm, negotiable: !sellForm.negotiable })} className={`w-full px-3 py-2.5 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition ${sellForm.negotiable ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500"}`}>{t("negotiableToggle")} {sellForm.negotiable ? t("yesLabel") : t("noLabel")}</button>
