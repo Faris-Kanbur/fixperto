@@ -70,7 +70,7 @@ export function ListingDetailPage() {
     t, lang, role, ownerLang, myProfile, mechanicsList,
     listingPageItem, closeListingPage, setSelectedListingId,
     favoriteIds, toggleFavorite, compareListingIds, toggleCompareListing,
-    openOfferForm, setShowListingMsgForm, openReportForm, recordShare,
+    openOfferForm, offerButtonState, setShowListingMsgForm, openReportForm, recordShare,
     similarListings, listingPriceComparison, isMyListing, openSellForm, sellPrefillFromListing,
   } = useApp() as any;
 
@@ -199,7 +199,12 @@ export function ListingDetailPage() {
         </>
       ) : (
         <>
-          <button onClick={() => openOfferForm()} className="w-full bg-rose-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-rose-700 active:scale-[0.99] transition shadow-md shadow-rose-200 whitespace-nowrap flex items-center justify-center gap-2"><Banknote size={16} /> {t("makeOffer")}</button>
+          {/* Düğmenin etiketi ve tıklanabilirliği tek yerden geliyor (bkz. offerButtonState):
+              satıcı teklifi gördüyse yeni teklif gönderilemez, reddettiyse gönderilebilir. */}
+          {(() => { const ob = offerButtonState(l); return (<>
+            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition whitespace-nowrap flex items-center justify-center gap-2 ${ob.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-rose-600 text-white hover:bg-rose-700 active:scale-[0.99] shadow-md shadow-rose-200"}`}><Banknote size={16} /> {t(ob.labelKey)}</button>
+            {ob.hintKey && <p className="text-[11px] text-gray-400 mt-1.5 text-center leading-relaxed">{t(ob.hintKey)}</p>}
+          </>); })()}
           <button onClick={() => setShowListingMsgForm(true)} className="w-full mt-2 border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={16} /> {t("sendMessage")}</button>
           {sellerMech?.phone && (
             <a href={`tel:${sellerMech.phone}`} className="w-full mt-2 text-gray-500 py-2 font-medium text-xs hover:text-rose-600 transition flex items-center justify-center gap-1.5"><Phone size={13} /> {sellerMech.phone}</a>
@@ -397,7 +402,9 @@ export function ListingDetailPage() {
             <p className="text-base font-bold text-gray-900 leading-none">{l.price}</p>
           </div>
           <button onClick={() => setShowListingMsgForm(true)} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
-          <button onClick={() => openOfferForm()} className="flex-1 bg-rose-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-rose-700 transition whitespace-nowrap">{t("makeOffer")}</button>
+          {(() => { const ob = offerButtonState(l); return (
+            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`flex-1 py-3 rounded-xl font-semibold text-sm transition whitespace-nowrap ${ob.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-rose-600 text-white hover:bg-rose-700"}`}>{t(ob.labelKey)}</button>
+          ); })()}
         </div>
       )}
     </div>

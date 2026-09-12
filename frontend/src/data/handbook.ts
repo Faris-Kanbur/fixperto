@@ -228,6 +228,28 @@ Mesajlar karşı tarafın diline otomatik çevrilebilir. Çeviri sonucu veritaba
 ## Sohbetten randevuya
 Sohbet başlığındaki düğme o tamirciyle randevu ekranını açar. Sohbetin tamirci bağlamı ile randevu ekranının seçili tamircisi burada eşitlenir; eşitlenmezse YANLIŞ tamirciyle randevu açılırdı.`,
       },
+      {
+        id: "teklifakisi",
+        title: "3.7 İlana teklif verme ve tekrar teklif",
+        body: `Alıcı bir araç ilanına teklif verir; satıcı kabul eder, reddeder ya da bekletir. "Verdiğim Teklifler" listesi her iki rolde de (araç sahibi ve tamirci) aynı kuralla çalışır.
+
+## Teklif nereye yazılıyor
+GERÇEK HATA: teklif ve soru, ilanın kendi PATCH'i ile yazılıyordu. Ama ilan satırının yazma yetkisi SATICIYA bağlı — teklifi veren satıcı olmadığı için istek sunucuda 403 alıyordu: teklif ekranda görünüyor, veritabanına HİÇ kaydedilmiyordu. Artık teklif ve soru için ayrı uç noktalar var; kimlik (kim teklif verdi, kim sordu) sunucuda oturumdan damgalanıyor ve ekleme sunucudaki güncel diziye yapılıyor, yani eşzamanlı teklifler birbirini ezmiyor.
+
+## Tekrar teklif kuralı
+Satıcı teklifi HENÜZ GÖRMEDİYSE: tutar yerinde güncellenir, yeni satır açılmaz. REDDETTİYSE: yeni teklif verilebilir, eski kayıt arşivlenir ki listede tek güncel satır kalsın. GÖRDÜ ama henüz yanıtlamadıysa: yeni teklif YOK — satıcı yanıt bekliyorken arka arkaya teklif göndermek pazarlık değil, bildirim yağmuru olur. KABUL EDİLDİYSE: iş bitmiştir.
+
+Kural SUNUCUDA. Arayüzdeki düğmenin etiketi ve tıklanabilirliği de tek bir yerden (offerButtonState) geliyor — üç ayrı yerde teklif düğmesi var ve her birinde ayrı hesaplansaydı biri er geç sunucunun reddedeceği bir isteği gönderirdi.
+
+## Listeden doğrudan tekrar teklif
+"Verdiğim Teklifler" satırında, teklif uygunsa bir düğme çıkar ve ilanı teklif formu açık olarak getirir. Kullanıcı ilanı arayıp bulmak zorunda kalmıyor. İki tarafta da aynı.
+
+## Satıcının cevap hakkı
+Alıcı ilana soru sorabiliyordu ama satıcının cevap verecek bir yeri yoktu: soru ilan yönetim ekranında okunup orada kalıyordu. Artık satıcı aynı yerden cevaplıyor; cevap "Satıcı" rozetiyle işaretleniyor (bu işareti SUNUCU koyuyor, istemciye bırakılsa bir alıcı kendi mesajını satıcı cevabı gibi gösterebilirdi) ve soruyu soran kişiye bildirim gidiyor.
+
+## Sınırlar
+Aynı ilanda bir alıcının teklif geçmişi 10 kayıtla, teklif/soru yazma IP başına dakikalık bir tavanla sınırlı. Kendi ilanına teklif verilemez, yayından kalkmış ilan teklif almaz.`,
+      },
     ],
   },
 
@@ -765,10 +787,10 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 19 test takımı.
+tsc tip denetimi + her backend dosyasının sözdizimi + 20 test takımı.
 
 ## Takımlar
-arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi.
+arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri.
 
 ## Belgeyi canlı tutan takım
 "el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.
@@ -927,7 +949,13 @@ Panelde yapılan bir düzenleme kullanıcının verisini değiştiriyor. "Bunu k
 Tarayıcı izni verilmemişse bildirim tamamen kaybolmamalı. Zil ikonundaki kayıt her durumda tutulur.
 
 ## Kategoriler
-Randevu, teklif, mesaj, başvuru ve duyuru. Kullanıcı ayarlardan kategorileri tek tek kapatabilir; kapalı kategoride hiç bildirim üretilmez.
+Randevu, teklif, mesaj, başvuru, duyuru ve İLAN GÜNCELLEMELERİ. Kullanıcı ayarlardan kategorileri tek tek kapatabilir; kapalı kategoride hiç bildirim üretilmez. Her kategori iki rolde de (araç sahibi ve tamirci) ayrı ayrı vardır.
+
+## "İlanıma teklif geldi" ile "izlediğim ilan değişti" AYNI ŞEY DEĞİL
+İkisi eskiden tek anahtara (teklif bildirimleri) bağlıydı; birini kapatmak isteyen diğerini de kaybediyordu. Artık ilan güncellemelerinin kendi anahtarı var (notifyListingUpdates).
+
+## İlan güncellemelerini kim alır
+Üç grup: ilanı FAVORİLEYENLER, o ilana TEKLİF VERENLER ve SORU SORANLAR. Eskiden yalnızca favorileyenler haber alıyordu — oysa teklif vermiş biri favorileyenden daha ilgilidir: parasını konuşmuş, cevap bekliyor. Haber verilen değişiklikler: fiyat düşüşü (ayrı başlıkla), fiyat değişimi, ilan bilgilerinin güncellenmesi, durum değişimi (satıldı/duraklatıldı) ve ilanın yayından kaldırılması.
 
 ## Tıklayınca nereye
 Her bildirim bir hedef taşır (randevu, teklif, sohbet, ilan, duyuru). Tıklanınca doğru ekran ve doğru SEKME açılır. Randevu bildirimi aktif randevular sekmesini açar — kullanıcı en son "geçmiş" sekmesine bakmış olsa bile.

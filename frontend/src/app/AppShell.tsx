@@ -168,7 +168,8 @@ export function AppShell() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers,
-    confirmBooking, goHome, chooseRole, completeVinInput, setCompleteVinInput, myHistoryRecords, setVehicleHistoryShared, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
+    confirmBooking, goHome, chooseRole, completeVinInput, setCompleteVinInput, canReoffer, startReoffer,
+    listingReply, setListingReply, submitListingReply, myHistoryRecords, setVehicleHistoryShared, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
     adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats, viewStats, myProfileViewStats, listingViewStats, listingFavoriteCount,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
@@ -190,7 +191,7 @@ export function AppShell() {
     findMissingFixedPriceService, saveMyProfile, previewMyProfile, tryAddService, cancelAddService, uploadCoverPhoto, removeCoverPhoto, addStaff,
     updateStaffField, removeStaff, staffAvatarUpload, ownerPhotoUpload, toggleDayOpen, toggleSlotClosed, addExtraSlot, openSellForm,
     startSellFlow, pickVehicleToSell, pickOtherCarToSell, sellPhotoUpload, sellPhotosUpload, removeSellPhoto, MAX_LISTING_GALLERY_PHOTOS, toggleSellFeature, customFeatureInput, setCustomFeatureInput, addCustomFeature, showAllFeatureOptions, setShowAllFeatureOptions, toggleBrandServiced, customBrandInput, setCustomBrandInput, addCustomBrand, showAllBrandOptions, setShowAllBrandOptions, togglePaymentMethod, customPaymentInput, setCustomPaymentInput, addCustomPaymentMethod, showAllPaymentOptions, setShowAllPaymentOptions, notifyFavoriteWatchers, submitListing, setListingStatus, removeListing,
-    myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
+    myBuyerName, myBuyerId, isRealSellerOfListing, isMyListing, myPendingOfferOn, offerButtonState, openOfferForm, submitOffer, submitListingMsg, respondOffer, markOffersSeen, clearListingFilters,
     gallerySelectedIds, setGallerySelectedIds, myListingsStats, toggleGallerySelect, listingDaysActive, bulkFeatureSelectedListings, bulkSetStatusSelectedListings, bulkDeleteSelectedListings,
     similarListings, listingPriceComparison, requestFeaturedListing, confirmFeaturedPurchase, showFeaturedUpsell, setShowFeaturedUpsell, FEATURED_LISTING_PRICE, FEATURED_LISTING_DAYS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
@@ -1737,7 +1738,9 @@ export function AppShell() {
                   <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
                   <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-500" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                   {(() => {
-                    const notifOpts = [{ key: "notifyAppointments", label: t("notifApptUpdatesLabel") }, { key: "notifyOffers", label: t("notifOfferResultsLabel") }, { key: "notifyMessages", label: t("notifMessagesLabel") }];
+                    // notifyListingUpdates: "izlediğim ilan değişti" — "benim ilanıma teklif geldi"den (notifyOffers)
+                    // farklı bir şey, bu yüzden ayrı bir anahtar (bkz. notifyFavoriteWatchers).
+                    const notifOpts = [{ key: "notifyAppointments", label: t("notifApptUpdatesLabel") }, { key: "notifyOffers", label: t("notifOfferResultsLabel") }, { key: "notifyMessages", label: t("notifMessagesLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }];
                     const allNotifsOn = notifOpts.every(opt => ownerSettings[opt.key]);
                     const toggleAllNotifs = () => {
                       setOwnerSettings(s => ({ ...s, ...Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])) }));
@@ -2210,7 +2213,26 @@ export function AppShell() {
               {ownerProfileTab === "chats" && (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-300 transition flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><MessageCircle size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noChatsShort")}</p></div>}</div>)}
               {ownerProfileTab === "offers" && (<>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersMade")}</h3>
-                <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<div key={o.id} className="bg-white border border-gray-200 rounded-xl p-3 flex justify-between items-center"><div><p className="text-xs font-medium text-gray-700">{o.listing.brand} {o.listing.model}</p><p className="text-[10px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("pendingSeenStatus") : t("pendingStatus")}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>))}
+                <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
+                  <div key={o.id} className="bg-white border border-gray-200 rounded-xl p-3">
+                    <div className="flex justify-between items-center gap-3">
+                      <button onClick={() => setSelectedListingId(o.listing.id)} className="text-left min-w-0 flex-1">
+                        <p className="text-xs font-medium text-gray-700 truncate">{o.listing.brand} {o.listing.model}</p>
+                        <p className="text-[10px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("pendingSeenStatus") : t("pendingStatus")}</p>
+                      </button>
+                      <span className="font-bold text-rose-600 text-sm flex-shrink-0">{o.amount}{o.currency || "₺"}</span>
+                    </div>
+                    {/* TEKRAR TEKLİF: satıcı teklifi henüz görmediyse tutar değiştirilebilir,
+                        reddettiyse yeni teklif verilebilir. Kural sunucuda da var (bkz.
+                        backend/routes/listingInteractions.js) — buradaki düğme sadece kısayol. */}
+                    {canReoffer(o) && (
+                      <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-gray-100">
+                        <span className="text-[10px] text-gray-400">{o.status === "rejected" ? t("reofferRejectedHint") : t("reofferUnseenHint")}</span>
+                        <button onClick={() => startReoffer(o.listing, o)} className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
                 {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">{t("noOffersMadeNote")}</p>}</div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersReceived")}</h3>
                 <div className="space-y-2">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
@@ -2476,19 +2498,25 @@ export function AppShell() {
                     )}
                     {selectedListing.messages.length > 0 && (<>
                       <h3 className="font-semibold text-gray-800 text-sm mt-5 mb-2 flex items-center gap-2"><MessageCircle size={15} className="text-rose-500" /> {t("questionsTitle")}</h3>
-                      <div className="space-y-2">{selectedListing.messages.map(m => (<div key={m.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs"><span className="font-medium text-gray-700">{m.from}:</span> <span className="text-gray-600"><TranslatedText id={`listingmsg-${m.id}`} text={m.text} fromLang={m.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></span></div>))}</div>
+                      <div className="space-y-2">{selectedListing.messages.map(m => (<div key={m.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs"><span className="font-medium text-gray-700">{m.from}{m.isSellerReply && <span className="ml-1 text-[9px] font-bold uppercase text-emerald-600 bg-emerald-50 rounded px-1 py-0.5">{t("sellerReplyBadge")}</span>}:</span> <span className="text-gray-600"><TranslatedText id={`listingmsg-${m.id}`} text={m.text} fromLang={m.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></span></div>))}</div>
+                      {/* SATICININ CEVABI — eksik olan yarı. Alıcı soru sorabiliyordu ama satıcının
+                          cevap verecek bir yeri yoktu; soru ilan yönetiminde okunup orada kalıyordu. */}
+                      <div className="flex gap-2 mt-2">
+                        <input value={listingReply} onChange={(e) => setListingReply(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitListingReply(selectedListing); }} placeholder={t("listingReplyPlaceholder")} aria-label={t("listingReplyPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                        <button onClick={() => submitListingReply(selectedListing)} className="bg-gray-900 text-white px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-gray-800 transition flex-shrink-0">{t("listingReplySendBtn")}</button>
+                      </div>
                     </>)}
                   </>
                 );
                 const myOffer = myPendingOfferOn(selectedListing);
                 const currency = listingCurrency(selectedListing.price);
-                const offerLabel = myOffer && !myOffer.seen ? t("updateOfferBtn") : myOffer ? t("newOfferBtn") : t("makeOffer");
+                const offerBtn = offerButtonState(selectedListing);
                 const sellerPhone = selectedListing.sellerType === "mechanic"
                   ? mechanicsList.find(m => selectedListing.sellerId != null ? m.id === selectedListing.sellerId : m.name === selectedListing.sellerName)?.phone
                   : ownersDirectory.find(o => selectedListing.sellerId != null ? o.id === selectedListing.sellerId : o.name === selectedListing.sellerName)?.phone;
                 return (
                   <div className="grid grid-cols-2 gap-2 mt-5 sticky bottom-0 bg-white/95 backdrop-blur-sm pt-3 pb-2 -mx-5 px-5 md:-mx-8 md:px-8 border-t border-gray-100">
-                    <button onClick={openOfferForm} className="bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Banknote size={15} /> {offerLabel}</button>
+                    <button onClick={openOfferForm} disabled={offerBtn.disabled} title={offerBtn.hintKey ? t(offerBtn.hintKey) : undefined} className={`py-3 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 ${offerBtn.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-rose-600 text-white hover:bg-rose-700"}`}><Banknote size={15} /> {t(offerBtn.labelKey)}</button>
                     {selectedListing.sellerType === "mechanic" ? (
                       <button onClick={() => { const mech = mechanicsList.find(m => m.name === selectedListing.sellerName); if (mech) openChatWithMechanic(mech, `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`); setSelectedListingId(null); }} className="border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
                     ) : (
@@ -3825,7 +3853,20 @@ export function AppShell() {
               <div className="w-full max-w-6xl mx-auto px-5 md:px-8 py-6 md:py-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6">
                 <h3 className="font-bold text-gray-900 text-base mb-4">{t("offersMade")}</h3>
-                <div className="space-y-2.5">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (<button key={o.id} onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left border border-gray-100 rounded-2xl p-3.5 flex justify-between items-center hover:border-rose-300 hover:shadow-sm transition"><div><p className="text-sm font-semibold text-gray-800">{o.listing.brand} {o.listing.model}</p><p className="text-xs text-gray-400 mt-0.5">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("offerPendingSeenStatus") : t("offerPendingStatus")}</p></div><span className="font-bold text-rose-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span></button>))}
+                <div className="space-y-2.5">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
+                  <div key={o.id} className="border border-gray-100 rounded-2xl p-3.5 hover:border-rose-300 hover:shadow-sm transition">
+                    <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center">
+                      <div className="min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{o.listing.brand} {o.listing.model}</p><p className="text-xs text-gray-400 mt-0.5">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("offerPendingSeenStatus") : t("offerPendingStatus")}</p></div>
+                      <span className="font-bold text-rose-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span>
+                    </button>
+                    {/* Araç sahibi tarafındaki ile AYNI kural ve aynı düğme (bkz. o taraf). */}
+                    {canReoffer(o) && (
+                      <div className="flex items-center justify-between gap-2 mt-2.5 pt-2.5 border-t border-gray-100">
+                        <span className="text-[11px] text-gray-400">{o.status === "rejected" ? t("reofferRejectedHint") : t("reofferUnseenHint")}</span>
+                        <button onClick={() => startReoffer(o.listing, o)} className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
+                      </div>
+                    )}
+                  </div>))}
                 {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noOffersMadeYet")}</p>}</div>
                 {listings.filter(l => l.offers.some(o => o.status === "rejected" && (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name))).length > 0 && (
                   <p className="text-[11px] text-gray-400 mt-4 flex items-start gap-1.5"><AlertTriangle size={12} className="flex-shrink-0 mt-0.5 text-amber-500" /> {t("rejectedOfferHint")}</p>
@@ -3871,7 +3912,7 @@ export function AppShell() {
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={() => setAutoAccept(!autoAccept)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
                 <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-600" /> {t("useMyLocationTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                 {(() => {
-                  const notifOpts = [{ key: "notifyAppointments", label: t("notifyAppointmentsLabel") }, { key: "notifyOffers", label: t("notifyOffersLabel") }, { key: "notifyMessages", label: t("notifyMessagesLabel") }, { key: "notifyJobApplications", label: t("notifyJobApplicationsLabel") }];
+                  const notifOpts = [{ key: "notifyAppointments", label: t("notifyAppointmentsLabel") }, { key: "notifyOffers", label: t("notifyOffersLabel") }, { key: "notifyMessages", label: t("notifyMessagesLabel") }, { key: "notifyJobApplications", label: t("notifyJobApplicationsLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }];
                   const allNotifsOn = notifOpts.every(opt => mechSettings[opt.key]);
                   const toggleAllNotifs = () => {
                     setMechSettings(s => ({ ...s, ...Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])) }));

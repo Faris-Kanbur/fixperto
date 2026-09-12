@@ -15,6 +15,7 @@ export interface ApiErrorOptions {
   status: number;
   devMessage?: string;
   url?: string;
+  details?: any;
 }
 
 /**
@@ -26,13 +27,18 @@ export class ApiError extends Error {
   status: number;
   devMessage?: string;
   url?: string;
+  // Sunucunun yanıt gövdesi. Bazı uçlar hatanın NEDENİNİ makine-okunur bir alanla bildiriyor
+  // (ör. teklif reddi: reason "seen" | "accepted") — çağıran taraf kullanıcıya duruma özel bir
+  // açıklama gösterebilsin diye metni ayrıştırmak yerine bu alanı okuyor.
+  details?: any;
 
-  constructor(message: string, { status, devMessage, url }: ApiErrorOptions) {
+  constructor(message: string, { status, devMessage, url, details }: ApiErrorOptions) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.devMessage = devMessage;
     this.url = url;
+    this.details = details;
   }
 }
 
@@ -188,6 +194,7 @@ async function request(path: string, options: RequestOptions = {}) {
         status: res.status,
         devMessage: backendMessage,
         url,
+        details: body,
       });
     }
     if (res.status === 204) return null;
@@ -298,7 +305,15 @@ export const api = {
   owners: withPasswordEndpoints<Owner>("owners"),
   vehicles: crud<Vehicle>("vehicles"),
   appointments: crud<Appointment>("appointments"),
-  listings: crud<Listing>("listings"),
+  listings: {
+    ...crud<Listing>("listings"),
+    // Teklif ve soru, ilanın kendi PATCH'i ile DEĞİL bu uçlarla yazılır: ilan satırının yazma
+    // yetkisi satıcıya ait, teklifi veren satıcı değil. Kimlik sunucuda oturumdan damgalanıyor.
+    addOffer: (id: number | string, amount: string | number, currency?: string): Promise<{ listing: Listing; replacedRejected: boolean; updatedInPlace: boolean }> =>
+      request(`/api/listings/${id}/offers`, { method: "POST", body: JSON.stringify({ amount, currency }) }),
+    addMessage: (id: number | string, text: string): Promise<{ listing: Listing }> =>
+      request(`/api/listings/${id}/messages`, { method: "POST", body: JSON.stringify({ text }) }),
+  },
   conversations: {
     ...crud<Conversation>("conversations"),
     // GÜVENLİK: mesaj eklemenin TEK yolu. Gönderen kimliği sunucuda oturumdan damgalanıyor

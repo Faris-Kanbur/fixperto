@@ -143,9 +143,9 @@ function useAppLogic() {
   const callLatest = (name, ...args) => latestFnsRef.current[name]?.(...args);
   const [ownerTab, setOwnerTab] = useState(() => nav0("ownerTab", "search"));
   const [ownerMode, setOwnerMode] = useState(() => nav0("ownerMode", "mechanics"));
-  const [ownerSettings, setOwnerSettings] = useState({ smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true });
+  const [ownerSettings, setOwnerSettings] = useState({ smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyListingUpdates: true });
   // Tamirci tarafının kendi bildirim tercihleri — hepsi varsayılan olarak açık.
-  const [mechSettings, setMechSettings] = useState({ notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyJobApplications: true });
+  const [mechSettings, setMechSettings] = useState({ notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyJobApplications: true, notifyListingUpdates: true });
   // Uygulama-içi bildirim kaydı: tarayıcı bildirim izni verilmemiş/desteklenmiyor olsa bile
   // kullanıcının bildirimi görebilmesi için (zil ikonu + rozet) permission-bağımsız bir yedek.
   const [notifLog, setNotifLog] = useState([]);
@@ -3972,12 +3972,34 @@ function useAppLogic() {
   // Bir ilan favorilenmişse (favoriteIds), o ilanla ilgili herhangi bir güncelleme (fiyat, durum, vb.)
   // olduğunda favorileyen kişiye bildirim gönderiyoruz. Demo'da tekil favoriteIds listesi rol bazlı
   // ayrılmadığı için hem owner hem mechanic tarafına düşürüyoruz — hangi rolde bakılırsa görünsün.
+  /**
+   * İLAN GÜNCELLEMESİ BİLDİRİMİ — kimler haber alır?
+   * -------------------------------------------------------------------------------------------
+   * Eskiden yalnızca ilanı FAVORİLEYENLER haber alıyordu. Oysa o ilana teklif vermiş ya da soru
+   * sormuş biri, favorileyenden daha ilgilidir: parasını konuşmuş, cevap bekliyor. Fiyat düştüğünü
+   * ya da aracın satıldığını en çok onun bilmesi gerekir. Artık üç grup da haber alıyor:
+   * favorileyenler, teklif verenler ve soru soranlar.
+   *
+   * AÇ/KAPA: kendi ayarı var (notifyListingUpdates, iki rolde de). Eskiden "teklif bildirimleri"
+   * ayarına bağlıydı; ikisi farklı şeyler — biri "benim ilanıma teklif geldi", diğeri "izlediğim
+   * ilan değişti". Aynı anahtara bağlamak, birini kapatmak isteyenin diğerini de kaybetmesi demekti.
+   */
+  const isWatchingListing = (listingId) => {
+    if (favoriteIds.includes(listingId)) return true;
+    const listing = listings.find((l) => l.id === listingId);
+    if (!listing) return false;
+    const myId = myBuyerId();
+    const myName = myBuyerName();
+    const mine = (x) => (x?.buyerId != null ? x.buyerId === myId : x?.from === myName);
+    return (listing.offers || []).some((o) => o.status !== "replaced" && mine(o))
+      || (listing.messages || []).some((m) => mine(m));
+  };
   const notifyFavoriteWatchers = (listingId, listingLabel, message, titleOverride = null) => {
-    if (!favoriteIds.includes(listingId)) return;
-    const title = titleOverride || "Favorilediğiniz ilan güncellendi ⭐";
+    if (!isWatchingListing(listingId)) return;
+    const title = titleOverride || "İzlediğiniz ilan güncellendi ⭐";
     const body = `"${listingLabel}" ilanında bir güncelleme var: ${message}`;
-    fireNotification(title, body, ownerSettings.notifyOffers, "owner", { type: "listing", id: listingId });
-    fireNotification(title, body, mechSettings.notifyOffers, "mechanic", { type: "listing", id: listingId });
+    fireNotification(title, body, ownerSettings.notifyListingUpdates, "owner", { type: "listing", id: listingId });
+    fireNotification(title, body, mechSettings.notifyListingUpdates, "mechanic", { type: "listing", id: listingId });
   };
   // ---- KAYITLI ARAMALAR (AutoScout24'teki "Suche speichern" karşılığı) ------------------------
   // Üç arama türünü de destekler: "mechanics" (tamirci ara), "cars" (ikinci el araç), "jobs"
@@ -4324,6 +4346,10 @@ function useAppLogic() {
   };
   const removeListing = (id) => {
     const listing = listings.find(l => l.id === id);
+    // İzleyenler (favorileyen, teklif veren, soru soran) ilanın kaldırıldığını bilmeli: aksi
+    // halde cevap bekleyen biri boşuna bekler. Bildirim SİLMEDEN ÖNCE hesaplanıyor, çünkü
+    // sonrasında ilan listede olmayacak ve izleyici kontrolü yapılamayacak.
+    if (listing) notifyFavoriteWatchers(id, `${listing.brand} ${listing.model}`, "ilan yayından kaldırıldı.", "İzlediğiniz ilan kaldırıldı");
     setListings(l => l.filter(x => x.id !== id));
     persist(api.listings.remove(id), "İlan silinemedi");
     if (listing?._vehicleId) { setVehicles(vs => vs.map(v => v.id === listing._vehicleId ? { ...v, listingId: null } : v)); persist(api.vehicles.update(listing._vehicleId, { listingId: null }), "Araç kaydedilemedi"); }
@@ -4336,6 +4362,9 @@ function useAppLogic() {
   // myBuyerName sadece görünen ad (teklif kartında gösterilecek metin için hâlâ lazım) — kalıcı
   // eşleştirme artık id ile yapılıyor, bkz. Listing/ListingOffer.buyerId notu (types/domain.ts).
   const myBuyerId = () => role === "mechanic" ? MY_MECHANIC_ID : MY_OWNER_ID;
+  // Bu ilandaki EN GÜNCEL teklifim (durumu ne olursa olsun; "replaced" olanlar sayılmaz).
+  // Tekrar teklif kuralları bunun durumuna bakıyor (bkz. canReoffer).
+  const myActiveOfferOn = (listing) => listing ? (listing.offers || []).find(o => o.status !== "replaced" && (o.buyerId != null ? o.buyerId === myBuyerId() : o.from === myBuyerName())) : null;
   const myPendingOfferOn = (listing) => listing ? (listing.offers || []).find(o => (o.buyerId != null ? o.buyerId === myBuyerId() : o.from === myBuyerName()) && o.status === "pending") : null;
   const openOfferForm = () => {
     if (!selectedListing) return;
@@ -4435,34 +4464,75 @@ function useAppLogic() {
   // "Fiyat değerlendirmesi" filtresi (listingFilters.priceRating) matematiksel olarak aynı kaynaktan
   // besleniyor, ikisi birbirinden ayrı düşemiyor.
   const listingPriceComparison = (listing) => listingMarketPriceTier(listing, listings);
-  const submitOffer = () => {
+  /**
+   * TEKLİF VERME.
+   * -------------------------------------------------------------------------------------------
+   * GERÇEK HATA (bu işin denetiminde bulundu): teklif, ilanın kendi PATCH'i ile yazılıyordu. Ama
+   * ilan satırının yazma yetkisi SATICIYA ait — teklifi veren satıcı olmadığı için istek sunucuda
+   * 403 alıyordu: teklif ekranda görünüyor, KAYDEDİLMİYORDU. Artık ayrı bir uç nokta var ve
+   * alıcı kimliği sunucuda oturumdan damgalanıyor (bkz. backend/routes/listingInteractions.js).
+   *
+   * TEKRAR TEKLİF (kullanıcı isteği): satıcı teklifi henüz GÖRMEDİYSE tutar yerinde güncellenir;
+   * REDDETTİYSE yeni teklif verilebilir. Satıcı görmüş ve yanıt bekliyorsa yeni teklif yok —
+   * bu pazarlık değil, üst üste bildirim olurdu. Kuralın kendisi SUNUCUDA; buradaki kontrol
+   * yalnızca kullanıcıya doğru mesajı göstermek için.
+   */
+  const OFFER_BLOCK_MESSAGES = { seen: "offerBlockedSeenToast", accepted: "offerBlockedAcceptedToast" };
+  const submitOffer = async () => {
     if (!offerAmount || !selectedListing) return;
     // Misafir teklif tutarını yazabiliyor; giriş sadece "Teklif Ver" anında isteniyor (bkz.
     // confirmBooking'deki aynı desen) — giriş sonrası teklif aynı tutarla otomatik gönderiliyor.
     if (!ensureAuth(t("authGateReasonOffer"), () => callLatest("submitOffer"))) return;
     track("offer_made", { targetType: "listing", targetId: selectedListing.id });
     const currency = listingCurrency(selectedListing.price);
-    const buyerName = myBuyerName();
-    const buyerId = myBuyerId();
-    const buyerType = role === "mechanic" ? "mechanic" : "owner";
-    const existing = myPendingOfferOn(selectedListing);
-    const newOffers = existing && !existing.seen
-      ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, amount: offerAmount, currency } : o)
-      : [{ id: nestedItemId++, amount: offerAmount, currency, from: buyerName, buyerId, buyerType, status: "pending", seen: false }, ...(existing ? selectedListing.offers.map(o => o.id === existing.id ? { ...o, status: "replaced" } : o) : selectedListing.offers)];
-    setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, offers: newOffers } : x));
-    persist(api.listings.update(selectedListing.id, { offers: newOffers }), "Teklif kaydedilemedi");
-    if (!existing) recordConversion("offer");
-    setOfferAmount("");
-    setShowOfferForm(false);
-    setToast({ type: "info", text: existing && !existing.seen ? "💰 Teklifiniz güncellendi." : "💰 Teklifiniz iletildi." });
-    // Bildirim sadece ilanın satıcısı gerçekten "siz" iseniz (etkileşimli owner/mechanic hesabı)
-    // ateşlenir — demo/örnek satıcılara teklif verilince gerçek bir bildirim gitmemeli, çünkü o
-    // hesabın panelinde bu teklif zaten hiç görünmeyecek.
-    if (selectedListing.sellerId != null ? selectedListing.sellerId !== buyerId : selectedListing.sellerName !== buyerName) {
-      if (isRealSellerOfListing(selectedListing)) {
-        fireNotification("Yeni teklif aldınız! 💰", `${selectedListing.brand} ${selectedListing.model} ilanınıza ${offerAmount}${currency} teklif geldi.`, selectedListing.sellerType === "mechanic" ? mechSettings.notifyOffers : ownerSettings.notifyOffers, selectedListing.sellerType === "mechanic" ? "mechanic" : "owner", { type: "listing", id: selectedListing.id });
+    const listingId = selectedListing.id;
+    const wasFirstOffer = !myActiveOfferOn(selectedListing);
+    try {
+      const res = await api.listings.addOffer(listingId, offerAmount, currency);
+      // Sunucunun döndürdüğü ilan, bu sırada gelen başka teklifleri de içerir — yerel kopyayı
+      // onunla tazeliyoruz (eskiden dizi topluca ezildiği için eşzamanlı teklifler kayboluyordu).
+      setListings(l => l.map(x => x.id === listingId ? { ...x, ...res.listing } : x));
+      if (wasFirstOffer) recordConversion("offer");
+      setOfferAmount("");
+      setShowOfferForm(false);
+      setToast({ type: "info", text: res.updatedInPlace ? t("offerUpdatedToast") : res.replacedRejected ? t("offerResentToast") : t("offerSentToast") });
+      if (selectedListing.sellerId != null ? selectedListing.sellerId !== myBuyerId() : selectedListing.sellerName !== myBuyerName()) {
+        if (isRealSellerOfListing(selectedListing)) {
+          fireNotification("Yeni teklif aldınız! 💰", `${selectedListing.brand} ${selectedListing.model} ilanınıza ${offerAmount}${currency} teklif geldi.`, selectedListing.sellerType === "mechanic" ? mechSettings.notifyOffers : ownerSettings.notifyOffers, selectedListing.sellerType === "mechanic" ? "mechanic" : "owner", { type: "listing", id: listingId });
+        }
       }
+    } catch (err) {
+      const key = OFFER_BLOCK_MESSAGES[err?.details?.reason];
+      setToast({ type: "info", text: `⚠️ ${key ? t(key) : (err?.message || "Teklif kaydedilemedi.")}` });
     }
+  };
+  /**
+   * TEKRAR TEKLİF VERME — "Verdiğim Teklifler" listesinden doğrudan.
+   * Kullanıcı teklifini görmek için ilanı bulup açmak zorunda kalmasın diye liste satırının
+   * kendisinde bir düğme var; ilanı açıp teklif formunu doldurulmuş şekilde getiriyor.
+   */
+  /**
+   * TEKLİF DÜĞMESİNİN DURUMU — tek doğruluk kaynağı.
+   * -------------------------------------------------------------------------------------------
+   * Üç ayrı yerde teklif düğmesi var (hızlı görüntüleme modali, tam sayfa ilan, yapışkan alt
+   * çubuk). Etiketi ve tıklanabilirliği her birinde ayrı hesaplamak, birinde eski kuralın kalması
+   * demekti — nitekim "yeni teklif ver" yazan düğme, sunucunun reddedeceği bir isteği gönderiyordu.
+   * Artık durum burada hesaplanıyor ve kural sunucudakiyle birebir aynı.
+   */
+  const offerButtonState = (listing) => {
+    const active = myActiveOfferOn(listing);
+    if (!active) return { labelKey: "makeOffer", disabled: false, hintKey: null };
+    if (active.status === "accepted") return { labelKey: "offerAcceptedStatus", disabled: true, hintKey: "offerBlockedAcceptedToast" };
+    if (active.status === "rejected") return { labelKey: "reofferBtn", disabled: false, hintKey: "reofferRejectedHint" };
+    if (active.seen) return { labelKey: "offerAwaitingReplyBtn", disabled: true, hintKey: "offerBlockedSeenToast" };
+    return { labelKey: "reofferUpdateBtn", disabled: false, hintKey: "reofferUnseenHint" };
+  };
+  const canReoffer = (offer) => !!offer && (offer.status === "rejected" || (offer.status === "pending" && !offer.seen));
+  const startReoffer = (listing, offer) => {
+    if (!listing) return;
+    setSelectedListingId(listing.id);
+    setOfferAmount(offer && offer.status === "pending" ? String(offer.amount || "") : "");
+    setShowOfferForm(true);
   };
   const submitListingMsg = () => {
     if (!listingMsg || !selectedListing) return;
@@ -4473,9 +4543,14 @@ function useAppLogic() {
     const senderLang = role === "owner" ? ownerLang : (myProfile?.lang || "tr");
     const senderId = myBuyerId();
     const senderType = role === "mechanic" ? "mechanic" : "owner";
+    // Teklifle AYNI gerekçe: ilan satırının yazma yetkisi satıcıya ait, soruyu soran satıcı değil.
+    // Kimlik ve dil sunucuda damgalanıyor (bkz. backend/routes/listingInteractions.js).
+    const listingId = selectedListing.id;
     const messages = [{ id: nestedItemId++, text: listingMsg, from: senderName, buyerId: senderId, buyerType: senderType, lang: senderLang }, ...selectedListing.messages];
-    setListings(l => l.map(x => x.id === selectedListing.id ? { ...x, messages } : x));
-    persist(api.listings.update(selectedListing.id, { messages }), "Mesaj kaydedilemedi");
+    setListings(l => l.map(x => x.id === listingId ? { ...x, messages } : x));
+    api.listings.addMessage(listingId, listingMsg)
+      .then((res) => setListings(l => l.map(x => x.id === listingId ? { ...x, ...res.listing } : x)))
+      .catch((err) => setToast({ type: "info", text: `⚠️ Mesaj kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` }));
     setListingMsg("");
     setShowListingMsgForm(false);
     setToast({ type: "info", text: "💬 Mesaj gönderildi." });
@@ -4484,6 +4559,34 @@ function useAppLogic() {
         fireNotification("İlanınıza yeni soru geldi 💬", `"${selectedListing.brand} ${selectedListing.model}" ilanınıza bir soru soruldu.`, selectedListing.sellerType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, selectedListing.sellerType === "mechanic" ? "mechanic" : "owner", { type: "listing", id: selectedListing.id });
       }
     }
+  };
+  /**
+   * SATICININ SORUYA CEVABI — eksik olan yarı.
+   * -------------------------------------------------------------------------------------------
+   * Alıcı ilana soru sorabiliyordu ama satıcının cevap verecek hiçbir yeri yoktu: sorular ilan
+   * yönetim ekranında okunuyor, orada kalıyordu. Soruyu soran kişi cevabı hiç görmüyordu.
+   * Cevap, sorularla AYNI uç noktadan gidiyor; "bu bir satıcı cevabı mı" bilgisini sunucu
+   * kendisi koyuyor (bkz. listingInteractions.js isSellerReply) — istemciye bırakılsa bir alıcı
+   * kendi mesajını satıcı cevabı gibi gösterebilirdi.
+   */
+  const [listingReply, setListingReply] = useState("");
+  const submitListingReply = (listing) => {
+    const text = listingReply.trim();
+    if (!text || !listing) return;
+    api.listings.addMessage(listing.id, text)
+      .then((res) => {
+        setListings(l => l.map(x => x.id === listing.id ? { ...x, ...res.listing } : x));
+        setListingReply("");
+        setToast({ type: "info", text: t("listingReplySentToast") });
+        // Soruyu soran taraf: cevabı beklediği için haber verilmeli.
+        const lastQuestion = (listing.messages || []).find((m) => !m.isSellerReply);
+        if (lastQuestion) {
+          const askerRole = lastQuestion.buyerType === "mechanic" ? "mechanic" : "owner";
+          fireNotification("İlan sorunuza cevap geldi 💬", `"${listing.brand} ${listing.model}" ilanındaki sorunuz yanıtlandı.`,
+            askerRole === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, askerRole, { type: "listing", id: listing.id });
+        }
+      })
+      .catch((err) => setToast({ type: "info", text: `⚠️ ${err?.message || "Cevap kaydedilemedi."}` }));
   };
   const respondOffer = (listingIdx, offerId, status) => {
     const listing = listings.find(l => l.id === listingIdx);
@@ -5107,6 +5210,8 @@ function useAppLogic() {
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, goToMyPanel, goToMySettings,
+    canReoffer, startReoffer, myActiveOfferOn, offerButtonState,
+    listingReply, setListingReply, submitListingReply,
     vinLookup, lookupVin, clearVinLookup, myHistoryRecords, refreshMyHistory, setVehicleHistoryShared,
     completeVinInput, setCompleteVinInput, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
     roleBtn, goToNotifTarget,

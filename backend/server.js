@@ -8,6 +8,7 @@ import shareEventsRouter from "./routes/shareEvents.js";
 import profileViewsRouter from "./routes/profileViews.js";
 import translateRouter from "./routes/translate.js";
 import vehicleHistoryRouter from "./routes/vehicleHistory.js";
+import listingInteractionsRouter from "./routes/listingInteractions.js";
 import analyticsRouter from "./routes/analytics.js";
 import blogRouter from "./routes/blog.js";
 import careersRouter from "./routes/careers.js";
@@ -96,6 +97,10 @@ app.use("/api/appointments", makeCrudRouter("appointments", {
 // owner #7 ile mechanic #7 farklı kişiler, ama ikisi de aynı `sellerId` sütununa yazıyor. Rolü
 // ayıran `sellerType` sütunu da kontrole dâhil edilmezse bir araç sahibi, aynı id'ye sahip bir
 // tamircinin ilanını düzenleyip silebiliyordu.
+// Alıcı tarafının yazma yolu (teklif verme, soru sorma) AYRI bir router'da ve CRUD'dan ÖNCE
+// bağlanıyor: ilanların genel yazma yetkisi satıcıya ait olduğu için bu istekler eskiden 403
+// alıyor ve teklif sunucuya hiç kaydedilmiyordu (bkz. routes/listingInteractions.js).
+app.use("/api/listings", listingInteractionsRouter);
 app.use("/api/listings", makeCrudRouter("listings", {
   shareCountColumn: "shareCount",
   authScope: {

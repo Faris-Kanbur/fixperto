@@ -28,6 +28,7 @@ yalnızca bozulanın ayrıntısını basar. Amaç: düzenli koşabilmek ama çı
 | `hizmet fiyatı` | Sabit/Değişken seçimi (Değişken her zaman serbest), fiyatsız hizmetin randevuda görünmesi, "?" bilgi baloncukları |
 | `çeviri` | Toplu çeviri isteği, kalıcı metin önbelleği, tekrar eden metnin tek kez çevrilmesi, başarısız çevirinin saklanmaması |
 | `araç geçmişi` | Şasi (VIN) doğrulaması, kaydın uydurulamaması, paylaşım izni, kişisel veri sızdırmama, ilandaki geçmişin satıcıya bağlı olması |
+| `ilan teklifleri` | Teklifin gerçekten kaydedilmesi, tekrar teklif kuralı (görülmedi/reddedildi), izleyici bildirimleri ve aç/kapa, satıcının cevap hakkı |
 
 Ayrıca `tsc --noEmit` ve her backend dosyası için `node --check` çalışır.
 
