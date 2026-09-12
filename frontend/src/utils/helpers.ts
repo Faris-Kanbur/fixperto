@@ -329,20 +329,87 @@ export function isValidEmail(str) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(str.trim());
 }
 
-export function validatePhone(raw) {
-  const v = (raw || "").trim().replace(/[\s()-]/g, "");
-  if (!v) return { valid: false, message: "Telefon numarası gerekli." };
-  if (v.startsWith("+90")) {
-    return /^\+90\d{10}$/.test(v)
-      ? { valid: true }
-      : { valid: false, message: "Geçersiz telefon numarası. +90'dan sonra 10 haneli numara girin (örn. +90 532 123 45 67)." };
+/**
+ * TELEFON NUMARASI — normalleştirme + GERÇEK ön ek denetimi.
+ * ---------------------------------------------------------------------------------------------
+ * İKİ AYRI SORUN VARDI (kullanıcı bildirdi):
+ *
+ * 1) "+" ZORUNLUYDU. Kimse telefonunu "+90 532…" diye yazmıyor; herkes "0532…" ya da "532…"
+ *    yazıyor ve form onu reddediyordu. Ülke kodunu kullanıcıya yazdırmak yerine BİZ ekliyoruz.
+ *
+ * 2) DENETİM YÜZEYSELDİ. Kural sadece "+90'dan sonra 10 hane" idi; "+90 876 000 00 00" geçiyordu.
+ *    Türkiye'de 8 ile başlayan bir abone numarası YOK. Yani sistem, telefon numarası olmayan bir
+ *    şeyi telefon numarası diye kaydediyordu — sonra o kişiye ulaşmak isteyen tamirci arıyor,
+ *    numara çalışmıyor. Artık numaranın gerçekten o ülkenin numara planına uyup uymadığına
+ *    bakılıyor (Türkiye ve Almanya için operatör/alan kodu aralıkları).
+ *
+ * DÜRÜST SINIR: bu bir "numara var mı" doğrulaması DEĞİL. Numara planına uyan ama kimseye ait
+ * olmayan bir numara yine kabul edilir; bunu ancak SMS ile doğrulama çözer. Amaç, apaçık
+ * imkânsız numaraları (876…, 000…, 5 haneli girdiler) kaynağında elemek.
+ */
+
+// Türkiye cep operatörleri: 50x (501-509), 53x, 54x, 55x ve 56x'in kullanımdaki ilk blokları.
+// 500 ayrılmamış; 8 ve 9 ile başlayan numaralar abone numarası değil (özel servis/ücretli hat).
+const TR_MOBILE = /^5(0[1-9]|3\d|4\d|5\d|6[0-6])\d{7}$/;
+// Sabit hat alan kodları 2, 3 veya 4 ile başlar (212 İstanbul, 312 Ankara, 442 Erzurum…).
+const TR_LANDLINE = /^[234]\d{9}$/;
+
+// Almanya: cep hatları 15x / 16x / 17x. 11x, 18x, 19x abone numarası değil (servis/kısa numara).
+const DE_MOBILE = /^1(5\d{9}|6[02389]\d{7,8}|7\d{8,9})$/;
+// Sabit hat alan kodları 2-9 ile başlar; numara uzunluğu ülke genelinde 6-12 hane arasında değişir.
+const DE_LANDLINE = /^[2-9]\d{5,11}$/;
+
+/**
+ * Girilen metni +E.164 biçimine çevirir. Ülke kodu yoksa `defaultCountry` ("tr" | "de") kullanılır.
+ * Dönüş: { ok, e164, country } ya da { ok: false, reason }.
+ */
+export function normalizePhone(raw, defaultCountry = "tr") {
+  // Boşluk, parantez, tire, nokta ve baştaki "00" gibi yazım alışkanlıklarını temizliyoruz —
+  // kullanıcıyı biçim konusunda eğitmek yerine biçimi biz düzeltiyoruz.
+  let v = String(raw ?? "").trim().replace(/[\s()\-.]/g, "");
+  if (!v) return { ok: false, reason: "empty" };
+  if (v.startsWith("00")) v = `+${v.slice(2)}`;
+
+  let country = null;
+  let national = null;
+  if (v.startsWith("+90")) { country = "tr"; national = v.slice(3); }
+  else if (v.startsWith("+49")) { country = "de"; national = v.slice(3); }
+  else if (v.startsWith("+")) return { ok: false, reason: "unsupportedCountry" };
+  else {
+    // Ülke kodu yok: "0532…" / "532…" / "0151…". Baştaki 0 ulusal önektir, atılır.
+    national = v.startsWith("0") ? v.slice(1) : v;
+    // 10 hane ve 5 ile başlıyorsa Türkiye cep numarasıdır — dil ayarından bağımsız olarak bunu
+    // bilebiliyoruz. Aksi halde kullanıcının bulunduğu ülkeyi varsayıyoruz.
+    country = (/^5\d{9}$/.test(national)) ? "tr" : (defaultCountry === "de" ? "de" : "tr");
   }
-  if (v.startsWith("+49")) {
-    return /^\+49\d{6,11}$/.test(v)
-      ? { valid: true }
-      : { valid: false, message: "Geçersiz telefon numarası. +49'dan sonra Almanya numarası girin (örn. +49 151 2345678)." };
-  }
-  return { valid: false, message: "Geçersiz telefon numarası. Türkiye için +90, Almanya için +49 ülke koduyla eksiksiz girin." };
+  if (!/^\d+$/.test(national)) return { ok: false, reason: "chars" };
+  // Ülke kodundan sonra yazılmış ulusal 0 (ör. "+90 0532…") da atılır.
+  if (national.startsWith("0")) national = national.replace(/^0+/, "");
+
+  const valid = country === "tr"
+    ? (TR_MOBILE.test(national) || TR_LANDLINE.test(national))
+    : (DE_MOBILE.test(national) || DE_LANDLINE.test(national));
+  if (!valid) return { ok: false, reason: country === "tr" ? "notTr" : "notDe", country };
+
+  return { ok: true, country, e164: `${country === "tr" ? "+90" : "+49"}${national}` };
+}
+
+/**
+ * Form doğrulaması. Geçerliyse `normalized` alanında +E.164 numara döner — çağıran taraf BUNU
+ * kaydeder, kullanıcının yazdığı ham metni değil. Aynı numaranın iki farklı biçimde kaydedilmesi
+ * (0532… / +90532…) sonradan "aynı kişi mi" sorusunu cevaplanamaz hale getirirdi.
+ */
+export function validatePhone(raw, defaultCountry = "tr") {
+  const res = normalizePhone(raw, defaultCountry);
+  if (res.ok) return { valid: true, normalized: res.e164, country: res.country };
+  const messages = {
+    empty: "Telefon numarası gerekli.",
+    chars: "Telefon numarası yalnızca rakamlardan oluşmalı.",
+    unsupportedCountry: "Şu an yalnızca Türkiye (+90) ve Almanya (+49) numaraları destekleniyor.",
+    notTr: "Geçerli bir Türkiye numarası girin. Cep: 5xx xxx xx xx, sabit hat: 2xx/3xx/4xx ile başlar.",
+    notDe: "Geçerli bir Almanya numarası girin. Cep: 15x/16x/17x, sabit hat alan koduyla başlar.",
+  };
+  return { valid: false, message: messages[res.reason] || messages.notTr };
 }
 
 const REMINDER_LABELS_LOCAL = { inspection: "Araç Muayenesi", maintenance: "Periyodik Bakım", "tire-winter": "Kışlık Lastik", "tire-summer": "Yazlık Lastik", insurance: "Sigorta Yenileme", battery: "Akü ve Cam Suyu Kontrolü" };

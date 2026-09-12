@@ -259,6 +259,9 @@ Aynı iş markaya göre farklı tutabilir (kapı tamiri BMW'de başka, Toyota'da
 ## Sabit ve değişken fiyat
 Sabit fiyatlı hizmetler önceden bilinen tutarlıdır; değişkenler ekspertiz sonrası netleşir. Sabit işaretlenip fiyatı boş bırakılan bir hizmet kaydedilemez.
 
+## Düzeltilen yanlış açıklama
+Hizmet ekranındaki yardım metni "sabit fiyatlı hizmetler araç sahiplerine ÖNCEDEN ÖDEME seçeneğiyle gösterilir" diyordu. Randevudaki ödeme adımı kaldırıldığı için (bkz. 3.4) bu cümle olmayan bir özelliği anlatıyordu — tamirci, müşterinin parayı peşin yatırdığını sanabilirdi. Metin gerçeğe çevrildi: sabit fiyat, araç sahibine randevu alırken KESİN tutar olarak gösterilir, tahsilat serviste yapılır; fiyat değişkense işaretlenmez ve "başlangıç fiyatı" olarak görünür.
+
 ## Başlangıç fiyatı türetilir
 Tamircinin kartında görünen "başlangıç fiyatı", hizmet listesindeki EN DÜŞÜK fiyattan hesaplanır. Eskiden elle girilen "saatlik ücret" alanı vardı; uydurma bir sayıydı, hiçbir yerde doğrulanmıyordu ve müşteriye yanlış beklenti veriyordu.`,
       },
@@ -383,6 +386,32 @@ Yakıt tüketimi 1–40 L/100km, CO₂ 0–600 g/km, batarya 1–300 kWh, menzil
 ## Hizmet
 Hizmet fiyatı 0 – 1.000.000 (0 = ücretsiz kontrol).
 Garanti 0 – 3650 gün.`,
+      },
+      {
+        id: "telefon",
+        title: "6.3 Telefon numarası",
+        body: `Telefon, sitedeki en kritik iletişim alanı: randevu değişince tamirci müşteriyi ARAR. Yanlış kayıtlı bir numara, randevunun sessizce kaybolması demektir.
+
+## Yaşanan iki hata
+1) "+" işareti ZORUNLUYDU. Kimse telefonunu "+90 532…" diye yazmaz; "0532…" yazar ve form reddediyordu. Ülke kodunu kullanıcıya yazdırmak yerine BİZ ekliyoruz.
+2) Denetim sadece "ülke kodundan sonra 10 hane" diyordu. "+90 876 000 00 00" kabul ediliyordu — oysa Türkiye'de 8 ile başlayan abone numarası YOKTUR. Sistem, telefon numarası olmayan bir şeyi telefon numarası diye kaydediyordu.
+
+## Kural
+Girdi önce temizlenir (boşluk, parantez, tire, nokta; baştaki "00" → "+"), sonra ulusal numaraya indirgenir (baştaki 0 atılır) ve GERÇEK numara planına göre denetlenir:
+Türkiye — cep: 50(1–9), 53x, 54x, 55x, 56(0–6) + 7 hane. Sabit hat: alan kodu 2/3/4 ile başlar, toplam 10 hane. 8 ve 9 ile başlayanlar abone numarası değildir (özel servis/ücretli hat), reddedilir.
+Almanya — cep: 15x / 16(0,2,3,8,9) / 17x. Sabit hat: alan kodu 2–9 ile başlar, 6–12 hane. 0180/0137/011x gibi servis numaraları reddedilir.
+
+## Ülke tahmini kullanıcıya sorulmaz
+Varsayılan ülke saat diliminden tahmin edilir (bkz. detectCountryCode) — Almanya'daki kullanıcı "0151…" yazdığında Alman numarası olduğu anlaşılır. 5 ile başlayan 10 haneli numara ise tahminden BAĞIMSIZ olarak Türkiye cep numarası sayılır.
+
+## Kaydedilen biçim: +E.164
+Geçerli numara her zaman "+905321234567" biçiminde kaydedilir. Aynı numaranın veritabanında iki farklı yazımla durması, sonradan "bu iki kayıt aynı kişi mi" sorusunu cevaplanamaz hale getirirdi.
+
+## Nerede çalışır
+Kayıt formu, araç sahibi profili, tamirci profili, iş başvurusu formu ve yönetici panelindeki kullanıcı düzenleme — hepsi aynı merkezden (checkPhone / normalizePhoneField) geçer. Alan odağını kaybettiği anda numara düzeltilir ya da uyarı gösterilir; kaydet düğmesine kadar beklemek hatayı fark etmeyi geciktiriyordu. "telefon" test takımı, telefon girilen HER alanın bu merkezden geçtiğini denetler — biri unutulursa test düşer.
+
+## BİLİNEN SINIR
+Bu, numaranın GERÇEKTEN VAR OLDUĞUNU doğrulamaz. Numara planına uyan ama kimseye ait olmayan bir numara kabul edilir; bunu ancak SMS doğrulaması çözer. Amaç, apaçık imkânsız numaraları kaynağında elemek.`,
       },
     ],
   },
@@ -669,10 +698,10 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 15 test takımı.
+tsc tip denetimi + her backend dosyasının sözdizimi + 16 test takımı.
 
 ## Takımlar
-arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer.
+arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon.
 
 ## Belgeyi canlı tutan takım
 "el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.

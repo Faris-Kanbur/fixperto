@@ -24,6 +24,7 @@ yalnızca bozulanın ayrıntısını basar. Amaç: düzenli koşabilmek ama çı
 | `el kitabı` | Belge yapısı, zorunlu konular, bilinen sınırların yazılmış olması ve KAPSAM: her bileşenin el kitabında geçmesi |
 | `alt bilgi bağlantıları` | Footer hedefleri anlamlı mı, eylem bağlantıları eylemi yapıyor mu, kaydırma sıfırlanıyor mu |
 | `kariyer` | Kariyer ilanlarının yetkisi, taslak/yayın ayrımı, tamirci ilanlarından ayrılığı |
+| `telefon` | Numara normalleştirme (+ yoksa biz ekleriz) ve gerçek TR/DE numara planı denetimi; her telefon alanının aynı merkezden geçmesi |
 
 Ayrıca `tsc --noEmit` ve her backend dosyası için `node --check` çalışır.
 

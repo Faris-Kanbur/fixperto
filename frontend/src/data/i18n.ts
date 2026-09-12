@@ -439,7 +439,11 @@ export const T = {
   paymentMethodsTitle: { tr: "Ödeme Yöntemleri", en: "Payment Methods", de: "Zahlungsmethoden" },
   servicesTitle: { tr: "Hizmetler", en: "Services", de: "Leistungen" },
   genericAddBtn: { tr: "Ekle", en: "Add", de: "Hinzufügen" },
-  servicesFixedPriceHint: { tr: '"Sabit Fiyat" işaretlediğiniz hizmetler, araç sahiplerine randevu alırken önceden ödeme seçeneğiyle gösterilir.', en: 'Services you mark as "Fixed Price" are shown to vehicle owners with a pre-payment option when booking.', de: 'Als "Festpreis" markierte Leistungen werden Fahrzeughaltern bei der Buchung mit einer Vorauszahlungsoption angezeigt.' },
+  // DÜZELTİLDİ: bu metin eskiden "önceden ödeme seçeneğiyle gösterilir" diyordu — oysa randevu
+  // akışındaki ödeme adımı kaldırıldı (bkz. confirmBooking: paymentMethod hep "onsite"). Tamirciye
+  // olmayan bir özelliği anlatıyordu. Yeni metin gerçekte olanı anlatıyor: sabit fiyat, araç
+  // sahibine randevu öncesi kesin tutar olarak gösterilir; tahsilat serviste yapılır.
+  servicesFixedPriceHint: { tr: '"Sabit Fiyat" işaretlediğiniz hizmetlerin tutarı, araç sahibine randevu alırken kesin fiyat olarak gösterilir. Ödeme serviste alınır. Fiyatı değişkense işaretlemeyin — o zaman "başlangıç fiyatı" olarak görünür.', en: 'The price of services you mark as "Fixed Price" is shown to vehicle owners as a firm price while booking. Payment is collected at your shop. Leave it unchecked if the price varies — it then appears as a "starting from" price.', de: 'Der Preis von Leistungen, die Sie als "Festpreis" markieren, wird Fahrzeughaltern bei der Buchung als verbindlicher Preis angezeigt. Die Zahlung erfolgt in der Werkstatt. Bei variablen Preisen nicht markieren — dann erscheint er als "ab"-Preis.' },
   servicePlaceholder: { tr: "Hizmet", en: "Service", de: "Leistung" },
   priceRequiredShort: { tr: "Fiyat *", en: "Price *", de: "Preis *" },
   priceOptionalShort: { tr: "Fiyat (opsiyonel)", en: "Price (optional)", de: "Preis (optional)" },

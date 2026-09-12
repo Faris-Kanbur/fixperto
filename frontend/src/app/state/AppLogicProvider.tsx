@@ -2759,18 +2759,41 @@ function useAppLogic() {
   // MY_OWNER_ID/MY_MECHANIC_ID'ye yazılır). Bkz. backend/routes/auth.js.
   // submitRegister ile submitLogin aynı OTP ekranında birleşiyor; hangisinden gelindiğini
   // ayırt edemezsek "kayıt" ile "giriş" olayları karışır ve büyüme metriği yanlış çıkar.
+  /**
+   * TELEFON ALANLARI — tek merkez.
+   * -------------------------------------------------------------------------------------------
+   * Kullanıcı "+90" yazmak zorunda değil: "0532…", "532…", "0090…" hepsi kabul ediliyor ve
+   * KAYDEDİLİRKEN +E.164 biçimine (ör. +905321234567) çevriliyor. Aynı numaranın veritabanında
+   * iki farklı biçimde durması, sonradan "bu iki kayıt aynı kişi mi" sorusunu cevapsız bırakırdı.
+   *
+   * Varsayılan ülke, kullanıcıya sorulmadan saat diliminden tahmin ediliyor (bkz. detectCountryCode):
+   * Almanya'daki bir kullanıcı "0151…" yazdığında bunun Alman numarası olduğunu anlıyoruz.
+   * Türkiye cep numaraları (5 ile başlayan 10 hane) ülke tahmininden bağımsız olarak tanınıyor.
+   */
+  const phoneCountry = detectedCountry === "DE" ? "de" : "tr";
+  const checkPhone = (raw) => validatePhone(raw, phoneCountry);
+  // Alan odağı kaybettiğinde çağrılır: geçerliyse normalleştirilmiş hali yazılır, geçersizse
+  // kullanıcı hemen uyarılır — kaydet düğmesine basana kadar beklemek, yanlışı fark etmeyi geciktirir.
+  const normalizePhoneField = (raw, apply) => {
+    const v = String(raw ?? "").trim();
+    if (!v) return;
+    const res = checkPhone(v);
+    if (res.valid) { if (res.normalized !== v) apply(res.normalized); }
+    else setToast({ type: "info", text: `⚠️ ${res.message}` });
+  };
+
   const authFlowWasSignupRef = useRef(false);
   const submitRegister = async () => {
     authFlowWasSignupRef.current = true;
     if (!isValidEmail(form.email)) { setAuthError("Geçersiz e-posta adresi. Lütfen geçerli bir e-posta girin (örn. ad@ornek.com)."); return; }
-    const phoneCheck = validatePhone(form.phone);
+    const phoneCheck = checkPhone(form.phone);
     if (!phoneCheck.valid) { setAuthError(phoneCheck.message); return; }
     if (!form.name.trim()) { setAuthError("Ad soyad zorunludur."); return; }
     setAuthError(""); setAuthNotice(""); setAuthLoading(true);
     try {
       // role artık misafir gezinme yüzünden "owner" ile başlıyor (eskiden null'dı) — bu yüzden
       // tipi daraltmak gerekiyor; kayıt/giriş yalnızca bu iki rol için geçerli.
-      const result = await api.auth.register(role as "owner" | "mechanic", form.email, form.name, { phone: form.phone });
+      const result = await api.auth.register(role as "owner" | "mechanic", form.email, form.name, { phone: phoneCheck.normalized });
       setAuthLoading(false);
       setPendingOnboarding(true);
       // GELİŞTİRME KOLAYLIĞI: backend SMTP ayarlanmamışsa (yerelde çalışırken) üretilen şifreyi
@@ -4295,7 +4318,7 @@ function useAppLogic() {
     setJobApplyCv(null);
     setShowJobApplyForm(true);
   };
-  const jobApplyPhoneCheck = validatePhone(jobApplyInfo.phone);
+  const jobApplyPhoneCheck = checkPhone(jobApplyInfo.phone);
   const jobApplyEmailValid = isValidEmail(jobApplyInfo.email);
   const jobApplyInfoValid = jobApplyInfo.name.trim() && jobApplyPhoneCheck.valid && jobApplyEmailValid && jobApplyInfo.address.trim();
   const jobApplyReady = jobApplyInfoValid && jobApplyCv;
@@ -4305,7 +4328,7 @@ function useAppLogic() {
     // Misafir başvuru formunu (ad, telefon, e-posta, adres, mesaj, CV) tamamen doldurabiliyor;
     // giriş yalnızca "Başvur" anında isteniyor ve giriş sonrası başvuru otomatik gönderiliyor.
     if (!ensureAuth(t("authGateReasonJobApply"), () => callLatest("submitJobApplication"))) return;
-    const applicant = { id: nestedItemId++, name: jobApplyInfo.name.trim(), phone: jobApplyInfo.phone.trim(), email: jobApplyInfo.email.trim(), address: jobApplyInfo.address.trim(), message: jobApplyMsg, lang: ownerLang, date: "az önce", status: "pending", cvName: jobApplyCv?.name || null, cvUrl: jobApplyCv?.url || null };
+    const applicant = { id: nestedItemId++, name: jobApplyInfo.name.trim(), phone: jobApplyPhoneCheck.normalized || jobApplyInfo.phone.trim(), email: jobApplyInfo.email.trim(), address: jobApplyInfo.address.trim(), message: jobApplyMsg, lang: ownerLang, date: "az önce", status: "pending", cvName: jobApplyCv?.name || null, cvUrl: jobApplyCv?.url || null };
     const applicants = [applicant, ...selectedJob.applicants];
     setJobListings(js => js.map(j => j.id === selectedJob.id ? { ...j, applicants } : j));
     persist(api.jobs.update(selectedJob.id, { applicants }), "Başvuru kaydedilemedi");
@@ -4835,7 +4858,7 @@ function useAppLogic() {
     isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, toggleAddVehicle, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
-    openJobApplyForm, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
+    openJobApplyForm, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
     roleBtn, goToNotifTarget,
     jobEmploymentColor,
   };

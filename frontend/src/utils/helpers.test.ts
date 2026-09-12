@@ -51,12 +51,19 @@ test("isValidEmail", () => {
 
 test("validatePhone accepts valid TR numbers, rejects malformed ones", () => {
   assert.equal(validatePhone("+905321234567").valid, true);
+  // "+" olmadan da kabul: ülke kodunu biz ekliyoruz.
+  assert.equal(validatePhone("0532 123 45 67").normalized, "+905321234567");
   assert.equal(validatePhone("+90532123").valid, false);
+  // Türkiye'de 8 ile başlayan abone numarası yok.
+  assert.equal(validatePhone("+908760000000").valid, false);
   assert.equal(validatePhone("").valid, false);
 });
 
 test("validatePhone accepts valid DE numbers", () => {
-  assert.equal(validatePhone("+491512345678").valid, true);
+  assert.equal(validatePhone("+4915123456789").valid, true);
+  assert.equal(validatePhone("0151 23456789", "de").normalized, "+4915123456789");
+  // 0180 servis numarası, abone numarası değil.
+  assert.equal(validatePhone("+491801234567", "de").valid, false);
 });
 
 test("parsePriceNumber / listingCurrency", () => {
