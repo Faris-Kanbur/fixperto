@@ -26,6 +26,7 @@ yalnızca bozulanın ayrıntısını basar. Amaç: düzenli koşabilmek ama çı
 | `kariyer` | Kariyer ilanlarının yetkisi, taslak/yayın ayrımı, tamirci ilanlarından ayrılığı |
 | `telefon` | Numara normalleştirme (+ yoksa biz ekleriz) ve gerçek TR/DE numara planı denetimi; her telefon alanının aynı merkezden geçmesi |
 | `hizmet fiyatı` | Sabit/Değişken seçimi (Değişken her zaman serbest), fiyatsız hizmetin randevuda görünmesi, "?" bilgi baloncukları |
+| `çeviri` | Toplu çeviri isteği, kalıcı metin önbelleği, tekrar eden metnin tek kez çevrilmesi, başarısız çevirinin saklanmaması |
 
 Ayrıca `tsc --noEmit` ve her backend dosyası için `node --check` çalışır.
 

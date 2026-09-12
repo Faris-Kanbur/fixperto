@@ -100,6 +100,17 @@ conversationsRouter.post("/", (req, res) => {
   if ("messages" in req.body) {
     const err = validateMessages(req.body.messages);
     if (err) return res.status(400).json({ error: err });
+    // Sohbet AÇILIRKEN de gönderen damgalanıyor: aksi halde ilk mesajı karşı tarafın ağzından
+    // yazmak, POST /:id/messages'taki kontrolü baştan atlatmanın kolay yolu olurdu.
+    if (actor.role === "owner" || actor.role === "mechanic") {
+      const langRow = actor.role === "owner"
+        ? db.prepare(`SELECT lang FROM owners WHERE id = ?`).get(actor.id)
+        : db.prepare(`SELECT lang FROM mechanics WHERE id = ?`).get(actor.id);
+      const stampedInitial = (req.body.messages || []).map((m, i) => ({
+        ...m, id: i + 1, sender: actor.role, lang: langRow?.lang || "tr",
+      }));
+      body.messages = JSON.stringify(stampedInitial);
+    }
   }
   const cols = Object.keys(body);
   const stmt = db.prepare(`INSERT INTO conversations (${cols.join(",")}) VALUES (${cols.map((c) => `@${c}`).join(",")})`);
@@ -115,7 +126,20 @@ conversationsRouter.patch("/:id", (req, res) => {
   if (!convoVisibleTo(existing, actor)) {
     return res.status(actor ? 403 : 401).json(actor ? { error: "Bu sohbeti değiştirme yetkiniz yok." } : { error: "Bu işlem için giriş yapmanız gerekiyor." });
   }
+  // GÜVENLİK AÇIĞI (bu denetimde bulundu — MESAJ SAHTECİLİĞİ ve KAYIP GÜNCELLEME):
+  // PATCH, `messages` dizisinin TAMAMINI istemciden alıyordu. İki somut sonucu vardı:
+  //   1) Sohbetin bir tarafı, KARŞI TARAFIN AĞZINDAN mesaj yazabiliyordu — dizideki her elemanın
+  //      `sender` alanı serbestti. Bir araç sahibi "tamirci: tamiri ücretsiz yapacağım" diye bir
+  //      satır ekleyip ekran görüntüsünü destek talebine delil olarak koyabilirdi.
+  //   2) Dizi topluca ezildiği için, karşı taraf sen yazarken bir mesaj göndermişse onun mesajı
+  //      SESSİZCE SİLİNİYORDU (son yazan kazanır).
+  // Mesaj ekleme artık ayrı bir uç noktada (POST /:id/messages): gönderen kimliği oturumdan
+  // damgalanıyor ve ekleme sunucuda mevcut dizinin SONUNA yapılıyor. Bu PATCH ise artık yalnızca
+  // admin'in mesaj dizisine dokunmasına izin veriyor (moderasyon/silme).
   if ("messages" in req.body) {
+    if (actor.role !== "admin") {
+      return res.status(403).json({ error: "Mesajlar yalnızca mesaj gönderme uç noktasıyla eklenebilir." });
+    }
     const err = validateMessages(req.body.messages);
     if (err) return res.status(400).json({ error: err });
   }
@@ -125,6 +149,62 @@ conversationsRouter.patch("/:id", (req, res) => {
   if (cols.length === 0) return res.json(hydrate("conversations", existing));
   const stmt = db.prepare(`UPDATE conversations SET ${cols.map((c) => `${c} = @${c}`).join(",")} WHERE id = @__id`);
   stmt.run({ ...body, __id: req.params.id });
+  const updated = db.prepare(`SELECT * FROM conversations WHERE id = ?`).get(req.params.id);
+  res.json(hydrate("conversations", updated));
+});
+
+/**
+ * MESAJ GÖNDERME — tek doğru yol.
+ * ---------------------------------------------------------------------------------------------
+ * Gövde: { messages: [{ text?, image?, isRejectionNotice? }], clearContextNote?: boolean }
+ * En fazla 3 mesaj (ör. bağlam notu + asıl mesaj). Her mesajın `sender` ve `lang` alanı
+ * İSTEMCİDEN DEĞİL oturumdan damgalanır — kimse karşı tarafın ağzından yazamaz. Ekleme sunucuda
+ * okunan GÜNCEL diziye yapılır, böylece karşı tarafın bu sırada gönderdiği mesaj kaybolmaz.
+ * Yanıt, sohbetin sunucudaki son hâlidir; istemci kendi yerel kopyasını buna göre tazeler.
+ */
+const MAX_APPEND_PER_CALL = 3;
+
+conversationsRouter.post("/:id/messages", (req, res) => {
+  const row = db.prepare(`SELECT * FROM conversations WHERE id = ?`).get(req.params.id);
+  if (!row) return res.status(404).json({ error: "conversations not found" });
+  const actor = resolveActor(req);
+  if (!convoVisibleTo(row, actor)) {
+    return res.status(actor ? 403 : 401).json(actor ? { error: "Bu sohbete mesaj gönderme yetkiniz yok." } : { error: "Bu işlem için giriş yapmanız gerekiyor." });
+  }
+  // Admin sohbetin bir TARAFI değildir; onun adına mesaj yazmak "sender" alanını anlamsız kılardı.
+  if (actor.role !== "owner" && actor.role !== "mechanic") {
+    return res.status(403).json({ error: "Bu sohbete yalnızca tarafları mesaj gönderebilir." });
+  }
+  const incoming = Array.isArray(req.body?.messages) ? req.body.messages : [req.body?.message].filter(Boolean);
+  if (incoming.length === 0) return res.status(400).json({ error: "Gönderilecek mesaj yok." });
+  if (incoming.length > MAX_APPEND_PER_CALL) return res.status(400).json({ error: "Tek seferde en fazla 3 mesaj gönderilebilir." });
+
+  const langRow = actor.role === "owner"
+    ? db.prepare(`SELECT lang FROM owners WHERE id = ?`).get(actor.id)
+    : db.prepare(`SELECT lang FROM mechanics WHERE id = ?`).get(actor.id);
+  const senderLang = langRow?.lang || "tr";
+
+  const existing = JSON.parse(row.messages || "[]");
+  // Mesaj kimliği sunucuda üretiliyor: iki taraf aynı anda yazdığında istemcilerin ürettiği
+  // sayaçlar çakışabiliyordu (aynı id = React listesinde aynı key = yanlış eşleşen baloncuk).
+  const baseId = existing.reduce((max, m) => Math.max(max, Number(m?.id) || 0), 0);
+
+  const stamped = incoming.map((m, i) => ({
+    id: baseId + i + 1,
+    sender: actor.role,          // <- oturumdan, istemciden DEĞİL
+    lang: senderLang,            // <- gönderenin kayıtlı dili; çeviri bunu kullanıyor
+    text: typeof m?.text === "string" ? m.text : undefined,
+    image: typeof m?.image === "string" ? m.image : undefined,
+    ...(m?.isRejectionNotice ? { isRejectionNotice: true } : {}),
+  }));
+  const merged = [...existing, ...stamped];
+  const err = validateMessages(merged);
+  if (err) return res.status(400).json({ error: err });
+
+  const patch = req.body?.clearContextNote
+    ? db.prepare(`UPDATE conversations SET messages = ?, pendingContextNote = NULL WHERE id = ?`)
+    : db.prepare(`UPDATE conversations SET messages = ? WHERE id = ?`);
+  patch.run(JSON.stringify(merged), req.params.id);
   const updated = db.prepare(`SELECT * FROM conversations WHERE id = ?`).get(req.params.id);
   res.json(hydrate("conversations", updated));
 });

@@ -1,13 +1,28 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
-import { resolveActor } from "../utils/auth.js";
+import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 
 // Paylaşım analitiği: her ShareButton eylemi ayrı bir satır (kendi refCode'u ile). Link o refCode'u
 // taşıdığı için tıklama ve sonraki dönüşüm (sohbet/randevu/teklif/başvuru) aynı satıra atfedilebiliyor.
 // Bkz. frontend/src/app/state/AppLogicProvider.tsx: recordShare, recordConversion, deep-link click efekti.
 const router = Router();
 
-router.post("/", (req, res) => {
+// GÜVENLİK DÜZELTMESİ (bu denetimde bulundu — KİMLİKSİZ SINIRSIZ YAZMA):
+// Bu uç noktalar kimlik doğrulaması ve hız sınırı olmadan açıktı. İki somut sonucu vardı:
+// (1) bir tamircinin görüntülenme/paylaşım sayaçları bir betikle şişirilebilir, "en çok bakılan
+//     tamirci" gibi ekranlar anlamsızlaşırdı; (2) tabloya sınırsız satır yazdırılarak diskin
+//     dolması sağlanabilirdi. Kimlik zorunlu KILINAMIYOR (girişsiz ziyaretçinin görüntülenmesi de
+//     sayılmalı), bu yüzden IP başına dakikalık bir tavan konuyor — gerçek bir ziyaretçi dakikada
+//     120 profil açmaz, betik açar.
+const writeLimiter = makeRateLimiter({ maxAttempts: 120, lockoutMs: 5 * 60 * 1000, windowMs: 60 * 1000 });
+const limitWrites = (req, res, next) => {
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  if (writeLimiter.check(ip).blocked) return res.status(429).json({ error: "Çok fazla istek. Lütfen birkaç dakika sonra tekrar deneyin." });
+  writeLimiter.registerFailure(ip);
+  next();
+};
+
+router.post("/", limitWrites, (req, res) => {
   const { targetType, targetId, channel, refCode, sharedBy } = req.body || {};
   if (!targetType || !targetId || !channel || !refCode) {
     return res.status(400).json({ error: "targetType, targetId, channel ve refCode zorunludur." });
@@ -26,13 +41,13 @@ router.post("/", (req, res) => {
   }
 });
 
-router.post("/:refCode/click", (req, res) => {
+router.post("/:refCode/click", limitWrites, (req, res) => {
   const info = db.prepare(`UPDATE share_events SET clickCount = clickCount + 1 WHERE refCode = ?`).run(req.params.refCode);
   if (info.changes === 0) return res.status(404).json({ error: "Paylaşım kaydı bulunamadı." });
   res.json(db.prepare(`SELECT * FROM share_events WHERE refCode = ?`).get(req.params.refCode));
 });
 
-router.post("/:refCode/convert", (req, res) => {
+router.post("/:refCode/convert", limitWrites, (req, res) => {
   const info = db.prepare(`UPDATE share_events SET conversionCount = conversionCount + 1 WHERE refCode = ?`).run(req.params.refCode);
   if (info.changes === 0) return res.status(404).json({ error: "Paylaşım kaydı bulunamadı." });
   res.json(db.prepare(`SELECT * FROM share_events WHERE refCode = ?`).get(req.params.refCode));

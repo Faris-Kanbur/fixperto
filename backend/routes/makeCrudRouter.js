@@ -22,6 +22,42 @@ import { hashPassword, verifyPassword as bcryptVerify, resolveActor } from "../u
 //     sadece çağıranın kendi kayıtlarıyla sınırlanıyor (admin hepsini görür). `publicRead: true`
 //     (varsayılan, mechanics/listings/jobs gibi pazar yeri verileri için) GET'leri değiştirmiyor —
 //     bunlar zaten girişsiz gezinme için herkese açık kalmalı.
+/**
+ * YALNIZCA ADMIN'İN YAZABİLECEĞİ SÜTUNLAR.
+ * ---------------------------------------------------------------------------------------------
+ * GÜVENLİK AÇIĞI (bu denetimde bulundu — KİTLESEL ATAMA / MASS ASSIGNMENT):
+ * PATCH gövdesindeki her alan doğrudan SQL UPDATE'e yazılıyordu. Sahiplik kontrolü "bu satır senin
+ * mi" sorusunu cevaplıyor, ama "bu SÜTUNU değiştirmeye hakkın var mı" sorusunu kimse sormuyordu.
+ * Somut sonuçlar:
+ *   - Bir tamirci kendi satırına `verified: 1` yazıp sitede "doğrulanmış tamirci" rozetiyle
+ *     görünebiliyordu. Oysa doğrulama, belge inceleyen yöneticinin verdiği bir güven işareti
+ *     (bkz. admin paneli grantVerification) — kendi kendine verilebiliyorsa hiçbir anlamı kalmaz.
+ *   - Yönetici tarafından ASKIYA ALINMIŞ bir kullanıcı kendi satırına `status: "active"` yazıp
+ *     askıyı kaldırabiliyordu.
+ *   - Sayaç/ölçüm sütunları (shareCount, vehicleCount, apptCount, avgResponseMinutes, distance)
+ *     elle şişirilebiliyordu.
+ * Bu sütunlar artık admin dışındaki hiç kimsenin yazmasına izin verilmeden gövdeden DÜŞÜRÜLÜYOR
+ * (isteği reddetmiyoruz: aynı PATCH'in meşru alanları — ad, adres, telefon — işlenmeye devam etsin).
+ *
+ * DÜRÜST SINIR: rating/reviews/reviewList burada YOK, çünkü yorum bırakan araç sahibi bu üç alanı
+ * meşru olarak yazıyor (bkz. sharedWrite). Yani puan hâlâ istemcinin hesapladığı bir değer; gerçek
+ * çözümü yorumları ayrı bir tabloya taşıyıp puanı sunucuda hesaplamak, o ayrı bir iş.
+ */
+const ADMIN_ONLY_FIELDS = {
+  mechanics: ["verified", "verificationDocs", "shareCount", "avgResponseMinutes", "distance"],
+  owners: ["status", "vehicleCount", "apptCount"],
+  listings: ["shareCount"],
+  job_listings: ["shareCount"],
+};
+
+// Tablonun GERÇEK sütunları. Gövdeden gelen tanınmayan anahtarlar (yazım hatası, eski istemci,
+// kasıtlı deneme, JSON'daki "__proto__" gibi tuhaf isimler) SQL'e hiç ulaşmadan eleniyor — aksi
+// halde sorgu sözdizimi hatasıyla 500 dönüyordu.
+const columnsOf = (table) => {
+  try { return new Set(db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name)); }
+  catch { return null; }
+};
+
 export function makeCrudRouter(table, {
   idColumn = "id",
   shareCountColumn = null,
@@ -46,6 +82,16 @@ export function makeCrudRouter(table, {
   // seviyesinde ama artık en azından girişsiz kimse yazamıyor.
   const sharedWriteFields = new Set(authScope?.sharedWrite?.fields || []);
   const sharedWriteRoles = new Set(authScope?.sharedWrite?.roles || []);
+  const tableColumns = columnsOf(table);
+  const adminOnly = new Set(ADMIN_ONLY_FIELDS[table] || []);
+  // Gövdeyi yazmadan önce süz: önce bilinmeyen sütunlar, sonra (admin değilse) korumalı sütunlar.
+  const sanitizeBody = (body, actor) => {
+    for (const key of Object.keys(body)) {
+      if (tableColumns && !tableColumns.has(key)) { delete body[key]; continue; }
+      if (adminOnly.has(key) && actor?.role !== "admin") delete body[key];
+    }
+    return body;
+  };
 
   // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu — ROLLER ARASI ID ÇAKIŞMASI / IDOR):
   // owners.id ve mechanics.id AYRI tablolarda, ayrı sayaçlarla üretiliyor — yani owner #7 ile
@@ -124,7 +170,7 @@ export function makeCrudRouter(table, {
         return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
       }
     }
-    const body = dehydrate(table, req.body);
+    const body = sanitizeBody(dehydrate(table, req.body), actor);
     // GÜVENLİK: password bu genel (mass-assignment'a açık) yazma yolundan asla kabul edilmiyor —
     // yalnızca aşağıdaki özel /:id/set-password uç noktasından değiştirilebilir (bkz. o uç
     // noktanın yorumu). passwordVerify açık olmayan tablolarda (yani şifre sütunu olmayanlarda)
@@ -152,9 +198,13 @@ export function makeCrudRouter(table, {
   router.patch("/:id", (req, res) => {
     const existing = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
     if (!existing) return res.status(404).json({ error: `${table} not found` });
-    const body = dehydrate(table, req.body);
+    const rawBody = dehydrate(table, req.body);
+    // Korumalı sütunlar yetki kontrolünden ÖNCE düşürülüyor: aksi halde bir tamircinin
+    // `{verified: 1}` PATCH'i sharedWrite/self kontrolünü geçip yazılabilirdi.
+    const actorForBody = authScope ? resolveActor(req) : null;
+    const body = sanitizeBody(rawBody, actorForBody);
     if (authScope) {
-      const actor = resolveActor(req);
+      const actor = actorForBody;
       if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
       if (actor.role !== "admin" && !matchingField(actor, existing) && !isSharedWrite(actor, Object.keys(body))) {
         return res.status(403).json({ error: "Bu kaydı değiştirme yetkiniz yok." });

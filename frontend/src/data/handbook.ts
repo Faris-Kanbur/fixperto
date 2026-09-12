@@ -191,6 +191,9 @@ Tamirci hizmetleri marka bazında fiyatlandırabilir. Araç seçilince liste o m
 ## Ödeme adımı yok
 Randevu alırken kart bilgisi istemek gereksiz bir sürtünmeydi; iş yapılmadan para alınmıyor. Tamircinin KABUL ETTİĞİ ödeme yöntemleri bilgi olarak özet kartında gösterilir.
 
+## Onay anında yeniden doğrulama
+Seçim ile onay arasında dakikalar geçebiliyor (giriş kapısı açılıyor, kullanıcı sekmeyi bırakıp dönüyor). Buton yalnızca "seçimler dolu mu" diye bakıyordu: 13:55'te 14:00'ı seçip 14:30'da onaylayan kullanıcı GEÇMİŞE randevu alıyordu, bu arada aynı saati başkası kaptıysa iki randevu aynı saate düşüyordu. Artık onay anında saat yeniden sorgulanıyor; geçmiş ya da dolu ise randevu oluşturulmuyor, saat seçimi düşürülüyor ve nedeni yazılıyor. Kontrol, ölçüm ve kayıttan ÖNCE yapılıyor — reddedilen bir randevu "alındı" diye sayılmamalı.
+
 ## Pahalı hizmet onayı
 Belirli bir tutarın üzerindeki sabit fiyatlı hizmetlerde kullanıcının tutarı onayladığını işaretlemesi istenir.
 
@@ -588,11 +591,20 @@ Açılış dili cihazın saat dilimi ve tarayıcı dilinden tahmin edilir. Hiçb
 ## Servisler
 Önce anahtarsız Google uç noktası, olmazsa MyMemory. Her ikisinde de 3 saniyelik zaman aşımı var.
 
-## Önbellek
-Sonuçlar veritabanında saklanır; aynı metin/dil çifti bir daha dış servise gitmez.
+## Önbellek üç katmanlı
+1) Sunucuda SQLite: aynı metin/dil çifti bir daha dış servise gitmez. 2) Tarayıcıda localStorage: anahtarı MESAJ KİMLİĞİ değil "kaynakDil:hedefDil:metin" — aynı cümle ikinci kez görüldüğünde (sayfa yenilendi, aynı kalıp başka bir sohbette geçti) hiç ağ isteği olmadan ANINDA basılır; en fazla 500 cümle saklanır, eskiler düşer. 3) Ekran ömrü boyunca bellekteki mesaj-kimliği önbelleği.
+
+## Neden toplu istek
+Yavaşlığın sebebi çeviri servisi değil MİMARİYDİ: her mesaj için ayrı bir HTTP isteği atılıyordu ve tarayıcı aynı sunucuya aynı anda ~6 bağlantı açabildiği için 20 mesajlık bir sohbette istekler sıraya giriyordu. Artık bir karede istenen tüm çeviriler 16 ms biriktirilip TEK isteğe (POST /api/translate/batch) konuyor. Sunucu önbellektekileri anında döndürüyor, kalanları kendi arasında paralel (8) çeviriyor ve sohbette tekrar eden aynı cümleyi bir kez çeviriyor.
 
 ## Hata durumu
-Çeviri başarısız olursa orijinal metin gösterilir; kullanıcı "çeviri hatası" görmez.`,
+Çeviri başarısız olursa orijinal metin gösterilir; kullanıcı "çeviri hatası" görmez. Başarısız sonuç ÖNBELLEĞE ALINMAZ — aksi halde servis bir kez erişilemediğinde o cümle bir daha hiç çevrilmezdi.
+
+## Mesajın dili uydurulmuyor
+Bir mesajın "hangi dilde yazıldığı" bilgisi sunucuda, gönderenin kayıtlı dilinden damgalanır. İstemcinin gönderdiği bir dil etiketine güvenilseydi çeviri yanlış yönde yapılabilirdi.
+
+## Hız sınırı gerçek kullanımı engellemiyor
+Sayaç yalnızca DIŞ SERVİSE giden istekleri sayar (önbellek isabetleri bedava) ve 5 dakikalık kayan pencerede çalışır. Eskiden sayaç ömür boyu birikiyordu: uzun bir oturumda sohbetleri gezen sıradan bir kullanıcı sınıra çarpıyor, çeviri sessizce ölüyordu.`,
       },
     ],
   },
@@ -615,8 +627,14 @@ Araçlar, randevular ve destek talepleri tamamen özeldir: girişsiz kimse göre
 ## Yönetici
 Ayrı token. Yönetici uçları token olmadan çalışmaz; blog yazma/düzenleme/silme dahil.
 
+## Korumalı sütunlar (kitlesel atama)
+Sahiplik kontrolü "bu satır senin mi" sorusunu cevaplar; "bu SÜTUNU değiştirebilir misin" sorusunu değil. İkincisi sorulmadığı için bir tamirci kendi satırına verified:1 yazıp "doğrulanmış" rozetiyle görünebiliyor, askıya alınmış bir kullanıcı status:"active" yazıp askıyı kaldırabiliyordu. Artık bu sütunlar (verified, verificationDocs, status, shareCount, vehicleCount, apptCount, avgResponseMinutes, distance) admin dışında kimseden kabul edilmiyor; gövdeden sessizce düşürülüyor, isteğin meşru alanları işlenmeye devam ediyor. Ayrıca tabloda GERÇEKTEN bulunmayan sütun adları SQL'e hiç ulaşmıyor.
+
+## Mesaj gönderen kimliği
+Sohbet mesajı eklemenin tek yolu POST /api/conversations/:id/messages. Gönderen ve dil sunucuda oturumdan damgalanır, ekleme sunucudaki güncel dizinin sonuna yapılır. Eskiden mesaj dizisi PATCH ile topluca yazılıyordu: bir taraf karşı tarafın ağzından mesaj uydurabiliyor ve aynı anda gelen mesaj sessizce siliniyordu. Aynı nedenle "tamirci otomatik yanıtı" demosu da kaldırıldı — kullanıcı gerçekten cevap aldığını sanıyordu.
+
 ## Hız sınırlama
-Kayıt, giriş, OTP ve analitik olay gönderimi IP bazlı sınırlıdır.`,
+Kayıt, giriş, OTP, çeviri, profil görüntülenme ve paylaşım kayıtları IP bazlı sınırlıdır. Sayaç kayan pencerede çalışır: giriş denemelerinde art arda hata kilit getirir, normal kullanımda ise sınır "ömür boyu" değil "dakikada/5 dakikada" anlamına gelir.`,
       },
       {
         id: "girdi",
@@ -747,10 +765,10 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 17 test takımı.
+tsc tip denetimi + her backend dosyasının sözdizimi + 18 test takımı.
 
 ## Takımlar
-arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı.
+arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri.
 
 ## Belgeyi canlı tutan takım
 "el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.

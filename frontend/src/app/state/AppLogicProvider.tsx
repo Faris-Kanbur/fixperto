@@ -1842,6 +1842,26 @@ function useAppLogic() {
     // anında isteniyor. Popup açıldığında alttaki ekran mount'lu kaldığı için form kaybolmuyor;
     // giriş biter bitmez bu fonksiyon aynı verilerle otomatik yeniden çağrılıyor.
     if (!ensureAuth(t("authGateReasonBooking"), () => callLatest("confirmBooking"))) return;
+    /**
+     * ONAY ANINDA YENİDEN DOĞRULAMA.
+     * -----------------------------------------------------------------------------------------
+     * GERÇEK HATA (tam denetimde bulundu): seçim yapıldığı AN ile onay anı arasında dakikalar,
+     * bazen saatler geçebiliyor — giriş kapısı açılıyor, kullanıcı sekmeyi bırakıp geri dönüyor.
+     * Buton sadece "seçimler dolu mu" diye bakıyordu; seçilen saatin hâlâ geçerli olup olmadığını
+     * kimse sormuyordu. Sonuçlar: 13:55'te 14:00'ı seçip 14:30'da onaylayan kullanıcı GEÇMİŞE
+     * randevu alıyordu; bu sırada aynı saati başka biri kaptıysa iki randevu aynı saate düşüyordu.
+     * Liste ekranda tazelenmiş olsa bile onay yolunda bu kontrol yoktu.
+     */
+    if (!selectedDate || !selectedTime || !bookingService) {
+      setToast({ type: "info", text: `⚠️ ${t("bookingIncompleteToast")}` });
+      return;
+    }
+    const slotNow = bookableSlots(selectedMechanic, selectedDate).find((s) => s.time === selectedTime);
+    if (!slotNow || slotNow.past || slotNow.taken) {
+      setSelectedTime(null);
+      setToast({ type: "info", text: `⚠️ ${t(slotNow?.taken ? "bookingSlotTakenToast" : "bookingSlotPastToast")}` });
+      return;
+    }
     track("appointment_booked", { targetType: "mechanic", targetId: selectedMechanicId });
     const status = autoAccept ? "Sırada" : "Onay Bekliyor";
     const bookingVehicle = vehicles.find(v => v.id === selectedBookingVehicleId) || vehicles[0];
@@ -3340,11 +3360,19 @@ function useAppLogic() {
     if (!text && !image) return;
     const convo = conversations.find(c => c.id === activeConvoId);
     if (!convo) return;
-    const newMsgs = [...convo.messages];
-    if (convo.pendingContextNote) newMsgs.push({ id: msgId++, sender: "owner", text: convo.pendingContextNote, lang: ownerLang });
-    newMsgs.push({ id: msgId++, sender: "owner", text, lang: ownerLang, image });
+    // Yerel (iyimser) güncelleme anında yapılıyor ki yazan kişi beklemesin; KALICI kayıt ise
+    // artık mesaj ekleme uç noktasıyla — gönderen sunucuda oturumdan damgalanıyor ve ekleme
+    // sunucudaki güncel dizinin sonuna yapılıyor (bkz. backend/routes/conversations.js).
+    const outgoing = [];
+    if (convo.pendingContextNote) outgoing.push({ text: convo.pendingContextNote });
+    outgoing.push({ text, image });
+    const newMsgs = [...convo.messages, ...outgoing.map((m) => ({ id: msgId++, sender: "owner", lang: ownerLang, ...m }))];
     setConversations(cs => cs.map(c => c.id === activeConvoId ? { ...c, messages: newMsgs, pendingContextNote: null } : c));
-    persist(api.conversations.update(activeConvoId, { messages: newMsgs, pendingContextNote: null }), "Mesaj kaydedilemedi");
+    // Sunucunun döndürdüğü sohbet, karşı tarafın bu sırada yazdığı mesajları da içerir — yerel
+    // kopyayı onunla tazeliyoruz (eskiden dizi topluca ezildiği için o mesajlar kayboluyordu).
+    api.conversations.appendMessages(activeConvoId, outgoing, { clearContextNote: true })
+      .then((saved) => setConversations(cs => cs.map(c => c.id === activeConvoId ? { ...c, messages: saved.messages, pendingContextNote: null } : c)))
+      .catch((err) => setToast({ type: "info", text: `⚠️ Mesaj kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` }));
     // Not: bildirim gövdesi sabit bir dizgi olduğu için canlı çeviri altyapısını kullanamıyor —
     // alıcı tamircinin dili göndericiyle AYNI değilse mesaj önizlemesini ham haliyle göstermiyoruz
     // (bkz. quote-request bildirimi için yukarıdaki not); sohbet ekranındaki ChatBubble zaten
@@ -3368,7 +3396,18 @@ function useAppLogic() {
     reader.readAsDataURL(file);
     e.target.value = "";
   };
-  const sendOwnerMessageWithReply = (text, image = undefined) => { const convoId = activeConvoId; const wasEmpty = activeConvo && activeConvo.messages.length === 0; sendOwnerMessage(text, image); if (wasEmpty) { setTimeout(() => { let replyMsgs = null; setConversations(cs => cs.map(c => { if (c.id !== convoId) return c; const replyText = c.mechanicLang === "en" ? "Thanks for reaching out!" : "Merhaba, mesajınız için teşekkürler!"; replyMsgs = [...c.messages, { id: msgId++, sender: "mechanic", text: replyText, lang: c.mechanicLang }]; return { ...c, messages: replyMsgs }; })); if (replyMsgs) persist(api.conversations.update(convoId, { messages: replyMsgs }), "Mesaj kaydedilemedi"); fireNotification("Yeni mesaj 💬", `${activeConvo.mechanicName}: Merhaba, mesajınız için teşekkürler!`, ownerSettings.notifyMessages, "owner", { type: "chat", id: convoId }); }, 900); } };
+  /**
+   * KALDIRILDI: SAHTE OTOMATİK YANIT.
+   * -------------------------------------------------------------------------------------------
+   * Bu fonksiyon, araç sahibi bir sohbete ilk mesajını yazdıktan 0,9 saniye sonra tamircinin
+   * ağzından "Merhaba, mesajınız için teşekkürler!" diye bir yanıt uyduruyor, üstelik bunu
+   * sunucuya da KAYDEDİYORDU (sender: "mechanic"). Demo amaçlıydı ama sonucu şuydu: kullanıcı
+   * gerçekten cevap aldığını sanıyor, bildirim bile alıyordu — oysa karşı tarafta kimse yoktu.
+   * Sohbet geçmişinde de tamircinin hiç yazmadığı bir cümle kalıcı olarak duruyordu.
+   * Aynı zamanda bu, sunucuda kapatılan "karşı tarafın ağzından mesaj yazma" açığının ta kendisi
+   * (bkz. backend/routes/conversations.js). Artık mesaj sadece gerçekten gönderiliyor.
+   */
+  const sendOwnerMessageWithReply = (text, image = undefined) => sendOwnerMessage(text, image);
   // Mesaj çevirisi: varsayılan olarak (kullanıcı elle değiştirmediği sürece) karşı taraf mesajı
   // HER ZAMAN kendi diline otomatik çevrilmiş görür — showTranslated[msgId] burada "true" ise
   // çeviriyi, "false" ise bilerek orijinali gösteriyor demektir; "undefined" (hiç dokunulmamış)
@@ -3379,19 +3418,103 @@ function useAppLogic() {
   // değiştirme/yeniden render'da tekrar istek atılmaz). Ayrıca aynı mesaj+dil için aynı anda birden
   // fazla istek gitmesini de translationInFlightRef ile engelliyoruz. Uygulamayı yavaşlatmaması için
   // TAMAMEN arka planda, mesaj her zaman önce orijinaliyle görünür, çeviri gelince yerine geçer.
+  /**
+   * ÇEVİRİ HIZI — üç katman.
+   * -------------------------------------------------------------------------------------------
+   * ŞİKÂYET: "çeviri yavaş, anında olsun". Sebep tek bir yavaş servis değildi, MİMARİYDİ:
+   * her mesaj için AYRI bir HTTP isteği atılıyordu. 20 mesajlık bir sohbet açıldığında tarayıcı
+   * 20 istek kuyruğa koyuyor ve aynı sunucuya aynı anda ~6 bağlantı açabildiği için istekler
+   * sıraya giriyordu — son mesaj ancak birkaç saniye sonra çevriliyordu.
+   *
+   * 1) KALICI METİN ÖNBELLEĞİ (localStorage): anahtar mesaj kimliği değil, "kaynakDil:hedefDil:metin".
+   *    Aynı cümle ikinci kez görüldüğünde (aynı sohbette tekrar eden bir yanıt, sayfa yenilemesi,
+   *    başka bir sohbette aynı kalıp) HİÇ ağ isteği yok — çeviri ANINDA basılıyor.
+   * 2) TOPLU İSTEK: aynı karede istenen tüm çeviriler tek bir POST /api/translate/batch isteğinde
+   *    gidiyor (bkz. backend). Sunucu önbellektekileri anında döndürüyor, kalanları paralel çeviriyor.
+   * 3) KISA BİRİKTİRME (16ms): bileşenler tek tek "beni çevir" diyor; bir sonraki karede hepsi
+   *    tek istekte birleşiyor. Kullanıcı bu gecikmeyi hissetmez, ağ trafiği 20 istekten 1'e iner.
+   *
+   * Başarısız çeviri (servis ulaşılamadı) ÖNBELLEĞE ALINMIYOR: aksi halde o mesaj oturum boyunca
+   * bir daha hiç çevrilmezdi.
+   */
+  const TRANSLATION_STORE_KEY = "fixperto_translations_v1";
+  const TRANSLATION_STORE_MAX = 500;   // ~kaç cümle saklanacak (localStorage'ı şişirmemek için)
+  const readTranslationStore = () => {
+    try {
+      const raw = window.localStorage.getItem(TRANSLATION_STORE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch { return {}; }
+  };
   const [translationCache, setTranslationCache] = useState({});
   const translationInFlightRef = useRef(new Set());
+  // Metin tabanlı kalıcı katman. Mesaj kimlikleri geçici (sunucu yeniden üretiyor), metin değil —
+  // bu yüzden kalıcı önbellek METNE göre anahtarlanıyor.
+  const textTranslationsRef = useRef(typeof window === "undefined" ? {} : readTranslationStore());
+  const textKey = (from, to, text) => `${from}:${to}:${text}`;
+  const rememberTranslation = (from, to, text, translated) => {
+    const store = textTranslationsRef.current;
+    store[textKey(from, to, text)] = translated;
+    const keys = Object.keys(store);
+    // En eski kayıtlar düşsün: sınırsız büyüyen bir localStorage anahtarı, kotayı doldurduğunda
+    // SESSİZCE yazma hatası verir ve önbellek tamamen işlevsiz kalır.
+    if (keys.length > TRANSLATION_STORE_MAX) {
+      for (const k of keys.slice(0, keys.length - TRANSLATION_STORE_MAX)) delete store[k];
+    }
+    try { window.localStorage.setItem(TRANSLATION_STORE_KEY, JSON.stringify(store)); } catch { /* kota dolu: önbellek yalnızca bellekte kalır */ }
+  };
+
+  const translationQueueRef = useRef([]);
+  const translationTimerRef = useRef(null);
+  const flushTranslationQueue = () => {
+    translationTimerRef.current = null;
+    const batch = translationQueueRef.current;
+    translationQueueRef.current = [];
+    if (batch.length === 0) return;
+    // Hedef dile göre grupla (normalde tek dil, ama iki ekran birden açıksa ikisi de olabilir).
+    const byLang = new Map();
+    for (const item of batch) {
+      if (!byLang.has(item.to)) byLang.set(item.to, []);
+      byLang.get(item.to).push(item);
+    }
+    for (const [toLang, items] of byLang) {
+      api.translateBatch(items.map((i) => ({ id: i.key, text: i.text, from: i.from })), toLang)
+        .then((res) => {
+          const results = res?.results || {};
+          const failed = new Set(res?.failed || []);
+          setTranslationCache((c) => {
+            const next = { ...c };
+            for (const item of items) {
+              const value = results[item.key];
+              if (value === undefined) continue;
+              next[item.key] = value;
+              if (!failed.has(item.key)) rememberTranslation(item.from, toLang, item.text, value);
+            }
+            return next;
+          });
+          // Başarısızlar tekrar denenebilsin diye uçuş kaydından çıkıyor ve önbelleğe yazılmıyor.
+          for (const item of items) translationInFlightRef.current.delete(item.key);
+        })
+        .catch(() => {
+          // Ağ hatası: orijinal metin gösterilmeye devam ediyor, kilitlenme olmasın diye
+          // uçuş kayıtları temizleniyor (sonraki render tekrar deneyebilir).
+          for (const item of items) translationInFlightRef.current.delete(item.key);
+        });
+    }
+  };
   const translateMessage = (msg, toLang) => {
     if (!msg?.text || !toLang) return;
     const fromLang = msg.lang || "tr";
     if (fromLang === toLang) return;
     const key = `${msg.id}:${toLang}`;
     if (translationCache[key] !== undefined || translationInFlightRef.current.has(key)) return;
+    // 1) Kalıcı metin önbelleği — ağ yok, bekleme yok.
+    const known = textTranslationsRef.current[textKey(fromLang, toLang, msg.text)];
+    if (known !== undefined) { setTranslationCache((c) => ({ ...c, [key]: known })); return; }
+    // 2+3) Kuyruğa ekle, bir sonraki karede hepsi tek istekte gitsin.
     translationInFlightRef.current.add(key);
-    api.translate(msg.text, fromLang, toLang)
-      .then((res) => setTranslationCache((c) => ({ ...c, [key]: res?.translatedText || msg.text })))
-      .catch(() => setTranslationCache((c) => ({ ...c, [key]: msg.text })))
-      .finally(() => translationInFlightRef.current.delete(key));
+    translationQueueRef.current.push({ key, text: msg.text, from: fromLang, to: toLang });
+    if (translationTimerRef.current == null) translationTimerRef.current = setTimeout(flushTranslationQueue, 16);
   };
   const mechConvo = conversations.find(c => c.id === mechActiveConvoId);
   const sendMechMessage = (text) => {
@@ -3403,11 +3526,14 @@ function useAppLogic() {
     // convo.mechanicLang yerine myProfile'ın GÜNCEL dil ayarından okunuyor (bkz. Ayarlar'daki dil
     // seçici). Böylece tamirci dilini değiştirdiğinde yeni mesajları doğru dille etiketlenir.
     const senderLang = myProfile.lang || "tr";
-    const newMsgs = [...convo.messages];
-    if (convo.pendingContextNote) newMsgs.push({ id: msgId++, sender: "mechanic", text: convo.pendingContextNote, lang: senderLang });
-    newMsgs.push({ id: msgId++, sender: "mechanic", text, lang: senderLang });
+    const outgoing = [];
+    if (convo.pendingContextNote) outgoing.push({ text: convo.pendingContextNote });
+    outgoing.push({ text });
+    const newMsgs = [...convo.messages, ...outgoing.map((m) => ({ id: msgId++, sender: "mechanic", lang: senderLang, ...m }))];
     setConversations(cs => cs.map(c => c.id === mechActiveConvoId ? { ...c, messages: newMsgs, pendingContextNote: null } : c));
-    persist(api.conversations.update(mechActiveConvoId, { messages: newMsgs, pendingContextNote: null }), "Mesaj kaydedilemedi");
+    api.conversations.appendMessages(mechActiveConvoId, outgoing, { clearContextNote: true })
+      .then((saved) => setConversations(cs => cs.map(c => c.id === mechActiveConvoId ? { ...c, messages: saved.messages, pendingContextNote: null } : c)))
+      .catch((err) => setToast({ type: "info", text: `⚠️ Mesaj kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` }));
     // Bildirim gövdesi canlı çeviremediği için (bkz. sendOwnerMessage'daki not) alıcı araç
     // sahibinin dili göndericiyle farklıysa ham metni değil genel bir önizleme gösteriyoruz.
     const chatPreviewSameLang = senderLang === ownerLang;
@@ -4402,7 +4528,9 @@ function useAppLogic() {
     if (existing) {
       const messages = [...existing.messages, newMsg];
       setConversations(cs => cs.map(c => c.id === existing.id ? { ...c, messages } : c));
-      persist(api.conversations.update(existing.id, { messages }), "Mesaj kaydedilemedi");
+      api.conversations.appendMessages(existing.id, [{ text: rejectionText, isRejectionNotice: true }])
+        .then((saved) => setConversations(cs => cs.map(c => c.id === existing.id ? { ...c, messages: saved.messages } : c)))
+        .catch((err) => setToast({ type: "info", text: `⚠️ Mesaj kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` }));
     } else {
       const newConvo = { id: Date.now(), ownerId: applicantOwnerId, mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang || "tr", messages: [newMsg] };
       setConversations(cs => [newConvo, ...cs]);

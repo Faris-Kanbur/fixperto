@@ -164,8 +164,19 @@ export function resolveActor(req) {
 
 // Basit, bağımlılıksız IP başına deneme sınırlayıcı — admin.js'teki ile aynı desen, login/OTP gibi
 // kaba kuvvete açık uç noktalarda tekrar kullanılıyor.
-export function makeRateLimiter({ maxAttempts, lockoutMs }) {
-  const attempts = new Map(); // key -> { count, lockedUntil }
+/**
+ * windowMs (opsiyonel): KAYAN PENCERE.
+ * ---------------------------------------------------------------------------------------------
+ * GERÇEK HATA DÜZELTMESİ (tam site denetiminde bulundu): sayaç hiç sıfırlanmıyordu. Giriş
+ * denemeleri için bu doğru davranış (art arda 5 yanlış şifre = kilit), ama sayaç ömür boyu
+ * biriktiği için ÇEVİRİ gibi normal ve sık kullanılan uç noktalarda yanlış sonuç veriyordu:
+ * uzun bir oturumda sohbetleri gezen sıradan bir kullanıcı toplam 120 isteği aşınca 10 dakika
+ * boyunca "çok fazla istek" duvarına çarpıyor, çeviri sessizce ölüyordu. windowMs verildiğinde
+ * sayaç, iki istek arasında bu süre kadar boşluk olduğunda sıfırlanır — yani sınır "ömür boyu
+ * 120" değil "N dakikada 120" anlamına gelir.
+ */
+export function makeRateLimiter({ maxAttempts, lockoutMs, windowMs = null }) {
+  const attempts = new Map(); // key -> { count, lockedUntil, last }
   return {
     check(key) {
       const entry = attempts.get(key);
@@ -175,8 +186,10 @@ export function makeRateLimiter({ maxAttempts, lockoutMs }) {
       return { blocked: false };
     },
     registerFailure(key) {
-      const entry = attempts.get(key) || { count: 0, lockedUntil: null };
+      const entry = attempts.get(key) || { count: 0, lockedUntil: null, last: 0 };
+      if (windowMs && entry.last && Date.now() - entry.last > windowMs) entry.count = 0;
       entry.count += 1;
+      entry.last = Date.now();
       if (entry.count >= maxAttempts) entry.lockedUntil = Date.now() + lockoutMs;
       attempts.set(key, entry);
     },

@@ -9,14 +9,29 @@ import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 // TÜM platform için toplu (admin panel "Sayfa Ziyaretleri" bölümü).
 const router = Router();
 
-router.post("/", (req, res) => {
+// GÜVENLİK DÜZELTMESİ (bu denetimde bulundu — KİMLİKSİZ SINIRSIZ YAZMA):
+// Bu uç noktalar kimlik doğrulaması ve hız sınırı olmadan açıktı. İki somut sonucu vardı:
+// (1) bir tamircinin görüntülenme/paylaşım sayaçları bir betikle şişirilebilir, "en çok bakılan
+//     tamirci" gibi ekranlar anlamsızlaşırdı; (2) tabloya sınırsız satır yazdırılarak diskin
+//     dolması sağlanabilirdi. Kimlik zorunlu KILINAMIYOR (girişsiz ziyaretçinin görüntülenmesi de
+//     sayılmalı), bu yüzden IP başına dakikalık bir tavan konuyor — gerçek bir ziyaretçi dakikada
+//     120 profil açmaz, betik açar.
+const writeLimiter = makeRateLimiter({ maxAttempts: 120, lockoutMs: 5 * 60 * 1000, windowMs: 60 * 1000 });
+const limitWrites = (req, res, next) => {
+  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  if (writeLimiter.check(ip).blocked) return res.status(429).json({ error: "Çok fazla istek. Lütfen birkaç dakika sonra tekrar deneyin." });
+  writeLimiter.registerFailure(ip);
+  next();
+};
+
+router.post("/", limitWrites, (req, res) => {
   const { targetType, targetId } = req.body || {};
   if (!targetType || !targetId) return res.status(400).json({ error: "targetType ve targetId zorunludur." });
   const info = db.prepare(`INSERT INTO profile_views (targetType, targetId) VALUES (?, ?)`).run(targetType, targetId);
   res.status(201).json(db.prepare(`SELECT * FROM profile_views WHERE id = ?`).get(info.lastInsertRowid));
 });
 
-router.post("/:id/convert", (req, res) => {
+router.post("/:id/convert", limitWrites, (req, res) => {
   const info = db.prepare(`UPDATE profile_views SET converted = 1 WHERE id = ?`).run(req.params.id);
   if (info.changes === 0) return res.status(404).json({ error: "Görüntülenme kaydı bulunamadı." });
   res.json(db.prepare(`SELECT * FROM profile_views WHERE id = ?`).get(req.params.id));

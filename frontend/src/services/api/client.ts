@@ -299,7 +299,17 @@ export const api = {
   vehicles: crud<Vehicle>("vehicles"),
   appointments: crud<Appointment>("appointments"),
   listings: crud<Listing>("listings"),
-  conversations: crud<Conversation>("conversations"),
+  conversations: {
+    ...crud<Conversation>("conversations"),
+    // GÜVENLİK: mesaj eklemenin TEK yolu. Gönderen kimliği sunucuda oturumdan damgalanıyor
+    // (bkz. backend/routes/conversations.js) ve ekleme sunucudaki güncel dizinin sonuna yapılıyor —
+    // böylece ne karşı tarafın ağzından mesaj yazılabiliyor ne de eşzamanlı mesajlar kayboluyor.
+    appendMessages: (id: number | string, messages: any[], opts?: { clearContextNote?: boolean }): Promise<Conversation> =>
+      request(`/api/conversations/${id}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ messages, clearContextNote: !!opts?.clearContextNote }),
+      }),
+  },
   jobs: crud<JobListing>("jobs"),
   tickets: crud<SupportTicket>("tickets"),
   // BLOG — herkese açık okuma (yalnızca yayınlanmış yazılar), yazma yönetici token'ı ister.
@@ -427,5 +437,9 @@ export const api = {
   // var, bu yüzden aynı metin/dil çifti ikinci kez asla dış servise gitmiyor.
   translate: (text: string, from: string, to: string): Promise<TranslateResult> =>
     request("/api/translate", { method: "POST", body: JSON.stringify({ text, from, to }) }),
+  // TOPLU ÇEVİRİ: bir ekrandaki tüm mesajlar TEK istekte gider. Tek tek istek atmak, tarayıcının
+  // aynı sunucuya ~6 eşzamanlı bağlantı sınırı yüzünden çeviriyi görünür şekilde yavaşlatıyordu.
+  translateBatch: (items: { id: string; text: string; from: string }[], to: string): Promise<{ results: Record<string, string>; failed?: string[]; cached?: boolean }> =>
+    request("/api/translate/batch", { method: "POST", body: JSON.stringify({ items, to }) }),
   health: (): Promise<{ ok: boolean; service: string }> => request("/api/health"),
 };

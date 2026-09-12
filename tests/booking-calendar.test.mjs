@@ -2,7 +2,12 @@
 // Bu takımdaki kuralların hepsi gerçek bir kusurdan doğdu: kendi hesabımız dışındaki tamircilere
 // saatler sabit 09:00-18:00 üretiliyordu (kapalı günlere randevu verilebiliyordu) ve bugün için
 // çoktan geçmiş saatler seçilebiliyordu.
-import { eq, report } from "./_harness.mjs";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { eq, ok, report } from "./_harness.mjs";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 const genSlots = (start, end) => {
   const slots = [];
@@ -96,5 +101,30 @@ eq(feb[0].getDate(), 1, "Pazartesi başlayan ayda boş hücre yok");
 eq(feb.length, 28, "Şubat 2027 28 gün");
 // Artık yıl kontrolü.
 eq(monthGrid(2028, 1).filter(Boolean).length, 29, "2028 artık yıl → Şubat 29 gün");
+
+// --- ONAY ANINDA YENİDEN DOĞRULAMA ------------------------------------------------------------
+// GERÇEK HATA (tam denetimde bulundu): seçim ile onay arasında dakikalar geçebiliyor (giriş kapısı
+// açılıyor, kullanıcı sekmeyi bırakıp dönüyor). Buton yalnızca "seçimler dolu mu" diye bakıyordu:
+// 13:55'te 14:00'ı seçip 14:30'da onaylayan kullanıcı GEÇMİŞE randevu alıyordu; bu arada aynı saati
+// başkası kaptıysa iki randevu aynı saate düşüyordu.
+const provider = readFileSync(join(ROOT, "frontend/src/app/state/AppLogicProvider.tsx"), "utf8");
+const confirmSrc = provider.slice(provider.indexOf("const confirmBooking = async () =>"), provider.indexOf("const goHome ="));
+ok(/const slotNow = bookableSlots\(selectedMechanic, selectedDate\)/.test(confirmSrc), "onay anında saat yeniden sorgulanıyor");
+ok(/if \(!slotNow \|\| slotNow\.past \|\| slotNow\.taken\)/.test(confirmSrc), "geçmiş ya da dolu saat reddediliyor");
+ok(/setSelectedTime\(null\)/.test(confirmSrc), "geçersiz saat seçimden düşürülüyor");
+ok(/bookingSlotTakenToast/.test(confirmSrc) && /bookingSlotPastToast/.test(confirmSrc), "iki durum için ayrı açıklama var");
+ok(/if \(!selectedDate \|\| !selectedTime \|\| !bookingService\)/.test(confirmSrc), "eksik seçimle randevu oluşturulamıyor");
+// Kontrol, kayıt/analitik çağrılarından ÖNCE olmalı — yoksa reddedilen bir randevu "alındı" diye
+// ölçülür ve sayaçlar şişer.
+const guardIdx = confirmSrc.indexOf("const slotNow =");
+const trackIdx = confirmSrc.indexOf('track("appointment_booked"');
+ok(guardIdx > 0 && guardIdx < trackIdx, "doğrulama, ölçüm ve kayıttan önce yapılıyor");
+
+// Davranış: aynı kuralı çalıştırıyoruz.
+const guard = (slot) => !slot || slot.past || slot.taken;
+eq(guard(undefined), true, "listede olmayan saat reddediliyor");
+eq(guard({ time: "14:00", past: true, taken: false }), true, "geçmiş saat reddediliyor");
+eq(guard({ time: "14:00", past: false, taken: true }), true, "dolu saat reddediliyor");
+eq(guard({ time: "14:00", past: false, taken: false }), false, "uygun saat kabul ediliyor");
 
 report("randevu takvimi");
