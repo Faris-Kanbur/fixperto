@@ -1224,7 +1224,14 @@ Sorgulama sonucunda kaç kaydın paylaşıma kapalı olduğu yazılır. Alıcı 
         body: `## Araç satışında
 İlan formunda "Bakım geçmişini ilanda göster" seçeneği var. Açıksa ilan sayfasında "doğrulanmış servis geçmişi" bölümü çıkar. Seçenek yalnızca şasi numarası girilmişse çalışır — numara olmadan açık bırakmak, ilanda hiç görünmeyecek bir vaat olurdu.
 
-GÜVENLİK: satıcı ilana RASTGELE bir numara yazıp başkasının aracının geçmişini yayımlayamaz. Numaranın satıcıyla gerçek bir bağı olmalı: ya araç şu anda onun garajında kayıtlı, ya da o numaraya ait kayıtların sahibi kendisi. İkisi de yoksa geçmiş gösterilmez.
+## "Bu VIN gerçekten satıcının aracı mı?" — DOĞRULAYAMAYIZ
+Şasi numarası bir sır değil: ön camın altında, ruhsatta, çoğu zaman ilan fotoğrafında yazar. Bir kullanıcının o numarayı kendi garajına araç olarak eklemesi BEYANDIR, kanıt değil. Gerçek sahiplik doğrulaması ancak resmi tescil kaydına bağlanmakla olur; öyle bir bağlantımız yok ve varmış gibi davranmak, güvenilmemesi gereken bir şeye güven etiketi basmak olurdu.
+
+İlk sürümde kural "araç satıcının garajında kayıtlı mı" idi ve bu kendi kendine sağlanabiliyordu; sağlandığında da o numaraya ait TÜM paylaşılan kayıtlar (önceki sahiplerin dönemleri dâhil) girişsiz bir sayfada yayımlanıyordu — yani sorgulamadaki kimlik ve hız sınırı bu yoldan aşılabiliyordu.
+
+Şimdiki kural, doğrulayamadığımız soruyu hiç sormuyor: ilanda YALNIZCA satıcının kendi dönemindeki (ownerId = satıcı) kayıtlar yayımlanır. Bu kayıtların arkasında tamamlanmış bir randevu ve onu yapan tamircinin kaydı var; yani satıcı yalnızca kendi yaptırdığı işleri yayımlayabilir. Başkasının geçmişini yayımlamak için o kişinin hesabına girmesi gerekirdi.
+
+Aracın daha eski dönemleri kaybolmaz: alıcı giriş yapıp şasi numarasıyla kendisi sorgularsa önceki sahiplerin paylaşıma açtığı kayıtları da görür. Orada kimlik ve hız sınırı var; ilan sayfası herkese açık olduğu için kapsam dar tutuluyor. İlanda ayrıca "daha eski dönemlerden {n} kayıt daha var" notu çıkar — alıcı gösterilenin aracın tüm geçmişi olduğunu sanmamalı.
 
 ## Randevu alırken
 "Bu tamircinin geçmiş randevularımı görmesine izin veriyorum" kutusu (varsayılan açık, kapatılabilir). Tamirci, izin verilmişse müşterinin kendisindeki geçmiş randevularını görür; izin verilmemişse yerinde bir kilit simgesi ve açıklama çıkar.

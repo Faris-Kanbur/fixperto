@@ -95,14 +95,45 @@ ok(/UPDATE vehicle_history SET shared = \? WHERE vin = \? AND ownerId = \?/.test
   "paylaşım izni yalnızca kendi dönemindeki kayıtları etkiliyor");
 ok(/actor\.role !== "owner"/.test(backend.slice(backend.indexOf('router.post("/share"'))), "izni yalnızca araç sahibi değiştirebiliyor");
 
-// --- 6) GÜVENLİK: ilandaki geçmiş başkasının aracı olamaz --------------------------------------
-// Satıcı ilana rastgele bir VIN yazıp başkasının geçmişini yayımlayamamalı.
+// --- 6) İLANDAKİ GEÇMİŞ: doğrulayamadığımız şeyi iddia etmiyoruz ------------------------------
+// KULLANICI SORDU: "satıcının VIN ile bağını nasıl kontrol edeceğiz?" Cevap: EDEMEYİZ. Şasi
+// numarası sır değil (ön camda, ruhsatta, fotoğrafta) ve garaja araç eklemek beyandır, kanıt
+// değil. İlk sürümdeki kural ("araç satıcının garajında kayıtlı mı") kendi kendine sağlanabiliyor,
+// sağlandığında da o VIN'e ait TÜM paylaşılan kayıtlar (önceki sahiplerin dönemleri dahil)
+// GİRİŞSİZ bir sayfada yayımlanıyordu — yani sorgulamadaki kimlik + hız sınırı bu yoldan aşılıyordu.
+// Yeni kural: ilanda yalnızca SATICININ KENDİ DÖNEMİNDEKİ kayıtlar yayımlanır.
 const listingBlock = backend.slice(backend.indexOf('router.get("/listing/:id"'));
-ok(/sellerOwnsVehicle/.test(listingBlock) && /sellerHasRecords/.test(listingBlock), "satıcı-VIN bağı doğrulanıyor");
-ok(/if \(!sellerOwnsVehicle && !sellerHasRecords\) return res\.json\(\{ records: \[\], shown: false, unverified: true \}\)/.test(listingBlock),
-  "bağ yoksa geçmiş gösterilmiyor");
-ok(/WHERE vin = \? AND shared = 1/.test(listingBlock), "ilanda yalnızca paylaşıma açık kayıtlar");
+ok(/WHERE vin = \? AND ownerId = \? AND shared = 1/.test(listingBlock),
+  "ilanda yalnızca satıcının kendi dönemindeki paylaşılan kayıtlar");
+ok(/listing\.sellerType !== "owner" \|\| listing\.sellerId == null/.test(listingBlock), "satıcı kimliği yoksa hiçbir şey gösterilmiyor");
+ok(/if \(rows\.length === 0\) return res\.json\(\{ records: \[\], shown: false, unverified: true \}\)/.test(listingBlock),
+  "kaydı olmayan satıcı geçmiş yayımlayamıyor");
+// Kendi kendine sağlanabilen "garajımda kayıtlı" şartı KALDIRILMIŞ olmalı.
+eq(/SELECT 1 FROM vehicles WHERE vin = \? AND ownerId = \?/.test(listingBlock), false,
+  "garaja araç eklemek geçmiş yayımlamaya yetmiyor");
 ok(/publicRecord/.test(listingBlock), "ilanda da kişisel veri dönmüyor");
+// Alıcı, gösterilenin aracın TÜM geçmişi olduğunu sanmamalı.
+ok(/earlierCount: earlier/.test(listingBlock), "daha eski kayıtların SAYISI bildiriliyor");
+ok(/COUNT\(\*\) n FROM vehicle_history WHERE vin = \? AND ownerId IS NOT \?/.test(listingBlock), "eski dönem sayımı satıcı dışındaki kayıtlar");
+eq(/serviceText.*earlier|earlier.*serviceText/.test(listingBlock), false, "eski kayıtların İÇERİĞİ ilanda dönmüyor");
+
+// Davranış: kuralı çalıştırıyoruz.
+const listingRecords = (rows, listing) => (
+  listing.sellerType !== "owner" || listing.sellerId == null
+    ? []
+    : rows.filter((r) => r.vin === listing.vin && r.ownerId === listing.sellerId && r.shared)
+);
+const all = [
+  { id: 1, vin: "V1", ownerId: 5, shared: 1 },   // satıcının kendi dönemi
+  { id: 2, vin: "V1", ownerId: 9, shared: 1 },   // ÖNCEKİ sahibin dönemi — ilanda görünmemeli
+  { id: 3, vin: "V1", ownerId: 5, shared: 0 },   // satıcı kapatmış
+];
+eq(listingRecords(all, { vin: "V1", sellerId: 5, sellerType: "owner" }).map((r) => r.id), [1],
+  "ilanda yalnızca satıcının kendi paylaşılan kaydı");
+eq(listingRecords(all, { vin: "V1", sellerId: 7, sellerType: "owner" }), [],
+  "VIN'i kopyalayan yabancı hiçbir kayıt yayımlayamıyor");
+eq(listingRecords(all, { vin: "V1", sellerId: 5, sellerType: "mechanic" }), [],
+  "tamirci ilanında araç geçmişi yayımlanmıyor");
 
 // --- 7) ARAYÜZ: üç yerde de bağlı ---------------------------------------------------------------
 ok(/vin: "", vinShared: true/.test(provider), "araç formunda şasi alanı var");

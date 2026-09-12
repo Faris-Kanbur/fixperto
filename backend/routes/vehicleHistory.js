@@ -200,19 +200,46 @@ router.get("/listing/:id", (req, res) => {
   const listing = db.prepare(`SELECT id, vin, showHistory, sellerId, sellerType FROM listings WHERE id = ?`).get(req.params.id);
   if (!listing) return res.status(404).json({ error: "İlan bulunamadı." });
   if (!listing.showHistory || !listing.vin) return res.json({ records: [], shown: false });
-  // GÜVENLİK: satıcının ilana RASTGELE bir VIN yazıp başkasının aracının geçmişini yayımlaması
-  // engelleniyor. İlandaki numaranın satıcıyla gerçek bir bağı olmalı: ya araç şu anda satıcının
-  // garajında kayıtlı, ya da o VIN'e ait kayıtların sahibi satıcının kendisi (aracı bizde
-  // kullanmış). İkisi de yoksa geçmiş gösterilmiyor.
-  const sellerOwnsVehicle = listing.sellerType === "owner" && !!db.prepare(
-    `SELECT 1 FROM vehicles WHERE vin = ? AND ownerId = ?`
-  ).get(listing.vin, listing.sellerId);
-  const sellerHasRecords = listing.sellerType === "owner" && !!db.prepare(
-    `SELECT 1 FROM vehicle_history WHERE vin = ? AND ownerId = ?`
-  ).get(listing.vin, listing.sellerId);
-  if (!sellerOwnsVehicle && !sellerHasRecords) return res.json({ records: [], shown: false, unverified: true });
-  const rows = db.prepare(`SELECT * FROM vehicle_history WHERE vin = ? AND shared = 1 ORDER BY serviceDate DESC`).all(listing.vin);
-  res.json({ records: rows.map(publicRecord), shown: true });
+
+  /**
+   * ====== "BU VIN GERÇEKTEN SATICININ ARACI MI?" — DÜRÜST CEVAP: BUNU DOĞRULAYAMAYIZ.
+   * -------------------------------------------------------------------------------------------
+   * Şasi numarası bir SIR DEĞİL: ön camın altında yazar, ruhsatta yazar, ilan fotoğraflarında
+   * görünebilir. Elinde bir numara olan herkes onu kendi garajına araç olarak ekleyebilir — bu
+   * beyandır, kanıt değildir. Gerçek sahiplik doğrulaması ancak resmi tescil kaydına (TNVTS / KBA)
+   * bağlanmakla olur; öyle bir bağlantımız yok ve varmış gibi yapmak, güvenmemesi gereken bir
+   * şeye güven etiketi basmak olurdu.
+   *
+   * İLK SÜRÜMDEKİ HATA (kullanıcı sordu, denetimde doğrulandı): kural "araç satıcının garajında
+   * KAYITLI mı ya da o VIN'e ait kaydı var mı" idi. İlk şart kendi kendine sağlanabiliyordu
+   * (garaja istediğin numarayı yazarsın) ve şart sağlandığında o VIN'e ait TÜM paylaşılan kayıtlar
+   * — yani önceki sahiplerin dönemleri de — GİRİŞSİZ, herkese açık bir sayfada yayımlanıyordu.
+   * Yani sorgulama uç noktasındaki kimlik + hız sınırı korumaları bu yoldan aşılabiliyordu.
+   *
+   * ÇÖZÜM: doğrulayamadığımız şeyi sormuyoruz. İlanda yayımlanan kayıtlar, SATICININ KENDİ
+   * DÖNEMİNDE (ownerId = sellerId) oluşmuş kayıtlarla sınırlı. Bu kayıtlar bizde gerçekten
+   * gerçekleşmiş: karşılığında tamamlanmış bir randevu ve o işi yapan tamircinin kaydı var.
+   * Yani satıcı yalnızca KENDİ yaptırdığı işleri yayımlayabiliyor; başkasının geçmişini
+   * yayımlamak için o kişinin hesabına girmesi gerekirdi.
+   *
+   * Aracın daha eski dönemleri kaybolmuyor: alıcı giriş yapıp şasi numarasıyla kendisi sorgularsa
+   * (POST /lookup) önceki sahiplerin paylaşıma açtığı kayıtları da görür. Orada kimlik ve hız
+   * sınırı var; burada — herkese açık sayfada — olmadığı için kapsam dar tutuluyor.
+   */
+  if (listing.sellerType !== "owner" || listing.sellerId == null) {
+    return res.json({ records: [], shown: false, unverified: true });
+  }
+  const rows = db.prepare(
+    `SELECT * FROM vehicle_history WHERE vin = ? AND ownerId = ? AND shared = 1 ORDER BY serviceDate DESC`
+  ).all(listing.vin, listing.sellerId);
+  if (rows.length === 0) return res.json({ records: [], shown: false, unverified: true });
+
+  // Satıcının döneminden ÖNCE de kayıt var mı? Sayısını söylüyoruz (içeriğini değil): alıcı
+  // "gösterilen her şey bu" sanmasın, isterse şasi numarasıyla kendisi sorgulasın.
+  const earlier = db.prepare(
+    `SELECT COUNT(*) n FROM vehicle_history WHERE vin = ? AND ownerId IS NOT ?`
+  ).get(listing.vin, listing.sellerId).n;
+  res.json({ records: rows.map(publicRecord), shown: true, earlierCount: earlier });
 });
 
 export default router;

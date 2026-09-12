@@ -101,12 +101,12 @@ export function VinLookupPanel() {
 /** İlan sayfasındaki "doğrulanmış servis geçmişi" bölümü. Satıcı açmadıysa hiç görünmez. */
 export function ListingHistorySection({ listingId }: { listingId: number | string }) {
   const { t } = useApp();
-  const [state, setState] = useState<{ loading: boolean; records: any[]; shown: boolean }>({ loading: true, records: [], shown: false });
+  const [state, setState] = useState<{ loading: boolean; records: any[]; shown: boolean; earlierCount: number }>({ loading: true, records: [], shown: false, earlierCount: 0 });
   useEffect(() => {
     let alive = true;
     api.vehicleHistory.forListing(listingId)
-      .then((res) => { if (alive) setState({ loading: false, records: res.records || [], shown: !!res.shown }); })
-      .catch(() => { if (alive) setState({ loading: false, records: [], shown: false }); });
+      .then((res) => { if (alive) setState({ loading: false, records: res.records || [], shown: !!res.shown, earlierCount: (res as any).earlierCount || 0 }); })
+      .catch(() => { if (alive) setState({ loading: false, records: [], shown: false, earlierCount: 0 }); });
     return () => { alive = false; };
   }, [listingId]);
   if (state.loading || !state.shown || state.records.length === 0) return null;
@@ -116,8 +116,13 @@ export function ListingHistorySection({ listingId }: { listingId: number | strin
         <ShieldCheck size={15} className="text-emerald-500" /> {t("vehicleHistoryVerifiedTitle")}
         <InfoTip text={t("vehicleHistoryVerifiedNote")} label={t("infoTipAria")} />
       </h3>
-      <p className="text-[11px] text-gray-400 mb-3">{t("vehicleHistoryVerifiedNote")}</p>
+      <p className="text-[11px] text-gray-400 mb-3">{t("listingHistoryOwnPeriodNote")}</p>
       <VerifiedHistoryList records={state.records} />
+      {/* Alıcı, gösterilenin ARACIN TÜM GEÇMİŞİ olduğunu sanmamalı: ilanda yalnızca satıcının
+          kendi dönemi yayımlanıyor (bkz. backend). Daha eski kayıt varsa sayısını söylüyoruz. */}
+      {state.earlierCount > 0 && (
+        <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">{t("listingHistoryEarlierNote", { n: String(state.earlierCount) })}</p>
+      )}
     </div>
   );
 }
