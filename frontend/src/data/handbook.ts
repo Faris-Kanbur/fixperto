@@ -652,6 +652,12 @@ Ayrı token. Yönetici uçları token olmadan çalışmaz; blog yazma/düzenleme
 ## Korumalı sütunlar (kitlesel atama)
 Sahiplik kontrolü "bu satır senin mi" sorusunu cevaplar; "bu SÜTUNU değiştirebilir misin" sorusunu değil. İkincisi sorulmadığı için bir tamirci kendi satırına verified:1 yazıp "doğrulanmış" rozetiyle görünebiliyor, askıya alınmış bir kullanıcı status:"active" yazıp askıyı kaldırabiliyordu. Artık bu sütunlar (verified, verificationDocs, status, shareCount, vehicleCount, apptCount, avgResponseMinutes, distance) admin dışında kimseden kabul edilmiyor; gövdeden sessizce düşürülüyor, isteğin meşru alanları işlenmeye devam ediyor. Ayrıca tabloda GERÇEKTEN bulunmayan sütun adları SQL'e hiç ulaşmıyor.
 
+## "Sessiz 403" hatası — bir HATA SINIFI
+Bir kaydın yazma yetkisi SAHİBİNE bağlıdır. Ama bazı akışlarda o kayda yazan kişi sahibi değildir: teklifi veren satıcı değildir, işe başvuran ilanı açan tamirci değildir, yorumu yazan tamircinin kendisi değildir. Bu akışlar genel PATCH ile yazıldığında sunucu 403 döndürüyor ve özellik SESSİZCE çalışmıyordu — kullanıcı "gönderildi" mesajını görüyor, veri hiç kaydedilmiyordu. Üç yerde vardı: sohbet mesajı, ilan teklifi/sorusu ve İŞ BAŞVURUSU. Hepsi kendi uç noktasına taşındı; kimlik oturumdan damgalanıyor. Yeni bir "başkasının kaydına yazma" akışı eklenirse KURAL: genel PATCH değil, kendi uç noktası.
+
+## Puan ve yorumlar
+reviewList/reviews/rating alanları giriş yapmış herkese açıktı ("sharedWrite") — dizinin tamamı istemciden geldiği için biri bir tamircinin olumsuz yorumlarını silebiliyor, başkasının ağzından yorum ekleyebiliyor ve puanı doğrudan 5,0 yazabiliyordu. Puan bu pazar yerinin en önemli güven sinyali. Artık: yorum ayrı uçtan gidiyor, yazar oturumdan damgalanıyor, YALNIZCA o tamircide tamamlanmış randevusu olan kullanıcı yorum bırakabiliyor, kişi başına tek yorum, yorumu yalnızca yazarı silebiliyor (tamirci silemiyor, yalnızca yanıtlayabiliyor) ve PUANI SUNUCU listeden hesaplıyor.
+
 ## Mesaj gönderen kimliği
 Sohbet mesajı eklemenin tek yolu POST /api/conversations/:id/messages. Gönderen ve dil sunucuda oturumdan damgalanır, ekleme sunucudaki güncel dizinin sonuna yapılır. Eskiden mesaj dizisi PATCH ile topluca yazılıyordu: bir taraf karşı tarafın ağzından mesaj uydurabiliyor ve aynı anda gelen mesaj sessizce siliniyordu. Aynı nedenle "tamirci otomatik yanıtı" demosu da kaldırıldı — kullanıcı gerçekten cevap aldığını sanıyordu.
 
@@ -787,10 +793,10 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 20 test takımı.
+tsc tip denetimi + her backend dosyasının sözdizimi + 21 test takımı.
 
 ## Takımlar
-arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri.
+arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği.
 
 ## Belgeyi canlı tutan takım
 "el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.
@@ -1078,6 +1084,23 @@ Onay ister ve geri alınamaz olduğu açıkça yazılır.
 
 ## Çıkış
 Çıkışta oturum sunucudan da düşürülür ve özel veri listeleri (araçlar, randevular, sohbetler) yerel olarak boşaltılır. Sadece ekran değiştirmek yetmez; veriler bellekte kalırsa bir sonraki kullanıcı onları görebilirdi.`,
+      },
+      {
+        id: "hesapguvenlik",
+        title: "17.4 Hesap güvenliği",
+        body: `İlke: hesabın KALICI kontrolünü etkileyen hiçbir işlem, yalnızca oturum token'ıyla yapılamaz — mevcut ŞİFRE sorulur. Gerekçe: token çalınabilir (XSS, ödünç alınmış cihaz, kopyalanmış localStorage). Token'ı olan biri şifreyi/e-postayı değiştirebilseydi ya da hesabı silebilseydi, gerçek sahibi hesabından kalıcı olarak dışarıda kalırdı.
+
+## Şifre değişimi diğer oturumları kapatır
+AÇIK: şifre değiştirmek, o ana kadar açılmış diğer oturumları etkilemiyordu. Hesabı ele geçirilmiş biri şifresini değiştirdiğinde saldırganın elindeki token çalışmaya DEVAM ediyordu — yani şifre değiştirmek hiçbir şeyi kurtarmıyordu. Artık değişimde bu cihaz dışındaki tüm oturumlar sonlandırılıyor ve kaç oturumun kapandığı kullanıcıya söyleniyor. Yeni şifre en az 8 karakter ve eskisiyle aynı olamaz.
+
+## Tüm cihazlardan çıkış
+Ayarlarda açık oturum sayısı görünür ve tek tıkla bu cihaz dışındaki tüm oturumlar kapatılır. Bu işlem şifre İSTEMEZ: hesabı kaybettirmez, aksine güvenliği artırır — "telefonumu kaybettim" diyen birinin önüne engel koymak yanlış olurdu.
+
+## E-posta değişimi
+E-posta, şifre sıfırlamanın gittiği adrestir: onu değiştirmek hesabın kontrolünü devretmektir. Bu yüzden genel profil güncellemesiyle DEĞİŞTİRİLEMEZ (alan sunucuda düşürülür, admin için de), yalnızca mevcut şifre sorulan özel uçtan değişir. Başka bir hesapta kullanılan adres reddedilir ve değişiklik ESKİ adrese e-postayla bildirilir — e-posta değişimi hesap ele geçirmenin klasik adımıdır, gerçek sahibi bunu öğrenmeli.
+
+## Hesap silme gerçekten siliyor
+Bu düğme eskiden yalnızca "Hesabınız silindi (demo)" yazan bir bildirim gösteriyordu; hesap, araçlar ve oturumlar olduğu gibi duruyordu. Kullanıcıya verisinin silindiğini söyleyip saklamak hem yanlış bilgi hem de veri koruması açısından savunulamaz. Artık mevcut şifre sorulur; hesap, araçlar ve tüm oturumlar silinir. Randevu/teklif gibi KARŞI TARAFIN da tarafı olduğu kayıtlar silinmez (tamircinin işletme geçmişi tek taraflı yok edilemez) ama kişiyi tanımlayan alanlar anonimleştirilir. Bu ayrım kullanıcıya silme ekranında yazılı olarak söylenir.`,
       },
     ],
   },

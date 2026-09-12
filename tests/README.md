@@ -29,6 +29,7 @@ yalnızca bozulanın ayrıntısını basar. Amaç: düzenli koşabilmek ama çı
 | `çeviri` | Toplu çeviri isteği, kalıcı metin önbelleği, tekrar eden metnin tek kez çevrilmesi, başarısız çevirinin saklanmaması |
 | `araç geçmişi` | Şasi (VIN) doğrulaması, kaydın uydurulamaması, paylaşım izni, kişisel veri sızdırmama, ilandaki geçmişin satıcıya bağlı olması |
 | `ilan teklifleri` | Teklifin gerçekten kaydedilmesi, tekrar teklif kuralı (görülmedi/reddedildi), izleyici bildirimleri ve aç/kapa, satıcının cevap hakkı |
+| `hesap güvenliği` | "Sessiz 403" taraması (başkasının kaydına PATCH), yorum/puan uydurulamazlığı, şifre-e-posta-silme işlemlerinde şifre şartı, oturum sonlandırma |
 
 Ayrıca `tsc --noEmit` ve her backend dosyası için `node --check` çalışır.
 

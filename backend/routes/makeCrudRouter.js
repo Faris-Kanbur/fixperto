@@ -43,8 +43,29 @@ import { hashPassword, verifyPassword as bcryptVerify, resolveActor } from "../u
  * meşru olarak yazıyor (bkz. sharedWrite). Yani puan hâlâ istemcinin hesapladığı bir değer; gerçek
  * çözümü yorumları ayrı bir tabloya taşıyıp puanı sunucuda hesaplamak, o ayrı bir iş.
  */
+/**
+ * HESAP-KRİTİK ALANLAR — genel profil güncellemesiyle DEĞİŞTİRİLEMEZ.
+ * ---------------------------------------------------------------------------------------------
+ * AÇIK (bu denetimde bulundu): e-posta, kullanıcının kendi PATCH'i ile serbestçe değiştirilebiliyordu.
+ * Ama e-posta şifre sıfırlamanın gittiği adrestir: onu değiştirmek hesabın kalıcı kontrolünü
+ * devretmektir. Yalnızca oturum token'ı olan biri (çalınmış bir token, ödünç alınmış bir cihaz)
+ * e-postayı değiştirip gerçek sahibi hesabından kalıcı olarak dışarıda bırakabilirdi.
+ * Bu alanlar artık yalnızca mevcut ŞİFRE sorulan özel uçlardan değişiyor:
+ * POST /api/auth/change-email ve POST /api/auth/change-password.
+ * Admin için de kapalı: yöneticinin kullanıcı e-postasını sessizce değiştirmesi, hesabı ele
+ * geçirmesiyle aynı şey olurdu (şifre sıfırlama bağlantısı ona gider).
+ */
+const ACCOUNT_CRITICAL_FIELDS = {
+  owners: ["email", "password"],
+  mechanics: ["email", "password"],
+};
+
 const ADMIN_ONLY_FIELDS = {
-  mechanics: ["verified", "verificationDocs", "shareCount", "avgResponseMinutes", "distance"],
+  // reviewList/reviews/rating: yorum akışının TEK yazma yolu reviewsRouter (puanı sunucu hesaplar).
+  // applicants: başvuruların tek yazma yolu jobApplicationsRouter. Genel PATCH'ten yazılabilseydi
+  // tamirci kendi ilanındaki başvuruları topluca silebilir, aday da durumunu değiştirebilirdi.
+  mechanics: ["verified", "verificationDocs", "shareCount", "avgResponseMinutes", "distance", "reviewList", "reviews", "rating"],
+  job_listings: ["applicants"],
   owners: ["status", "vehicleCount", "apptCount"],
   listings: ["shareCount"],
   job_listings: ["shareCount"],
@@ -84,10 +105,15 @@ export function makeCrudRouter(table, {
   const sharedWriteRoles = new Set(authScope?.sharedWrite?.roles || []);
   const tableColumns = columnsOf(table);
   const adminOnly = new Set(ADMIN_ONLY_FIELDS[table] || []);
+  const accountCritical = new Set(ACCOUNT_CRITICAL_FIELDS[table] || []);
   // Gövdeyi yazmadan önce süz: önce bilinmeyen sütunlar, sonra (admin değilse) korumalı sütunlar.
-  const sanitizeBody = (body, actor) => {
+  // mode: "patch" | "create". Hesap-kritik alan kısıtı yalnızca GÜNCELLEMEDE geçerli — hesap
+  // OLUŞTURMA zaten kendi uç noktasında (POST /api/auth/register) ve orada e-posta şart.
+  const sanitizeBody = (body, actor, mode = "patch") => {
     for (const key of Object.keys(body)) {
       if (tableColumns && !tableColumns.has(key)) { delete body[key]; continue; }
+      // Hesap-kritik alanlar HERKESE kapalı (admin dahil): yalnızca şifre soran özel uçlardan.
+      if (mode === "patch" && accountCritical.has(key)) { delete body[key]; continue; }
       if (adminOnly.has(key) && actor?.role !== "admin") delete body[key];
     }
     return body;
@@ -170,7 +196,7 @@ export function makeCrudRouter(table, {
         return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
       }
     }
-    const body = sanitizeBody(dehydrate(table, req.body), actor);
+    const body = sanitizeBody(dehydrate(table, req.body), actor, "create");
     // GÜVENLİK: password bu genel (mass-assignment'a açık) yazma yolundan asla kabul edilmiyor —
     // yalnızca aşağıdaki özel /:id/set-password uç noktasından değiştirilebilir (bkz. o uç
     // noktanın yorumu). passwordVerify açık olmayan tablolarda (yani şifre sütunu olmayanlarda)

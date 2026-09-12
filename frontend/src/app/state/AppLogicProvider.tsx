@@ -337,10 +337,16 @@ function useAppLogic() {
       const prefsUpdate = MY_OWNER_ID != null
         ? api.owners.update(MY_OWNER_ID, { likedReviewIds: nextLiked })
         : api.mechanics.update(MY_MECHANIC_ID, { likedReviewIds: nextLiked });
-      await Promise.all([
-        api.mechanics.update(mechanicId, { reviewList }),
+      // "Faydalı" sayacı artık yorum listesini topluca yazarak değil, özel uçtan güncelleniyor:
+      // sayacı SUNUCU tutuyor ve kimin beğendiğini kaydediyor, yoksa aynı kişi sayacı istediği
+      // kadar artırabilirdi (bkz. backend/routes/reviews.js).
+      const [helpfulRes] = await Promise.all([
+        api.mechanics.toggleReviewHelpful(mechanicId, reviewId),
         prefsUpdate,
       ]);
+      if (helpfulRes?.mechanic) {
+        setMechanicsList(list => list.map(m => m.id === mechanicId ? { ...m, ...helpfulRes.mechanic } : m));
+      }
     } catch (err) {
       // Rollback — istek gerçekten başarısız oldu, sayaç ekranda yanlış kalmasın.
       setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList: prevReviewList }));
@@ -717,6 +723,9 @@ function useAppLogic() {
         // Aracın şasi numarasına bağlı servis kayıtları (kendi dönemim / kendi yaptığım işler).
         // Ayrı bir istek: bu veri sahiplikten bağımsız bir tabloda duruyor (bkz. vehicle_history).
         api.vehicleHistory.mine().then((rows) => { if (!cancelled) setMyHistoryRecords(rows); }).catch(() => {});
+        // Açık oturum sayısı: "başka cihazlarda oturumunuz açık" bilgisi hesap güvenliği
+        // bölümünde gösteriliyor (bkz. logoutEverywhere).
+        api.account.sessions().then((r) => { if (!cancelled) setOpenSessionCount(r?.count || 0); }).catch(() => {});
         if (MY_MECHANIC_ID != null) {
           // GÜVENLİK DÜZELTMESİ: `iban`/`bankName`/`accountHolder` artık toplu tamirci listesinde
           // (GET /api/mechanics) dönmüyor (bkz. backend/db/hydrate.js) — bu alanlar sadece tamircinin
@@ -3216,13 +3225,19 @@ function useAppLogic() {
     // kaydediliyor) kalıcı, değişmeyen doğru anahtar.
     const mech = mechanicsList.find(m => m.id === appt.mechanicId);
     if (mech) {
-      const newReview = { id: nestedItemId++, mine: true, date: "az önce", name: ownerProfile.name || "Araç Sahibi", avatar: "🙂", rating: reviewForm.rating, comment: reviewForm.comment.trim() || "Hizmetten memnun kaldım.", photo: false, lang: ownerLang };
-      const newReviewsCount = mech.reviews + 1;
-      const newAvg = Math.round((((mech.rating * mech.reviews) + reviewForm.rating) / newReviewsCount) * 10) / 10;
-      const reviewList = [newReview, ...mech.reviewList];
-      setMechanicsList(list => list.map(m => m.id !== mech.id ? m : { ...m, reviewList, reviews: newReviewsCount, rating: newAvg }));
-      persist(api.mechanics.update(mech.id, { reviewList, reviews: newReviewsCount, rating: newAvg }), "Değerlendirme kaydedilemedi");
+      /**
+       * GÜVENLİK DÜZELTMESİ: yorum ve puan artık istemciden yazılmıyor.
+       * Eskiden yorum listesi ve `rating`/`reviews` alanları ilan satırına doğrudan PATCH
+       * ediliyordu ve bu alanlar giriş yapmış HERKESE açıktı — biri tamircinin olumsuz
+       * yorumlarını silebiliyor, başkasının ağzından yorum ekleyebiliyor, puanı 5,0 yazabiliyordu.
+       * Artık yorum ayrı bir uçtan gidiyor, yazar oturumdan damgalanıyor ve PUANI SUNUCU
+       * hesaplıyor (bkz. backend/routes/reviews.js).
+       */
+      api.mechanics.addReview(mech.id, { rating: reviewForm.rating, comment: reviewForm.comment.trim(), lang: ownerLang })
+        .then((res) => setMechanicsList(list => list.map(m => m.id === mech.id ? { ...m, ...res.mechanic } : m)))
+        .catch((err) => setToast({ type: "info", text: `⚠️ ${err?.message || "Değerlendirme kaydedilemedi."}` }));
     }
+
     setAppointments(apps => apps.map(a => a.id === reviewingApptId ? { ...a, reviewed: true } : a));
     persist(api.appointments.update(reviewingApptId, { reviewed: true }), "Randevu güncellenemedi");
     setReviewingApptId(null);
@@ -3236,9 +3251,13 @@ function useAppLogic() {
     if (!replyDraft.trim()) return;
     const mech = mechanicsList.find(m => m.id === mechanicId);
     const review = mech?.reviewList.find(r => r.id === reviewId);
+    // Yanıtı yalnızca yorumun yazıldığı tamirci verebilir; yorumun KENDİSİNE dokunamaz
+    // (olumsuz yorumu silmek yerine yanıtlamak). Kural sunucuda.
     const reviewList = mech ? mech.reviewList.map(r => r.id === reviewId ? { ...r, reply: replyDraft.trim(), replyLang: myProfile?.lang || "tr" } : r) : [];
     setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList }));
-    if (mech) persist(api.mechanics.update(mechanicId, { reviewList }), "Yanıt kaydedilemedi");
+    if (mech) api.mechanics.replyReview(mechanicId, reviewId, replyDraft.trim())
+      .then((res) => setMechanicsList(list => list.map(m => m.id === mechanicId ? { ...m, ...res.mechanic } : m)))
+      .catch((err) => setToast({ type: "info", text: `⚠️ ${err?.message || "Yanıt kaydedilemedi."}` }));
     setReplyingReviewId(null);
     setReplyDraft("");
     setToast({ type: "info", text: "💬 Yanıtınız yayınlandı." });
@@ -3250,11 +3269,12 @@ function useAppLogic() {
     const mech = mechanicsList.find(m => m.id === mechanicId);
     const review = mech?.reviewList.find(r => r.id === reviewId);
     if (mech && review) {
-      const newReviewsCount = Math.max(0, mech.reviews - 1);
-      const newAvg = newReviewsCount > 0 ? Math.round((((mech.rating * mech.reviews) - review.rating) / newReviewsCount) * 10) / 10 : 0;
+      // Yorumu yalnızca YAZARI silebilir (sunucu denetliyor); puanı yine sunucu yeniden hesaplıyor.
       const reviewList = mech.reviewList.filter(r => r.id !== reviewId);
-      setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList, reviews: newReviewsCount, rating: newAvg }));
-      persist(api.mechanics.update(mechanicId, { reviewList, reviews: newReviewsCount, rating: newAvg }), "Yorum silinemedi");
+      setMechanicsList(list => list.map(m => m.id !== mechanicId ? m : { ...m, reviewList }));
+      api.mechanics.deleteReview(mechanicId, reviewId)
+        .then((res) => setMechanicsList(list => list.map(m => m.id === mechanicId ? { ...m, ...res.mechanic } : m)))
+        .catch((err) => setToast({ type: "info", text: `⚠️ ${err?.message || "Yorum silinemedi."}` }));
     }
     setToast({ type: "info", text: "🗑️ Yorumunuz silindi." });
   };
@@ -3270,28 +3290,92 @@ function useAppLogic() {
   const submitPasswordChange = async () => {
     if (passwordChangeLoading) return; // duplicate-submit koruması
     if (!passwordForm.current || !passwordForm.next) { setToast({ type: "info", text: "⚠️ Lütfen tüm alanları doldurun." }); return; }
-    if (passwordForm.next.length < 6) { setToast({ type: "info", text: "⚠️ Yeni şifre en az 6 karakter olmalı." }); return; }
+    if (passwordForm.next.length < 8) { setToast({ type: "info", text: `⚠️ ${t("passwordMinLengthToast")}` }); return; }
     if (passwordForm.next !== passwordForm.confirm) { setToast({ type: "info", text: "⚠️ Yeni şifreler eşleşmiyor." }); return; }
     const myId = role === "mechanic" ? MY_MECHANIC_ID : MY_OWNER_ID;
     const passwordApi = role === "mechanic" ? api.mechanics : api.owners;
     setPasswordChangeLoading(true);
     try {
-      const { valid } = await passwordApi.verifyPassword(myId, passwordForm.current);
-      if (!valid) { setToast({ type: "info", text: "⚠️ Mevcut şifreniz yanlış." }); return; }
-      await passwordApi.setPassword(myId, passwordForm.next);
+      /**
+       * GÜVENLİK DÜZELTMESİ (tam denetimde bulundu): şifre değişimi iki ayrı isteğe bölünmüştü
+       * (önce doğrula, sonra yaz) ve ikinci istek yalnızca oturum token'ı istiyordu. Ayrıca
+       * değişimden sonra DİĞER OTURUMLAR AÇIK KALIYORDU: hesabı ele geçirilmiş biri şifresini
+       * değiştirse bile saldırganın elindeki token çalışmaya devam ediyordu — yani şifre
+       * değiştirmek hiçbir şeyi kurtarmıyordu. Artık tek uç: mevcut şifre zorunlu ve diğer tüm
+       * oturumlar kapatılıyor (bkz. backend/routes/auth.js change-password).
+       */
+      const res = await api.account.changePassword(passwordForm.current, passwordForm.next);
       setShowPasswordModal(false);
       setPasswordForm({ current: "", next: "", confirm: "" });
-      setToast({ type: "info", text: "🔒 Şifreniz güncellendi." });
+      setToast({ type: "info", text: res?.otherSessionsClosed > 0
+        ? t("passwordChangedSessionsClosedToast", { n: String(res.otherSessionsClosed) })
+        : t("passwordChangedToast") });
+      refreshSessionCount();
     } catch (err) {
       setToast({ type: "info", text: `⚠️ Şifre değiştirilemedi: ${err?.message || "Sunucuya bağlanılamadı."}` });
     } finally {
       setPasswordChangeLoading(false);
     }
   };
-  const confirmDeleteAccount = () => {
-    setShowDeleteAccountModal(false);
-    setToast({ type: "info", text: "🗑️ Hesabınız silindi (demo)." });
-    goHome();
+  /**
+   * HESAP SİLME — artık gerçekten siliyor.
+   * -------------------------------------------------------------------------------------------
+   * GERÇEK HATA (tam denetimde bulundu): bu düğme yalnızca "Hesabınız silindi (demo)" yazan bir
+   * bildirim gösteriyordu; hesap, araçlar ve oturumlar olduğu gibi duruyordu. Kullanıcıya
+   * verisinin silindiğini söyleyip saklamak hem yanlış bilgi hem de veri koruması açısından
+   * savunulamaz. Silme geri alınamaz olduğu için mevcut şifre soruluyor.
+   */
+  const [deleteAccountPassword, setDeleteAccountPassword] = useState("");
+  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
+  const confirmDeleteAccount = async () => {
+    if (deleteAccountLoading) return;
+    if (!deleteAccountPassword) { setToast({ type: "info", text: `⚠️ ${t("accountDeletePasswordRequired")}` }); return; }
+    setDeleteAccountLoading(true);
+    try {
+      await api.account.deleteAccount(deleteAccountPassword);
+      setDeleteAccountPassword("");
+      setShowDeleteAccountModal(false);
+      setDeleteConfirmText("");
+      logoutUser();
+      setToast({ type: "info", text: t("accountDeletedToast") });
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ ${err?.message || "Hesap silinemedi."}` });
+    } finally {
+      setDeleteAccountLoading(false);
+    }
+  };
+  /** Açık oturum sayısı + "tüm cihazlardan çık". Kaybolan/ödünç verilen cihaz için. */
+  const [openSessionCount, setOpenSessionCount] = useState(0);
+  const refreshSessionCount = () => {
+    if (MY_OWNER_ID == null && MY_MECHANIC_ID == null) { setOpenSessionCount(0); return; }
+    api.account.sessions().then((r) => setOpenSessionCount(r?.count || 0)).catch(() => {});
+  };
+  const logoutEverywhere = async () => {
+    try {
+      const res = await api.account.logoutAll(true);
+      setToast({ type: "info", text: t("loggedOutEverywhereToast", { n: String(res?.closed || 0) }) });
+      refreshSessionCount();
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ ${err?.message || "İşlem tamamlanamadı."}` });
+    }
+  };
+  /** E-posta değişimi: hesabın kalıcı kontrolünü etkilediği için mevcut şifre isteniyor. */
+  const [emailChangeForm, setEmailChangeForm] = useState({ open: false, email: "", password: "", loading: false });
+  const submitEmailChange = async () => {
+    if (emailChangeForm.loading) return;
+    if (!isValidEmail(emailChangeForm.email)) { setToast({ type: "info", text: t("invalidEmailAddrToast") }); return; }
+    if (!emailChangeForm.password) { setToast({ type: "info", text: `⚠️ ${t("accountDeletePasswordRequired")}` }); return; }
+    setEmailChangeForm((f) => ({ ...f, loading: true }));
+    try {
+      const res = await api.account.changeEmail(emailChangeForm.password, emailChangeForm.email);
+      if (MY_OWNER_ID != null) setOwnersDirectory((list) => list.map((o) => (o.id === MY_OWNER_ID ? { ...o, email: res.email } : o)));
+      if (MY_MECHANIC_ID != null) setMechanicsList((list) => list.map((m) => (m.id === MY_MECHANIC_ID ? { ...m, email: res.email } : m)));
+      setEmailChangeForm({ open: false, email: "", password: "", loading: false });
+      setToast({ type: "info", text: t("emailChangedToast") });
+    } catch (err) {
+      setEmailChangeForm((f) => ({ ...f, loading: false }));
+      setToast({ type: "info", text: `⚠️ ${err?.message || "E-posta değiştirilemedi."}` });
+    }
   };
   const openHelpInfo = (topic) => setToast({ type: "info", text: `ℹ️ ${topic} — bu bir demo uygulamasıdır, gerçek içerik burada gösterilir.` });
   // ---- Araç sahibi / tamirci "Yardım & Destek" akışı: kendi şikayet/destek talebini oluşturur,
@@ -4678,9 +4762,21 @@ function useAppLogic() {
     // giriş yalnızca "Başvur" anında isteniyor ve giriş sonrası başvuru otomatik gönderiliyor.
     if (!ensureAuth(t("authGateReasonJobApply"), () => callLatest("submitJobApplication"))) return;
     const applicant = { id: nestedItemId++, name: jobApplyInfo.name.trim(), phone: jobApplyPhoneCheck.normalized || jobApplyInfo.phone.trim(), email: jobApplyInfo.email.trim(), address: jobApplyInfo.address.trim(), message: jobApplyMsg, lang: ownerLang, date: "az önce", status: "pending", cvName: jobApplyCv?.name || null, cvUrl: jobApplyCv?.url || null };
+    /**
+     * GERÇEK HATA DÜZELTMESİ (tam denetimde bulundu): başvuru, iş ilanının PATCH'i ile
+     * yazılıyordu. İlanın yazma yetkisi ilanı AÇAN TAMİRCİYE ait olduğu için istek sunucuda
+     * 403 alıyordu: kullanıcı "Başvurunuz iletildi" mesajını görüyor, başvuru veritabanına
+     * HİÇ yazılmıyor, tamirci hiçbir zaman görmüyordu. Artık ayrı bir uç var ve aday kimliği
+     * oturumdan damgalanıyor (bkz. backend/routes/jobApplications.js).
+     */
     const applicants = [applicant, ...selectedJob.applicants];
     setJobListings(js => js.map(j => j.id === selectedJob.id ? { ...j, applicants } : j));
-    persist(api.jobs.update(selectedJob.id, { applicants }), "Başvuru kaydedilemedi");
+    api.jobs.apply(selectedJob.id, {
+      name: applicant.name, phone: applicant.phone, email: applicant.email, address: applicant.address,
+      message: applicant.message, lang: applicant.lang, cvName: applicant.cvName, cvUrl: applicant.cvUrl,
+    })
+      .then((res) => setJobListings(js => js.map(j => j.id === selectedJob.id ? { ...j, ...res.job } : j)))
+      .catch((err) => setToast({ type: "info", text: `⚠️ ${err?.message || "Başvuru kaydedilemedi."}` }));
     setMyApplications(list => [{ id: applicant.id, jobId: selectedJob.id, applicantId: applicant.id, role, date: "az önce" }, ...list]);
     recordConversion("jobApplication");
     setJobApplyMsg("");
@@ -4693,9 +4789,13 @@ function useAppLogic() {
     const job = jobListings.find(j => j.id === jobId);
     const applicant = job?.applicants.find(a => a.id === applicantId);
     if (!job || !applicant || !myProfile) return;
+    // Durumu yalnızca ilan sahibi tamirci değiştirebilir; kural sunucuda (aday kendini
+    // "kabul edildi" yapamasın diye durum alanı istemciden hiç kabul edilmiyor).
     const applicants = job.applicants.map(a => a.id === applicantId ? { ...a, status: "rejected" } : a);
     setJobListings(js => js.map(j => j.id === jobId ? { ...j, applicants } : j));
-    persist(api.jobs.update(jobId, { applicants }), "Başvuru kaydedilemedi");
+    api.jobs.setApplicationStatus(jobId, applicantId, "rejected")
+      .then((res) => setJobListings(js => js.map(j => j.id === jobId ? { ...j, ...res.job } : j)))
+      .catch((err) => setToast({ type: "info", text: `⚠️ ${err?.message || "Başvuru kaydedilemedi."}` }));
     // applicant.name JSON sütunundan geliyor — eski/eksik kayıtlarda boş olabilir.
     const applicantName = String(applicant.name ?? "").trim();
     const firstName = applicantName.split(" ")[0] || applicantName;
@@ -5211,6 +5311,9 @@ function useAppLogic() {
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, goToMyPanel, goToMySettings,
     canReoffer, startReoffer, myActiveOfferOn, offerButtonState,
+    deleteAccountPassword, setDeleteAccountPassword, deleteAccountLoading,
+    openSessionCount, refreshSessionCount, logoutEverywhere,
+    emailChangeForm, setEmailChangeForm, submitEmailChange,
     listingReply, setListingReply, submitListingReply,
     vinLookup, lookupVin, clearVinLookup, myHistoryRecords, refreshMyHistory, setVehicleHistoryShared,
     completeVinInput, setCompleteVinInput, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,

@@ -108,6 +108,30 @@ export function destroySession(token) {
   if (token) deleteSession.run(hashToken(token));
 }
 
+/**
+ * HESAP GÜVENLİĞİ: bir kullanıcının TÜM oturumlarını (isteğe bağlı olarak biri hariç) kapatır.
+ * ---------------------------------------------------------------------------------------------
+ * AÇIK (bu denetimde bulundu): şifre değiştirmek, o ana kadar açılmış diğer oturumları
+ * etkilemiyordu. Hesabı ele geçirilmiş bir kullanıcı şifresini değiştirdiğinde saldırganın
+ * elindeki token çalışmaya DEVAM ediyordu — yani şifre değiştirmek hiçbir şeyi kurtarmıyordu.
+ * Şifre değişiminde ve "tüm cihazlardan çık" işleminde artık oturumlar gerçekten sonlandırılıyor.
+ */
+const deleteUserSessions = db.prepare("DELETE FROM sessions WHERE userId = ? AND role = ?");
+const deleteOtherUserSessions = db.prepare("DELETE FROM sessions WHERE userId = ? AND role = ? AND tokenHash != ?");
+export function destroyUserSessions(userId, role, keepToken = null) {
+  if (userId == null || !role) return 0;
+  const info = keepToken
+    ? deleteOtherUserSessions.run(userId, role, hashToken(keepToken))
+    : deleteUserSessions.run(userId, role);
+  return info.changes;
+}
+/** Kullanıcının açık oturum sayısı — "başka cihazlarda açık oturumunuz var" bilgisi için. */
+const countUserSessions = db.prepare("SELECT COUNT(*) n FROM sessions WHERE userId = ? AND role = ?");
+export function userSessionCount(userId, role) {
+  if (userId == null || !role) return 0;
+  return countUserSessions.get(userId, role)?.n || 0;
+}
+
 export function extractBearerToken(req) {
   const header = req.headers.authorization || "";
   const match = /^Bearer\s+(.+)$/i.exec(header);

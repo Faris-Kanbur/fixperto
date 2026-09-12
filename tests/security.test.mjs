@@ -83,7 +83,7 @@ ok(/const ADMIN_ONLY_FIELDS = \{/.test(crudSrc), "korumalı sütun listesi var")
 for (const f of ["verified", "status", "shareCount", "vehicleCount", "apptCount"]) {
   ok(new RegExp(`"${f}"`).test(crudSrc.slice(crudSrc.indexOf("ADMIN_ONLY_FIELDS"), crudSrc.indexOf("// Tablonun GERÇEK sütunları"))), `${f} korumalı`);
 }
-ok(/sanitizeBody\(dehydrate\(table, req\.body\), actor\)/.test(crudSrc), "POST gövdesi süzülüyor");
+ok(/sanitizeBody\(dehydrate\(table, req\.body\), actor, "create"\)/.test(crudSrc), "POST gövdesi süzülüyor");
 ok(/const body = sanitizeBody\(rawBody, actorForBody\);/.test(crudSrc), "PATCH gövdesi süzülüyor");
 // Süzme yetki kontrolünden ÖNCE olmalı: sharedWrite yolu korumalı alanı içeri sızdırmasın.
 const patchIdx = crudSrc.indexOf('router.patch("/:id"');

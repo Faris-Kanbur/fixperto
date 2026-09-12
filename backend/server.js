@@ -9,6 +9,8 @@ import profileViewsRouter from "./routes/profileViews.js";
 import translateRouter from "./routes/translate.js";
 import vehicleHistoryRouter from "./routes/vehicleHistory.js";
 import listingInteractionsRouter from "./routes/listingInteractions.js";
+import jobApplicationsRouter from "./routes/jobApplications.js";
+import reviewsRouter from "./routes/reviews.js";
 import analyticsRouter from "./routes/analytics.js";
 import blogRouter from "./routes/blog.js";
 import careersRouter from "./routes/careers.js";
@@ -76,12 +78,16 @@ app.get("/api/health", (req, res) => res.json({ ok: true, service: "fixperto-bac
 // olduğu için publicRead:false (girişsiz kimse göremez, sahibi ya da admin görür); mechanics/owners/
 // listings/jobs pazar yeri gezinme deneyimi için okumada açık kalıyor (publicRead varsayılan true),
 // sadece yazma (kayıt oluşturma/değiştirme/silme) artık gerçek sahiplik kontrolüne tabi.
+// Yorumlar AYRI router'da ve CRUD'dan ÖNCE: puan artık istemcinin gönderdiği bir sayı değil,
+// sunucunun yorum listesinden hesapladığı bir değer (bkz. routes/reviews.js).
+app.use("/api/mechanics", reviewsRouter);
 app.use("/api/mechanics", makeCrudRouter("mechanics", {
   shareCountColumn: "shareCount", passwordVerify: true,
-  // sharedWrite: reviewList/reviews/rating tek başına self-only olamaz — bir owner bir tamirciye
-  // yorum bırakabilmeli, kendi yorumunu "faydalı" işaretleyebilmeli/silebilmeli (bkz.
-  // makeCrudRouter.js üstündeki büyük yorum, "Beğeni kaydedilemedi" regresyonunun düzeltmesi).
-  authScope: { fields: [{ field: "id", role: "mechanic" }], sharedWrite: { fields: ["reviewList", "reviews", "rating"], roles: ["owner", "mechanic"] } },
+  // sharedWrite KALDIRILDI (güvenlik denetimi): reviewList/reviews/rating alanları giriş yapmış
+  // HERKESE açıktı — dizinin tamamı istemciden geldiği için biri tamircinin olumsuz yorumlarını
+  // silebiliyor, başkasının ağzından yorum ekleyebiliyor ve puanı doğrudan 5,0 yazabiliyordu.
+  // Bu üç alan artık yalnızca reviewsRouter üzerinden, sunucunun hesaplamasıyla değişiyor.
+  authScope: { fields: [{ field: "id", role: "mechanic" }] },
 }));
 app.use("/api/owners", makeCrudRouter("owners", {
   passwordVerify: true,
@@ -113,6 +119,9 @@ app.use("/api/listings", makeCrudRouter("listings", {
 // Genel CRUD factory yerine özel router (bkz. backend/routes/conversations.js) — mesaj
 // şeklinin/boyutunun ve sohbet kimliğinin (mechanicId) her zaman geçerli kalması için.
 app.use("/api/conversations", conversationsRouter);
+// Başvurular AYRI router'da ve CRUD'dan ÖNCE: iş ilanının yazma yetkisi ilanı açan tamirciye
+// ait olduğu için başvurular eskiden 403 alıyor ve HİÇ kaydedilmiyordu (bkz. jobApplications.js).
+app.use("/api/jobs", jobApplicationsRouter);
 app.use("/api/jobs", makeCrudRouter("job_listings", {
   shareCountColumn: "shareCount",
   authScope: { fields: [{ field: "mechanicId", role: "mechanic" }] },

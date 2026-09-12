@@ -230,6 +230,17 @@ function crud<T extends { id: number | string }>(resource: string) {
 function withPasswordEndpoints<T extends { id: number | string }>(resource: string) {
   return {
     ...crud<T>(resource),
+    // DEĞERLENDİRMELER: puan artık istemcinin gönderdiği bir sayı değil — sunucu yorum listesinden
+    // hesaplıyor (bkz. backend/routes/reviews.js). Yorum yazmak için o tamircide tamamlanmış
+    // randevu şart; yorumu yalnızca yazarı silebilir, tamirci yalnızca yanıtlayabilir.
+    addReview: (id: number | string, data: { rating: number; comment?: string; lang?: string }): Promise<any> =>
+      request(`/api/${resource}/${id}/reviews`, { method: "POST", body: JSON.stringify(data) }),
+    deleteReview: (id: number | string, reviewId: number | string): Promise<any> =>
+      request(`/api/${resource}/${id}/reviews/${reviewId}`, { method: "DELETE" }),
+    replyReview: (id: number | string, reviewId: number | string, reply: string): Promise<any> =>
+      request(`/api/${resource}/${id}/reviews/${reviewId}/reply`, { method: "POST", body: JSON.stringify({ reply }) }),
+    toggleReviewHelpful: (id: number | string, reviewId: number | string): Promise<any> =>
+      request(`/api/${resource}/${id}/reviews/${reviewId}/helpful`, { method: "POST" }),
     verifyPassword: (id: number | string, password: string, opts?: RequestOptions): Promise<{ valid: boolean }> =>
       request(`/api/${resource}/${id}/verify-password`, { method: "POST", body: JSON.stringify({ password }), ...opts }),
     setPassword: (id: number | string, password: string, opts?: RequestOptions): Promise<{ ok: true }> =>
@@ -325,7 +336,15 @@ export const api = {
         body: JSON.stringify({ messages, clearContextNote: !!opts?.clearContextNote }),
       }),
   },
-  jobs: crud<JobListing>("jobs"),
+  jobs: {
+    ...crud<JobListing>("jobs"),
+    // Başvuru, ilanın PATCH'i ile DEĞİL bu uçla yazılır: ilanın yazma yetkisi ilanı açan
+    // tamirciye ait, başvuran o değil (eskiden 403 alıyor ve başvuru kayboluyordu).
+    apply: (id: number | string, data: Record<string, unknown>): Promise<{ job: JobListing; applicantId: number }> =>
+      request(`/api/jobs/${id}/applications`, { method: "POST", body: JSON.stringify(data) }),
+    setApplicationStatus: (id: number | string, applicantId: number | string, status: string): Promise<{ job: JobListing }> =>
+      request(`/api/jobs/${id}/applications/${applicantId}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+  },
   tickets: crud<SupportTicket>("tickets"),
   // BLOG — herkese açık okuma (yalnızca yayınlanmış yazılar), yazma yönetici token'ı ister.
   // Generic crud<>() kullanılmıyor çünkü tekil okuma id ile değil SLUG ile yapılıyor: kalıcı
@@ -469,6 +488,19 @@ export const api = {
       request("/api/vehicle-history/share", { method: "POST", body: JSON.stringify({ vin, shared }) }),
     forListing: (listingId: number | string): Promise<{ records: any[]; shown: boolean; unverified?: boolean }> =>
       request(`/api/vehicle-history/listing/${listingId}`),
+  },
+  // HESAP GÜVENLİĞİ: üçü de mevcut ŞİFRE ister — token'ı olan biri (çalınmış oturum) hesabın
+  // kalıcı kontrolünü ele geçirememeli (bkz. backend/routes/auth.js).
+  account: {
+    sessions: (): Promise<{ count: number }> => request("/api/auth/sessions"),
+    logoutAll: (keepCurrent = true): Promise<{ ok: boolean; closed: number }> =>
+      request("/api/auth/logout-all", { method: "POST", body: JSON.stringify({ keepCurrent }) }),
+    changePassword: (currentPassword: string, newPassword: string): Promise<{ ok: boolean; otherSessionsClosed: number }> =>
+      request("/api/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) }),
+    changeEmail: (currentPassword: string, newEmail: string): Promise<{ ok: boolean; email: string }> =>
+      request("/api/auth/change-email", { method: "POST", body: JSON.stringify({ currentPassword, newEmail }) }),
+    deleteAccount: (currentPassword: string): Promise<{ ok: boolean }> =>
+      request("/api/auth/delete-account", { method: "POST", body: JSON.stringify({ currentPassword }) }),
   },
   health: (): Promise<{ ok: boolean; service: string }> => request("/api/health"),
 };

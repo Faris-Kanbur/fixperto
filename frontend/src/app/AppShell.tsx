@@ -169,7 +169,9 @@ export function AppShell() {
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers,
     confirmBooking, goHome, chooseRole, completeVinInput, setCompleteVinInput, canReoffer, startReoffer,
-    listingReply, setListingReply, submitListingReply, myHistoryRecords, setVehicleHistoryShared, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
+    listingReply, setListingReply, submitListingReply,
+    deleteAccountPassword, setDeleteAccountPassword, deleteAccountLoading, openSessionCount, logoutEverywhere,
+    emailChangeForm, setEmailChangeForm, submitEmailChange, myHistoryRecords, setVehicleHistoryShared, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
     adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats, viewStats, myProfileViewStats, listingViewStats, listingFavoriteCount,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
@@ -1765,6 +1767,17 @@ export function AppShell() {
                   <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className="text-rose-500" /> {t("appearanceDarkModeTitle")}</h4><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
                   <button onClick={() => setOwnerAccountOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Lock size={15} className="text-gray-400" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${ownerAccountOpen ? "rotate-90" : ""}`} /></button>
                   {ownerAccountOpen && (<>
+                    {/* HESAP GÜVENLİĞİ — açık oturumlar ve e-posta değişimi.
+                        Şifre değiştirmek eskiden diğer oturumları kapatmıyordu; e-posta ise
+                        yalnızca token'la değiştirilebiliyordu (bkz. backend/routes/auth.js). */}
+                    <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-2">
+                      <p className="text-sm font-medium text-gray-700 mb-1">{t("accountSecurityTitle")}</p>
+                      <p className="text-[11px] text-gray-400 mb-3">{t("openSessionsLabel", { n: String(openSessionCount) })} · {t("logoutEverywhereDesc")}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={logoutEverywhere} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("logoutEverywhereBtn")}</button>
+                        <button onClick={() => setEmailChangeForm({ open: true, email: "", password: "", loading: false })} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("changeEmailBtn")}</button>
+                      </div>
+                    </div>
                     <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordTitle")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                     <button onClick={() => setOwnerSettingsTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
                     <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
@@ -1878,7 +1891,7 @@ export function AppShell() {
                       <h3 className="font-bold text-gray-900 text-base mb-4">{t("myInfo")}</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("fullNameShortPlaceholder")}</span><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder={t("fullNameShortPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
-                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("emailPlaceholder")}</span><input value={ownerProfile.email} onChange={(e) => updateMyOwnerField("email", e.target.value)} placeholder={t("emailPlaceholder")} type="email" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("emailPlaceholder")}</span><input value={ownerProfile.email} readOnly onClick={() => setEmailChangeForm({ open: true, email: ownerProfile.email || "", password: "", loading: false })} title={t("changeEmailDesc")} placeholder={t("emailPlaceholder")} type="email" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
                         <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample2")}</span><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} onBlur={(e) => normalizePhoneField(e.target.value, (v) => updateMyOwnerField("phone", v))} placeholder={t("phonePlaceholderExample2")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
                         <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholderShort")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder={t("addressPlaceholderShort")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></div></label>
                       </div>
@@ -3949,6 +3962,17 @@ export function AppShell() {
                 </>)}
                 <button onClick={() => setMechAccountOpen(o => !o)} className="w-full flex items-center justify-between mt-2 mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Lock size={15} className="text-gray-400" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${mechAccountOpen ? "rotate-90" : ""}`} /></button>
                 {mechAccountOpen && (<>
+                  {/* HESAP GÜVENLİĞİ — açık oturumlar ve e-posta değişimi.
+                      Şifre değiştirmek eskiden diğer oturumları kapatmıyordu; e-posta ise
+                      yalnızca token'la değiştirilebiliyordu (bkz. backend/routes/auth.js). */}
+                  <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-2">
+                    <p className="text-sm font-medium text-gray-700 mb-1">{t("accountSecurityTitle")}</p>
+                    <p className="text-[11px] text-gray-400 mb-3">{t("openSessionsLabel", { n: String(openSessionCount) })} · {t("logoutEverywhereDesc")}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={logoutEverywhere} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("logoutEverywhereBtn")}</button>
+                      <button onClick={() => setEmailChangeForm({ open: true, email: "", password: "", loading: false })} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("changeEmailBtn")}</button>
+                    </div>
+                  </div>
                   <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                   <button onClick={() => setMechProfileTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
                   <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
@@ -4485,7 +4509,26 @@ export function AppShell() {
           </div>
         </div>
       )}
-      {showDeleteAccountModal && (() => { const deleteReady = deleteConfirmText.trim().toLocaleUpperCase("tr-TR") === "SİL"; const closeDeleteModal = () => { setShowDeleteAccountModal(false); setDeleteConfirmText(""); }; return (
+      {/* E-POSTA DEĞİŞTİRME — mevcut şifre zorunlu. E-posta, şifre sıfırlamanın gittiği adres:
+          yalnızca oturum token'ıyla değiştirilebilseydi, çalınmış bir token hesabın kalıcı
+          kontrolünü ele geçirmeye yeterdi. */}
+      {emailChangeForm.open && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={() => setEmailChangeForm({ open: false, email: "", password: "", loading: false })}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
+            <h3 className="font-bold text-gray-900 mb-1">{t("changeEmailBtn")}</h3>
+            <p className="text-xs text-gray-400 mb-4 leading-relaxed">{t("changeEmailDesc")}</p>
+            <label className="text-[11px] text-gray-500 mb-1 block">{t("newEmailLabel")}</label>
+            <input type="email" value={emailChangeForm.email} onChange={(e) => setEmailChangeForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm mb-3" />
+            <label className="text-[11px] text-gray-500 mb-1 block">{t("currentPasswordLabel")}</label>
+            <input type="password" value={emailChangeForm.password} onChange={(e) => setEmailChangeForm(f => ({ ...f, password: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm mb-4" />
+            <div className="flex gap-2">
+              <button onClick={() => setEmailChangeForm({ open: false, email: "", password: "", loading: false })} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("cancel")}</button>
+              <button onClick={submitEmailChange} disabled={emailChangeForm.loading} className="flex-1 bg-gray-900 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-gray-800 transition disabled:opacity-60">{t("save")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDeleteAccountModal && (() => { const deleteReady = deleteConfirmText.trim().toLocaleUpperCase("tr-TR") === "SİL"; const closeDeleteModal = () => { setShowDeleteAccountModal(false); setDeleteConfirmText(""); setDeleteAccountPassword(""); }; return (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={closeDeleteModal}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-3 mx-auto"><Trash2 size={26} className="text-red-500" /></div>
@@ -4495,9 +4538,16 @@ export function AppShell() {
               <p className="text-xs text-gray-600 text-center mb-2">{t("typeToConfirmNote", { word: t("deleteWordTr") })}</p>
               <input value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder={t("deleteWordTr")} className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm text-center font-semibold tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-red-300" />
             </div>
+            {/* Silme artık GERÇEKTEN siliyor (eskiden yalnızca "silindi (demo)" yazıyordu), bu
+                yüzden geri alınamaz bir işlem için mevcut şifre isteniyor. */}
+            <div className="mb-4">
+              <label className="text-[11px] text-gray-500 mb-1 block">{t("currentPasswordLabel")}</label>
+              <input type="password" value={deleteAccountPassword} onChange={(e) => setDeleteAccountPassword(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">{t("accountDeleteKeepsNote")}</p>
+            </div>
             <div className="flex gap-2">
               <button onClick={closeDeleteModal} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("cancel")}</button>
-              <button disabled={!deleteReady} onClick={confirmDeleteAccount} className={`flex-1 py-3 rounded-2xl font-semibold text-sm transition ${deleteReady ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("yesDeleteConfirmLabel")}</button>
+              <button disabled={!deleteReady || !deleteAccountPassword || deleteAccountLoading} onClick={confirmDeleteAccount} className={`flex-1 py-3 rounded-2xl font-semibold text-sm transition ${deleteReady && deleteAccountPassword && !deleteAccountLoading ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("yesDeleteConfirmLabel")}</button>
             </div>
           </div>
         </div>

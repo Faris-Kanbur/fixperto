@@ -6,6 +6,7 @@ import { sendMail, isMailerConfigured } from "../utils/mailer.js";
 import {
   hashPassword, verifyPassword, generateRandomPassword, generateOtp,
   createSession, destroySession, requireSession, makeRateLimiter,
+  destroyUserSessions, userSessionCount, extractBearerToken,
 } from "../utils/auth.js";
 
 // GÜVENLİK/ÖZELLİK: gerçek e-posta + şifre ile kayıt/giriş, e-posta ile gönderilen tek kullanımlık
@@ -215,6 +216,139 @@ authRouter.post("/logout", (req, res) => {
   const header = req.headers.authorization || "";
   const match = /^Bearer\s+(.+)$/i.exec(header);
   if (match) destroySession(match[1]);
+  res.json({ ok: true });
+});
+
+/**
+ * ====== HESAP GÜVENLİĞİ UÇLARI ======
+ * Üçü de AYNI kurala dayanıyor: hesabın kalıcı kontrolünü etkileyen bir işlem, oturum token'ının
+ * varlığıyla YAPILAMAZ; mevcut ŞİFRE sorulur. Gerekçe: token çalınabilir (XSS, ödünç alınmış
+ * cihaz, kopyalanmış localStorage). Token'ı olan biri şifreyi/e-postayı değiştirebilseydi ya da
+ * hesabı silebilseydi, gerçek sahibi hesabından kalıcı olarak dışarıda kalırdı.
+ */
+const accountLimiter = makeRateLimiter({ maxAttempts: 10, lockoutMs: 15 * 60 * 1000, windowMs: 15 * 60 * 1000 });
+
+async function requireCurrentPassword(req, res) {
+  const ip = clientIp(req);
+  if (accountLimiter.check(ip).blocked) {
+    res.status(429).json({ error: "Çok fazla deneme. Lütfen birkaç dakika sonra tekrar deneyin." });
+    return null;
+  }
+  const table = ROLE_TABLES[req.session.role];
+  const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(req.session.id);
+  if (!row) { res.status(404).json({ error: "Kullanıcı bulunamadı." }); return null; }
+  const given = req.body?.currentPassword;
+  const okPass = typeof given === "string" && given.length > 0 && await verifyPassword(given, row.password);
+  if (!okPass) {
+    accountLimiter.registerFailure(ip);
+    res.status(403).json({ error: "Mevcut şifreniz yanlış." });
+    return null;
+  }
+  return row;
+}
+
+/** Açık oturum sayısı — "başka cihazlarda oturumunuz açık" bilgisini göstermek için. */
+authRouter.get("/sessions", requireSession(["owner", "mechanic"]), (req, res) => {
+  res.json({ count: userSessionCount(req.session.id, req.session.role) });
+});
+
+/**
+ * TÜM CİHAZLARDAN ÇIKIŞ. Şifre istemiyoruz: bu işlem hesabı kaybettirmez, aksine güvenliği
+ * ARTIRIR — "telefonumu kaybettim" diyen birinin önündeki engeli azaltmak doğru olan.
+ * İsteği yapan oturum isterse ayakta kalır (keepCurrent), istemezse o da kapanır.
+ */
+authRouter.post("/logout-all", requireSession(["owner", "mechanic"]), (req, res) => {
+  const keep = req.body?.keepCurrent === false ? null : extractBearerToken(req);
+  const closed = destroyUserSessions(req.session.id, req.session.role, keep);
+  res.json({ ok: true, closed });
+});
+
+/**
+ * ŞİFRE DEĞİŞTİRME. Mevcut şifre zorunlu ve değişimden sonra DİĞER TÜM OTURUMLAR KAPANIR.
+ * Eskiden bu iş genel /:id/set-password ucundan yapılıyordu ve yalnızca token istiyordu; üstelik
+ * eski oturumlar açık kalıyordu — yani hesabı ele geçirilmiş biri şifresini değiştirse bile
+ * saldırgan içeride kalmaya devam ediyordu.
+ */
+authRouter.post("/change-password", requireSession(["owner", "mechanic"]), async (req, res) => {
+  const row = await requireCurrentPassword(req, res);
+  if (!row) return;
+  const next = req.body?.newPassword;
+  if (typeof next !== "string" || next.length < 8) {
+    return res.status(400).json({ error: "Yeni şifre en az 8 karakter olmalı." });
+  }
+  if (next === req.body?.currentPassword) {
+    return res.status(400).json({ error: "Yeni şifre eskisiyle aynı olamaz." });
+  }
+  const table = ROLE_TABLES[req.session.role];
+  db.prepare(`UPDATE ${table} SET password = ? WHERE id = ?`).run(await hashPassword(next), req.session.id);
+  const closed = destroyUserSessions(req.session.id, req.session.role, extractBearerToken(req));
+  res.json({ ok: true, otherSessionsClosed: closed });
+});
+
+/**
+ * E-POSTA DEĞİŞTİRME. E-posta, şifre sıfırlamanın gittiği adrestir: onu değiştirmek hesabın
+ * kontrolünü devretmektir. Bu yüzden genel profil güncellemesiyle (PATCH /api/owners/:id)
+ * yapılamıyor — orada e-posta alanı düşürülüyor (bkz. makeCrudRouter ACCOUNT_CRITICAL_FIELDS) —
+ * ve burada mevcut şifre isteniyor.
+ */
+authRouter.post("/change-email", requireSession(["owner", "mechanic"]), async (req, res) => {
+  const row = await requireCurrentPassword(req, res);
+  if (!row) return;
+  const email = String(req.body?.newEmail || "").trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Geçersiz e-posta adresi." });
+  const table = ROLE_TABLES[req.session.role];
+  // Aynı e-posta başka bir hesapta kullanılıyorsa reddediyoruz: giriş e-posta ile yapılıyor,
+  // çakışma olursa hangi hesaba gireceği belirsizleşir.
+  for (const [role, tbl] of Object.entries(ROLE_TABLES)) {
+    const clash = db.prepare(`SELECT id FROM ${tbl} WHERE lower(email) = ?`).get(email);
+    if (clash && !(tbl === table && clash.id === req.session.id)) {
+      return res.status(409).json({ error: "Bu e-posta adresi başka bir hesapta kullanılıyor." });
+    }
+  }
+  db.prepare(`UPDATE ${table} SET email = ? WHERE id = ?`).run(email, req.session.id);
+  // Eski adrese haber ver: e-posta değişimi hesap ele geçirmenin klasik adımıdır, gerçek sahibi
+  // bunu öğrenmeli. Posta sunucusu yoksa sessizce geçiyoruz (uygulama akışı bozulmasın).
+  if (isMailerConfigured() && row.email && row.email !== email) {
+    sendMail({
+      to: row.email,
+      subject: "Fixperto hesabınızın e-posta adresi değişti",
+      text: `Hesabınızın e-posta adresi ${email} olarak değiştirildi. Bu işlemi siz yapmadıysanız hemen bizimle iletişime geçin.`,
+    }).catch(() => {});
+  }
+  res.json({ ok: true, email });
+});
+
+/**
+ * HESAP SİLME — gerçekten siliyor.
+ * Eskiden bu düğme yalnızca "Hesabınız silindi (demo)" yazan bir bildirim gösteriyordu: hesap
+ * duruyordu. Kullanıcıya verisinin silindiğini söyleyip saklamak, hem yanlış bilgi hem de veri
+ * koruması (KVKK/GDPR "unutulma hakkı") açısından savunulamaz.
+ *
+ * NE SİLİNİR, NE KALIR: kişinin kendi kaydı, araçları, oturumları ve kayıtlı aramaları silinir.
+ * Randevu/teklif/yorum gibi KARŞI TARAFIN da tarafı olduğu kayıtlar silinmez — bunlar tamircinin
+ * işletme geçmişi ve tek taraflı yok edilemez — ama kişiyi tanımlayan alanları anonimleştirilir.
+ */
+authRouter.post("/delete-account", requireSession(["owner", "mechanic"]), async (req, res) => {
+  const row = await requireCurrentPassword(req, res);
+  if (!row) return;
+  const { id, role } = req.session;
+  const anonName = "Silinmiş kullanıcı";
+  const tx = db.transaction(() => {
+    if (role === "owner") {
+      db.prepare(`UPDATE appointments SET customer = ? WHERE ownerId = ?`).run(anonName, id);
+      db.prepare(`DELETE FROM vehicles WHERE ownerId = ?`).run(id);
+      db.prepare(`DELETE FROM owners WHERE id = ?`).run(id);
+    } else {
+      // Tamirci kaydı silinirse randevu/ilan geçmişi sahipsiz kalır; kaydı anonimleştirip
+      // yayından kaldırıyoruz (profil aramada çıkmasın, iletişim bilgisi kalmasın).
+      db.prepare(`UPDATE mechanics SET name = ?, email = ?, phone = NULL, address = NULL, iban = '', bankName = '', accountHolder = '', verified = 0, services = '[]', staff = '[]' WHERE id = ?`)
+        .run(anonName, `deleted-${id}@fixperto.invalid`, id);
+      db.prepare(`UPDATE listings SET status = 'removed' WHERE sellerId = ? AND sellerType = 'mechanic'`).run(id);
+      db.prepare(`UPDATE job_listings SET status = 'closed' WHERE mechanicId = ?`).run(id);
+    }
+  });
+  tx();
+  destroyUserSessions(id, role);
   res.json({ ok: true });
 });
 
