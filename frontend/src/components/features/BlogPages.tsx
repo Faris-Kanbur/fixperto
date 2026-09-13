@@ -75,10 +75,14 @@ export function BlogListPage() {
             {/* Öne çıkan yazı: en yeni olan geniş kartta — okuyucunun gözü ilk oraya gitsin. */}
             {lead && (
               <button onClick={() => openBlogPost(lead.slug)} className="w-full text-left bg-white border border-gray-100 rounded-3xl shadow-sm hover:shadow-md transition overflow-hidden mb-6 grid grid-cols-1 md:grid-cols-2">
-                <div className="h-52 md:h-full bg-gradient-to-br from-rose-100 to-gray-100 flex items-center justify-center">
+                {/* GÖRSEL ARKA PLANI NÖTR: burada pembe bir degrade vardı ve görselin kapatmadığı
+                    her yerde (şeffaf PNG, farklı en-boy oranı, görsel yüklenemediğinde) kırmızımsı
+                    bir zemin görünüyordu — hiçbir fotoğrafla uyuşmuyordu. Görsel varsa nötr gri,
+                    yoksa (yer tutucu ikon) yumuşak gri. */}
+                <div className={`h-52 md:h-full flex items-center justify-center ${isImgUrl(lead.coverPhoto) ? "bg-gray-100" : "bg-gray-50"}`}>
                   {isImgUrl(lead.coverPhoto)
                     ? <img src={imgThumb(lead.coverPhoto, 900)} onError={imgFallbackHandler} alt={lead.title} className="w-full h-full object-cover" />
-                    : <Wrench size={48} className="text-rose-200" />}
+                    : <Wrench size={48} className="text-gray-300" />}
                 </div>
                 <div className="p-6 md:p-8 flex flex-col justify-center">
                   <div className="flex flex-wrap gap-1.5 mb-3">
@@ -95,10 +99,10 @@ export function BlogListPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {rest.map((p) => (
                 <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-rose-200 transition overflow-hidden flex flex-col">
-                  <div className="h-36 bg-gradient-to-br from-rose-50 to-gray-100 flex items-center justify-center flex-shrink-0">
+                  <div className={`h-36 flex items-center justify-center flex-shrink-0 ${isImgUrl(p.coverPhoto) ? "bg-gray-100" : "bg-gray-50"}`}>
                     {isImgUrl(p.coverPhoto)
                       ? <img src={imgThumb(p.coverPhoto, 500)} onError={imgFallbackHandler} alt={p.title} className="w-full h-full object-cover" />
-                      : <Wrench size={32} className="text-rose-200" />}
+                      : <Wrench size={32} className="text-gray-300" />}
                   </div>
                   <div className="p-5 flex-1 flex flex-col">
                     <h3 className="font-bold text-gray-900 mb-2 leading-snug">{p.title}</h3>

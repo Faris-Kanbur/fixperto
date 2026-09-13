@@ -21,7 +21,7 @@ import { useApp } from "../../app/state/AppLogicProvider";
  * Modül düzeyinde tanımlı — bkz. tests/ui.test.mjs KURAL 8.
  */
 export function SavedSearchList({ showUpdate = false, compact = false }: { showUpdate?: boolean; compact?: boolean }) {
-  const { t, savedSearches, applySavedSearch, removeSavedSearch, renameSavedSearch, updateSavedSearchToCurrent } = useApp();
+  const { t, savedSearches, applySavedSearch, removeSavedSearch, renameSavedSearch, updateSavedSearchToCurrent, savedSearchFrequency, setSavedSearchFrequency } = useApp();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draftName, setDraftName] = useState("");
 
@@ -44,8 +44,10 @@ export function SavedSearchList({ showUpdate = false, compact = false }: { showU
     <div className="space-y-2">
       {savedSearches.map((s) => {
         const editing = editingId === s.id;
+        const freq = savedSearchFrequency(s);
         return (
-          <div key={s.id} className={`rounded-2xl p-3 flex items-center justify-between gap-2 transition ${compact ? "border border-gray-100 hover:border-rose-200" : "bg-white border border-gray-100 shadow-sm"}`}>
+          <div key={s.id} className={`rounded-2xl p-3 transition ${compact ? "border border-gray-100 hover:border-rose-200" : "bg-white border border-gray-100 shadow-sm"}`}>
+            <div className="flex items-center justify-between gap-2">
             {editing ? (
               <>
                 <input
@@ -79,6 +81,22 @@ export function SavedSearchList({ showUpdate = false, compact = false }: { showU
                 <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")}
                   className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-1"><Trash2 size={14} /></button>
               </>
+            )}
+            </div>
+            {/* BİLDİRİM SIKLIĞI — arama başına. Emlak/iş ilanı sitelerinin yaptığı gibi: geniş bir
+                aramada her sonuç için ayrı bildirim yorucu olur, kullanıcı da bildirimleri tümden
+                kapatır. Günlük/haftalıkta eşleşmeler tek özet bildirimde toplanıyor. */}
+            {!editing && (
+              <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-100 flex-wrap">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mr-0.5">{t("savedSearchFreqLabel")}</span>
+                {["instant", "daily", "weekly", "off"].map((f) => (
+                  <button key={f} onClick={() => setSavedSearchFrequency(s.id, f)} aria-pressed={freq === f}
+                    title={t("savedSearchFreqHint")}
+                    className={`text-[10px] font-semibold px-2 py-1 rounded-lg transition ${freq === f ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                    {t(`savedSearchFreq_${f}`)}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         );

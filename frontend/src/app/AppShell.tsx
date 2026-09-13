@@ -186,7 +186,7 @@ export function AppShell() {
     openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
     ownerSettingsTab, setOwnerSettingsTab, adminBlogPosts, adminBlogForm, setAdminBlogForm, editBlogPost, cancelBlogEdit, saveBlogPost, deleteBlogPost,
     goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, setServiceFixed, finalizeAddService,
-    serviceLabel, servicePriceForBrand, mechanicStartingPrice,
+    serviceLabel, serviceCategoryOf, servicePriceForBrand, mechanicStartingPrice,
     servicePickerOpen, setServicePickerOpen, servicePickerQuery, setServicePickerQuery,
     servicePickerCat, setServicePickerCat, brandPriceEditKey, setBrandPriceEditKey,
     toggleCatalogService, setServiceBrandPrice, clearServiceBrandPrices, brandPriceOptions,
@@ -1742,7 +1742,7 @@ export function AppShell() {
                   {(() => {
                     // notifyListingUpdates: "izlediğim ilan değişti" — "benim ilanıma teklif geldi"den (notifyOffers)
                     // farklı bir şey, bu yüzden ayrı bir anahtar (bkz. notifyFavoriteWatchers).
-                    const notifOpts = [{ key: "notifyAppointments", label: t("notifApptUpdatesLabel") }, { key: "notifyOffers", label: t("notifOfferResultsLabel") }, { key: "notifyMessages", label: t("notifMessagesLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }];
+                    const notifOpts = [{ key: "notifyAppointments", label: t("notifApptUpdatesLabel") }, { key: "notifyOffers", label: t("notifOfferResultsLabel") }, { key: "notifyMessages", label: t("notifMessagesLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }, { key: "notifySavedSearches", label: t("notifySavedSearchesLabel") }];
                     const allNotifsOn = notifOpts.every(opt => ownerSettings[opt.key]);
                     const toggleAllNotifs = () => {
                       setOwnerSettings(s => ({ ...s, ...Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])) }));
@@ -3721,8 +3721,41 @@ export function AppShell() {
                       <p className="text-xs text-gray-400 mt-1">{t("noServicesYetHint")}</p>
                     </button>
                   )}
-                  <div className="space-y-2.5 mb-4">
-                    {myProfile.services.map((s, i) => {
+                  {/* HİZMETLER KATEGORİYE GÖRE GRUPLANIYOR (kullanıcı bildirdi: "çok seçince
+                      uzayıp gidiyor ve çok karışık oluyor").
+                      50 hizmet düz bir liste olarak alt alta dizildiğinde profil sayfası metrelerce
+                      uzuyor ve aranan hizmet bulunamıyordu. Artık hizmet SEÇİCİSİNDEKİ ile aynı
+                      düzen: kategori başlıkları ve altında o kategorinin hizmetleri. Bir kategoride
+                      7'den fazla hizmet varsa o BÖLÜM kendi içinde kaydırılıyor — sayfa uzamıyor,
+                      diğer kategori başlıkları ekranda kalıyor. (Aynı desen: tamirci sayfasındaki
+                      uzun hizmet listesi, bkz. el kitabı 4.2.) */}
+                  {(() => {
+                    const SECTION_SCROLL_ROWS = 7;
+                    const SERVICE_ROW_PX = 62;   // bir hizmet satırının yüksekliği
+                    const withIndex = myProfile.services.map((svc, idx) => ({ svc, idx }));
+                    const groups = SERVICE_CATALOG
+                      .map((cat) => ({
+                        key: cat.key,
+                        label: cat[lang] || cat.tr,
+                        rows: withIndex.filter(({ svc }) => serviceCategoryOf(svc) === cat.key),
+                      }))
+                      .filter((g) => g.rows.length > 0);
+                    // Katalogda olmayan (tamircinin kendi yazdığı) hizmetler kendi başlığı altında.
+                    const customRows = withIndex.filter(({ svc }) => !serviceCategoryOf(svc));
+                    if (customRows.length > 0) groups.push({ key: "__custom", label: t("customServicesGroupLabel"), rows: customRows });
+                    return (
+                      <div className="space-y-4 mb-4">
+                        {groups.map((g) => {
+                          const scrollable = g.rows.length > SECTION_SCROLL_ROWS;
+                          return (
+                            <div key={g.key}>
+                              <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{g.label}</p>
+                                <span className="text-[11px] text-gray-300">{g.rows.length}</span>
+                              </div>
+                              <div className={`space-y-2.5 ${scrollable ? "overflow-y-auto pr-1" : ""}`}
+                                style={scrollable ? { maxHeight: SECTION_SCROLL_ROWS * SERVICE_ROW_PX } : undefined}>
+                                {g.rows.map(({ svc: s, idx: i }) => {
                       const bp = s.brandPrices || {};
                       const bpCount = Object.keys(bp).length;
                       const open = brandPriceEditKey === (s.key || `custom-${i}`);
@@ -3773,9 +3806,18 @@ export function AppShell() {
                             </div>
                           )}
                         </div>
-                      );
-                    })}
-                  </div>
+                                  );
+                                })}
+                              </div>
+                              {scrollable && (
+                                <p className="text-[10px] text-gray-400 mt-1">{t("serviceSectionScrollNote", { shown: String(SECTION_SCROLL_ROWS), total: String(g.rows.length) })}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                   {showAddServiceForm && (
                     <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4">
                       <p className="text-xs font-semibold text-gray-700 mb-2.5">{t("addCustomServiceBtn")}</p>
@@ -3925,7 +3967,7 @@ export function AppShell() {
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={() => setAutoAccept(!autoAccept)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
                 <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-600" /> {t("useMyLocationTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                 {(() => {
-                  const notifOpts = [{ key: "notifyAppointments", label: t("notifyAppointmentsLabel") }, { key: "notifyOffers", label: t("notifyOffersLabel") }, { key: "notifyMessages", label: t("notifyMessagesLabel") }, { key: "notifyJobApplications", label: t("notifyJobApplicationsLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }];
+                  const notifOpts = [{ key: "notifyAppointments", label: t("notifyAppointmentsLabel") }, { key: "notifyOffers", label: t("notifyOffersLabel") }, { key: "notifyMessages", label: t("notifyMessagesLabel") }, { key: "notifyJobApplications", label: t("notifyJobApplicationsLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }, { key: "notifySavedSearches", label: t("notifySavedSearchesLabel") }];
                   const allNotifsOn = notifOpts.every(opt => mechSettings[opt.key]);
                   const toggleAllNotifs = () => {
                     setMechSettings(s => ({ ...s, ...Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])) }));

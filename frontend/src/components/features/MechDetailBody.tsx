@@ -59,7 +59,7 @@ export function MechDetailBody() {
     setShareHistoryConsent, bookingService, setBookingService, bookingServiceSearch, setBookingServiceSearch, 
     selectedBookingVehicleId, setSelectedBookingVehicleId, paymentForm, setPaymentForm, reviewingApptId, 
     setReviewingApptId, reviewForm, setReviewForm, showPasswordModal, setShowPasswordModal, legalModalTopic, 
-    setLegalModalTopic, detailReturnScreen, setDetailReturnScreen, passwordForm, setPasswordForm, 
+    setLegalModalTopic, detailReturnScreen, setDetailReturnScreen, detailReturnTab, setDetailReturnTab, passwordForm, setPasswordForm, 
     showNewTicketForm, setShowNewTicketForm, newTicketForm, setNewTicketForm, showDeleteAccountModal, 
     setShowDeleteAccountModal, confirmDialog, setConfirmDialog, deleteConfirmText, setDeleteConfirmText, 
     ownerDangerZoneOpen, setOwnerDangerZoneOpen, mechDangerZoneOpen, setMechDangerZoneOpen, 
@@ -193,7 +193,16 @@ export function MechDetailBody() {
   const mechJobs = jobListings.filter((j) => j.mechanicId === selectedMechanic.id);
   const isVisitor = role !== "mechanic";
   const closeOverlays = () => { setMapDetailOpen(false); setShowMapMobile(false); };
-  const goBack = () => { if (mapDetailOpen) { setMapDetailOpen(false); } else { setScreen(detailReturnScreen || (role === "mechanic" ? "mechBrowse" : "owner")); setDetailReturnScreen(null); } };
+  // Geri dönüş yalnızca EKRANI değil SEKMEYİ de geri alıyor: önizlemeden dönen tamirci,
+  // profilini düzenlerken kaldığı sekmede buluyor kendini (bkz. previewMyProfile).
+  const goBack = () => {
+    if (mapDetailOpen) { setMapDetailOpen(false); return; }
+    setScreen(detailReturnScreen || (role === "mechanic" ? "mechBrowse" : "owner"));
+    if (detailReturnTab?.kind === "mechTab") setMechTab(detailReturnTab.value);
+    if (detailReturnTab?.kind === "mechProfileTab") setMechProfileTab(detailReturnTab.value);
+    setDetailReturnTab(null);
+    setDetailReturnScreen(null);
+  };
   // Rozetler: profilin en üstünde "bu servis neden iyi" sorusuna tek bakışta cevap veren şerit.
   // Yalnızca GERÇEKTEN hak edilen rozetler gösteriliyor — herkeste çıkan bir rozet bilgi taşımaz.
   const highlights = [

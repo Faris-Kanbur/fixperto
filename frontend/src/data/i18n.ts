@@ -519,7 +519,11 @@ export const T = {
   turkishFallbackLabel: { tr: "Türkçe", en: "Turkish", de: "Türkisch" },
   notSpecifiedLabel: { tr: "Belirtilmemiş", en: "Not specified", de: "Nicht angegeben" },
   brandsServicedByMechanicTitle: { tr: "Hizmet Verdiği Markalar", en: "Brands Serviced", de: "Bediente Marken" },
-  priceUponInspectionLabel: { tr: "Fiyata bakılacak", en: "Price upon inspection", de: "Preis nach Besichtigung" },
+  // DÜZELTİLDİ: burada "Fiyata bakılacak" yazıyordu. Bu satır tamircinin fiyat GİRMEDİĞİ
+  // hizmetlerde çıkıyor — yani anlatmak istediği şey "bu işin fiyatı değişken". "Fiyata
+  // bakılacak" hem belirsiz hem de sitedeki diğer yerlerde kullandığımız "Değişken" rozetiyle
+  // çelişiyordu; aynı şey iki farklı isimle anılıyordu.
+  priceUponInspectionLabel: { tr: "Değişken fiyat", en: "Variable price", de: "Variabler Preis" },
   scrollForMoreLabel: { tr: "Daha fazlası için kaydırın", en: "Scroll for more", de: "Für mehr scrollen" },
   carListingsTitle: { tr: "Araç İlanları", en: "Car Listings", de: "Fahrzeuganzeigen" },
   jobListingsTitle: { tr: "İş İlanları", en: "Job Listings", de: "Stellenanzeigen" },
@@ -1402,6 +1406,20 @@ export const T = {
   accountDeletedToast: { tr: "🗑️ Hesabınız silindi. Verileriniz kaldırıldı.", en: "🗑️ Your account was deleted. Your data has been removed.", de: "🗑️ Ihr Konto wurde gelöscht. Ihre Daten wurden entfernt." },
   accountDeleteKeepsNote: { tr: "Hesabınız, araçlarınız ve oturumlarınız silinir. Tamircilerin işletme kayıtlarındaki geçmiş randevu/teklif kayıtları silinmez ama adınız kaldırılır.", en: "Your account, vehicles and sessions are deleted. Past appointments and offers stay in the mechanics' business records, but your name is removed from them.", de: "Konto, Fahrzeuge und Sitzungen werden gelöscht. Vergangene Termine und Angebote bleiben in den Geschäftsunterlagen der Werkstätten, Ihr Name wird jedoch entfernt." },
   reviewNeedsAppointmentToast: { tr: "Yalnızca bu tamircide tamamlanmış randevusu olan kullanıcılar yorum bırakabilir.", en: "Only customers with a completed appointment at this mechanic can leave a review.", de: "Nur Kunden mit einem abgeschlossenen Termin bei dieser Werkstatt können eine Bewertung abgeben." },
+  // --- KAYITLI ARAMA BİLDİRİMLERİ ---
+  savedSearchMatchTitle: { tr: "Kayıtlı aramanızla eşleşen yeni sonuç 🔔", en: "New match for your saved search 🔔", de: "Neuer Treffer für Ihre gespeicherte Suche 🔔" },
+  savedSearchMatchOne: { tr: "\"{name}\" aramanıza uyan yeni bir sonuç var: {label}.", en: "There is a new result matching \"{name}\": {label}.", de: "Es gibt einen neuen Treffer für \"{name}\": {label}." },
+  savedSearchMatchMany: { tr: "\"{name}\" aramanıza uyan {n} yeni sonuç var.", en: "There are {n} new results matching \"{name}\".", de: "Es gibt {n} neue Treffer für \"{name}\"." },
+  savedSearchFreqLabel: { tr: "Bildirim sıklığı", en: "Alert frequency", de: "Benachrichtigungshäufigkeit" },
+  savedSearchFreq_instant: { tr: "Anında", en: "Instant", de: "Sofort" },
+  savedSearchFreq_daily: { tr: "Günlük", en: "Daily", de: "Täglich" },
+  savedSearchFreq_weekly: { tr: "Haftalık", en: "Weekly", de: "Wöchentlich" },
+  savedSearchFreq_off: { tr: "Kapalı", en: "Off", de: "Aus" },
+  savedSearchFreqHint: { tr: "Geniş aramalarda her yeni sonuç için ayrı bildirim yorucu olur; günlük ya da haftalık seçerseniz hepsi tek özet bildirimde toplanır.", en: "On broad searches a separate alert per result gets tiring; pick daily or weekly and they arrive as one summary.", de: "Bei weit gefassten Suchen ist eine Meldung pro Treffer ermüdend; mit täglich oder wöchentlich kommt alles in einer Zusammenfassung." },
+  savedSearchFrequencySavedToast: { tr: "🔔 Bildirim sıklığı: {label}", en: "🔔 Alert frequency: {label}", de: "🔔 Benachrichtigungshäufigkeit: {label}" },
+  notifySavedSearchesLabel: { tr: "Kayıtlı arama sonuçları", en: "Saved search results", de: "Ergebnisse gespeicherter Suchen" },
+  customServicesGroupLabel: { tr: "Kendi eklediklerim", en: "My own services", de: "Eigene Leistungen" },
+  serviceSectionScrollNote: { tr: "{total} hizmetten {shown} tanesi görünüyor — bu bölümü kaydırın.", en: "Showing {shown} of {total} services — scroll this section.", de: "{shown} von {total} Leistungen sichtbar — diesen Abschnitt scrollen." },
   vinLabel: { tr: "Şasi (VIN) numarası", en: "Chassis (VIN) number", de: "Fahrgestellnummer (VIN)" },
   vinOptional: { tr: "İsteğe bağlı", en: "Optional", de: "Optional" },
   vinPlaceholder: { tr: "Örn. WBA3B5C50DF123456", en: "e.g. WBA3B5C50DF123456", de: "z. B. WBA3B5C50DF123456" },

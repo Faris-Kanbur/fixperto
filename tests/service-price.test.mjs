@@ -173,4 +173,23 @@ const i18nScrollLine = i18n.split("\n").find((l) => l.trim().startsWith("mechSer
 for (const lang of ["tr:", "en:", "de:"]) ok(i18nScrollLine.includes(lang), `kaydırma notu ${lang} dilinde var`);
 ok(/\{shown\}/.test(i18nScrollLine) && /\{total\}/.test(i18nScrollLine), "notta görünen/toplam sayıları yer tutucudan geliyor");
 
+// --- "Fiyata bakılacak" -> "Değişken fiyat" ----------------------------------------------------
+// Bu satır tamircinin fiyat GİRMEDİĞİ hizmetlerde çıkıyor; anlatmak istediği şey "değişken".
+// "Fiyata bakılacak" hem belirsizdi hem de sitedeki "Değişken" rozetiyle çelişiyordu.
+const priceLine = i18n.split("\n").find((l) => l.trim().startsWith("priceUponInspectionLabel:")) || "";
+ok(/Değişken/.test(priceLine), "fiyatsız hizmette 'Değişken fiyat' yazıyor");
+eq(/Fiyata bakılacak|upon inspection|nach Besichtigung/.test(priceLine), false, "eski belirsiz metin kaldırıldı");
+
+// --- Tamirci profilinde hizmetler KATEGORİYE göre gruplanıyor ----------------------------------
+// Kullanıcı bildirdi: çok hizmet seçince liste uzayıp gidiyor ve karışıyordu.
+ok(/const SECTION_SCROLL_ROWS = 7;/.test(shell), "bölüm başına 7 satır tavanı");
+ok(/serviceCategoryOf\(svc\) === cat\.key/.test(shell), "hizmetler kategoriye göre gruplanıyor");
+ok(/customServicesGroupLabel/.test(shell), "katalog dışı hizmetler kendi başlığında");
+ok(/scrollable \? "overflow-y-auto pr-1" : ""/.test(shell), "kalabalık bölüm kendi içinde kayıyor");
+ok(/maxHeight: SECTION_SCROLL_ROWS \* SERVICE_ROW_PX/.test(shell), "yükseklik satır sayısından hesaplanıyor");
+ok(/serviceSectionScrollNote/.test(shell), "kaydırılabildiği yazıyla bildiriliyor");
+const sectionScroll = (n) => n > 7;
+eq(sectionScroll(7), false, "tam 7 hizmette kaydırma yok");
+eq(sectionScroll(8), true, "8 hizmette kaydırma var");
+
 report("hizmet fiyatı");

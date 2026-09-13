@@ -155,4 +155,45 @@ const i18nSrc = readFileSync(join(SRC_DIR, "data", "i18n.ts"), "utf8");
 const panelLine = i18nSrc.split("\n").find((l) => l.trim().startsWith("backToPanelBtn:")) || "";
 for (const lang of ["tr:", "en:", "de:"]) ok(panelLine.includes(lang), `panele dön etiketi ${lang} dilinde var`);
 
+// --- ÖNİZLEMEDEN GERİ DÖNÜŞ -------------------------------------------------------------------
+// Yaşanan hata (kullanıcı bildirdi): "önizleme"ye tıklayıp geri gelince alakasız bir ekran
+// açılıyordu. Sebep: dönüş adresi SABİT "mechProfilePage" yazılmıştı, oysa düğme tamirci
+// panelinin profil sekmesinde duruyor — kullanıcı hiç gitmediği bir sayfaya "geri" dönüyordu.
+const providerSrc3 = readFileSync(join(SRC_DIR, "app", "state", "AppLogicProvider.tsx"), "utf8");
+const previewFn = providerSrc3.slice(providerSrc3.indexOf("const previewMyProfile = () => {"), providerSrc3.indexOf("const tryAddService"));
+eq(/openDetail\(myProfile, "mechProfilePage"\)/.test(previewFn), false, "sabit dönüş adresi kaldırıldı");
+ok(/openDetail\(myProfile, screen\)/.test(previewFn), "dönüş adresi o an bulunulan ekran");
+ok(/setDetailReturnTab\(/.test(previewFn), "dönüşte sekme de hatırlanıyor");
+const detailBody = readFileSync(join(SRC_DIR, "components", "features", "MechDetailBody.tsx"), "utf8");
+ok(/if \(detailReturnTab\?\.kind === "mechTab"\) setMechTab\(detailReturnTab\.value\)/.test(detailBody), "geri dönüşte panel sekmesi geri geliyor");
+ok(/if \(detailReturnTab\?\.kind === "mechProfileTab"\) setMechProfileTab\(detailReturnTab\.value\)/.test(detailBody), "geri dönüşte profil sekmesi geri geliyor");
+
+// --- KAYITLI ARAMA BİLDİRİMLERİ: sıklık ve iki rol ---------------------------------------------
+ok(/const SAVED_SEARCH_INTERVALS = \{ instant: 0, daily: 24 \* 60 \* 60 \* 1000, weekly: 7 \* 24 \* 60 \* 60 \* 1000 \}/.test(providerSrc3),
+  "anında/günlük/haftalık aralıkları tanımlı");
+ok(/const setSavedSearchFrequency = \(id, frequency\)/.test(providerSrc3), "sıklık arama başına ayarlanabiliyor");
+ok(/MY_OWNER_ID == null && MY_MECHANIC_ID == null/.test(providerSrc3), "bildirim iki rolde de çalışıyor");
+ok(/pendingMatchIds/.test(providerSrc3), "beklemedeki eşleşmeler biriktiriliyor");
+ok(/savedSearchMatchMany/.test(providerSrc3), "çoklu eşleşme tek özet bildirimde");
+ok(/notifySavedSearches/.test(providerSrc3), "kendi bildirim ayarı var");
+
+// Sıklık kararını çalıştır: süre dolmadan bildirim gitmemeli.
+const DAY = 24 * 60 * 60 * 1000;
+const dueNow = (freq, lastNotifiedAt, now) => {
+  const interval = { instant: 0, daily: DAY, weekly: 7 * DAY }[freq] ?? 0;
+  return interval === 0 || !lastNotifiedAt || (now - lastNotifiedAt) >= interval;
+};
+const T = 1_000_000_000_000;
+eq(dueNow("instant", T - 1000, T), true, "anında her zaman gönderiliyor");
+eq(dueNow("daily", T - 1000, T), false, "günlükte 1 saniye sonra gönderilmiyor");
+eq(dueNow("daily", T - DAY, T), true, "günlükte 24 saat sonra gönderiliyor");
+eq(dueNow("weekly", T - 3 * DAY, T), false, "haftalıkta 3 gün sonra gönderilmiyor");
+eq(dueNow("weekly", T - 7 * DAY, T), true, "haftalıkta 7 gün sonra gönderiliyor");
+eq(dueNow("daily", null, T), true, "hiç bildirim gitmediyse ilk seferde gönderiliyor");
+
+const savedList = readFileSync(join(SRC_DIR, "components", "features", "SavedSearchList.tsx"), "utf8");
+ok(/\["instant", "daily", "weekly", "off"\]\.map/.test(savedList), "dört seçenek de listede");
+ok(/setSavedSearchFrequency\(s\.id, f\)/.test(savedList), "seçim kaydediliyor");
+ok(/aria-pressed=\{freq === f\}/.test(savedList), "seçili sıklık ekran okuyucuya bildiriliyor");
+
 report("gezinme");

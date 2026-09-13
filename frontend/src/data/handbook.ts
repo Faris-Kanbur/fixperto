@@ -287,6 +287,9 @@ Sabit fiyatlı hizmetler önceden bilinen tutarlıdır; değişkenler ekspertiz 
 ## Sabit / Değişken seçimi tek düğme DEĞİL
 Eskiden tek bir düğme vardı ve üzerinde MEVCUT durum yazıyordu. "Değişken" yazan düğmeye basmak "değişkeni seç" değil "sabite geçir" demekti; fiyat vermek istemeyen tamirci "Değişken"e bastığında "önce bir fiyat girin" uyarısı alıyordu — yani uyarı, kullanıcının niyetinin TAM TERSİNİ engelliyordu. Artık iki ayrı seçenek var. "Değişken" her zaman serbesttir, hiçbir rakam gerektirmez; uyarı yalnızca tamirci açıkça "Sabit" dediğinde çıkar, çünkü rakamsız sabit fiyat müşteriye hiçbir şey anlatmaz.
 
+## Tamircinin kendi hizmet listesi kategoriye göre gruplanır
+Tamirci 50 hizmet seçtiğinde profil düzenleme ekranı düz bir liste olarak metrelerce uzuyor ve aranan hizmet bulunamıyordu. Artık hizmet SEÇİCİSİNDEKİ ile aynı düzen: kategori başlıkları ve altlarında o kategorinin hizmetleri. Bir kategoride 7'den fazla hizmet varsa o BÖLÜM kendi içinde kaydırılır — sayfa uzamaz, diğer başlıklar ekranda kalır. Katalogda olmayan (tamircinin kendi yazdığı) hizmetler kendi başlığı altında toplanır.
+
 ## Uzun hizmet listesi sayfayı ele geçirmez
 Tamirci sayfasında kapalı hâlde 6 hizmet gösterilir. "Tümünü gör" listeyi OLDUĞU GİBİ açıyordu; 50 hizmeti olan bir tamircide sayfa metrelerce uzuyor, altındaki çalışma saatleri ve yorumlar pratikte erişilemez hâle geliyordu. Artık açık hâlde de bir tavan var: 10 satır görünür, gerisi kutunun KENDİ İÇİNDE kaydırılır. 10 ve altı hizmette kaydırma kutusu hiç açılmaz — gereksiz bir kutu, düz listeden kötüdür. Kaydırılabildiği ayrıca yazıyla da söylenir ("{total} hizmetten {shown} tanesi görünüyor"), çünkü kullanıcı listenin bittiğini sanıp kaydırmayı denemeyebilir.
 
@@ -496,7 +499,10 @@ Bazı ekranlar pencereyi değil kendi overflow-y-auto kapsayıcılarını kaydı
 "Panele dön" ve "Ayarlar". Eskiden burada "Ara" (Suchen) yazan tek bir düğme vardı: etiket kullanıcının adından geliyordu, adı boş olanlarda arama sekmesinin adına düşüyordu. Zaten ana sayfadaki arama kutusunun üstünde duran birine "Ara" demek hiçbir şey kazandırmıyordu; asıl eksik olan kullanıcının kendi alanına dönebilmesiydi.
 
 ## Hedef role göre değişir ve TEK yerde durur
-goToMyPanel / goToMySettings (AppLogicProvider). Tamirci → tamirci paneli ve profil ayarları sekmesi; araç sahibi → panosu ve ayar ekranı. Bu seçimi her üst çubukta yeniden yazmak, birinin er geç yanlış ekrana gitmesi demekti.`,
+goToMyPanel / goToMySettings (AppLogicProvider). Tamirci → tamirci paneli ve profil ayarları sekmesi; araç sahibi → panosu ve ayar ekranı. Bu seçimi her üst çubukta yeniden yazmak, birinin er geç yanlış ekrana gitmesi demekti.
+
+## Önizlemeden dönüş: ekran DEĞİL, ekran + sekme
+Tamircinin "önizleme" düğmesi kendi profilini ziyaretçi gözüyle açıyor. Dönüş adresi sabit yazılmıştı ve kullanıcının hiç gitmediği bir sayfaya "geri" götürüyordu. Kural: bir ekrandan geçici olarak çıkan her akış, dönerken YALNIZCA ekranı değil o ekrandaki SEKMEYİ de geri almalı — kullanıcı düzenlemeye kaldığı yerden devam etsin.`,
       },
     ],
   },
@@ -522,7 +528,10 @@ Beyaz zemin + border-gray-100 + rounded-3xl. Site genelinde tek desen; yeni ekra
 İçerik max-w-7xl kapsayıcılarda ortalanır. Tam sayfa ekranlarda dış kabuk max-w-none olmalı; bu listeye eklenmeyen bir ekran dar kapsayıcıda sıkışır (test bu kuralı denetliyor).
 
 ## Boş durumlar
-Her liste için ikon + tek cümlelik açıklama. Boş ekran bırakılmaz.`,
+Her liste için ikon + tek cümlelik açıklama. Boş ekran bırakılmaz.
+
+## Görsel arka planları NÖTR
+Blog kapak görsellerinin arkasında pembe bir degrade vardı; görselin kapatmadığı her yerde (şeffaf PNG, farklı en-boy oranı, görsel yüklenemediğinde) kırmızımsı bir zemin görünüyor ve hiçbir fotoğrafla uyuşmuyordu. Kural: bir görselin ARKASINDA marka rengi olmaz — nötr gri kullanılır. Marka rengi, görselin kendisi olmayan yerlerde (rozetler, başlık bantları, düğmeler) kalır.`,
       },
       {
         id: "bilesen",
@@ -1006,7 +1015,15 @@ Bir filtre kombinasyonu isimle kaydedilir ve tek tıkla geri yüklenir. Kaydedil
 Kriter güncelleme düğmesi YALNIZCA arama ekranında görünür; profil sayfasında "şu anki filtre" diye bir bağlam yok, orada göstermek yanıltıcı olurdu.
 
 ## Giriş gerekiyor
-İkisi de hesaba yazıldığı için misafirken kapılanır.`,
+İkisi de hesaba yazıldığı için misafirken kapılanır.
+
+## Bildirim sıklığı (arama başına)
+Emlak ve iş ilanı sitelerinin yıllardır yaptığı şey: aramayı kaydet, yeni sonuç çıkınca haber al — ama hangi sıklıkta haber alacağına KULLANICI karar versin. Dört seçenek var: anında, günlük, haftalık, kapalı. Geniş bir aramada ("İstanbul'da araba") her yeni ilan için ayrı bildirim, kullanıcıya bildirimleri tümden kapattırır.
+
+Günlük/haftalıkta eşleşmeler biriktirilir (pendingMatchIds) ve süre dolunca TEK özet bildirim gider ("3 yeni sonuç"). Anında seçilse bile ikiden fazla eşleşme tek bildirimde toplanır. "Kapalı"da eşleşmeler yine "görüldü" işaretlenir — aksi halde sıklık sonradan açıldığında aylar öncesinin sonuçları bir anda yağardı.
+
+## Düzeltilen iki hata
+Bildirim yalnızca ARAÇ SAHİBİ oturumundayken çalışıyordu; tamirci de arama kaydedebildiği hâlde onun aramaları hiç bildirim üretmiyordu. Ayrıca her eşleşme için ayrı bildirim atılıyordu: tek seferde 20 yeni ilan gelirse 20 bildirim. İkisi de düzeltildi ve bu bildirimlerin kendi aç/kapa anahtarı var (notifySavedSearches).`,
       },
       {
         id: "karsilastirma",

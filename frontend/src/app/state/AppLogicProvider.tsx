@@ -143,9 +143,9 @@ function useAppLogic() {
   const callLatest = (name, ...args) => latestFnsRef.current[name]?.(...args);
   const [ownerTab, setOwnerTab] = useState(() => nav0("ownerTab", "search"));
   const [ownerMode, setOwnerMode] = useState(() => nav0("ownerMode", "mechanics"));
-  const [ownerSettings, setOwnerSettings] = useState({ smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyListingUpdates: true });
+  const [ownerSettings, setOwnerSettings] = useState({ smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyListingUpdates: true, notifySavedSearches: true });
   // Tamirci tarafının kendi bildirim tercihleri — hepsi varsayılan olarak açık.
-  const [mechSettings, setMechSettings] = useState({ notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyJobApplications: true, notifyListingUpdates: true });
+  const [mechSettings, setMechSettings] = useState({ notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyJobApplications: true, notifyListingUpdates: true, notifySavedSearches: true });
   // Uygulama-içi bildirim kaydı: tarayıcı bildirim izni verilmemiş/desteklenmiyor olsa bile
   // kullanıcının bildirimi görebilmesi için (zil ikonu + rozet) permission-bağımsız bir yedek.
   const [notifLog, setNotifLog] = useState([]);
@@ -3885,10 +3885,21 @@ function useAppLogic() {
     if (missing) { setToast({ type: "info", text: `⚠️ ${t("fixedPriceMissingToast", { name: missing.name })}` }); return; }
     setToast({ type: "info", text: t("profileUpdatedToast") });  // metnin kendisinde zaten ✅ var
   };
+  /**
+   * "ÖNİZLEME" — ve geri dönüşü.
+   * -------------------------------------------------------------------------------------------
+   * GERÇEK HATA (kullanıcı bildirdi): önizlemeden geri gelince alakasız bir ekran açılıyordu.
+   * Sebep: önizleme, dönüş adresi olarak SABİT "mechProfilePage" (ayarlar/profil sayfası)
+   * yazıyordu. Oysa düğme tamirci PANELİNİN profil sekmesinde duruyor — yani kullanıcı hiç
+   * gitmediği bir sayfaya "geri" dönüyordu. Artık dönüş adresi o an bulunulan ekran VE sekme:
+   * kullanıcı düzenlemeye kaldığı yerden devam ediyor.
+   */
+  const [detailReturnTab, setDetailReturnTab] = useState(null);
   const previewMyProfile = () => {
     const missing = findMissingFixedPriceService();
     if (missing) { setToast({ type: "info", text: `⚠️ ${t("fixedPriceMissingPreviewToast", { name: missing.name })}` }); return; }
-    openDetail(myProfile, "mechProfilePage");
+    setDetailReturnTab(screen === "mechanicDashboard" ? { kind: "mechTab", value: mechTab } : screen === "mechProfilePage" ? { kind: "mechProfileTab", value: mechProfileTab } : null);
+    openDetail(myProfile, screen);
   };
   const tryAddService = () => {
     const name = newServiceForm.name.trim();
@@ -4279,42 +4290,84 @@ function useAppLogic() {
     setHasSearched(true);
     goToBrowse(type === "cars" ? "cars" : type === "jobs" ? "jobs" : "mechanics");
   };
-  // Yeni-eşleşme bildirimi: kaynak listeler ya da kayıtlı arama sayısı değiştiğinde, her kayıtlı
-  // arama için ŞU AN eşleşen kayıtların id'lerini hesaplayıp seenListingIds ile karşılaştırıyoruz.
-  // Listede OLMAYAN yeni bir eşleşme bulunursa bildirim gönderip listeyi güncelliyoruz (aynı kayıt
-  // için tekrar bildirim gitmesin diye).
+  /**
+   * KAYITLI ARAMA BİLDİRİMLERİ — sıklık seçimiyle.
+   * -------------------------------------------------------------------------------------------
+   * Emlak ve iş ilanı sitelerinin (ImmoScout, StepStone vb.) yıllardır yaptığı şey: aramayı
+   * kaydet, yeni sonuç çıkınca haber al — ama HANGİ SIKLIKTA haber alacağına kullanıcı karar
+   * versin. Geniş bir aramada ("İstanbul'da araba") her yeni ilan için ayrı bildirim, bildirimleri
+   * tamamen kapattırır.
+   *
+   * DÜZELTİLEN İKİ HATA:
+   *  1) Bildirim yalnızca ARAÇ SAHİBİ oturumundayken çalışıyordu (MY_OWNER_ID kontrolü). Oysa
+   *     tamirci de arama kaydedebiliyor — onun kayıtlı aramaları hiç bildirim üretmiyordu.
+   *  2) Her eşleşme için AYRI bildirim atılıyordu: tek seferde 20 yeni ilan gelirse 20 bildirim.
+   *     Artık ikiden fazlası tek bir özet bildirimde toplanıyor.
+   *
+   * SIKLIK: anında / günlük / haftalık / kapalı (arama başına, varsayılan anında).
+   * Günlük ve haftalıkta eşleşmeler biriktirilir (pendingMatchIds) ve süre dolunca TEK özet
+   * bildirim gider. "Kapalı"da eşleşmeler yine "görüldü" işaretlenir — aksi halde sıklık sonradan
+   * açıldığında aylar öncesinin sonuçları bir anda bildirim olarak yağardı.
+   */
+  const SAVED_SEARCH_INTERVALS = { instant: 0, daily: 24 * 60 * 60 * 1000, weekly: 7 * 24 * 60 * 60 * 1000 };
+  const savedSearchFrequency = (search) => (
+    ["instant", "daily", "weekly", "off"].includes(search?.notifyFrequency) ? search.notifyFrequency : "instant"
+  );
+  const setSavedSearchFrequency = (id, frequency) => {
+    const next = savedSearches.map((sr) => (sr.id === id ? { ...sr, notifyFrequency: frequency } : sr));
+    setSavedSearches(next);
+    persistMyPrefs({ savedSearches: next }, "Arama güncellenemedi");
+    setToast({ type: "info", text: t("savedSearchFrequencySavedToast", { label: t(`savedSearchFreq_${frequency}`) }) });
+  };
   useEffect(() => {
-    if (MY_OWNER_ID == null || savedSearches.length === 0) return;
+    // Her iki rol de arama kaydedebiliyor; bildirim de her ikisinde çalışmalı.
+    if ((MY_OWNER_ID == null && MY_MECHANIC_ID == null) || savedSearches.length === 0) return;
+    const now = Date.now();
     let changed = false;
-    const nextSearches = savedSearches.map(search => {
+    const nextSearches = savedSearches.map((search) => {
       const type = search.type || "cars";
       const source = savedSearchSource(type);
       if (source.length === 0) return search;
-      const matchingIds = source.filter(x => matchesSavedSearchCriteria(x, search)).map(x => x.id);
+      const matchingIds = source.filter((x) => matchesSavedSearchCriteria(x, search)).map((x) => x.id);
       const seen = search.seenListingIds || [];
-      const newlyMatched = matchingIds.filter(id => !seen.includes(id));
-      if (newlyMatched.length === 0) return search;
+      const newlyMatched = matchingIds.filter((id) => !seen.includes(id));
+      const frequency = savedSearchFrequency(search);
+      const pending = [...(search.pendingMatchIds || []), ...newlyMatched];
+      if (newlyMatched.length === 0 && pending.length === 0) return search;
       changed = true;
-      newlyMatched.forEach(id => {
-        const item = source.find(x => x.id === id);
-        if (!item) return;
-        const title = "Kayıtlı aramanızla eşleşen yeni sonuç 🔔";
-        const label = type === "cars" ? `${item.brand} ${item.model} — ${item.price}${listingCurrency(item.price)}`
+
+      const markSeen = { ...search, seenListingIds: [...seen, ...newlyMatched] };
+      if (frequency === "off") return { ...markSeen, pendingMatchIds: [] };
+
+      const interval = SAVED_SEARCH_INTERVALS[frequency] ?? 0;
+      const due = interval === 0 || !search.lastNotifiedAt || (now - search.lastNotifiedAt) >= interval;
+      if (!due || pending.length === 0) return { ...markSeen, pendingMatchIds: pending };
+
+      // Tek sonuç: ne olduğunu söyle. Birden çok: özet — 20 ayrı bildirim kimseye yardımcı olmaz.
+      const title = t("savedSearchMatchTitle");
+      let body;
+      if (pending.length === 1) {
+        const item = source.find((x) => x.id === pending[0]);
+        const label = !item ? "" : type === "cars" ? `${item.brand} ${item.model} — ${item.price}${listingCurrency(item.price)}`
           : type === "jobs" ? `${item.title} — ${item.mechanicName || ""}`.trim()
           : `${item.name}${item.specialty ? " — " + item.specialty : ""}`;
-        const body = `"${search.name}" aramanıza uyan yeni bir sonuç var: ${label}.`;
-        const target = type === "cars" ? { type: "listing", id } : type === "jobs" ? { type: "job", id } : { type: "mechanicDetail", id };
-        fireNotification(title, body, ownerSettings.notifyOffers, "owner", target);
-        fireNotification(title, body, mechSettings.notifyOffers, "mechanic", target);
-      });
-      return { ...search, seenListingIds: [...seen, ...newlyMatched] };
+        body = t("savedSearchMatchOne", { name: search.name, label });
+      } else {
+        body = t("savedSearchMatchMany", { name: search.name, n: String(pending.length) });
+      }
+      const target = pending.length === 1
+        ? (type === "cars" ? { type: "listing", id: pending[0] } : type === "jobs" ? { type: "job", id: pending[0] } : { type: "mechanicDetail", id: pending[0] })
+        : { type: "savedSearch", id: search.id };
+      fireNotification(title, body, ownerSettings.notifySavedSearches, "owner", target);
+      fireNotification(title, body, mechSettings.notifySavedSearches, "mechanic", target);
+      return { ...markSeen, pendingMatchIds: [], lastNotifiedAt: now };
     });
     if (changed) {
       setSavedSearches(nextSearches);
       persistMyPrefs({ savedSearches: nextSearches }, "Arama güncellenemedi");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listings, mechanicsList, jobListings, savedSearches.length, MY_OWNER_ID]);
+  }, [listings, mechanicsList, jobListings, savedSearches.length, MY_OWNER_ID, MY_MECHANIC_ID]);
   const submitListing = async (sellerType) => {
     track("listing_created");
     const missingFields = [];
@@ -5311,6 +5364,8 @@ function useAppLogic() {
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, goToMyPanel, goToMySettings,
     canReoffer, startReoffer, myActiveOfferOn, offerButtonState,
+    savedSearchFrequency, setSavedSearchFrequency,
+    detailReturnTab, setDetailReturnTab,
     deleteAccountPassword, setDeleteAccountPassword, deleteAccountLoading,
     openSessionCount, refreshSessionCount, logoutEverywhere,
     emailChangeForm, setEmailChangeForm, submitEmailChange,
