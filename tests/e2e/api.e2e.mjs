@@ -6,7 +6,7 @@
  * "200 döndü" tek başına geçer not değil: yazma işlemlerinden sonra satırın gerçekten değiştiğini
  * (ya da değişMEdiğini) doğrudan veritabanından okuyoruz.
  */
-import { startServer, stopServer, api, createUser, login, adminToken, row, rows } from "./harness.mjs";
+import { startServer, stopServer, api, createUser, login, adminToken, row, rows , skipIfUnsupported } from "./harness.mjs";
 
 let passed = 0;
 const failures = [];
@@ -16,6 +16,8 @@ const eq = (actual, expected, name) => {
 };
 const ok = (v, name) => eq(!!v, true, name);
 const section = (title) => { if (process.env.E2E_VERBOSE) console.log(`\n— ${title}`); };
+
+if (skipIfUnsupported("uçtan uca")) process.exit(0);
 
 await startServer();
 try {

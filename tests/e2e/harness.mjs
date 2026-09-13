@@ -6,19 +6,57 @@
 // sonucu VERİTABANINDAN doğruluyor. "Başarılı görünüyor" ile "gerçekten oldu" arasındaki farkı
 // ancak böyle görebiliriz.
 //
-// TEK UYARLAMA: bu ortamda better-sqlite3'ün derlenmiş ikilisi çalışmıyor (invalid ELF header),
-// bu yüzden ESM yükleyicisi onu Node'un yerleşik node:sqlite'ına dayanan bir adaptörle
-// değiştiriyor (sqlite-adapter.mjs). UYGULAMA KODU DEĞİŞMİYOR — aynı SQL, aynı şema, aynı rotalar.
+// SQLITE SÜRÜCÜSÜ ÇALIŞTIĞI MAKİNEYE GÖRE SEÇİLİYOR — bu kısım önemli, çünkü ilk sürümü
+// yalnızca geliştirme sanal ortamında çalışıyordu ve senin makinende patladı.
+//   - Normal kurulumda (senin Mac'in, CI) `better-sqlite3` derlenmiş hâlde var: sunucu OLDUĞU GİBİ,
+//     hiçbir yükleyici numarası olmadan başlatılıyor. Test edilen şey birebir üretimdeki şey.
+//   - Bazı sanal ortamlarda better-sqlite3'ün ikilisi çalışmıyor (invalid ELF header). Orada, EĞER
+//     Node 22+ ise, ESM yükleyicisi o modül isteğini yerleşik node:sqlite üstündeki adaptöre
+//     yönlendiriyor (sqlite-adapter.mjs). UYGULAMA KODU YİNE DEĞİŞMİYOR.
+//   - İkisi de yoksa takım HATA VERMİYOR, "atlandı" deyip çıkıyor: çalıştıramadığın bir testin
+//     kırmızı yanması, gerçek bir hatayı gördüğünde ona güvenmemene yol açar.
 import { spawn } from "node:child_process";
-import { DatabaseSync } from "node:sqlite";
+import { createRequire } from "node:module";
 import { rmSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(HERE, "..", "..");
-const DB_PATH = "/tmp/fixperto-e2e.sqlite";
+const requireFromRoot = createRequire(join(ROOT, "backend", "server.js"));
+
+/** Doğrudan veritabanı okumaları için sürücü seç. null → uçtan uca testler çalıştırılamaz. */
+function pickDriver() {
+  try {
+    const Better = requireFromRoot("better-sqlite3");
+    // Sadece import etmek yetmez; ikilinin gerçekten AÇILABİLDİĞİNİ görmeliyiz.
+    const probe = new Better(":memory:");
+    probe.close();
+    // readonly AÇMIYORUZ bilerek: veritabanı WAL kipinde ve salt-okunur bir bağlantının WAL
+    // indeksini açamayıp SQLITE_CANTOPEN vermesi mümkün. Buradan hiç yazmıyoruz zaten.
+    return { kind: "better-sqlite3", open: (path) => new Better(path) };
+  } catch { /* ikili yok ya da çalışmıyor — node:sqlite'a bak */ }
+  try {
+    const { DatabaseSync } = requireFromRoot("node:sqlite");
+    return { kind: "node:sqlite", open: (path) => new DatabaseSync(path) };
+  } catch { /* Node 22 öncesi */ }
+  return null;
+}
+export const DRIVER = pickDriver();
+
+/**
+ * Bu takım bu makinede çalıştırılabilir mi? Değilse SEBEBİNİ söyleyip 0 ile çık.
+ * Test takımlarının en başında çağrılıyor.
+ */
+export function skipIfUnsupported(suiteName) {
+  if (DRIVER) return false;
+  console.log(`ATLANDI ${suiteName} — ne better-sqlite3 çalışıyor ne de node:sqlite var (Node 22+ gerekir). Node: ${process.version}`);
+  return true;
+}
+
 const PORT = Number(process.env.E2E_PORT || 4321);
+// Veritabanı yolu porta bağlı: iki takım aynı anda çalışırsa birbirinin dosyasını silmesin.
+const DB_PATH = join(process.env.TMPDIR || "/tmp", `fixperto-e2e-${PORT}.sqlite`);
 export const BASE = `http://127.0.0.1:${PORT}`;
 
 let child = null;
@@ -26,7 +64,11 @@ let dbHandle = null;
 
 export async function startServer() {
   for (const f of [DB_PATH, `${DB_PATH}-wal`, `${DB_PATH}-shm`]) if (existsSync(f)) rmSync(f);
-  child = spawn(process.execPath, ["--experimental-loader", join(HERE, "loader.mjs"), join(ROOT, "backend", "server.js")], {
+  // better-sqlite3 çalışıyorsa yükleyici YOK: sunucu üretimdeki hâliyle başlıyor.
+  const args = DRIVER?.kind === "node:sqlite"
+    ? ["--experimental-loader", join(HERE, "loader.mjs"), join(ROOT, "backend", "server.js")]
+    : [join(ROOT, "backend", "server.js")];
+  child = spawn(process.execPath, args, {
     cwd: ROOT,
     env: {
       ...process.env,
@@ -62,7 +104,7 @@ export function stopServer() {
 
 /** Veritabanına DOĞRUDAN bakmak için — "API başarılı dedi" yetmez, satır gerçekten değişti mi? */
 export function db() {
-  if (!dbHandle) dbHandle = new DatabaseSync(DB_PATH);
+  if (!dbHandle) dbHandle = DRIVER.open(DB_PATH);
   return dbHandle;
 }
 export const row = (sql, ...params) => db().prepare(sql).get(...params);

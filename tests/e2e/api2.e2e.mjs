@@ -2,7 +2,7 @@
  * UÇTAN UCA DENETİM — 2. bölüm: kalan modüller, eşzamanlılık ve dağıtım güvenliği.
  * Aynı ilke: gerçek sunucu, gerçek SQLite, gerçek HTTP; sonuç veritabanından doğrulanıyor.
  */
-import { startServer, stopServer, api, createUser, adminToken, row, rows, BASE } from "./harness.mjs";
+import { startServer, stopServer, api, createUser, adminToken, row, rows, BASE , skipIfUnsupported } from "./harness.mjs";
 
 let passed = 0;
 const failures = [];
@@ -11,6 +11,8 @@ const eq = (actual, expected, name) => {
   else failures.push(`${name}\n    beklenen: ${JSON.stringify(expected)}\n    gelen   : ${JSON.stringify(actual)}`);
 };
 const ok = (v, name) => eq(!!v, true, name);
+
+if (skipIfUnsupported("uçtan uca 2")) process.exit(0);
 
 await startServer();
 try {

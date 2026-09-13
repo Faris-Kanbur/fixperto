@@ -842,18 +842,25 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 22 STATİK takım + 2 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 23 STATİK takım + 2 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
 
 ## Takımlar
-Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri.
+Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı.
 Uçtan uca: tests/e2e/api.e2e.mjs (kimlik, araç, randevu, değerlendirme, ilan, sohbet, hesap güvenliği, girdi güvenliği), tests/e2e/api2.e2e.mjs (destek, teklif, blog/kariyer, duyuru, eşzamanlılık, analitik, şifre uçları, başlıklar, hız sınırı).
 Envanter: tests/e2e/inventory.mjs — istemcinin çağırdığı her yolun sunucuda karşılığı var mı.
 
-## better-sqlite3 sorunu ve çözümü
-Bu ortamda better-sqlite3 derlenemiyor. Node 22'nin yerleşik node:sqlite modülü üstüne ince bir adaptör (tests/e2e/sqlite-adapter.mjs) yazıldı ve --experimental-loader ile "better-sqlite3" istekleri ona yönlendiriliyor (tests/e2e/loader.mjs). UYGULAMA KODU DEĞİŞMİYOR — test uğruna üretim kodunu esnetmek, test ettiğin şeyin artık üretimdeki şey olmaması demektir.
+## SQLite sürücüsü makineye göre seçilir
+Normal kurulumda (senin makinen, CI) better-sqlite3 derlenmiş hâlde vardır ve sunucu OLDUĞU GİBİ başlatılır — hiçbir yükleyici numarası yok, test edilen şey birebir üretimdeki şey.
+
+Bazı sanal ortamlarda better-sqlite3'ün ikilisi çalışmaz. Orada, Node 22+ ise, --experimental-loader ile "better-sqlite3" istekleri node:sqlite üstündeki ince bir adaptöre yönlendirilir (tests/e2e/sqlite-adapter.mjs + loader.mjs). UYGULAMA KODU YİNE DEĞİŞMEZ — test uğruna üretim kodunu esnetmek, test ettiğin şeyin artık üretimdeki şey olmaması demektir.
+
+İkisi de yoksa takım hata VERMEZ; sebebini yazıp atlar. Çalıştıramadığın bir testin kırmızı yanması, gerçek bir hata gördüğünde ona güvenmemene yol açar.
+
+## Bu kural bir hatadan doğdu
+İlk sürüm node:sqlite'ı tek yol olarak yazmıştı ve üst seviyede import ediyordu: geliştirme ortamında yeşildi, Node 20 kurulu makinede "No such built-in module: node:sqlite" ile patladı. tests/test-altyapisi.test.mjs takımı bu hatanın geri gelmesini engelliyor — sürücü seçiminin çalışma anında yapıldığını, atlama yolunun durduğunu ve her takımın kendi portu/veritabanı dosyasıyla çalıştığını denetliyor.
 
 ## Belgeyi canlı tutan takım
 "el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.
