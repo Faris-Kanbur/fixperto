@@ -426,6 +426,71 @@ try {
   ok(row("SELECT rating, reviews FROM mechanics WHERE id = ?", revTarget.id).reviews === 1,
     "puan ve yorum sayısı korundu (anonimleştirme puanı bozmuyor)");
 
+  // ================================================================ 6c) TARAYICI TARAFI SALDIRI YÜZEYİ
+  /**
+   * Buraya kadarki her şey sunucu-sunucu bakış açısıydı. Tarayıcıdan gelen saldırılar AYRI bir
+   * yüzey: kötü niyetli bir site, kurbanın tarayıcısını kullanarak bizim API'mize istek attırabilir
+   * ya da bizim sayfamızı kendi sayfasına gömebilir. Matrisin ilk sürümü hiç `Origin` başlığı
+   * göndermiyordu — yani bu yüzeyi HİÇ sınamıyordu. Bu bölüm o boşluğu kapatıyor.
+   */
+  const withOrigin = (origin) => api("GET", "/api/mechanics", { headers: { Origin: origin } });
+
+  const evilRes = await withOrigin("https://evil.example");
+  eq(evilRes.headers["access-control-allow-origin"], undefined,
+    "izinsiz origin'e CORS başlığı VERİLMİYOR (tarayıcı yanıtı JS'e teslim etmez)");
+  /**
+   * Ve bu bir HATA değil: önceki hâlde izinsiz origin 500 dönüyordu. Sunucuda bozulan bir şey yok,
+   * istek sadece izinli değil — 500 hem izleme panelinde gerçek arızalarla karışır hem de her
+   * istek hata katmanından geçip tam yığın izini günlüğe yazdığı için BEDAVA GÜNLÜK ŞİŞİRME
+   * yoluna dönüşür (herhangi bir sayfadaki JS saniyede yüzlerce istek atabilir).
+   */
+  eq(evilRes.status < 500, true, "izinsiz origin 500 ÜRETMİYOR (günlük şişirme yolu kapalı)");
+  eq((await withOrigin("http://localhost:5173")).headers["access-control-allow-origin"], "http://localhost:5173",
+    "izinli origin'e başlık veriliyor (kural meşru istemciyi bozmuyor)");
+  // Klasik yanlış yapılandırma: origin'i sorgulamadan geri yansıtmak.
+  eq((await withOrigin("https://evil.example")).headers["access-control-allow-origin"] === "https://evil.example", false,
+    "origin körü körüne geri YANSITILMIYOR");
+  // Alt dize eşleşmesi tuzağı: "localhost:5173.evil.com" izinli GÖRÜNMEMELİ.
+  eq((await withOrigin("http://localhost:5173.evil.example")).headers["access-control-allow-origin"], undefined,
+    "izinli adresi İÇEREN sahte origin reddediliyor (alt dize eşleşmesi yok)");
+  eq((await withOrigin("null")).headers["access-control-allow-origin"], undefined,
+    "\"null\" origin (kum havuzlu iframe / data: sayfası) reddediliyor");
+
+  // Ön uçuş da aynı kuralı uygulamalı; yoksa yazma istekleri sızardı.
+  const preflight = await api("OPTIONS", "/api/vehicles", {
+    headers: { Origin: "https://evil.example", "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "authorization" },
+  });
+  eq(preflight.headers["access-control-allow-origin"], undefined, "ön uçuş izinsiz origin'e izin vermiyor");
+  eq(preflight.status < 500, true, "ön uçuş de 500 üretmiyor");
+
+  /**
+   * ÇEREZ KULLANILMIYOR — ve bu, CSRF açısından yapısal bir avantaj. Oturum jetonu Authorization
+   * başlığında taşınıyor; tarayıcı bunu başka bir sitenin isteğine KENDİLİĞİNDEN eklemez. Yani
+   * klasik CSRF (kurbanın oturumuyla habersiz işlem yaptırma) bu mimaride mümkün değil.
+   * Bir gün çerez tabanlı oturuma geçilirse bu test düşer ve CSRF jetonu gerekli hâle gelir.
+   */
+  const loginRes = await api("POST", "/api/auth/login", { body: { email: owner.email, password: "yanlis" } });
+  eq(loginRes.headers["set-cookie"], undefined, "sunucu çerez KULLANMIYOR (klasik CSRF yapısal olarak kapalı)");
+
+  /**
+   * ÖZEL BAŞLIK AÇIĞA ÇIKARILMALI. Tarayıcı, çapraz kaynaklı yanıtta JS'e yalnızca güvenli liste
+   * başlıklarını verir; `Access-Control-Expose-Headers` olmadan `X-Total-Count` GİZLENİR.
+   * Bu testin var olma sebebi: başlığı ekledikten sonra sunucu-sunucu testler geçiyordu ama
+   * tarayıcıda okunamıyordu — test istemcisi tarayıcı olmadığı için CORS kuralları ona
+   * uygulanmıyor. Başlığın VARLIĞI yetmez, AÇIĞA ÇIKARILDIĞI da doğrulanmalı.
+   */
+  const crossOrigin = await api("GET", "/api/mechanics?limit=2", { headers: { Origin: "http://localhost:5173" } });
+  ok(String(crossOrigin.headers["access-control-expose-headers"] || "").toLowerCase().includes("x-total-count"),
+    "X-Total-Count çapraz kaynakta JS'e açılıyor (yoksa tarayıcı gizler)");
+  ok(crossOrigin.headers["x-total-count"], "başlığın kendisi de dönüyor");
+
+  // Çerçeveleme (clickjacking) ve MIME tahmini korumaları HER yanıtta olmalı — hata yanıtlarında da.
+  for (const [label, r] of [["normal", await api("GET", "/api/mechanics")], ["404", await api("GET", "/api/yok-boyle")], ["401", await api("GET", "/api/auth/me")]]) {
+    eq(r.headers["x-frame-options"], "DENY", `${label}: çerçevelemeye kapalı`);
+    eq(r.headers["x-content-type-options"], "nosniff", `${label}: MIME tahmini kapalı`);
+    eq(r.headers["referrer-policy"], "no-referrer", `${label}: yönlendiren adres sızmıyor`);
+  }
+
   // ================================================================ 7) YANIT ŞİŞKİNLİĞİ
   /**
    * Bir uç ihtiyacından fazla veri döndürüyorsa, bugün zararsız olan alan yarın hassas hâle gelir.

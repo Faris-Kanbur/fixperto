@@ -462,8 +462,12 @@ export function MechDetailBody() {
             <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white">
               <MapPanel className={compact ? "h-32" : "h-56 md:h-64"} items={[selectedMechanic]} onPick={() => {}} />
               <a
+                /* Koordinatlar da KODLANARAK ekleniyor. Sütun REAL ama SQLite gevşek tipli ve
+                   tamirci kendi satırını güncelleyebiliyor; oraya metin düşerse adrese fazladan
+                   parametre sızabilir. Şema sabit olduğu için XSS değil, ama iki daldan birinin
+                   kodlayıp diğerinin kodlamaması zaten tutarsızdı. */
                 href={selectedMechanic.lat && selectedMechanic.lng
-                  ? `https://www.google.com/maps/dir/?api=1&destination=${selectedMechanic.lat},${selectedMechanic.lng}`
+                  ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${selectedMechanic.lat},${selectedMechanic.lng}`)}`
                   : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedMechanic.address || selectedMechanic.name)}`}
                 target="_blank" rel="noreferrer"
                 className="p-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition group"

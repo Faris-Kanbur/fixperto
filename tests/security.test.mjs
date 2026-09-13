@@ -197,4 +197,83 @@ ok(/UPDATE listings SET status = 'removed' WHERE sellerId = \? AND \(sellerType 
 ok(/recomputeMechanicReviews\(mechanicId\)/.test(deleteBlock),
   "yorum ÖNBELLEĞİ de tazeleniyor (yoksa silinen kullanıcının adı profilde kalırdı)");
 
+/**
+ * --- TARAYICI TARAFI: XSS HAVUZLARI, ADRESLER VE CSP -------------------------------------------
+ * Oturum jetonu localStorage'da tutuluyor. Bu, sayfa yenilemesinde oturumun sürmesi için pratik
+ * bir seçim ama bedeli şu: sayfaya SCRIPT sokabilen biri jetonu okuyup hesabı devralır. Yani
+ * XSS burada "çirkin bir açık" değil, doğrudan HESAP DEVRİ demek. Bu blok üç katmanı da kontrol
+ * ediyor: tehlikeli havuz yok, kullanıcı adresleri süzülüyor, ve derlenmiş çıktıda CSP var.
+ */
+const uiFiles = [];
+(function walk(dir) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, e.name);
+    if (e.isDirectory()) walk(full);
+    // El kitabı ve sözlük SALT METİN: içerikleri ekrana basılan açıklamalar. "document.write
+    // kullanmıyoruz" diye yazan bir cümle, tehlikeli havuz taramasında KULLANIM sayılıyordu —
+    // yani kuralın gerekçesi kuralı düşürüyordu. Bu iki dosya taramanın dışında; ikisi de
+    // çalıştırılabilir arayüz kodu değil.
+    else if (/\.tsx?$/.test(e.name) && !/[/\\]data[/\\](handbook|i18n)\.ts$/.test(full)) uiFiles.push(full);
+  }
+})(join(ROOT, "frontend", "src"));
+/**
+ * Yorumlar AYIKLANIYOR: bu blokların çoğu "şunu neden kullanmıyoruz" diye açıklama içeriyor ve
+ * ham metinde arama yapmak o açıklamaları "kullanım" sayıyordu. Bir kuralı, kuralın kendi
+ * gerekçesiyle düşüren test yanlış alarmdır ve zamanla görmezden gelinir.
+ */
+const stripComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
+const uiSrc = stripComments(uiFiles.map((f) => readFileSync(f, "utf8")).join("\n"));
+
+// 1) Tehlikeli havuzlar: bunlar olmadan XSS için önce başka bir hata gerekir.
+for (const [pattern, name] of [
+  [/dangerouslySetInnerHTML\s*=/, "dangerouslySetInnerHTML"],
+  [/\.innerHTML\s*=/, "innerHTML ataması"],
+  [/insertAdjacentHTML/, "insertAdjacentHTML"],
+  [/\beval\s*\(/, "eval()"],
+  [/new Function\s*\(/, "new Function()"],
+  [/document\.write/, "document.write"],
+]) {
+  eq(pattern.test(uiSrc), false, `arayüzde ${name} kullanılmıyor`);
+}
+
+// 2) Kullanıcının girdiği her adres süzgeçten geçmeli. `javascript:` bir href'e girerse tıklama
+//    doğrudan script çalıştırır — ve o script localStorage'daki jetonu okur.
+const helpersSrc = read("frontend", "src", "utils", "helpers.ts");
+ok(/export function safeHref/.test(helpersSrc), "adres süzgeci (safeHref) var");
+ok(/SAFE_LINK_SCHEMES = \["http:", "https:", "mailto:", "tel:"\]/.test(helpersSrc), "yalnızca zararsız şemalar geçiyor");
+eq(/SAFE_DATA_PREFIXES[^\n]*text\/html/.test(helpersSrc), false, "data:text/html ASLA izinli değil");
+// Kullanıcı verisinden gelen her href safeHref'ten geçmeli; sabit ve şablon (tel:/mailto:) hariç.
+const rawHrefs = [...uiSrc.matchAll(/href=\{([^}]+)\}/g)].map((m) => m[1].trim())
+  .filter((expr) => !/^["'`]/.test(expr) && !/^`(tel|mailto):/.test(expr) && !/safeHref\(/.test(expr));
+// Kalanlar uygulamanın KENDİ ürettiği adresler (paylaşım bağlantısı, yol tarifi) — kullanıcı metni değil.
+// Uygulamanın KENDİ ürettiği, şeması sabit adresler (paylaşım bağlantısı, harita yol tarifi)
+// kullanıcı metni değil; onları safeHref'e sokmak da bir şey kazandırmaz.
+const APP_BUILT = /^(href\b|mechanicDirectionsUrl\b|selectedMechanic\.lat)/;
+eq(rawHrefs.filter((e) => !APP_BUILT.test(e)), [], "kullanıcıdan gelen tüm adresler safeHref'ten geçiyor");
+
+// 3) Yeni sekmede açılan bağlantılar: rel olmadan açılan sekme, açan sayfayı yönlendirebilir.
+// Etiket bazlı kontrol: `rel` başka bir SATIRDA olabiliyor, o yüzden <a ...> bloğunun tamamına
+// bakıyoruz. Satır bazlı arama burada yanlış alarm veriyordu.
+const anchorsWithBlank = [...uiSrc.matchAll(/<a\b[^>]*target="_blank"[^>]*>/g)].map((m) => m[0]);
+const missingRel = anchorsWithBlank.filter((tag) => !/rel="[^"]*(noreferrer|noopener)/.test(tag));
+eq(missingRel.map((t) => t.slice(0, 60)), [], "her yeni sekme bağlantısında rel var (ters sekme kaçırma kapalı)");
+ok(anchorsWithBlank.length > 0, `yeni sekme bağlantıları taranıyor (${anchorsWithBlank.length})`);
+
+// 4) CSP: derlenmiş çıktıya ekleniyor, geliştirme sunucusuna EKLENMİYOR (Vite satır içi script
+//    enjekte ediyor; oraya da uygularsak npm run dev çalışmaz ve önlem ilk gün kapatılır).
+const viteCfg = read("frontend", "vite.config.js");
+ok(/Content-Security-Policy/.test(viteCfg), "üretim derlemesine CSP ekleniyor");
+ok(/apply: "build"/.test(viteCfg), "CSP yalnızca derlemede (geliştirme sunucusu bozulmuyor)");
+for (const directive of ["script-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'"]) {
+  ok(viteCfg.includes(directive), `CSP: ${directive}`);
+}
+// frame-ancestors meta etiketinde YOK SAYILIR — oraya yazmak yanlış güven verirdi.
+const cspBlock = viteCfg.slice(viteCfg.indexOf("const CSP = ["), viteCfg.indexOf("].join(\"; \")"));
+eq(/frame-ancestors/.test(cspBlock), false, "frame-ancestors CSP'ye yazılmamış (meta etiketinde tarayıcı yok sayar)");
+
+// 5) CORS reddi bir HATA değil: 500 dönmek hem yanlış cevap hem bedava günlük şişirme yoludur.
+const serverCors = read("backend", "server.js");
+eq(/callback\(new Error\("CORS/.test(serverCors), false, "izinsiz origin için hata FIRLATILMIYOR");
+ok(/callback\(null, isAllowedOrigin\(origin\)\)/.test(serverCors), "izinsiz origin sessizce başlıksız bırakılıyor");
+
 report("güvenlik");

@@ -67,18 +67,47 @@ const allowedOrigins = (process.env.FIXPERTO_ALLOWED_ORIGINS || "")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
+/**
+ * İZİNSİZ ORIGIN "HATA" DEĞİL, "İZİN YOK" DEMEKTİR (tarayıcı denetiminde bulundu).
+ * ------------------------------------------------------------------------------------------------
+ * Önceki hâlde izinsiz bir origin için `callback(new Error(...))` çağrılıyordu. cors paketi bu
+ * hatayı Express'in hata ara katmanına veriyor, o da 500 "Internal server error" dönüyordu.
+ * İki ayrı sorun:
+ *   1) YANLIŞ CEVAP: sunucuda bozulan bir şey yok; istek sadece izinli değil. 500, izleme
+ *      panellerinde gerçek arızalarla karışır ve "sunucu çöküyor" sanılır.
+ *   2) UCUZ GÜNLÜK ŞİŞİRME: her izinsiz istek hata katmanından geçip `console.error(err)` ile tam
+ *      yığın izini günlüğe yazıyordu. Herhangi bir sayfadaki JS, saniyede yüzlerce istekle
+ *      sunucunun günlüğünü (ve diskini) bedava şişirebilirdi.
+ *
+ * Doğrusu: CORS başlığını EKLEMEMEK. Tarayıcı zaten başlık olmadan yanıtı JS'e vermez — koruma
+ * başlığın YOKLUĞUNDAN gelir, sunucunun hata fırlatmasından değil. Böylece izinsiz origin sessizce
+ * (ve ucuza) engelleniyor, tarayıcı isteği bloke ediyor, günlük temiz kalıyor.
+ *
+ * NOT: bu, tarayıcı DIŞI isteği (curl, betik) engellemez ve engellemesi de beklenmez — CORS
+ * tarayıcı politikasıdır, kimlik doğrulama değildir. Yetki kontrolü her uçta ayrıca yapılıyor.
+ */
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;   // tarayıcı dışı istek: CORS zaten uygulanmaz
+  if (allowedOrigins.length > 0) return allowedOrigins.includes(origin);
+  return LOCALHOST_ORIGIN_RE.test(origin);
+};
 app.use(cors({
   origin(origin, callback) {
-    // origin yok = tarayıcı dışı istek (curl, sunucudan sunucuya sağlık kontrolü vb.) — bunlara
-    // zaten CORS uygulanmaz, engellemenin bir anlamı yok; sadece TARAYICI kaynaklı originleri
-    // kısıtlıyoruz.
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.length > 0) {
-      return allowedOrigins.includes(origin) ? callback(null, true) : callback(new Error("CORS: origin izinli değil"));
-    }
-    if (LOCALHOST_ORIGIN_RE.test(origin)) return callback(null, true);
-    callback(new Error("CORS: origin izinli değil"));
+    // İkinci argüman false → başlık eklenmez, hata da fırlatılmaz.
+    callback(null, isAllowedOrigin(origin));
   },
+  /**
+   * GERÇEK HATA (tarayıcı denetiminde bulundu): `X-Total-Count` başlığı eklendi ama AÇIĞA
+   * ÇIKARILMADI. Tarayıcı, çapraz kaynaklı bir yanıtta JS'e yalnızca güvenli liste başlıklarını
+   * verir; `Access-Control-Expose-Headers` ile açıkça izin verilmeyen her başlık GİZLENİR.
+   * Yani "kırpılma görülebilir olsun" diye eklenen başlık, ön yüz ile API'nin ayrı adreste
+   * olduğu NORMAL dağıtımda hiç görünmüyordu.
+   *
+   * Bu hatanın sunucu-sunucu testlerde görünmemesi öğretici: test istemcisi tarayıcı değil,
+   * CORS kuralları ona uygulanmıyor. O yüzden başlığın varlığını değil, AÇIĞA ÇIKARILDIĞINI
+   * de ayrıca doğrulamak gerekiyor.
+   */
+  exposedHeaders: ["X-Total-Count"],
 }));
 app.use(express.json({ limit: "5mb" }));
 

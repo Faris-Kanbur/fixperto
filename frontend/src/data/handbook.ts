@@ -1499,6 +1499,36 @@ Hesap sayımı (account enumeration) kapalı: var olan ve olmayan e-posta hem gi
 OTP ve giriş sınırlayıcıları IP başına çalışıyor ve 15 dakika kilitliyor. Paylaşımlı bir çıkış arkasında (ofis, CGNAT) bir kişinin kaba kuvvet denemesi aynı çıkıştaki HERKESİN girişini kilitler. Bu yüzden ikisi de ortam değişkeniyle ayarlanabilir (LOGIN_LIMIT_PER_WINDOW, OTP_IP_LIMIT_PER_WINDOW) — ama BİLET BAŞINA deneme sınırı ayarlanamaz: kodun kendisini korumak pazarlık konusu değil. Bkz. 22.1 (TRUST_PROXY).`,
       },
       {
+        id: "tarayici-yuzeyi",
+        title: "22.6 Tarayıcı tarafı saldırı yüzeyi",
+        body: `Buraya kadarki denetim sunucu-sunucu bakış açısıydı: istek at, yanıta bak. Tarayıcıdan gelen saldırılar AYRI bir yüzey — kötü niyetli bir site, kurbanın tarayıcısını kullanarak bizim API'mize istek attırabilir, sayfamızı kendi sayfasına gömebilir ya da sayfamıza script sokabilir. Güvenlik matrisinin ilk sürümü hiç \`Origin\` başlığı göndermiyordu, yani bu yüzeyi HİÇ sınamıyordu.
+
+## Neden burada bahis yüksek: jeton localStorage'da
+Oturum jetonu localStorage'da tutuluyor — sayfa yenilemesinde oturumun sürmesi için pratik bir seçim, ama bedeli şu: sayfaya SCRIPT sokabilen biri jetonu okur ve hesabı devralır. Yani bu projede XSS "çirkin bir açık" değil, doğrudan HESAP DEVRİ demek. Üç katman birden gerekiyor.
+
+## Katman 1 — kodda tehlikeli havuz yok
+\`dangerouslySetInnerHTML\`, \`innerHTML\` ataması, \`insertAdjacentHTML\`, \`eval\`, \`new Function\`, \`document.write\`: hiçbiri kullanılmıyor ve test bunu her koşuda doğruluyor. React metni kendiliğinden kaçırdığı için kullanıcı içeriği ekrana güvenle basılıyor.
+
+## Katman 2 — kullanıcı adresleri süzülüyor
+Kullanıcının girdiği her adres \`safeHref\`ten geçiyor: yalnızca http/https/mailto/tel geçerli, \`javascript:\` reddediliyor. Bu önemli çünkü \`<a href="javascript:...">\` tıklandığında script çalıştırır ve o script jetonu okur. \`data:\` tamamen yasaklanamıyor (CV yüklemesi data URI olarak saklanıyor) ama yalnızca zararsız içerik türlerine izin var; \`data:text/html\` asla. Yeni sekmede açılan her bağlantıda \`rel\` var — yoksa açılan sekme, açan sayfayı başka bir adrese yönlendirebilirdi.
+
+## Katman 3 — CSP (yalnızca üretim derlemesinde)
+\`script-src 'self'\` sayfaya dışarıdan ya da satır içi script sokulmasını engelliyor; \`object-src 'none'\`, \`base-uri 'self'\` (\`<base>\` enjekte edip tüm göreli adresleri saldırgana yönlendirme numarası), \`form-action 'self'\` de kapalı. \`img-src\`/\`connect-src\` bilerek geniş: ilan fotoğrafları dış adreslerden geliyor ve API adresi dağıtıma göre değişiyor — buraya dar bir liste yazmak yanlış yapılandırmada siteyi çalışmaz hâle getirir, ve çalışmayan bir site kapatılan bir CSP demektir.
+
+CSP yalnızca DERLEMEDE ekleniyor: Vite geliştirme sunucusu sıcak yenileme için satır içi script enjekte ediyor, \`script-src 'self'\` onu keser ve \`npm run dev\` çalışmaz. Geliştiriciyi engelleyen bir önlem, kapatılana kadar yaşar.
+
+\`frame-ancestors\` CSP'ye YAZILMADI: meta etiketiyle verildiğinde tarayıcılar onu yok sayar, yazmak yanlış güven verirdi. Çerçeveleme koruması sunucu başlığıyla gelir — API'de \`X-Frame-Options: DENY\` var (hata yanıtlarında da), ön yüzü barındıran sunucuda da ayarlanmalı.
+
+## CORS: reddetmek bir HATA değildir
+Önceki hâlde izinsiz bir origin 500 alıyordu. İki sorun: (1) sunucuda bozulan bir şey yok, istek sadece izinli değil — 500 izleme panelinde gerçek arızalarla karışır; (2) her istek hata katmanından geçip tam yığın izini günlüğe yazdığı için, herhangi bir sayfadaki JS saniyede yüzlerce istekle sunucunun günlüğünü bedava şişirebilirdi. Doğrusu CORS başlığını EKLEMEMEK: koruma başlığın yokluğundan gelir. Alt dize tuzağı da test ediliyor — "localhost:5173.evil.com" izinli görünmüyor.
+
+## Klasik CSRF yapısal olarak kapalı
+Sunucu hiç çerez kullanmıyor; oturum jetonu Authorization başlığında. Tarayıcı bu başlığı başka bir sitenin isteğine kendiliğinden eklemez, dolayısıyla "kurbanın oturumuyla habersiz işlem yaptırma" mümkün değil. Bir gün çerez tabanlı oturuma geçilirse ilgili test düşer ve CSRF jetonu gerekli hâle gelir.
+
+## Sunucu-sunucu testin GÖREMEDİĞİ bir hata
+\`X-Total-Count\` başlığı eklendiğinde testler geçiyordu ama tarayıcıda okunamıyordu: çapraz kaynaklı yanıtta tarayıcı, \`Access-Control-Expose-Headers\` ile açıkça izin verilmeyen her başlığı JS'ten GİZLER. Test istemcisi tarayıcı olmadığı için CORS kuralları ona uygulanmıyordu. Ders şu: tarayıcıya bağlı bir davranışı sunucu-sunucu testle doğrulamak yetmez — yapılandırmanın kendisi de sınanmalı.`,
+      },
+      {
         id: "denetim-bulgulari",
         title: "22.3 Sunucuyu çalıştırınca çıkan hatalar",
         body: `Hepsi statik testlerin GÖREMEDİĞİ, yalnızca gerçek istek atınca ortaya çıkan hatalardı.
