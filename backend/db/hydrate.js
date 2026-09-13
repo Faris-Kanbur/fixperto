@@ -30,9 +30,26 @@ const BOOL_FIELDS = {
 // değiştir" formu) artık ayrı bir sunucu tarafı POST /:id/verify-password uç noktası kullanıyor
 // (bkz. makeCrudRouter.js passwordVerify seçeneği) — şifre değeri hiçbir zaman ağ üzerinden
 // istemciye taşınmıyor, sadece eşleşip eşleşmediği (true/false) dönüyor.
+/**
+ * GÜVENLİK DÜZELTMESİ (otomatik güvenlik matrisi taramasında bulundu): `signupIpHash`.
+ * ------------------------------------------------------------------------------------------------
+ * Bu alan, kayıt anındaki IP adresinin karması. Sunucu onu SADECE kendi içinde kullanıyor
+ * (rakip yorum tespitinde bir inceleme ipucu olarak, bkz. routes/reviews.js). Ama hiçbir yerde
+ * yanıttan çıkarılmadığı için `GET /api/mechanics` ve `GET /api/owners` gibi HERKESE AÇIK
+ * uçlarda olduğu gibi dönüyordu.
+ *
+ * Neden ciddi: karma, IP'yi geri vermez ama EŞİTLİĞİ verir. Yani girişsiz biri tek istekle
+ * tüm kullanıcıları çekip "hangi hesaplar aynı ağdan açılmış" haritasını çıkarabilir —
+ * aynı ev, aynı ofis, aynı tamirhane. Bu bir kimlik bağlama (deanonimizasyon) sinyalidir ve
+ * kimsenin görmesi gerekmiyor. Ayrıca kötü niyetli biri, hangi hesabın işaretleneceğini
+ * önceden öğrenip tespitten kaçabilirdi.
+ *
+ * Çözüm: alan artık HİÇBİR yanıtta dönmüyor (yöneticide de değil — yönetici de bu ham değere
+ * ihtiyaç duymuyor, kararı sunucu veriyor).
+ */
 const SENSITIVE_FIELDS = {
-  owners: ["password"],
-  mechanics: ["password"],
+  owners: ["password", "signupIpHash"],
+  mechanics: ["password", "signupIpHash"],
 };
 
 // GÜVENLİK DÜZELTMESİ (devamı): `iban`/`bankName`/`accountHolder` sadece tamircinin KENDİ profil
@@ -64,7 +81,11 @@ const SENSITIVE_FIELDS = {
 const LIST_ONLY_SENSITIVE_FIELDS = {
   // Tamircinin kendi favorileri/kayıtlı aramaları da owners tarafındaki ile aynı gerekçeyle toplu
   // listede gizleniyor: bir tamircinin neyi favorilediği başka kullanıcıları ilgilendirmez.
-  mechanics: ["iban", "bankName", "accountHolder", "favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches"],
+  // verificationDocs (aynı tarama): tamircinin doğrulama için yüklediği BELGELER. Rozetin kendisi
+  // herkese açık bilgi ama belgeler değil — vergi levhası, ruhsat, kimlik gibi şeyler olabilir.
+  // Girişsiz tamirci listesinde olduğu gibi dönüyordu. Kendi profilini görüntüleyen tamirci ve
+  // yönetici hâlâ görüyor (hydrateAll yalnızca BAŞKALARININ gördüğü listede gizliyor).
+  mechanics: ["iban", "bankName", "accountHolder", "favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches", "verificationDocs"],
   owners: ["favoriteMechanicIds", "likedReviewIds", "savedSearches"],
 };
 

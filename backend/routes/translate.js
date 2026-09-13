@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { asyncRoute } from "../utils/asyncRoute.js";
 import { db } from "../db/db.js";
 import { makeRateLimiter } from "../utils/auth.js";
 
@@ -110,7 +111,7 @@ const writeCache = (from, to, text, translated) => {
 const MAX_BATCH_ITEMS = 60;
 const CONCURRENCY = 8;
 
-router.post("/batch", async (req, res) => {
+router.post("/batch", asyncRoute(async (req, res) => {
   const ip = clientIp(req);
   if (translateLimiter.check(ip).blocked) {
     return res.status(429).json({ error: "Çok fazla çeviri isteği. Lütfen birkaç dakika sonra tekrar deneyin." });
@@ -165,9 +166,9 @@ router.post("/batch", async (req, res) => {
   };
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, keys.length) }, worker));
   res.json({ results, failed });
-});
+}));
 
-router.post("/", async (req, res) => {
+router.post("/", asyncRoute(async (req, res) => {
   const ip = clientIp(req);
   if (translateLimiter.check(ip).blocked) {
     return res.status(429).json({ error: "Çok fazla çeviri isteği. Lütfen birkaç dakika sonra tekrar deneyin." });
@@ -196,6 +197,6 @@ router.post("/", async (req, res) => {
 
   writeCache(fromLang, toLang, text, translated);
   res.json({ translatedText: translated });
-});
+}));
 
 export default router;

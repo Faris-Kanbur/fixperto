@@ -15,45 +15,9 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (...p) => readFileSync(join(ROOT, ...p), "utf8");
 
 // --- 1) Sunucudaki uçlar -----------------------------------------------------------------------
-const server = read("backend", "server.js");
-const mounts = [...server.matchAll(/app\.use\("(\/api\/[^"]+)",\s*([A-Za-z]+)/g)].map((m) => ({ base: m[1], router: m[2] }));
-const crudMounts = [...server.matchAll(/app\.use\("(\/api\/[^"]+)",\s*makeCrudRouter\("([^"]+)"([\s\S]*?)\}\)\);/g)]
-  .map((m) => ({ base: m[1], table: m[2], opts: m[3] }));
-
-const endpoints = [];
-for (const { base, table, opts } of crudMounts) {
-  for (const sub of ["", "/:id"]) endpoints.push({ path: base + sub, source: `crud(${table})` });
-  // NOT: `/:id/verify-password` KALDIRILDI (hız sınırı olmayan şifre kâhiniydi, bkz.
-  // makeCrudRouter.js). passwordVerify bayrağı artık yalnızca admin sıfırlama ucunu açıyor.
-  if (/passwordVerify: true/.test(opts)) endpoints.push({ path: `${base}/:id/set-password`, source: `crud(${table})` });
-  if (/shareCountColumn/.test(opts)) endpoints.push({ path: `${base}/:id/share`, source: `crud(${table})` });
-}
-// server.js'te doğrudan tanımlı uçlar (router dosyasında değil).
-for (const m of server.matchAll(/app\.(get|post|patch|delete)\("(\/api\/[^"]*)"/g)) {
-  endpoints.push({ path: m[2], source: "server.js" });
-}
-const fileToBase = {
-  "auth.js": "/api/auth", "admin.js": "/api/admin", "analytics.js": "/api/analytics", "blog.js": "/api/blog",
-  "careers.js": "/api/careers", "conversations.js": "/api/conversations", "profileViews.js": "/api/profile-views",
-  "shareEvents.js": "/api/share-events", "translate.js": "/api/translate", "vehicleHistory.js": "/api/vehicle-history",
-  "listingInteractions.js": "/api/listings", "jobApplications.js": "/api/jobs", "reviews.js": "/api/mechanics",
-  "recommendations.js": "/api/recommendations",
-};
-for (const file of readdirSync(join(ROOT, "backend", "routes")).filter((f) => f.endsWith(".js") && f !== "makeCrudRouter.js")) {
-  const base = fileToBase[file];
-  if (!base && file !== "quotes.js") continue;
-  const src = read("backend", "routes", file);
-  if (file === "quotes.js") {
-    for (const match of src.matchAll(/(quoteRequestsRouter|quoteOffersRouter)\.(get|post|patch|delete)\("([^"]*)"/g)) {
-      const b = match[1] === "quoteRequestsRouter" ? "/api/quote-requests" : "/api/quote-offers";
-      endpoints.push({ path: (b + match[3]).replace(/\/$/, "") || b, source: file });
-    }
-    continue;
-  }
-  for (const match of src.matchAll(/\w+\.(get|post|patch|delete)\("([^"]*)"/g)) {
-    endpoints.push({ path: (base + match[2]).replace(/\/$/, "") || base, source: file });
-  }
-}
+// Liste tek kaynaktan üretiliyor (endpoints.mjs): aynı çıkarımı iki dosyada tutmak, yeni bir uç
+// eklendiğinde birinde unutulması demekti — unutulan uç DENETLENMEYEN uçtur.
+import { endpointPaths } from "./endpoints.mjs";
 
 // --- 2) İstemcinin çağırdığı yollar ------------------------------------------------------------
 const client = read("frontend", "src", "services", "api", "client.ts");
@@ -121,7 +85,7 @@ const norm = (p) => p
   .replace(/\s+$/, "")
   .replace(/\/$/, "");
 const clientPaths = [...new Set(calls.map(norm))];
-const serverPaths = [...new Set(endpoints.map((e) => norm(e.path)))];
+const serverPaths = [...new Set(endpointPaths().map(norm))];
 const matches = (a, b) => new RegExp(`^${b.replace(/:[a-zA-Z]+/g, "[^/]+")}$`).test(a.replace(/:[a-zA-Z]+/g, "X"));
 
 const orphanCalls = clientPaths.filter((c) => !serverPaths.some((s) => matches(c, s)));

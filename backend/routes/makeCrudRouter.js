@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { asyncRoute } from "../utils/asyncRoute.js";
 import { db } from "../db/db.js";
 import { hydrate, hydrateAll, dehydrate } from "../db/hydrate.js";
 import { hashPassword, resolveActor, destroyUserSessions } from "../utils/auth.js";
@@ -109,6 +110,23 @@ export function makeCrudRouter(table, {
   // Gövdeyi yazmadan önce süz: önce bilinmeyen sütunlar, sonra (admin değilse) korumalı sütunlar.
   // mode: "patch" | "create". Hesap-kritik alan kısıtı yalnızca GÜNCELLEMEDE geçerli — hesap
   // OLUŞTURMA zaten kendi uç noktasında (POST /api/auth/register) ve orada e-posta şart.
+  /**
+   * GERÇEK HATA (otomatik güvenlik matrisinde bulundu): metin bir sütuna DİZİ ya da NESNE
+   * gönderildiğinde (ör. `{"name": ["a","b"]}`) SQLite sürücüsü "yalnızca sayı, metin, bigint,
+   * buffer ve null bağlanabilir" diye bir TypeError atıyordu. Bu kısıt hatası olmadığı için
+   * yukarıdaki 400 dönüşümüne yakalanmıyor ve kullanıcıya 500 "Internal server error" gidiyordu.
+   * Yani yanlış TÜRDE bir alan göndermek her CRUD ucunda sunucu hatası üretebiliyordu — kötü
+   * deneyim (istemci "tekrar dene" der, hiç işe yaramaz) ve gereksiz bir gürültü kaynağı.
+   *
+   * JSON sütunları dehydrate() tarafından zaten metne çevrildiği için, bu aşamadan sonra kalan
+   * her nesne/dizi değeri TANIM OLARAK geçersizdir. Sessizce düşürmüyoruz: kullanıcı gönderdiği
+   * alanın kaydedildiğini sanmasın diye açıkça 400 dönüyoruz.
+   */
+  const unbindableKeys = (body) => Object.keys(body).filter((k) => {
+    const v = body[k];
+    return v !== null && typeof v === "object";
+  });
+
   const sanitizeBody = (body, actor, mode = "patch") => {
     for (const key of Object.keys(body)) {
       if (tableColumns && !tableColumns.has(key)) { delete body[key]; continue; }
@@ -144,15 +162,58 @@ export function makeCrudRouter(table, {
     return bodyKeys.every((k) => sharedWriteFields.has(k));
   }
 
+  /**
+   * SAYFALAMA ve ÜST SINIR.
+   * ---------------------------------------------------------------------------------------------
+   * BULUNAN SORUN (otomatik denetim): liste uçları tablonun TAMAMINI döndürüyordu ve okuma
+   * tarafında hiçbir sınır yoktu. Bugün zararsız (10 tamirci = 15 KB) ama ölçek büyüdüğünde
+   * tek bir GET 15 MB'a çıkar ve bunu saniyede onlarca kez istemek serbesttir — hem bant
+   * genişliği hem bellek açısından bedava bir yük bindirme yolu.
+   *
+   * NEDEN SESSİZCE KESMİYORUZ: bir listeyi habersiz kırpmak "veri kayboldu" sınıfı hataların
+   * kaynağıdır — istemci 500 kaydın 500'ünü aldığını sanır. Bu yüzden:
+   *   - `?limit` / `?offset` ile sayfalama İSTEĞE BAĞLI (mevcut istemci hiç değişmiyor),
+   *   - varsayılan davranış bugünküyle aynı kalacak kadar yüksek bir GÜVENLİK TAVANI var,
+   *   - her yanıtta `X-Total-Count` başlığı dönüyor; kırpılma olduysa GÖRÜLEBİLİR.
+   * Okuma tarafındaki istek sayısı sınırı dağıtım katmanının işi (bkz. el kitabı TRUST_PROXY):
+   * uygulama içinde IP başına okuma sınırı koymak, vekil arkasında tüm kullanıcıları tek sayaca
+   * düşürüp siteyi herkese kapatma riskini doğuruyor.
+   */
+  const MAX_PAGE = 1000;
+  const pageOf = (req) => {
+    const limitRaw = Number(req.query?.limit);
+    const offsetRaw = Number(req.query?.offset);
+    const limit = Number.isInteger(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, MAX_PAGE) : MAX_PAGE;
+    const offset = Number.isInteger(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
+    return { limit, offset };
+  };
+  const sendList = (res, req, rows, total, mapper) => {
+    res.set("X-Total-Count", String(total));
+    res.json(rows.map(mapper));
+  };
+
   router.get("/", (req, res) => {
+    const { limit, offset } = pageOf(req);
     if (!authScope || publicRead) {
-      const rows = db.prepare(`SELECT * FROM ${table}`).all();
-      return res.json(hydrateAll(table, rows));
+      const total = db.prepare(`SELECT COUNT(*) n FROM ${table}`).get().n;
+      const rows = db.prepare(`SELECT * FROM ${table} LIMIT ? OFFSET ?`).all(limit, offset);
+      /**
+       * YÖNETİCİ TOPLU LİSTEDE DE TAM KAYDI GÖRÜR.
+       * Önceden bu dal aktöre hiç bakmıyordu: herkese açık okuma varsa liste HER ZAMAN
+       * filtrelenmiş dönüyordu. Yönetici panelinin okuduğu alanlar (ör. doğrulama belgeleri)
+       * bu yüzden ya listede yoktu ya da — daha kötüsü — listeden gizlenmesin diye hiç
+       * gizlenmiyordu. İkisi de yanlış: filtre herkese açık okuma İÇİN var, yönetici için değil.
+       */
+      const viewer = resolveActor(req);
+      res.set("X-Total-Count", String(total));
+      return res.json(viewer?.role === "admin" ? rows.map((r) => hydrate(table, r)) : hydrateAll(table, rows));
     }
     const actor = resolveActor(req);
     if (!actor) return res.status(401).json({ error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
     if (actor.role === "admin") {
-      return res.json(hydrateAll(table, db.prepare(`SELECT * FROM ${table}`).all()));
+      const total = db.prepare(`SELECT COUNT(*) n FROM ${table}`).get().n;
+      res.set("X-Total-Count", String(total));
+      return res.json(hydrateAll(table, db.prepare(`SELECT * FROM ${table} LIMIT ? OFFSET ?`).all(limit, offset)));
     }
     const myFields = scopeFields.filter((f) => f.role === actor.role);
     if (myFields.length === 0) return res.json([]);
@@ -161,7 +222,9 @@ export function makeCrudRouter(table, {
     // kayıtlarını listede görmeye devam ederdi.
     const where = myFields.map((f) => (f.typeField ? `(${f.field} = ? AND ${f.typeField} = ?)` : `${f.field} = ?`)).join(" OR ");
     const params = myFields.flatMap((f) => (f.typeField ? [actor.id, f.typeValue] : [actor.id]));
-    const rows = db.prepare(`SELECT * FROM ${table} WHERE ${where}`).all(...params);
+    const total = db.prepare(`SELECT COUNT(*) n FROM ${table} WHERE ${where}`).get(...params).n;
+    const rows = db.prepare(`SELECT * FROM ${table} WHERE ${where} LIMIT ? OFFSET ?`).all(...params, limit, offset);
+    res.set("X-Total-Count", String(total));
     res.json(hydrateAll(table, rows));
   });
 
@@ -214,6 +277,8 @@ export function makeCrudRouter(table, {
         if (f.typeField) body[f.typeField] = f.typeValue;
       }
     }
+    const badTypes = unbindableKeys(body);
+    if (badTypes.length) return res.status(400).json({ error: "Geçersiz alan değeri gönderildi.", fields: badTypes });
     const cols = Object.keys(body);
     if (cols.length === 0) return res.status(400).json({ error: "Kaydedilecek alan yok." });
     /**
@@ -257,6 +322,8 @@ export function makeCrudRouter(table, {
     }
     if (passwordVerify) delete body.password;
     if (authScope) for (const f of scopeFields) delete body[f.field]; // sahiplik alanı PATCH ile devredilemez
+    const badPatchTypes = unbindableKeys(body);
+    if (badPatchTypes.length) return res.status(400).json({ error: "Geçersiz alan değeri gönderildi.", fields: badPatchTypes });
     const cols = Object.keys(body).filter((c) => c !== idColumn);
     if (cols.length === 0) return res.json(hydrate(table, existing));
     try {
@@ -298,7 +365,7 @@ export function makeCrudRouter(table, {
      * Admin sıfırlaması artık hedefin TÜM oturumlarını da kapatıyor: şifre sıfırlanmasının sebebi
      * genelde "hesap ele geçirildi"dir; saldırganın token'ı ayakta kalırsa sıfırlama işe yaramaz.
      */
-    router.post("/:id/set-password", async (req, res) => {
+    router.post("/:id/set-password", asyncRoute(async (req, res) => {
       const actor = resolveActor(req);
       if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
       if (actor.role !== "admin") {
@@ -314,7 +381,7 @@ export function makeCrudRouter(table, {
       db.prepare(`UPDATE ${table} SET password = ? WHERE ${idColumn} = ?`).run(hashed, req.params.id);
       const closed = destroyUserSessions(existing[idColumn], table === "owners" ? "owner" : "mechanic");
       res.json({ ok: true, sessionsClosed: closed });
-    });
+    }));
   }
 
   router.delete("/:id", (req, res) => {

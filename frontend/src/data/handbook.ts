@@ -847,14 +847,26 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 24 STATİK takım + 2 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 24 STATİK takım + 3 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
 
 ## Takımlar
 Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı, arayüz çizimi.
-Uçtan uca: tests/e2e/api.e2e.mjs (kimlik, araç, randevu, değerlendirme, ilan, sohbet, hesap güvenliği, girdi güvenliği), tests/e2e/api2.e2e.mjs (destek, teklif, blog/kariyer, duyuru, eşzamanlılık, analitik, şifre uçları, başlıklar, hız sınırı).
+Uçtan uca: tests/e2e/api.e2e.mjs (kimlik, araç, randevu, değerlendirme, ilan, sohbet, hesap güvenliği, girdi güvenliği), tests/e2e/api2.e2e.mjs (destek, teklif, blog/kariyer, duyuru, eşzamanlılık, analitik, öneri rızası, şifre uçları, başlıklar, hız sınırı), tests/e2e/api3.e2e.mjs (OTOMATİK GÜVENLİK MATRİSİ — aşağıya bakın).
+
+## Otomatik güvenlik matrisi — elle yazılan testin kapatamadığı boşluk
+Elle yazılan uçtan uca testler yalnızca YAZDIĞIN uçları korur. Yeni bir uç eklendiğinde kimse hatırlamazsa o uç denetlenmeden yayına çıkar. Bu yüzden uç listesi artık KODDAN üretiliyor (tests/e2e/endpoints.mjs) ve matris sunucudaki 128 ucun TAMAMINA aynı soruları soruyor:
+1. Girişsiz çağrıldığında ne oluyor? Yazma uçları 200 dönmemeli. "Kasıtlı olarak herkese açık" olanların listesi testte gerekçeleriyle yazılı — listede olmayan bir uç girişsiz 200 dönerse test düşer, yani yeni bir açık uç eklemek FARK EDİLİR.
+2. Bozuk/kötü niyetli gövdeyle (dizi, nesne, 5000 karakter, SQL, XSS, __proto__, yol atlama, eksi sayı) 500 patlatılabiliyor mu?
+3. Yanıtlarda hassas alan sızıyor mu (password, tokenHash, signupIpHash…)?
+4. Hata gövdesinde yığın izi, SQL hatası ya da dosya yolu görünüyor mu?
+5. Sahiplikli her kaynakta IDOR: başkasının kaydı düzenlenebiliyor/silinebiliyor mu — ve kural meşru sahibi engelliyor mu?
+6. Kitlesel atama: kullanıcı kendine rozet/puan/sayaç yazabiliyor mu?
+7. Bozuk jetonlar (boş, "null", 500 karakter, son harfi değiştirilmiş) kabul ediliyor mu?
+
+Aynı liste envanter taramasıyla da paylaşılıyor; tek kaynak olması, yeni bir ucun birinde unutulmasını imkânsız kılıyor.
 Envanter: tests/e2e/inventory.mjs — istemcinin çağırdığı her yolun sunucuda karşılığı var mı.
 
 ## SQLite sürücüsü makineye göre seçilir
@@ -1426,6 +1438,35 @@ Uygulama bu ucu artık hiç çağırmıyordu ama uç açıktı ve hız sınırı
 
 ## Admin sıfırlaması oturumları kapatır
 Bir yönetici şifre sıfırlıyorsa sebebi genelde "hesap ele geçirildi"dir. Saldırganın token'ı ayakta kalırsa sıfırlama hiçbir işe yaramaz; bu yüzden sıfırlama hedefin bütün oturumlarını siler ve kaç oturum kapandığını döner.`,
+      },
+      {
+        id: "matris-bulgulari",
+        title: "22.4 Otomatik matrisin bulduğu açıklar",
+        body: `Uç listesi koddan üretilip 128 ucun tamamına aynı sorular sorulduğunda, ELLE yazılan 250'den fazla uçtan uca kontrolün kaçırdığı yedi sorun çıktı. Ortak özellikleri: hiçbiri "ekranda görünen" bir hata değil.
+
+## 1) Kayıt IP karması herkese açıktı (YÜKSEK)
+\`signupIpHash\` hiçbir yanıttan çıkarılmıyordu; girişsiz biri \`GET /api/mechanics\` ve \`GET /api/owners\` ile tüm kullanıcıların karmasını çekebiliyordu. Karma IP'yi geri vermez ama EŞİTLİĞİ verir: "hangi hesaplar aynı ağdan açılmış" haritası çıkar — aynı ev, aynı ofis, aynı tamirhane. Bu bir kimlik bağlama sinyali. Ayrıca kötü niyetli biri hangi hesabın işaretleneceğini önceden öğrenip tespitten kaçabilirdi. Artık hiç kimseye dönmüyor, yöneticiye de değil.
+
+## 2) Doğrulama belgeleri herkese açıktı (ORTA)
+\`verificationDocs\` tamircinin doğrulama için yüklediği belgeler (vergi levhası, ruhsat gibi). Rozetin kendisi herkese açık bilgi, belgeler değil. Artık yalnızca tamircinin kendisi ve yönetici görüyor.
+
+## 3) Tek bir istek TÜM SUNUCUYU düşürebiliyordu (KRİTİK)
+Express 4, async bir rota işleyicisinin reddedilen sözünü yakalamaz; hata Node'un unhandledRejection yoluna düşer ve Node 22 varsayılanında süreç sonlanır. "Hesabımı sil" akışındaki bir veritabanı kısıt hatası backend'i komple kapattı. Yani giriş yapmış herhangi bir kullanıcı, kendi hesabını silmeye çalışarak siteyi HERKES için düşürebiliyordu. Üç katmanlı düzeltme: asıl hata giderildi, tüm async işleyiciler sarmalandı (utils/asyncRoute.js), ve süreç düzeyinde son savunma eklendi. Statik bir test yeni bir sarmasız işleyicinin eklenmesini engelliyor.
+
+## 4) Hesap silme, randevusu olan kullanıcılarda HİÇ çalışmıyordu (YÜKSEK)
+appointments/quote_requests/conversations owners(id)'ye yabancı anahtarla bağlı. Kayıtlar bilerek silinmiyor (karşı tarafın işletme geçmişi) ama bağ koparılmadığı için silme kısıt hatası veriyordu. Artık ad anonimleştiriliyor VE bağ koparılıyor; ikisi birlikte olmazsa ya veri silinmiş sayılmaz ya da silme hiç çalışmaz.
+
+## 5) Kişisel öneri profili hesap silindikten sonra kalıyordu (YÜKSEK)
+Kullanıcı "hesabımı sil" dediğinde kastettiği şey "verimi tutmayı bırak"tır. Ana kaydı silip ondan türetilmiş kişisel profili saklamak, silme talebini teknik bir kurnazlıkla boşa çıkarmaktır. Artık iki rolde de siliniyor.
+
+## 6) Silinen kullanıcının ilanları yayında kalıyordu (ORTA)
+Tamirci kolunda düşünülmüş, araç sahibi kolunda atlanmış: ilan "active" kalıyor, alıcı teklif verip soru soruyor, karşı tarafta kimse yok. Ayrıca yorum anonimleştirmesinde ikinci bir tuzak vardı — yorumlar tabloda anonimleşiyor ama \`mechanics.reviewList\` önbelleği (JSON kopya) gerçek adı tutmaya devam ediyordu. Veriyi iki yerde tutmanın bedeli budur; o yüzden tek yazma yolu her zaman yeniden hesaplamadan geçiyor.
+
+## 7) Yanlış türde alan 500 üretiyordu (ORTA)
+Metin bir sütuna dizi/nesne gönderildiğinde SQLite sürücüsü kısıt hatası olmayan bir tür hatası atıyor, bu da 400'e çevrilmeyip 500 "Internal server error" olarak dönüyordu. Her CRUD ucunda geçerliydi. Artık bağlanamayan değerler 400 ile ve hangi alan olduğu söylenerek reddediliyor.
+
+## Ayrıca: sınırsız liste
+Liste uçları tablonun tamamını döndürüyordu ve okuma tarafında hiçbir sınır yoktu (10 tamirci = 15 KB; 10.000 tamirci = 15 MB, saniyede onlarca kez istenebilir). \`?limit\` / \`?offset\` eklendi, yüksek bir güvenlik tavanı kondu ve her yanıtta \`X-Total-Count\` başlığı dönüyor — sessizce kırpmak "veri kayboldu" hatalarının kaynağıdır, kırpılma GÖRÜLEBİLİR olmalı. Okuma tarafındaki istek sayısı sınırı dağıtım katmanının işi: uygulama içinde IP başına okuma sınırı koymak, vekil arkasında (bkz. 22.1) tüm kullanıcıları tek sayaca düşürüp siteyi herkese kapatma riski taşıyor.`,
       },
       {
         id: "denetim-bulgulari",

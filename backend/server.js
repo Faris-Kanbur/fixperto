@@ -213,6 +213,26 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
+/**
+ * SON SAVUNMA HATTI — tek bir isteğin tüm hizmeti durdurmasını engeller.
+ * ------------------------------------------------------------------------------------------------
+ * Yukarıdaki ara katman Express'in gördüğü hataları yakalıyor. Ama yakalanmayan bir söz reddi
+ * (unhandledRejection) ya da gerçekten beklenmeyen bir istisna Node 22'de SÜRECİ SONLANDIRIR.
+ * Bu denetimde tam olarak bu yaşandı: "hesabımı sil" akışındaki bir veritabanı kısıt hatası
+ * backend'i komple kapattı — yani giriş yapmış herhangi bir kullanıcı siteyi HERKES için
+ * düşürebiliyordu. Asıl düzeltme hatanın kendisiydi (bkz. routes/auth.js) ve asenkron rotalar
+ * artık sarmalanıyor (bkz. utils/asyncRoute.js); burası bir sonraki gözden kaçanı yakalıyor.
+ *
+ * Hatayı GİZLEMİYORUZ: sunucu günlüğüne tam hâliyle yazılıyor. Yalnızca "bir isteği kaybetmek"
+ * ile "tüm siteyi kaybetmek" arasındaki farkı koruyoruz.
+ */
+process.on("unhandledRejection", (reason) => {
+  console.error("YAKALANMAYAN SÖZ REDDİ (süreç ayakta tutuluyor):", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("YAKALANMAYAN İSTİSNA (süreç ayakta tutuluyor):", err);
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Fixperto backend listening on http://localhost:${PORT}`);

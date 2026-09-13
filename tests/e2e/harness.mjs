@@ -124,7 +124,8 @@ export async function api(method, path, { token = null, body = undefined, header
   let data = null;
   const text = await res.text();
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-  return { status: res.status, body: data, raw: text };
+  // Başlıklar da dönüyor: "X-Total-Count" gibi sözleşmeler yalnızca gövdeye bakarak denetlenemez.
+  return { status: res.status, body: data, raw: text, headers: Object.fromEntries(res.headers) };
 }
 
 /** Kayıt + giriş + OTP: gerçek akışın tamamı. Test kullanıcıları böyle üretiliyor. */

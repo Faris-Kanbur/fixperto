@@ -151,4 +151,50 @@ for (const [file, name] of [["profileViews.js", "profil görüntülenme"], ["sha
   for (const m of posts) eq(m[2], "limitWrites", `${name}: POST ${m[1]} hız sınırlı`);
 }
 
+/**
+ * --- TEK İSTEK TÜM SUNUCUYU DÜŞÜREMEZ ----------------------------------------------------------
+ * BULUNAN AÇIK (otomatik güvenlik matrisi): Express 4, `async` bir rota işleyicisinin reddedilen
+ * sözünü yakalamaz — hata Express'in hata ara katmanına hiç ulaşmaz, Node'un unhandledRejection
+ * yoluna düşer ve Node 22 varsayılanında SÜREÇ SONLANIR. "Hesabımı sil" akışındaki bir veritabanı
+ * kısıt hatası tam olarak bunu yaptı: backend komple kapandı. Yani giriş yapmış herhangi bir
+ * kullanıcı, kendi hesabını silmeye çalışarak siteyi HERKES için düşürebiliyordu.
+ *
+ * Bu blok, düzeltmenin geri alınmasını engelliyor: yeni bir async işleyici sarmalanmadan eklenirse
+ * test düşer. Sarmalayıcıyı hatırlamak bir insana bırakılamaz.
+ */
+const routeFiles = readdirSync(join(ROOT, "backend", "routes")).filter((f) => f.endsWith(".js"));
+const unwrapped = [];
+for (const f of routeFiles) {
+  const src = read("backend", "routes", f);
+  for (const m of src.matchAll(/\w+\.(?:get|post|patch|delete)\("([^"]*)"[^\n]*?(async \(req, res\))/g)) {
+    const line = m[0];
+    if (!line.includes("asyncRoute(")) unwrapped.push(`${f} ${m[1]}`);
+  }
+}
+eq(unwrapped, [], "her async rota işleyicisi asyncRoute ile sarmalanmış (sarmasız olan süreci öldürür)");
+ok(/Promise\.resolve\(handler\(req, res, next\)\)\.catch\(next\)/.test(read("backend", "utils", "asyncRoute.js")),
+  "sarmalayıcı reddi Express'in hata katmanına veriyor");
+// Son savunma: gözden kaçan bir hata bile süreci kapatmamalı.
+const serverSrc = read("backend", "server.js");
+ok(/process\.on\("unhandledRejection"/.test(serverSrc), "yakalanmayan söz reddi süreci kapatmıyor");
+ok(/process\.on\("uncaughtException"/.test(serverSrc), "yakalanmayan istisna süreci kapatmıyor");
+ok(/console\.error\("YAKALANMAYAN/.test(serverSrc), "hata gizlenmiyor, sunucu günlüğüne yazılıyor");
+
+/**
+ * --- HESAP SİLME: BAĞLAR KOPARILMADAN SİLİNEMEZ ------------------------------------------------
+ * appointments/quote_requests/conversations owners(id)'ye yabancı anahtarla bağlı. Kayıtlar
+ * bilerek silinmiyor (karşı tarafın işletme geçmişi) — ama bağ koparılmazsa silme hiç çalışmaz.
+ * Ayrıca kişisel öneri profili de gitmeli: ana kaydı silip türetilmiş profili saklamak, silme
+ * talebini teknik bir kurnazlıkla boşa çıkarmak olurdu.
+ */
+const authSrc2 = read("backend", "routes", "auth.js");
+const deleteBlock = authSrc2.slice(authSrc2.indexOf('authRouter.post("/delete-account"'), authSrc2.indexOf('authRouter.get("/me"'));
+ok(/UPDATE appointments SET customer = \?, ownerId = NULL/.test(deleteBlock), "randevu bağı koparılıyor (kayıt kalıyor, kişi çıkıyor)");
+ok(/UPDATE quote_requests SET ownerId = NULL/.test(deleteBlock), "teklif talebi bağı koparılıyor");
+ok(/DELETE FROM taste_signals WHERE userId = \? AND role = \?/.test(deleteBlock), "kişisel öneri profili siliniyor");
+ok(/UPDATE listings SET status = 'removed' WHERE sellerId = \? AND \(sellerType IS NULL OR sellerType = 'owner'\)/.test(deleteBlock),
+  "araç sahibinin ilanları yayından kalkıyor (sahipsiz ilan kalmıyor)");
+ok(/recomputeMechanicReviews\(mechanicId\)/.test(deleteBlock),
+  "yorum ÖNBELLEĞİ de tazeleniyor (yoksa silinen kullanıcının adı profilde kalırdı)");
+
 report("güvenlik");

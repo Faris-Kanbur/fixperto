@@ -1,6 +1,7 @@
 import { Router } from "express";
+import { asyncRoute } from "../utils/asyncRoute.js";
 import crypto from "node:crypto";
-import { db } from "../db/db.js";
+import { db, recomputeMechanicReviews } from "../db/db.js";
 import { hydrate } from "../db/hydrate.js";
 import { sendMail, isMailerConfigured } from "../utils/mailer.js";
 import {
@@ -65,7 +66,7 @@ function sanitizeUser(role, row) {
 
 export const authRouter = Router();
 
-authRouter.post("/register", async (req, res) => {
+authRouter.post("/register", asyncRoute(async (req, res) => {
   try {
     const ip = clientIp(req);
     if (registerLimiter.check(ip).blocked) {
@@ -132,9 +133,9 @@ authRouter.post("/register", async (req, res) => {
     console.error("[auth] register hatası:", err);
     res.status(500).json({ error: "Kayıt oluşturulamadı." });
   }
-});
+}));
 
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/login", asyncRoute(async (req, res) => {
   try {
     const ip = clientIp(req);
     if (loginLimiter.check(ip).blocked) {
@@ -184,7 +185,7 @@ authRouter.post("/login", async (req, res) => {
     console.error("[auth] login hatası:", err);
     res.status(500).json({ error: "Giriş yapılamadı." });
   }
-});
+}));
 
 authRouter.post("/verify-otp", (req, res) => {
   const ip = clientIp(req);
@@ -272,7 +273,7 @@ authRouter.post("/logout-all", requireSession(["owner", "mechanic"]), (req, res)
  * eski oturumlar açık kalıyordu — yani hesabı ele geçirilmiş biri şifresini değiştirse bile
  * saldırgan içeride kalmaya devam ediyordu.
  */
-authRouter.post("/change-password", requireSession(["owner", "mechanic"]), async (req, res) => {
+authRouter.post("/change-password", requireSession(["owner", "mechanic"]), asyncRoute(async (req, res) => {
   const row = await requireCurrentPassword(req, res);
   if (!row) return;
   const next = req.body?.newPassword;
@@ -286,7 +287,7 @@ authRouter.post("/change-password", requireSession(["owner", "mechanic"]), async
   db.prepare(`UPDATE ${table} SET password = ? WHERE id = ?`).run(await hashPassword(next), req.session.id);
   const closed = destroyUserSessions(req.session.id, req.session.role, extractBearerToken(req));
   res.json({ ok: true, otherSessionsClosed: closed });
-});
+}));
 
 /**
  * E-POSTA DEĞİŞTİRME. E-posta, şifre sıfırlamanın gittiği adrestir: onu değiştirmek hesabın
@@ -294,7 +295,7 @@ authRouter.post("/change-password", requireSession(["owner", "mechanic"]), async
  * yapılamıyor — orada e-posta alanı düşürülüyor (bkz. makeCrudRouter ACCOUNT_CRITICAL_FIELDS) —
  * ve burada mevcut şifre isteniyor.
  */
-authRouter.post("/change-email", requireSession(["owner", "mechanic"]), async (req, res) => {
+authRouter.post("/change-email", requireSession(["owner", "mechanic"]), asyncRoute(async (req, res) => {
   const row = await requireCurrentPassword(req, res);
   if (!row) return;
   const email = String(req.body?.newEmail || "").trim().toLowerCase();
@@ -319,7 +320,7 @@ authRouter.post("/change-email", requireSession(["owner", "mechanic"]), async (r
     }).catch(() => {});
   }
   res.json({ ok: true, email });
-});
+}));
 
 /**
  * HESAP SİLME — gerçekten siliyor.
@@ -331,15 +332,62 @@ authRouter.post("/change-email", requireSession(["owner", "mechanic"]), async (r
  * Randevu/teklif/yorum gibi KARŞI TARAFIN da tarafı olduğu kayıtlar silinmez — bunlar tamircinin
  * işletme geçmişi ve tek taraflı yok edilemez — ama kişiyi tanımlayan alanları anonimleştirilir.
  */
-authRouter.post("/delete-account", requireSession(["owner", "mechanic"]), async (req, res) => {
+authRouter.post("/delete-account", requireSession(["owner", "mechanic"]), asyncRoute(async (req, res) => {
   const row = await requireCurrentPassword(req, res);
   if (!row) return;
   const { id, role } = req.session;
   const anonName = "Silinmiş kullanıcı";
   const tx = db.transaction(() => {
+    /**
+     * KİŞİSEL PROFİL HER İKİ ROLDE DE SİLİNİR (otomatik güvenlik matrisinde bulundu).
+     * ---------------------------------------------------------------------------------------------
+     * Öneri profili (taste_signals) hesap silindikten sonra tabloda kalıyordu. Kullanıcı "hesabımı
+     * sil" dediğinde kastettiği şey "verimi tutmayı bırak"tır; ana kaydı silip ondan türetilmiş
+     * kişisel profili saklamak, silme talebini teknik bir kurnazlıkla boşa çıkarmaktır. Ayrıca
+     * bu satırlar hiçbir işe de yaramaz: sahibi olmayan bir profilden öneri üretilmiyor.
+     */
+    db.prepare(`DELETE FROM taste_signals WHERE userId = ? AND role = ?`).run(id, role);
+
     if (role === "owner") {
-      db.prepare(`UPDATE appointments SET customer = ? WHERE ownerId = ?`).run(anonName, id);
+      /**
+       * GERÇEK HATA (otomatik güvenlik matrisinde bulundu): `appointments.ownerId` ve
+       * `quote_requests.ownerId` owners(id)'ye YABANCI ANAHTARLA bağlı. Randevular bilerek
+       * silinmiyor (tamircinin işletme geçmişi) ama bağ koparılmadığı için `DELETE FROM owners`
+       * kısıt hatası veriyordu. Yani "hesabımı sil", HİÇ RANDEVU ALMIŞ her kullanıcıda
+       * başarısızdı — ve async rota hatası olduğu için sunucuyu komple düşürüyordu.
+       *
+       * Doğru davranış zaten belgede yazılıydı: kaydı sakla, KİŞİYİ çıkar. Bu yüzden hem ad
+       * anonimleştiriliyor hem BAĞ (ownerId) koparılıyor — ikisi bir arada olmazsa ya veri
+       * silinmiş sayılmaz ya da silme hiç çalışmaz.
+       */
+      db.prepare(`UPDATE appointments SET customer = ?, ownerId = NULL WHERE ownerId = ?`).run(anonName, id);
+      db.prepare(`UPDATE quote_requests SET ownerId = NULL WHERE ownerId = ?`).run(id);
+      db.prepare(`UPDATE conversations SET ownerId = NULL WHERE ownerId = ?`).run(id);
       db.prepare(`DELETE FROM vehicles WHERE ownerId = ?`).run(id);
+      /**
+       * GERÇEK HATA (aynı tarama): araç sahibinin İLANLARI silmeden sonra "active" kalıyordu.
+       * Tamirci kolunda bu düşünülmüş (aşağıda listings → 'removed') ama araç sahibi kolunda
+       * atlanmış. Sonuç sessiz ve kötü: ilan yayında durur, alıcı teklif verir ve soru sorar,
+       * karşı tarafta artık kimse yoktur. Satıcısı olmayan bir ilan pazar yerinde durmamalı.
+       */
+      db.prepare(`UPDATE listings SET status = 'removed' WHERE sellerId = ? AND (sellerType IS NULL OR sellerType = 'owner')`).run(id);
+      /**
+       * Yorumlar SİLİNMEZ — tamircinin işletme geçmişidir ve tek taraflı yok edilemez (randevu
+       * kaydıyla aynı gerekçe). Ama yazarın ADI kişisel veridir: anonimleştiriliyor. Puan
+       * önbelleği de yeniden hesaplanmıyor çünkü yorumun kendisi ve puanı yerinde kalıyor.
+       */
+      const touchedMechanics = db.prepare(
+        `SELECT DISTINCT mechanicId FROM mechanic_reviews WHERE authorId = ? AND (authorType IS NULL OR authorType = 'owner')`
+      ).all(id).map((r) => r.mechanicId);
+      db.prepare(`UPDATE mechanic_reviews SET author = ? WHERE authorId = ? AND (authorType IS NULL OR authorType = 'owner')`).run(anonName, id);
+      /**
+       * ÖNBELLEĞİ DE TAZELEMEK ZORUNLU. Yorumlar tabloda ama `mechanics.reviewList` sütunu onların
+       * JSON bir KOPYASI (okuma yollarını değiştirmemek için, bkz. db.js). Tabloyu anonimleştirip
+       * kopyayı bırakmak, silinen kullanıcının GERÇEK ADINI her tamirci profilinde görünür
+       * bırakırdı — yani anonimleştirme kâğıt üzerinde kalırdı. Bu tuzak, veriyi iki yerde
+       * tutmanın bedeli; o yüzden tek yazma yolu her zaman recompute'tan geçiyor.
+       */
+      for (const mechanicId of touchedMechanics) recomputeMechanicReviews(mechanicId);
       db.prepare(`DELETE FROM owners WHERE id = ?`).run(id);
     } else {
       // Tamirci kaydı silinirse randevu/ilan geçmişi sahipsiz kalır; kaydı anonimleştirip
@@ -353,7 +401,7 @@ authRouter.post("/delete-account", requireSession(["owner", "mechanic"]), async 
   tx();
   destroyUserSessions(id, role);
   res.json({ ok: true });
-});
+}));
 
 authRouter.get("/me", requireSession(["owner", "mechanic"]), (req, res) => {
   const table = ROLE_TABLES[req.session.role];
