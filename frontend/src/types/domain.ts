@@ -95,8 +95,9 @@ export interface Mechanic {
   savedSearches?: any[];
   /** GÜVENLİK DÜZELTMESİ: backend artık bu alanı hiçbir yanıtta döndürmüyor (bkz. hydrate.js) —
    * tip burada sadece geriye dönük uyumluluk için opsiyonel olarak duruyor, runtime'da hep
-   * undefined gelir. Şifre değiştirmek için api.owners/mechanics.verifyPassword + setPassword
-   * kullanılmalı, bu alan asla okunmamalı/gösterilmemeli. */
+   * undefined gelir. Kullanıcı kendi şifresini api.account.changePassword ile (mevcut şifre
+   * zorunlu, diğer oturumlar kapanır) değiştirir; api.owners/mechanics.setPassword yalnızca
+   * admin sıfırlaması içindir. Bu alan asla okunmamalı/gösterilmemeli. */
   password?: string;
 }
 

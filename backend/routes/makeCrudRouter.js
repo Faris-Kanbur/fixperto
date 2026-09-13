@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
 import { hydrate, hydrateAll, dehydrate } from "../db/hydrate.js";
-import { hashPassword, verifyPassword as bcryptVerify, resolveActor } from "../utils/auth.js";
+import { hashPassword, resolveActor, destroyUserSessions } from "../utils/auth.js";
 
 // Generic REST CRUD router factory: GET /, GET /:id, POST /, PATCH /:id, DELETE /:id.
 // Every Fixperto entity table (mechanics, listings, appointments, ...) follows the
@@ -215,8 +215,27 @@ export function makeCrudRouter(table, {
       }
     }
     const cols = Object.keys(body);
-    const stmt = db.prepare(`INSERT INTO ${table} (${cols.join(",")}) VALUES (${cols.map((c) => `@${c}`).join(",")})`);
-    const info = stmt.run(body);
+    if (cols.length === 0) return res.status(400).json({ error: "Kaydedilecek alan yok." });
+    /**
+     * GERÇEK HATA (uçtan uca denetimde bulundu): zorunlu bir sütun eksik gönderildiğinde SQLite
+     * kısıt hatası fırlatıyor, genel hata yakalayıcı da bunu 500 "Internal server error" olarak
+     * döndürüyordu. Kullanıcı hatası (eksik alan) sunucu hatası gibi görünüyordu: istemci "tekrar
+     * dene" diyor, tekrar denemek hiçbir zaman işe yaramıyordu. Kısıt hataları artık 400 ve
+     * ANLAŞILIR bir mesapla dönüyor — ama mesajda sütun adı/SQL detayı verilmiyor (iç yapıyı
+     * sızdırmamak için).
+     */
+    let info;
+    try {
+      info = db.prepare(`INSERT INTO ${table} (${cols.join(",")}) VALUES (${cols.map((c) => `@${c}`).join(",")})`).run(body);
+    } catch (err) {
+      const msg = String(err?.message || "");
+      if (/NOT NULL|UNIQUE|CHECK|FOREIGN KEY|constraint/i.test(msg)) {
+        return res.status(400).json({
+          error: /UNIQUE/i.test(msg) ? "Bu kayıt zaten var." : "Zorunlu alanlar eksik ya da geçersiz.",
+        });
+      }
+      throw err;
+    }
     const created = db.prepare(`SELECT * FROM ${table} WHERE rowid = ?`).get(info.lastInsertRowid);
     res.status(201).json(hydrate(table, created));
   });
@@ -240,8 +259,16 @@ export function makeCrudRouter(table, {
     if (authScope) for (const f of scopeFields) delete body[f.field]; // sahiplik alanı PATCH ile devredilemez
     const cols = Object.keys(body).filter((c) => c !== idColumn);
     if (cols.length === 0) return res.json(hydrate(table, existing));
-    const stmt = db.prepare(`UPDATE ${table} SET ${cols.map((c) => `${c} = @${c}`).join(",")} WHERE ${idColumn} = @__id`);
-    stmt.run({ ...body, __id: req.params.id });
+    try {
+      db.prepare(`UPDATE ${table} SET ${cols.map((c) => `${c} = @${c}`).join(",")} WHERE ${idColumn} = @__id`)
+        .run({ ...body, __id: req.params.id });
+    } catch (err) {
+      const msg = String(err?.message || "");
+      if (/NOT NULL|UNIQUE|CHECK|FOREIGN KEY|constraint/i.test(msg)) {
+        return res.status(400).json({ error: /UNIQUE/i.test(msg) ? "Bu değer zaten kullanılıyor." : "Geçersiz değer." });
+      }
+      throw err;
+    }
     const updated = db.prepare(`SELECT * FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
     res.json(hydrate(table, updated));
   });
@@ -253,27 +280,30 @@ export function makeCrudRouter(table, {
   // düzeltmesinde) buraya hiç oturum kontrolü eklenmemişti çünkü henüz gerçek bir oturum sistemi
   // yoktu — artık var, o boşluk burada kapatılıyor.
   if (passwordVerify) {
-    function requireSelfOrAdmin(req, res) {
-      const actor = resolveActor(req);
-      const selfRole = table === "owners" ? "owner" : "mechanic";
-      if (!actor) { res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." }); return null; }
-      if (actor.role === "admin") return actor;
-      if (actor.role === selfRole && String(actor.id) === String(req.params.id)) return actor;
-      res.status(403).json({ error: "Bu işlem için yetkiniz yok." });
-      return null;
-    }
-
-    router.post("/:id/verify-password", async (req, res) => {
-      if (!requireSelfOrAdmin(req, res)) return;
-      const { password } = req.body || {};
-      const row = db.prepare(`SELECT password FROM ${table} WHERE ${idColumn} = ?`).get(req.params.id);
-      if (!row) return res.status(404).json({ error: `${table} not found` });
-      const valid = typeof password === "string" && password.length > 0 && await bcryptVerify(password, row.password);
-      res.json({ valid: !!valid });
-    });
-
+    /**
+     * GÜVENLİK DÜZELTMESİ (bu denetimde bulundu) — İKİ GERÇEK AÇIK kapatıldı.
+     * -------------------------------------------------------------------------------------------
+     * 1) `/:id/verify-password` KALDIRILDI. Uygulama onu artık hiç çağırmıyordu (şifre değişimi
+     *    `POST /api/auth/change-password` üzerinden yapılıyor) ama uç açık duruyordu ve hız
+     *    sınırı YOKTU: çalınmış bir oturum token'ı, hesabın DÜZ METİN şifresini deneme-yanılma
+     *    ile bulabileceği bir "doğru mu?" kâhinine dönüşüyordu. Oturum token'ı normalde şifreyi
+     *    ele vermez; bu uç veriyordu — üstelik insanlar şifrelerini başka sitelerde de kullanıyor.
+     *
+     * 2) `/:id/set-password` artık SADECE ADMIN. Önceden "kendisi ya da admin" idi; yani çalınmış
+     *    bir token, MEVCUT ŞİFREYİ BİLMEDEN yeni şifre koyabiliyor ve gerçek sahibi hesabından
+     *    kalıcı olarak kilitleyebiliyordu. Bu, `/api/auth/change-password` için özellikle konmuş
+     *    iki korumayı (mevcut şifre zorunlu + diğer oturumları kapat) tamamen bypass ediyordu.
+     *    Kullanıcının kendi şifresini değiştirme yolu tektir ve orasıdır.
+     *
+     * Admin sıfırlaması artık hedefin TÜM oturumlarını da kapatıyor: şifre sıfırlanmasının sebebi
+     * genelde "hesap ele geçirildi"dir; saldırganın token'ı ayakta kalırsa sıfırlama işe yaramaz.
+     */
     router.post("/:id/set-password", async (req, res) => {
-      if (!requireSelfOrAdmin(req, res)) return;
+      const actor = resolveActor(req);
+      if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+      if (actor.role !== "admin") {
+        return res.status(403).json({ error: "Kendi şifrenizi hesap ayarlarından değiştirebilirsiniz." });
+      }
       const { password } = req.body || {};
       if (typeof password !== "string" || password.length < 6) {
         return res.status(400).json({ error: "Şifre en az 6 karakter olmalı." });
@@ -282,7 +312,8 @@ export function makeCrudRouter(table, {
       if (!existing) return res.status(404).json({ error: `${table} not found` });
       const hashed = await hashPassword(password);
       db.prepare(`UPDATE ${table} SET password = ? WHERE ${idColumn} = ?`).run(hashed, req.params.id);
-      res.json({ ok: true });
+      const closed = destroyUserSessions(existing[idColumn], table === "owners" ? "owner" : "mechanic");
+      res.json({ ok: true, sessionsClosed: closed });
     });
   }
 

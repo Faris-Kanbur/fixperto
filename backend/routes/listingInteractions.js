@@ -83,8 +83,15 @@ listingInteractionsRouter.post("/:id/offers", (req, res) => {
   if (isOwnListing(listing, actor)) return res.status(403).json({ error: "Kendi ilanınıza teklif veremezsiniz." });
   if (listing.status && listing.status !== "active") return res.status(400).json({ error: "Bu ilan artık teklif almıyor." });
 
-  const amountNum = Number(String(req.body?.amount ?? "").replace(/[^\d]/g, ""));
-  if (!Number.isFinite(amountNum) || amountNum <= 0 || amountNum > MAX_OFFER_AMOUNT) {
+  /**
+   * GERÇEK HATA (uçtan uca denetimde bulundu): tutar "rakam olmayan her şeyi at" ile
+   * ayrıştırılıyordu. "-5" gönderildiğinde eksi işareti atılıyor ve 5 TL'lik GEÇERLİ bir teklife
+   * dönüşüyordu; "1e9" gibi bir girdi de sessizce başka bir sayıya dönüşüyordu. Doğrulama,
+   * girdiyi DÜZELTMEK için değil REDDETMEK için var: önce sayıya çeviriyoruz, sonra bakıyoruz.
+   */
+  const rawAmount = req.body?.amount;
+  const amountNum = typeof rawAmount === "number" ? rawAmount : Number(String(rawAmount ?? "").replace(/[\s.]/g, "").replace(",", "."));
+  if (!Number.isFinite(amountNum) || !Number.isInteger(amountNum) || amountNum <= 0 || amountNum > MAX_OFFER_AMOUNT) {
     return res.status(400).json({ error: "Geçersiz teklif tutarı." });
   }
   const currency = ["₺", "€", "$"].includes(req.body?.currency) ? req.body.currency : "₺";

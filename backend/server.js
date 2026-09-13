@@ -21,6 +21,18 @@ import { authRouter } from "./routes/auth.js";
 seedIfEmpty();
 
 const app = express();
+/**
+ * TERS VEKİL (reverse proxy) ARKASINDA IP.
+ * ---------------------------------------------------------------------------------------------
+ * DAĞITIM TUZAĞI (denetimde bulundu): uygulama bir vekilin (nginx, Cloudflare, Render…) arkasına
+ * konduğunda req.ip ARTIK ziyaretçinin değil VEKİLİN adresi olur. O anda IP başına çalışan bütün
+ * hız sınırlayıcılar (kayıt, giriş, OTP, çeviri, VIN sorgulama) tek bir kovaya düşer: ilk beş
+ * kaydolan kişiden sonra SİTEYE KİMSE KAYDOLAMAZ. Tersi de tehlikeli: "trust proxy" gelişigüzel
+ * açılırsa saldırgan X-Forwarded-For başlığını uydurup her istekte yeni bir kimlikmiş gibi
+ * görünür ve sınırları tamamen atlar.
+ * Bu yüzden BİLİNÇLİ bir anahtar: yalnızca gerçekten vekil arkasındaysanız TRUST_PROXY=true.
+ */
+if (process.env.TRUST_PROXY === "true") app.set("trust proxy", 1);
 
 // GÜVENLİK BAŞLIKLARI (site geneli denetimde eksik bulundu).
 // Yeni bir bağımlılık (helmet) EKLEMİYORUZ: bu API yalnızca JSON döndürüyor, helmet'in başlıklarının

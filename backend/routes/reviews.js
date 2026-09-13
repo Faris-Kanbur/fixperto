@@ -123,10 +123,18 @@ reviewsRouter.post("/:id/reviews", (req, res) => {
   if (linkedMechanic && linkedMechanic.id === mech.id) {
     return res.status(403).json({ error: "Bu hesap, yorum yazmak istediğiniz işletmeyle aynı iletişim bilgilerine sahip. Kendi işletmenize yorum yazamazsınız.", reason: "selfReview" });
   }
-  // Kayıt IP'sinin karması eşleşiyorsa (aynı cihaz/ağdan açılmış hesap) bu da bir işarettir —
-  // ama tek başına engel değil: aynı ev/ofis/operatör ağı gerçek müşterilerde de olabilir.
+  /**
+   * AYNI AĞ: TEK BAŞINA PUANI ETKİLEMEZ (uçtan uca denetimde düzeltildi).
+   * İlk sürümde aynı kayıt-IP karması da yorumu "puana katılmaz" yapıyordu. Gerçek çalıştırmada
+   * görüldü ki bu çok kolay tetikleniyor: aynı evden, aynı ofisten ya da aynı mobil operatörün
+   * NAT'ı arkasından kaydolan iki kişi (ki bu apartman/site ölçeğinde sıradan) birbirine yorum
+   * yazamaz hâle geliyordu — dürüst müşterinin yorumu sessizce yok sayılıyordu. Yanlış pozitifin
+   * bedeli, kaçırılan bir sahte yorumdan büyük. Artık ağ eşleşmesi yalnızca YÖNETİCİYE bir
+   * inceleme ipucu olarak kaydediliyor; puanı yalnızca KESİN sinyal (aynı iletişim bilgisi)
+   * etkiliyor.
+   */
   const sameNetwork = !!(authorRow.signupIpHash && mech.signupIpHash && authorRow.signupIpHash === mech.signupIpHash);
-  const flaggedCompetitor = !!linkedMechanic || sameNetwork;
+  const flaggedCompetitor = !!linkedMechanic;
 
   const review = {
     id: list.reduce((max, r) => Math.max(max, Number(r?.id) || 0), 0) + 1,
@@ -142,7 +150,9 @@ reviewsRouter.post("/:id/reviews", (req, res) => {
     reply: null,
     // İşaretli yorum: kaydedilir, görünür, ama puana katılmaz (bkz. saveList).
     flaggedCompetitor,
-    flagReason: linkedMechanic ? "linkedMechanicAccount" : sameNetwork ? "sameSignupNetwork" : null,
+    flagReason: linkedMechanic ? "linkedMechanicAccount" : null,
+    // Yalnızca yönetici incelemesi için ipucu; puana etkisi YOK.
+    ...(sameNetwork ? { sameNetworkSignal: true } : {}),
   };
   const updated = saveList(mech.id, [review, ...list]);
   res.status(201).json({ mechanic: hydrate("mechanics", updated), reviewId: review.id });

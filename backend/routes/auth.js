@@ -32,7 +32,10 @@ const otpLimiter = makeRateLimiter({ maxAttempts: OTP_MAX_ATTEMPTS, lockoutMs: 1
 // IP, script ile sınırsız sahte hesap açıp hem veritabanını şişirebilir hem de her kayıtta bir
 // e-posta gönderttiği için SMTP hesabının spam olarak işaretlenmesine (mail itibarının yanmasına)
 // yol açabilirdi. Giriş/OTP ile aynı paylaşılan sınırlayıcı deseni burada da uygulanıyor.
-const registerLimiter = makeRateLimiter({ maxAttempts: 5, lockoutMs: 60 * 60 * 1000 });
+// Sınır bir OPS AYARI: gerçek bir ofis/aile aynı IP'nin arkasından birden çok hesap açabilir ve
+// bu sayı dağıtıma göre değişir. Varsayılan korumacı; ortam değişkeniyle yükseltilebilir.
+const REGISTER_MAX = Number(process.env.REGISTER_LIMIT_PER_HOUR) > 0 ? Number(process.env.REGISTER_LIMIT_PER_HOUR) : 5;
+const registerLimiter = makeRateLimiter({ maxAttempts: REGISTER_MAX, lockoutMs: 60 * 60 * 1000, windowMs: 60 * 60 * 1000 });
 
 // loginTicket -> { role, id, email, otp, expiresAt } — şifre doğrulandıktan sonra, OTP onaylanana
 // kadar geçen KISA süreli ara adım. Gerçek oturum token'ı (createSession) sadece OTP doğrulanınca

@@ -842,10 +842,18 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 22 test takımı.
+tsc tip denetimi + her backend dosyasının sözdizimi + 22 STATİK takım + 2 UÇTAN UCA takım + envanter taraması.
+
+## Statik ve uçtan uca farkı — bu ayrım kritik
+Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
 
 ## Takımlar
-arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri.
+Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri.
+Uçtan uca: tests/e2e/api.e2e.mjs (kimlik, araç, randevu, değerlendirme, ilan, sohbet, hesap güvenliği, girdi güvenliği), tests/e2e/api2.e2e.mjs (destek, teklif, blog/kariyer, duyuru, eşzamanlılık, analitik, şifre uçları, başlıklar, hız sınırı).
+Envanter: tests/e2e/inventory.mjs — istemcinin çağırdığı her yolun sunucuda karşılığı var mı.
+
+## better-sqlite3 sorunu ve çözümü
+Bu ortamda better-sqlite3 derlenemiyor. Node 22'nin yerleşik node:sqlite modülü üstüne ince bir adaptör (tests/e2e/sqlite-adapter.mjs) yazıldı ve --experimental-loader ile "better-sqlite3" istekleri ona yönlendiriliyor (tests/e2e/loader.mjs). UYGULAMA KODU DEĞİŞMİYOR — test uğruna üretim kodunu esnetmek, test ettiğin şeyin artık üretimdeki şey olmaması demektir.
 
 ## Belgeyi canlı tutan takım
 "el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.
@@ -1363,6 +1371,61 @@ Araç sahibinin garaj sekmesinde ve tamircinin randevular sekmesinde AYNI panel 
 
 ## BİLİNEN SINIR
 Bu bir "araç sorgu" servisi değildir: yalnızca Fixperto üzerinden yapılmış işleri bilir. Hasar kaydı, kilometre doğrulama ya da resmi tescil verisi burada yoktur ve öyleymiş gibi sunulmaz.`,
+      },
+    ],
+  },
+  {
+    id: "dagitim-ve-denetim",
+    title: "22. Dağıtım Tuzakları ve Denetim Bulguları",
+    summary: "Sunucuyu gerçekten çalıştırınca ortaya çıkan hatalar ve canlıya alırken bozulacak ayarlar.",
+    pages: [
+      {
+        id: "trust-proxy",
+        title: "22.1 Ters vekil arkasında IP (TRUST_PROXY)",
+        body: `Sitedeki bütün hız sınırları (giriş denemesi, kayıt, VIN sorgulama, teklif yazma) İP ADRESİNE göre sayıyor. Express \`req.ip\`'yi doğrudan TCP bağlantısından okur.
+
+## Tuzak
+Uygulama Nginx, Cloudflare, Render, Heroku gibi bir vekil arkasına konulduğunda her isteğin kaynak IP'si vekilin IP'sidir. O anda bütün kullanıcılar TEK bir sayaca düşer: bir kişinin şifreyi üç kez yanlış girmesi ya da beş kayıt açması, siteyi HERKES için kilitler. Ters yönde de tehlikeli: körü körüne \`X-Forwarded-For\` başlığına güvenmek, saldırganın her istekte başlığı değiştirerek tüm sınırları atlaması demektir.
+
+## Kural
+\`app.set("trust proxy", 1)\` YALNIZCA \`TRUST_PROXY=true\` ortam değişkeniyle açılır ve yalnızca gerçekten bir vekilin arkasındayken açılmalıdır. Değişken varsayılan olarak kapalıdır — yerel çalıştırmada ve doğrudan internete bakan kurulumda doğru olan budur.
+
+## İlgili ayar
+\`REGISTER_LIMIT_PER_HOUR\` (varsayılan 5) kayıt sınırını işletmeye bırakır. Otomatik testler ve yük denemeleri bu sınıra takılmasın diye ayar var; canlıda düşük tutulmalı.`,
+      },
+      {
+        id: "sifre-uclari",
+        title: "22.2 Şifre uçları: kaldırılan kâhin ve admin-only sıfırlama",
+        body: `Şifre değişiminin TEK meşru yolu \`POST /api/auth/change-password\`: mevcut şifreyi sorar ve başarıdan sonra diğer tüm oturumları kapatır. Bu iki koruma birlikte "hesabım ele geçirildi, şifremi değiştirdim" cümlesini anlamlı kılar.
+
+## Kaldırılan: /:id/verify-password
+Uygulama bu ucu artık hiç çağırmıyordu ama uç açıktı ve hız sınırı YOKTU. Çalınmış bir oturum token'ı, "bu şifre doğru mu?" sorusunu sınırsız sorarak hesabın DÜZ METİN şifresini bulabilirdi. Oturum token'ı normalde şifreyi ele vermez; bu uç veriyordu — ve insanlar aynı şifreyi başka sitelerde de kullanıyor. Uç tamamen kaldırıldı.
+
+## Daraltılan: /:id/set-password
+Önceden "kendisi ya da admin" idi. Yani çalınmış bir token, MEVCUT ŞİFREYİ BİLMEDEN yeni şifre koyabiliyor ve gerçek sahibi hesabından kalıcı olarak kilitleyebiliyordu — change-password'ün iki korumasını da baştan aşarak. Uç artık SADECE ADMIN'e açık; kullanıcının kendi şifresini değiştirme yolu tektir.
+
+## Admin sıfırlaması oturumları kapatır
+Bir yönetici şifre sıfırlıyorsa sebebi genelde "hesap ele geçirildi"dir. Saldırganın token'ı ayakta kalırsa sıfırlama hiçbir işe yaramaz; bu yüzden sıfırlama hedefin bütün oturumlarını siler ve kaç oturum kapandığını döner.`,
+      },
+      {
+        id: "denetim-bulgulari",
+        title: "22.3 Sunucuyu çalıştırınca çıkan hatalar",
+        body: `Hepsi statik testlerin GÖREMEDİĞİ, yalnızca gerçek istek atınca ortaya çıkan hatalardı.
+
+## 1) Analitik uçları ?days olmadan 500 veriyordu
+Sorgular \`.all({ cutoff })\` ile çağrılıyordu; \`cutoff\` tanımsızken SQLite bağlama hatası veriyordu. Yani gün filtresi seçilmeden açılan her analitik ekranı boş dönüyordu. Düzeltme: \`const bind = (cutoff) => (cutoff ? { cutoff } : {})\`.
+
+## 2) Eksi teklif kabul ediliyordu
+Tutar "rakam olmayan her şeyi at" mantığıyla ayrıştırılıyordu: "-5" gönderildiğinde eksi işareti atılıyor ve 5 TL'lik GEÇERLİ bir teklif oluyordu. Doğrulama girdiyi DÜZELTMEK için değil REDDETMEK için vardır: önce sayıya çevir, sonra tam sayı/pozitif/üst sınır kontrolü yap.
+
+## 3) Veritabanı kısıtı 500 dönüyordu
+Zorunlu alan eksik bırakılınca NOT NULL/UNIQUE hatası kullanıcıya "sunucu hatası" olarak gidiyordu. Bunlar kullanıcı hatasıdır: artık 400 ve anlaşılır Türkçe mesaj.
+
+## 4) Aynı ağdan kaydolmak tamircinin puanını sıfırlıyordu
+Yorum yazan ile tamirci aynı IP'den kaydolmuşsa yorum "rakip" diye işaretleniyor, işaretli yorumlar ortalamaya girmediği için puan sıfırlanıyordu. Aynı ev, aynı ofis, aynı kafe, mobil operatörün CGNAT'ı — hepsi aynı IP'yi paylaşır; bu kanıt değil. Ağ eşleşmesi artık yalnızca inceleme için \`sameNetworkSignal\` olarak kaydediliyor, puanı etkilemiyor. Puanı yalnızca gerçek bir bağ (aynı e-posta/telefonla açılmış işletme hesabı) etkiler.
+
+## Yöntem notu
+Bu dördü, "kodu okuyup kural arayan" 1000'den fazla iddianın arasından geçmişti. Bir davranışın doğru olduğunu iddia etmenin tek dürüst yolu onu çalıştırıp sonucu veritabanından okumaktır.`,
       },
     ],
   },

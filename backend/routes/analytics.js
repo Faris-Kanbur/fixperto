@@ -119,10 +119,19 @@ function cutoffFor(days) {
 }
 // createdAt filtresini tek yerden üretiyoruz ki her sorguda elle tekrarlanmasın.
 const since = (cutoff) => (cutoff ? " AND createdAt >= @cutoff" : "");
+/**
+ * GERÇEK HATA (uçtan uca denetimde bulundu): sorgu parametreleri koşulsuz `{ cutoff }` olarak
+ * veriliyordu. Tarih aralığı VERİLMEDİĞİNDE (`?days` yok) `since()` boş dönüyor, yani SQL'de
+ * @cutoff yer tutucusu HİÇ YOK — ama parametre yine de gönderiliyordu. SQLite sürücüsü
+ * "kullanılmayan adlandırılmış parametre" hatası fırlatıyor ve uç nokta 500 dönüyordu.
+ * Yani analitik ekranı, aralık seçilmeden açıldığında tamamen boştu ve nedeni görünmüyordu.
+ * Artık parametre yalnızca sorguda gerçekten kullanılıyorsa gönderiliyor.
+ */
+const bind = (cutoff) => (cutoff ? { cutoff } : {});
 
 router.get("/overview", requireAdmin, (req, res) => {
   const cutoff = cutoffFor(req.query.days);
-  const p = { cutoff };
+  const p = bind(cutoff);
   const one = (sql) => db.prepare(sql).get(p) || {};
 
   // Ziyaretçi/oturum: DISTINCT sayım. visitorId anonim olduğu için bu "kaç kişi" değil "kaç tarayıcı"
@@ -204,7 +213,7 @@ router.get("/breakdown", requireAdmin, (req, res) => {
     SELECT COALESCE(NULLIF(${col}, ''), 'bilinmiyor') label, COUNT(DISTINCT visitorId) visitors, COUNT(*) events
     FROM analytics_events WHERE 1=1${since(cutoff)}
     GROUP BY label ORDER BY visitors DESC LIMIT 20
-  `).all({ cutoff });
+  `).all(bind(cutoff));
   res.json(rows);
 });
 
@@ -232,7 +241,7 @@ router.get("/comparisons", requireAdmin, (req, res) => {
     FROM analytics_events
     WHERE name = 'compare_pair' AND json_extract(meta, '$.pairA') IS NOT NULL${since(cutoff)}
     GROUP BY a, b ORDER BY n DESC LIMIT 20
-  `).all({ cutoff });
+  `).all(bind(cutoff));
   // Tek tek modeller: "en çok kıyaslanan araçlar" — çiftin iki ucu da sayılıyor.
   const models = db.prepare(`
     SELECT label, SUM(n) n FROM (
@@ -242,7 +251,7 @@ router.get("/comparisons", requireAdmin, (req, res) => {
       SELECT json_extract(meta, '$.pairB') label, COUNT(*) n FROM analytics_events
         WHERE name = 'compare_pair' AND json_extract(meta, '$.pairB') IS NOT NULL${since(cutoff)} GROUP BY label
     ) GROUP BY label ORDER BY n DESC LIMIT 15
-  `).all({ cutoff });
+  `).all(bind(cutoff));
   res.json({ pairs, models });
 });
 
@@ -254,7 +263,7 @@ router.get("/searches", requireAdmin, (req, res) => {
     WHERE name = '${name}' AND json_extract(meta, '$.${jsonKey}') IS NOT NULL
       AND TRIM(json_extract(meta, '$.${jsonKey}')) != ''${since(cutoff)}
     GROUP BY label ORDER BY n DESC LIMIT 15
-  `).all({ cutoff });
+  `).all(bind(cutoff));
   res.json({
     topQueries: topBy("query", "search_performed"),
     topCities: topBy("city", "search_performed"),
@@ -274,7 +283,7 @@ router.get("/timeseries", requireAdmin, (req, res) => {
            SUM(CASE WHEN name = 'appointment_booked' THEN 1 ELSE 0 END) appointments
     FROM analytics_events WHERE 1=1${since(cutoff)}
     GROUP BY day ORDER BY day ASC LIMIT 180
-  `).all({ cutoff });
+  `).all(bind(cutoff));
   res.json(rows);
 });
 
@@ -287,7 +296,7 @@ router.get("/top-targets", requireAdmin, (req, res) => {
     FROM analytics_events
     WHERE name = '${eventName}' AND targetId IS NOT NULL${since(cutoff)}
     GROUP BY targetId ORDER BY views DESC LIMIT 10
-  `).all({ cutoff });
+  `).all(bind(cutoff));
   res.json(rows);
 });
 
@@ -330,7 +339,7 @@ router.get("/my-mechanic", (req, res) => {
       AND json_extract(meta, '$.service') IS NOT NULL
       AND TRIM(json_extract(meta, '$.service')) != ''${since(cutoff)}
     GROUP BY label ORDER BY n DESC LIMIT 8
-  `).all({ cutoff });
+  `).all(bind(cutoff));
 
   const series = db.prepare(`
     SELECT date(createdAt) day, COUNT(*) views

@@ -118,8 +118,14 @@ ok(/hashchange/.test(provider), "hash sonradan değişirse de yakalanıyor");
 // Belgede yazan test takımı SAYISI gerçekle uyuşmalı — eskimiş bir sayı, belgeye olan güveni
 // tümüyle bitirir ("burada 12 yazıyor ama 15 varsa başka neler eski?").
 const suiteFiles = readdirSync(join(ROOT, "tests")).filter((f) => f.endsWith(".test.mjs"));
-const statedMatch = handbookSrc.match(/(\d+) test takımı/);
-ok(statedMatch, "el kitabında takım sayısı yazıyor");
-eq(Number(statedMatch?.[1]), suiteFiles.length, `belgedeki takım sayısı gerçekle uyuşuyor (${suiteFiles.length})`);
+const e2eFiles = readdirSync(join(ROOT, "tests", "e2e")).filter((f) => f.endsWith(".e2e.mjs"));
+const statedMatch = handbookSrc.match(/(\d+) STATİK takım \+ (\d+) UÇTAN UCA takım/);
+ok(statedMatch, "el kitabında statik ve uçtan uca takım sayıları yazıyor");
+eq(Number(statedMatch?.[1]), suiteFiles.length, `belgedeki statik takım sayısı gerçekle uyuşuyor (${suiteFiles.length})`);
+eq(Number(statedMatch?.[2]), e2eFiles.length, `belgedeki uçtan uca takım sayısı gerçekle uyuşuyor (${e2eFiles.length})`);
+// Uçtan uca katmanın NE İŞE YARADIĞI da yazılı olmalı: sayı vermek, o katmanın neden var
+// olduğunu anlatmadan, sonraki geliştiriciye "bunlar da ne" dedirtir.
+ok(/gerçek Express sunucusunu/.test(handbookSrc) && /VERİTABANINDAN okuyarak/.test(handbookSrc),
+  "uçtan uca katmanın ne yaptığı el kitabında açıklanmış");
 
 report("el kitabı");

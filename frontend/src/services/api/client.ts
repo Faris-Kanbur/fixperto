@@ -241,9 +241,10 @@ function withPasswordEndpoints<T extends { id: number | string }>(resource: stri
       request(`/api/${resource}/${id}/reviews/${reviewId}/reply`, { method: "POST", body: JSON.stringify({ reply }) }),
     toggleReviewHelpful: (id: number | string, reviewId: number | string): Promise<any> =>
       request(`/api/${resource}/${id}/reviews/${reviewId}/helpful`, { method: "POST" }),
-    verifyPassword: (id: number | string, password: string, opts?: RequestOptions): Promise<{ valid: boolean }> =>
-      request(`/api/${resource}/${id}/verify-password`, { method: "POST", body: JSON.stringify({ password }), ...opts }),
-    setPassword: (id: number | string, password: string, opts?: RequestOptions): Promise<{ ok: true }> =>
+    // YALNIZCA ADMIN: kullanıcının kendi şifresini değiştirme yolu api.account.changePassword.
+    // (verifyPassword metodu kaldırıldı — sunucudaki karşılığı bir şifre kâhiniydi, bkz.
+    // backend/routes/makeCrudRouter.js)
+    setPassword: (id: number | string, password: string, opts?: RequestOptions): Promise<{ ok: true; sessionsClosed?: number }> =>
       request(`/api/${resource}/${id}/set-password`, { method: "POST", body: JSON.stringify({ password }), ...opts }),
   };
 }

@@ -42,20 +42,34 @@ ok(/SELECT name, email, phone, signupIpHash FROM owners WHERE id = \?/.test(revi
 ok(/FROM mechanics WHERE \(email IS NOT NULL AND lower\(email\) = \?\) OR \(phone IS NOT NULL AND phone != '' AND phone = \?\)/.test(reviews),
   "e-posta VEYA telefon işletme hesaplarıyla karşılaştırılıyor");
 ok(/reason: "selfReview"/.test(reviews), "kendi işletmesine yorum kesin engelleniyor");
-ok(/const flaggedCompetitor = !!linkedMechanic \|\| sameNetwork;/.test(reviews), "başka bir işletmeye bağlı hesap işaretleniyor");
-ok(/flagReason: linkedMechanic \? "linkedMechanicAccount" : sameNetwork \? "sameSignupNetwork" : null/.test(reviews), "işaretin nedeni kaydediliyor");
+ok(/const flaggedCompetitor = !!linkedMechanic;/.test(reviews), "başka bir işletmeye bağlı hesap işaretleniyor");
+ok(/flagReason: linkedMechanic \? "linkedMechanicAccount" : null/.test(reviews), "işaretin nedeni kaydediliyor");
+/**
+ * DEĞİŞEN KURAL (uçtan uca denetimde bulunan GERÇEK hata): "aynı ağdan kaydolmuş olmak" tek
+ * başına yorumu işaretliyor ve işaretli yorumlar ortalamaya katılmadığı için tamircinin puanını
+ * SIFIRLIYORDU. Ağ eşleşmesi kanıt değil: aynı ev, aynı ofis, aynı kafe, aynı mobil operatörün
+ * CGNAT'ı, hatta aynı sunucu arkasındaki tüm kullanıcılar aynı IP'yi paylaşır. Yani dürüst bir
+ * müşterinin yorumu, tamamen ilgisiz bir sebeple tamircinin puanını yok edebiliyordu — kötü
+ * niyetli biri için de kolay bir sabotaj yolu. Artık ağ eşleşmesi yalnızca `sameNetworkSignal`
+ * olarak KAYDEDİLİYOR (inceleme için duruyor) ama puanı etkilemiyor; puanı yalnızca gerçek bir
+ * bağ (aynı e-posta/telefonla açılmış işletme hesabı) etkiliyor.
+ */
+ok(/sameNetworkSignal: true/.test(reviews), "ağ eşleşmesi yine de kayda geçiyor (inceleme için)");
+ok(/sameNetwork/.test(reviews) && !/flaggedCompetitor = !!linkedMechanic \|\| sameNetwork/.test(reviews),
+  "ağ eşleşmesi hesaplanıyor ama işaretlemeye BAĞLANMIYOR");
 
 // Karar tablosunu çalıştır: hangi durumda engel, hangisinde işaret?
-const decide = ({ role, linkedMechanicId, reviewedId, sameNetwork }) => {
+const decide = ({ role, linkedMechanicId, reviewedId }) => {
   if (role === "mechanic") return "block-mechanic";
   if (linkedMechanicId && linkedMechanicId === reviewedId) return "block-self";
-  if (linkedMechanicId || sameNetwork) return "flag";
+  if (linkedMechanicId) return "flag";
   return "ok";
 };
 eq(decide({ role: "mechanic" }), "block-mechanic", "tamirci hesabı engelli");
 eq(decide({ role: "owner", linkedMechanicId: 5, reviewedId: 5 }), "block-self", "kendi işletmesi engelli");
 eq(decide({ role: "owner", linkedMechanicId: 9, reviewedId: 5 }), "flag", "başka işletmeye bağlı hesap işaretli");
-eq(decide({ role: "owner", sameNetwork: true, reviewedId: 5 }), "flag", "aynı ağdan açılmış hesap işaretli");
+eq(decide({ role: "owner", sameNetwork: true, reviewedId: 5 }), "ok",
+  "aynı ağdan açılmış hesap ARTIK işaretlenmiyor (paylaşımlı IP kanıt değil, puanı sıfırlıyordu)");
 eq(decide({ role: "owner", reviewedId: 5 }), "ok", "sıradan müşteri serbest");
 
 // İŞARETLİ YORUM PUANA GİRMEZ ama SİLİNMEZ: tamirci gerçekten müşteri olabilir.

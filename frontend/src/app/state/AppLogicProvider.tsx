@@ -3337,8 +3337,6 @@ function useAppLogic() {
     if (!passwordForm.current || !passwordForm.next) { setToast({ type: "info", text: "⚠️ Lütfen tüm alanları doldurun." }); return; }
     if (passwordForm.next.length < 8) { setToast({ type: "info", text: `⚠️ ${t("passwordMinLengthToast")}` }); return; }
     if (passwordForm.next !== passwordForm.confirm) { setToast({ type: "info", text: "⚠️ Yeni şifreler eşleşmiyor." }); return; }
-    const myId = role === "mechanic" ? MY_MECHANIC_ID : MY_OWNER_ID;
-    const passwordApi = role === "mechanic" ? api.mechanics : api.owners;
     setPasswordChangeLoading(true);
     try {
       /**
