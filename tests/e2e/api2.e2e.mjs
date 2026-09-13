@@ -169,6 +169,72 @@ try {
   eq((await api("GET", "/sitemap.xml")).status, 200, "sitemap.xml yayında");
   ok(!/taslak/.test((await api("GET", "/sitemap.xml")).raw), "sitemap taslak yazıyı içermiyor");
 
+  // ============================================================ YORUMLAR: JSON DİZİSİ → GERÇEK TABLO
+  /**
+   * ESKİ HATA: bütün yorumlar mechanics.reviewList JSON dizisindeydi ve her yazma "diziyi oku →
+   * değiştir → baştan yaz" idi. İki kişi aynı anda yorum yazarsa ikincisi birincisini SİLİYORDU;
+   * kullanıcıya "kaydedildi" deniyor, yorum kayboluyordu. Aşağıdaki testler eşzamanlı istekleri
+   * GERÇEKTEN paralel atıp veritabanından sayıyor — sıralı çağrı bu hatayı hiç göstermez.
+   */
+  const revMech = await createUser("mechanic", { name: "Puan Servis", email: "puan@example.com", phone: "+905331230011" });
+  const reviewers = [];
+  for (let i = 0; i < 4; i++) {
+    const u = await createUser("owner", { name: `Yorumcu ${i}`, email: `yorumcu${i}@example.com`, phone: `+90532123002${i}` });
+    const appt = await api("POST", "/api/appointments", {
+      token: u.token,
+      body: { mechanicId: revMech.id, service: "Bakım", date: "2026-01-01", time: "10:00", status: "Onay Bekliyor" },
+    });
+    await api("PATCH", `/api/appointments/${appt.body.id}`, { token: revMech.token, body: { status: "Tamamlandı" } });
+    reviewers.push(u);
+  }
+
+  // Taşıma çalıştı mı: tanıtım verisindeki yorumlar tabloya girdi ve kimlikleri korundu.
+  ok(rows("SELECT id FROM mechanic_reviews WHERE mechanicId = 1").length > 0, "eski JSON yorumlar tabloya taşındı");
+  ok(JSON.parse(row("SELECT reviewList FROM mechanics WHERE id = 1").reviewList || "[]").length > 0,
+    "önbellek sütunu (reviewList) tablodan yeniden üretildi — arayüz hiç değişmedi");
+  eq(rows("SELECT id FROM mechanic_reviews WHERE id = 6001").length, 1, "yorum kimlikleri korundu (beğeni listeleri bozulmadı)");
+
+  // 1) DÖRT KİŞİ AYNI ANDA yorum yazıyor — hiçbiri kaybolmamalı.
+  const conc = await Promise.all(reviewers.map((u, i) => api("POST", `/api/mechanics/${revMech.id}/reviews`, {
+    token: u.token, body: { rating: 4, comment: `eşzamanlı ${i}` },
+  })));
+  eq(conc.filter((r) => r.status === 201).length, 4, "dört eşzamanlı yorumun dördü de kabul edildi");
+  eq(rows("SELECT id FROM mechanic_reviews WHERE mechanicId = ?", revMech.id).length, 4,
+    "DÖRDÜ DE veritabanında — eski JSON dizisinde son yazan diğerlerini siliyordu");
+  eq(row("SELECT reviews, rating FROM mechanics WHERE id = ?", revMech.id).reviews, 4, "önbellek sayacı da doğru");
+
+  // 2) AYNI kullanıcı aynı anda iki yorum gönderirse tam olarak BİRİ yazılmalı (veritabanı kısıtı).
+  const dupUser = reviewers[0];
+  const dupes = await Promise.all([1, 2].map(() => api("POST", `/api/mechanics/${revMech.id}/reviews`, {
+    token: dupUser.token, body: { rating: 1, comment: "ikinci" },
+  })));
+  eq(dupes.every((r) => r.status === 409), true, "ikinci yorum denemeleri 409 (zaten yorum var)");
+  eq(rows("SELECT id FROM mechanic_reviews WHERE mechanicId = ? AND authorId = ?", revMech.id, dupUser.id).length, 1,
+    "kullanıcı başına tek yorum kuralı veritabanı tarafından garanti");
+
+  // 3) Aynı kişi aynı anda iki kez beğenirse sayaç 1 olmalı; ikinci istek beğeniyi geri almamalı.
+  // Eşzamanlı yazımda kimlik sırası belirsiz; hedefi YAZARINA göre seçiyoruz (yoksa test kırılgan olur).
+  const targetReview = row("SELECT id FROM mechanic_reviews WHERE mechanicId = ? AND authorId = ?", revMech.id, reviewers[0].id).id;
+  const liker = reviewers[1];
+  await Promise.all([1, 2].map(() => api("POST", `/api/mechanics/${revMech.id}/reviews/${targetReview}/helpful`, { token: liker.token })));
+  eq(rows("SELECT voterKey FROM review_helpful WHERE reviewId = ?", targetReview).length <= 1, true,
+    "aynı kişi için en fazla bir oy satırı (birincil anahtar koruyor)");
+  const cached = JSON.parse(row("SELECT reviewList FROM mechanics WHERE id = ?", revMech.id).reviewList)
+    .find((r) => r.id === targetReview);
+  eq(cached.helpful, rows("SELECT voterKey FROM review_helpful WHERE reviewId = ?", targetReview).length,
+    "gösterilen beğeni sayısı gerçek oy sayısıyla birebir (sayaç tutulmuyor, sayılıyor)");
+
+  // 4) Yanıt ve silme tablo üzerinden çalışıyor; silinen yorumun oyları da gidiyor.
+  eq((await api("POST", `/api/mechanics/${revMech.id}/reviews/${targetReview}/reply`, {
+    token: revMech.token, body: { reply: "Teşekkürler" },
+  })).status, 200, "tamirci yanıt yazabiliyor");
+  eq(row("SELECT reply FROM mechanic_reviews WHERE id = ?", targetReview).reply, "Teşekkürler", "yanıt tabloda");
+  eq((await api("DELETE", `/api/mechanics/${revMech.id}/reviews/${targetReview}`, { token: reviewers[0].token })).status, 200,
+    "yazar kendi yorumunu silebiliyor");
+  eq(rows("SELECT id FROM mechanic_reviews WHERE id = ?", targetReview).length, 0, "yorum satırı silindi");
+  eq(rows("SELECT voterKey FROM review_helpful WHERE reviewId = ?", targetReview).length, 0, "yorumun oyları da silindi (öksüz satır kalmıyor)");
+  eq(row("SELECT reviews FROM mechanics WHERE id = ?", revMech.id).reviews, 3, "silmeden sonra puan/sayaç yeniden hesaplandı");
+
   // ============================================================ ŞİFRE UÇLARI (bu denetimde bulundu)
   /**
    * AÇIK 1: `/:id/verify-password` hız sınırsız bir şifre kâhiniydi — çalınmış bir oturum

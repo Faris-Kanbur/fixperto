@@ -20,6 +20,8 @@ const crud = read("backend", "routes", "makeCrudRouter.js");
 const server = read("backend", "server.js");
 const jobs = read("backend", "routes", "jobApplications.js");
 const reviews = read("backend", "routes", "reviews.js");
+// Yorumlar artık kendi tablosunda; puan hesabı ve önbellek yazımı db.js'te (recomputeMechanicReviews).
+const dbSchema = read("backend", "db", "db.js");
 const provider = read("frontend", "src", "app", "state", "AppLogicProvider.tsx");
 const shell = read("frontend", "src", "app", "AppShell.tsx");
 const client = read("frontend", "src", "services", "api", "client.ts");
@@ -60,16 +62,24 @@ eq(/sharedWrite: \{/.test(server), false, "mechanics sharedWrite izni kaldırıl
 eq(/sharedWrite/.test(crud.slice(crud.indexOf("router.patch"))), true, "makeCrudRouter'daki genel destek duruyor (başka tablolar kullanabilir)");
 ok(/"reviewList", "reviews", "rating"/.test(crud), "bu üç alan genel PATCH'e kapalı");
 ok(/"applicants"/.test(crud), "applicants genel PATCH'e kapalı");
-ok(/UPDATE mechanics SET reviewList = \?, reviews = \?, rating = \?/.test(reviews), "puanı sunucu yazıyor");
-ok(/const rated = list\.filter\(\(r\) => Number\(r\?\.rating\) > 0 && !r\.flaggedCompetitor\)/.test(reviews),
-  "puan LİSTEDEN hesaplanıyor ve işaretli yorumlar ortalamaya girmiyor");
+ok(/UPDATE mechanics SET reviewList = \?, reviews = \?, rating = \?/.test(dbSchema), "puanı sunucu yazıyor");
+ok(/const rated = list\.filter\(\(r\) => Number\(r\.rating\) > 0 && !r\.flaggedCompetitor\)/.test(dbSchema),
+  "puan TABLODAN hesaplanıyor ve işaretli yorumlar ortalamaya girmiyor");
+// Rotalar puanı ARTIK KENDİ ELİYLE YAZMIYOR: tek yol recomputeMechanicReviews. Bir rota
+// doğrudan rating/reviews yazmaya başlarsa önbellek ile tablo ayrışır ve puan yalan söyler.
+eq(/UPDATE mechanics SET .*rating/.test(reviews), false, "rota puanı elle yazmıyor");
+ok((reviews.match(/recomputeMechanicReviews\(/g) || []).length >= 4, "her yazma yolundan sonra puan yeniden hesaplanıyor");
+// Eşzamanlılık kuralları veritabanı kısıtı olarak yazılı — JavaScript kontrolü yetmez.
+ok(/CREATE UNIQUE INDEX IF NOT EXISTS idx_review_one_per_author/.test(dbSchema), "bir kullanıcı bir yorum kuralı veritabanında");
+ok(/PRIMARY KEY \(reviewId, voterKey\)/.test(dbSchema), "bir kişi bir beğeni kuralı veritabanında");
 ok(/status = 'Tamamlandı'/.test(reviews), "yorum için tamamlanmış randevu şartı");
 ok(/reason: "noAppointment"/.test(reviews), "randevusu olmayan yorum bırakamıyor");
 ok(/reason: "duplicate"/.test(reviews), "aynı tamirciye ikinci yorum engelli");
 ok(/Yalnızca kendi yorumunuzu silebilirsiniz/.test(reviews), "yorumu yalnızca yazarı silebiliyor");
 ok(/Kendi işletmenize yorum yazamazsınız/.test(reviews), "kendi işletmesine yorum yazamıyor");
 ok(/Tamirci hesabıyla değerlendirme yazılamaz/.test(reviews), "tamirci hesabı hiç yorum yazamıyor");
-ok(/helpfulBy/.test(reviews), "'faydalı' oyu kişi başına bir kez");
+ok(/INSERT OR IGNORE INTO review_helpful/.test(reviews) && /DELETE FROM review_helpful WHERE reviewId = \? AND voterKey = \?/.test(reviews),
+  "'faydalı' oyu kişi başına bir kez (ayrı tabloda, sayaç türetiliyor)");
 
 // Puan hesabını gerçekten çalıştır.
 const avgOf = (list) => {

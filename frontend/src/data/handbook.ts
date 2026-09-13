@@ -842,13 +842,13 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 23 STATİK takım + 2 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 24 STATİK takım + 2 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
 
 ## Takımlar
-Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı.
+Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı, arayüz çizimi.
 Uçtan uca: tests/e2e/api.e2e.mjs (kimlik, araç, randevu, değerlendirme, ilan, sohbet, hesap güvenliği, girdi güvenliği), tests/e2e/api2.e2e.mjs (destek, teklif, blog/kariyer, duyuru, eşzamanlılık, analitik, şifre uçları, başlıklar, hız sınırı).
 Envanter: tests/e2e/inventory.mjs — istemcinin çağırdığı her yolun sunucuda karşılığı var mı.
 
@@ -858,6 +858,14 @@ Normal kurulumda (senin makinen, CI) better-sqlite3 derlenmiş hâlde vardır ve
 Bazı sanal ortamlarda better-sqlite3'ün ikilisi çalışmaz. Orada, Node 22+ ise, --experimental-loader ile "better-sqlite3" istekleri node:sqlite üstündeki ince bir adaptöre yönlendirilir (tests/e2e/sqlite-adapter.mjs + loader.mjs). UYGULAMA KODU YİNE DEĞİŞMEZ — test uğruna üretim kodunu esnetmek, test ettiğin şeyin artık üretimdeki şey olmaması demektir.
 
 İkisi de yoksa takım hata VERMEZ; sebebini yazıp atlar. Çalıştıramadığın bir testin kırmızı yanması, gerçek bir hata gördüğünde ona güvenmemene yol açar.
+
+## Arayüz gerçekten çiziliyor mu — üçüncü katman
+Statik takımlar bileşenin KAYNAĞINI okur, uçtan uca takımlar SUNUCUYU çalıştırır. Aradaki boşluk şuydu: bileşenin kendi kodu hiç çalışmıyordu. Artık çalışıyor — TypeScript derleyicisi TSX'i çevirip react-dom/server bileşeni HTML'e basıyor (tests/ui-render.test.mjs). Böylece koşullar, hesaplamalar, dil seçimi ve "veri boş geldi" hâlleri gerçekten sınanıyor.
+
+En değerli parçası TOPLU TARAMA: her bileşen boş/eksik veriyle bir kez çiziliyor. React'te tek bir bileşenin çizim sırasında atması bütün ağacı düşürür — kullanıcı beyaz ekran görür. Bu tarama daha ilk çalıştırmada gerçek bir örnek buldu: iş ilanı kartı, başvuru listesi null geldiğinde çöküyordu; tek bozuk kayıt bütün ilan listesini beyaz ekrana çeviriyordu.
+
+## Hâlâ test EDİLMEYEN: tarayıcı
+Bu bir tarayıcı değil. Tıklama, odak, kaydırma, CSS, gerçek z-index ve portal yerleşimi burada ölçülmüyor; ölçülen şey ilk çizim. Paketleyicinin (vite/rollup/esbuild) derlenmiş ikilileri bu ortamda çalışmadığı için uygulamayı paketleyip tarayıcıda açmak mümkün değil. Bu sınır biliniyor ve gizlenmiyor: "arayüz test edildi" demek, "tarayıcıda tıklandı" demek değildir.
 
 ## Bu kural bir hatadan doğdu
 İlk sürüm node:sqlite'ı tek yol olarak yazmıştı ve üst seviyede import ediyordu: geliştirme ortamında yeşildi, Node 20 kurulu makinede "No such built-in module: node:sqlite" ile patladı. tests/test-altyapisi.test.mjs takımı bu hatanın geri gelmesini engelliyor — sürücü seçiminin çalışma anında yapıldığını, atlama yolunun durduğunu ve her takımın kendi portu/veritabanı dosyasıyla çalıştığını denetliyor.

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db } from "../db/db.js";
+import { db, recomputeMechanicReviews } from "../db/db.js";
 import { hydrate } from "../db/hydrate.js";
 import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 
@@ -30,17 +30,17 @@ const MAX_COMMENT_LEN = 2000;
 const MAX_REPLY_LEN = 2000;
 const writeLimiter = makeRateLimiter({ maxAttempts: 30, lockoutMs: 10 * 60 * 1000, windowMs: 10 * 60 * 1000 });
 
-const readList = (row) => { try { return JSON.parse(row.reviewList || "[]"); } catch { return []; } };
-
-/** Puanı LİSTEDEN hesaplar ve satıra yazar — istemcinin gönderdiği bir sayıya asla güvenilmez. */
-function saveList(mechanicId, list) {
-  // İŞARETLİ (flagged) yorumlar ortalamaya GİRMEZ. Gerekçe aşağıda, competitorLink yorumunda.
-  const rated = list.filter((r) => Number(r?.rating) > 0 && !r.flaggedCompetitor);
-  const avg = rated.length ? Math.round((rated.reduce((sum, r) => sum + Number(r.rating), 0) / rated.length) * 10) / 10 : 0;
-  db.prepare(`UPDATE mechanics SET reviewList = ?, reviews = ?, rating = ? WHERE id = ?`)
-    .run(JSON.stringify(list), rated.length, avg, mechanicId);
-  return db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(mechanicId);
-}
+/**
+ * YORUMLAR ARTIK JSON DİZİSİ DEĞİL, KENDİ TABLOSUNDA (bkz. backend/db/db.js mechanic_reviews).
+ * Eskiden her yazma "diziyi oku → değiştir → baştan yaz" idi; iki kişi aynı anda yorum yazınca
+ * ikincisi birincisini siliyordu ve "bir kullanıcı bir yorum" kuralı eşzamanlı isteklerde
+ * delinebiliyordu. Artık her yorum bir satır, kurallar veritabanı kısıtı.
+ * `mechanics.reviewList/reviews/rating` sütunları duruyor ama yalnızca ÖNBELLEK: her değişiklikten
+ * sonra tablodan yeniden üretiliyor, böylece okuma yolları ve arayüz hiç değişmedi.
+ */
+const findReview = (mechanicId, reviewId) => db.prepare(
+  `SELECT * FROM mechanic_reviews WHERE id = ? AND mechanicId = ?`
+).get(reviewId, mechanicId);
 
 function actorOf(req, res, roles = ["owner", "mechanic"]) {
   const actor = resolveActor(req);
@@ -107,10 +107,6 @@ reviewsRouter.post("/:id/reviews", (req, res) => {
     return res.status(403).json({ error: "Yalnızca bu tamircide tamamlanmış randevusu olan kullanıcılar yorum bırakabilir.", reason: "noAppointment" });
   }
 
-  const list = readList(mech);
-  if (list.some((r) => r.authorId === actor.id && (r.authorType || "owner") === actor.role)) {
-    return res.status(409).json({ error: "Bu tamirci için zaten bir yorumunuz var. Önce onu silin.", reason: "duplicate" });
-  }
   const authorRow = db.prepare(`SELECT name, email, phone, signupIpHash FROM owners WHERE id = ?`).get(actor.id) || {};
 
   // (3) ve (4): iletişim bilgisi eşleşmesi. Telefon +E.164'e normalleştirilmiş olarak saklanıyor
@@ -136,26 +132,37 @@ reviewsRouter.post("/:id/reviews", (req, res) => {
   const sameNetwork = !!(authorRow.signupIpHash && mech.signupIpHash && authorRow.signupIpHash === mech.signupIpHash);
   const flaggedCompetitor = !!linkedMechanic;
 
-  const review = {
-    id: list.reduce((max, r) => Math.max(max, Number(r?.id) || 0), 0) + 1,
-    rating: Math.round(rating),
-    comment: String(req.body?.comment ?? "").slice(0, MAX_COMMENT_LEN),
-    author: authorRow?.name || "Kullanıcı",
-    authorId: actor.id,
-    authorType: actor.role,
-    lang: ["tr", "en", "de"].includes(req.body?.lang) ? req.body.lang : "tr",
-    date: new Date().toISOString(),
-    helpful: 0,
-    verified: true,          // arkasında tamamlanmış randevu var
-    reply: null,
-    // İşaretli yorum: kaydedilir, görünür, ama puana katılmaz (bkz. saveList).
-    flaggedCompetitor,
-    flagReason: linkedMechanic ? "linkedMechanicAccount" : null,
-    // Yalnızca yönetici incelemesi için ipucu; puana etkisi YOK.
-    ...(sameNetwork ? { sameNetworkSignal: true } : {}),
-  };
-  const updated = saveList(mech.id, [review, ...list]);
-  res.status(201).json({ mechanic: hydrate("mechanics", updated), reviewId: review.id });
+  /**
+   * "Bir kullanıcı bir tamirciye bir yorum" kuralını ARTIK VERİTABANI uyguluyor (kısmi UNIQUE
+   * indeks). Önceden bu kontrol JavaScript'te yapılıyordu: aynı anda gelen iki istek de kontrolü
+   * geçip iki yorum yazabilirdi. Kısıt ihlalini yakalayıp aynı 409'u dönüyoruz — istemci için
+   * hiçbir şey değişmiyor, ama kural artık gerçekten garanti.
+   */
+  let info;
+  try {
+    info = db.prepare(`INSERT INTO mechanic_reviews
+      (mechanicId, authorId, authorType, author, rating, comment, lang, date, verified, reply, flaggedCompetitor, flagReason, sameNetworkSignal)
+      VALUES (@mechanicId, @authorId, @authorType, @author, @rating, @comment, @lang, @date, 1, NULL, @flaggedCompetitor, @flagReason, @sameNetworkSignal)`).run({
+      mechanicId: mech.id,
+      authorId: actor.id,
+      authorType: actor.role,
+      author: authorRow?.name || "Kullanıcı",
+      rating: Math.round(rating),
+      comment: String(req.body?.comment ?? "").slice(0, MAX_COMMENT_LEN),
+      lang: ["tr", "en", "de"].includes(req.body?.lang) ? req.body.lang : "tr",
+      date: new Date().toISOString(),
+      flaggedCompetitor: flaggedCompetitor ? 1 : 0,
+      flagReason: linkedMechanic ? "linkedMechanicAccount" : null,
+      sameNetworkSignal: sameNetwork ? 1 : 0,   // yalnızca yönetici incelemesi için; puana etkisi YOK
+    });
+  } catch (err) {
+    if (/UNIQUE/i.test(err.message)) {
+      return res.status(409).json({ error: "Bu tamirci için zaten bir yorumunuz var. Önce onu silin.", reason: "duplicate" });
+    }
+    throw err;
+  }
+  const updated = recomputeMechanicReviews(mech.id);
+  res.status(201).json({ mechanic: hydrate("mechanics", updated), reviewId: Number(info.lastInsertRowid) });
 });
 
 /** Yorumu silme — yalnızca YAZARI (ya da admin). Tamirci kendi hakkındaki yorumu silemez. */
@@ -164,15 +171,17 @@ reviewsRouter.delete("/:id/reviews/:reviewId", (req, res) => {
   if (!actor) return;
   const mech = db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(req.params.id);
   if (!mech) return res.status(404).json({ error: "Tamirci bulunamadı." });
-  const list = readList(mech);
-  const target = list.find((r) => String(r.id) === String(req.params.reviewId));
+  const target = findReview(mech.id, req.params.reviewId);
   if (!target) return res.status(404).json({ error: "Yorum bulunamadı." });
-  const isAuthor = target.authorId === actor.id && (target.authorType || "owner") === actor.role;
+  const isAuthor = target.authorId != null && target.authorId === actor.id && (target.authorType || "owner") === actor.role;
   if (!isAuthor && actor.role !== "admin") {
     return res.status(403).json({ error: "Yalnızca kendi yorumunuzu silebilirsiniz." });
   }
-  const updated = saveList(mech.id, list.filter((r) => r !== target));
-  res.json({ mechanic: hydrate("mechanics", updated) });
+  db.transaction(() => {
+    db.prepare(`DELETE FROM review_helpful WHERE reviewId = ?`).run(target.id);
+    db.prepare(`DELETE FROM mechanic_reviews WHERE id = ?`).run(target.id);
+  })();
+  res.json({ mechanic: hydrate("mechanics", recomputeMechanicReviews(mech.id)) });
 });
 
 /** Tamircinin yoruma YANITI — yalnızca yorumun yazıldığı tamirci. Yorumun kendisine dokunamaz. */
@@ -185,11 +194,10 @@ reviewsRouter.post("/:id/reviews/:reviewId/reply", (req, res) => {
     return res.status(403).json({ error: "Yalnızca kendi profilinizdeki yorumları yanıtlayabilirsiniz." });
   }
   const text = String(req.body?.reply ?? "").slice(0, MAX_REPLY_LEN).trim();
-  const list = readList(mech);
-  const target = list.find((r) => String(r.id) === String(req.params.reviewId));
+  const target = findReview(mech.id, req.params.reviewId);
   if (!target) return res.status(404).json({ error: "Yorum bulunamadı." });
-  const updated = saveList(mech.id, list.map((r) => (r === target ? { ...r, reply: text || null } : r)));
-  res.json({ mechanic: hydrate("mechanics", updated) });
+  db.prepare(`UPDATE mechanic_reviews SET reply = ? WHERE id = ?`).run(text || null, target.id);
+  res.json({ mechanic: hydrate("mechanics", recomputeMechanicReviews(mech.id)) });
 });
 
 /** "Faydalı" işareti — kişi başına bir kez, sayacı SUNUCU tutar. */
@@ -204,17 +212,18 @@ reviewsRouter.post("/:id/reviews/:reviewId/helpful", (req, res) => {
   if (limited(req, res)) return;
   const mech = db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(req.params.id);
   if (!mech) return res.status(404).json({ error: "Tamirci bulunamadı." });
-  const list = readList(mech);
-  const target = list.find((r) => String(r.id) === String(req.params.reviewId));
+  const target = findReview(mech.id, req.params.reviewId);
   if (!target) return res.status(404).json({ error: "Yorum bulunamadı." });
-  // Kimin beğendiğini kaydediyoruz: aksi halde aynı kişi sayacı istediği kadar artırabilirdi.
-  const voters = Array.isArray(target.helpfulBy) ? target.helpfulBy : [];
+  /**
+   * Kimin beğendiği artık ayrı bir satır ve (reviewId, voterKey) BİRİNCİL ANAHTAR: aynı kişi
+   * iki kez sayamaz — eşzamanlı iki istekte bile. Sayaç tutulmuyor, sayılıyor; "sayaç ile
+   * oy listesi birbirini tutmuyor" diye bir durum kalmadı.
+   */
   const key = `${actor.role}:${actor.id}`;
-  const nextVoters = voters.includes(key) ? voters.filter((v) => v !== key) : [...voters, key];
-  const updated = saveList(mech.id, list.map((r) => (
-    r === target ? { ...r, helpfulBy: nextVoters, helpful: nextVoters.length } : r
-  )));
-  res.json({ mechanic: hydrate("mechanics", updated), liked: nextVoters.includes(key) });
+  const existing = db.prepare(`SELECT 1 FROM review_helpful WHERE reviewId = ? AND voterKey = ?`).get(target.id, key);
+  if (existing) db.prepare(`DELETE FROM review_helpful WHERE reviewId = ? AND voterKey = ?`).run(target.id, key);
+  else db.prepare(`INSERT OR IGNORE INTO review_helpful (reviewId, voterKey) VALUES (?, ?)`).run(target.id, key);
+  res.json({ mechanic: hydrate("mechanics", recomputeMechanicReviews(mech.id)), liked: !existing });
 });
 
 export default reviewsRouter;

@@ -124,7 +124,7 @@ export function JobCard({ j }) {
           </div>
         </div>
       </div>
-      <p className="text-[10px] text-gray-300 mt-2.5 flex items-center gap-3"><span className="flex items-center gap-1"><Clock size={10} />{j.postedDate}</span>{j.applicants.length > 0 && <span className="flex items-center gap-1"><Users size={10} />{t("applicantsCountSuffix", { n: String(j.applicants.length) })}</span>}</p>
+      <p className="text-[10px] text-gray-300 mt-2.5 flex items-center gap-3"><span className="flex items-center gap-1"><Clock size={10} />{j.postedDate}</span>{(j.applicants?.length ?? 0) > 0 && <span className="flex items-center gap-1"><Users size={10} />{t("applicantsCountSuffix", { n: String(j.applicants.length) })}</span>}</p>
     </button>
   );
 }

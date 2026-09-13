@@ -59,7 +59,23 @@ ok(/TMPDIR/.test(harness), "geçici dizin işletim sistemine bırakılıyor (mac
 ok(/e2e"\)\)\.filter\(f => f\.endsWith\("\.e2e\.mjs"\)\)/.test(runner), "run.mjs uçtan uca takımları buluyor");
 ok(/inventory\.mjs/.test(runner), "run.mjs envanter taramasını çalıştırıyor");
 
-// 6) Adaptör yalnızca testlerde; uygulama kodu ona hiç dokunmamalı.
+// 6) Arayüz çizim katmanı: paketleyici olmadan çalışabilmeli ve dürüst sınırını yazmalı.
+const uiLoader = read("tests", "ui", "ts-loader.mjs");
+const uiWrapper = read("tests", "ui-render.test.mjs");
+const uiSuite = read("tests", "ui", "render.ui.mjs");
+ok(/typescript/.test(uiLoader), "TSX'i TypeScript derleyicisiyle çeviriyor (paketleyici ikilisi gerekmiyor)");
+ok(/react-dom\/server/.test(uiSuite), "bileşenler gerçekten çiziliyor");
+ok(/node_modules/.test(uiWrapper) && /ATLANDI arayüz çizimi/.test(uiWrapper),
+  "frontend bağımlılıkları yoksa hata değil, açıklamalı atlama");
+// Taklit sözlüğü GERÇEK i18n dosyasından okumalı; uydurma bir t() eksik çeviri anahtarını gizler.
+ok(/data\/i18n/.test(read("tests", "ui", "app-stub.mjs")), "çeviriler gerçek sözlükten okunuyor");
+ok(/missingKeys/.test(uiSuite), "sözlükte olmayan çeviri anahtarı testi düşürüyor");
+// Toplu tarama olmadan bu katman yalnızca seçili birkaç bileşeni korur.
+ok(/crashed/.test(uiSuite) && /readdirSync/.test(uiSuite), "her bileşen boş veriyle taranıyor");
+// SINIRIN KENDİSİ yazılı olmalı: "arayüz test edildi" ile "tarayıcıda tıklandı" aynı şey değil.
+ok(/tarayıcı değil/.test(uiLoader) && /tarayıcı değil/.test(uiSuite), "tarayıcı sınırı kodda açıkça yazılı");
+
+// 7) Adaptör yalnızca testlerde; uygulama kodu ona hiç dokunmamalı.
 const backendFiles = ["server.js", ...readdirSync(join(ROOT, "backend/routes")).map((f) => "routes/" + f),
   ...readdirSync(join(ROOT, "backend/db")).filter((f) => f.endsWith(".js")).map((f) => "db/" + f),
   ...readdirSync(join(ROOT, "backend/utils")).map((f) => "utils/" + f)];

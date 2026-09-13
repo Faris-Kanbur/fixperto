@@ -807,6 +807,140 @@ try {
   console.error("İlan satıcı id backfill hatası:", err.message);
 }
 
+/**
+ * DEĞERLENDİRMELER ARTIK GERÇEK BİR TABLODA.
+ * ------------------------------------------------------------------------------------------------
+ * ESKİ DURUM: bütün yorumlar `mechanics.reviewList` sütununda tek bir JSON dizisiydi. Her yazma
+ * işlemi "diziyi oku → değiştir → diziyi baştan yaz" biçimindeydi ve bunun GERÇEK bir sonucu vardı:
+ * iki kişi aynı anda yorum yazarsa (ya da aynı anda 'faydalı' derse) ikisi de aynı eski diziyi
+ * okur, ikincinin yazdığı birincininkini SİLER. Kullanıcıya "yorumunuz kaydedildi" denir, yorum
+ * kaybolur. Aynı sınıf hata ilanlardaki tekliflerde de vardı ve orada da böyle çözüldü.
+ * "Aynı kullanıcı iki yorum yazamaz" ve "aynı kişi iki kez beğenemez" kuralları da JavaScript'te
+ * kontrol ediliyordu; eşzamanlı iki istekte ikisi de kontrolü geçebiliyordu.
+ *
+ * YENİ DURUM: her yorum bir SATIR. Kurallar veritabanı kısıtı olarak yazılı — eşzamanlılıkta bile
+ * delinemezler. `mechanics.reviewList/reviews/rating` sütunları KALDIRILMADI ama artık yalnızca
+ * bu tablodan üretilen bir ÖNBELLEK; okuma yolları ve arayüz hiç değişmedi.
+ *
+ * Not: `authorId` kısıtı KISMİ indeksle konuyor, çünkü tanıtım (seed) verisindeki eski yorumların
+ * gerçek bir yazar hesabı yok. Onlara sahte kimlik uydurmak, veriyi olduğundan güvenilir
+ * göstermek olurdu.
+ */
+db.exec(`
+CREATE TABLE IF NOT EXISTS mechanic_reviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  mechanicId INTEGER NOT NULL,
+  authorId INTEGER,
+  authorType TEXT,
+  author TEXT,
+  avatar TEXT,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT DEFAULT '',
+  lang TEXT DEFAULT 'tr',
+  date TEXT DEFAULT (datetime('now')),
+  verified INTEGER DEFAULT 0,
+  reply TEXT,
+  photo INTEGER DEFAULT 0,
+  photoUrl TEXT,
+  flaggedCompetitor INTEGER DEFAULT 0,
+  flagReason TEXT,
+  sameNetworkSignal INTEGER DEFAULT 0
+);
+-- Bir kullanıcı bir tamirciye YALNIZCA BİR yorum bırakabilir. Kural artık veritabanında:
+-- eşzamanlı iki istek gelse bile ikincisi UNIQUE ihlaliyle geri döner.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_review_one_per_author
+  ON mechanic_reviews (mechanicId, authorId, authorType) WHERE authorId IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_review_mechanic ON mechanic_reviews (mechanicId);
+
+-- "Faydalı" oyları: kişi başına bir kez. Sayaç türetiliyor, elle tutulmuyor.
+CREATE TABLE IF NOT EXISTS review_helpful (
+  reviewId INTEGER NOT NULL,
+  voterKey TEXT NOT NULL,
+  createdAt TEXT DEFAULT (datetime('now')),
+  PRIMARY KEY (reviewId, voterKey)
+);
+`);
+
+/** Önbellek sütunlarını (reviewList/reviews/rating) tablodan yeniden üretir. Tek doğruluk kaynağı tablo. */
+export function recomputeMechanicReviews(mechanicId) {
+  const list = db.prepare(`
+    SELECT r.*, (SELECT COUNT(*) FROM review_helpful h WHERE h.reviewId = r.id) AS helpful,
+           (SELECT json_group_array(h.voterKey) FROM review_helpful h WHERE h.reviewId = r.id) AS helpfulByJson
+    FROM mechanic_reviews r WHERE r.mechanicId = ? ORDER BY r.id DESC`).all(mechanicId)
+    .map((r) => {
+      const out = {
+        id: r.id, rating: r.rating, comment: r.comment || "", author: r.author || undefined,
+        name: r.author || undefined, avatar: r.avatar || undefined, authorId: r.authorId ?? undefined,
+        authorType: r.authorType || undefined, lang: r.lang || "tr", date: r.date,
+        verified: !!r.verified, reply: r.reply || null, photo: !!r.photo,
+        photoUrl: r.photoUrl || undefined, flaggedCompetitor: !!r.flaggedCompetitor,
+        flagReason: r.flagReason || null, helpful: r.helpful,
+        helpfulBy: JSON.parse(r.helpfulByJson || "[]"),
+      };
+      if (r.sameNetworkSignal) out.sameNetworkSignal = true;
+      for (const k of Object.keys(out)) if (out[k] === undefined) delete out[k];
+      return out;
+    });
+  // İŞARETLİ yorumlar ortalamaya girmez (gerekçe: backend/routes/reviews.js).
+  const rated = list.filter((r) => Number(r.rating) > 0 && !r.flaggedCompetitor);
+  const avg = rated.length ? Math.round((rated.reduce((sum, r) => sum + Number(r.rating), 0) / rated.length) * 10) / 10 : 0;
+  db.prepare(`UPDATE mechanics SET reviewList = ?, reviews = ?, rating = ? WHERE id = ?`)
+    .run(JSON.stringify(list), rated.length, avg, mechanicId);
+  return db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(mechanicId);
+}
+
+/**
+ * Eski JSON dizisindeki yorumları tabloya aktarır. Kimlikler korunuyor ki kullanıcıların
+ * "beğendiğim yorumlar" listesi (likedReviewIds) bozulmasın.
+ *
+ * TAMİRCİ BAZINDA idempotent: bir tamircinin tabloda zaten satırı varsa ona dokunulmaz. Bu
+ * ayrıntı önemliydi — tohum verisi (seed.js) db.js yüklendikten SONRA çalışıyor ve reviewList
+ * sütununa doğrudan JSON yazıyor. Taşıma yalnızca yükleme anında çalışsaydı, sıfırdan kurulan
+ * her veritabanında tanıtım yorumları tabloya hiç girmez, tablo boş kalırdı.
+ */
+export function migrateLegacyReviews() {
+  try {
+    const insert = db.prepare(`INSERT OR IGNORE INTO mechanic_reviews
+      (id, mechanicId, authorId, authorType, author, avatar, rating, comment, lang, date, verified, reply, photo, photoUrl, flaggedCompetitor, flagReason, sameNetworkSignal)
+      VALUES (@id, @mechanicId, @authorId, @authorType, @author, @avatar, @rating, @comment, @lang, @date, @verified, @reply, @photo, @photoUrl, @flaggedCompetitor, @flagReason, @sameNetworkSignal)`);
+    const insertVote = db.prepare(`INSERT OR IGNORE INTO review_helpful (reviewId, voterKey) VALUES (?, ?)`);
+    const hasRows = db.prepare(`SELECT 1 FROM mechanic_reviews WHERE mechanicId = ? LIMIT 1`);
+    const touched = [];
+    const move = db.transaction(() => {
+      for (const m of db.prepare(`SELECT id, reviewList FROM mechanics`).all()) {
+        if (hasRows.get(m.id)) continue;   // bu tamirci zaten taşınmış
+        let list = [];
+        try { list = JSON.parse(m.reviewList || "[]"); } catch { list = []; }
+        for (const r of Array.isArray(list) ? list : []) {
+          const rating = Number(r?.rating);
+          if (!Number.isFinite(rating) || rating < 1 || rating > 5) continue;
+          insert.run({
+            id: Number(r.id) || null, mechanicId: m.id,
+            authorId: r.authorId ?? null, authorType: r.authorId != null ? (r.authorType || "owner") : null,
+            author: r.author || r.name || null, avatar: r.avatar || null,
+            rating: Math.round(rating), comment: String(r.comment ?? ""), lang: r.lang || "tr",
+            date: r.date || new Date().toISOString(), verified: r.verified ? 1 : 0,
+            reply: r.reply || null, photo: r.photo ? 1 : 0, photoUrl: r.photoUrl || null,
+            flaggedCompetitor: (r.flaggedCompetitor || r.flagged) ? 1 : 0,
+            flagReason: r.flagReason || (r.flagged ? "legacyFlag" : null),
+            sameNetworkSignal: r.sameNetworkSignal ? 1 : 0,
+          });
+          const rid = Number(r.id);
+          for (const v of Array.isArray(r.helpfulBy) ? r.helpfulBy : []) if (rid) insertVote.run(rid, String(v));
+        }
+        if (list.length) touched.push(m.id);
+      }
+    });
+    move();
+    for (const id of touched) recomputeMechanicReviews(id);
+    return touched.length;
+  } catch (err) {
+    console.error("Yorum taşıma hatası:", err.message);
+    return 0;
+  }
+}
+migrateLegacyReviews();   // var olan veritabanları için; tohum sonrası seed.js tekrar çağırıyor
+
 export function isEmpty(table) {
   return db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n === 0;
 }

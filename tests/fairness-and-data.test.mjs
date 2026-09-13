@@ -54,7 +54,7 @@ ok(/flagReason: linkedMechanic \? "linkedMechanicAccount" : null/.test(reviews),
  * olarak KAYDEDİLİYOR (inceleme için duruyor) ama puanı etkilemiyor; puanı yalnızca gerçek bir
  * bağ (aynı e-posta/telefonla açılmış işletme hesabı) etkiliyor.
  */
-ok(/sameNetworkSignal: true/.test(reviews), "ağ eşleşmesi yine de kayda geçiyor (inceleme için)");
+ok(/sameNetworkSignal: sameNetwork \? 1 : 0/.test(reviews), "ağ eşleşmesi yine de kayda geçiyor (inceleme için)");
 ok(/sameNetwork/.test(reviews) && !/flaggedCompetitor = !!linkedMechanic \|\| sameNetwork/.test(reviews),
   "ağ eşleşmesi hesaplanıyor ama işaretlemeye BAĞLANMIYOR");
 
@@ -73,7 +73,7 @@ eq(decide({ role: "owner", sameNetwork: true, reviewedId: 5 }), "ok",
 eq(decide({ role: "owner", reviewedId: 5 }), "ok", "sıradan müşteri serbest");
 
 // İŞARETLİ YORUM PUANA GİRMEZ ama SİLİNMEZ: tamirci gerçekten müşteri olabilir.
-ok(/!r\.flaggedCompetitor/.test(reviews), "işaretli yorum ortalamaya katılmıyor");
+ok(/!r\.flaggedCompetitor/.test(read("backend", "db", "db.js")), "işaretli yorum ortalamaya katılmıyor");
 ok(/reviewFlaggedLabel/.test(detail), "işaret okuyucuya da gösteriliyor");
 const avgOf = (list) => {
   const rated = list.filter((r) => Number(r?.rating) > 0 && !r.flaggedCompetitor);

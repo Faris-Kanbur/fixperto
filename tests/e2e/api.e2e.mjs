@@ -257,6 +257,39 @@ try {
   eq((await api("POST", "/api/vehicle-history/lookup", { token: owner2.token, body: { vin: "1234" } })).status, 400,
     "geçersiz VIN reddediliyor");
 
+  /**
+   * "BAŞKASININ ARACININ GEÇMİŞİNİ İLANDA YAYIMLAYABİLİR MİYİM?" — kullanıcının sorduğu ve
+   * "bunu nasıl kontrol edeceğiz?" dediği senaryo. Şasi numarası sır değil (ön camda yazar), yani
+   * kötü niyetli bir satıcı onu kendi garajına yazıp "doğrulanmış servis geçmişi" rozetiyle
+   * ilan verebilir mi? Aşağıdaki test bunu GERÇEKTEN deniyor: owner2, owner'ın aracının VIN'ini
+   * kendi garajına ekliyor ve o VIN'le ilan açıyor. Beklenen: hiçbir kayıt yayımlanmıyor.
+   */
+  const stolenVin = "WBA3B5C50DF123456";
+  const fakeVehicle = await api("POST", "/api/vehicles", {
+    token: owner2.token,
+    body: { plate: "34 SAHTE 34", brand: "BMW", model: "320i", year: 2015, vin: stolenVin },
+  });
+  eq(fakeVehicle.status, 201, "başkasının VIN'ini garaja EKLEMEK engellenmiyor (beyandır, doğrulayamayız)");
+  const fakeListing = await api("POST", "/api/listings", {
+    token: owner2.token,
+    body: { title: "BMW 320i", price: 500000, vin: stolenVin, showHistory: 1, status: "active" },
+  });
+  eq(fakeListing.status, 201, "ilan açılabiliyor");
+  const published = await api("GET", `/api/vehicle-history/listing/${fakeListing.body.id}`);
+  eq(published.body.records.length, 0, "ama BAŞKASININ geçmişi ilanda YAYIMLANMIYOR");
+  eq(published.body.shown, false, "ilan 'doğrulanmış geçmiş' rozetini alamıyor");
+  // Gerçek sahibin kendi ilanı ise kendi dönemindeki kaydı yayımlayabiliyor — kural sadece
+  // kısıtlamıyor, meşru kullanımı da bozmuyor.
+  const realListing = await api("POST", "/api/listings", {
+    token: owner.token,
+    body: { title: "BMW 320i", price: 505000, vin: stolenVin, showHistory: 1, status: "active" },
+  });
+  const realPublished = await api("GET", `/api/vehicle-history/listing/${realListing.body.id}`);
+  eq([realPublished.body.shown, realPublished.body.records.length], [true, 1],
+    "gerçek sahip KENDİ dönemindeki kaydı yayımlayabiliyor");
+  eq(Object.keys(realPublished.body.records[0]).some((k) => ["ownerId", "vin", "plate", "customer"].includes(k)), false,
+    "yayımlanan kayıtta kişisel veri ve VIN yok");
+
   // ============================================================ HESAP GÜVENLİĞİ
   section("Hesap güvenliği");
   const victim = await createUser("owner", { name: "Kurban Test", email: "kurban@example.com", phone: "+905321230000" });

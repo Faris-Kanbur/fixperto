@@ -2,7 +2,7 @@
 // INITIAL_VEHICLES, INITIAL_APPOINTMENTS, INITIAL_LISTINGS, INITIAL_JOB_LISTINGS,
 // INITIAL_OWNERS_DIRECTORY and INITIAL_SUPPORT_TICKETS constants, so the backend
 // starts up with the exact same demo dataset the frontend used to hardcode.
-import { db, isEmpty } from "./db.js";
+import { db, isEmpty, migrateLegacyReviews } from "./db.js";
 import { BLOG_SEED_POSTS } from "./blogSeed.js";
 
 // Fotoğraf linkleri LoremFlickr'dan (Faris'in verdiği gerçek çalışan linkler) —
@@ -223,6 +223,11 @@ export function seedIfEmpty() {
     const insertMany = db.transaction((rows) => { for (const t of rows) stmt.run(t); });
     insertMany(SUPPORT_TICKETS);
   }
+
+  // Tohum verisi tamirci satırına reviewList JSON'u yazıyor; yorumların GERÇEK yeri artık
+  // mechanic_reviews tablosu. Tohumdan sonra taşımayı bir kez daha çalıştırmazsak sıfırdan
+  // kurulan bir veritabanında tanıtım yorumları tabloya hiç girmez ve puan hesabı onları görmez.
+  migrateLegacyReviews();
 }
 
 // Allow running directly: `npm run seed`
