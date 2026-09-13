@@ -43,7 +43,11 @@ const ALLOWED_EVENTS = new Set([
   "signup",               // kayıt olundu
   "login",                // giriş yapıldı
   "favorite_added",       // favoriye eklendi
-  "compare_used",         // karşılaştırma açıldı
+  "compare_used",         // karşılaştırma listesine ekleme/çıkarma
+  // KARŞILAŞTIRMA ÇİFTİ: "hangi araç hangisiyle karşılaştırılıyor". Tek tek ilan görüntülenmesi
+  // "neye bakılıyor"u söyler; ÇİFT ise "neyin ALTERNATİFİ ne" sorusunu cevaplar — bu, ilanı doğru
+  // fiyatlamaktan öneri motoruna kadar her yerde işe yarayan bir sinyal (bkz. el kitabı 11).
+  "compare_pair",         // iki araç yan yana karşılaştırıldı (meta: pairA, pairB)
   "saved_search_created",  // arama kaydedildi
 ]);
 
@@ -51,7 +55,7 @@ const MAX_STR = 120;
 const clip = (v) => (v == null ? null : String(v).slice(0, MAX_STR));
 
 // meta içine kişisel veri sızmasın diye: yalnızca izin verilen anahtarlar, sınırlı uzunlukta.
-const META_KEYS = new Set(["mode", "query", "city", "service", "brand", "resultCount", "filterCount", "step", "channel"]);
+const META_KEYS = new Set(["mode", "query", "city", "service", "brand", "resultCount", "filterCount", "step", "channel", "pairA", "pairB"]);
 function sanitizeMeta(meta) {
   if (!meta || typeof meta !== "object") return {};
   const out = {};
@@ -205,6 +209,43 @@ router.get("/breakdown", requireAdmin, (req, res) => {
 });
 
 // Arama trendleri + SONUÇSUZ aramalar. İkincisi ürün için en değerli sinyal: talep var, arz yok.
+/**
+ * KARŞILAŞTIRMA VERİSİ — "hangi araç hangisiyle yarışıyor".
+ * ---------------------------------------------------------------------------------------------
+ * NEDEN İŞE YARAR (hepsi bu veriyle doğrudan yapılabilir):
+ *  1) FİYATLAMA: satıcıya "ilanınız en çok X ile karşılaştırılıyor, X'in ortalama fiyatı şu"
+ *     diyebiliriz. İlanını doğru fiyatlayan satıcı daha hızlı satar; pazar yeri de öyle kazanır.
+ *  2) ÖNERİ: "bunu görenler şunu da inceledi" listesi, tahmin yerine GERÇEK karşılaştırmalardan
+ *     kurulur. Benzerlik hesabı (aynı marka/segment) insanların gerçekte neyi alternatif
+ *     gördüğünü bilmez; bu veri bilir.
+ *  3) ARZ AÇIĞI: sürekli karşılaştırılan ama sitede az bulunan modeller, hangi ilanları çekmemiz
+ *     gerektiğini söyler.
+ *  4) TAMİRCİ TARAFI: en çok kıyaslanan modeller, o modelleri servis eden ustalara "bu markaya
+ *     talep artıyor" sinyali verir (marka bazlı fiyat girmeye teşvik).
+ * KİŞİSEL VERİ YOK: yalnızca "marka model" metinleri ve sayılar tutuluyor, kimin karşılaştırdığı
+ * değil (ziyaretçi kimliği olay tablosunda zaten takma bir id).
+ */
+router.get("/comparisons", requireAdmin, (req, res) => {
+  const cutoff = cutoffFor(req.query.days);
+  const pairs = db.prepare(`
+    SELECT json_extract(meta, '$.pairA') a, json_extract(meta, '$.pairB') b, COUNT(*) n
+    FROM analytics_events
+    WHERE name = 'compare_pair' AND json_extract(meta, '$.pairA') IS NOT NULL${since(cutoff)}
+    GROUP BY a, b ORDER BY n DESC LIMIT 20
+  `).all({ cutoff });
+  // Tek tek modeller: "en çok kıyaslanan araçlar" — çiftin iki ucu da sayılıyor.
+  const models = db.prepare(`
+    SELECT label, SUM(n) n FROM (
+      SELECT json_extract(meta, '$.pairA') label, COUNT(*) n FROM analytics_events
+        WHERE name = 'compare_pair' AND json_extract(meta, '$.pairA') IS NOT NULL${since(cutoff)} GROUP BY label
+      UNION ALL
+      SELECT json_extract(meta, '$.pairB') label, COUNT(*) n FROM analytics_events
+        WHERE name = 'compare_pair' AND json_extract(meta, '$.pairB') IS NOT NULL${since(cutoff)} GROUP BY label
+    ) GROUP BY label ORDER BY n DESC LIMIT 15
+  `).all({ cutoff });
+  res.json({ pairs, models });
+});
+
 router.get("/searches", requireAdmin, (req, res) => {
   const cutoff = cutoffFor(req.query.days);
   const topBy = (jsonKey, name) => db.prepare(`

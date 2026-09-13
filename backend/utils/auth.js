@@ -76,6 +76,19 @@ const selectSession = db.prepare("SELECT userId, role, createdAt FROM sessions W
 const deleteSession = db.prepare("DELETE FROM sessions WHERE tokenHash = ?");
 const deleteExpired = db.prepare("DELETE FROM sessions WHERE createdAt < ?");
 
+/**
+ * KAYIT AĞI KARMASI. Ham IP hiçbir yerde saklanmıyor; yalnızca tuzlanmış karması.
+ * Tuz olmadan IP karmaları kolayca geri çözülür (IPv4 uzayı küçüktür, kaba kuvvetle taranabilir).
+ * Tuz ortam değişkeninden gelir; ayarlanmamışsa süreç ömrü boyunca rastgele bir tuz kullanılır —
+ * bu durumda yeniden başlatmadan sonra eşleşme yapılamaz, ki bu "yanlış eşleştirme"den iyidir.
+ */
+const IP_SALT = process.env.IP_HASH_SALT || crypto.randomBytes(16).toString("hex");
+export function hashIp(ip) {
+  const clean = String(ip || "").trim();
+  if (!clean) return null;
+  return crypto.createHash("sha256").update(`${IP_SALT}:${clean}`).digest("hex");
+}
+
 export function createSession(id, role) {
   const token = generateToken();
   insertSession.run(hashToken(token), id, role, Date.now());

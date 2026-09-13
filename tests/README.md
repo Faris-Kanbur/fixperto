@@ -30,6 +30,7 @@ yalnızca bozulanın ayrıntısını basar. Amaç: düzenli koşabilmek ama çı
 | `araç geçmişi` | Şasi (VIN) doğrulaması, kaydın uydurulamaması, paylaşım izni, kişisel veri sızdırmama, ilandaki geçmişin satıcıya bağlı olması |
 | `ilan teklifleri` | Teklifin gerçekten kaydedilmesi, tekrar teklif kuralı (görülmedi/reddedildi), izleyici bildirimleri ve aç/kapa, satıcının cevap hakkı |
 | `hesap güvenliği` | "Sessiz 403" taraması (başkasının kaydına PATCH), yorum/puan uydurulamazlığı, şifre-e-posta-silme işlemlerinde şifre şartı, oturum sonlandırma |
+| `rekabet ve veri` | Tamircinin rakibini puanlayamaması, kendine yorum tespiti (e-posta/telefon/ağ), karşılaştırma verisi, karanlık mod kapsaması, bölüme kaydırma |
 
 Ayrıca `tsc --noEmit` ve her backend dosyası için `node --check` çalışır.
 

@@ -34,7 +34,8 @@ const readList = (row) => { try { return JSON.parse(row.reviewList || "[]"); } c
 
 /** Puanı LİSTEDEN hesaplar ve satıra yazar — istemcinin gönderdiği bir sayıya asla güvenilmez. */
 function saveList(mechanicId, list) {
-  const rated = list.filter((r) => Number(r?.rating) > 0);
+  // İŞARETLİ (flagged) yorumlar ortalamaya GİRMEZ. Gerekçe aşağıda, competitorLink yorumunda.
+  const rated = list.filter((r) => Number(r?.rating) > 0 && !r.flaggedCompetitor);
   const avg = rated.length ? Math.round((rated.reduce((sum, r) => sum + Number(r.rating), 0) / rated.length) * 10) / 10 : 0;
   db.prepare(`UPDATE mechanics SET reviewList = ?, reviews = ?, rating = ? WHERE id = ?`)
     .run(JSON.stringify(list), rated.length, avg, mechanicId);
@@ -67,8 +68,30 @@ reviewsRouter.post("/:id/reviews", (req, res) => {
   if (limited(req, res)) return;
   const mech = db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(req.params.id);
   if (!mech) return res.status(404).json({ error: "Tamirci bulunamadı." });
-  if (actor.role === "mechanic" && actor.id === mech.id) {
-    return res.status(403).json({ error: "Kendinize yorum yazamazsınız." });
+  /**
+   * ====== REKABETE AYKIRI DEĞERLENDİRME: NE ENGELLİYORUZ, NEYİ ENGELLEYEMİYORUZ ======
+   * Bir tamircinin rakibinin puanını düşürmesi (ya da kendi puanını şişirmesi) bu pazar yerinin
+   * en kolay kötüye kullanım yolu. Katman katman savunma:
+   *
+   * 1) TAMİRCİ HESABI YORUM YAZAMAZ. Yorum, MÜŞTERİ deneyimidir. Tamirci hesabıyla başka bir
+   *    tamirciye yorum yazmak (ya da beğenmek) doğrudan rekabet aracıdır. Tamirci gerçekten
+   *    müşteriyse zaten bir araç sahibi hesabı açar — ve o zaman aşağıdaki kurallar işler.
+   * 2) DOĞRULANMIŞ MÜŞTERİ ŞARTI. Yorum, o tamircide TAMAMLANMIŞ bir randevu gerektirir. Sahte
+   *    hesapla gelip yorum yazmak, önce gerçek bir randevu almayı ve tamamlamayı gerektirir.
+   * 3) KENDİNE YORUM: araç sahibi hesabının e-postası ya da telefonu, yorum yazılan tamircinin
+   *    iletişim bilgisiyle aynıysa bu aynı kişidir — kesin engel.
+   * 4) RAKİP İŞARETİ: iletişim bilgisi BAŞKA bir tamirci hesabıyla eşleşiyorsa, yorum kaydedilir
+   *    ama "işletme hesabına bağlı" olarak işaretlenir ve PUAN ORTALAMASINA KATILMAZ. Silmiyoruz,
+   *    çünkü bir tamirci başka bir tamircinin gerçek müşterisi olabilir; ama sessizce puanı
+   *    etkilemesine de izin vermiyoruz. İşaret hem yöneticiye hem okuyucuya görünür.
+   *
+   * DÜRÜST SINIR: farklı e-posta + farklı telefonla açılmış ikinci bir hesabı bu kontroller
+   * yakalamaz. Onun için kayıt anındaki IP'nin karması ek bir ipucu olarak tutuluyor (aşağıda) —
+   * ama IP paylaşımlı olabileceği için (aynı ev, aynı ofis, mobil operatör NAT) TEK BAŞINA engel
+   * değil, yalnızca işaret sebebidir. Gerçek çözüm kimlik doğrulamadır ve bu ölçekte yoktur.
+   */
+  if (actor.role === "mechanic") {
+    return res.status(403).json({ error: "Tamirci hesabıyla değerlendirme yazılamaz. Yorum, müşteri deneyimini anlatır.", reason: "mechanicRole" });
   }
 
   const rating = Number(req.body?.rating);
@@ -88,9 +111,22 @@ reviewsRouter.post("/:id/reviews", (req, res) => {
   if (list.some((r) => r.authorId === actor.id && (r.authorType || "owner") === actor.role)) {
     return res.status(409).json({ error: "Bu tamirci için zaten bir yorumunuz var. Önce onu silin.", reason: "duplicate" });
   }
-  const authorRow = actor.role === "owner"
-    ? db.prepare(`SELECT name FROM owners WHERE id = ?`).get(actor.id)
-    : db.prepare(`SELECT name FROM mechanics WHERE id = ?`).get(actor.id);
+  const authorRow = db.prepare(`SELECT name, email, phone, signupIpHash FROM owners WHERE id = ?`).get(actor.id) || {};
+
+  // (3) ve (4): iletişim bilgisi eşleşmesi. Telefon +E.164'e normalleştirilmiş olarak saklanıyor
+  // (bkz. utils/helpers.ts validatePhone), bu yüzden karşılaştırma güvenilir.
+  const email = String(authorRow.email || "").trim().toLowerCase();
+  const phone = String(authorRow.phone || "").trim();
+  const linkedMechanic = (email || phone)
+    ? db.prepare(`SELECT id, name FROM mechanics WHERE (email IS NOT NULL AND lower(email) = ?) OR (phone IS NOT NULL AND phone != '' AND phone = ?)`).get(email, phone)
+    : null;
+  if (linkedMechanic && linkedMechanic.id === mech.id) {
+    return res.status(403).json({ error: "Bu hesap, yorum yazmak istediğiniz işletmeyle aynı iletişim bilgilerine sahip. Kendi işletmenize yorum yazamazsınız.", reason: "selfReview" });
+  }
+  // Kayıt IP'sinin karması eşleşiyorsa (aynı cihaz/ağdan açılmış hesap) bu da bir işarettir —
+  // ama tek başına engel değil: aynı ev/ofis/operatör ağı gerçek müşterilerde de olabilir.
+  const sameNetwork = !!(authorRow.signupIpHash && mech.signupIpHash && authorRow.signupIpHash === mech.signupIpHash);
+  const flaggedCompetitor = !!linkedMechanic || sameNetwork;
 
   const review = {
     id: list.reduce((max, r) => Math.max(max, Number(r?.id) || 0), 0) + 1,
@@ -104,6 +140,9 @@ reviewsRouter.post("/:id/reviews", (req, res) => {
     helpful: 0,
     verified: true,          // arkasında tamamlanmış randevu var
     reply: null,
+    // İşaretli yorum: kaydedilir, görünür, ama puana katılmaz (bkz. saveList).
+    flaggedCompetitor,
+    flagReason: linkedMechanic ? "linkedMechanicAccount" : sameNetwork ? "sameSignupNetwork" : null,
   };
   const updated = saveList(mech.id, [review, ...list]);
   res.status(201).json({ mechanic: hydrate("mechanics", updated), reviewId: review.id });
@@ -147,6 +186,11 @@ reviewsRouter.post("/:id/reviews/:reviewId/reply", (req, res) => {
 reviewsRouter.post("/:id/reviews/:reviewId/helpful", (req, res) => {
   const actor = actorOf(req, res);
   if (!actor) return;
+  // Yorum yazmak gibi, "faydalı" oyu da bir MÜŞTERİ sinyalidir. Tamirci hesabıyla başka bir
+  // tamircinin yorumlarını öne çıkarmak/gizlemek rekabet aracı olurdu.
+  if (actor.role === "mechanic") {
+    return res.status(403).json({ error: "Tamirci hesabıyla değerlendirme beğenilemez.", reason: "mechanicRole" });
+  }
   if (limited(req, res)) return;
   const mech = db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(req.params.id);
   if (!mech) return res.status(404).json({ error: "Tamirci bulunamadı." });

@@ -416,6 +416,9 @@ export const api = {
     // requireAdmin) — platformun tamamına ait davranış verisi rekabet açısından hassas.
     analyticsOverview: (days?: number): Promise<any> => request(`/api/analytics/overview${days ? `?days=${days}` : ""}`, { ...adminAuthOpts() }),
     analyticsBreakdown: (field: string, days?: number): Promise<any[]> => request(`/api/analytics/breakdown?field=${encodeURIComponent(field)}${days ? `&days=${days}` : ""}`, { ...adminAuthOpts() }),
+    // Karşılaştırma verisi: "hangi araç hangisiyle yarışıyor" (bkz. backend /analytics/comparisons).
+    analyticsComparisons: (days?: number): Promise<{ pairs: any[]; models: any[] }> =>
+      request(`/api/analytics/comparisons${days ? `?days=${days}` : ""}`, { ...adminAuthOpts() }),
     analyticsSearches: (days?: number): Promise<any> => request(`/api/analytics/searches${days ? `?days=${days}` : ""}`, { ...adminAuthOpts() }),
     analyticsTimeseries: (days?: number): Promise<any[]> => request(`/api/analytics/timeseries?days=${days || 30}`, { ...adminAuthOpts() }),
     analyticsTopTargets: (targetType: string, days?: number): Promise<any[]> => request(`/api/analytics/top-targets?targetType=${encodeURIComponent(targetType)}${days ? `&days=${days}` : ""}`, { ...adminAuthOpts() }),

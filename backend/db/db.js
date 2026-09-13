@@ -436,6 +436,12 @@ function ensureColumn(table, columnDef) {
   ["appointments", "warrantyEndDate TEXT"],
   // Şasi (VIN) numarası — İSTEĞE BAĞLI. Girilirse aracın servis geçmişi sahibine değil ARACA
   // bağlanır ve araç el değiştirdiğinde yeni sahip bu numarayla geçmişi görebilir.
+  // KAYIT AĞI KARMASI — rekabete aykırı değerlendirmeleri işaretlemek için (bkz. routes/reviews.js).
+  // HAM IP SAKLANMIYOR: yalnızca tuzlanmış SHA-256 karması. Amaç "bu iki hesap aynı ağdan mı
+  // açılmış" sorusuna evet/hayır cevabı vermek; kimin nereden bağlandığını bilmek değil.
+  // Paylaşımlı ağlar (ev, ofis, mobil operatör NAT) yüzünden bu TEK BAŞINA engel sebebi değil.
+  ["owners", "signupIpHash TEXT"],
+  ["mechanics", "signupIpHash TEXT"],
   ["vehicles", "vin TEXT"],
   // Sahibin açık izni: bu araca ait doğrulanmış kayıtlar VIN'i bilen sonraki sahibe/alıcıya
   // gösterilsin mi. Varsayılan açık, çünkü VIN'i girmenin tek amacı zaten bu; ama kapatılabilir.

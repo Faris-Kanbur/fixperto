@@ -61,12 +61,14 @@ eq(/sharedWrite/.test(crud.slice(crud.indexOf("router.patch"))), true, "makeCrud
 ok(/"reviewList", "reviews", "rating"/.test(crud), "bu üç alan genel PATCH'e kapalı");
 ok(/"applicants"/.test(crud), "applicants genel PATCH'e kapalı");
 ok(/UPDATE mechanics SET reviewList = \?, reviews = \?, rating = \?/.test(reviews), "puanı sunucu yazıyor");
-ok(/const rated = list\.filter\(\(r\) => Number\(r\?\.rating\) > 0\)/.test(reviews), "puan LİSTEDEN hesaplanıyor");
+ok(/const rated = list\.filter\(\(r\) => Number\(r\?\.rating\) > 0 && !r\.flaggedCompetitor\)/.test(reviews),
+  "puan LİSTEDEN hesaplanıyor ve işaretli yorumlar ortalamaya girmiyor");
 ok(/status = 'Tamamlandı'/.test(reviews), "yorum için tamamlanmış randevu şartı");
 ok(/reason: "noAppointment"/.test(reviews), "randevusu olmayan yorum bırakamıyor");
 ok(/reason: "duplicate"/.test(reviews), "aynı tamirciye ikinci yorum engelli");
 ok(/Yalnızca kendi yorumunuzu silebilirsiniz/.test(reviews), "yorumu yalnızca yazarı silebiliyor");
-ok(/Kendinize yorum yazamazsınız/.test(reviews), "tamirci kendine yorum yazamıyor");
+ok(/Kendi işletmenize yorum yazamazsınız/.test(reviews), "kendi işletmesine yorum yazamıyor");
+ok(/Tamirci hesabıyla değerlendirme yazılamaz/.test(reviews), "tamirci hesabı hiç yorum yazamıyor");
 ok(/helpfulBy/.test(reviews), "'faydalı' oyu kişi başına bir kez");
 
 // Puan hesabını gerçekten çalıştır.

@@ -528,6 +528,10 @@ export function MechDetailBody() {
                         <div className="flex items-center gap-0.5 mb-2">{[...Array(5)].map((_, j) => (<Star key={j} size={12} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div>
                         {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 400)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-full h-32 rounded-xl object-cover mb-2" />}
                         <p className="text-xs text-gray-500 leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p>
+                        {/* İŞARETLİ YORUM: bir işletme hesabına bağlı olduğu için ortalamaya
+                            katılmıyor. Silmiyoruz (tamirci de gerçek müşteri olabilir) ama sessizce
+                            puanı etkilemesine de izin vermiyoruz — okuyucu bunu bilmeli. */}
+                        {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
                         {r.reply && (<div className="mt-2.5 bg-gray-50 rounded-xl p-2.5"><p className="text-[10px] font-bold text-gray-500 mb-0.5">{t("businessReplyLabel")}</p><p className="text-[11px] text-gray-500 leading-snug"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p></div>)}
                         {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                           replyingReviewId === r.id ? (
@@ -598,6 +602,7 @@ export function MechDetailBody() {
                     {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 300)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-1/3 max-w-[110px] aspect-square rounded-xl object-cover mb-2.5 float-left mr-3" />}
                     <p className="text-sm text-gray-600 leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
                     <div className="clear-left" />
+                    {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
                     {r.reply && (<div className="mt-2.5 pt-2.5 border-t border-gray-50 bg-gray-50 rounded-xl p-3"><p className="text-[10px] font-bold text-gray-500 mb-1">{t("businessReplyLabel")}</p><p className="text-xs text-gray-500 leading-relaxed"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p></div>)}
                     {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                       replyingReviewId === r.id ? (

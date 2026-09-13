@@ -6,7 +6,7 @@ import { sendMail, isMailerConfigured } from "../utils/mailer.js";
 import {
   hashPassword, verifyPassword, generateRandomPassword, generateOtp,
   createSession, destroySession, requireSession, makeRateLimiter,
-  destroyUserSessions, userSessionCount, extractBearerToken,
+  destroyUserSessions, userSessionCount, extractBearerToken, hashIp,
 } from "../utils/auth.js";
 
 // GÜVENLİK/ÖZELLİK: gerçek e-posta + şifre ile kayıt/giriş, e-posta ile gönderilen tek kullanımlık
@@ -85,8 +85,8 @@ authRouter.post("/register", async (req, res) => {
 
     let created;
     if (role === "owner") {
-      const stmt = db.prepare(`INSERT INTO owners (name, email, phone, city, joinDate, status, password) VALUES (@name, @email, @phone, @city, @joinDate, 'active', @password)`);
-      const info = stmt.run({ name: cleanName, email: cleanEmail, phone: req.body.phone || null, city: req.body.city || null, joinDate: new Date().toISOString().slice(0, 10), password: hashed });
+      const stmt = db.prepare(`INSERT INTO owners (name, email, phone, city, joinDate, status, password, signupIpHash) VALUES (@name, @email, @phone, @city, @joinDate, 'active', @password, @signupIpHash)`);
+      const info = stmt.run({ signupIpHash: hashIp(clientIp(req)), name: cleanName, email: cleanEmail, phone: req.body.phone || null, city: req.body.city || null, joinDate: new Date().toISOString().slice(0, 10), password: hashed });
       created = db.prepare(`SELECT * FROM owners WHERE id = ?`).get(info.lastInsertRowid);
     } else {
       // GERÇEK HATA DÜZELTMESİ: yeni kaydolan tamircide rating/reviews/price/verified sütunları
@@ -96,14 +96,14 @@ authRouter.post("/register", async (req, res) => {
       // distance/lat/lng bilerek NULL bırakılıyor: yeni tamircinin henüz adresi yok, mesafesi
       // GERÇEKTEN bilinmiyor. 0 yazmak "0 km uzaklıkta" gibi bir YALAN olurdu; arayüz bunu
       // "—" olarak gösteriyor (bkz. frontend helpers.ts formatDistance).
-      const stmt = db.prepare(`INSERT INTO mechanics (name, email, phone, specialty, lang, password, rating, reviews, price, verified, shareCount)
-        VALUES (@name, @email, @phone, @specialty, 'tr', @password, 0, 0, 0, 0, 0)`);
+      const stmt = db.prepare(`INSERT INTO mechanics (name, email, phone, specialty, lang, password, rating, reviews, price, verified, shareCount, signupIpHash)
+        VALUES (@name, @email, @phone, @specialty, 'tr', @password, 0, 0, 0, 0, 0, @signupIpHash)`);
       // GERÇEK HATA DÜZELTMESİ: `specialty` NULL kaydediliyordu. Arayüzdeki arama filtreleri bu
       // alanı metin olarak işliyor (m.specialty.toLowerCase()) ve tek bir NULL kayıt "Cannot read
       // properties of null" ile TÜM arama ekranlarını çökertiyordu — üstelik tamirci, araç ve iş
       // ilanı aramaları aynı sorgu state'ini paylaştığı için üçü birden. Metin alanları için NULL
       // yerine boş dize yazıyoruz (sayısal alanlar için aynı düzeltme yukarıda 0 ile yapılmıştı).
-      const info = stmt.run({ name: cleanName, email: cleanEmail, phone: req.body.phone || "", specialty: req.body.specialty || "", password: hashed });
+      const info = stmt.run({ signupIpHash: hashIp(clientIp(req)), name: cleanName, email: cleanEmail, phone: req.body.phone || "", specialty: req.body.specialty || "", password: hashed });
       created = db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(info.lastInsertRowid);
     }
 

@@ -283,6 +283,30 @@ function useAppLogic() {
   }, [compareListingIds]);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const MAX_COMPARE_LISTINGS = 3;
+  /**
+   * KARŞILAŞTIRMA ÇİFTİ ÖLÇÜMÜ.
+   * -------------------------------------------------------------------------------------------
+   * Tek tek "şu ilana bakıldı" verisi "neye bakılıyor"u söyler; asıl değerli soru "neyin
+   * ALTERNATİFİ ne". Kullanıcı iki aracı yan yana koyduğunda bunu bize kendisi söylüyor.
+   * Kaydettiğimiz şey yalnızca "Marka Model" metinleri: kim karşılaştırdı bilgisi yok.
+   * Çift her zaman ALFABETİK sıralanıyor — "A ile B" ve "B ile A" aynı satıra düşsün diye,
+   * yoksa aynı karşılaştırma iki ayrı kayıt gibi görünür ve sayılar bölünürdü.
+   * Kullanım alanları için bkz. backend/routes/analytics.js /comparisons.
+   */
+  const trackComparePairs = (ids) => {
+    const labels = ids
+      .map((id) => listings.find((l) => l.id === id))
+      .filter(Boolean)
+      .map((l) => `${l.brand} ${l.model}`.trim())
+      .filter(Boolean);
+    for (let i = 0; i < labels.length; i++) {
+      for (let j = i + 1; j < labels.length; j++) {
+        const [pairA, pairB] = [labels[i], labels[j]].sort((a, b) => a.localeCompare(b, "tr"));
+        if (pairA === pairB) continue;
+        track("compare_pair", { meta: { pairA, pairB } });
+      }
+    }
+  };
   const toggleCompareListing = (id) => {
     track("compare_used", { targetType: "listing", targetId: id });
     setCompareListingIds(ids => {
@@ -293,6 +317,12 @@ function useAppLogic() {
       }
       return [...ids, id];
     });
+  };
+  const openCompareModal = () => {
+    // Ölçüm, kullanıcı gerçekten KARŞILAŞTIRMAYA BAKTIĞINDA gönderiliyor — listeye ekleyip
+    // vazgeçmek bir karşılaştırma değildir.
+    trackComparePairs(compareListingIds);
+    setShowCompareModal(true);
   };
   const clearCompareListings = () => { setCompareListingIds([]); setShowCompareModal(false); };
   const [mechanicsList, setMechanicsList] = useState([]);
@@ -312,11 +342,19 @@ function useAppLogic() {
   // yoksa (oturum kurulmadıysa) hiç optimistic güncelleme yapmadan önce açıkça uyarıyoruz, ve
   // backend isteği gerçekten başarısız olursa yerel sayaç geri alınıyor (önceden hep +1 kalıyordu).
   const toggleReviewHelpful = async (mechanicId, reviewId) => {
-    // GERÇEK HATA DÜZELTMESİ: burası `role !== "owner"` ile kapalıydı, oysa aşağıdaki kalıcılık
-    // kodunda tamirci dalı zaten yazılmıştı (ölü koddu) ve mechanics tablosunda likedReviewIds
-    // sütunu var. Tamirciler de başka tamircilerin yorumlarına "faydalı" diyebilir; yalnızca
-    // KENDİ profilindeki yoruma oy vermek engelleniyor (kendini öne çıkarma).
-    if (role === "mechanic" && mechanicId === MY_MECHANIC_ID) return;
+    /**
+     * REKABET KURALI (kullanıcı isteği): TAMİRCİ HESABI başka bir tamircinin yorumlarını
+     * beğenemez. Bir önceki sürümde bu serbestti ("tamirciler de faydalı diyebilir") — ama
+     * "faydalı" oyu yorumların sıralamasını etkiliyor, yani rakibin olumsuz yorumunu öne
+     * çıkarmanın ya da olumlusunu gölgede bırakmanın ucuz bir yolu. Yorum yazmak gibi bu da
+     * MÜŞTERİ sinyalidir: tamirci gerçekten müşteriyse araç sahibi hesabıyla oy verir.
+     * Kural sunucuda da var (bkz. backend/routes/reviews.js) — buradaki erken çıkış yalnızca
+     * gereksiz istek atmamak ve doğru mesajı göstermek için.
+     */
+    if (role === "mechanic" || MY_MECHANIC_ID != null) {
+      setToast({ type: "info", text: `⚠️ ${t("mechanicCannotRateToast")}` });
+      return;
+    }
     // MİSAFİR GEZİNME: eskiden burada sadece bir uyarı toast'ı gösteriliyordu; artık giriş popup'ı
     // açılıyor ve giriş sonrası beğeni otomatik uygulanıyor.
     if (MY_OWNER_ID == null && MY_MECHANIC_ID == null) { requireAuth(() => callLatest("toggleReviewHelpful", mechanicId, reviewId), t("authGateReasonReviewHelpful")); return; }
@@ -2019,9 +2057,10 @@ function useAppLogic() {
       api.admin.analyticsTimeseries(adminAnalyticsRange),
       api.admin.analyticsTopTargets("mechanic", adminAnalyticsRange),
       api.admin.analyticsTopTargets("listing", adminAnalyticsRange),
-    ]).then(([overview, searches, sources, countries, devices, series, topMechanics, topListings]) => {
+      api.admin.analyticsComparisons(adminAnalyticsRange),
+    ]).then(([overview, searches, sources, countries, devices, series, topMechanics, topListings, comparisons]) => {
       if (cancelled) return;
-      setAdminAnalyticsData({ overview, searches, sources, countries, devices, series, topMechanics, topListings });
+      setAdminAnalyticsData({ overview, searches, sources, countries, devices, series, topMechanics, topListings, comparisons });
     }).catch(() => {
       // Analitik uçları henüz veri toplamamışsa ya da backend eski sürümdeyse panel çökmemeli;
       // boş durum gösteriliyor.
@@ -3235,7 +3274,13 @@ function useAppLogic() {
        */
       api.mechanics.addReview(mech.id, { rating: reviewForm.rating, comment: reviewForm.comment.trim(), lang: ownerLang })
         .then((res) => setMechanicsList(list => list.map(m => m.id === mech.id ? { ...m, ...res.mechanic } : m)))
-        .catch((err) => setToast({ type: "info", text: `⚠️ ${err?.message || "Değerlendirme kaydedilemedi."}` }));
+        .catch((err) => {
+          // Sunucu reddin NEDENİNİ makine-okunur döndürüyor; kullanıcıya "kaydedilemedi" demek
+          // yerine gerçek sebebi gösteriyoruz (bkz. backend/routes/reviews.js).
+          const reasons = { mechanicRole: "mechanicCannotRateToast", selfReview: "selfReviewBlockedToast", noAppointment: "reviewNeedsAppointmentToast", duplicate: "reviewDuplicateToast" };
+          const key = reasons[err?.details?.reason];
+          setToast({ type: "info", text: `⚠️ ${key ? t(key) : (err?.message || "Değerlendirme kaydedilemedi.")}` });
+        });
     }
 
     setAppointments(apps => apps.map(a => a.id === reviewingApptId ? { ...a, reviewed: true } : a));
@@ -3894,6 +3939,24 @@ function useAppLogic() {
    * gitmediği bir sayfaya "geri" dönüyordu. Artık dönüş adresi o an bulunulan ekran VE sekme:
    * kullanıcı düzenlemeye kaldığı yerden devam ediyor.
    */
+  /**
+   * SAYFA İÇİ BÖLÜME KAYDIRMA.
+   * -------------------------------------------------------------------------------------------
+   * "Profil tamamlanma" listesi neyin eksik olduğunu söylüyor ama kullanıcı o alanı uzun formda
+   * kendisi arıyordu (kullanıcı bildirdi). Eksik maddeye tıklayınca ilgili bölüme iniyoruz ve
+   * bölümü kısa bir süre vurguluyoruz — kaydırma bittiğinde "nereye geldim" sorusu kalmasın.
+   * prefers-reduced-motion açık kullanıcılarda yumuşak kaydırma yapılmıyor.
+   */
+  const scrollToSection = (elementId) => {
+    if (typeof document === "undefined" || !elementId) return;
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    try { el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); }
+    catch { el.scrollIntoView(); }
+    el.classList.add("section-flash");
+    setTimeout(() => el.classList.remove("section-flash"), 1600);
+  };
   const [detailReturnTab, setDetailReturnTab] = useState(null);
   const previewMyProfile = () => {
     const missing = findMissingFixedPriceService();
@@ -5360,10 +5423,10 @@ function useAppLogic() {
     detectedCountry, myMechanicAnalytics, adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading,
     listingPageId, listingPageItem, openListingPage, closeListingPage, sellPrefillFromListing,
     isAuthed, requireAuth, ensureAuth, requireAuthForTab, goToBrowse, hasSearched, setHasSearched, EMPTY_LISTING_FILTERS, searchGuidance, openQuoteModal, toggleAddVehicle, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate, latestFnsRef,
-    compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
+    compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, openCompareModal, clearCompareListings, MAX_COMPARE_LISTINGS,
     clearJobFilters, openJobForm, submitJobListing, setJobListingStatus, removeJobListing, handleCvSelect, removeCv, closeJobApplyForm,
     openJobApplyForm, goToMyPanel, goToMySettings,
-    canReoffer, startReoffer, myActiveOfferOn, offerButtonState,
+    canReoffer, startReoffer, myActiveOfferOn, offerButtonState, scrollToSection,
     savedSearchFrequency, setSavedSearchFrequency,
     detailReturnTab, setDetailReturnTab,
     deleteAccountPassword, setDeleteAccountPassword, deleteAccountLoading,

@@ -271,7 +271,10 @@ Kimlik bilgileri, kapak fotoğrafı, hizmetler ve fiyatlar, çalışma saatleri,
 IBAN, banka adı ve hesap sahibi toplu tamirci listesinde DÖNMEZ; yalnızca tamircinin kendi profil ayarlarında tek kayıt uç noktasından çekilir.
 
 ## Randevu talepleri
-Aktif ve geçmiş olarak ikiye ayrılır. Otomatik kabul açıksa gelen randevular doğrudan "Sırada" olur, kapalıysa "Onay Bekliyor".`,
+Aktif ve geçmiş olarak ikiye ayrılır. Otomatik kabul açıksa gelen randevular doğrudan "Sırada" olur, kapalıysa "Onay Bekliyor".
+
+## Profil tamamlanma listesi tıklanabilir
+Liste neyin eksik olduğunu söylüyordu ama kullanıcı o alanı uzun formda kendisi arıyordu. Artık her eksik madde bir düğme: tıklayınca ilgili bölüme kaydırıyor ve bölüm kısa süre vurgulanıyor ("nereye geldim" sorusu kalmasın). Tamamlanmış maddeler düğme DEĞİL — orada yapılacak bir şey yok. Hareket azaltma tercihi açık kullanıcılarda yumuşak kaydırma yapılmıyor.`,
       },
       {
         id: "hizmet",
@@ -531,7 +534,12 @@ Beyaz zemin + border-gray-100 + rounded-3xl. Site genelinde tek desen; yeni ekra
 Her liste için ikon + tek cümlelik açıklama. Boş ekran bırakılmaz.
 
 ## Görsel arka planları NÖTR
-Blog kapak görsellerinin arkasında pembe bir degrade vardı; görselin kapatmadığı her yerde (şeffaf PNG, farklı en-boy oranı, görsel yüklenemediğinde) kırmızımsı bir zemin görünüyor ve hiçbir fotoğrafla uyuşmuyordu. Kural: bir görselin ARKASINDA marka rengi olmaz — nötr gri kullanılır. Marka rengi, görselin kendisi olmayan yerlerde (rozetler, başlık bantları, düğmeler) kalır.`,
+Blog kapak görsellerinin arkasında pembe bir degrade vardı; görselin kapatmadığı her yerde (şeffaf PNG, farklı en-boy oranı, görsel yüklenemediğinde) kırmızımsı bir zemin görünüyor ve hiçbir fotoğrafla uyuşmuyordu. Kural: bir görselin ARKASINDA marka rengi olmaz — nötr gri kullanılır. Marka rengi, görselin kendisi olmayan yerlerde (rozetler, başlık bantları, düğmeler) kalır.
+
+## Karanlık mod: yarı saydam zeminler de kapsanmalı
+Karanlık mod, açık renk Tailwind sınıflarını kapsam içinde ezen bir CSS katmanıyla çalışıyor. Kural ".bg-white" sınıfına bakıyordu; ama "bg-white/95" ve "bg-white/90" AYRI birer sınıftır ve hiç yakalanmıyordu. Sonuç: yapışkan üst çubuklar, ana sayfa başlığı ve modal başlıkları karanlık modda BEYAZ kalıyor, üzerlerindeki açık gri yazı okunmuyordu. Aynı sınıf hata degrade bantlarda (from-rose-50 …) ve yer tutucu ikonların açık grisinde vardı.
+
+KURAL: yarı saydam bir zemin sınıfı (bg-white/90 gibi) eklenirse karanlık karşılığı da eklenir. Test bunu denetliyor: opak sayılabilecek her "bg-white/NN" için bir karanlık kural aranıyor.`,
       },
       {
         id: "bilesen",
@@ -739,6 +747,38 @@ Toplu raporlar yalnızca yöneticiye açıktır. Tamirci yalnızca KENDİ profil
 ## Tamirciye özel içgörü
 "Şehrindeki talep" bloğu, tamircinin bulunduğu şehirde en çok aranan hizmetleri gösterir. Kişi bazlı hiçbir veri içermez.`,
       },
+      {
+        id: "veristratejisi",
+        title: "11.4 Hangi veriyi neden tutuyoruz",
+        body: `Veri toplamanın tek meşru gerekçesi, o veriyle ALINACAK bir kararın olması. "İleride lazım olur" diye toplanan veri, sorumluluğu artırır ve hiçbir zaman kullanılmaz. Aşağıdaki listede her kalemin karşısında hangi kararı beslediği yazıyor.
+
+## Karşılaştırma çiftleri (eklendi)
+Kullanıcı iki aracı yan yana koyduğunda "neyin ALTERNATİFİ ne" sorusunu bize kendisi söylüyor. Tek tek görüntülenme verisi bunu bilemez. Beslediği kararlar:
+· FİYATLAMA — satıcıya "ilanınız en çok X ile karşılaştırılıyor, X'in ortalama fiyatı şu" denebilir; doğru fiyatlanan ilan daha hızlı satılır.
+· ÖNERİ — "bunu görenler şunu da inceledi" listesi tahmine değil gerçek karşılaştırmalara dayanır.
+· ARZ AÇIĞI — çok kıyaslanan ama sitede az bulunan modeller, hangi ilanları çekmemiz gerektiğini söyler.
+· TAMİRCİ TARAFI — çok kıyaslanan markalar, o markalara marka bazlı fiyat girmeye değer sinyalidir.
+Kaydedilen şey yalnızca "Marka Model" metinleri ve sayılar; kimin karşılaştırdığı değil. Çift her zaman alfabetik sıralanır, yoksa "A ile B" ve "B ile A" iki ayrı satır olur ve sayılar bölünür.
+
+## Zaten topladıklarımız ve besledikleri karar
+· Sonuçsuz arama (search_zero_result) — ARZ AÇIĞI: aranan ama bulunamayan şey.
+· Arama terimi/şehir/hizmet — hangi hizmete nerede talep var; tamirciye "şehrinde bu hizmete talep var, sen sunmuyorsun" sinyali.
+· Filtre kullanımı — hangi filtre gerçekten kullanılıyor; kullanılmayan filtre arayüzden çıkarılabilir.
+· Görüntülenme → dönüşüm hunisi — nerede kaybediyoruz.
+· Paylaşım kanalı + tıklama — hangi kanal gerçekten müşteri getiriyor.
+· Trafik kaynağı / ülke / cihaz — nereye yatırım yapılacağı.
+
+## Eklemeye DEĞER (öncelik sırasıyla, henüz yok)
+1. RANDEVU HUNİSİNDE TERK ADIMI: kullanıcı hangi adımda vazgeçiyor (araç/hizmet/tarih/onay). En pahalı kayıp burada ve düzeltmesi en ucuz yer.
+2. YANIT SÜRESİ: tamircinin mesaja/randevuya ilk yanıt süresi. Hem sıralama sinyali hem tamirciye "rakiplerin 20 dakikada dönüyor" geri bildirimi.
+3. TEKLİF/İLAN FİYAT ORANI: kabul edilen tekliflerin ilan fiyatına oranı — gerçek pazar fiyat endeksi, "bu fiyat pazarın üstünde" uyarısı yapılabilir.
+4. TEKRAR GELEN MÜŞTERİ ORANI: aynı araç sahibinin aynı tamirciye dönüşü. Memnuniyetin puandan daha dürüst ölçüsü; sahte yorumla şişirilemez.
+5. BİLDİRİM TIKLAMA ORANI: hangi bildirim işe yarıyor, hangisi rahatsızlık. Kapatma oranıyla birlikte okunmalı.
+6. KAYITLI ARAMA DOLULUK ORANI: kaydedilen aramaların kaçı hiç sonuç görmüyor — yine arz açığı, ama kişinin beklentisiyle birlikte.
+
+## Kural
+Her yeni ölçüm için üç soru: (1) hangi kararı besliyor, (2) kişisel veri içeriyor mu, (3) panelde nerede görünecek? Üçünün de cevabı yoksa ölçüm eklenmez. Panelde hiç gösterilmeyen bir olay, veriyi sessizce çöpe atmakla aynı şeydir — kimse bakmadığı için bozulduğu da fark edilmez.`,
+      },
     ],
   },
 
@@ -802,10 +842,10 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 21 test takımı.
+tsc tip denetimi + her backend dosyasının sözdizimi + 22 test takımı.
 
 ## Takımlar
-arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği.
+arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri.
 
 ## Belgeyi canlı tutan takım
 "el kitabı" takımı bu belgeyi denetliyor: bölüm/sayfa yapısı, zorunlu konu listesi, bilinen sınırların yazılmış olması, yönetici panelindeki her sekmenin anlatılmış olması ve KAPSAM — components/features altındaki her bileşenin burada bir karşılığı olması. Yeni bir bileşen ekleyip belgeye dokunmazsan test düşer. Belge yazmak kolay, güncel tutmak zordur; kural yazıyla kalırsa birkaç hafta içinde unutulur.
@@ -1054,7 +1094,21 @@ Tamirci bir yoruma tek seferlik cevap yazabilir.
 Tamircinin puanı yorumlardan hesaplanır, elle girilmez.
 
 ## Ana sayfadaki değerlendirme şeridi
-"Kullanıcılar ne diyor?" bölümü gerçek yorumlardan beslenir ve AKAN bir şerittir: en fazla 12 yorum, kendiliğinden ilerliyor, fare üzerine gelince duruyor, oklarla ve dokunmatik kaydırmayla da gezilebiliyor. Eskiden sabit üç karttı; her ziyarette aynı üç metni göstermek vitrin değil dekordu ve "gerçek yorumlar" iddiasını zayıflatıyordu. "Hareketi azalt" tercihi olan kullanıcıda otomatik ilerleme çalışmaz, şerit yalnızca elle kaydırılır.`,
+"Kullanıcılar ne diyor?" bölümü gerçek yorumlardan beslenir ve AKAN bir şerittir: en fazla 12 yorum, kendiliğinden ilerliyor, fare üzerine gelince duruyor, oklarla ve dokunmatik kaydırmayla da gezilebiliyor. Eskiden sabit üç karttı; her ziyarette aynı üç metni göstermek vitrin değil dekordu ve "gerçek yorumlar" iddiasını zayıflatıyordu. "Hareketi azalt" tercihi olan kullanıcıda otomatik ilerleme çalışmaz, şerit yalnızca elle kaydırılır.
+
+## Rekabete aykırı değerlendirmeye karşı katmanlar
+Bir tamircinin rakibinin puanını düşürmesi (ya da kendi puanını şişirmesi) bu pazar yerinin en kolay kötüye kullanım yolu. Dört katman var:
+
+1. TAMİRCİ HESABI YORUM YAZAMAZ VE "FAYDALI" OYU VEREMEZ. Yorum müşteri deneyimidir; beğeni de yorumların sıralamasını etkilediği için aynı sınıfa girer. Tamirci gerçekten müşteriyse araç sahibi hesabıyla değerlendirir.
+2. DOĞRULANMIŞ MÜŞTERİ ŞARTI: yorum, o tamircide TAMAMLANMIŞ bir randevu gerektirir. Sahte hesapla yorum yazmak önce gerçek bir randevu almayı ve tamamlamayı gerektirir.
+3. KENDİNE YORUM KESİN ENGEL: araç sahibi hesabının e-postası ya da telefonu, yorum yazılan işletmenin bilgisiyle aynıysa aynı kişidir. (Telefon +E.164'e normalleştirilmiş saklandığı için bu karşılaştırma güvenilir — bkz. 6.3.)
+4. RAKİP İŞARETİ: iletişim bilgisi BAŞKA bir işletme hesabıyla eşleşiyorsa yorum kaydedilir, görünür kalır ama PUAN ORTALAMASINA KATILMAZ ve okuyucuya bunun nedeni yazılır. Silmiyoruz, çünkü bir tamirci başka bir tamircinin gerçek müşterisi olabilir; ama sessizce puanı etkilemesine de izin vermiyoruz.
+
+## Kayıt ağı karması
+Ek bir ipucu olarak kayıt anındaki IP'nin TUZLANMIŞ KARMASI saklanır (ham IP değil). İki hesap aynı ağdan açıldıysa yorum işaretlenir. Bu TEK BAŞINA engel sebebi değildir: aynı ev, aynı ofis ve mobil operatör NAT'ı yüzünden ilgisiz kişiler de aynı IP'yi paylaşabilir.
+
+## BİLİNEN SINIR
+Farklı e-posta + farklı telefon + farklı ağ ile açılmış ikinci bir hesabı bu kontroller yakalamaz. Gerçek çözüm kimlik doğrulaması (ya da ödeme kartı doğrulaması) olurdu ve bu ölçekte yoktur. Bunun yerine kötüye kullanımın MALİYETİ artırılıyor: sahte yorum için gerçek bir randevu alınıp tamamlanmalı.`,
       },
       {
         id: "paylasim",

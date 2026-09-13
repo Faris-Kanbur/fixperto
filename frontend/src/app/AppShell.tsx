@@ -168,7 +168,7 @@ export function AppShell() {
     isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers,
-    confirmBooking, goHome, chooseRole, completeVinInput, setCompleteVinInput, canReoffer, startReoffer,
+    confirmBooking, goHome, chooseRole, completeVinInput, setCompleteVinInput, canReoffer, startReoffer, scrollToSection,
     listingReply, setListingReply, submitListingReply,
     deleteAccountPassword, setDeleteAccountPassword, deleteAccountLoading, openSessionCount, logoutEverywhere,
     emailChangeForm, setEmailChangeForm, submitEmailChange, myHistoryRecords, setVehicleHistoryShared, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
@@ -201,7 +201,7 @@ export function AppShell() {
     roleBtn, goToNotifTarget,
     jobEmploymentColor,
     savedSearches, saveCurrentSearch, removeSavedSearch, applySavedSearch, showSaveSearchInput, setShowSaveSearchInput, saveSearchNameInput, setSaveSearchNameInput,
-    compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, clearCompareListings, MAX_COMPARE_LISTINGS,
+    compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, openCompareModal, clearCompareListings, MAX_COMPARE_LISTINGS,
     isAuthed, requireAuth, requireAuthForTab, openQuoteModal, toggleAddVehicle, saveVehicleToGarage, setSaveVehicleToGarage, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate,
   } = useApp();
   return (
@@ -234,12 +234,42 @@ export function AppShell() {
         .dark-scope .bg-rose-50 { background-color: #2a141c !important; }
         .dark-scope .bg-rose-100 { background-color: #3a1a28 !important; }
         .dark-scope .border-rose-100, .dark-scope .border-rose-200 { border-color: #4a2538 !important; }
+
+        /* ===== KARANLIK MOD DENETİMİNDE BULUNAN EKSİKLER =====
+           Kural ".bg-white" sınıfına bakıyordu; YARI SAYDAM varyantlar (bg-white/95, bg-white/90)
+           AYRI birer sınıf olduğu için hiç yakalanmıyordu. Sonuç: yapışkan üst çubuklar, ana sayfa
+           başlığı ve modal başlıkları karanlık modda BEYAZ kalıyor, üzerlerindeki açık gri yazı
+           okunmuyordu. En görünür kusur buydu. */
+        .dark-scope .bg-white\/95, .dark-scope .bg-white\/90 { background-color: rgba(23,23,31,0.95) !important; }
+        .dark-scope .bg-gray-50\/70, .dark-scope .bg-gray-50\/50 { background-color: rgba(18,18,24,0.7) !important; }
+        /* Degrade bantlar: açık pembe/gri geçişler karanlıkta parlak bir şerit gibi duruyordu. */
+        .dark-scope [class*="from-rose-50"], .dark-scope [class*="via-rose-50"],
+        .dark-scope [class*="from-gray-100"][class*="to-rose-50"] {
+          background-image: none !important; background-color: #1b1b24 !important;
+        }
+        /* Boş durum/yer tutucu ikonlarının açık grisi karanlıkta görünmüyordu. */
+        .dark-scope .text-gray-200 { color: #3f3f52 !important; }
+        .dark-scope .bg-gray-300 { background-color: #33334a !important; }
+        /* Emerald/mavi/menekşe rozetler: yalnızca kırmızı ve yeşil ele alınmıştı. */
+        .dark-scope .bg-emerald-50 { background-color: #10241c !important; }
+        .dark-scope .bg-blue-50 { background-color: #121e2e !important; }
+        .dark-scope .bg-violet-50 { background-color: #1d1630 !important; }
+        .dark-scope .bg-cyan-50 { background-color: #10242a !important; }
+        .dark-scope .border-emerald-100, .dark-scope .border-emerald-200 { border-color: #1c4436 !important; }
+        .dark-scope .border-blue-100, .dark-scope .border-blue-200 { border-color: #1d3348 !important; }
+        /* Ayırıcı çizgiler ve gölgeler. */
+        .dark-scope .divide-gray-50 > * + * { border-color: #24242f !important; }
+        .dark-scope .bg-gray-950, .dark-scope .bg-gray-900 { background-color: #0d0d13 !important; }
       `}</style>)}
       <style>{`
         @keyframes micro-pop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes micro-fade-out { 0%, 75% { opacity: 1; } 100% { opacity: 0; } }
         .success-pulse-badge { animation: micro-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, micro-fade-out 1.4s ease forwards; }
         button:not(:disabled):active { transform: scale(0.96); }
+        /* Bölüme kaydırma sonrası kısa vurgu — kullanıcı nereye geldiğini görsün (scrollToSection). */
+        @keyframes section-flash-kf { 0% { box-shadow: 0 0 0 0 rgba(225,29,72,0.35); } 100% { box-shadow: 0 0 0 12px rgba(225,29,72,0); } }
+        .section-flash { animation: section-flash-kf 1.4s ease-out; }
+        @media (prefers-reduced-motion: reduce) { .section-flash { animation: none; outline: 2px solid rgba(225,29,72,0.5); } }
         button { transition: transform 0.12s ease, background-color 0.15s ease, opacity 0.15s ease; }
       `}</style>
       {toast && (<div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md"><div className={`rounded-2xl shadow-lg p-3 flex items-start gap-2 text-xs ${toast.type === "sms" ? "bg-green-600 text-white" : "bg-gray-800 text-white"}`}><Bell size={16} className="flex-shrink-0 mt-0.5" /><span className="flex-1">{toast.text}</span><button onClick={() => setToast(null)} aria-label={t("dismissToastAria")} className="p-2 -m-2"><X size={14} /></button></div></div>)}
@@ -252,7 +282,7 @@ export function AppShell() {
             </div>
             <span className="flex-1 text-xs font-medium truncate">{t("compareBarLabel", { n: String(compareListingIds.length), max: String(MAX_COMPARE_LISTINGS) })}</span>
             <button onClick={clearCompareListings} aria-label={t("closeAria")} className="text-gray-400 hover:text-white p-1.5 -m-1.5 flex-shrink-0"><X size={16} /></button>
-            <button onClick={() => setShowCompareModal(true)} disabled={compareListingIds.length < 2} className={`flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${compareListingIds.length < 2 ? "bg-gray-700 text-gray-500" : "bg-rose-600 text-white hover:bg-rose-700"}`}><Scale size={13} /> {t("compareBtn")}</button>
+            <button onClick={openCompareModal} disabled={compareListingIds.length < 2} className={`flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${compareListingIds.length < 2 ? "bg-gray-700 text-gray-500" : "bg-rose-600 text-white hover:bg-rose-700"}`}><Scale size={13} /> {t("compareBtn")}</button>
           </div>
         </div>
       )}
@@ -1060,6 +1090,29 @@ export function AppShell() {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <BreakdownList title="En Çok Aranan Terimler" rows={a.searches?.topQueries} icon={Search} />
                             <BreakdownList title="En Çok Aranan Şehirler" rows={a.searches?.topCities} icon={MapPin} />
+                          </div>
+                          {/* KARŞILAŞTIRMA VERİSİ — "hangi araç hangisiyle yarışıyor".
+                              Tek tek görüntülenme "neye bakılıyor"u söyler; ÇİFT ise "neyin
+                              ALTERNATİFİ ne" sorusunu cevaplar: satıcıya fiyatlama önerisi,
+                              alıcıya gerçek "benzer ilanlar", bize arz açığı sinyali.
+                              Kişisel veri yok — yalnızca marka/model metinleri ve sayılar. */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                              <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Scale size={15} className="text-rose-500" /> En Çok Karşılaştırılan Çiftler</h3>
+                              {(a.comparisons?.pairs || []).length === 0 ? (
+                                <p className="text-xs text-gray-400 py-4 text-center">Henüz karşılaştırma verisi yok.</p>
+                              ) : (
+                                <div className="space-y-1.5">
+                                  {a.comparisons.pairs.map((r) => (
+                                    <div key={`${r.a}|${r.b}`} className="flex items-center justify-between gap-3 text-xs">
+                                      <span className="text-gray-600 truncate">{r.a} <span className="text-gray-300">↔</span> {r.b}</span>
+                                      <span className="font-semibold text-gray-900 flex-shrink-0">{r.n}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <BreakdownList title="En Çok Kıyaslanan Modeller" rows={a.comparisons?.models} icon={Scale} />
                           </div>
                           {/* TÜM OLAY SAYAÇLARI: toplanan her olay burada görünüyor. Bir olayı
                               toplayıp panelde HİÇ göstermemek, veriyi sessizce çöpe atmakla aynı —
@@ -3567,16 +3620,19 @@ export function AppShell() {
               // PROFİL TAMAMLANMA — sağdaki yapışkan kart. Bu bir "süsleme" değil: tamirciye somut
               // olarak neyi eksik bıraktığını ve neden önemli olduğunu söylüyor. Alanlar aramada
               // gerçekten kullanılan alanlarla birebir aynı (marka filtresi, ödeme filtresi vb.).
+              // Her maddenin bir HEDEF BÖLÜMÜ var: eksik maddeye tıklayan kişi doğrudan o bölüme
+              // iniyor. Eskiden liste yalnızca "neyin eksik olduğunu" söylüyordu; kullanıcı uzun
+              // formda o alanı kendisi aramak zorundaydı (kullanıcı bildirdi).
               const checks = [
-                { ok: !!String(myProfile.name || "").trim(), label: t("completeItemName") },
-                { ok: !!String(myProfile.specialty || "").trim(), label: t("completeItemSpecialty") },
-                { ok: !!String(myProfile.address || "").trim(), label: t("completeItemAddress") },
-                { ok: !!String(myProfile.phone || "").trim(), label: t("completeItemPhone") },
-                { ok: DAY_KEYS.some((k) => mechanicHours[k]?.open), label: t("completeItemHours") },
-                { ok: (myProfile.services || []).length > 0, label: t("completeItemServices") },
-                { ok: (myProfile.brandsServiced || []).length > 0, label: t("completeItemBrands") },
-                { ok: (myProfile.paymentMethods || []).length > 0, label: t("completeItemPayment") },
-                { ok: !!myProfile.coverPhoto, label: t("completeItemCover") },
+                { ok: !!String(myProfile.name || "").trim(), label: t("completeItemName"), target: "mech-sec-basic" },
+                { ok: !!String(myProfile.specialty || "").trim(), label: t("completeItemSpecialty"), target: "mech-sec-basic" },
+                { ok: !!String(myProfile.address || "").trim(), label: t("completeItemAddress"), target: "mech-sec-basic" },
+                { ok: !!String(myProfile.phone || "").trim(), label: t("completeItemPhone"), target: "mech-sec-basic" },
+                { ok: DAY_KEYS.some((k) => mechanicHours[k]?.open), label: t("completeItemHours"), target: "mech-sec-hours" },
+                { ok: (myProfile.services || []).length > 0, label: t("completeItemServices"), target: "mech-sec-services" },
+                { ok: (myProfile.brandsServiced || []).length > 0, label: t("completeItemBrands"), target: "mech-sec-brands" },
+                { ok: (myProfile.paymentMethods || []).length > 0, label: t("completeItemPayment"), target: "mech-sec-payment" },
+                { ok: !!myProfile.coverPhoto, label: t("completeItemCover"), target: "mech-sec-cover" },
               ];
               const done = checks.filter((c) => c.ok).length;
               const pct = Math.round((done / checks.length) * 100);
@@ -3594,10 +3650,22 @@ export function AppShell() {
                     <p className="text-[11px] text-gray-400 mb-4 leading-snug">{t("profileCompletenessHint")}</p>
                     <div className="space-y-1.5">
                       {checks.map((c) => (
-                        <div key={c.label} className={`flex items-center gap-2 text-xs ${c.ok ? "text-gray-400" : "text-gray-700 font-medium"}`}>
-                          {c.ok ? <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" /> : <CircleDot size={14} className="text-gray-300 flex-shrink-0" />}
-                          <span className={c.ok ? "line-through" : ""}>{c.label}</span>
-                        </div>
+                        // Tamamlanmış madde düz metin; EKSİK madde düğme — tıklayınca ilgili bölüme
+                        // kaydırıyor (scrollToSection). Tamamlanmışı da tıklanabilir yapmak,
+                        // "burada yapılacak bir şey var" izlenimi verirdi.
+                        c.ok ? (
+                          <div key={c.label} className="flex items-center gap-2 text-xs text-gray-400">
+                            <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
+                            <span className="line-through">{c.label}</span>
+                          </div>
+                        ) : (
+                          <button key={c.label} onClick={() => scrollToSection(c.target)}
+                            className="w-full flex items-center gap-2 text-xs text-gray-700 font-medium hover:text-rose-600 transition text-left group">
+                            <CircleDot size={14} className="text-gray-300 group-hover:text-rose-400 flex-shrink-0" />
+                            <span className="flex-1">{c.label}</span>
+                            <ChevronRight size={13} className="text-gray-300 group-hover:text-rose-400 flex-shrink-0" />
+                          </button>
+                        )
                       ))}
                     </div>
                   </div>
@@ -3607,7 +3675,7 @@ export function AppShell() {
                 {/* TASARIM: alanlar eskiden etiketsiz ve alt alta tek sütundu; sayfa genişleyince
                     tek satırlık "İşletme adı" kutusu ekranın sonuna kadar uzuyordu. Artık bölüm
                     kartı içinde, etiketli ve iki sütunlu — uzun alanlar (adres) tam satır. */}
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <div id="mech-sec-basic" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
                   <h3 className="font-bold text-gray-900 text-base mb-4">{t("basicInfoTitle")}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("businessNamePlaceholder")}</span><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
@@ -3628,7 +3696,7 @@ export function AppShell() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <div id="mech-sec-brands" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
                 <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> {t("brandsServicedTitle")}</h3>
                 <p className="text-xs text-gray-400 mb-4">{t("brandsServicedHint")}</p>
                 {/* Donanımdaki gibi: sabit CAR_BRANDS listesinde olmayan bir marka da serbest metin
@@ -3669,7 +3737,7 @@ export function AppShell() {
                   );
                 })()}
                 </div>
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <div id="mech-sec-payment" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
                 <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><CreditCard size={16} className="text-rose-500" /> {t("paymentMethodsTitle")}</h3>
                 {(() => {
                   const selectedPayments = myProfile.paymentMethods || [];
@@ -3705,7 +3773,7 @@ export function AppShell() {
                     katalogdan çoklu seçim yapılıyor; katalogda olmayan iş için serbest ekleme yolu
                     duruyor. Her hizmetin varsayılan bir fiyatı, istenirse MARKA BAZLI fiyatları var
                     (aynı iş BMW'de başka, Toyota'da başka tutabiliyor — ATU da önce marka soruyor). */}
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <div id="mech-sec-services" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
                     <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("servicesTitle")} <span className="text-gray-300 font-normal text-sm">({myProfile.services.length})</span></h3>
                     <div className="flex items-center gap-2">
@@ -3855,7 +3923,7 @@ export function AppShell() {
                     bir bilgi — adres, telefon, hizmetler gibi. Müşteriye görünen her şey artık tek
                     yerde, profilin altında düzenleniyor; Ayarlar sekmesi yalnızca hesabı/uygulamayı
                     ilgilendiren şeylere (bildirim, dil, ödeme bilgisi, şifre) ayrıldı. */}
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <div id="mech-sec-hours" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
                   <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Clock size={16} className="text-rose-500" /> {t("workingHours")}</h3>
                   <p className="text-xs text-gray-400 mb-4">{t("workingHoursHint")}</p>
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
@@ -3878,7 +3946,7 @@ export function AppShell() {
                   ); })}
                 </div>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <div id="mech-sec-cover" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
                 <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><Camera size={16} className="text-rose-500" /> {t("coverPhotoTitle")}</h3>
                 <input ref={coverFileRef} type="file" accept="image/*" onChange={uploadCoverPhoto} className="hidden" />
                 {myProfile.coverPhoto ? (<div className="relative w-full h-40 md:h-48 rounded-2xl overflow-hidden"><img src={imgThumb(myProfile.coverPhoto, 700)} onError={imgFallbackHandler} alt={t("coverPhotoAlt")} className="w-full h-full object-cover" /><button onClick={() => coverFileRef.current?.click()} aria-label={t("changeCoverPhotoAria")} className="absolute top-2 right-12 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><Pencil size={14} /></button><button onClick={removeCoverPhoto} aria-label={t("removeCoverPhotoAria")} className="absolute top-2 right-2 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><X size={14} /></button></div>) : (<div><div className="flex gap-2 mb-3">{Object.entries(BANNER_PRESETS).map(([key, grad]) => (<button key={key} onClick={() => updateMyField("bannerPreset", key)} className={`flex-1 h-20 rounded-xl bg-gradient-to-br ${grad} ${myProfile.bannerPreset === key ? "ring-2 ring-offset-2 ring-rose-600" : ""}`} />))}</div><button onClick={() => coverFileRef.current?.click()} className="w-full border-2 border-dashed border-rose-300 rounded-xl py-2.5 text-rose-600 text-xs font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><Camera size={14} /> {t("uploadOwnPhotoBtn")}</button></div>)}
@@ -3898,6 +3966,18 @@ export function AppShell() {
                       <span className={`text-xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-rose-600"}`}>%{pct}</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${pct === 100 ? "bg-emerald-500" : "bg-rose-500"}`} style={{ width: `${pct}%` }} /></div>
+                    {/* Mobilde de eksik maddeler tıklanabilir: kullanıcı uzun formda o alanı
+                        kendisi aramak zorunda kalmasın (masaüstü paneliyle aynı davranış). */}
+                    {checks.some((c) => !c.ok) && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {checks.filter((c) => !c.ok).map((c) => (
+                          <button key={c.label} onClick={() => scrollToSection(c.target)}
+                            className="text-[11px] font-semibold text-rose-600 bg-rose-50 rounded-lg px-2 py-1 hover:bg-rose-100 transition">
+                            {c.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -3948,10 +4028,13 @@ export function AppShell() {
                 ikinci bir katman. Profil ve Teklifler artık panonun ana sekme çubuğunda; burada
                 yalnızca hesabı ve uygulamayı ilgilendiren ayarlar kaldı (bildirim, dil, görünüm,
                 ödeme bilgisi, şifre, hesap). Dişliye basınca tam olarak bu görünüyor. */}
-            <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50 relative">
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40"><BrandMark size="sm" /></div>
-              <button onClick={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} aria-label={t("back")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
-            </div>
+            {/* TEK GERİ TUŞU (kullanıcı bildirdi: "burada iki tane geri tuşu var").
+                Bu sayfanın kendi bandında bir geri oku vardı; sitenin geri kalanında ise standart
+                üst çubuk (PageTopBar) kullanılıyor ve onun da kendi geri oku var. İkisi aynı anda
+                görününce hangisinin nereye götürdüğü belirsizleşiyordu. Artık her sayfada olduğu
+                gibi TEK üst çubuk: solda geri, ortada logo. */}
+            <PageTopBar onBack={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} />
+            <div className="h-16 md:h-20 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50" />
             {/* Aynı katman hatası burada da vardı — bkz. panodaki uzun not. */}
             <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10">
               <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
@@ -3962,7 +4045,11 @@ export function AppShell() {
                 </div>
               </div>
             </div>
-            {mechProfileTab === "settings" && (
+            {/* SAYFA ASLA BOŞ KALMAZ (kullanıcı bildirdi: "saçma bir yere çıkıyor" — ekran
+                bomboştu). Bu ekranın iki içeriği var: ayarlar ve destek. mechProfileTab başka bir
+                değerdeyse (varsayılanı "profile" ve o içerik artık PANODA) sayfa hiçbir şey
+                basmıyordu. Artık "support" dışındaki her değer ayarları gösteriyor. */}
+            {mechProfileTab !== "support" && (
               <div className="w-full max-w-3xl mx-auto px-5 md:px-8 py-6">
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={() => setAutoAccept(!autoAccept)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
                 <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-600" /> {t("useMyLocationTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
