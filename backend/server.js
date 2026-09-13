@@ -9,6 +9,7 @@ import profileViewsRouter from "./routes/profileViews.js";
 import translateRouter from "./routes/translate.js";
 import vehicleHistoryRouter from "./routes/vehicleHistory.js";
 import listingInteractionsRouter from "./routes/listingInteractions.js";
+import recommendationsRouter from "./routes/recommendations.js";
 import jobApplicationsRouter from "./routes/jobApplications.js";
 import reviewsRouter from "./routes/reviews.js";
 import analyticsRouter from "./routes/analytics.js";
@@ -119,6 +120,9 @@ app.use("/api/appointments", makeCrudRouter("appointments", {
 // bağlanıyor: ilanların genel yazma yetkisi satıcıya ait olduğu için bu istekler eskiden 403
 // alıyor ve teklif sunucuya hiç kaydedilmiyordu (bkz. routes/listingInteractions.js).
 app.use("/api/listings", listingInteractionsRouter);
+// ÖNERİLER: kişisel profil YALNIZCA açık rıza varsa yazılır; rıza kapatılınca silinir
+// (bkz. routes/recommendations.js — gerekçe ve Netflix/Amazon karşılaştırması orada).
+app.use("/api/recommendations", recommendationsRouter);
 app.use("/api/listings", makeCrudRouter("listings", {
   shareCountColumn: "shareCount",
   authScope: {

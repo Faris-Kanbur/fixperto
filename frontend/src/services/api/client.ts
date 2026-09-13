@@ -396,6 +396,26 @@ export const api = {
     myMechanic: (days?: number): Promise<any> =>
       request(`/api/analytics/my-mechanic${days ? `?days=${days}` : ""}`),
   },
+  /**
+   * ÖNERİLER. Sinyal göndermek, sinyalin SAKLANACAĞI anlamına gelmiyor: sunucu izni kendisi
+   * kontrol ediyor ve izin yoksa {stored:false} dönüyor. Bu bilinçli — istemcide "izin var mı"
+   * bayrağı taşıyıp ona güvenmek, bayrağı bozan her hata sessiz bir gizlilik ihlali olurdu.
+   */
+  recommendations: {
+    list: (limit?: number, seedIds?: (number | string)[]): Promise<any> => {
+      const q = new URLSearchParams();
+      if (limit) q.set("limit", String(limit));
+      if (seedIds?.length) q.set("seed", seedIds.slice(0, 5).join(","));
+      const qs = q.toString();
+      return request(`/api/recommendations${qs ? `?${qs}` : ""}`);
+    },
+    signal: (payload: { action?: string; listingId?: number | string; mechanicId?: number | string; search?: Record<string, string> }): Promise<{ stored: boolean }> =>
+      request("/api/recommendations/signal", { method: "POST", body: JSON.stringify(payload) }),
+    consent: (enabled: boolean): Promise<{ enabled: boolean; deletedSignals: number }> =>
+      request("/api/recommendations/consent", { method: "POST", body: JSON.stringify({ enabled }) }),
+    profile: (): Promise<{ consent: boolean; signals: any[] }> => request("/api/recommendations/profile"),
+    deleteProfile: (): Promise<{ deleted: number }> => request("/api/recommendations/profile", { method: "DELETE" }),
+  },
   admin: {
     // GÜVENLİK DÜZELTMESİ: backend artık başarılı girişte bir token dönüyor (bkz.
     // backend/routes/admin.js) — bu token bellekte saklanıp aşağıdaki diğer admin çağrılarına

@@ -233,7 +233,12 @@ function useAppLogic() {
     // ANALİTİK DÜZELTMESİ: olay eskiden koşulsuz gönderiliyordu — favoriden ÇIKARMA da
     // "favorite_added" olarak sayılıyor, panelde favori sayısını şişiriyordu. Yan etki
     // bilerek updater'ın DIŞINDA: React güncelleyici fonksiyonu iki kez çağırabilir.
-    if (!favoriteIds.includes(id)) track("favorite_added", { targetType: "listing", targetId: id });
+    if (!favoriteIds.includes(id)) {
+      track("favorite_added", { targetType: "listing", targetId: id });
+      // Favorileme, bakmaktan çok daha güçlü bir niyet sinyali (bkz. ACTION_WEIGHT).
+      // Favoriden ÇIKARMA sinyal değil: vazgeçmenin ne anlama geldiği belirsiz.
+      sendRecSignal({ action: "favorite", listingId: id });
+    }
     setFavoriteIds(f => {
       const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
       persistMyPrefs({ favoriteIds: next }, "Favori kaydedilemedi");
@@ -309,6 +314,7 @@ function useAppLogic() {
   };
   const toggleCompareListing = (id) => {
     track("compare_used", { targetType: "listing", targetId: id });
+    if (!compareListingIds.includes(id)) sendRecSignal({ action: "compare", listingId: id });
     setCompareListingIds(ids => {
       if (ids.includes(id)) return ids.filter(x => x !== id);
       if (ids.length >= MAX_COMPARE_LISTINGS) {
@@ -598,6 +604,8 @@ function useAppLogic() {
   const listingPageItem = listings.find((l) => l.id === listingPageId) || null;
   const openListingPage = (id) => {
     track("listing_view", { targetType: "listing", targetId: id });
+    // Öneri sinyali: NE saklanacağına sunucu karar veriyor (izin + hangi özellikler).
+    sendRecSignal({ action: "view", listingId: id });
     setSelectedListingId(null);   // modal açıksa kapat — ikisi aynı anda görünmesin
     setListingPageId(id);
     listingPageReturnRef.current = screen;
@@ -929,6 +937,77 @@ function useAppLogic() {
     }
   };
   const clearVinLookup = () => setVinLookup({ vin: "", loading: false, records: null, hiddenCount: 0, error: "" });
+
+  /**
+   * ARAÇ DETAYINDA OTOMATİK GEÇMİŞ (kullanıcı isteği): "araç ekleyince onun içinde çıksın".
+   * Elle sorgulama kutusundan farkı: şasi numarası zaten araç kaydında yazılı, kullanıcıdan onu
+   * kopyalayıp yapıştırmasını istemek bildiğimiz bir şeyi sormaktır. Ayrıca araç detayı önceden
+   * yalnızca KULLANICININ KENDİ kayıtlarını gösteriyordu; ikinci el araç alan biri önceki sahibin
+   * paylaştığı işleri göremiyordu — asıl değerli bilgi oydu.
+   * VIN başına önbellek: aynı araca her girişte yeniden sorgulamıyoruz (sunucuda hız sınırı var).
+   */
+  // Garajda "başka bir aracı sorgula" kutusu varsayılan olarak kapalı: kendi araçlarının geçmişi
+  // artık aracın içinde geldiği için bu kutu istisnai bir ihtiyaç.
+  /**
+   * ÖNERİLER ("Senin İçin").
+   * ---------------------------------------------------------------------------------------------
+   * Kişiselleştirmenin AÇIK/KAPALI olması istemcide karar verilen bir şey değil: sunucu kendi
+   * kontrol ediyor ve her yanıtta `consent` bilgisini geri veriyor. Buradaki `recsConsent` yalnızca
+   * EKRANDA doğru anahtarı göstermek için; hiçbir gizlilik kararı buna dayanmıyor.
+   */
+  const [recommendations, setRecommendations] = useState({ loading: true, listings: [], personalized: false, consent: false });
+  const [recsProfile, setRecsProfile] = useState(null);
+  const loadRecommendations = ({ seedIds = [], limit = 4 } = {}) => {
+    api.recommendations.list(limit, seedIds)
+      .then((res) => setRecommendations({ loading: false, listings: res.listings || [], personalized: !!res.personalized, consent: !!res.consent }))
+      .catch(() => setRecommendations({ loading: false, listings: [], personalized: false, consent: false }));
+  };
+  /**
+   * Sinyal gönderimi ürünün akışını ASLA bozmamalı: hata olursa sessizce vazgeçiyoruz. Ayrıca
+   * girişsiz kullanıcı için hiç çağrılmıyor — sunucu zaten 401 döner, boşuna istek atmayalım.
+   */
+  const sendRecSignal = (payload) => {
+    if (MY_OWNER_ID == null && MY_MECHANIC_ID == null) return;
+    api.recommendations.signal(payload).catch(() => { /* öneri sinyali kritik değil */ });
+  };
+  const refreshRecsProfile = () => api.recommendations.profile().then(setRecsProfile).catch(() => setRecsProfile(null));
+  const setRecsConsent = async (enabled) => {
+    try {
+      const res = await api.recommendations.consent(enabled);
+      setRecommendations((r) => ({ ...r, consent: res.enabled }));
+      await refreshRecsProfile();
+      loadRecommendations();
+      setToast({ type: "info", text: enabled ? t("recConsentOnToast") : t("recConsentOffToast", { n: String(res.deletedSignals || 0) }) });
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ ${err?.message || t("recConsentFailedToast")}` });
+    }
+  };
+  const clearRecsProfile = async () => {
+    try {
+      const res = await api.recommendations.deleteProfile();
+      await refreshRecsProfile();
+      loadRecommendations();
+      setToast({ type: "info", text: t("recProfileClearedToast", { n: String(res.deleted || 0) }) });
+    } catch (err) {
+      setToast({ type: "info", text: `⚠️ ${err?.message || t("recConsentFailedToast")}` });
+    }
+  };
+  const openOwnerSettingsForRecs = () => { setScreen("ownerSettings"); setOwnerSettingsTab("settings"); };
+
+  const [showForeignVinLookup, setShowForeignVinLookup] = useState(false);
+  const [vehicleHistoryFor, setVehicleHistoryFor] = useState({});
+  const loadVehicleHistory = (rawVin, { force = false } = {}) => {
+    const check = validateVin(rawVin);
+    if (!check.valid || !check.normalized) return;
+    const vin = check.normalized;
+    setVehicleHistoryFor((prev) => {
+      if (!force && prev[vin] && !prev[vin].error) return prev;   // önbellekte var
+      api.vehicleHistory.lookup(vin)
+        .then((res) => setVehicleHistoryFor((p) => ({ ...p, [vin]: { loading: false, records: res.records || [], hiddenCount: res.hiddenCount || 0, error: "" } })))
+        .catch((err) => setVehicleHistoryFor((p) => ({ ...p, [vin]: { loading: false, records: [], hiddenCount: 0, error: err?.message || t("vinLookupFailed") } })));
+      return { ...prev, [vin]: { loading: true, records: [], hiddenCount: 0, error: "" } };
+    });
+  };
   // Paylaşım iznini değiştirmek iki yere birden yazılıyor: aracın kendi kaydına (ileride
   // oluşacak kayıtlar için) ve o VIN'e ait MEVCUT kayıtlara (geçmişe dönük olarak).
   const setVehicleHistoryShared = (vehicle, shared) => {
@@ -5432,6 +5511,9 @@ function useAppLogic() {
     emailChangeForm, setEmailChangeForm, submitEmailChange,
     listingReply, setListingReply, submitListingReply,
     vinLookup, lookupVin, clearVinLookup, myHistoryRecords, refreshMyHistory, setVehicleHistoryShared,
+    vehicleHistoryFor, loadVehicleHistory, showForeignVinLookup, setShowForeignVinLookup,
+    recommendations, loadRecommendations, sendRecSignal, recsProfile, refreshRecsProfile,
+    setRecsConsent, clearRecsProfile, openOwnerSettingsForRecs,
     completeVinInput, setCompleteVinInput, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
     roleBtn, goToNotifTarget,
     jobEmploymentColor,

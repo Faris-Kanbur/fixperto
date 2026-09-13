@@ -1444,6 +1444,57 @@ Bu dördü, "kodu okuyup kural arayan" 1000'den fazla iddianın arasından geçm
       },
     ],
   },
+  {
+    id: "oneriler",
+    title: "23. Öneriler ve Kişiselleştirme",
+    summary: "\"Senin için\" nasıl çalışıyor, hangi veri tutuluyor, izin nasıl yönetiliyor.",
+    pages: [
+      {
+        id: "nasil-calisiyor",
+        title: "23.1 Öneri motoru — üç katman",
+        body: `Netflix ve Amazon tek bir algoritma kullanmıyor; birkaç sinyali harmanlıyorlar. Buradaki tasarım aynı fikri bu pazar yerinin ölçeğine indiriyor.
+
+## 1) Örtük sinyal — tek gerçekçi kaynak
+Kimse "bu ilanı beğendim" düğmesine basmaz, ama insanlar ilanlara bakar, arar, karşılaştırır, favoriler. Netflix'in dayandığı şey de bu: açık puan azdır, davranış boldur. Ağırlıklar niyetin gücüne göre: bakmak 1, aramak 1,5, karşılaştırmak 2,5, favorilemek 4, teklif vermek 6. Favoriden ÇIKARMA sinyal değildir — vazgeçmenin ne anlama geldiği belirsizdir.
+
+## 2) İçerik temelli — ana motor
+Kullanıcının zevk profiliyle (marka, kasa tipi, yakıt, şanzıman, şehir, fiyat bandı) ilanın özellikleri eşleştirilir. Bu ANA motor, çünkü ölçek küçük: Netflix'in milyonlarca kullanıcısı var, biz yeni bir pazar yeriyiz. Az kullanıcıyla işbirlikçi süzgeç "soğuk başlangıç" yüzünden saçmalar; marka/fiyat benzerliği ilk günden çalışır.
+
+## 3) Ürün-ürün benzerliği — "bu ilana bakanlar buna da baktı"
+Amazon'un item-to-item yöntemi. ANONİM oturum akışından hesaplanır: aynı oturumda hangi iki ilana bakıldığı. Kullanıcıyı profillemediği için İZİN GEREKTİRMEZ ve izin vermeyen kullanıcıda da çalışır. Tek bir kişinin gezintisi benzerlik sayılmaz — en az iki farklı oturum gerekir. Pencere 60 gün: altı ay önce satılmış bir arabaya bakanların davranışı bugünü açıklamaz.
+
+## Unutma
+Bir ay önceki ilgi dünkü kadar güçlü değil; ağırlıklar okunurken yaşa göre azaltılıyor. Ayrıca tek bir değerin profili ele geçirmemesi için ağırlık tavanı var (bir markaya 200 kez bakmak onu sonsuz güçlü yapmaz).
+
+## Her önerinin GEREKÇESİ yazılı
+Netflix'in "X izlediğin için" satırının karşılığı. İki sebeple zorunlu: gerekçesiz öneri rastgele görünür ve güven kazanmaz; ayrıca kişiselleştirmenin neye dayandığını göstermeden "verini işliyoruz" demek rızayı biçimsel bir onay kutusuna indirger.`,
+      },
+      {
+        id: "veri-ve-izin",
+        title: "23.2 Hangi veri tutuluyor, izin nasıl çalışıyor",
+        body: `## Gezinme geçmişi SAKLANMIYOR
+Ham "şu ilana şu saatte baktı" kaydı tutulmuyor. Onun yerine baktıklarından çıkarılmış küçük bir ZEVK PROFİLİ var: "Volkswagen: 3,0", "Dizel: 1,5", "300–500 bin bandı: 2,0". Üç faydası:
+1. Çok daha az veri — neyi sevdiğin, ne zaman ne yaptığın değil.
+2. Amaca bağlı — bu özetten geçmişin geri kurulamaz.
+3. GÖSTERİLEBİLİR — ayarlarda "hakkımda ne tutuyorsunuz" ile ekrana basılıyor.
+
+## Varsayılan KAPALI
+Davranıştan profil çıkarmak profillemedir ve açık rıza ister. "Zaten kabul etmiş sayılır" varsaymak hukuken de ahlaken de yanlış olur. Rızanın ne zaman verildiği (recsConsentAt) kaydediliyor; ispat yükümlülüğü bizde.
+
+## Kapatınca SİLİNİYOR
+Kapatmak yalnızca yeni yazmayı durdurmaz; birikmiş profil de silinir. Veriyi elde tutmak da işlemedir.
+
+## Kontrol SUNUCUDA
+İstemci "sakla" dese bile izin yoksa hiçbir şey yazılmaz ve yanıt {stored:false} döner. İstemcide bir "izin var mı" bayrağı taşıyıp ona güvenmek, o bayrağı bozan her hatayı sessiz bir gizlilik ihlaline çevirirdi.
+
+## Özellikleri istemci belirlemiyor
+İstemci yalnızca "şu ilana baktım" der; hangi özelliklerin saklanacağına sunucu, ilanı veritabanından okuyarak karar verir. Aksi halde biri kendi profiline istediği değerleri yazdırıp öneri sıralamasını manipüle edebilirdi. Serbest metin arama sorgusu hiç saklanmaz — kişisel bilgi içerebilir.
+
+## İzin vermeyen cezalandırılmıyor
+Kapalıyken bölüm kaybolmuyor: ürün-ürün benzerliği ve "şu sıralar çok bakılıyor" gösteriliyor, etiketi de dürüstçe "popüler" oluyor. Reddedeni boş ekranla cezalandırmak, rızayı gönüllü olmaktan çıkarır.`,
+      },
+    ],
+  },
 ];
 
 /** Arama için düz liste: bölüm başlığı + sayfa başlığı + gövde. */

@@ -5,6 +5,7 @@ import { SiteFooter } from "./SiteFooter";
 import { SkeletonCard } from "./SkeletonCard";
 import { MapPanel } from "./MapPanel";
 import { ListingCard } from "./ListingCard";
+import { RecommendedListings } from "./RecommendedListings";
 import { JobCard } from "./JobCard";
 
 
@@ -210,6 +211,10 @@ export function BrowseHome({ theme = undefined }) {
               </div>
             <p className="text-xs text-gray-400 whitespace-nowrap">{filteredListings.length} {t("listingsFoundSuffix")}</p>
           </div>
+          {/* "SENİN İÇİN": arama sonuçlarının ÜSTÜNDE değil, filtre çubuğunun ALTINDA duruyor —
+              kullanıcı aradığı şeyi görmeden öneri okumak zorunda kalmasın. Filtre uygulanmışsa
+              çekirdek olarak ilk sonuçları veriyoruz: "bu ilana bakanlar" zinciri böyle başlıyor. */}
+          <RecommendedListings seedIds={filteredListings.slice(0, 3).map((l) => l.id)} />
           <SearchGuidanceBar mode="cars" />
           <div className="md:flex md:gap-6">
             <div className="md:w-[58%]"><div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative">{filteredListings.map(l => (<ListingCard key={l.id} l={l} onHover={setHoveredPinId} />))}{filteredListings.length === 0 && (<SearchEmptyState mode="cars" emptyText={t("noListingsMatchFilters")} />)}</div></div>

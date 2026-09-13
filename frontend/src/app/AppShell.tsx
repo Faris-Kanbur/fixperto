@@ -1,11 +1,11 @@
 import { useApp } from "./state/AppLogicProvider";
 import { MONTH_ABBR_BY_LANG } from "../data/i18n";
-import { BookOpen, Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download, Scale, TrendingDown, Maximize2 } from "lucide-react";
+import { BookOpen, Sparkles, Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download, Scale, TrendingDown, Maximize2 } from "lucide-react";
 import { PriceLevelDots } from "../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../components/ui/MiniBarChart";
 import { generateAnalyticsPdf } from "../utils/analyticsReport";
 import { InfoTip } from "../components/features/InfoTip";
-import { VinLookupPanel, VerifiedHistoryList } from "../components/features/VehicleHistoryPanel";
+import { VinLookupPanel, VerifiedHistoryList, VehicleOwnHistory } from "../components/features/VehicleHistoryPanel";
 import { LangSwitch } from "../components/features/LangSwitch";
 import { NotifBell } from "../components/features/NotifBell";
 import { SiteFooter } from "../components/features/SiteFooter";
@@ -171,7 +171,8 @@ export function AppShell() {
     confirmBooking, goHome, chooseRole, completeVinInput, setCompleteVinInput, canReoffer, startReoffer, scrollToSection,
     listingReply, setListingReply, submitListingReply,
     deleteAccountPassword, setDeleteAccountPassword, deleteAccountLoading, openSessionCount, logoutEverywhere,
-    emailChangeForm, setEmailChangeForm, submitEmailChange, myHistoryRecords, setVehicleHistoryShared, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
+    emailChangeForm, setEmailChangeForm, submitEmailChange, myHistoryRecords, setVehicleHistoryShared, showForeignVinLookup, setShowForeignVinLookup,
+    recommendations, setRecsConsent, recsProfile, refreshRecsProfile, clearRecsProfile, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
     adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats, viewStats, myProfileViewStats, listingViewStats, listingFavoriteCount,
     toggleHistoryGroup, revertAdminChangeGroup, fieldEditSnapshotRef, trackFieldFocus, trackFieldBlurAndLog, trackInputProps, adminStats, adminAllUsers,
     adminFilteredUsers, openAdminUserEdit, saveAdminUserEdit, toggleAdminUserStatus, resetUserPassword, sendPasswordResetLink, openAdminProfileView, viewingUser,
@@ -1790,6 +1791,44 @@ export function AppShell() {
             <div className="max-w-3xl mx-auto px-5 md:px-8 py-6 md:py-8">
               {ownerSettingsTab === "settings" && (
                 <>
+                  {/* KİŞİSELLEŞTİRME RIZASI — varsayılan KAPALI.
+                      Davranıştan profil çıkarmak "profilleme"dir ve açık rıza ister; kapatınca
+                      yalnızca durmuyor, birikmiş profil de siliniyor (elde tutmak da işlemedir).
+                      Ne tuttuğumuz aşağıda tek tek gösteriliyor: anlaşılmayan bir rıza, rıza sayılmaz. */}
+                  <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="pr-2 min-w-0">
+                        <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Sparkles size={14} className="text-rose-500" /> {t("recConsentTitle")}</h4>
+                        <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t("recConsentDesc")}</p>
+                      </div>
+                      <button onClick={() => setRecsConsent(!recommendations.consent)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0">
+                        <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-rose-600" : "bg-gray-200"}`}>
+                          <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${recommendations.consent ? "left-6" : "left-1"}`} />
+                        </div>
+                      </button>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-gray-600 hover:text-rose-600 transition">{t("recProfileShowBtn")}</button>
+                      {recsProfile && (
+                        <div className="mt-2">
+                          {recsProfile.signals.length === 0 ? (
+                            <p className="text-[11px] text-gray-400">{t("recProfileEmpty")}</p>
+                          ) : (
+                            <>
+                              <div className="flex flex-wrap gap-1.5">
+                                {recsProfile.signals.slice(0, 24).map((sg) => (
+                                  <span key={`${sg.kind}:${sg.value}`} className="text-[10px] bg-gray-50 border border-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                                    {sg.value} <span className="text-gray-400">· {sg.weight}</span>
+                                  </span>
+                                ))}
+                              </div>
+                              <button onClick={clearRecsProfile} className="mt-2 text-[11px] font-medium text-red-500 hover:text-red-600">{t("recProfileClearBtn")}</button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
                   <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-500" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                   {(() => {
@@ -2064,9 +2103,21 @@ export function AppShell() {
                 <>
                   {/* GARAJIM — başlık + birincil eylem tek satırda; araç kartları ızgarada.
                       ÖNCE: tam genişlikte kesikli "araç ekle" kutusu ve alt alta tek sütun liste. */}
-                  {/* İKİNCİ EL ARAÇ ALDIYSA: şasi numarasıyla aracın geçmişini sorgulayabilir.
-                      Kayıtlar araca bağlı olduğu için önceki sahibin izin verdiği işler görünür. */}
-                  <div className="mb-5"><VinLookupPanel /></div>
+                  {/* GARAJDAKİ araçların geçmişi artık aracın KENDİ sayfasında otomatik geliyor;
+                      bu kutu yalnızca "garajımda olmayan bir aracı sorgulayayım" (satın almadan
+                      önce kontrol) senaryosu için kaldı — o yüzden ikincil ve katlanır. Önceden
+                      garajın en tepesinde duruyordu ve kullanıcı ne işe yaradığını anlamıyordu. */}
+                  {!showForeignVinLookup ? (
+                    <button onClick={() => setShowForeignVinLookup(true)}
+                      className="mb-5 inline-flex items-center gap-2 text-[12px] font-medium text-gray-500 hover:text-rose-600 transition">
+                      <Search size={13} /> {t("lookupForeignVinCta")}
+                    </button>
+                  ) : (
+                    <div className="mb-5">
+                      <VinLookupPanel />
+                      <button onClick={() => setShowForeignVinLookup(false)} className="mt-2 text-[11px] text-gray-400 hover:text-gray-600">{t("cancel")}</button>
+                    </div>
+                  )}
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                     <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Car size={17} className="text-rose-500" /> {t("myGarageTitle")} <span className="text-gray-300 font-normal text-sm">({vehicles.length})</span></h2>
                   </div>
@@ -2138,13 +2189,17 @@ export function AppShell() {
                       Kayıtlar şasi numarasına bağlı: araç satıldığında yeni sahip aynı numarayla
                       görebilir. Paylaşımı kapatmak yalnızca BU sahibin dönemindeki kayıtları
                       etkiler (bkz. backend/routes/vehicleHistory.js). */}
+                  {/* ARACIN GEÇMİŞİ ARTIK ARACIN İÇİNDE (kullanıcı isteği). Önceden burada yalnızca
+                      KULLANICININ KENDİ kayıtları listeleniyordu; aracın önceki sahiplerinin
+                      paylaştığı işleri görmek için garajın tepesindeki ayrı kutuya şasi numarasını
+                      elle yazmak gerekiyordu. Numara zaten burada yazılı — artık kendiliğinden
+                      sorgulanıyor ve tüm paylaşılan geçmiş görünüyor. */}
                   {String(selectedVehicle.vin || "").trim() && (() => {
-                    const vinRecords = myHistoryRecords.filter((r) => r.vin === selectedVehicle.vin);
                     return (
                       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
                         <h3 className="font-semibold text-gray-800 text-sm mb-1 flex items-center gap-2">{t("vehicleHistoryVerifiedTitle")}<InfoTip text={t("vinTip")} label={t("infoTipAria")} /></h3>
                         <p className="text-[11px] text-gray-400 mb-3 font-mono tracking-wide">{selectedVehicle.vin}</p>
-                        <VerifiedHistoryList records={vinRecords} emptyText={t("vinLookupEmpty")} />
+                        <VehicleOwnHistory vin={selectedVehicle.vin} />
                         <label className="flex items-start gap-2 mt-3 cursor-pointer">
                           <input type="checkbox" checked={selectedVehicle.vinShared !== false} onChange={(e) => setVehicleHistoryShared(selectedVehicle, e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600" />
                           <span className="text-[11px] text-gray-500 leading-relaxed">{t("vinShareLabel")}{selectedVehicle.vinShared === false && <span className="block text-gray-400 mt-0.5">{t("vinShareOffNote")}</span>}</span>
@@ -2152,6 +2207,15 @@ export function AppShell() {
                       </div>
                     );
                   })()}
+                  {/* Şasi numarası YOKSA bölüm eskiden hiç görünmüyordu; kullanıcı böyle bir
+                      özelliğin varlığından habersiz kalıyordu. Artık ne kaçırdığı söyleniyor. */}
+                  {!String(selectedVehicle.vin || "").trim() && (
+                    <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-4 mb-5">
+                      <h3 className="font-semibold text-gray-800 text-sm mb-1 flex items-center gap-2">{t("vehicleHistoryVerifiedTitle")}<InfoTip text={t("vinTip")} label={t("infoTipAria")} /></h3>
+                      <p className="text-[12px] text-gray-500 leading-relaxed">{t("vehicleNoVinHistoryHint")}</p>
+                      <button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} className="mt-3 text-[12px] font-semibold text-rose-600 hover:text-rose-700">{t("vehicleAddVinCta")}</button>
+                    </div>
+                  )}
                   {showEditVehicle && editVehicleForm && (
                     <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5 space-y-2">
                       <h3 className="font-semibold text-gray-800 text-sm mb-1">{t("editVehicleInfoTitle")}</h3>
@@ -3690,9 +3754,12 @@ export function AppShell() {
                     <div className="sm:col-span-2 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-gray-700">{t("startingPriceLabel")}</p>
-                        <p className="text-[11px] text-gray-400 mt-0.5">{t("startingPriceHint")}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{t("startingPriceHint")}</p>
+                        {mechanicStartingPrice(myProfile) <= 0 && (
+                          <p className="text-[11px] text-amber-600 mt-1.5 leading-relaxed">⚠️ {t("startingPriceEmptyWarn")}</p>
+                        )}
                       </div>
-                      <span className="text-lg font-bold text-rose-600 flex-shrink-0">{mechanicStartingPrice(myProfile) > 0 ? `${mechanicStartingPrice(myProfile).toLocaleString("tr-TR")}₺` : "—"}</span>
+                      <span className="text-lg font-bold text-rose-600 flex-shrink-0">{mechanicStartingPrice(myProfile) > 0 ? t("landingServiceFromPrice", { price: `${mechanicStartingPrice(myProfile).toLocaleString("tr-TR")}₺` }) : "—"}</span>
                     </div>
                   </div>
                 </div>
@@ -4051,6 +4118,35 @@ export function AppShell() {
                 basmıyordu. Artık "support" dışındaki her değer ayarları gösteriyor. */}
             {mechProfileTab !== "support" && (
               <div className="w-full max-w-3xl mx-auto px-5 md:px-8 py-6">
+                {/* Aynı kişiselleştirme rızası tamirci tarafında da var: tamirciler de araç
+                    ilanlarına bakıyor ve satıyor. Rıza rol bazlı tutuluyor (bkz. taste_signals),
+                    yani bir kişinin iki hesabı varsa ikisi ayrı ayrı karar veriyor. */}
+                <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="pr-2 min-w-0">
+                      <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Sparkles size={14} className="text-rose-500" /> {t("recConsentTitle")}</h3>
+                      <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t("recConsentDesc")}</p>
+                    </div>
+                    <button onClick={() => setRecsConsent(!recommendations.consent)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0">
+                      <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-rose-600" : "bg-gray-200"}`}>
+                        <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${recommendations.consent ? "left-6" : "left-1"}`} />
+                      </div>
+                    </button>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-gray-600 hover:text-rose-600 transition">{t("recProfileShowBtn")}</button>
+                    {recsProfile && (
+                      recsProfile.signals.length === 0
+                        ? <p className="text-[11px] text-gray-400 mt-2">{t("recProfileEmpty")}</p>
+                        : (<div className="mt-2">
+                            <div className="flex flex-wrap gap-1.5">{recsProfile.signals.slice(0, 24).map((sg) => (
+                              <span key={`${sg.kind}:${sg.value}`} className="text-[10px] bg-gray-50 border border-gray-200 text-gray-600 px-2 py-1 rounded-full">{sg.value} <span className="text-gray-400">· {sg.weight}</span></span>
+                            ))}</div>
+                            <button onClick={clearRecsProfile} className="mt-2 text-[11px] font-medium text-red-500 hover:text-red-600">{t("recProfileClearBtn")}</button>
+                          </div>)
+                    )}
+                  </div>
+                </div>
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={() => setAutoAccept(!autoAccept)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
                 <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-600" /> {t("useMyLocationTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                 {(() => {

@@ -52,6 +52,7 @@ const COVERAGE = {
   AdminCareersPanel: "kariyer ilanları",
   InfoTip: "bilgi baloncuğu",
   VehicleHistoryPanel: "şasi",
+  RecommendedListings: "öneri",
 };
 const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
 const bookLower = lc(handbookSrc);

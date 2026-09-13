@@ -425,6 +425,13 @@ function ensureColumn(table, columnDef) {
   }
 }
 [
+  // ÖNERİ RIZASI: varsayılan 0 (KAPALI). Kişiselleştirme için davranış saklamak profillemedir ve
+  // GDPR'de açık rıza ister; "zaten kabul etmiş sayılır" diye varsaymak hukuken de ahlaken de
+  // yanlış olurdu. recsConsentAt, rızanın NE ZAMAN verildiğini kanıtlar (ispat yükümlülüğü bizde).
+  ["owners", "recsConsent INTEGER DEFAULT 0"],
+  ["owners", "recsConsentAt TEXT"],
+  ["mechanics", "recsConsent INTEGER DEFAULT 0"],
+  ["mechanics", "recsConsentAt TEXT"],
   ["appointments", "dateISO TEXT"],
   ["appointments", "issuePhotos TEXT DEFAULT '[]'"],
   ["appointments", "paymentMethod TEXT"],
@@ -859,6 +866,34 @@ CREATE TABLE IF NOT EXISTS review_helpful (
   createdAt TEXT DEFAULT (datetime('now')),
   PRIMARY KEY (reviewId, voterKey)
 );
+`);
+
+/**
+ * KİŞİSEL ÖNERİ PROFİLİ — yalnızca AÇIK İZİN varsa dolar.
+ * ------------------------------------------------------------------------------------------------
+ * Netflix/Amazon mantığının bu ölçekteki dürüst karşılığı: kullanıcının HAM gezinme geçmişini
+ * saklamıyoruz. Onun yerine baktığı şeylerden çıkarılmış küçük bir ZEVK PROFİLİ tutuyoruz —
+ * "Volkswagen: 3.0", "Dizel: 1.5", "fiyat aralığı 300-500 bin: 2.0" gibi. Bunun üç faydası var:
+ *   1) Çok daha az veri: hangi ilana ne zaman baktığın değil, neyi sevdiğin.
+ *   2) Amaca bağlı: bu veriden geçmişini geri kuramayız, yalnızca öneri üretiriz.
+ *   3) GÖSTERİLEBİLİR: kullanıcı "hakkımda ne tutuyorsunuz" diye sorduğunda ekrana basılabilir
+ *      ve tek tuşla silinebilir. Anlaşılmayan bir profil, rıza alınmış sayılmaz.
+ *
+ * Ağırlık ARTIRIMLI güncelleniyor (UPSERT + toplama): iki sekmede aynı anda gezinmek satırları
+ * birbirine ezdirmiyor — ilanlardaki teklif ve yorumlardaki JSON hatasının aynısını burada
+ * baştan yapmamak için.
+ */
+db.exec(`
+CREATE TABLE IF NOT EXISTS taste_signals (
+  userId INTEGER NOT NULL,
+  role TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  value TEXT NOT NULL,
+  weight REAL NOT NULL DEFAULT 0,
+  updatedAt TEXT DEFAULT (datetime('now')),
+  PRIMARY KEY (userId, role, kind, value)
+);
+CREATE INDEX IF NOT EXISTS idx_taste_user ON taste_signals (userId, role);
 `);
 
 /** Önbellek sütunlarını (reviewList/reviews/rating) tablodan yeniden üretir. Tek doğruluk kaynağı tablo. */

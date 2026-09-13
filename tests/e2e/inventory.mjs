@@ -37,6 +37,7 @@ const fileToBase = {
   "careers.js": "/api/careers", "conversations.js": "/api/conversations", "profileViews.js": "/api/profile-views",
   "shareEvents.js": "/api/share-events", "translate.js": "/api/translate", "vehicleHistory.js": "/api/vehicle-history",
   "listingInteractions.js": "/api/listings", "jobApplications.js": "/api/jobs", "reviews.js": "/api/mechanics",
+  "recommendations.js": "/api/recommendations",
 };
 for (const file of readdirSync(join(ROOT, "backend", "routes")).filter((f) => f.endsWith(".js") && f !== "makeCrudRouter.js")) {
   const base = fileToBase[file];

@@ -55,7 +55,43 @@ export function VerifiedHistoryList({ records, emptyText = null }: { records: an
   );
 }
 
-/** Şasi numarasıyla sorgulama — araç sahibi ve tamirci için aynı panel. */
+/**
+ * ARACIN KENDİ GEÇMİŞİ — garajdaki bir araç açıldığında, ONUN şasi numarasıyla otomatik gelir.
+ * ---------------------------------------------------------------------------------------------
+ * ÖNCE: araç detayında yalnızca KULLANICININ KENDİ kayıtları vardı; aracın önceki sahibinin
+ * paylaşıma açtığı işleri görmek için garajın tepesindeki ayrı bir kutuya şasi numarasını ELLE
+ * yazmak gerekiyordu. İkinci el araç alan biri için bu saçma: numara zaten araç kaydında yazılı,
+ * kullanıcıdan onu kopyalayıp bir arama kutusuna yapıştırmasını istemek, bildiğimiz bir şeyi
+ * sormaktır. Artık araç açılınca o aracın TÜM paylaşılan geçmişi (önceki dönemler dâhil)
+ * kendiliğinden yükleniyor.
+ */
+export function VehicleOwnHistory({ vin }: { vin: string }) {
+  const { t, vehicleHistoryFor, loadVehicleHistory } = useApp();
+  const entry = vehicleHistoryFor?.[vin];
+  useEffect(() => { if (vin) loadVehicleHistory?.(vin); }, [vin]);
+
+  if (!vin) return null;
+  if (!entry || entry.loading) {
+    return <p className="flex items-center gap-2 text-[12px] text-gray-400 py-3"><Loader2 size={13} className="animate-spin" /> {t("vinLookupLoading")}</p>;
+  }
+  if (entry.error) return <p className="text-[12px] text-red-500 py-2">{entry.error}</p>;
+  return (
+    <>
+      <VerifiedHistoryList records={entry.records} emptyText={t("vinLookupEmpty")} />
+      {entry.hiddenCount > 0 && (
+        <p className="flex items-center gap-1.5 text-[11px] text-gray-400 mt-2">
+          <Lock size={11} /> {t("vinLookupHidden", { n: String(entry.hiddenCount) })}
+        </p>
+      )}
+    </>
+  );
+}
+
+/**
+ * Şasi numarasıyla ELLE sorgulama. Artık yalnızca "garajımda olmayan bir araç" senaryosu için:
+ * satın almadan önce bir aracı kontrol etmek, ya da tamircinin dükkânına gelen aracı sorgulaması.
+ * Kendi araçların için buna gerek yok (bkz. VehicleOwnHistory).
+ */
 export function VinLookupPanel() {
   const { t, vinLookup, lookupVin, clearVinLookup } = useApp();
   const [input, setInput] = useState("");

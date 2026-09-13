@@ -268,6 +268,84 @@ try {
   eq((await api("POST", `/api/owners/${victim.id}/set-password`, { token: admin, body: { password: "kisa" } })).status, 400,
     "kısa şifre reddediliyor");
 
+  // ============================================================ ÖNERİLER ve RIZA
+  /**
+   * Buradaki asıl soru "öneri iyi mi" değil — o zevk meselesi. Sorulan şu: RIZA GERÇEKTEN
+   * çalışıyor mu? Yani izin yokken hiçbir şey saklanıyor mu, izin kapatılınca birikmiş veri
+   * gerçekten siliniyor mu, istemci sunucuyu kandırabiliyor mu. Bunlar veritabanından doğrulanıyor.
+   */
+  const recUser = await createUser("owner", { name: "Öneri Test", email: "oneri@example.com", phone: "+905321230031" });
+  const seller = await createUser("owner", { name: "Satıcı", email: "satici2@example.com", phone: "+905321230032" });
+  const mkListing = async (body) => (await api("POST", "/api/listings", { token: seller.token, body: { status: "active", ...body } })).body;
+  const vw1 = await mkListing({ title: "VW Golf", brand: "Volkswagen", model: "Golf", price: "400000", fuelType: "Dizel", city: "İzmir" });
+  const vw2 = await mkListing({ title: "VW Passat", brand: "Volkswagen", model: "Passat", price: "450000", fuelType: "Dizel", city: "İzmir" });
+  await mkListing({ title: "Fiat Egea", brand: "Fiat", model: "Egea", price: "900000", fuelType: "Benzin", city: "Bursa" });
+
+  // 1) İZİN YOKKEN: sinyal gönderilse bile HİÇBİR ŞEY yazılmamalı.
+  const noConsent = await api("POST", "/api/recommendations/signal", { token: recUser.token, body: { action: "favorite", listingId: vw1.id } });
+  eq(noConsent.body.stored, false, "izin yokken sinyal saklanmıyor");
+  eq(noConsent.body.reason, "noConsent", "reddin nedeni makine-okunur");
+  eq(rows("SELECT value FROM taste_signals WHERE userId = ?", recUser.id).length, 0,
+    "veritabanında da hiçbir kayıt yok (istemci 'sakla' dese bile)");
+  eq((await api("GET", "/api/recommendations", { token: recUser.token })).body.consent, false, "izin durumu doğru bildiriliyor");
+  // İzin yokken de öneri GELİYOR — reddedeni boş ekranla cezalandırmıyoruz.
+  ok((await api("GET", "/api/recommendations", { token: recUser.token })).body.listings.length > 0,
+    "izin yokken de öneri geliyor (kişisel değil)");
+  eq((await api("GET", "/api/recommendations", { token: recUser.token })).body.personalized, false, "ama 'kişiselleştirildi' demiyor");
+
+  // 2) İZİN AÇILINCA: sinyal saklanıyor ve profil oluşuyor.
+  eq((await api("POST", "/api/recommendations/consent", { token: recUser.token, body: { enabled: true } })).status, 200, "izin açılabiliyor");
+  ok(row("SELECT recsConsentAt FROM owners WHERE id = ?", recUser.id).recsConsentAt, "rızanın zamanı kaydedildi (ispat bizde)");
+  eq((await api("POST", "/api/recommendations/signal", { token: recUser.token, body: { action: "favorite", listingId: vw1.id } })).body.stored, true,
+    "izin varken sinyal saklanıyor");
+  const brandSignal = row("SELECT weight FROM taste_signals WHERE userId = ? AND kind = 'brand' AND value = 'Volkswagen'", recUser.id);
+  ok(brandSignal, "markadan zevk sinyali çıkarıldı");
+  // 3) İstemci ÖZELLİK UYDURAMAZ: gönderdiği alanlar değil, ilanın gerçek alanları saklanıyor.
+  await api("POST", "/api/recommendations/signal", { token: recUser.token, body: { action: "view", listingId: vw1.id, brand: "Ferrari", search: { brand: "Ferrari" } } });
+  eq(rows("SELECT value FROM taste_signals WHERE userId = ? AND value = 'Ferrari'", recUser.id).length, 1,
+    "yalnızca ARAMA alanından gelen değer saklandı — ilan özellikleri istemciden değil veritabanından okunuyor");
+  eq(row("SELECT value FROM taste_signals WHERE userId = ? AND kind = 'brand' AND value = 'Volkswagen'", recUser.id).value, "Volkswagen",
+    "ilanın gerçek markası korundu");
+  // 4) Ağırlık ARTIYOR ama tavanı var (tek değer profili ele geçirmesin).
+  const before = row("SELECT weight FROM taste_signals WHERE userId = ? AND kind='brand' AND value='Volkswagen'", recUser.id).weight;
+  await api("POST", "/api/recommendations/signal", { token: recUser.token, body: { action: "favorite", listingId: vw2.id } });
+  ok(row("SELECT weight FROM taste_signals WHERE userId = ? AND kind='brand' AND value='Volkswagen'", recUser.id).weight > before,
+    "tekrar eden ilgi ağırlığı artırıyor");
+  for (let i = 0; i < 30; i++) await api("POST", "/api/recommendations/signal", { token: recUser.token, body: { action: "offer", listingId: vw1.id } });
+  ok(row("SELECT weight FROM taste_signals WHERE userId = ? AND kind='brand' AND value='Volkswagen'", recUser.id).weight <= 50,
+    "ağırlık tavanı aşılmıyor");
+
+  // 5) Öneri artık KİŞİSEL ve gerekçeli.
+  const recs = await api("GET", "/api/recommendations", { token: recUser.token, body: undefined });
+  eq(recs.body.personalized, true, "profil oluşunca öneriler kişiselleşiyor");
+  eq(recs.body.listings[0].recommendReason.type, "taste", "ilk öneri zevk profilinden geliyor");
+  ok(recs.body.listings.every((l) => l.recommendReason), "her önerinin GEREKÇESİ var");
+  eq(recs.body.listings.some((l) => l.sellerId === recUser.id), false, "kendi ilanı önerilmiyor");
+
+  // 6) "Hakkımda ne tutuyorsunuz" gerçekten cevaplanıyor.
+  const profile = await api("GET", "/api/recommendations/profile", { token: recUser.token });
+  eq(profile.body.consent, true, "profil ekranı izni doğru gösteriyor");
+  ok(profile.body.signals.length > 0, "tutulan veri kullanıcıya gösterilebiliyor");
+  ok(profile.body.signals.every((sg) => sg.kind && sg.value), "her kayıt okunabilir (kind + value)");
+
+  // 7) İZİN KAPATILINCA VERİ SİLİNİYOR — durdurmak yetmez.
+  const off = await api("POST", "/api/recommendations/consent", { token: recUser.token, body: { enabled: false } });
+  ok(off.body.deletedSignals > 0, "kapatma birikmiş kayıtları sildi");
+  eq(rows("SELECT value FROM taste_signals WHERE userId = ?", recUser.id).length, 0, "veritabanında hiçbir şey kalmadı");
+  eq(row("SELECT recsConsentAt FROM owners WHERE id = ?", recUser.id).recsConsentAt, null, "rıza zaman damgası da temizlendi");
+  eq((await api("GET", "/api/recommendations", { token: recUser.token })).body.personalized, false, "öneriler tekrar kişisel değil");
+
+  // 8) BAŞKASININ profiline dokunulamıyor (IDOR).
+  await api("POST", "/api/recommendations/consent", { token: seller.token, body: { enabled: true } });
+  await api("POST", "/api/recommendations/signal", { token: seller.token, body: { action: "view", listingId: vw1.id } });
+  const sellerCount = rows("SELECT value FROM taste_signals WHERE userId = ? AND role = 'owner'", seller.id).length;
+  ok(sellerCount > 0, "satıcının kendi profili oluştu");
+  await api("DELETE", "/api/recommendations/profile", { token: recUser.token });
+  eq(rows("SELECT value FROM taste_signals WHERE userId = ? AND role = 'owner'", seller.id).length, sellerCount,
+    "bir kullanıcının silme isteği BAŞKASININ profilini etkilemiyor");
+  eq((await api("POST", "/api/recommendations/signal", { body: { action: "view", listingId: vw1.id } })).status, 401,
+    "girişsiz sinyal gönderilemiyor");
+
   // ============================================================ HIZ SINIRI GERÇEKTEN ÇALIŞIYOR MU
   let blocked = false;
   for (let i = 0; i < 45; i++) {
