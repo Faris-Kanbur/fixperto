@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { History, Search, ShieldCheck, Wrench, Calendar, Loader2, Lock } from "lucide-react";
+import { History, Search, SearchX, ShieldCheck, Wrench, Calendar, Loader2, Lock } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
 import { InfoTip } from "./InfoTip";
 import { api } from "../../services/api/client";
@@ -30,7 +30,28 @@ const fmtDate = (value, lang) => {
 export function VerifiedHistoryList({ records, emptyText = null }: { records: any[]; emptyText?: string | null }) {
   const { t, lang } = useApp();
   if (!records || records.length === 0) {
-    return emptyText ? <p className="text-sm text-gray-400 py-4 text-center">{emptyText}</p> : null;
+    /**
+     * BOŞ DURUM AÇIKLAMASI (kullanıcı isteği).
+     * -------------------------------------------------------------------------------------------
+     * Tek satır "kayıt bulunamadı" yazmak burada YANILTICI. Bu ekranda "kayıt yok" üç ayrı şey
+     * demek olabilir ve ikisi araçla ilgili DEĞİL:
+     *   1. Araca bu işler Fixperto DIŞINDA yaptırılmış (mahalle ustası, yetkili servis...).
+     *   2. Yaptıran kişi kaydı paylaşıma kapatmış — kaydı görme hakkı onda.
+     *   3. Gerçekten hiç iş yapılmamış.
+     * Alıcı bunu bilmezse "geçmişi temiz" ya da tersine "bakımsız araç" diye okur; ikisi de
+     * bizim veremeyeceğimiz bir yargı. Bu yüzden ne bildiğimizi ve ne BİLMEDİĞİMİZİ yazıyoruz.
+     */
+    if (!emptyText) return null;
+    return (
+      <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-4 py-4 text-center">
+        <div className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center mx-auto mb-2">
+          <SearchX size={16} className="text-gray-400" />
+        </div>
+        <p className="text-sm font-semibold text-gray-700">{emptyText}</p>
+        <p className="text-[11px] text-gray-500 leading-relaxed mt-1.5 max-w-sm mx-auto">{t("vinLookupEmptyWhy")}</p>
+        <p className="text-[11px] text-gray-400 leading-relaxed mt-1.5 max-w-sm mx-auto">{t("vinLookupEmptyNotJudgment")}</p>
+      </div>
+    );
   }
   return (
     <div className="space-y-2">

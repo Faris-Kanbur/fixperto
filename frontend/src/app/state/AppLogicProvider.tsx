@@ -4405,6 +4405,49 @@ function useAppLogic() {
     setToast({ type: "info", text: t("savedSearchCriteriaUpdatedToast") });
   };
 
+  /**
+   * KAYITLI ARAMA DÜZENLEME (kullanıcı isteği: "kalem sadece ismi değiştiriyor").
+   * ---------------------------------------------------------------------------------------------
+   * Kritik ayrıntı: kriterler değiştiğinde `seenListingIds` YENİDEN HESAPLANIYOR. Aksi halde
+   * genişletilmiş bir aramada eskiden beri duran onlarca ilan bir anda "yeni eşleşme" sayılıp
+   * kullanıcıyı bildirime boğardı — kullanıcının aramayı silip yeniden kurmasının da sebebi
+   * tam olarak buydu. Ad değişirse liste yeniden hesaplanmıyor (kriter değişmemiştir).
+   */
+  const [editingSavedSearchId, setEditingSavedSearchId] = useState(null);
+  const editingSavedSearch = savedSearches.find((x) => x.id === editingSavedSearchId) || null;
+  const openSavedSearchEditor = (id) => setEditingSavedSearchId(id);
+  const closeSavedSearchEditor = () => setEditingSavedSearchId(null);
+  const savedSearchFilterLabel = (key) => filterLabel(key);
+
+  const saveSavedSearchEdits = (draft) => {
+    if (!draft?.id) return;
+    const name = String(draft.name || "").trim();
+    if (!name) { setToast({ type: "info", text: t("savedSearchNameRequiredToast") }); return; }
+    const type = draft.type || "cars";
+    setSavedSearches((list) => {
+      const current = list.find((x) => x.id === draft.id);
+      if (!current) return list;
+      const updated = {
+        ...current,
+        name,
+        query: String(draft.query || "").trim(),
+        locationQuery: String(draft.locationQuery || "").trim(),
+        serviceQuery: type === "mechanics" ? String(draft.serviceQuery || "").trim() : "",
+        filters: { ...(draft.filters || {}) },
+      };
+      const criteriaChanged = JSON.stringify([current.query, current.locationQuery, current.serviceQuery, current.filters])
+        !== JSON.stringify([updated.query, updated.locationQuery, updated.serviceQuery, updated.filters]);
+      if (criteriaChanged) {
+        updated.seenListingIds = savedSearchSource(type).filter((x) => matchesSavedSearchCriteria(x, updated)).map((x) => x.id);
+      }
+      const next = list.map((x) => (x.id === draft.id ? updated : x));
+      persistMyPrefs({ savedSearches: next }, "Arama güncellenemedi");
+      return next;
+    });
+    setEditingSavedSearchId(null);
+    setToast({ type: "info", text: t("savedSearchUpdatedToast") });
+  };
+
   const removeSavedSearch = (id) => {
     setSavedSearches(s => {
       const next = s.filter(x => x.id !== id);
@@ -5605,7 +5648,8 @@ function useAppLogic() {
     listingReply, setListingReply, submitListingReply,
     vinLookup, lookupVin, clearVinLookup, myHistoryRecords, refreshMyHistory, setVehicleHistoryShared,
     vehicleHistoryFor, loadVehicleHistory, showForeignVinLookup, setShowForeignVinLookup,
-    nearMisses,
+    nearMisses, editingSavedSearch, openSavedSearchEditor, closeSavedSearchEditor,
+    saveSavedSearchEdits, savedSearchFilterLabel, countSearchMatches, EMPTY_MECH_FILTERS,
     recommendations, loadRecommendations, sendRecSignal, recsProfile, refreshRecsProfile,
     setRecsConsent, clearRecsProfile, openOwnerSettingsForRecs,
     completeVinInput, setCompleteVinInput, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,

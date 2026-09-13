@@ -16,6 +16,8 @@ import { WelcomeTour } from "../components/features/WelcomeTour";
 import { OwnerChatsPanel } from "../components/features/OwnerChatsPanel";
 import { HandbookPanel } from "../components/features/HandbookPanel";
 import { SavedSearchList } from "../components/features/SavedSearchList";
+import { SavedSearchEditModal } from "../components/features/SavedSearchEditModal";
+import { EmojiPicker } from "../components/features/EmojiPicker";
 import { CareersPage } from "../components/features/CareersPage";
 import { AdminCareersPanel } from "../components/features/AdminCareersPanel";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
@@ -602,6 +604,9 @@ export function AppShell() {
       )}
       {/* Karşılama turu — bkz. WelcomeTour.tsx (iki panelli, markalı, geniş düzen). */}
       {onboardingVisible && <WelcomeTour />}
+      {/* Kayıtlı arama düzenleme penceresi: liste hem profilde hem arama ekranında görünüyor,
+          bu yüzden pencere en dışta duruyor — iki kopya olsaydı biri güncellenip diğeri unutulurdu. */}
+      <SavedSearchEditModal />
       <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" || screen === "blog" || screen === "blogPost" || screen === "about" || screen === "careers" || screen === "booking" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
@@ -3282,6 +3287,7 @@ export function AppShell() {
                           {mechConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={myProfile.lang || "tr"} mine={m.sender === "mechanic"} />))}
                         </div>
                         <div className="px-5 py-4 border-t border-gray-100 flex items-center gap-2">
+                          <EmojiPicker onPick={(em) => setMechChatInput((v) => `${v || ""}${em}`)} />
                           <input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder={t("replyInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
                           <button onClick={() => sendMechMessage(mechChatInput)} aria-label={t("sendBtn")} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button>
                         </div>

@@ -53,6 +53,8 @@ const COVERAGE = {
   InfoTip: "bilgi baloncuğu",
   VehicleHistoryPanel: "şasi",
   RecommendedListings: "öneri",
+  SavedSearchEditModal: "kayıtlı arama",
+  EmojiPicker: "emoji",
 };
 const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
 const bookLower = lc(handbookSrc);

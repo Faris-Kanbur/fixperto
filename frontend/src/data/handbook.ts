@@ -226,7 +226,12 @@ Kabul edilen teklif randevu ekranını hazır verilerle açar.`,
 Mesajlar karşı tarafın diline otomatik çevrilebilir. Çeviri sonucu veritabanında önbelleğe alınır; aynı metin bir daha dış servise gitmez. Arayüzde çeviri gösterimi tek bir bileşen üzerinden yapılır (TranslatedText): orijinal/çeviri geçişi ve yükleniyor durumu her yerde aynı davranır.
 
 ## Sohbetten randevuya
-Sohbet başlığındaki düğme o tamirciyle randevu ekranını açar. Sohbetin tamirci bağlamı ile randevu ekranının seçili tamircisi burada eşitlenir; eşitlenmezse YANLIŞ tamirciyle randevu açılırdı.`,
+Sohbet başlığındaki düğme o tamirciyle randevu ekranını açar. Sohbetin tamirci bağlamı ile randevu ekranının seçili tamircisi burada eşitlenir; eşitlenmezse YANLIŞ tamirciyle randevu açılırdı.
+
+## Emoji
+Yazma alanının yanında gülen yüz düğmesi var (her iki tarafta da). Panel hazır bir kütüphane DEĞİL: emoji seçici paketleri birkaç yüz kilobayt ve binlerce emoji taşıyor, oysa burada gerçek ihtiyaç "tamam", "eyvallah", "araba hazır mı" yazışmasıdır. Küçük ve konuya uygun bir set hem daha hızlı yüklenir hem de aranacak bir şey kalmadığı için daha hızlı kullanılır; içinde bu işe özgü olanlar da var (araba, anahtar, tamir, yakıt) — genel bir kütüphanede bunları bulmak için arama yapmak gerekirdi.
+
+Panel PORTAL ile document.body'ye basılıyor. Sohbet kutusu taşma (overflow) olan bir kabın içinde; normal akışta açılan panel o kabın kenarında kesiliyor ya da altında kalıyordu — bilgi baloncuğunda (InfoTip) yaşanan hatanın aynısı. Panel düğmenin ÜSTÜNDE açılıyor, çünkü yazma alanı ekranın altında; aşağı açılsa ekran dışına taşardı. Escape ile ve dışarı tıklayınca kapanıyor.`,
       },
       {
         id: "teklifakisi",
@@ -1480,6 +1485,13 @@ Netflix'in "X izlediğin için" satırının karşılığı. İki sebeple zorunl
 
 ## Her kartta "neye uymuyor" yazılı — bu bilerek böyle
 Pek çok site gevşetilmiş sonucu sessizce listeye karıştırıyor ve kullanıcı neden o kartın orada olduğunu anlamıyor ("ben dizel aramıştım, bu neden burada?"). Burada her kartın altında kaç kriterden kaçını tuttuğu ve hangi kritere uymadığı yazıyor. Böylece liste bir "belki" listesi olarak kalıyor, aramanın yerini almıyor.
+
+## Kayıtlı aramayı düzenleme
+Kayıtlı aramanın kalem simgesi bir DÜZENLEME PENCERESİ açıyor: ad, arama metni, konum ve filtreler aynı yerden değişiyor. Önceden yalnızca adı değiştiriyordu; kriterlerini değiştirmek isteyen aramayı silip baştan kurmak zorundaydı — ve sildiği anda "hangi ilanları zaten gördü" takibi sıfırlandığı için bir sonraki açılışta eski ilanların hepsi "yeni eşleşme" diye bildiriliyordu. Yani en masum düzenleme, bildirimleri çöpe çeviriyordu.
+
+Kriter değişirse "görülenler" listesi YENİDEN hesaplanıyor; yalnızca ad değişirse dokunulmuyor (kriter değişmemiştir). Pencere, kaydetmeden önce "bu kriterlere şu an kaç kayıt uyuyor" bilgisini canlı gösteriyor — kullanıcı boş bir arama kaydedip sonra "hiç bildirim gelmiyor" diye şaşırmasın.
+
+BİLİNÇLİ SINIR: araç aramasının 35'in üzerinde filtresi var; hepsini bu pencereye kopyalamak aynı arayüzün ikinci bir kopyasını yaratırdı ve biri düzeltilip diğeri unutulduğunda ikisi ayrışırdı. Bu yüzden pencerede karar veren alanlar doğrudan düzenleniyor (fiyat, yıl, km, yakıt, vites, kasa; tamircide puan/doğrulanmış; iş ilanında çalışma türü/deneyim), kalan aktif filtreler rozet olarak listelenip tek tıkla kaldırılabiliyor. Sıfırdan karmaşık bir filtre kurmanın yolu zaten arama ekranı: oradaki filtre panelini kullanıp "kriterleri şu ankiyle değiştir" demek.
 
 ## Neyin gösterilmeyeceği de bir karar
 - Hiçbir kriteri tutmayan gösterilmez: o bir "belki" değil, rastgele bir kayıttır.

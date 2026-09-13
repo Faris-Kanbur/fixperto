@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { MessageCircle, ChevronRight, ChevronLeft, Send, Image as ImageIcon, Calendar } from "lucide-react";
 import { useApp } from "../../app/state/AppLogicProvider";
+import { EmojiPicker } from "./EmojiPicker";
 import { ChatBubble } from "./ChatBubble";
 
 /**
@@ -101,6 +102,10 @@ export function OwnerChatsPanel() {
               <div className="px-5 py-4 border-t border-gray-100 flex items-center gap-2">
                 <input ref={fileRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
                 <button onClick={() => fileRef.current?.click()} aria-label={t("addPhotoAria")} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition flex-shrink-0"><ImageIcon size={18} /></button>
+                {/* Emoji, yazılan metnin SONUNA ekleniyor ve kutu boş bile olsa çalışıyor.
+                    İmleç konumuna eklemek daha "doğru" görünürdü ama ekranda klavyeyle emoji
+                    seçen kişi zaten yazının sonundadır; karmaşıklığın karşılığı yok. */}
+                <EmojiPicker onPick={(e) => setChatInput((v) => `${v || ""}${e}`)} />
                 <input value={chatInput} onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") sendOwnerMessageWithReply(chatInput); }}
                   placeholder={t("chatInputPlaceholder")}

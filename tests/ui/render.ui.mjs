@@ -85,6 +85,35 @@ ok(trJob !== deJob, "dil değişince çıktı GERÇEKTEN değişiyor (çeviri ba
 has(deJob, "Vollzeit", "Almanca'da çalışma türü Almanca etiketle çiziliyor");
 hasNot(deJob, "Tam Zamanlı", "Almanca çıktıda Türkçe etiket kalmıyor");
 
+// ---------------------------------------------------------------- 5b) BOŞ SERVİS GEÇMİŞİ AÇIKLAMASI
+/**
+ * "Kayıt bulunamadı" tek başına yanıltıcıydı: alıcı bunu "geçmişi temiz" ya da tersine
+ * "bakımsız araç" diye okuyabilir. İkisi de bizim veremeyeceğimiz bir yargı. Test, boş durumda
+ * SEBEBİN ve "bu bir yargı değildir" uyarısının gerçekten basıldığını doğruluyor.
+ */
+const { VerifiedHistoryList } = await import("../../frontend/src/components/features/VehicleHistoryPanel.tsx");
+const emptyHist = render(VerifiedHistoryList, { records: [], emptyText: "Kayıt yok" }, BASE);
+has(emptyHist, "Kayıt yok", "boş geçmişte başlık basılıyor");
+has(emptyHist, "Fixperto dışında", "boş geçmişin SEBEBİ açıklanıyor");
+has(emptyHist, "bakımsız", "boş geçmiş bir yargı DEĞİL diye uyarılıyor");
+// emptyText verilmediyse (bileşen bir liste içinde kullanılıyorsa) hiçbir şey basmamalı.
+eqJson(render(VerifiedHistoryList, { records: [], emptyText: null }, BASE), "", "emptyText yoksa sessiz");
+const fullHist = render(VerifiedHistoryList, { records: [{ id: 1, serviceText: "Yağ değişimi", serviceDate: "2026-01-02", mechanicName: "Test Oto" }] }, BASE);
+has(fullHist, "Yağ değişimi", "kayıt varsa liste basılıyor");
+hasNot(fullHist, "bakımsız", "kayıt varken boş durum açıklaması çıkmıyor");
+
+// ---------------------------------------------------------------- 5c) EMOJİ SEÇİCİ
+const { EmojiPicker } = await import("../../frontend/src/components/features/EmojiPicker.tsx");
+const picker = render(EmojiPicker, { onPick: () => {} }, BASE);
+has(picker, "<button", "emoji düğmesi gerçek bir düğme (klavyeyle erişilebilir)");
+has(picker, "aria-expanded=\"false\"", "kapalı durumu ekran okuyucuya bildiriliyor");
+hasNot(picker, "🚗", "panel kapalıyken emojiler DOM'a basılmıyor");
+
+// ---------------------------------------------------------------- 5d) KAYITLI ARAMA DÜZENLEME
+const { SavedSearchEditModal } = await import("../../frontend/src/components/features/SavedSearchEditModal.tsx");
+eqJson(render(SavedSearchEditModal, {}, { ...BASE, editingSavedSearch: null }), "",
+  "düzenlenen arama yokken pencere hiç çizilmiyor");
+
 // ---------------------------------------------------------------- 6b) KISMİ EŞLEŞME PUANLAYICISI
 /**
  * "Kriterlere uyan yok" ekranında gösterilen "bunlar ilgini çekebilir" listesinin kuralları.

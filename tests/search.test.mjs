@@ -1,6 +1,7 @@
 // ARAMA — regresyon: "Cannot read properties of null (reading 'toLowerCase')".
 // Tamirci/araç/iş ilanı filtrelerinin üretimdeki mantığı, EKSİK ALANLI kayıtlarla.
 // Üçü aynı `query` state'ini paylaşan ayrı useMemo'lar olduğu için tek bozuk kayıt üçünü de düşürür.
+import { readFileSync } from "node:fs";
 import { eq, noThrow, throws, report } from "./_harness.mjs";
 
 const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
@@ -61,5 +62,32 @@ noThrow(() => filterJobs(JOBS, "", "istanbul").map(j => j.id), "ilan: konum", [1
 // Testin hatayı gerçekten temsil ettiğinin kanıtı: eski (korumasız) kod bu veriyle çöküyor.
 throws(() => MECHS.filter(m => m.name.toLowerCase().includes("x") || m.specialty.toLowerCase().includes("x")),
        "eski korumasız kod bu veriyle çökmeli");
+
+/**
+ * KAYITLI ARAMA DÜZENLEME — "görülenler" listesi ne zaman yeniden hesaplanmalı?
+ * ------------------------------------------------------------------------------------------------
+ * Bu kural, kullanıcının aramayı silip baştan kurma alışkanlığının GERÇEK sebebiydi: kriterleri
+ * değiştirmenin bir yolu yoktu, silip yeniden kurunca da "hangi ilanları zaten gördü" bilgisi
+ * sıfırlanıyor ve bir sonraki açılışta eski ilanların hepsi "yeni eşleşme" diye bildiriliyordu.
+ * Şimdi düzenleme var; ama yeniden hesaplama SADECE kriter değiştiğinde yapılmalı — sırf adı
+ * düzelten kişi de aynı bildirim seline maruz kalmamalı.
+ */
+const criteriaOf = (x) => JSON.stringify([x.query, x.locationQuery, x.serviceQuery, x.filters]);
+const shouldRecompute = (before, after) => criteriaOf(before) !== criteriaOf(after);
+const BASE_SEARCH = { name: "Ucuz BMW", query: "BMW", locationQuery: "", serviceQuery: "", filters: { maxPrice: "500000" } };
+eq(shouldRecompute(BASE_SEARCH, { ...BASE_SEARCH, name: "Uygun BMW" }), false,
+   "yalnızca ad değişince 'görülenler' yeniden hesaplanmıyor (bildirim seli olmasın)");
+eq(shouldRecompute(BASE_SEARCH, { ...BASE_SEARCH, filters: { maxPrice: "700000" } }), true,
+   "filtre değişince yeniden hesaplanıyor");
+eq(shouldRecompute(BASE_SEARCH, { ...BASE_SEARCH, query: "Audi" }), true, "arama metni değişince yeniden hesaplanıyor");
+eq(shouldRecompute(BASE_SEARCH, { ...BASE_SEARCH, locationQuery: "İzmir" }), true, "konum değişince yeniden hesaplanıyor");
+eq(shouldRecompute(BASE_SEARCH, { ...BASE_SEARCH }), false, "hiçbir şey değişmediyse dokunulmuyor");
+
+// Kuralın KODDA da böyle olduğunu doğrula: yukarıdaki tablo doğru ama uygulanmıyorsa değersiz.
+const providerSrc = readFileSync(new URL("../frontend/src/app/state/AppLogicProvider.tsx", import.meta.url), "utf8");
+const editFn = providerSrc.slice(providerSrc.indexOf("const saveSavedSearchEdits"), providerSrc.indexOf("const removeSavedSearch"));
+eq(/criteriaChanged/.test(editFn) && /if \(criteriaChanged\)[\s\S]{0,160}seenListingIds/.test(editFn), true,
+   "kod da 'görülenler'i yalnızca kriter değişince yeniden hesaplıyor");
+eq(/setEditingSavedSearchId\(null\)/.test(editFn), true, "kaydettikten sonra pencere kapanıyor");
 
 report("arama");

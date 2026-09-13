@@ -1438,6 +1438,9 @@ export const T = {
   vinLookupHidden: { tr: "{n} kayıt sahibi tarafından paylaşıma kapalı tutulmuş.", en: "{n} record(s) were kept private by their owner.", de: "{n} Eintrag/Einträge wurden vom Halter privat gehalten." },
   vinRequiredForLookup: { tr: "Sorgulamak için geçerli bir şasi numarası girin.", en: "Enter a valid chassis number to look up.", de: "Geben Sie eine gültige Fahrgestellnummer ein." },
   vinLookupFailed: { tr: "Sorgulama yapılamadı. Lütfen daha sonra tekrar deneyin.", en: "The lookup could not be completed. Please try again later.", de: "Die Abfrage konnte nicht durchgeführt werden. Bitte später erneut versuchen." },
+  // Boş geçmiş: "kayıt yok" tek başına yanıltıcı — üç ayrı sebebi olabilir ve ikisi araçla ilgili değil.
+  vinLookupEmptyWhy: { tr: "Fixperto yalnızca kendi üzerinden alınmış ve tamamlanmış randevuları bilir. Kayıt görünmemesinin üç sebebi olabilir: işler Fixperto dışında yaptırılmıştır, yaptıran kişi kaydını paylaşıma kapatmıştır ya da gerçekten iş yapılmamıştır.", en: "Fixperto only knows about appointments booked and completed through Fixperto. Three things can explain an empty history: the work was done elsewhere, the owner chose not to share their records, or no work was done.", de: "Fixperto kennt nur Termine, die über Fixperto gebucht und abgeschlossen wurden. Eine leere Historie kann drei Gründe haben: Die Arbeiten wurden woanders erledigt, der Halter hat seine Einträge nicht freigegeben, oder es wurden keine Arbeiten durchgeführt." },
+  vinLookupEmptyNotJudgment: { tr: "Bu yüzden boş bir geçmiş ne \"araç bakımsız\" ne de \"geçmişi temiz\" anlamına gelir. Satıcıdan servis faturalarını istemek en sağlıklısı.", en: "So an empty history means neither \"poorly maintained\" nor \"clean history\". Asking the seller for service invoices is the safest step.", de: "Eine leere Historie bedeutet daher weder \"schlecht gewartet\" noch \"saubere Historie\". Am sichersten ist es, den Verkäufer nach Servicerechnungen zu fragen." },
   vehicleHistoryVerifiedTitle: { tr: "Doğrulanmış servis geçmişi", en: "Verified service history", de: "Verifizierte Servicehistorie" },
   // Garajda "başka bir aracı sorgula": kendi araçlarının geçmişi artık aracın içinde otomatik
   // geliyor, bu kutu yalnızca satın almadan önce yabancı bir aracı kontrol etmek için.
@@ -1446,6 +1449,18 @@ export const T = {
   // ÖNERİLER ("Senin İçin"). Her metin, kullanıcının "neden bunu görüyorum" sorusuna cevap verir.
   // KISMİ EŞLEŞME (sorgu gevşetme). "Sonuç yok" demek yerine yaklaşanları gösteriyoruz;
   // her kartta hangi kritere uymadığı yazıyor ki liste aramanın yerini almasın.
+  // KAYITLI ARAMA DÜZENLEME PENCERESİ
+  // EMOJİ SEÇİCİ (sohbet). Grup adları kısa: panel dar ve göz hızlı taramalı.
+  emojiPickerAria: { tr: "Emoji ekle", en: "Add emoji", de: "Emoji einfügen" },
+  emojiGroupCommon: { tr: "Sık kullanılan", en: "Frequently used", de: "Häufig genutzt" },
+  emojiGroupCar: { tr: "Araç ve tamir", en: "Car and repair", de: "Auto und Reparatur" },
+  emojiGroupTime: { tr: "Randevu ve ödeme", en: "Appointment and payment", de: "Termin und Zahlung" },
+  savedSearchEditTitle: { tr: "Kayıtlı aramayı düzenle", en: "Edit saved search", de: "Gespeicherte Suche bearbeiten" },
+  savedSearchEditAria: { tr: "Kayıtlı aramayı düzenle", en: "Edit saved search", de: "Gespeicherte Suche bearbeiten" },
+  savedSearchNameFieldLabel: { tr: "Arama adı", en: "Search name", de: "Name der Suche" },
+  savedSearchOtherFiltersHint: { tr: "Bu aramada ayrıca şu filtreler açık — kaldırmak için üzerine dokun:", en: "These filters are also active — tap to remove:", de: "Diese Filter sind ebenfalls aktiv — zum Entfernen antippen:" },
+  savedSearchEditMatchCount: { tr: "Bu kriterlere şu an {n} kayıt uyuyor.", en: "{n} records currently match these criteria.", de: "Derzeit passen {n} Einträge zu diesen Kriterien." },
+  savedSearchEditNoMatch: { tr: "Şu an hiçbir kayıt uymuyor. Böyle kaydedebilirsin — uyan bir şey çıkınca haber veririz.", en: "Nothing matches right now. You can still save it — we will tell you when something does.", de: "Derzeit passt nichts. Sie können trotzdem speichern — wir melden uns, sobald etwas passt." },
   nearMissTitle: { tr: "Tam uyan yok — ama bunlar ilgini çekebilir", en: "No exact match — but these might interest you", de: "Keine exakte Übereinstimmung — aber das könnte Sie interessieren" },
   nearMissHint: { tr: "Aradığın kriterlerin çoğunu karşılıyorlar. Uymayan kısımlar her kartın altında yazıyor.", en: "These meet most of your criteria. What does not match is listed under each card.", de: "Diese erfüllen die meisten Ihrer Kriterien. Was nicht passt, steht unter jeder Karte." },
   nearMissMatchCount: { tr: "{total} kriterden {hit} tanesi uyuyor", en: "Matches {hit} of {total} criteria", de: "Erfüllt {hit} von {total} Kriterien" },
