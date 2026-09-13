@@ -1446,7 +1446,7 @@ Bu dördü, "kodu okuyup kural arayan" 1000'den fazla iddianın arasından geçm
   },
   {
     id: "oneriler",
-    title: "23. Öneriler ve Kişiselleştirme",
+    title: "23. Öneriler, Kişiselleştirme ve Sıfır Sonuç",
     summary: "\"Senin için\" nasıl çalışıyor, hangi veri tutuluyor, izin nasıl yönetiliyor.",
     pages: [
       {
@@ -1468,6 +1468,26 @@ Bir ay önceki ilgi dünkü kadar güçlü değil; ağırlıklar okunurken yaşa
 
 ## Her önerinin GEREKÇESİ yazılı
 Netflix'in "X izlediğin için" satırının karşılığı. İki sebeple zorunlu: gerekçesiz öneri rastgele görünür ve güven kazanmaz; ayrıca kişiselleştirmenin neye dayandığını göstermeden "verini işliyoruz" demek rızayı biçimsel bir onay kutusuna indirger.`,
+      },
+      {
+        id: "sifir-sonuc",
+        title: "23.3 Sıfır sonuç — \"tam uyan yok ama şunlar\"",
+        body: `Sıfır sonuç, ARAMANIN başarısızlığıdır, kullanıcının değil. Katı bir filtre listeyi boşaltıyorsa doğru davranış filtreleri gevşetip yaklaşanları göstermektir. Bu desenin adı SORGU GEVŞETME (query relaxation); arama altyapılarının (Bloomreach, Elastic, OpenSearch) standart özelliği ve ticaret sitelerinde "tam eşleşme yok — benzerleri" bölümü olarak görünür.
+
+## İki katman birlikte çalışıyor
+1. HANGİ KRİTERİ KALDIRSAM: her kriter tek tek kaldırılıp kaç sonuç çıkacağı hesaplanıyor, sadece gerçekten sonuç getirenler tek tıkla uygulanabilir öneri olarak gösteriliyor. Bu, kullanıcının aramayı DÜZELTMESİNİ sağlar.
+2. TAM UYAN YOK AMA BUNLAR: kriterlerin çoğunu karşılayan kayıtlar listeleniyor. Bu, kullanıcının aramayı düzeltmeden de bir şey bulmasını sağlar.
+
+## Her kartta "neye uymuyor" yazılı — bu bilerek böyle
+Pek çok site gevşetilmiş sonucu sessizce listeye karıştırıyor ve kullanıcı neden o kartın orada olduğunu anlamıyor ("ben dizel aramıştım, bu neden burada?"). Burada her kartın altında kaç kriterden kaçını tuttuğu ve hangi kritere uymadığı yazıyor. Böylece liste bir "belki" listesi olarak kalıyor, aramanın yerini almıyor.
+
+## Neyin gösterilmeyeceği de bir karar
+- Hiçbir kriteri tutmayan gösterilmez: o bir "belki" değil, rastgele bir kayıttır.
+- Tam eşleşen gösterilmez: o zaten normal sonuçtur.
+- Tek kriter varsa bu bölüm hiç çıkmaz: tek kriteri de tutmuyorsa "kısmen uydu" diye bir şey yoktur; doğru cevap "bu kriteri kaldır" önerisidir.
+- Donanım listesi tek kriter sayılmaz; her donanım ayrı bir "uymadı" sebebidir, yoksa "üç donanımdan ikisi var" bilgisi kaybolur.
+
+Sıralama ve eleme kuralları saf bir işlevde (helpers.ts scoreNearMisses) — React'e bağlı olmadığı için testlerde gerçekten çalıştırılarak denetleniyor.`,
       },
       {
         id: "veri-ve-izin",

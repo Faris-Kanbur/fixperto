@@ -15,6 +15,7 @@ import { setAppState, missingKeys } from "./app-stub.mjs";
 let passed = 0;
 const failures = [];
 const ok = (v, name) => { if (v) passed++; else failures.push(name); };
+const eqJson = (a, b, name) => ok(JSON.stringify(a) === JSON.stringify(b), `${name} — beklenen ${JSON.stringify(b)}, gelen ${JSON.stringify(a)}`);
 const has = (html, text, name) => ok(html.includes(text), `${name} — "${text}" çıktıda yok`);
 const hasNot = (html, text, name) => ok(!html.includes(text), `${name} — "${text}" çıktıda OLMAMALIYDI`);
 
@@ -83,6 +84,38 @@ const deJob = render(JobCard, { j: JOB }, { ...BASE, lang: "de" });
 ok(trJob !== deJob, "dil değişince çıktı GERÇEKTEN değişiyor (çeviri bağlı)");
 has(deJob, "Vollzeit", "Almanca'da çalışma türü Almanca etiketle çiziliyor");
 hasNot(deJob, "Tam Zamanlı", "Almanca çıktıda Türkçe etiket kalmıyor");
+
+// ---------------------------------------------------------------- 6b) KISMİ EŞLEŞME PUANLAYICISI
+/**
+ * "Kriterlere uyan yok" ekranında gösterilen "bunlar ilgini çekebilir" listesinin kuralları.
+ * Saf bir işlev olduğu için burada GERÇEKTEN çalıştırılıyor — regex ile kaynağa bakmak,
+ * sıralamanın doğru olduğunu söylemez.
+ */
+const { scoreNearMisses } = await import("../../frontend/src/utils/helpers.ts");
+const crit = (key, pred) => ({ key, label: key, value: key, test: pred });
+const CARS = [
+  { id: 1, brand: "BMW", fuelType: "Dizel", city: "İzmir" },   // 3/3 — tam eşleşme
+  { id: 2, brand: "BMW", fuelType: "Dizel", city: "Bursa" },   // 2/3
+  { id: 3, brand: "BMW", fuelType: "Benzin", city: "Ankara" }, // 1/3
+  { id: 4, brand: "Fiat", fuelType: "Benzin", city: "Ankara" },// 0/3
+];
+const CRITERIA = [
+  crit("brand", (x) => x.brand === "BMW"),
+  crit("fuelType", (x) => x.fuelType === "Dizel"),
+  crit("city", (x) => x.city === "İzmir"),
+];
+const nm = scoreNearMisses(CARS, CRITERIA);
+eqJson(nm.items.map((x) => x.item.id), [2, 3], "yalnızca KISMİ eşleşenler, en çok tutan üstte");
+eqJson(nm.criteriaCount, 3, "kriter sayısı bildiriliyor");
+eqJson(nm.items[0].hit, 2, "tutan kriter sayısı doğru");
+eqJson(nm.items[0].missed.map((m) => m.key), ["city"], "uymayan kriter adıyla veriliyor (kullanıcıya gösterilecek)");
+eqJson(nm.items.some((x) => x.item.id === 1), false, "TAM eşleşen bu listede yok (o zaten normal sonuç)");
+eqJson(nm.items.some((x) => x.item.id === 4), false, "hiçbir kriteri tutmayan gösterilmiyor (rastgele liste olurdu)");
+// Tek kriter varsa "kısmen uydu" diye bir şey yoktur — o durumda doğru cevap "bu kriteri kaldır".
+eqJson(scoreNearMisses(CARS, [CRITERIA[0]]).items.length, 0, "tek kriterde kısmi eşleşme gösterilmiyor");
+eqJson(scoreNearMisses(CARS, []).items.length, 0, "kriter yokken boş dönüyor");
+eqJson(scoreNearMisses(CARS, CRITERIA, 1).items.length, 1, "üst sınıra uyuluyor");
+eqJson(scoreNearMisses(null, CRITERIA).items.length, 0, "bozuk girdide çökmüyor");
 
 // ---------------------------------------------------------------- 7) TOPLU ÇİZİM TARAMASI
 /**

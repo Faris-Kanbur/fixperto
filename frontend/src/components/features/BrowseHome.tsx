@@ -34,8 +34,9 @@ function SearchGuidanceBar({ mode }) {
 // çıkacağını hesaplayıp tek tıkla uygulanabilir öneriler sunuyoruz; şehir yazımı hatalıysa
 // veri içindeki en yakın gerçek şehri öneriyoruz.
 function SearchEmptyState({ mode, emptyText }) {
-  const { t, searchGuidance } = useApp();
+  const { t, searchGuidance, nearMisses } = useApp();
   const g = searchGuidance(mode);
+  const near = nearMisses(mode);
   return (
     <div className="col-span-full text-center py-12 px-4">
       <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><SlidersHorizontal size={22} className="text-gray-400" /></div>
@@ -56,6 +57,36 @@ function SearchEmptyState({ mode, emptyText }) {
                 <span className="text-xs font-bold text-rose-600 whitespace-nowrap">{t("searchRelaxCount", { n: String(r.count) })}</span>
               </button>
             ))}
+          </div>
+        </div>
+      )}
+      {/* KISMİ EŞLEŞMELER — "hiçbir şey yok" demek yerine yaklaşanları gösteriyoruz (sorgu
+          gevşetme deseni). Her kartın altında HANGİ KRİTERE UYMADIĞI yazıyor: gevşetilmiş sonucu
+          sessizce listeye karıştırmak, kullanıcıya "ben dizel aramıştım, bu neden burada?"
+          dedirtir ve aramaya olan güveni bitirir. */}
+      {near.items.length > 0 && (
+        <div className="mt-8 text-left">
+          <div className="border-t border-gray-100 pt-6">
+            <h3 className="text-sm font-bold text-gray-800 mb-1">{t("nearMissTitle")}</h3>
+            <p className="text-xs text-gray-400 mb-4">{t("nearMissHint")}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {near.items.map(({ item, missed, hit }) => (
+                <div key={item.id}>
+                  {mode === "cars" ? <ListingCard l={item} /> : mode === "jobs" ? <JobCard j={item} /> : <MechCard m={item} onHover={undefined} />}
+                  <div className="mt-1.5 px-1">
+                    <p className="text-[11px] text-gray-500">{t("nearMissMatchCount", { hit: String(hit), total: String(near.criteriaCount) })}</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {missed.slice(0, 3).map((m) => (
+                        <span key={m.key} className="text-[10px] bg-amber-50 border border-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
+                          {t("nearMissNotMatching", { label: m.label, value: m.value })}
+                        </span>
+                      ))}
+                      {missed.length > 3 && <span className="text-[10px] text-gray-400 px-1 py-0.5">{t("nearMissMore", { n: String(missed.length - 3) })}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -1444,6 +1444,28 @@ export const T = {
   lookupForeignVinCta: { tr: "Garajımda olmayan bir aracın geçmişini sorgula", en: "Look up a car that is not in my garage", de: "Historie eines Fahrzeugs abfragen, das nicht in meiner Garage ist" },
   vehicleNoVinHistoryHint: { tr: "Bu araca şasi (VIN) numarası eklersen, Fixperto üzerinden yaptırılan işler bu araca bağlanır ve geçmişi burada görürsün. Aracı sattığında geçmiş kaybolmaz; yeni sahip aynı numarayla görebilir.", en: "Add this car's chassis (VIN) number and work done through Fixperto will be linked to the car itself — you will see its history here. The history survives a sale: the next owner can see it with the same number.", de: "Wenn Sie die Fahrgestellnummer (VIN) eintragen, werden über Fixperto erledigte Arbeiten diesem Fahrzeug zugeordnet und Sie sehen die Historie hier. Beim Verkauf bleibt sie erhalten — der nächste Halter kann sie mit derselben Nummer einsehen." },
   // ÖNERİLER ("Senin İçin"). Her metin, kullanıcının "neden bunu görüyorum" sorusuna cevap verir.
+  // KISMİ EŞLEŞME (sorgu gevşetme). "Sonuç yok" demek yerine yaklaşanları gösteriyoruz;
+  // her kartta hangi kritere uymadığı yazıyor ki liste aramanın yerini almasın.
+  nearMissTitle: { tr: "Tam uyan yok — ama bunlar ilgini çekebilir", en: "No exact match — but these might interest you", de: "Keine exakte Übereinstimmung — aber das könnte Sie interessieren" },
+  nearMissHint: { tr: "Aradığın kriterlerin çoğunu karşılıyorlar. Uymayan kısımlar her kartın altında yazıyor.", en: "These meet most of your criteria. What does not match is listed under each card.", de: "Diese erfüllen die meisten Ihrer Kriterien. Was nicht passt, steht unter jeder Karte." },
+  nearMissMatchCount: { tr: "{total} kriterden {hit} tanesi uyuyor", en: "Matches {hit} of {total} criteria", de: "Erfüllt {hit} von {total} Kriterien" },
+  nearMissNotMatching: { tr: "{label}: {value} değil", en: "{label}: not {value}", de: "{label}: nicht {value}" },
+  nearMissMore: { tr: "+{n} daha", en: "+{n} more", de: "+{n} weitere" },
+  // Etiketi olmayan filtreler için kısa adlar (kısmi eşleşme rozetlerinde kullanılıyor).
+  nearMissDamageFree: { tr: "Hasarsız", en: "Damage-free", de: "Unfallfrei" },
+  nearMissNegotiable: { tr: "Pazarlık payı", en: "Negotiable", de: "Verhandelbar" },
+  nearMissInspection: { tr: "Ekspertiz raporu", en: "Inspection report", de: "Gutachten" },
+  nearMissPhotos: { tr: "Fotoğraflı", en: "With photos", de: "Mit Fotos" },
+  nearMissHideSold: { tr: "Satılanlar gizli", en: "Sold hidden", de: "Verkaufte ausgeblendet" },
+  nearMissVerified: { tr: "Doğrulanmış", en: "Verified", de: "Verifiziert" },
+  nearMissOpenNow: { tr: "Şu an açık", en: "Open now", de: "Jetzt geöffnet" },
+  nearMissResponse: { tr: "Yanıt süresi", en: "Response time", de: "Antwortzeit" },
+  nearMissReviews: { tr: "Yorum sayısı", en: "Review count", de: "Anzahl Bewertungen" },
+  nearMissPayment: { tr: "Ödeme yöntemi", en: "Payment method", de: "Zahlungsart" },
+  nearMissLang: { tr: "Dil", en: "Language", de: "Sprache" },
+  nearMissFixedPrice: { tr: "Sabit fiyat", en: "Fixed price", de: "Festpreis" },
+  nearMissEmployment: { tr: "Çalışma türü", en: "Employment type", de: "Beschäftigungsart" },
+  nearMissExperience: { tr: "Deneyim", en: "Experience", de: "Erfahrung" },
   recommendedTitle: { tr: "Senin için", en: "For you", de: "Für dich" },
   recReasonTaste: { tr: "{value} ile ilgilendiğin için", en: "Because you looked at {value}", de: "Weil du dich für {value} interessiert hast" },
   recReasonCoViewed: { tr: "Benzer ilanlara bakanlar buna da baktı", en: "People who viewed similar listings also viewed this", de: "Wer ähnliche Inserate ansah, sah auch dieses" },

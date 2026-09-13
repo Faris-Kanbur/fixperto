@@ -811,3 +811,30 @@ export function safeHref(value) {
     return null; // ayrıştırılamayan adres = gösterilmez
   }
 }
+
+/**
+ * KISMİ EŞLEŞME PUANLAYICISI (sorgu gevşetme).
+ * ------------------------------------------------------------------------------------------------
+ * Burada duruyor çünkü SAF bir işlev: girdi verilir, çıktı alınır, React'e ya da ağa bağlı değil —
+ * yani gerçekten çalıştırılarak test edilebilir. Kriterlerin nasıl üretildiği (hangi filtre aktif,
+ * nasıl sınanıyor) çağıranın işi; buradaki tek karar SIRALAMA ve NEYİN GÖSTERİLMEYECEĞİ.
+ *
+ * Kurallar:
+ *  - Hiçbir kriteri tutmayan aday gösterilmez: o bir "belki" değil, rastgele bir kayıttır.
+ *  - Tüm kriterleri tutan aday da gösterilmez: o zaten normal sonuçtur, burada olmamalı
+ *    (bu koruma, çağıran taraf yanlış listeyi verirse aynı kartın iki kez çıkmasını engeller).
+ *  - Sıralama: en çok kriteri tutan üstte; eşitlikte daha az kriteri kaçıran üstte.
+ */
+export function scoreNearMisses(items, criteria, limit = 6) {
+  if (!Array.isArray(items) || !Array.isArray(criteria) || criteria.length < 2) {
+    return { items: [], criteriaCount: criteria?.length || 0, total: 0 };
+  }
+  const scored = [];
+  for (const item of items) {
+    const missed = criteria.filter((c) => !c.test(item));
+    const hit = criteria.length - missed.length;
+    if (hit > 0 && missed.length > 0) scored.push({ item, missed, hit });
+  }
+  scored.sort((a, b) => b.hit - a.hit || a.missed.length - b.missed.length);
+  return { items: scored.slice(0, limit), criteriaCount: criteria.length, total: scored.length };
+}

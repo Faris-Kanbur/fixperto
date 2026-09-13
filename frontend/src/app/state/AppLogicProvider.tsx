@@ -31,7 +31,7 @@ import {
   isImgUrl, monthsBetween, initials, listingStatusMeta, slugifyForEmail, ticketDaysOpen, ticketSlaBreached,
   parseDecimalField, listingMarketPriceTier, initialSiteLang, detectCountryCode, rememberSiteLang,
   brandPriceFor, canonicalBrand, readNavSession, writeNavSession,
-  slotsFromHoursText, isSlotInPast,
+  slotsFromHoursText, isSlotInPast, scoreNearMisses,
 } from "../../utils/helpers";
 import { PriceLevelDots } from "../../components/ui/PriceLevelDots";
 import { MiniBarChart } from "../../components/ui/MiniBarChart";
@@ -5143,6 +5143,99 @@ function useAppLogic() {
   };
   // Arama ekranı için rehber verisi: aktif kriter çipleri, sıfır sonuçta gevşetme önerileri ve
   // şehir yazım önerisi. UI tarafı bunu doğrudan render eder (bkz. BrowseHome.tsx).
+  /**
+   * KISMİ EŞLEŞME ("kriterlere uyan yok ama şunlar ilgini çekebilir").
+   * ===============================================================================================
+   * ARAŞTIRMA NOTU: bu desenin adı SORGU GEVŞETME (query relaxation). Bloomreach, Elastic ve
+   * OpenSearch gibi arama altyapılarının hepsinde var; ticaret sitelerinde (Booking, Airbnb,
+   * AutoScout24, Zalando) "tam eşleşme yok — benzerleri" bölümü olarak görünür. Ortak fikir:
+   * sıfır sonuç, ARAMANIN BAŞARISIZLIĞIDIR, kullanıcının değil. Katı bir filtre listeyi
+   * boşaltıyorsa, filtreleri gevşetip yaklaşanları göstermek doğru davranıştır.
+   *
+   * BİZDEKİ FARK — ve bunu bilerek yaptım: pek çok site gevşetilmiş sonucu SESSİZCE gösteriyor,
+   * kullanıcı da neden o kartın orada olduğunu anlamıyor ("ben dizel aramıştım, bu neden burada?").
+   * Burada her kartın altında HANGİ KRİTERE UYMADIĞI yazıyor. Böylece liste bir "belki" listesi
+   * olarak kalıyor, aramanın yerini almıyor.
+   *
+   * NASIL: her aktif kriteri TEK BAŞINA test edilebilir bir parçaya ayırıyoruz, sonra her adayın
+   * kaç kriteri tuttuğunu sayıyoruz. En çok tutan en üstte. Hiçbir kriteri tutmayan gösterilmiyor
+   * (o zaman öneri değil, rastgele liste olurdu).
+   */
+  const EMPTY_FILTERS_FOR = (type) => (
+    type === "cars" ? EMPTY_LISTING_FILTERS
+      : type === "jobs" ? { employmentType: "all", experienceLevel: "all" }
+        : EMPTY_MECH_FILTERS
+  );
+  // Filtre anahtarı → ekranda görünecek etiket. Var olan sözlük anahtarları kullanılıyor.
+  const FILTER_LABEL_KEY = {
+    transmission: "transmission", fuelType: "fuelType", bodyType: "bodyTypePlaceholder",
+    drivetrain: "drivetrainPlaceholder", doorCount: "doorCountPlaceholder", seatCount: "seatCountLabel",
+    color: "colorPlaceholder", sellerType: "sellerTypeLabel", emissionClass: "emissionClassPlaceholder",
+    minPrice: "priceLabel", maxPrice: "priceLabel", minKm: "kmRangeLabel", maxKm: "kmRangeLabel",
+    minYear: "minYearPlaceholder", maxYear: "maxYearPlaceholder", minPower: "powerRangeLabel",
+    maxPower: "powerRangeLabel", maxCo2: "co2Label", maxOwnerCount: "ownerCountRowLabel",
+    damageFree: "nearMissDamageFree", tradeIn: "tradeInRowLabel", negotiable: "nearMissNegotiable",
+    features: "featuresSection", maxDistance: "maxDistanceLabel", minEngine: "engineSizeLabel",
+    maxEngine: "engineSizeLabel", maxFuelConsumption: "consumptionLabel", minRange: "rangeLabel",
+    maxPaintedParts: "paintedPartsRowLabel", maxChangedParts: "changedPartsRowLabel",
+    hasInspectionReport: "nearMissInspection", withPhotos: "nearMissPhotos",
+    featuredOnly: "featuredLabel", listedWithin: "listedWithinLabel", hideSold: "nearMissHideSold",
+    verifiedSeller: "nearMissVerified", priceRating: "priceRatingLabel",
+    priceTier: "priceLabel", minRating: "minRatingLabel", brand: "brandFieldLabel",
+    service: "serviceFieldLabel", openNow: "nearMissOpenNow", verifiedOnly: "nearMissVerified",
+    maxResponse: "nearMissResponse", minReviews: "nearMissReviews", paymentMethod: "nearMissPayment",
+    mechLang: "nearMissLang", fixedPriceOnly: "nearMissFixedPrice",
+    employmentType: "nearMissEmployment", experienceLevel: "nearMissExperience",
+  };
+  const filterLabel = (key) => (FILTER_LABEL_KEY[key] ? t(FILTER_LABEL_KEY[key]) : key);
+
+  /** Aktif kriterleri, her biri TEK BAŞINA sınanabilir parçalara ayırır. */
+  const criteriaBreakdown = (mode) => {
+    const type = searchModeType(mode);
+    const c = currentSearchCriteria(mode);
+    const emptyFilters = EMPTY_FILTERS_FOR(type);
+    const base = { type, query: "", locationQuery: "", serviceQuery: "", filters: { ...emptyFilters } };
+    const out = [];
+    const add = (key, label, value, patch) => out.push({
+      key, label, value,
+      test: (item) => matchesSavedSearchCriteria(item, {
+        ...base, ...patch, filters: { ...emptyFilters, ...(patch.filters || {}) },
+      }),
+    });
+    const q = String(c.query ?? "").trim();
+    const svc = String(c.serviceQuery ?? "").trim();
+    const loc = String(c.locationQuery ?? "").trim();
+    if (q) add("query", type === "cars" ? t("brandModelFieldLabel") : type === "jobs" ? t("positionFieldLabel") : t("brandFieldLabel"), q, { query: q });
+    if (svc) add("service", t("serviceFieldLabel"), svc, { serviceQuery: svc });
+    if (loc) add("location", t("cityLabelShort"), loc, { locationQuery: loc });
+    for (const key of Object.keys(emptyFilters)) {
+      const cur = (c.filters || {})[key];
+      const empty = emptyFilters[key];
+      const active = Array.isArray(empty) ? (cur || []).length > 0
+        : typeof empty === "boolean" ? !!cur
+          : cur !== empty && cur !== "" && cur != null;
+      if (!active) continue;
+      // Donanım listesi tek bir kriter değil: her donanım ayrı bir "uymadı" sebebi olmalı,
+      // yoksa "üç donanımdan ikisi var" bilgisi kaybolur.
+      if (Array.isArray(empty)) {
+        for (const feat of cur) add(`filter:${key}:${feat}`, t("featuresSection"), feat, { filters: { [key]: [feat] } });
+      } else {
+        add(`filter:${key}`, filterLabel(key), typeof empty === "boolean" ? t("yesLabel") : String(cur), { filters: { [key]: cur } });
+      }
+    }
+    return out;
+  };
+
+  /** Kaç kriteri tutuyor? En çok tutandan başlayarak kısmi eşleşmeleri döndürür. */
+  const nearMisses = (mode, limit = 6) => {
+    const type = searchModeType(mode);
+    const criteria = criteriaBreakdown(mode);
+    // Tek kriter varsa "kısmi eşleşme" diye bir şey yoktur: onu da tutmuyorsa hiç tutmuyordur.
+    // O durumda zaten yukarıdaki "şu kriteri kaldır" önerisi doğru cevap. Sıralama/eleme kuralları
+    // saf bir işlevde (scoreNearMisses) — böylece gerçekten çalıştırılarak test edilebiliyor.
+    return scoreNearMisses(savedSearchSource(type), criteria, limit);
+  };
+
   const searchGuidance = (mode) => {
     const type = searchModeType(mode);
     const criteria = currentSearchCriteria(mode);
@@ -5512,6 +5605,7 @@ function useAppLogic() {
     listingReply, setListingReply, submitListingReply,
     vinLookup, lookupVin, clearVinLookup, myHistoryRecords, refreshMyHistory, setVehicleHistoryShared,
     vehicleHistoryFor, loadVehicleHistory, showForeignVinLookup, setShowForeignVinLookup,
+    nearMisses,
     recommendations, loadRecommendations, sendRecSignal, recsProfile, refreshRecsProfile,
     setRecsConsent, clearRecsProfile, openOwnerSettingsForRecs,
     completeVinInput, setCompleteVinInput, checkPhone, normalizePhoneField, jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, rejectApplication, roleColor,
