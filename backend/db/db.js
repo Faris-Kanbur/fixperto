@@ -976,6 +976,41 @@ export function migrateLegacyReviews() {
 }
 migrateLegacyReviews();   // var olan veritabanları için; tohum sonrası seed.js tekrar çağırıyor
 
+/**
+ * TEK SEFERLİK TEMİZLİK: geçmişte değişiklik günlüğüne DÜZ METİN yazılmış şifreler.
+ * ------------------------------------------------------------------------------------------------
+ * Sızıntıyı durdurmak (bkz. routes/admin.js redactSecrets) yeterli değil: o güne kadar yazılmış
+ * satırlar tabloda duruyor ve okunabiliyor. Bir güvenlik açığını kapatırken, açığın ÜRETTİĞİ
+ * veriyi de temizlemek gerekir — yoksa "düzelttik" demek yalnızca yeni zararı önlemiş olur.
+ *
+ * Kayıt silinmiyor, yalnızca değer maskeleniyor: "şifre değiştirildi" bilgisi denetim için lazım.
+ */
+try {
+  const rows = db.prepare(
+    `SELECT id, before, after FROM admin_change_log
+     WHERE (before LIKE '%"field":"password"%' OR after LIKE '%"field":"password"%')`
+  ).all();
+  if (rows.length) {
+    const mask = (json) => {
+      if (!json) return json;
+      try {
+        const parsed = JSON.parse(json);
+        if (parsed && typeof parsed === "object" && /password/i.test(String(parsed.field || ""))) {
+          parsed.value = "••••••";
+          return JSON.stringify(parsed);
+        }
+        return json;
+      } catch { return json; }
+    };
+    const upd = db.prepare(`UPDATE admin_change_log SET before = ?, after = ? WHERE id = ?`);
+    const clean = db.transaction(() => { for (const r of rows) upd.run(mask(r.before), mask(r.after), r.id); });
+    clean();
+    console.log(`Denetim kaydı temizliği: ${rows.length} satırdaki düz metin şifre maskelendi.`);
+  }
+} catch (err) {
+  console.error("Denetim kaydı temizliği hatası:", err.message);
+}
+
 export function isEmpty(table) {
   return db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n === 0;
 }

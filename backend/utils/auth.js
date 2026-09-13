@@ -100,12 +100,26 @@ export function getSession(token) {
   const tokenHash = hashToken(token);
   const row = selectSession.get(tokenHash);
   if (!row) return null;
-  if (Date.now() - row.createdAt > SESSION_TTL_MS) {
+  /**
+   * SÜRE KONTROLÜ "KAPALI" TARAFA DÜŞMELİ (denetimde fark edildi).
+   * ---------------------------------------------------------------------------------------------
+   * `createdAt` epoch milisaniye olarak (INTEGER) saklanıyor. Ama SQLite gevşek tipli: eski bir
+   * şema, elle yapılmış bir müdahale ya da hatalı bir göç oraya METİN yazabilir. O durumda
+   * `Date.now() - row.createdAt` NaN olur ve `NaN > TTL` her zaman FALSE'tur — yani kontrol
+   * sessizce GEÇER ve o oturum SONSUZA KADAR geçerli kalır. Hiçbir hata da görünmez.
+   *
+   * Bir güvenlik kontrolünün en kötü hâli, bozulduğunda hata vermek yerine izin vermesidir.
+   * Bu yüzden değer önce SAYIYA çevriliyor; sayı değilse oturum geçersiz sayılıyor ve siliniyor.
+   * Yanlış tarafta hata yapmanın bedeli "bir kullanıcı tekrar giriş yapar"; diğer tarafta bedeli
+   * "çalınmış jeton sonsuza kadar çalışır".
+   */
+  const createdAt = Number(row.createdAt);
+  if (!Number.isFinite(createdAt) || Date.now() - createdAt > SESSION_TTL_MS) {
     deleteSession.run(tokenHash);
     return null;
   }
   // Dönen nesne eskisiyle aynı biçimde: çağıranlar (requireSession, resolveActor) değişmedi.
-  return { id: row.userId, role: row.role, createdAt: row.createdAt };
+  return { id: row.userId, role: row.role, createdAt };
 }
 
 // Süresi dolmuş oturumları periyodik olarak bellekten at (yukarıdaki tembel temizlik, bir daha hiç

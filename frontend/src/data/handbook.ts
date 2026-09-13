@@ -1469,6 +1469,36 @@ Metin bir sütuna dizi/nesne gönderildiğinde SQLite sürücüsü kısıt hatas
 Liste uçları tablonun tamamını döndürüyordu ve okuma tarafında hiçbir sınır yoktu (10 tamirci = 15 KB; 10.000 tamirci = 15 MB, saniyede onlarca kez istenebilir). \`?limit\` / \`?offset\` eklendi, yüksek bir güvenlik tavanı kondu ve her yanıtta \`X-Total-Count\` başlığı dönüyor — sessizce kırpmak "veri kayboldu" hatalarının kaynağıdır, kırpılma GÖRÜLEBİLİR olmalı. Okuma tarafındaki istek sayısı sınırı dağıtım katmanının işi: uygulama içinde IP başına okuma sınırı koymak, vekil arkasında (bkz. 22.1) tüm kullanıcıları tek sayaca düşürüp siteyi herkese kapatma riski taşıyor.`,
       },
       {
+        id: "ikinci-tur-bulgular",
+        title: "22.5 İkinci turda çıkanlar — matrisin SORMADIĞI sorular",
+        body: `Matris ilk turda yedi açık buldu. Ama matrisin kendisi de eksikti: yalnızca GÖVDEYİ zorluyordu ve kimlik akışının ince noktalarına hiç dokunmuyordu. Genişletilince beş şey daha çıktı.
+
+## 1) Yönetici değişiklik günlüğüne DÜZ METİN ŞİFRE yazılıyordu (KRİTİK)
+Yönetici bir kullanıcının şifresini sıfırladığında istemci denetim kaydına \`after: { field: "password", value: "<yeni şifre>" }\` gönderiyordu. Şifreler her yerde bcrypt ile saklanıyorken aynı şifre kalıcı bir tabloya düz metin düşüyor ve \`GET /api/admin/change-log\` ile geri okunabiliyordu. Bu tabloyu okuyan herkes (başka bir yönetici, bir yedek dosyası, bir sızıntı) şifreyi olduğu gibi görür — ve insanlar aynı şifreyi başka sitelerde de kullanıyor. bcrypt'in bütün amacı "veritabanını ele geçiren şifreyi öğrenemesin"di; tek bir düz metin sütun o çabayı boşa çıkarır.
+
+Düzeltme üç parçalı: (a) sunucu artık şifre benzeri alanları kaydetmeden maskeliyor — istemcinin maskesine güvenmek yeterli değil, eski bir istemci ya da doğrudan API kullanımı onu atlar; (b) istemci değeri artık hiç göndermiyor (gönderilmeyen veri sızdırılamaz); (c) veritabanında ZATEN yazılmış satırlar tek seferlik bir temizlikle maskelendi — bir açığı kapatırken açığın ÜRETTİĞİ veriyi de temizlemek gerekir. Kayıt silinmiyor: "şifre değiştirildi" bilgisi denetim için gerekli, gizlenen yalnızca değer.
+
+## 2) \`?field=__proto__\` sunucu hatası üretiyordu (ORTA)
+Analitik kırılım ucunda sütun beyaz listesi düz bir nesneydi ve \`FIELDS[field]\` ile sorgulanıyordu. \`__proto__\` gönderildiğinde arama beyaz listeye değil nesnenin PROTOTİPİNE düşüyor ve truthy bir değer dönüyordu; bu değer sütun adı olarak SQL'e girip 500 üretiyordu. Aynı tuzak \`constructor\` ve \`toString\` için de geçerliydi. Beyaz liste artık prototipsiz (\`Object.create(null)\`) ve arama sahiplik kontrolüyle yapılıyor — "beyaz liste" gerçekten beyaz liste.
+
+## 3) \`?days=999999999999\` bütün analitik uçlarını 500 yapıyordu (ORTA)
+Tarih hesabı JavaScript'in geçerli tarih aralığının dışına çıkıyor, \`toISOString()\` hata fırlatıyordu. Üst sınır kondu (10 yıl): daha eskisi "tüm zamanlar" ile aynı şey.
+
+## 4) Bekleyen girişler sınırsız büyüyebiliyordu (ORTA)
+\`pendingLogins\` bellek içi bir eşleme ve süpürücüsü yalnızca SÜRESİ DOLANLARI siliyor. Giriş sınırlayıcısı ise yalnızca BAŞARISIZ denemeleri sayıyor — yani geçerli şifresi olan biri art arda giriş çağırarak 10 dakika boyunca belleği şişirebilirdi. Üst sınır kondu ve dolduğunda en eski bekleyen giriş düşüyor: yeni girişleri reddetmek, saldırganın meşru kullanıcıları kilitlemesine izin vermek olurdu.
+
+## 5) Oturum süresi kontrolü BOZULDUĞUNDA izin veriyordu (YÜKSEK — savunma sertleştirmesi)
+Bu, testi yazarken yanlışlıkla bulundu: \`createdAt\` epoch milisaniye olarak saklanıyor, testte oraya METİN yazdım ve oturum GEÇERLİ çıktı. Sebep şu: \`Date.now() - "2026-..."\` NaN olur ve \`NaN > TTL\` her zaman false'tur — kontrol sessizce geçer, o jeton sonsuza kadar çalışır, hiçbir hata da görünmez. SQLite gevşek tipli olduğu için eski bir şema, elle müdahale ya da hatalı bir göç bunu gerçekten üretebilir.
+
+Bir güvenlik kontrolünün en kötü hâli, bozulduğunda hata vermek yerine İZİN VERMESİDİR. Değer artık sayıya çevriliyor ve sayı değilse oturum geçersiz sayılıp siliniyor. Yanlış tarafta hata yapmanın bedeli "kullanıcı tekrar giriş yapar"; diğer tarafta bedeli "çalınmış jeton sonsuza kadar çalışır".
+
+## Doğrulanıp SAĞLAM çıkanlar
+Hesap sayımı (account enumeration) kapalı: var olan ve olmayan e-posta hem giriş hem şifre sıfırlamada aynı kodu ve aynı mesajı alıyor. OTP tek kullanımlık ve bilet başına 5 denemeden sonra düşüyor. Sütun adı beyaz listesi dışında SQL'e hiçbir kullanıcı girdisi girmiyor (14 farklı enjeksiyon denemesinden sonra tablolar yerinde). \`dangerouslySetInnerHTML\` hiçbir yerde yok. CORS izinli kaynak listesi ortam değişkeninden okunuyor.
+
+## Ops uyarısı: paylaşımlı IP
+OTP ve giriş sınırlayıcıları IP başına çalışıyor ve 15 dakika kilitliyor. Paylaşımlı bir çıkış arkasında (ofis, CGNAT) bir kişinin kaba kuvvet denemesi aynı çıkıştaki HERKESİN girişini kilitler. Bu yüzden ikisi de ortam değişkeniyle ayarlanabilir (LOGIN_LIMIT_PER_WINDOW, OTP_IP_LIMIT_PER_WINDOW) — ama BİLET BAŞINA deneme sınırı ayarlanamaz: kodun kendisini korumak pazarlık konusu değil. Bkz. 22.1 (TRUST_PROXY).`,
+      },
+      {
         id: "denetim-bulgulari",
         title: "22.3 Sunucuyu çalıştırınca çıkan hatalar",
         body: `Hepsi statik testlerin GÖREMEDİĞİ, yalnızca gerçek istek atınca ortaya çıkan hatalardı.

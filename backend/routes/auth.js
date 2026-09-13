@@ -27,8 +27,35 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const OTP_TTL_MS = 10 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
 
-const loginLimiter = makeRateLimiter({ maxAttempts: 10, lockoutMs: 15 * 60 * 1000 });
-const otpLimiter = makeRateLimiter({ maxAttempts: OTP_MAX_ATTEMPTS, lockoutMs: 15 * 60 * 1000 });
+// Giriş ve OTP sınırları da birer OPS AYARI: kayıt sınırıyla aynı gerekçe (paylaşımlı IP arkasında
+// gerçek kullanıcılar, ve otomatik testlerin kendi kimlik akışını doğrulayabilmesi). Varsayılanlar
+// korumacı; ortam değişkeniyle yükseltilebilir. Sınırın KENDİSİ kapatılamıyor — 0 ya da negatif
+// verilirse varsayılana düşülüyor, yani "sınırı kaldır" diye bir yapılandırma yok.
+const LOGIN_MAX = Number(process.env.LOGIN_LIMIT_PER_WINDOW) > 0 ? Number(process.env.LOGIN_LIMIT_PER_WINDOW) : 10;
+const loginLimiter = makeRateLimiter({ maxAttempts: LOGIN_MAX, lockoutMs: 15 * 60 * 1000 });
+/**
+ * OTP'de İKİ AYRI KORUMA VAR ve ayrı olmaları önemli:
+ *   1) BİLET BAŞINA deneme (OTP_MAX_ATTEMPTS = 5, sabit): belirli bir giriş denemesindeki kodu
+ *      kaba kuvvetle bulmayı engeller. Yalnızca o bileti etkiler, başka kullanıcıya dokunmaz.
+ *   2) IP BAŞINA deneme (aşağıdaki sınırlayıcı): aynı çıkıştan gelen toplu denemeyi keser.
+ * İkincisi bir OPS AYARI, çünkü paylaşımlı bir IP arkasında (ofis, CGNAT) bir kişinin denemesi
+ * aynı çıkıştaki HERKESİ kilitler (bkz. TRUST_PROXY notu). Birincisi ayarlanabilir DEĞİL:
+ * kodun kendisini korumak pazarlık konusu değil.
+ */
+const OTP_IP_MAX = Number(process.env.OTP_IP_LIMIT_PER_WINDOW) > 0 ? Number(process.env.OTP_IP_LIMIT_PER_WINDOW) : OTP_MAX_ATTEMPTS;
+const otpLimiter = makeRateLimiter({ maxAttempts: OTP_IP_MAX, lockoutMs: 15 * 60 * 1000 });
+
+/**
+ * BEKLEYEN GİRİŞLER SINIRSIZ BÜYÜYEMEZ (denetimde bulundu).
+ * ------------------------------------------------------------------------------------------------
+ * `pendingLogins` bellek içi bir Map ve yalnızca SÜRESİ DOLAN kayıtları temizleyen bir süpürücüsü
+ * var. Ama giriş sınırlayıcısı yalnızca BAŞARISIZ denemeleri sayıyor: geçerli şifreye sahip biri
+ * (kendi hesabı bile olsa) art arda giriş çağırarak 10 dakika boyunca Map'i sınırsız şişirebilir.
+ * Bu, kimlik doğrulaması gerektirmeyen ucuz bir bellek tüketme yolu. Üst sınır koyuyoruz: dolduğunda
+ * EN ESKİ bekleyen giriş düşürülüyor — yeni girişleri reddetmek, saldırganın meşru kullanıcıları
+ * kilitlemesine izin vermek olurdu.
+ */
+const MAX_PENDING_LOGINS = 5000;
 // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): /register'da hiçbir hız sınırı yoktu — tek bir
 // IP, script ile sınırsız sahte hesap açıp hem veritabanını şişirebilir hem de her kayıtta bir
 // e-posta gönderttiği için SMTP hesabının spam olarak işaretlenmesine (mail itibarının yanmasına)
@@ -166,6 +193,11 @@ authRouter.post("/login", asyncRoute(async (req, res) => {
     // 6 haneli bir kod gönderiliyor; gerçek oturum token'ı sadece bu kod doğrulanınca üretiliyor.
     const otp = generateOtp();
     const loginTicket = generateRandomTicket();
+    if (pendingLogins.size >= MAX_PENDING_LOGINS) {
+      // Map ekleme sırasını korur; ilk anahtar en eski bekleyen giriştir.
+      const oldest = pendingLogins.keys().next().value;
+      if (oldest !== undefined) pendingLogins.delete(oldest);
+    }
     pendingLogins.set(loginTicket, { role: matchedRole, id: row.id, email: cleanEmail, otp, expiresAt: Date.now() + OTP_TTL_MS, attempts: 0 });
 
     const mailResult = await sendMail({

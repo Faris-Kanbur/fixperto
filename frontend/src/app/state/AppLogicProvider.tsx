@@ -2554,7 +2554,10 @@ function useAppLogic() {
       // local mechanicAdminOverrides state'ine yazıyordu) — yani sayfa yenilenince "sıfırlanan" şifre
       // hiç kaydedilmemiş olurdu. Artık owner koluyla tutarlı şekilde gerçekten backend'e yazılıyor.
       else await api.mechanics.setPassword(selectedAdminUser.id, pwd, api.admin.authOpts());
-      logAdminChange({ targetType: pwdTargetType, targetId: selectedAdminUser.id, field: "password", oldValue: "••••••", newValue: pwd });
+      // GÜVENLİK: yeni şifre denetim kaydına HİÇ gönderilmiyor. Sunucu zaten maskeliyor
+      // (bkz. backend/routes/admin.js redactSecrets) ama şifreyi ağdan geçirmemek daha iyi:
+      // gönderilmeyen veri sızdırılamaz. Kayıt duruyor, yalnızca değeri yok.
+      logAdminChange({ targetType: pwdTargetType, targetId: selectedAdminUser.id, field: "password", oldValue: "••••••", newValue: "••••••" });
       setAdminEditForm(f => ({ ...f, newPassword: "" }));
       setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." });
     } catch (err: any) {

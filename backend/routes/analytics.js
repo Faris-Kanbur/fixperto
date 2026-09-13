@@ -111,11 +111,21 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// Gün sayısını ISO tarihe çevirir. days verilmezse "tüm zamanlar" (null) döner.
+/**
+ * Gün sayısını ISO tarihe çevirir. days verilmezse "tüm zamanlar" (null) döner.
+ *
+ * GERÇEK HATA (sorgu parametresi taramasında bulundu): üst sınır yoktu. `?days=999999999999`
+ * gönderildiğinde `Date.now() - n * 86400000` JavaScript'in geçerli tarih aralığının dışına
+ * çıkıyor, `new Date(...)` "Invalid Date" oluyor ve `.toISOString()` RangeError fırlatıyordu —
+ * yani kullanıcıya 500 dönüyordu. Bir tarih filtresinin makul bir tavanı olmalı: 10 yıldan
+ * eski analitik zaten "tüm zamanlar" ile aynı şey.
+ */
+const MAX_DAYS = 3650;
 function cutoffFor(days) {
   const n = parseInt(days, 10);
   if (!Number.isFinite(n) || n <= 0) return null;
-  return new Date(Date.now() - n * 86400000).toISOString().slice(0, 19).replace("T", " ");
+  const clamped = Math.min(n, MAX_DAYS);
+  return new Date(Date.now() - clamped * 86400000).toISOString().slice(0, 19).replace("T", " ");
 }
 // createdAt filtresini tek yerden üretiyoruz ki her sorguda elle tekrarlanmasın.
 const since = (cutoff) => (cutoff ? " AND createdAt >= @cutoff" : "");
@@ -197,8 +207,17 @@ router.get("/overview", requireAdmin, (req, res) => {
 // Kırılımlar: trafik kaynağı, ülke, cihaz, dil — hepsi aynı desende olduğu için tek uç.
 router.get("/breakdown", requireAdmin, (req, res) => {
   const cutoff = cutoffFor(req.query.days);
-  const FIELDS = { source: "source", country: "country", device: "device", lang: "lang" };
-  const col = FIELDS[req.query.field];
+  /**
+   * GERÇEK HATA (aynı tarama): beyaz liste düz bir nesne olarak yazılmıştı ve `FIELDS[field]`
+   * ile sorgulanıyordu. `?field=__proto__` gönderildiğinde arama beyaz listeye DEĞİL, nesnenin
+   * prototipine düşüyor ve TRUTHY bir değer (Object.prototype) dönüyordu; bu değer sütun adı
+   * olarak SQL'e giriyor ve 500 üretiyordu. Aynı tuzak `constructor` ve `toString` için de
+   * geçerli. Beyaz liste artık prototipsiz bir nesne (Object.create(null)) ve arama sahiplik
+   * kontrolüyle yapılıyor — "beyaz liste" gerçekten beyaz liste.
+   */
+  const FIELDS = Object.assign(Object.create(null), { source: "source", country: "country", device: "device", lang: "lang" });
+  const requested = String(req.query.field ?? "");
+  const col = Object.prototype.hasOwnProperty.call(FIELDS, requested) ? FIELDS[requested] : null;
   if (!col) return res.status(400).json({ error: "Geçersiz field." });
   // Kolon adı yukarıdaki beyaz listeden geliyor — kullanıcı girdisi doğrudan SQL'e girmiyor.
   //

@@ -15,7 +15,7 @@
  *
  * Yeni bir uç eklendiğinde bu testlerin hepsi otomatik olarak ona da uygulanır.
  */
-import { startServer, stopServer, api, createUser, adminToken, row, rows, skipIfUnsupported } from "./harness.mjs";
+import { startServer, stopServer, api, createUser, adminToken, row, rows, db, skipIfUnsupported } from "./harness.mjs";
 import { allEndpoints, crudMounts } from "./endpoints.mjs";
 
 let passed = 0;
@@ -227,6 +227,147 @@ try {
     if (res.status !== 401) tokenLeaks.push(`"${bad.slice(0, 12)}…" → ${res.status}`);
   }
   eq(tokenLeaks, [], "bozuk/uydurma jetonların hiçbiri kabul edilmiyor");
+
+  // ================================================================ 5a) KİMLİK AKIŞININ İNCE NOKTALARI
+  /**
+   * HESAP SAYIMI (account enumeration): "bu e-posta kayıtlı mı?" sorusuna cevap veren bir sistem,
+   * saldırgana hedef listesi hazırlar. Var olan ve olmayan e-posta için yanıtlar AYIRT EDİLEMEZ
+   * olmalı — hem durum kodu hem mesaj.
+   */
+  const knownEmail = owner.email;
+  const unknownEmail = "hic-yok-boyle-biri@example.com";
+  const loginKnown = await api("POST", "/api/auth/login", { body: { email: knownEmail, password: "yanlis-sifre-123" } });
+  const loginUnknown = await api("POST", "/api/auth/login", { body: { email: unknownEmail, password: "yanlis-sifre-123" } });
+  eq(loginKnown.status, loginUnknown.status, "giriş: var olan ve olmayan e-posta AYNI durum kodunu veriyor");
+  eq(loginKnown.body?.error, loginUnknown.body?.error, "giriş: hata mesajı da aynı (hesap sayımı yapılamıyor)");
+
+  const forgotKnown = await api("POST", "/api/auth/forgot-password", { body: { email: knownEmail } });
+  const forgotUnknown = await api("POST", "/api/auth/forgot-password", { body: { email: unknownEmail } });
+  eq(forgotKnown.status, forgotUnknown.status, "şifre sıfırlama: aynı durum kodu");
+  eq(JSON.stringify(forgotKnown.body) === JSON.stringify(forgotUnknown.body), true,
+    "şifre sıfırlama: yanıt gövdesi de aynı (e-posta kayıtlı mı belli olmuyor)");
+
+  /**
+   * OTP TEK KULLANIMLIK OLMALI. Aynı kod ikinci kez çalışırsa, e-postası bir kez görülen kod
+   * (omuz üstünden, paylaşılan cihaz, ele geçirilmiş posta kutusu) süresi dolana kadar tekrar
+   * tekrar giriş sağlar.
+   */
+  const otpUser = await createUser("owner", { name: "OTP Test", email: "otp-test@example.com", phone: "+905321240051" });
+  const l1 = await api("POST", "/api/auth/login", { body: { email: otpUser.email, password: otpUser.password } });
+  const ticket = l1.body.loginTicket;
+  const code = l1.body.devOtp;
+  eq((await api("POST", "/api/auth/verify-otp", { body: { loginTicket: ticket, code } })).status, 200, "OTP ilk kullanımda çalışıyor");
+  eq((await api("POST", "/api/auth/verify-otp", { body: { loginTicket: ticket, code } })).status >= 400, true,
+    "AYNI OTP ikinci kez çalışmıyor (tek kullanımlık)");
+
+  /**
+   * SÜRESİ DOLMUŞ OTURUM GERÇEKTEN REDDEDİLİYOR MU? Kod 7 günlük ömür diyor; ama kural yalnızca
+   * yazıldığı yerde değil, KONTROL edildiği yerde geçerlidir. Oturumun oluşma zamanını geriye
+   * çekip aynı jetonu kullanmayı deniyoruz.
+   */
+  const expUser = await createUser("owner", { name: "Süre Test", email: "sure-test@example.com", phone: "+905321240052" });
+  eq((await api("GET", "/api/auth/me", { token: expUser.token })).status, 200, "taze oturum geçerli");
+  // createdAt epoch milisaniye olarak saklanıyor; 40 gün geriye çekiyoruz.
+  db().prepare("UPDATE sessions SET createdAt = ? WHERE userId = ? AND role = 'owner'")
+    .run(Date.now() - 40 * 86400000, expUser.id);
+  eq((await api("GET", "/api/auth/me", { token: expUser.token })).status, 401,
+    "40 gün önce açılmış oturum REDDEDİLİYOR (süre kuralı gerçekten uygulanıyor)");
+
+  /**
+   * SÜRE KONTROLÜ BOZULDUĞUNDA HANGİ TARAFA DÜŞÜYOR? Bu testi ilk yazarken createdAt'e yanlışlıkla
+   * METİN yazdım ve oturum GEÇERLİ çıktı: `Date.now() - "2026-..."` NaN oluyor, `NaN > TTL` her
+   * zaman false, yani kontrol sessizce geçiyor ve o jeton sonsuza kadar çalışıyor. Bir güvenlik
+   * kontrolünün en kötü hâli, bozulduğunda hata vermek yerine İZİN VERMESİDİR. Artık sayı olmayan
+   * bir değer oturumu geçersiz kılıyor.
+   */
+  const corrupt = await createUser("owner", { name: "Bozuk Süre", email: "bozuk-sure@example.com", phone: "+905321240053" });
+  db().prepare("UPDATE sessions SET createdAt = ? WHERE userId = ? AND role = 'owner'")
+    .run("2026-01-01T00:00:00.000Z", corrupt.id);
+  eq((await api("GET", "/api/auth/me", { token: corrupt.token })).status, 401,
+    "createdAt bozuksa oturum GEÇERSİZ sayılıyor (kontrol kapalı tarafa düşüyor)");
+  eq(rows("SELECT tokenHash FROM sessions WHERE userId = ? AND role = 'owner'", corrupt.id).length, 0,
+    "bozuk oturum kaydı da siliniyor");
+
+  /**
+   * KABA KUVVET TESTİ EN SONA BIRAKILDI. OTP sınırlayıcısı IP başına çalışıyor ve 15 dakika
+   * kilitliyor; bu blok daha önce çalışırsa aynı IP'den yapılan SONRAKİ meşru girişler de
+   * kilitleniyor ve testin geri kalanı çöküyordu. Bu, sınırlayıcının doğru çalıştığının kanıtı —
+   * ama aynı zamanda gerçek bir dağıtım uyarısı: paylaşımlı bir IP arkasında (ofis, CGNAT) bir
+   * kişinin kaba kuvvet denemesi, aynı çıkıştaki herkesin girişini kilitler (bkz. el kitabı 22.1).
+   */
+  /**
+   * OTP DENEME SAYISI SINIRLI OLMALI: 6 haneli bir kod, sınırsız denemede saniyeler içinde bulunur.
+   */
+  const l2 = await api("POST", "/api/auth/login", { body: { email: otpUser.email, password: otpUser.password } });
+  let otpBlocked = false;
+  let attemptsUsed = 0;
+  for (let i = 0; i < 12; i++) {
+    attemptsUsed += 1;
+    const r = await api("POST", "/api/auth/verify-otp", { body: { loginTicket: l2.body.loginTicket, code: "000000" } });
+    if (r.status >= 400 && /çok fazla|deneme|geçersiz bilet|süresi/i.test(String(r.body?.error || ""))) {
+      // Bilet düşürüldüğünde doğru kod bile artık çalışmamalı — asıl kanıt bu.
+      const withRealCode = await api("POST", "/api/auth/verify-otp", { body: { loginTicket: l2.body.loginTicket, code: l2.body.devOtp } });
+      if (withRealCode.status >= 400) { otpBlocked = true; break; }
+    }
+  }
+  eq(otpBlocked, true, "yanlış OTP denemeleri bileti düşürüyor (kaba kuvvet kapalı)");
+  ok(attemptsUsed <= 6, `sınır makul sayıda denemede devreye giriyor (${attemptsUsed})`);
+
+
+  // ================================================================ 5b) YÖNETİCİ DEĞİŞİKLİK GÜNLÜĞÜ
+  /**
+   * DEĞİŞİKLİK GÜNLÜĞÜ NE KAYDEDİYOR? Denetim kaydı tutmak doğru; ama kaydın İÇİNE ne yazıldığı
+   * ayrı bir soru. Şifreler her yerde bcrypt ile saklanıyorken, aynı şifrenin DÜZ METİN olarak
+   * kalıcı bir denetim tablosuna düşmesi, bütün o çabayı tek satırda boşa çıkarır: tabloyu okuyan
+   * herkes (bir yönetici, bir yedek dosyası, bir veritabanı sızıntısı) şifreyi okur. İnsanlar
+   * şifrelerini başka sitelerde de kullanıyor, yani zarar bu siteyle sınırlı kalmaz.
+   *
+   * Kontrol SUNUCUDA olmalı: istemcinin "maskeleyerek gönderiyorum" demesi yetmez — eski bir
+   * istemci, hatalı bir çağrı ya da doğrudan API kullanımı maskeyi atlar.
+   */
+  const victimForPwd = await createUser("owner", { name: "Şifre Kurbanı", email: "pwd-victim@example.com", phone: "+905321240041" });
+  const SECRET = "cok-gizli-sifre-123";
+  await api("POST", `/api/owners/${victimForPwd.id}/set-password`, { token: admin, body: { password: SECRET } });
+  await api("POST", "/api/admin/change-log", {
+    token: admin,
+    body: {
+      action: "password güncellendi", entityType: "owner", entityId: victimForPwd.id,
+      before: { field: "password", value: "••••••" },
+      after: { field: "password", value: SECRET },
+    },
+  });
+  const logRes = await api("GET", "/api/admin/change-log", { token: admin });
+  eq(logRes.raw.includes(SECRET), false, "değişiklik günlüğü şifreyi DÜZ METİN saklamıyor");
+  eq(rows("SELECT after FROM admin_change_log WHERE after LIKE ?", `%${SECRET}%`).length, 0,
+    "veritabanında da düz metin şifre yok (istemcinin maskesine güvenilmiyor)");
+  // Kayıt tamamen kaybolmamalı: "şifre değiştirildi" bilgisi denetim için gerekli.
+  ok(logRes.body.some((e) => String(e.action || "").includes("password")), "şifre değişikliği kayıtta DURUYOR (yalnızca değeri gizli)");
+
+  // ================================================================ 5c) SORGU PARAMETRESİ TARAMASI
+  /**
+   * Şimdiye kadarki tarama yalnızca GÖVDEYİ zorluyordu. Oysa GET uçlarının çoğu sorgu
+   * parametresi okuyor (?days, ?field, ?targetType, ?limit, ?seed) ve bunlar da kullanıcı
+   * girdisi. Sütun adı ya da SQL parçası olarak kullanılan bir parametre en klasik enjeksiyon
+   * yoludur; sayı beklenen yere metin gelmesi de tipik 500 kaynağıdır.
+   */
+  const EVIL_QUERIES = [
+    "?days=1;DROP TABLE owners", "?days=-1", "?days=abc", "?days=999999999999",
+    "?field=id);DELETE FROM owners;--", "?field=__proto__", "?field=nonexistent",
+    "?targetType=' OR 1=1--", "?limit=1e9", "?offset=-1", "?seed=1,2,'a'",
+    "?vin=../../etc/passwd", "?q=%00", "?" + "a".repeat(3000) + "=1",
+  ];
+  const queryErrors = [];
+  for (const e of endpoints) {
+    if (e.method !== "GET") continue;
+    for (const q of EVIL_QUERIES) {
+      const res = await api("GET", fill(e.path) + q, { token: admin });
+      if (res.status >= 500) queryErrors.push(`GET ${e.path}${q} → ${res.status} ${String(res.raw).slice(0, 90)}`);
+    }
+  }
+  eq(queryErrors.slice(0, 6), [], "kötü niyetli sorgu parametreleri hiçbir GET ucunda 500 üretmiyor");
+  // Enjeksiyon denemesi gerçekten bir şey silmedi mi? Tablolar yerinde olmalı.
+  ok(rows("SELECT id FROM owners LIMIT 1").length > 0, "enjeksiyon denemelerinden sonra owners tablosu duruyor");
+  ok(rows("SELECT id FROM mechanics LIMIT 1").length > 0, "enjeksiyon denemelerinden sonra mechanics tablosu duruyor");
 
   // ================================================================ 6b) HESAP SİLME SONRASI VERİ TUTARLILIĞI
   /**

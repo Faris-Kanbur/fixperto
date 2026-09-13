@@ -101,8 +101,43 @@ router.get("/change-log", requireAdminAuth, (req, res) => {
   res.json(rows.map((r) => ({ ...r, reverted: !!r.reverted, before: r.before ? JSON.parse(r.before) : null, after: r.after ? JSON.parse(r.after) : null })));
 });
 
+/**
+ * DEĞİŞİKLİK GÜNLÜĞÜNE ŞİFRE YAZILMAZ — GÜVENLİK DÜZELTMESİ (denetimde bulundu).
+ * ------------------------------------------------------------------------------------------------
+ * AÇIK: yönetici bir kullanıcının şifresini sıfırladığında, istemci denetim kaydına
+ * `after: { field: "password", value: "<yeni şifre>" }` gönderiyordu. Şifreler her yerde bcrypt
+ * ile saklanıyorken aynı şifre DÜZ METİN olarak kalıcı bir tabloya düşüyor ve
+ * `GET /api/admin/change-log` ile geri okunabiliyordu.
+ *
+ * Neden kritik: bu tabloyu okuyan herkes (başka bir yönetici, bir veritabanı yedeği, bir sızıntı)
+ * şifreyi olduğu gibi görür. İnsanlar aynı şifreyi başka sitelerde de kullanıyor, yani zarar bu
+ * siteyle sınırlı kalmaz. Ayrıca bcrypt'in bütün amacı "veritabanını ele geçiren şifreyi
+ * öğrenemesin"di; tek bir düz metin sütun o çabayı boşa çıkarır.
+ *
+ * Kontrol SUNUCUDA: istemcinin maskeleyerek göndermesine güvenmek yeterli değil — eski bir
+ * istemci, hatalı bir çağrı ya da doğrudan API kullanımı maskeyi atlar. Kayıt SİLİNMİYOR:
+ * "şifre değiştirildi" bilgisi denetim için gerekli, gizlenen yalnızca DEĞER.
+ */
+const SECRET_FIELD = /^(password|currentPassword|newPassword|token|secret|otp)$/i;
+const REDACTED = "••••••";
+function redactSecrets(value) {
+  if (!value || typeof value !== "object") return value;
+  const out = Array.isArray(value) ? [...value] : { ...value };
+  // İstemcinin kullandığı biçim: { field: "password", value: "..." }
+  if (typeof out.field === "string" && SECRET_FIELD.test(out.field) && "value" in out) out.value = REDACTED;
+  // Doğrudan anahtar olarak da gelebilir: { password: "..." }
+  for (const k of Object.keys(out)) {
+    if (SECRET_FIELD.test(k)) out[k] = REDACTED;
+    else if (out[k] && typeof out[k] === "object") out[k] = redactSecrets(out[k]);
+  }
+  return out;
+}
+
 router.post("/change-log", requireAdminAuth, (req, res) => {
-  const { actor = "admin", action, entityType, entityId, before, after } = req.body || {};
+  const raw = req.body || {};
+  const { actor = "admin", action, entityType, entityId } = raw;
+  const before = redactSecrets(raw.before);
+  const after = redactSecrets(raw.after);
   const stmt = db.prepare(`INSERT INTO admin_change_log (actor, action, entityType, entityId, before, after) VALUES (@actor,@action,@entityType,@entityId,@before,@after)`);
   const info = stmt.run({ actor, action, entityType, entityId: String(entityId ?? ""), before: before ? JSON.stringify(before) : null, after: after ? JSON.stringify(after) : null });
   res.status(201).json({ id: info.lastInsertRowid });

@@ -79,6 +79,10 @@ export async function startServer() {
       IP_HASH_SALT: "e2e-salt",
       // Testte onlarca hesap açılıyor; kayıt sınırı bir ops ayarı (bkz. auth.js REGISTER_MAX).
       REGISTER_LIMIT_PER_HOUR: "500",
+      // Kimlik akışını test etmek için giriş sınırı yükseltiliyor; sınırın KENDİSİ ayrıca test ediliyor.
+      LOGIN_LIMIT_PER_WINDOW: "500",
+      // IP başına OTP sınırı yükseltiliyor; BİLET BAŞINA sınır (5) ayarlanamaz ve testte o doğrulanıyor.
+      OTP_IP_LIMIT_PER_WINDOW: "500",
       NODE_NO_WARNINGS: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],
