@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 27 STATİK takım + 3 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 27 STATİK takım + 4 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -1802,8 +1802,7 @@ Kimlik uçları (\`/api/auth/*\`) kasıtlı olarak sıkıştırma dışında: ka
         title: "25.3 Sıradaki fazlar ve neden şimdi değil",
         body: `Tam analiz ve ölçümler depo kökündeki PERFORMANS-RAPORU.md dosyasında.
 
-## Faz 2 — eksik indeksler
-\`vehicle_history.vin\`, \`vehicles.ownerId\`, \`appointments.ownerId\`, \`share_events.refCode\`, \`quote_offers.requestId\`, \`listings(status, sellerId)\`. Altısı da bugün tablo taraması yapıyor. Yazma maliyeti küçük tablolarda ihmal edilebilir. Sıfır risk.
+## Faz 2 — UYGULANDI (bkz. 25.4)
 
 ## Faz 3 — kalan 6 yükleme yolunu istemcide yeniden boyutlandırmaya geçirmek + lazy loading
 35 \`<img>\` etiketinden 13'ünde \`loading="lazy"\` var. Kalanlara eklenecek — ama hero ve ilk ekran görsellerine EKLENMEYECEK, yoksa ilk görüntü yavaşlar.
@@ -1825,6 +1824,69 @@ Dosya sistemi seçildi, obje deposu değil: sıfır ek bağımlılık, sıfır e
 
 ## Bilinen ve kabul edilen sınır
 SQLite tek yazıcılı. Yüksek eşzamanlı yazmada Postgres gerekecek — ama bu bugünün sorunu değil ve ölçülmeden yapılmamalı.`,
+      },
+      {
+        id: "faz-2-indeksler",
+        title: "25.4 Faz 2: indeksler ve sorgu planları",
+        body: `## Önce bir düzeltme: ilk rapor yanlıştı
+
+İlk performans raporu "6 indeks eksik" diyordu. Faz 2'de her sorgunun planı \`EXPLAIN QUERY PLAN\` ile okundu ve o listenin **3 satırı yanlış, 5 satırı eksik** çıktı.
+
+Yanlış olanlar: \`vehicle_history.vin\` zaten indeksliydi; \`share_events.refCode\` ve \`blog_posts.slug\` ise \`UNIQUE\` tanımlı olduğu için SQLite kendiliğinden indeks üretiyordu. Eksik olanlar: \`appointments.mechanicId\`, \`conversations.ownerId\`, \`conversations.mechanicId\`, \`support_tickets(fromId, fromType)\` ve \`profile_views\`.
+
+Hatanın sebebi yöntemdi: ilk rapor kaynak kodda \`CREATE INDEX\` arayıp sorgu sayısı saymıştı. İkisi de vekil ölçüt. Doğru ölçüt SQLite'ın o sorgu için ne YAPTIĞI:
+
+- \`SCAN <tablo>\` → tablo baştan sona okunuyor
+- \`SEARCH <tablo> USING INDEX\` → indeksten gidiliyor
+
+Bir indeksin VAR OLMASI ile KULLANILMASI ayrı şeyler: sütun sırası yanlışsa, sütuna bir işlev uygulanmışsa ya da karşılaştırma olumsuzsa (\`!=\`) indeks orada durur ama plan yine taramadır. Bu yüzden testler (\`tests/e2e/api4.e2e.mjs\`) indeksin varlığına değil PLANA bakıyor, hem de gerçek \`db.js\`'in kurduğu gerçek veritabanı üzerinde.
+
+## En büyük kazanç bir indeks değildi
+
+\`GET /api/conversations\` hiç \`WHERE\` cümlesi kullanmıyordu: tüm sohbetleri okuyup JS'te süzüyordu. Gizlilik açısından doğruydu — kimse başkasının sohbetini görmüyordu — ama mesajlar gömülü fotoğraflarıyla birlikte satırın İÇİNDE olduğu için "mesajlarım" ekranını açan her kullanıcı veritabanındaki HERKESİN fotoğraflarını diskten okutup belleğe alıyordu.
+
+Buraya indeks eklemek ve sorguyu olduğu gibi bırakmak hiçbir şeyi değiştirmezdi — "körlemesine indeks eklemek" tam olarak budur. O yüzden filtre SQL'e taşındı; kural birebir aynı:
+
+| Rol | Eskiden (JS) | Şimdi (SQL) |
+|---|---|---|
+| admin | \`true\` | WHERE yok |
+| owner | \`row.ownerId === actor.id\` | \`WHERE ownerId = ?\` |
+| mechanic | \`row.mechanicId === actor.id\` | \`WHERE mechanicId = ?\` |
+
+**Ölçüm — 301 sohbet, 390 MB mesaj verisi: 315 ms → 2 ms.**
+
+Bir performans değişikliğinin en sinsi hatası gizlilik kuralını farkında olmadan gevşetmektir: SQL bir satır FAZLA döndürürse o iyileştirme değil, sızıntıdır. Bu yüzden testler dört rolü de ayrı ayrı sınıyor, listeyi tekil GET ile karşılaştırıyor (listede görünmeyen bir sohbet id'si tahmin edilince okunabiliyor mu?) ve \`ownerId\` NULL olan eski kayıtların kimseye görünmediğini doğruluyor.
+
+## Eklenen 10 indeks
+
+\`vehicles(ownerId)\` · \`appointments(ownerId)\` · \`appointments(mechanicId)\` · \`conversations(ownerId)\` · \`conversations(mechanicId)\` · \`support_tickets(fromId, fromType)\` · \`profile_views(targetType, targetId, createdAt)\` · \`quote_offers(requestId)\` · \`vehicle_history(ownerId, serviceDate DESC)\` · \`listings(status)\`
+
+Üç tasarım kararı:
+
+**Randevularda İKİ indeks var.** Rol hangi sütunla sorgulandığını belirliyor: araç sahibi için \`ownerId\`, tamirci için \`mechanicId\`. Sadece biri eklenirse diğer rolün ekranı taramada kalır.
+
+**Destek talepleri BİLEŞİK.** Sorgu her zaman iki sütunu birlikte kullanıyor (\`fromId = ? AND fromType = ?\`), çünkü owner #7 ile mechanic #7 farklı kişiler. İki ayrı indeks aynı işi yapmaz.
+
+**Sütun sırası profil görüntülemelerinde önemli.** \`(targetType, targetId, createdAt)\` — eşitlikler önce, aralık en sonda. Ters sırada indeks aralık sütunundan sonrasını kullanamaz. Sorgular yalnızca \`COUNT\`/\`SUM\` istediği için plan \`COVERING INDEX\` diyor: satırlara hiç gidilmiyor. **200.000 satırda 5,7 ms → 0,0 ms**, ve istatistik ekranı bu tabloda beş ayrı sorgu çalıştırıyor.
+
+## Yazma maliyeti — tahmin değil, ölçüm
+
+Her indeks, sütun değiştiğinde fazladan bir B-ağacı yazması demek. Ölçüldü: 200.000 satırlık tabloya 2000 ekleme indekssiz 224 ms, indeksli 230 ms → **%2,7** (satır başına ~0,003 ms).
+
+Bu kadar küçük olmasının sebebi şu: eklenen sütunların hepsi SAHİPLİK/HEDEF alanı, yani satır oluşturulurken bir kez yazılıp bir daha neredeyse hiç değişmiyor (bir randevunun \`ownerId\`'si güncellenmiyor). Maliyet "her güncellemede" değil, "kayıt başına bir kez". Okuma kazancı ise her sayfa açılışında tekrar ediyor.
+
+## Kasıtlı olarak EKLENMEYENLER
+
+Körlemesine eklememek de bir karar, o yüzden gerekçeleri yazılı — hatta testlerde kayıt altında:
+
+- **\`sessions(createdAt)\`:** tek okuyucusu süresi dolmuş oturumları silen periyodik iş. Karşılığında her GİRİŞTE fazladan yazma gelirdi — en sık yazılan yolu yavaşlatıp en seyrek okunan işi hızlandırmak. Üstelik tablo 7 günlük TTL ile kendiliğinden sınırlı.
+- **\`listings(sellerId, sellerType)\`:** ilan listesi herkese açık ve filtresiz dönüyor, yani liste sorgusunda işe yaramaz. Tek kullanıcısı hesap silme (kullanıcı başına bir kez).
+- **\`quote_requests(ownerId)\`:** aynı gerekçe.
+- **\`mechanics\` filtre sütunları (price, rating, verified):** arama BUGÜN istemcide yapılıyor, sunucuya böyle bir sorgu hiç gitmiyor. Var olmayan bir sorgu için indeks eklemek ölçmeden karar vermek olurdu. Sunucu tarafı filtreleme yapıldığı gün birlikte eklenir.
+
+## İyi haber olarak bulunanlar
+
+Denetim sırasında en çok korkulan yer zaten sağlamdı: \`sessions.tokenHash\` her kimlik doğrulamalı istekte sorgulanıyor ve \`PRIMARY KEY\` olduğu için indeksli. Aynı şekilde \`owners.email\`/\`mechanics.email\` (giriş) ve \`translation_cache(fromLang, toLang, sourceText)\` (çeviri önbelleği) de \`UNIQUE\` sayesinde indeksli.`,
       },
     ],
   },

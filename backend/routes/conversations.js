@@ -94,10 +94,39 @@ function convoVisibleTo(row, actor) {
 
 export const conversationsRouter = Router();
 
+/**
+ * SOHBET LİSTESİ — filtre JS'ten SQL'e taşındı (Faz 2, performans).
+ * ------------------------------------------------------------------------------------------------
+ * ÖNCE: `SELECT * FROM conversations` ile TÜM sohbetler okunuyor, sonra JS'te `convoVisibleTo`
+ * ile süzülüyordu. Güvenlik açısından doğruydu (kimse başkasının sohbetini GÖRMÜYORDU) ama
+ * maliyeti şuydu: mesajlar — gömülü base64 fotoğraflarıyla birlikte — conversations satırının
+ * İÇİNDE duruyor. Yani "mesajlarım" ekranını açan her kullanıcı, veritabanındaki HERKESİN tüm
+ * fotoğraflarını diskten okutup belleğe alıyor, sonra bunların %99'unu atıyordu. 1.000 sohbet ×
+ * ortalama 2 MB = her istekte 2 GB okuma. Buradaki indeks (idx_conversations_owner/mechanic) tek
+ * başına işe yaramazdı, çünkü sorguda WHERE cümlesi YOKTU — indeks eklemek ama sorguyu olduğu
+ * gibi bırakmak tam olarak "körlemesine indeks eklemek" olurdu.
+ *
+ * SONRA: aynı kural SQL'de. Ve bu bir DAVRANIŞ DEĞİŞİKLİĞİ DEĞİL — üç rolün sonucu birebir aynı:
+ *   admin    → convoVisibleTo `true` döndürüyordu       → WHERE yok (hepsi)
+ *   owner    → `row.ownerId === actor.id`               → `WHERE ownerId = ?`
+ *   mechanic → `row.mechanicId === actor.id`            → `WHERE mechanicId = ?`
+ * NULL davranışı da aynı: JS'te `null === 5` false, SQL'de `NULL = 5` eşleşmiyor. Sahipsiz
+ * (ownerId NULL) sohbetler önce de görünmüyordu, şimdi de görünmüyor.
+ * `convoVisibleTo` KALDIRILMADI: tekil GET/PATCH yolları hâlâ onu kullanıyor, tek doğruluk
+ * kaynağı olarak orada duruyor (bkz. tests — iki yolun aynı sonucu verdiği doğrulanıyor).
+ */
 conversationsRouter.get("/", (req, res) => {
   const actor = resolveActor(req);
   if (!actor) return res.status(401).json({ error: "Bu veriye erişmek için giriş yapmanız gerekiyor." });
-  const rows = db.prepare(`SELECT * FROM conversations`).all().filter((r) => convoVisibleTo(r, actor));
+  const rows = actor.role === "admin"
+    ? db.prepare(`SELECT * FROM conversations`).all()
+    : actor.role === "owner"
+      ? db.prepare(`SELECT * FROM conversations WHERE ownerId = ?`).all(actor.id)
+      : actor.role === "mechanic"
+        ? db.prepare(`SELECT * FROM conversations WHERE mechanicId = ?`).all(actor.id)
+        // Bilinmeyen rol: convoVisibleTo'nun son satırı da `return false` idi. Yeni bir rol
+        // eklenirse sohbetler sessizce SIZMAK yerine sessizce GÖRÜNMEZ olsun — güvenli taraf.
+        : [];
   res.json(hydrateAll("conversations", rows));
 });
 

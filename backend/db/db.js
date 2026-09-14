@@ -896,6 +896,89 @@ CREATE TABLE IF NOT EXISTS taste_signals (
 CREATE INDEX IF NOT EXISTS idx_taste_user ON taste_signals (userId, role);
 `);
 
+/**
+ * FAZ 2 — EKSİK İNDEKSLER.
+ * ================================================================================================
+ * Tüm tablolar yukarıda oluşturulduktan SONRA burada, tek blokta. Her satırın gerekçesi yanında.
+ *
+ * NASIL BELİRLENDİ (tahminle değil, ölçümle):
+ * Kodda gerçekten çalışan her WHERE cümlesi çıkarıldı, sonra `EXPLAIN QUERY PLAN` ile SQLite'ın o
+ * sorgu için ne yaptığı okundu. Kural: planda `SCAN` görünüyorsa tablo baştan sona okunuyor,
+ * `SEARCH ... USING INDEX` görünüyorsa indeks kullanılıyor. Aşağıdaki her indeks, planı SCAN'den
+ * SEARCH'e çeviren ölçülmüş bir sorguya karşılık geliyor (bkz. tests/db-index.test.mjs).
+ *
+ * BU ARADA RAPORDAKİ ÜÇ HATA DÜZELTİLDİ (PERFORMANS-RAPORU.md C.9):
+ *   - `vehicle_history.vin` "indeks yok" diye yazılmıştı — ZATEN VAR (yukarıda, satır ~155).
+ *   - `share_events.refCode` de öyle — `UNIQUE NOT NULL` olduğu için SQLite kendiliğinden
+ *     `sqlite_autoindex` üretiyor. Aynı şey `blog_posts.slug`, `owners.email`, `sessions.tokenHash`
+ *     ve `translation_cache(fromLang,toLang,sourceText)` için de geçerli.
+ *   - Buna karşılık rapor GERÇEKTEN eksik olan beş indeksi atlamıştı: `appointments.mechanicId`,
+ *     `conversations.ownerId/mechanicId`, `support_tickets(fromId,fromType)` ve `profile_views`.
+ * Yani "raporda 6 indeks" cümlesi yanlıştı: 3'ü gereksiz, 5'i eksikti. Rapor düzeltildi.
+ *
+ * YAZMA MALİYETİ — GENEL DEĞERLENDİRME:
+ * Bir indeks, indekslenen sütun her değiştiğinde fazladan bir B-ağacı yazması demek. Aşağıdaki
+ * sütunların ortak özelliği şu: hepsi SAHİPLİK/HEDEF alanı, yani satır oluşturulurken bir kez
+ * yazılıyor ve bir daha neredeyse hiç değişmiyor (bir randevunun `ownerId`'si güncellenmiyor).
+ * Yani maliyet "her güncellemede" değil, "kayıt başına bir kez". Okuma tarafındaki kazanç ise her
+ * sayfa açılışında tekrar ediyor. Bu yüzden denge net biçimde okuma lehine.
+ *
+ * KASITLI OLARAK EKLENMEYENLER (körlemesine eklememek de bir karar):
+ *   - `sessions(createdAt)`: tek okuyucusu süresi dolmuş oturumları silen PERİYODİK iş. Karşılığında
+ *     her GİRİŞTE fazladan yazma gelir — yani en sık yazılan yolu yavaşlatıp en seyrek okunan yolu
+ *     hızlandırırdık. Üstelik tablo 7 günlük TTL ile kendiliğinden sınırlı.
+ *   - `listings(sellerId, sellerType)`: ilan listesi herkese açık ve FİLTRESİZ dönüyor, yani liste
+ *     sorgusunda işe yaramaz. Tek kullanıcısı hesap silme (kullanıcı başına bir kez).
+ *   - `quote_requests(ownerId)`: aynı gerekçe — tek kullanıcısı hesap silme.
+ *   - `mechanics.*` filtre sütunları (price, rating, verified): arama BUGÜN istemcide yapılıyor,
+ *     sunucuya böyle bir sorgu hiç gitmiyor. Var olmayan bir sorgu için indeks eklemek, ölçmeden
+ *     karar vermek olurdu. Sunucu tarafı filtreleme yapıldığı gün (ayrı iş) birlikte eklenir.
+ */
+db.exec(`
+-- ARAÇLARIM ekranı: GET /api/vehicles her açılışta \`WHERE ownerId = ?\` çalıştırıyor.
+CREATE INDEX IF NOT EXISTS idx_vehicles_owner ON vehicles (ownerId);
+
+-- RANDEVULAR iki taraftan da listeleniyor ve rol hangi sütunla sorgulandığını belirliyor
+-- (bkz. makeCrudRouter authScope): araç sahibi için ownerId, tamirci için mechanicId. Bu yüzden
+-- İKİSİ de gerekli — sadece biri eklenirse diğer rolün ekranı tablo taramasında kalır.
+CREATE INDEX IF NOT EXISTS idx_appointments_owner ON appointments (ownerId);
+CREATE INDEX IF NOT EXISTS idx_appointments_mechanic ON appointments (mechanicId);
+
+-- SOHBETLER — bu ikisi listedeki en yüksek getirili indeksler.
+-- Sebep: mesajlar (gömülü base64 fotoğraflarla birlikte) conversations satırının İÇİNDE. Yani
+-- bu tablodaki bir tarama "birkaç bin satır okumak" değil, veritabanındaki TÜM fotoğrafları
+-- diskten okumak demek. Sorgu ayrıca aşağıda SQL'e taşındı (routes/conversations.js).
+CREATE INDEX IF NOT EXISTS idx_conversations_owner ON conversations (ownerId);
+CREATE INDEX IF NOT EXISTS idx_conversations_mechanic ON conversations (mechanicId);
+
+-- DESTEK TALEPLERİ: sorgu her zaman İKİ sütunu birlikte kullanıyor — \`fromId = ? AND fromType = ?\`.
+-- (Tek başına fromId yetmez: owner #7 ile mechanic #7 farklı kişiler; bkz. server.js yorumu.)
+-- Bu yüzden bileşik indeks; iki ayrı indeks aynı işi yapmaz.
+CREATE INDEX IF NOT EXISTS idx_tickets_from ON support_tickets (fromId, fromType);
+
+-- PROFİL GÖRÜNTÜLEMELERİ: tablo her sayfa açılışında bir satır büyüyor, yani sınırsız artıyor.
+-- Tamirci istatistik ekranı ise bu tabloda BEŞ ayrı COUNT çalıştırıyor (toplam, bu yıl, dönüşüm,
+-- bu yılın dönüşümü, aya göre dağılım) — indekssiz hâlde beşi de baştan sona tarama.
+-- Sütun sırası sorgunun sırasıyla aynı: targetType/targetId eşitlik, createdAt aralık.
+-- Eşitlikler önce, aralık en sonda olmalı; ters sırada indeks aralık sütunundan sonrasını kullanamaz.
+-- Ayrıca sorgular yalnızca COUNT/SUM istediği için bu indeks "kapsayan" olabiliyor: satırların
+-- kendisine hiç gidilmiyor.
+CREATE INDEX IF NOT EXISTS idx_profile_views_target ON profile_views (targetType, targetId, createdAt);
+
+-- TEKLİFLER: bir talebin tekliflerini listeleme, hem araç sahibinin hem tamircinin gördüğü ekran.
+CREATE INDEX IF NOT EXISTS idx_quote_offers_request ON quote_offers (requestId);
+
+-- DOĞRULANMIŞ SERVİS GEÇMİŞİM: \`WHERE ownerId = ? ORDER BY serviceDate DESC\`.
+-- serviceDate indekse dâhil çünkü sıralama da ondan yapılıyor; böylece SQLite ayrı bir sıralama
+-- adımı (geçici B-ağacı) kurmuyor, kayıtları doğrudan sıralı okuyor.
+CREATE INDEX IF NOT EXISTS idx_vehicle_history_owner ON vehicle_history (ownerId, serviceDate DESC);
+
+-- İLAN DURUMU: yönetici paneli \`COUNT(*) WHERE status = 'active'\` çalıştırıyor ve öneri motoru
+-- adayları \`status\` üzerinden süzüyor. İlan satırları fotoğraf taşıdığı için ŞİŞMAN; indeksin asıl
+-- kazancı satır sayısı değil, satılmış/kaldırılmış ilanların fotoğraflarını hiç okumamak.
+CREATE INDEX IF NOT EXISTS idx_listings_status ON listings (status);
+`);
+
 /** Önbellek sütunlarını (reviewList/reviews/rating) tablodan yeniden üretir. Tek doğruluk kaynağı tablo. */
 export function recomputeMechanicReviews(mechanicId) {
   const list = db.prepare(`

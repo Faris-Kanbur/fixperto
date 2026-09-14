@@ -134,21 +134,41 @@ kodunu da indiriyor.
 
 ### C.9 — İndeks durumu
 
-Mevcut 5 indeks: `analytics_events` (3), `mechanic_reviews.mechanicId`, `taste_signals(userId,role)`.
+> **BU BÖLÜM DÜZELTİLDİ (Faz 2 uygulanırken).** İlk hâli kaynak kodda `CREATE INDEX` aramaya ve
+> sorgu sayısı saymaya dayanıyordu — ikisi de vekil ölçüt. Faz 2'de her sorgunun planı
+> `EXPLAIN QUERY PLAN` ile okundu ve ilk tablonun **üç satırı yanlış, beş satırı eksik** çıktı.
+> Aşağıdaki hâli ölçüme dayanıyor. Yanlışı silmek yerine bırakıyorum: hangi yöntemin neyi
+> kaçırdığını göstermesi, sonucun kendisinden daha öğretici.
 
-Sorgu desenlerine göre indeksi OLMAYAN sık sütunlar:
+**İlk raporun hataları:**
 
-| Sütun | Sorgu sayısı | Bugün | Ölçekte |
-|---|---|---|---|
-| `vehicle_history.vin` | 5 | tablo taraması | **VIN sorgulamada kritik** |
-| `vehicles.ownerId`, `appointments.ownerId` | 6 | tablo taraması | liste sorgularında kritik |
-| `share_events.refCode` | 4 | tablo taraması | orta |
-| `quote_offers.requestId` | 5 | tablo taraması | orta |
-| `listings.sellerId`, `listings.status` | 2 | tablo taraması | liste + filtreleme |
-| `blog_posts.slug` | 2 | tablo taraması | düşük (13 kayıt) |
-| `review_helpful(reviewId)` | 3 | **PK var** | ✓ |
+| İlk raporda yazan | Gerçek |
+|---|---|
+| `vehicle_history.vin` indekssiz | **Yanlış** — `idx_vehicle_history_vin` zaten var (db.js ~155) |
+| `share_events.refCode` indekssiz | **Yanlış** — `UNIQUE NOT NULL`, SQLite kendiliğinden indeks üretiyor |
+| `blog_posts.slug` indekssiz | **Yanlış** — aynı sebep (`UNIQUE`) |
+| `appointments.mechanicId` | **Eksikti** — tamircinin randevu ekranı tablo taraması yapıyordu |
+| `conversations.ownerId/mechanicId` | **Eksikti** — listedeki en pahalı tarama, aşağıda |
+| `support_tickets(fromId, fromType)` | **Eksikti** |
+| `profile_views(targetType, targetId, createdAt)` | **Eksikti** — sınırsız büyüyen tabloda 5 ayrı tarama |
 
-`WHERE id = ?` (97 sorgu) zaten INTEGER PRIMARY KEY → indeksli. Sorun orada değil.
+Zaten indeksli olanlar (ölçülerek doğrulandı): `analytics_events` (3 indeks), `mechanic_reviews.mechanicId`,
+`taste_signals(userId,role)`, `vehicle_history.vin`, `vehicle_history.appointmentId`,
+`blog_posts(status,publishedAt)`, `career_posts(status,createdAt)`, `review_helpful` (PK),
+`sessions.tokenHash` (PK — her isteğin yaptığı arama, iyi haber), `owners.email`/`mechanics.email`
+(UNIQUE), `translation_cache(fromLang,toLang,sourceText)` (UNIQUE), `share_events.refCode` (UNIQUE),
+`blog_posts.slug` (UNIQUE). `WHERE id = ?` (97 sorgu) INTEGER PRIMARY KEY → indeksli.
+
+**En pahalı tarama — ve indeksin tek başına ÇÖZMEDİĞİ yer:**
+`GET /api/conversations` hiç `WHERE` cümlesi kullanmıyordu: tüm tabloyu okuyup JS'te süzüyordu.
+Güvenlik açısından doğruydu, ama mesajlar (gömülü base64 fotoğraflarıyla) satırın İÇİNDE olduğu
+için "mesajlarım" ekranını açan her kullanıcı veritabanındaki herkesin tüm fotoğraflarını diskten
+okutuyordu. Buraya indeks eklemek ama sorguyu olduğu gibi bırakmak hiçbir şey değiştirmezdi.
+**Ölçüm (301 sohbet / 390 MB mesaj verisi):** 315 ms → **2 ms**.
+
+**Yazma maliyeti — ölçüldü, tahmin edilmedi:** 200.000 satırlık `profile_views` tablosuna 2000 ekleme
+indekssiz 224 ms, indeksli 230 ms → **%2,7 fark** (satır başına ~0,003 ms). Karşılığında istatistik
+sorgusu 5,7 ms → 0,0 ms ve plan `COVERING INDEX` diyor, yani satırlara hiç gidilmiyor.
 
 ### C.10 — Cache ve CDN yok
 
@@ -253,7 +273,7 @@ Bu, gerçekten gerektiğinde yapılacak bir iş.
 | 1 | **Sunucu tarafı görsel boyut + tür doğrulaması** (jenerik CRUD dâhil): `data:image/(jpeg\|png\|webp\|gif)` allowlist, alan başına boyut tavanı, SVG reddi | **P0** | **Düşük** — yalnızca reddetme ekliyor, mevcut geçerli veriye dokunmuyor | Depolama tükenmesi kapanır, SVG riski kapanır, DB büyümesi sınırlanır |
 | 2 | **Sohbet satırı tavanı**: mesaj başına görsel 6 MB → 1,5 MB; sohbet başına toplam BOYUT tavanı (satır 12 GB'a çıkamaz) | **P0** | **Düşük** | En büyük tek satır riski kapanır |
 | 3 | **Yanıt sıkıştırması** (`compression` middleware) | **P0** | **Düşük** | JSON meta verisinde 5-10x bant genişliği kazancı. Görselleri etkilemez. |
-| 4 | **Eksik indeksler**: `vehicle_history.vin`, `vehicles.ownerId`, `appointments.ownerId`, `share_events.refCode`, `quote_offers.requestId`, `listings(status, sellerId)` | **P1** | **Düşük** | VIN sorgulama ve liste sorguları tablo taramasından kurtulur. Yazma maliyeti: 6 indeks × küçük tablolar = ihmal edilebilir. |
+| 4 | **Eksik indeksler** — ~~6~~ **10 indeks** (liste C.9'da düzeltildi) + sohbet listesi filtresini JS'ten SQL'e taşı | **P1** | **Düşük** | Ölçüldü: sohbet listesi 315 ms → 2 ms; istatistik sorgusu 5,7 ms → 0,0 ms. Yazma maliyeti ölçüldü: **%2,7**. |
 | 5 | **Medya uçları** (`POST /api/media`, `GET /media/:hash`) + içerik karması dosya adı + `immutable` cache | **P1** | **Orta** — yeni uç, yeni dosya sistemi yazımı. Eski veri bozulmaz. | Görseller DB'den çıkar, cache'lenebilir, CDN'e hazır olur. **Asıl kazanç bu.** |
 | 6 | **Kalan 6 yükleme yolunu istemcide yeniden boyutlandırmaya geçir** (profil, kapak, sohbet, arıza, teklif fotoğrafı) | **P1** | **Düşük** — mevcut `readImageAsCompressedDataUrl` yeniden kullanılıyor | Yüklenen veri ~12x küçülür |
 | 7 | **Kalan 22 `<img>` etiketine `loading="lazy"` + `width`/`height`** (35'ten 13'ü zaten lazy) | **P1** | **Düşük** | Görünüm dışı görseller indirilmez; düzen kayması (CLS) azalır. Hero görselleri lazy YAPILMAZ. |
@@ -277,7 +297,8 @@ Bu, gerçekten gerektiğinde yapılacak bir iş.
 - `backend/package.json` — `compression` bağımlılığı
 
 **P1:**
-- `backend/db/db.js` — 6 indeks
+- `backend/db/db.js` — 10 indeks (Faz 2'de uygulandı; sayı C.9'da düzeltildi)
+- `backend/routes/conversations.js` — liste filtresi SQL'e (Faz 2'de uygulandı)
 - `backend/routes/media.js` — YENİ
 - `backend/server.js` — medya rotası + statik servis + cache başlıkları
 - `frontend/src/app/state/AppLogicProvider.tsx` — 6 yükleme yolu `readImageAsCompressedDataUrl`'e
