@@ -20,8 +20,25 @@ import { resolveActor } from "../utils/auth.js";
 // gönderdi" sorusunu da (mecanicId eşleşen tamirci ya da giriş yapmış owner/admin) cevaplıyor,
 // veri şeklinin geçerliliğinin yanı sıra.
 const MAX_MESSAGE_TEXT_LEN = 4000;
-const MAX_MESSAGE_IMAGE_LEN = 6_000_000; // ~4.5MB ikili veri karşılığı base64 (5mb body limitinin altında)
+/**
+ * SOHBET BOYUT TAVANLARI — performans denetiminde bulundu.
+ * ------------------------------------------------------------------------------------------------
+ * Eski değerler: görsel başına 6.000.000 karakter (~4,5 MB) × sohbet başına 2000 mesaj.
+ * Çarpımı hesaplamak yeterliydi: TEK BİR SOHBET SATIRI YASAL OLARAK 12 GB'A KADAR BÜYÜYEBİLİYORDU.
+ * Ve mesajlar tek bir JSON sütununda tutulduğu için her yeni mesaj bu satırı BAŞTAN OKUYUP BAŞTAN
+ * YAZIYOR: 100 MB'lık bir sohbette "merhaba" yazmak 100 MB okuma + 100 MB yazma demek.
+ *
+ * Yeni sınırlar birbirini tamamlıyor:
+ *   - Görsel başına 2 MB: istemci zaten 1600px/q0.78'e indiriyor (tipik 200-500 KB), yani meşru
+ *     yüklemenin ~4 katı. Sıkıştırmayı atlayan istemciyi bile kabul ediyor.
+ *   - Mesaj SAYISI 2000: değişmedi, uzun yazışmalar bozulmasın.
+ *   - Sohbet TOPLAM BOYUTU 40 MB: asıl koruma bu. Sayı sınırı tek başına yetmiyordu çünkü sorun
+ *     mesaj sayısı değil, mesajların BOYUTU. 40 MB, yüzlerce fotoğraflı bir yazışmayı bile kaldırır
+ *     ama satırın gigabaytlara çıkmasını engeller.
+ */
+const MAX_MESSAGE_IMAGE_LEN = 2_700_000;       // ~2 MB ikili karşılık (base64 %33 şişirir)
 const MAX_MESSAGES_PER_CONVERSATION = 2000;
+const MAX_CONVERSATION_TOTAL_LEN = 40 * 1024 * 1024;
 const VALID_SENDERS = new Set(["owner", "mechanic"]);
 
 function validateMessages(messages) {
@@ -37,6 +54,22 @@ function validateMessages(messages) {
       if (m.image.length > MAX_MESSAGE_IMAGE_LEN) return "Mesaj görseli çok büyük.";
     }
     if (!m.text && !m.image) return "Bir mesajın metni veya görseli olmalıdır.";
+    /**
+     * SVG REDDİ: `data:image/svg+xml` script taşıyabiliyor. Sohbet görselleri `<img src>` ile
+     * basıldığı için orada çalışmaz, ama veriyi DEPOLAMAYA almamak daha sağlam — yarın yeni bir
+     * gösterim yolu (ör. "yeni sekmede aç") eklendiği an açık oluşurdu.
+     */
+    if (typeof m.image === "string" && m.image.startsWith("data:") && !/^data:image\/(jpeg|jpg|png|webp|gif|avif);base64,/i.test(m.image)) {
+      return "Yalnızca JPEG, PNG, WebP, GIF ya da AVIF görsel gönderebilirsiniz.";
+    }
+  }
+  /**
+   * TOPLAM BOYUT. Mesaj sayısı sınırı tek başına yetmiyor: 2000 mesaj × büyük görsel = gigabaytlar.
+   * Ölçülen değer üzerinden karar verildi (bkz. PERFORMANS-RAPORU.md).
+   */
+  const totalLen = messages.reduce((sum, m) => sum + (m?.image?.length || 0) + (m?.text?.length || 0), 0);
+  if (totalLen > MAX_CONVERSATION_TOTAL_LEN) {
+    return "Bu sohbet boyut sınırına ulaştı. Yeni görsel göndermek için eski mesajları silin.";
   }
   return null;
 }

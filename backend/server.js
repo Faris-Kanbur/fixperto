@@ -3,6 +3,7 @@ import cors from "cors";
 import { seedIfEmpty } from "./db/seed.js";
 import { db } from "./db/db.js";
 import { trustedHops, logIpConfig } from "./utils/clientIp.js";
+import { compressResponses } from "./utils/compress.js";
 import { makeCrudRouter } from "./routes/makeCrudRouter.js";
 import adminRouter from "./routes/admin.js";
 import shareEventsRouter from "./routes/shareEvents.js";
@@ -126,6 +127,36 @@ app.use(cors({
   exposedHeaders: ["X-Total-Count"],
 }));
 app.use(express.json({ limit: "5mb" }));
+/**
+ * YANIT SIKIŞTIRMA — JSON yükünde 5-10x kazanç (bkz. utils/compress.js).
+ * express.json'dan SONRA, rotalardan ÖNCE: gövdeyi ayrıştırmakla ilgisi yok, ama tüm rotaların
+ * yanıtlarını sarmalaması gerekiyor. Kimlik uçları kasıtlı olarak kapsam dışında.
+ * NOT: base64 gömülü fotoğraflar sıkışmaz (%0-5) — bu, medya sorununun çözümü DEĞİL.
+ */
+app.use(compressResponses);
+
+/**
+ * GÖVDE ÇOK BÜYÜKSE 413 DÖNMELİ, 500 DEĞİL (Faz 1 testleri bunu ortaya çıkardı).
+ * ------------------------------------------------------------------------------------------------
+ * `express.json({limit:"5mb"})` sınırı aşan bir gövdede `PayloadTooLargeError` fırlatıyor ve bu
+ * hata genel hata katmanına düşüp "500 Internal server error" oluyordu. İki ayrı sorun:
+ *   1) YANLIŞ CEVAP: sunucuda bozulan bir şey yok; istek fazla büyük. 500, istemciye "tekrar dene"
+ *      dedirtiyor ve tekrar denemek hiçbir zaman işe yaramıyor.
+ *   2) SESSİZ SEBEP: kullanıcı fotoğrafın çok büyük olduğunu öğrenemiyor, "kaydedilemedi" görüyor.
+ * Artık 413 ve gerçek sebebi söyleyen bir mesaj dönüyor. Sınırın KENDİSİ de mesajda yazıyor ki
+ * kullanıcı ne yapacağını bilsin.
+ *
+ * NOT: bu ara katman JSON ayrıştırıcıdan SONRA gelmeli — hatayı o üretiyor.
+ */
+app.use((err, req, res, next) => {
+  if (err?.type === "entity.too.large" || err?.status === 413) {
+    return res.status(413).json({ error: "Gönderilen veri çok büyük (en fazla 5 MB). Fotoğrafı küçültüp tekrar deneyin." });
+  }
+  if (err?.type === "entity.parse.failed") {
+    return res.status(400).json({ error: "Geçersiz JSON gövdesi." });
+  }
+  return next(err);
+});
 
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "fixperto-backend" }));
 

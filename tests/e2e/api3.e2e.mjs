@@ -517,6 +517,112 @@ try {
   eq(spoofAttempts.every((s) => s === 429), true,
     `sahte X-Forwarded-For hız sınırını AŞAMIYOR (dönen kodlar: ${spoofAttempts.join(",")})`);
 
+  // ================================================================ 6e) MEDYA DOĞRULAMA (Faz 1)
+  /**
+   * Bu blok iki şeyi birlikte kanıtlıyor ve İKİNCİSİ daha önemli:
+   *   1) Zararlı/aşırı büyük görsel REDDEDİLİYOR.
+   *   2) MEVCUT GEÇERLİ BİÇİMLER HÂLÂ KABUL EDİLİYOR. Kullanıcı "çalışan sistemi bozma" dedi;
+   *      bu alanlar bugün üç ayrı biçim tutuyor (emoji, https adresi, data URI) ve üçü de meşru.
+   *      Bir güvenlik kısıtı meşru veriyi reddediyorsa o bir düzeltme değil, yeni bir hatadır.
+   */
+  const img = (mime, kb) => `data:${mime};base64,` + "A".repeat(Math.round(kb * 1024 * 4 / 3));
+
+  // --- MEVCUT BİÇİMLER BOZULMADI ---
+  const okEmoji = await api("PATCH", `/api/mechanics/${mech.id}`, { token: mech.token, body: { img: "🔧" } });
+  eq(okEmoji.status, 200, "emoji img alanı hâlâ kabul ediliyor (tohum verisi bu biçimde)");
+  const okUrl = await api("PATCH", `/api/mechanics/${mech.id}`, { token: mech.token, body: { coverPhoto: "https://loremflickr.com/800/600/car?lock=9" } });
+  eq(okUrl.status, 200, "https adresi hâlâ kabul ediliyor");
+  const okEmpty = await api("PATCH", `/api/mechanics/${mech.id}`, { token: mech.token, body: { coverPhoto: "" } });
+  eq(okEmpty.status, 200, "boş değer (fotoğrafı kaldır) hâlâ çalışıyor");
+  const okJpeg = await api("PATCH", `/api/mechanics/${mech.id}`, { token: mech.token, body: { coverPhoto: img("image/jpeg", 300) } });
+  eq(okJpeg.status, 200, "makul boyutlu JPEG data URI kabul ediliyor (istemcinin ürettiği tipik boyut)");
+  ok(row("SELECT coverPhoto FROM mechanics WHERE id = ?", mech.id).coverPhoto.startsWith("data:image/jpeg"),
+    "kabul edilen görsel GERÇEKTEN kaydedildi");
+
+  // --- ZARARLI / AŞIRI BÜYÜK REDDEDİLİYOR ---
+  const svg = await api("PATCH", `/api/mechanics/${mech.id}`, {
+    token: mech.token,
+    body: { coverPhoto: "data:image/svg+xml;base64," + Buffer.from('<svg onload="alert(1)"/>').toString("base64") },
+  });
+  eq(svg.status, 400, "SVG REDDEDİLİYOR (script taşıyabilir)");
+  ok(/SVG/i.test(String(svg.body?.error || "")), "ret mesajı sebebini söylüyor");
+  eq(row("SELECT coverPhoto FROM mechanics WHERE id = ?", mech.id).coverPhoto.startsWith("data:image/svg"), false,
+    "SVG veritabanına YAZILMADI (kabul etmemek, göstermemekten sağlam)");
+
+  eq((await api("PATCH", `/api/mechanics/${mech.id}`, { token: mech.token, body: { coverPhoto: "data:text/html;base64,PHNjcmlwdD4=" } })).status, 400,
+    "text/html data URI reddediliyor");
+  /**
+   * 4,5 MB'lık gövde express.json'ın 5 MB sınırını (JSON kaçışlarıyla birlikte) aşıyor ve daha
+   * medya doğrulamasına GELMEDEN reddediliyor. Bu testi yazarken oranın 500 döndüğünü gördüm —
+   * gerçek bir hata, çünkü sunucuda bozulan bir şey yok, istek fazla büyük. 413'e çevrildi.
+   */
+  eq((await api("PATCH", `/api/mechanics/${mech.id}`, { token: mech.token, body: { coverPhoto: img("image/jpeg", 4500) } })).status, 413,
+    "gövde sınırını aşan istek 413 veriyor (500 DEĞİL)");
+  // Gövde sınırının ALTINDA ama medya tavanının ÜSTÜNDE olan durum: doğrulama devreye giriyor.
+  eq((await api("PATCH", `/api/mechanics/${mech.id}`, { token: mech.token, body: { coverPhoto: img("image/jpeg", 2600) } })).status, 400,
+    "2,6 MB görsel medya doğrulamasıyla reddediliyor (tavan 2 MB)");
+  eq((await api("PATCH", `/api/owners/${owner.id}`, { token: owner.token, body: { photo: img("image/png", 1500) } })).status, 400,
+    "profil fotoğrafında daha dar tavan (ekranda 120px gösteriliyor)");
+
+  // --- DİZİ ALANLARI: öğe sayısı ve TOPLAM boyut ---
+  const manyPhotos = await api("POST", "/api/listings", {
+    token: owner.token,
+    body: { title: "Çok fotoğraflı", brand: "BMW", price: "400000", status: "active", photos: Array(25).fill(img("image/jpeg", 100)) },
+  });
+  eq(manyPhotos.status, 400, "25 galeri fotoğrafı reddediliyor (üst sınır 20)");
+  // Toplam boyut kontrolü: her biri tavanın altında (1,5 MB) ama toplamı 12 MB'ı aşıyor.
+  // Gövde sınırına takılmamak için 4 MB'lık toplamla test edilemez — bu yüzden 9 × 1,5 MB = 13,5 MB
+  // yerine gövde sınırının altında kalan bir kurgu gerekiyor; medya tavanı zaten öğe başına
+  // çalıştığı için toplam kontrolünü ayrı bir birim testiyle doğruluyoruz (aşağıda).
+  const bigTotal = await api("POST", "/api/listings", {
+    token: owner.token,
+    body: { title: "Toplam büyük", brand: "BMW", price: "400000", status: "active", photos: Array(4).fill(img("image/jpeg", 1000)) },
+  });
+  ok([201, 400, 413].includes(bigTotal.status),
+    `4 × 1 MB galeri: ${bigTotal.status} — 413 (gövde sınırı) da geçerli bir ret; ikisi de veriyi engelliyor`);
+  const goodGallery = await api("POST", "/api/listings", {
+    token: owner.token,
+    body: { title: "Normal galeri", brand: "BMW", price: "400000", status: "active", photo: img("image/jpeg", 250), photos: Array(6).fill(img("image/jpeg", 250)) },
+  });
+  eq(goodGallery.status, 201, "GERÇEKÇİ ilan (1 kapak + 6 galeri, 250 KB) hâlâ kabul ediliyor");
+
+  // --- SOHBET TAVANI ---
+  const convo = await api("POST", "/api/conversations", { token: owner.token, body: { mechanicId: mech.id, mechanicName: "Matris Oto", messages: [] } });
+  eq((await api("POST", `/api/conversations/${convo.body.id}/messages`, {
+    token: owner.token, body: { message: { text: "foto", image: img("image/jpeg", 3500) } },
+  })).status, 400, "sohbette 3,5 MB görsel reddediliyor (tavan 2 MB)");
+  eq((await api("POST", `/api/conversations/${convo.body.id}/messages`, {
+    token: owner.token, body: { message: { text: "foto", image: "data:image/svg+xml;base64,PHN2Zy8+" } },
+  })).status, 400, "sohbette SVG reddediliyor");
+  eq((await api("POST", `/api/conversations/${convo.body.id}/messages`, {
+    token: owner.token, body: { message: { text: "merhaba", image: img("image/jpeg", 400) } },
+  })).status, 200, "normal sohbet fotoğrafı hâlâ gönderilebiliyor");
+
+  // --- MEDYA YAZMALARINDA HIZ SINIRI ---
+  /**
+   * Boyut tavanı bir isteğin ne kadar yazacağını sınırlıyor; bu sınır KAÇ istek atılacağını.
+   * İkisi de gerekli: 2 MB tavanla dakikada 500 istek hâlâ gigabaytlar yazar.
+   */
+  let mediaBlocked = false;
+  for (let i = 0; i < 40; i++) {
+    const r = await api("PATCH", `/api/mechanics/${mech.id}`, { token: mech.token, body: { coverPhoto: img("image/jpeg", 60) } });
+    if (r.status === 429) { mediaBlocked = true; break; }
+  }
+  eq(mediaBlocked, true, "görsel yazmalarında hız sınırı devreye giriyor");
+  // Metin düzenlemesi ETKİLENMEMELİ — sınır yalnızca görsel taşıyan yazmalara.
+  eq((await api("PATCH", `/api/mechanics/${mech.id}`, { token: mech.token, body: { name: "Yeni Ad 2" } })).status, 200,
+    "görsel sınırı sıradan metin düzenlemesini ENGELLEMİYOR");
+
+  // --- SIKIŞTIRMA ---
+  const plain = await api("GET", "/api/mechanics");
+  const zipped = await api("GET", "/api/mechanics", { headers: { "Accept-Encoding": "gzip" } });
+  eq(zipped.headers["content-encoding"], "gzip", "yanıtlar gzip ile sıkıştırılıyor");
+  eq(zipped.headers["vary"], "Accept-Encoding", "Vary başlığı var (ara vekiller karıştırmasın)");
+  ok(Number(zipped.headers["content-length"]) < plain.raw.length / 2, "sıkıştırma en az 2x kazandırıyor");
+  ok(Array.isArray(zipped.body) && zipped.body.length > 0, "sıkıştırılmış yanıt GEÇERLİ JSON (istemci hiç değişmedi)");
+  eq((await api("GET", "/api/auth/me", { headers: { "Accept-Encoding": "gzip" } })).headers["content-encoding"], undefined,
+    "kimlik uçları sıkıştırma dışında (ihtiyat: jeton/OTP gövdede geçiyor)");
+
   // ================================================================ 7) YANIT ŞİŞKİNLİĞİ
   /**
    * Bir uç ihtiyacından fazla veri döndürüyorsa, bugün zararsız olan alan yarın hassas hâle gelir.

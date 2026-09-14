@@ -1,5 +1,8 @@
 import { Router } from "express";
 import { asyncRoute } from "../utils/asyncRoute.js";
+import { validateMediaBody, bodyCarriesMedia } from "../utils/mediaValidation.js";
+import { makeRateLimiter } from "../utils/rateLimiter.js";
+import { rateLimitKey } from "../utils/clientIp.js";
 import { db } from "../db/db.js";
 import { hydrate, hydrateAll, dehydrate } from "../db/hydrate.js";
 import { hashPassword, resolveActor, destroyUserSessions } from "../utils/auth.js";
@@ -79,6 +82,20 @@ const columnsOf = (table) => {
   try { return new Set(db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name)); }
   catch { return null; }
 };
+
+/**
+ * MEDYA TAŞIYAN YAZMALARA HIZ SINIRI (performans denetiminde bulundu).
+ * ------------------------------------------------------------------------------------------------
+ * Boyut tavanı tek bir isteğin ne kadar veri yazabileceğini sınırlıyor; bu sınırlayıcı ise KAÇ
+ * istek atılabileceğini. İkisi birlikte gerekli: tavan 2 MB olsa da dakikada 500 istek atan bir
+ * betik hâlâ gigabaytlar yazabilir. Sınır YALNIZCA gövdesinde gömülü görsel olan yazmalara
+ * uygulanıyor — sıradan profil/ilan düzenlemeleri (metin alanları) hiç etkilenmiyor, yani mevcut
+ * kullanım deneyimi bozulmuyor.
+ *
+ * Dakikada 30: gerçek bir kullanıcı ilan verirken 15 galeri fotoğrafını tek istekte gönderiyor.
+ * 30, meşru kullanımın çok üstünde; otomatik doldurmanın çok altında.
+ */
+const mediaWriteLimiter = makeRateLimiter({ maxAttempts: 30, lockoutMs: 10 * 60 * 1000, windowMs: 60 * 1000 });
 
 export function makeCrudRouter(table, {
   idColumn = "id",
@@ -277,6 +294,19 @@ export function makeCrudRouter(table, {
         if (f.typeField) body[f.typeField] = f.typeValue;
       }
     }
+    /**
+     * MEDYA DOĞRULAMASI — tür + boyut. Mevcut geçerli biçimler (emoji, https adresi) kabul
+     * edilmeye devam ediyor; yalnızca zararlı (SVG) ya da aşırı büyük data URI reddediliyor.
+     */
+    const mediaErr = validateMediaBody(table, body);
+    if (mediaErr) return res.status(400).json({ error: mediaErr });
+    if (bodyCarriesMedia(table, body)) {
+      const key = rateLimitKey(req);
+      if (mediaWriteLimiter.check(key).blocked) {
+        return res.status(429).json({ error: "Çok fazla görsel yüklemesi. Lütfen birkaç dakika sonra tekrar deneyin." });
+      }
+      mediaWriteLimiter.registerFailure(key);
+    }
     const badTypes = unbindableKeys(body);
     if (badTypes.length) return res.status(400).json({ error: "Geçersiz alan değeri gönderildi.", fields: badTypes });
     const cols = Object.keys(body);
@@ -322,6 +352,15 @@ export function makeCrudRouter(table, {
     }
     if (passwordVerify) delete body.password;
     if (authScope) for (const f of scopeFields) delete body[f.field]; // sahiplik alanı PATCH ile devredilemez
+    const mediaPatchErr = validateMediaBody(table, body);
+    if (mediaPatchErr) return res.status(400).json({ error: mediaPatchErr });
+    if (bodyCarriesMedia(table, body)) {
+      const key = rateLimitKey(req);
+      if (mediaWriteLimiter.check(key).blocked) {
+        return res.status(429).json({ error: "Çok fazla görsel yüklemesi. Lütfen birkaç dakika sonra tekrar deneyin." });
+      }
+      mediaWriteLimiter.registerFailure(key);
+    }
     const badPatchTypes = unbindableKeys(body);
     if (badPatchTypes.length) return res.status(400).json({ error: "Geçersiz alan değeri gönderildi.", fields: badPatchTypes });
     const cols = Object.keys(body).filter((c) => c !== idColumn);

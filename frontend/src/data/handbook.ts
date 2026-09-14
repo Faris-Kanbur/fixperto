@@ -847,13 +847,13 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 26 STATİK takım + 3 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 27 STATİK takım + 3 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
 
 ## Takımlar
-Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı, arayüz çizimi, tarayıcı uyumluluğu, IP güvenliği.
+Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı, arayüz çizimi, tarayıcı uyumluluğu, IP güvenliği, medya doğrulama.
 Uçtan uca: tests/e2e/api.e2e.mjs (kimlik, araç, randevu, değerlendirme, ilan, sohbet, hesap güvenliği, girdi güvenliği), tests/e2e/api2.e2e.mjs (destek, teklif, blog/kariyer, duyuru, eşzamanlılık, analitik, öneri rızası, şifre uçları, başlıklar, hız sınırı), tests/e2e/api3.e2e.mjs (OTOMATİK GÜVENLİK MATRİSİ — aşağıya bakın).
 
 ## Otomatik güvenlik matrisi — elle yazılan testin kapatamadığı boşluk
@@ -1729,6 +1729,102 @@ Statik olarak ölçülemeyen şeyler şunlar, ve bir insanın bakması gerekiyor
 - iOS'ta klavye açıkken sabit konumlu öğelerin yeri (WebKit klavye açılınca görünüm penceresini farklı hesaplar).
 
 Bunlar için doğru araç gerçek bir cihaz ya da tarayıcı otomasyonu (Playwright/BrowserStack); statik tarama onların yerine geçmez ve geçtiğini iddia etmemeli.`,
+      },
+    ],
+  },
+  {
+    id: "olcek-ve-medya",
+    title: "25. Ölçek, Medya ve Performans",
+    summary: "Fotoğraflar nerede saklanıyor, ölçekte ne olur, hangi sınırlar neden konuldu.",
+    pages: [
+      {
+        id: "medya-mimarisi",
+        title: "25.1 Fotoğraflar nerede — ve bunun bedeli",
+        body: `## Mevcut durum: fotoğraflar VERİTABANININ İÇİNDE
+Bu projede HTTP dosya yükleme yok. Tarayıcı fotoğrafı \`FileReader.readAsDataURL\` ile base64'e çeviriyor ve değer, normal bir JSON alanı gibi SQLite'ın TEXT sütununa yazılıyor. Ayrı dosya sistemi, obje deposu ya da CDN yok.
+
+Bu seçimin bir avantajı var ve önemsiz değil: dosya adı hiç kullanılmadığı ve dosya sistemine yazılmadığı için yol atlama (path traversal), çifte uzantı ve polyglot saldırıları YAPISAL OLARAK imkânsız. Ayrıca sunucu görseli hiç çözmediği için sıkıştırma bombası CPU riski de yok. Görseller kayıtların içinde olduğu için ayrı bir "tahmin edilebilir dosya adı" IDOR yüzeyi yok.
+
+## Ama ölçekte bedeli ağır — ÖLÇÜLDÜ
+10 ilana 1 kapak + 5 galeri fotoğrafı eklendi (SIKIŞTIRILMIŞ hâlleriyle, 250 KB/foto — yani iyimser senaryo):
+
+\`\`\`
+GET /api/listings   18 kayıt   14,67 MB   201 ms
+ilan başına ortalama: 834 KB
+\`\`\`
+
+Bugün aynı uç 7,9 KB / 3 ms. Veritabanı dosyası 13,45 MB'a çıktı → fotoğraf başına ~224 KB depolama. 200.000 fotoğrafta (10.000 kullanıcı × 20) tahmini ~45 GB TEK SQLite dosyası; günlük yedeklemesi pratik değil.
+
+## Asıl kısıt: bu görseller CACHE'LENEMEZ
+Görseller kimlik doğrulamalı, dinamik bir JSON yanıtının İÇİNDE gömülü. Ayrı bir URL'i olmayan bir görsel ne tarayıcı cache'ine, ne CDN'e, ne \`immutable\` başlığına konabilir. Yani "CDN ekleyelim" bugünkü mimaride işe yaramaz — cache'lenecek ayrı bir kaynak yok. Bu, mimarinin çekirdek kısıtı ve medya uçlarının (Faz 4) asıl gerekçesi.
+
+## Yeniden boyutlandırma kısmi
+8 yükleme yolundan 2'si (ilan kapak + galeri) istemcide 1600px / JPEG q0.78'e indiriliyor. Profil fotoğrafı, tamirci kapak fotoğrafı, sohbet fotoğrafı, arıza ve teklif fotoğrafı HAM kaydediliyor. Ayrıca yeniden boyutlandırma istemcide olduğu için doğrudan API'ye giderek atlanabiliyor — bu yüzden sunucu tarafı tavan şart (bkz. 25.2).`,
+      },
+      {
+        id: "faz1-sinirlar",
+        title: "25.2 Faz 1: konulan sınırlar ve gerekçeleri",
+        body: `Hiçbir mevcut davranış değiştirilmedi; yalnızca REDDETME ve SIKIŞTIRMA eklendi.
+
+## Sunucu tarafı medya doğrulama (utils/mediaValidation.js)
+Jenerik CRUD fabrikası TEXT sütunlarına yazarken hiçbir tür/boyut kontrolü yapmıyordu; tek sınır \`express.json({limit:"5mb"})\` idi.
+
+Doğrulama ÜÇ mevcut biçimi de kabul ediyor — emoji (\`mechanics.img\`), https adresi (tohum kapak fotoğrafları) ve data URI (kullanıcı yüklemeleri). Bir güvenlik kısıtı meşru veriyi reddediyorsa o bir düzeltme değil, yeni bir hatadır; bu yüzden birim testlerin yarısı "hâlâ kabul ediliyor mu" sorusunu soruyor.
+
+Reddedilenler: \`data:image/svg+xml\` (script taşıyabilir), \`text/html\`, \`javascript\`, görsel alanında PDF, ve tavanı aşan boyutlar. Tavanlar: tek görsel 2 MB, profil/avatar 1 MB (ekranda en fazla 120px gösteriliyor), belge 4 MB (PDF olabilir), dizi toplamı 12 MB, dizi öğe sayısı 20.
+
+2 MB seçildi çünkü istemci tipik olarak 200-500 KB üretiyor — yani meşru yüklemenin ~4 katı. Sıkıştırmayı atlayan bir istemciyi bile kabul ediyor ama sınırsız yazmayı engelliyor.
+
+SVG'yi DEPOLAMAYA almamak, göstermemekten daha sağlam: \`<img src>\` içinde script çalışmaz ama yarın "yeni sekmede aç" gibi bir gösterim yolu eklendiği an açık oluşurdu.
+
+## Sohbet satırı tavanı
+Eski değerler çarpıldığında ortaya çıkan şey şuydu: görsel başına 6 MB × sohbet başına 2000 mesaj = TEK BİR SATIR YASAL OLARAK 12 GB. Ve mesajlar tek JSON sütununda tutulduğu için her yeni mesaj bu satırı baştan okuyup baştan yazıyor — 100 MB'lık bir sohbette "merhaba" yazmak 100 MB okuma + 100 MB yazma demek.
+
+Yeni sınırlar: görsel başına 2 MB, mesaj sayısı 2000 (değişmedi), ve asıl koruma olan sohbet TOPLAM boyutu 40 MB. Sayı sınırı tek başına yetmiyordu çünkü sorun mesaj sayısı değil, mesajların boyutuydu.
+
+## Medya yazmalarında hız sınırı
+Boyut tavanı bir isteğin ne kadar yazacağını sınırlıyor; hız sınırı KAÇ istek atılacağını. İkisi de gerekli: 2 MB tavanla dakikada 500 istek hâlâ gigabaytlar yazar. Sınır dakikada 30 ve YALNIZCA gövdesinde gömülü görsel olan yazmalara uygulanıyor — sıradan metin düzenlemeleri hiç etkilenmiyor.
+
+## Gövde çok büyükse 413, 500 değil
+\`express.json\` sınırı aşan gövdede \`PayloadTooLargeError\` fırlatıyor ve bu genel hata katmanına düşüp "500 Internal server error" oluyordu. İki ayrı sorun: yanlış cevap (sunucuda bozulan bir şey yok, istek fazla büyük) ve sessiz sebep (kullanıcı fotoğrafın büyük olduğunu öğrenemiyor). Artık 413 ve sınırı söyleyen bir mesaj dönüyor.
+
+## Yanıt sıkıştırma (utils/compress.js)
+Hiçbir yanıt sıkıştırılmıyordu. Ölçüldü: \`/api/mechanics\` 15,3 KB → 3,4 KB (4,5x).
+
+\`compression\` paketi yerine \`node:zlib\` ile 40 satır yazıldı: yeni bir bağımlılık, güncellenmesi ve güvenlik takibi gereken yeni bir yüzey demek. Projenin geri kalanı da aynı ilkeyle yazılmış (helmet yerine dört başlık elle).
+
+DÜRÜST SINIR: base64 kodlanmış JPEG zaten sıkıştırılmış bir görüntünün metin gösterimidir; gzip onu %0-5 küçültür. Bu değişiklik META VERİ yükünü düşürür, gömülü fotoğraf yükünü DÜŞÜRMEZ. Fotoğraf sorununun çözümü ayrı (medya uçları).
+
+Kimlik uçları (\`/api/auth/*\`) kasıtlı olarak sıkıştırma dışında: kazanç yok, ve BREACH sınıfı saldırılara karşı ihtiyat (jeton/OTP gövdede geçiyor). Bu API'de ilgili koşul zaten yok — oturum jetonu Authorization BAŞLIĞINDA taşınıyor, çerez kullanılmıyor — ama küçük bir ihtiyatın bedeli de yok.`,
+      },
+      {
+        id: "sonraki-fazlar",
+        title: "25.3 Sıradaki fazlar ve neden şimdi değil",
+        body: `Tam analiz ve ölçümler depo kökündeki PERFORMANS-RAPORU.md dosyasında.
+
+## Faz 2 — eksik indeksler
+\`vehicle_history.vin\`, \`vehicles.ownerId\`, \`appointments.ownerId\`, \`share_events.refCode\`, \`quote_offers.requestId\`, \`listings(status, sellerId)\`. Altısı da bugün tablo taraması yapıyor. Yazma maliyeti küçük tablolarda ihmal edilebilir. Sıfır risk.
+
+## Faz 3 — kalan 6 yükleme yolunu istemcide yeniden boyutlandırmaya geçirmek + lazy loading
+35 \`<img>\` etiketinden 13'ünde \`loading="lazy"\` var. Kalanlara eklenecek — ama hero ve ilk ekran görsellerine EKLENMEYECEK, yoksa ilk görüntü yavaşlar.
+
+## Faz 4 — medya uçları (asıl mimari kazanç)
+\`POST /api/media\` + \`GET /media/:hash\` + içerik karması dosya adı + \`immutable\` cache. İçerik karması olunca cache invalidation sorunu HİÇ oluşmuyor: içerik değişince URL değişir, kullanıcı profil fotoğrafını değiştirince eskisi cache'te kalsa bile kimse ona bakmaz. Kullanıcının verdiği dosya adı hiç kullanılmadığı için yol atlama da imkânsız kalır.
+
+Mevcut base64 değerler OLDUĞU GİBİ çalışmaya devam eder — \`<img src>\` hem \`data:\` hem \`/media/...\` kabul ediyor. Yani mevcut fotoğrafların hiçbiri bozulmaz, silinmez, taşınmak zorunda değil.
+
+Dosya sistemi seçildi, obje deposu değil: sıfır ek bağımlılık, sıfır ek maliyet, ve "veritabanına binary koymama" hedefini tam karşılıyor. Obje deposu (S3/R2) doğru ADIM ama İKİNCİ adım — çok sunucuya geçince ya da 100 GB'ı aşınca. Yol soyutlaması aynı kaldığı için geçiş tek modül değişikliği olur.
+
+## ŞU ANDA GEREKSİZ görülenler
+- **Kuyruk / arka plan worker:** sunucuda görsel işleme olmadığı için kuyruğa alınacak ağır iş yok. Eklemek gereksiz karmaşıklık.
+- **CDN:** Faz 4'ten ÖNCE anlamsız — cache'lenecek ayrı bir görsel URL'i yok.
+- **Obje deposu:** çok sunucu ya da 100 GB'da.
+- **Sunucu tarafı görsel işleme (sharp):** istemci yeterli ve daha güvenli. Sunucuya native bağımlılık + CPU yükü + sıkıştırma bombası riski getirirdi. Sunucu yalnızca DOĞRULUYOR.
+- **AVIF:** tarayıcıda üretilemiyor, sunucu tarafı işleme gerektirir.
+- **Sunucu tarafı filtreleme + sayfalama:** arka uç hazır (\`?limit\`/\`?offset\` + \`X-Total-Count\`) ama frontend kullanmıyor ve filtreleme istemcide (35+ filtre). Görsel sorunu çözülünce ilan başına yük 834 KB'dan ~2 KB'a düşeceği için 10.000+ ilana kadar mevcut yaklaşım çalışır. Gerçekten gerektiğinde, ÖLÇEREK yapılacak.
+
+## Bilinen ve kabul edilen sınır
+SQLite tek yazıcılı. Yüksek eşzamanlı yazmada Postgres gerekecek — ama bu bugünün sorunu değil ve ölçülmeden yapılmamalı.`,
       },
     ],
   },
