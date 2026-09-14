@@ -38,7 +38,7 @@ export function PhotoLightbox({ photos, index, onIndexChange, onClose, title = "
         )}
         <div className="max-w-full max-h-full flex items-center justify-center">
           {isImgUrl(current) ? (
-            <img src={current} onError={imgFallbackHandler} alt={t("lightboxPhotoAlt", { title, n: String(safeIndex + 1) })} className="max-w-full max-h-[calc(100vh-160px)] object-contain rounded-lg" />
+            <img src={current} onError={imgFallbackHandler} alt={t("lightboxPhotoAlt", { title, n: String(safeIndex + 1) })} className="max-w-full max-h-viewport-photo object-contain rounded-lg" />
           ) : (
             <span className="text-8xl">{current}</span>
           )}

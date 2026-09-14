@@ -2,7 +2,12 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover: çentikli telefonlarda env(safe-area-inset-*) değişkenlerinin DOLU
+         gelmesi için gerekli (bkz. src/index.css .pb-safe). user-scalable/maximum-scale BİLEREK
+         yok: zoom'u kapatmak iOS'taki "alan odaklanınca zoomlanıyor" hatasını gizlerdi ama az
+         gören kullanıcıların yakınlaştırmasını da engellerdi (WCAG 1.4.4). O hata CSS ile
+         çözüldü. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Fixperto</title>
   </head>
   <body>

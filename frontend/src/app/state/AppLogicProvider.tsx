@@ -1232,7 +1232,29 @@ function useAppLogic() {
   const stopUsingLocation = () => { setUserLocation(null); setLocationStatus("idle"); setToast({ type: "info", text: "📍 Konum kullanımı kapatıldı, tahmini mesafeler gösteriliyor." }); };
   const requestNotifPermission = () => {
     if (typeof Notification === "undefined") { setToast({ type: "info", text: "🔔 Tarayıcınız bildirimleri desteklemiyor." }); return; }
-    Notification.requestPermission().then(perm => { setNotifPermission(perm); if (perm === "granted") { setToast({ type: "info", text: "🔔 Bildirimler açıldı." }); try { new Notification("Fixperto", { body: "Bildirimler başarıyla açıldı. Randevu güncellemelerinden haberdar olacaksınız." }); } catch (e) {} } else if (perm === "denied") setToast({ type: "info", text: "🔔 Bildirim izni reddedildi." }); });
+    /**
+     * İKİ İMZA BİRDEN DESTEKLENİYOR — eski Safari yüzünden.
+     * Notification.requestPermission() modern tarayıcılarda SÖZ (promise) döndürür. Safari uzun
+     * süre yalnızca GERİ ÇAĞRI (callback) imzasını destekledi ve `undefined` döndürdü; bu yüzden
+     * `.then(...)` çağırmak "undefined is not an object" hatası veriyordu — yani bildirim
+     * düğmesi eski iPhone/iPad'lerde tıklandığında hiçbir şey yapmıyordu (hata konsolda kalıyor,
+     * kullanıcı sebebini hiç görmüyor). Dönen değer söz mü diye bakıp iki yolu da kullanıyoruz.
+     */
+    const handle = (perm) => {
+      setNotifPermission(perm);
+      if (perm === "granted") {
+        setToast({ type: "info", text: "🔔 Bildirimler açıldı." });
+        try { new Notification("Fixperto", { body: "Bildirimler başarıyla açıldı. Randevu güncellemelerinden haberdar olacaksınız." }); } catch { /* bazı tarayıcılar yalnızca service worker ile izin veriyor */ }
+      } else if (perm === "denied") {
+        setToast({ type: "info", text: "🔔 Bildirim izni reddedildi." });
+      }
+    };
+    try {
+      const result = Notification.requestPermission(handle);
+      if (result && typeof result.then === "function") result.then(handle).catch(() => { /* kullanıcı kapattı */ });
+    } catch {
+      setToast({ type: "info", text: "🔔 Tarayıcınız bildirimleri desteklemiyor." });
+    }
   };
   // `allowed` parametresi, ilgili bildirim kategorisi (randevu/teklif/mesaj/başvuru) ayarlardan
   // kapatılmışsa false gelir — o zaman tarayıcı izni olsa da bildirim gönderilmez.

@@ -847,13 +847,13 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 24 STATİK takım + 3 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 25 STATİK takım + 3 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
 
 ## Takımlar
-Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı, arayüz çizimi.
+Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı, arayüz çizimi, tarayıcı uyumluluğu.
 Uçtan uca: tests/e2e/api.e2e.mjs (kimlik, araç, randevu, değerlendirme, ilan, sohbet, hesap güvenliği, girdi güvenliği), tests/e2e/api2.e2e.mjs (destek, teklif, blog/kariyer, duyuru, eşzamanlılık, analitik, öneri rızası, şifre uçları, başlıklar, hız sınırı), tests/e2e/api3.e2e.mjs (OTOMATİK GÜVENLİK MATRİSİ — aşağıya bakın).
 
 ## Otomatik güvenlik matrisi — elle yazılan testin kapatamadığı boşluk
@@ -1625,6 +1625,80 @@ Kapatmak yalnızca yeni yazmayı durdurmaz; birikmiş profil de silinir. Veriyi 
 
 ## İzin vermeyen cezalandırılmıyor
 Kapalıyken bölüm kaybolmuyor: ürün-ürün benzerliği ve "şu sıralar çok bakılıyor" gösteriliyor, etiketi de dürüstçe "popüler" oluyor. Reddedeni boş ekranla cezalandırmak, rızayı gönüllü olmaktan çıkarır.`,
+      },
+    ],
+  },
+  {
+    id: "tarayici-uyumlulugu",
+    title: "24. Tarayıcı Uyumluluğu ve Duyarlılık",
+    summary: "Hangi tarayıcılarda ne değişiyor, hangi tuzaklar kapatıldı, neyi hâlâ tarayıcıda denemek gerekiyor.",
+    pages: [
+      {
+        id: "motorlar",
+        title: "24.1 Üç motor, beş tarayıcı",
+        body: `Pazarda beş büyük tarayıcı var ama PRATİKTE ÜÇ MOTOR var — ve uyumluluk motorun işi, tarayıcı markasının değil.
+
+## Blink — yaklaşık %78
+Chrome (~%69), Edge (~%5) ve Samsung Internet (~%2) aynı motoru kullanıyor. Chrome'da çalışan bir şey Edge ve Samsung Internet'te de çalışır; üçünü ayrı ayrı denemek uyumluluk açısından yeni bilgi vermez (arayüz kabuğu farklı, web içeriği aynı).
+
+## WebKit — yaklaşık %16, RİSK BURADA
+Safari. Hem masaüstünde hem iPhone/iPad'de (iOS'ta tüm tarayıcılar WebKit kullanmak zorunda — iPhone'daki "Chrome" da WebKit'tir). Özellik desteği diğerlerinin arkasından geliyor ve kendine özgü davranışları var. Bu bölümdeki kuralların çoğu Safari kaynaklı.
+
+## Gecko — yaklaşık %3
+Firefox. Genellikle standartlara yakın ama webkit ön ekli kuralları YOK SAYAR.
+
+## Bundan çıkan kural
+"Chrome'da çalışıyor" bir uyumluluk kanıtı değildir: pazarın %78'ini kapatır, kalan riski hiç ölçmez. Bir özellik eklerken sorulacak soru "Safari'de de var mı" ve "Firefox webkit ön ekine bakmadan bunu nasıl çiziyor".`,
+      },
+      {
+        id: "kapatilan-tuzaklar",
+        title: "24.2 Kapatılan tarayıcı tuzakları",
+        body: `## 1) iOS'ta alan odaklanınca sayfa zoomlanıyordu — en görünür mobil hata
+iOS Safari, yazı tipi 16px'ten KÜÇÜK bir input/select/textarea odaklandığında sayfayı otomatik yakınlaştırır ve odak kalkınca GERİ ALMAZ. Bu projede 265 alanın 213'ü Tailwind'in \`text-sm\` (14px) sınıfını kullanıyordu — yani telefonda formların neredeyse tamamı bunu tetikliyordu. Kullanıcı her alandan sonra iki parmakla uzaklaştırmak zorunda kalıyordu.
+
+Düzeltme global bir CSS kuralı: dokunmatik işaretçide (\`pointer: coarse\`) alanlar 16px. 213 sınıfı tek tek değiştirmek birinin unutulması demekti; ayrıca masaüstü tasarımı da bozulurdu.
+
+İnternette en çok önerilen "çözüm" viewport'a \`user-scalable=no\` yazmak. BUNU YAPMADIK: zoom'u kapatmak hatayı gizler ama az gören kullanıcıların yakınlaştırmasını da engeller (WCAG 1.4.4). Bir erişilebilirlik özelliğini kapatarak düzen hatası çözülmez.
+
+## 2) Panoya kopyalama sessizce başarısız oluyordu
+\`navigator.clipboard\` yalnızca GÜVENLİ BAĞLAMDA var. localhost güvenli sayılır ama telefondan \`http://192.168.1.x\` ile bakarken YOK. Eski kod başarısızlığı yutuyor ve yine de "Kopyalandı ✓" gösteriyordu — kullanıcı paylaşacağı linki kaybediyordu. Artık gerçekten kopyalandıysa onay veriliyor; kopyalanamadıysa link ekranda gösteriliyor ki elle seçilebilsin. iOS'ta \`select()\` yok sayılabildiği için yedek yolda \`setSelectionRange\` de var.
+
+## 3) Bildirim izni eski Safari'de hiçbir şey yapmıyordu
+\`Notification.requestPermission()\` modern tarayıcılarda söz (promise) döndürür; Safari uzun süre yalnızca GERİ ÇAĞRI imzasını destekledi ve \`undefined\` döndürdü — \`.then(...)\` çağırmak hata veriyordu. Düğme tıklanıyor, hiçbir şey olmuyor, kullanıcı sebebini hiç görmüyordu. Artık iki imza da destekleniyor. (iOS Safari'de Notification API HİÇ yok; o durum zaten ayrıca kontrol ediliyor ve kullanıcıya söyleniyor.)
+
+## 4) Karanlık modda Firefox'un kaydırma çubukları açık kalıyordu
+Karanlık mod \`::-webkit-scrollbar-thumb\` ile boyanıyordu; Firefox webkit kurallarını yok sayar. Standart karşılığı \`scrollbar-color\` eklendi.
+
+## 5) Çentikli telefonlarda alt sekme çubuğu ana ekran çubuğunun altında kalıyordu
+\`env(safe-area-inset-bottom)\` ile boşluk telefondan okunuyor. Bu değişken ancak \`viewport-fit=cover\` varsa dolu gelir — ikisi birlikte eklendi. Çentiği olmayan cihazlarda değer 0, hiçbir fark yok.
+
+## 6) Mobilde 100vh adres çubuğunu da sayıyor
+Tam ekran öğe alttan kesiliyordu. \`dvh\` tam bunun için var ama eski tarayıcıda yok; \`@supports\` ile geçiliyor, desteklemeyen tarayıcı eski davranışta kalıyor.
+
+## 7) Pencere içi liste bitince arka plan kaymaya devam ediyordu
+\`overscroll-behavior-y: contain\` ile kaydırma zincirlenmesi kesildi.
+
+## Ayrıca doğrulandı
+Regex geriye bakma (lookbehind) hiç kullanılmıyor — Safari 16.4 öncesinde bu bir SÖZDİZİMİ hatasıdır ve dosya hiç yüklenmez, uygulama komple açılmaz. Boşluklu tarih dizesi (\`"2026-01-01 10:00"\`) hiç ayrıştırılmıyor: Chrome kabul eder, Safari "Invalid Date" verir — "Chrome'da çalışıyor" tuzağının klasik örneği. \`Object.groupBy\`, \`toSorted\`, \`structuredClone\` gibi çok yeni API'ler kullanılmıyor. Depolama erişimlerinin hepsi try/catch içinde (Safari gizli gezintide \`localStorage.setItem\` HATA FIRLATIR; korumasız tek bir çağrı gizli sekmede uygulamayı açılışta düşürür). autoprefixer yapılandırmada ve kurulu — \`backdrop-filter\` ve \`line-clamp\` Safari ön eklerini o üretiyor, düşerse hata çıkmaz ama Safari'de bulanıklık ve satır kırpma sessizce kaybolur.`,
+      },
+      {
+        id: "hala-denenmeli",
+        title: "24.3 Test edilen ve HÂLÂ denenmesi gereken",
+        body: `## Ne test ediliyor
+\`tests/browser-compat.test.mjs\` 46 kontrolle kaynak kodu biliniyor uyumluluk tuzaklarına karşı tarıyor: çok yeni JS API'leri, regex tuzakları, korumasız tarayıcı API'leri, tarih ayrıştırma, iOS zoom kuralı, viewport ayarları, güvenli alan, dvh yedeği, autoprefixer, karanlık mod mekanizması, sabit genişlikler.
+
+## DÜRÜST SINIR: bu takım tarayıcı ÇALIŞTIRMIYOR
+Paketleyicinin derlenmiş ikilileri bu geliştirme ortamında çalışmadığı için uygulama paketlenip bir tarayıcıda açılamıyor. "Beş tarayıcıda denendi" demek yanlış olur. Takımın bulduğu şeyler gerçek — kaynağı belgelenmiş tarayıcı davranışları — ama tarayıcıda GÖZLE doğrulanmış değil.
+
+## Gözle denenmesi gerekenler
+Statik olarak ölçülemeyen şeyler şunlar, ve bir insanın bakması gerekiyor:
+- Çok sütunlu ızgaraların 360px genişlikte gerçekten sıkışıp sıkışmadığı. Tehlike sütun SAYISI değil sütun GENİŞLİĞİ, o da kabın genişliğine bağlı — statik hesaplanamaz. Testte bilinen meşru kullanımlar gerekçeleriyle listede (takvim 7 gün olmak zorunda, emoji ızgarası 296px panelde 8×32px sığıyor); listede olmayan yeni bir ızgara eklenirse test düşer ve bir insan karar verir.
+- Dokunma hedeflerinin gerçek ölçüsü (Apple 44pt, Google 48dp önerir). Kod \`p-2 -m-2\` deseniyle küçük simge düğmelerinin tıklama alanını büyütüyor ve testte bu desenin yaygın kullanıldığı doğrulanıyor, ama gerçek piksel ölçümü ancak tarayıcıda yapılır.
+- Bilgi baloncuğu ve emoji panelinin portal yerleşimi: hangi kenardan açıldığı, ekran dışına taşıp taşmadığı.
+- Uzun Almanca metinlerin dar kartlarda taşması (Almanca kelimeler Türkçeden belirgin uzun).
+- iOS'ta klavye açıkken sabit konumlu öğelerin yeri (WebKit klavye açılınca görünüm penceresini farklı hesaplar).
+
+Bunlar için doğru araç gerçek bir cihaz ya da tarayıcı otomasyonu (Playwright/BrowserStack); statik tarama onların yerine geçmez ve geçtiğini iddia etmemeli.`,
       },
     ],
   },

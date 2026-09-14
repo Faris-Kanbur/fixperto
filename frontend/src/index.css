@@ -1,3 +1,91 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/**
+ * TARAYICI UYUMLULUĞU KATMANI
+ * =================================================================================================
+ * Buradaki kuralların hepsi belirli bir tarayıcı davranışını düzeltiyor. Hiçbiri "güzel görünsün"
+ * diye değil; her biri bir hatanın karşılığı ve gerekçesi yanında yazılı.
+ */
+
+/**
+ * 1) iOS SAFARI'DE ALAN ODAKLANINCA SAYFA ZOOMLANIYOR — en görünür mobil hata.
+ * -------------------------------------------------------------------------------------------------
+ * iOS Safari, yazı tipi 16px'ten KÜÇÜK bir input/select/textarea odaklandığında sayfayı otomatik
+ * olarak yakınlaştırır ve odak kalkınca GERİ ALMAZ. Kullanıcı her alandan sonra iki parmakla
+ * uzaklaştırmak zorunda kalır. Bu projede 265 alanın 213'ü Tailwind'in `text-sm` (14px) sınıfını
+ * kullanıyordu — yani telefonda formların neredeyse tamamı bu davranışı tetikliyordu.
+ *
+ * NEDEN 213 SINIFI TEK TEK DEĞİŞTİRMEDİM: aynı düzeltmeyi 213 yere yazmak, birinin unutulması
+ * demektir; ayrıca masaüstü tasarımı da bozulurdu. Kural yalnızca DOKUNMATİK işaretçide devreye
+ * giriyor (`pointer: coarse`), masaüstünde hiçbir şey değişmiyor.
+ *
+ * NEDEN `maximum-scale=1` / `user-scalable=no` YAPMADIM: zoom'u kapatmak bu hatayı "çözer" ve
+ * internette en sık önerilen yol bu. Ama az gören kullanıcıların sayfayı yakınlaştırmasını da
+ * engeller — WCAG 1.4.4 ihlali. Bir erişilebilirlik özelliğini kapatarak bir düzen hatasını
+ * gizlemek kabul edilebilir bir takas değil.
+ */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/**
+ * 2) iOS SAFARI YATAY MODDA YAZIYI KENDİLİĞİNDEN BÜYÜTÜYOR.
+ * Telefon yatay çevrildiğinde Safari bazı metin bloklarını "okunabilirlik için" şişirir ve düzen
+ * bozulur (satırlar taşar, kartlar kayar). Bu, tasarımın öngörmediği bir müdahale.
+ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/**
+ * 3) DOKUNMADA GRİ FLAŞ (iOS + Android Chrome).
+ * Mobil tarayıcılar dokunulan her öğenin üzerine yarı saydam gri bir dikdörtgen basıyor. Uygulamanın
+ * kendi basılı-durum stilleri (active:scale, hover arka planı) zaten var; üstüne bir de tarayıcının
+ * flaşı binince tıklama "kirli" görünüyor.
+ */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/**
+ * 4) ÇENTİKLİ TELEFONLARDA ALT GEZİNME ÇUBUĞU (iPhone ana ekran çubuğu).
+ * Alt sekme çubuğu ekranın en altına yapışık; çentikli iPhone'larda ana ekran çubuğunun (home bar)
+ * ALTINDA kalıyor ve son sekmeye basmak zorlaşıyor. `env(safe-area-inset-bottom)` bu boşluğu
+ * telefonun kendisinden okuyor. Değişken yalnızca index.html'de `viewport-fit=cover` varsa dolu
+ * gelir — o yüzden ikisi birlikte eklendi. Çentiği olmayan cihazlarda değer 0, yani hiçbir fark yok.
+ */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/**
+ * 5) MOBİL TARAYICIDA 100vh ADRES ÇUBUĞUNU DA SAYIYOR.
+ * `100vh` mobil Safari/Chrome'da GÖRÜNEN alandan büyüktür (adres çubuğu dâhil edilir), bu yüzden
+ * tam ekran bir öğe alttan kesilir. `dvh` (dinamik görünüm yüksekliği) tam olarak bunun için var
+ * ama eski tarayıcılarda yok — bu yüzden önce vh ile yazıp, destekleniyorsa dvh ile geçiyoruz.
+ */
+.max-h-viewport-photo {
+  max-height: calc(100vh - 160px);
+}
+@supports (height: 100dvh) {
+  .max-h-viewport-photo {
+    max-height: calc(100dvh - 160px);
+  }
+}
+
+/**
+ * 6) PENCERE AÇIKKEN ARKA PLANIN KAYDIRMAYA DEVAM ETMESİ (kaydırma zincirlenmesi).
+ * Bir pencerenin (modal) içini sonuna kadar kaydırınca tarayıcı kaydırmayı ARKADAKİ sayfaya
+ * devrediyor: kullanıcı pencereyi kapattığında sayfanın bambaşka bir yerinde buluyor kendini.
+ * Chrome/Firefox/Edge `overscroll-behavior` ile bunu keser; Safari 16+ de destekliyor.
+ */
+.overscroll-contain-y {
+  overscroll-behavior-y: contain;
+}

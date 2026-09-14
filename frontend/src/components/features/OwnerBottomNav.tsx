@@ -114,7 +114,7 @@ export function OwnerBottomNav() {
   // popup'ı açılıyor ve giriş sonrası kullanıcı istediği sekmede devam ediyor (bkz. requireAuthForTab).
   const PUBLIC_TABS = ["search", "market"];
   return (
-    <div className="border-t border-gray-200 bg-white flex sticky bottom-0 md:hidden">
+    <div className="border-t border-gray-200 bg-white flex sticky bottom-0 md:hidden pb-safe">
       {[{ key: "search", label: t("navSearch"), icon: Search }, { key: "market", label: t("navMarket"), icon: Tag }, { key: "favorites", label: t("navFavorites"), icon: Heart }, { key: "chats", label: t("navChats"), icon: MessageCircle }, { key: "appointments", label: t("navAppointments"), icon: ClipboardList }].map(tab => {
         const Icon = tab.icon; const active = ownerTab === tab.key;
         const needsAuth = !isAuthed && !PUBLIC_TABS.includes(tab.key);

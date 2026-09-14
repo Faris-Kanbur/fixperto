@@ -224,6 +224,11 @@ export function AppShell() {
         .dark-scope input::placeholder, .dark-scope textarea::placeholder { color: #63637a !important; }
         .dark-scope .shadow-sm, .dark-scope .shadow-lg, .dark-scope .shadow-xl, .dark-scope .shadow-2xl { box-shadow: 0 1px 2px rgba(0,0,0,0.4) !important; }
         .dark-scope ::-webkit-scrollbar-thumb { background-color: #34344a; }
+        /* Firefox ::-webkit-scrollbar kurallarını YOK SAYAR — karanlık modda kaydırma çubukları
+           açık renk kalıyordu (hata değil, ama bariz bir görsel tutarsızlık). Standart özellik
+           scrollbar-color; Firefox 64+ ve Chrome 121+ destekliyor, desteklemeyen tarayıcı
+           yukarıdaki webkit kuralını kullanmaya devam ediyor. */
+        .dark-scope { scrollbar-color: #34344a #17171f; }
         .dark-scope [class*="from-rose-50"][class*="to-white"] { background-image: none !important; background-color: #17171f !important; }
         .dark-scope .bg-red-50 { background-color: #2a1418 !important; }
         .dark-scope .bg-red-100 { background-color: #3a1a20 !important; }

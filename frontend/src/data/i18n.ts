@@ -1451,6 +1451,8 @@ export const T = {
   // her kartta hangi kritere uymadığı yazıyor ki liste aramanın yerini almasın.
   // KAYITLI ARAMA DÜZENLEME PENCERESİ
   // EMOJİ SEÇİCİ (sohbet). Grup adları kısa: panel dar ve göz hızlı taramalı.
+  // Panoya kopyalama başarısız olduğunda: sessizce "kopyalandı" demek yerine linki gösteriyoruz.
+  copyLinkFailedNotice: { tr: "Panoya kopyalanamadı (tarayıcı izin vermedi). Linki buradan seçip kopyalayabilirsin:", en: "Could not copy to the clipboard (the browser blocked it). You can select and copy the link here:", de: "Kopieren in die Zwischenablage nicht möglich (vom Browser blockiert). Sie können den Link hier markieren und kopieren:" },
   emojiPickerAria: { tr: "Emoji ekle", en: "Add emoji", de: "Emoji einfügen" },
   emojiGroupCommon: { tr: "Sık kullanılan", en: "Frequently used", de: "Häufig genutzt" },
   emojiGroupCar: { tr: "Araç ve tamir", en: "Car and repair", de: "Auto und Reparatur" },

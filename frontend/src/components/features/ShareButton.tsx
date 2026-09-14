@@ -31,6 +31,9 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
   const { t } = useApp();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Kopyalama BAŞARISIZ olduğunda linki ekranda göstermek için: sessiz başarısızlık yerine
+  // kullanıcının elle seçebileceği bir yol bırakıyoruz.
+  const [copyFailed, setCopyFailed] = useState(false);
   const ref = useRef(null);
   const refCode = useRef(Math.random().toString(36).slice(2, 10)).current;
 
@@ -48,21 +51,50 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedText = encodeURIComponent(text || title || "");
 
+  /**
+   * PANOYA KOPYALAMA — ÜÇ TARAYICI GERÇEĞİ BİRDEN.
+   * -------------------------------------------------------------------------------------------
+   * 1) `navigator.clipboard` yalnızca GÜVENLİ BAĞLAMDA var. localhost güvenli sayılır ama
+   *    telefondan http://192.168.1.x ile test ederken YOK — yani "linki kopyala" sessizce
+   *    çalışmıyordu. Eski tarayıcılarda da yok.
+   * 2) Safari, kullanıcı hareketiyle başlamayan bir kopyalamayı reddediyor; reddetme sessiz olur.
+   * 3) Yedek yol (`document.execCommand("copy")`) artık kullanımdan kaldırılmış ama hâlâ her yerde
+   *    çalışıyor — bu yüzden yedek olarak duruyor.
+   *
+   * GERÇEK HATA (bu denetimde bulundu): eski kodda `setCopied(true)` HER İKİ yol da başarısız
+   * olduğunda bile çağrılıyordu. Yani kullanıcı "Kopyalandı ✓" görüyor, panoda hiçbir şey yok ve
+   * paylaşacağı linki kaybediyor. Artık gerçekten kopyalandıysa onay veriliyor; kopyalanamadıysa
+   * link EKRANDA gösteriliyor ki kullanıcı elle seçip alabilsin — sessiz başarısızlık yok.
+   */
   const copyLink = async () => {
+    let ok = false;
     try {
-      await navigator.clipboard.writeText(shareUrl);
-    } catch {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        ok = true;
+      }
+    } catch { /* güvenli bağlam değil ya da izin yok — aşağıdaki yedeğe düşülüyor */ }
+    if (!ok) {
       const ta = document.createElement("textarea");
       ta.value = shareUrl;
+      ta.setAttribute("readonly", "");
       ta.style.position = "fixed";
+      ta.style.top = "0";
       ta.style.opacity = "0";
       document.body.appendChild(ta);
       ta.select();
-      try { document.execCommand("copy"); } catch { /* yoksay */ }
+      // iOS Safari `select()`'i yok sayabiliyor; setSelectionRange olmadan seçim boş kalır.
+      try { ta.setSelectionRange(0, shareUrl.length); } catch { /* desteklemiyorsa yoksay */ }
+      try { ok = document.execCommand("copy"); } catch { ok = false; }
       document.body.removeChild(ta);
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } else {
+      setCopyFailed(true);
+      setTimeout(() => setCopyFailed(false), 8000);
+    }
     onShare?.("copy", refCode);
   };
 
@@ -109,6 +141,21 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
             {copied ? <Check size={16} className="text-green-600" /> : <Link2 size={16} className="text-gray-400" />}
             {copied ? t("linkCopiedNotice") : t("copyLinkBtn")}
           </button>
+          {/* Kopyalanamadıysa linki GÖSTERİYORUZ. Panoya erişim güvenli bağlam gerektiriyor
+              (telefondan http://192.168.x.x ile bakan kullanıcıda yok) ve Safari izin vermeyebilir.
+              Sessizce başarısız olup "kopyalandı" demek, kullanıcının linki kaybetmesi demekti. */}
+          {copyFailed && (
+            <div className="mt-1 px-2 pb-1">
+              <p className="text-[11px] text-amber-600 mb-1">{t("copyLinkFailedNotice")}</p>
+              <input
+                readOnly
+                value={shareUrl}
+                onFocus={(e) => e.currentTarget.select()}
+                aria-label={t("copyLinkBtn")}
+                className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-[11px] font-mono text-gray-600 bg-gray-50"
+              />
+            </div>
+          )}
         </div>
       )}
     </div>
