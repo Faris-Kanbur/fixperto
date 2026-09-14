@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { asyncRoute } from "../utils/asyncRoute.js";
 import { db } from "../db/db.js";
+import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { makeRateLimiter } from "../utils/auth.js";
 
 const router = Router();
@@ -82,7 +83,7 @@ const MAX_TRANSLATE_TEXT_LEN = 5000;
 // görünüyordu. Artık: 5 dakikalık kayan pencere, yalnızca DIŞ SERVİSE giden istekler sayılıyor
 // (önbellek isabetleri bedava) ve toplu uç nokta sayesinde istek sayısı zaten çok daha düşük.
 const translateLimiter = makeRateLimiter({ maxAttempts: 200, lockoutMs: 5 * 60 * 1000, windowMs: 5 * 60 * 1000 });
-const clientIp = (req) => req.ip || req.socket?.remoteAddress || "unknown";
+
 
 const readCache = (from, to, text) => db.prepare(
   `SELECT translatedText FROM translation_cache WHERE fromLang = ? AND toLang = ? AND sourceText = ?`
@@ -112,7 +113,7 @@ const MAX_BATCH_ITEMS = 60;
 const CONCURRENCY = 8;
 
 router.post("/batch", asyncRoute(async (req, res) => {
-  const ip = clientIp(req);
+  const ip = rateLimitKey(req);
   if (translateLimiter.check(ip).blocked) {
     return res.status(429).json({ error: "Çok fazla çeviri isteği. Lütfen birkaç dakika sonra tekrar deneyin." });
   }
@@ -169,7 +170,7 @@ router.post("/batch", asyncRoute(async (req, res) => {
 }));
 
 router.post("/", asyncRoute(async (req, res) => {
-  const ip = clientIp(req);
+  const ip = rateLimitKey(req);
   if (translateLimiter.check(ip).blocked) {
     return res.status(429).json({ error: "Çok fazla çeviri isteği. Lütfen birkaç dakika sonra tekrar deneyin." });
   }

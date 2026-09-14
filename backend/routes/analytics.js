@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 
 /**
@@ -12,7 +13,8 @@ import { makeRateLimiter, resolveActor } from "../utils/auth.js";
  *                                uçtan verilecek, bu uçlar platformun tamamını gördüğü için admin'e
  *                                kapalı kalmalı.
  *
- * GİZLİLİK: burada req.ip'ye SADECE hız sınırlama için bakılıyor; hiçbir sorguda saklanmıyor.
+ * GİZLİLİK: istemci adresine SADECE hız sınırlama için bakılıyor (utils/clientIp.js üzerinden,
+ * IPv6'da /64 kovası); hiçbir sorguda saklanmıyor.
  */
 const router = Router();
 
@@ -68,7 +70,7 @@ function sanitizeMeta(meta) {
 }
 
 router.post("/events", (req, res) => {
-  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  const ip = rateLimitKey(req);
   if (eventLimiter.check(ip).blocked) return res.status(429).json({ error: "Çok fazla istek." });
   eventLimiter.registerFailure(ip);
 

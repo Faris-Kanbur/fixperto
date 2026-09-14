@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { asyncRoute } from "../utils/asyncRoute.js";
 import crypto from "node:crypto";
 import { db, recomputeMechanicReviews } from "../db/db.js";
@@ -82,9 +83,7 @@ const pendingSweepTimer = setInterval(() => {
 }, PENDING_SWEEP_MS);
 if (typeof pendingSweepTimer.unref === "function") pendingSweepTimer.unref();
 
-function clientIp(req) {
-  return req.ip || req.socket?.remoteAddress || "unknown";
-}
+
 
 function sanitizeUser(role, row) {
   const hydrated = hydrate(ROLE_TABLES[role], row);
@@ -95,7 +94,7 @@ export const authRouter = Router();
 
 authRouter.post("/register", asyncRoute(async (req, res) => {
   try {
-    const ip = clientIp(req);
+    const ip = rateLimitKey(req);
     if (registerLimiter.check(ip).blocked) {
       return res.status(429).json({ error: "Çok fazla kayıt denemesi. Lütfen daha sonra tekrar deneyin." });
     }
@@ -164,7 +163,7 @@ authRouter.post("/register", asyncRoute(async (req, res) => {
 
 authRouter.post("/login", asyncRoute(async (req, res) => {
   try {
-    const ip = clientIp(req);
+    const ip = rateLimitKey(req);
     if (loginLimiter.check(ip).blocked) {
       return res.status(429).json({ error: "Çok fazla başarısız deneme. Lütfen birkaç dakika sonra tekrar deneyin." });
     }
@@ -220,7 +219,7 @@ authRouter.post("/login", asyncRoute(async (req, res) => {
 }));
 
 authRouter.post("/verify-otp", (req, res) => {
-  const ip = clientIp(req);
+  const ip = rateLimitKey(req);
   if (otpLimiter.check(ip).blocked) {
     return res.status(429).json({ error: "Çok fazla başarısız deneme. Lütfen birkaç dakika sonra tekrar deneyin." });
   }
@@ -265,7 +264,7 @@ authRouter.post("/logout", (req, res) => {
 const accountLimiter = makeRateLimiter({ maxAttempts: 10, lockoutMs: 15 * 60 * 1000, windowMs: 15 * 60 * 1000 });
 
 async function requireCurrentPassword(req, res) {
-  const ip = clientIp(req);
+  const ip = rateLimitKey(req);
   if (accountLimiter.check(ip).blocked) {
     res.status(429).json({ error: "Çok fazla deneme. Lütfen birkaç dakika sonra tekrar deneyin." });
     return null;

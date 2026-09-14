@@ -226,26 +226,13 @@ export function resolveActor(req) {
  * sayaç, iki istek arasında bu süre kadar boşluk olduğunda sıfırlanır — yani sınır "ömür boyu
  * 120" değil "N dakikada 120" anlamına gelir.
  */
-export function makeRateLimiter({ maxAttempts, lockoutMs, windowMs = null }) {
-  const attempts = new Map(); // key -> { count, lockedUntil, last }
-  return {
-    check(key) {
-      const entry = attempts.get(key);
-      if (!entry) return { blocked: false };
-      if (entry.lockedUntil && entry.lockedUntil > Date.now()) return { blocked: true };
-      if (entry.lockedUntil && entry.lockedUntil <= Date.now()) attempts.delete(key);
-      return { blocked: false };
-    },
-    registerFailure(key) {
-      const entry = attempts.get(key) || { count: 0, lockedUntil: null, last: 0 };
-      if (windowMs && entry.last && Date.now() - entry.last > windowMs) entry.count = 0;
-      entry.count += 1;
-      entry.last = Date.now();
-      if (entry.count >= maxAttempts) entry.lockedUntil = Date.now() + lockoutMs;
-      attempts.set(key, entry);
-    },
-    reset(key) {
-      attempts.delete(key);
-    },
-  };
-}
+/**
+ * HIZ SINIRLAYICI AYRI BİR DOSYAYA TAŞINDI (utils/rateLimiter.js).
+ * ------------------------------------------------------------------------------------------------
+ * Sebep pratik ve öğretici: sınırlayıcının veritabanıyla HİÇBİR işi yok, ama bu dosyada durduğu
+ * için onu test etmek isteyen her şey `db.js`i de yüklemek zorunda kalıyordu — yani derlenmiş
+ * SQLite ikilisi olmayan bir ortamda sınırlayıcı test EDİLEMİYORDU. Bağımlılığı olmayan bir
+ * mantığı bağımlı bir dosyada tutmak, onu test edilemez yapar.
+ * Eski içe aktarmalar bozulmasın diye buradan yeniden dışa veriliyor.
+ */
+export { makeRateLimiter } from "./rateLimiter.js";

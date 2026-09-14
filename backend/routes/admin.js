@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { createAdminSession, destroyAdminSession, isAdminToken, extractBearerToken } from "../utils/auth.js";
 
 // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): admin kimlik bilgilerinin kaynak koda
@@ -73,7 +74,7 @@ function registerLoginFailure(ip) {
 const router = Router();
 
 router.post("/login", (req, res) => {
-  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  const ip = rateLimitKey(req);
   if (checkLoginRateLimit(ip).blocked) {
     return res.status(429).json({ ok: false, error: "Çok fazla başarısız deneme. Lütfen birkaç dakika sonra tekrar deneyin." });
   }

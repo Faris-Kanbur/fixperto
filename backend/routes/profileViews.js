@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 
 // Tamirci profili / araç ilanı görüntülenme takibi. Her açılışta bir satır eklenir; bir randevu/
@@ -18,7 +19,7 @@ const router = Router();
 //     120 profil açmaz, betik açar.
 const writeLimiter = makeRateLimiter({ maxAttempts: 120, lockoutMs: 5 * 60 * 1000, windowMs: 60 * 1000 });
 const limitWrites = (req, res, next) => {
-  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  const ip = rateLimitKey(req);
   if (writeLimiter.check(ip).blocked) return res.status(429).json({ error: "Çok fazla istek. Lütfen birkaç dakika sonra tekrar deneyin." });
   writeLimiter.registerFailure(ip);
   next();
@@ -50,7 +51,7 @@ router.post("/:id/convert", limitWrites, (req, res) => {
 // paylaşılan hız sınırlayıcı (login/OTP'de kullanılanla aynı desen) uygulandı.
 const bulkStatsLimiter = makeRateLimiter({ maxAttempts: 30, lockoutMs: 5 * 60 * 1000 });
 router.get("/stats/bulk", (req, res) => {
-  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  const ip = rateLimitKey(req);
   if (bulkStatsLimiter.check(ip).blocked) {
     return res.status(429).json({ error: "Çok fazla istek. Lütfen birkaç dakika sonra tekrar deneyin." });
   }

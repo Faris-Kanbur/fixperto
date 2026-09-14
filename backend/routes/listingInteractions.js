@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { hydrate } from "../db/hydrate.js";
 import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 
@@ -50,7 +51,7 @@ function actorContext(req, res) {
 }
 
 function limited(req, res) {
-  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  const ip = rateLimitKey(req);
   if (writeLimiter.check(ip).blocked) {
     res.status(429).json({ error: "Çok fazla istek. Lütfen birkaç dakika sonra tekrar deneyin." });
     return true;

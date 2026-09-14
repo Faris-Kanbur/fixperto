@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 
 // Paylaşım analitiği: her ShareButton eylemi ayrı bir satır (kendi refCode'u ile). Link o refCode'u
@@ -16,7 +17,7 @@ const router = Router();
 //     120 profil açmaz, betik açar.
 const writeLimiter = makeRateLimiter({ maxAttempts: 120, lockoutMs: 5 * 60 * 1000, windowMs: 60 * 1000 });
 const limitWrites = (req, res, next) => {
-  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  const ip = rateLimitKey(req);
   if (writeLimiter.check(ip).blocked) return res.status(429).json({ error: "Çok fazla istek. Lütfen birkaç dakika sonra tekrar deneyin." });
   writeLimiter.registerFailure(ip);
   next();

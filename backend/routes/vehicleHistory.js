@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 
 /**
@@ -157,7 +158,7 @@ router.get("/mine", (req, res) => {
 router.post("/lookup", (req, res) => {
   const actor = requireUser(req, res);
   if (!actor) return;
-  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  const ip = rateLimitKey(req);
   if (lookupLimiter.check(ip).blocked) {
     return res.status(429).json({ error: "Çok fazla sorgulama. Lütfen daha sonra tekrar deneyin." });
   }

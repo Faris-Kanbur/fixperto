@@ -847,13 +847,13 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 25 STATİK takım + 3 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 26 STATİK takım + 3 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
 
 ## Takımlar
-Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı, arayüz çizimi, tarayıcı uyumluluğu.
+Statik: arama, fiyatlandırma, gezinme, akışlar, i18n, ui, null-güvenliği, blog, randevu takvimi, araç formu, güvenlik, doğrulama, el kitabı, alt bilgi bağlantıları, kariyer, telefon, hizmet fiyatı, çeviri, araç geçmişi, ilan teklifleri, hesap güvenliği, rekabet ve veri, test altyapısı, arayüz çizimi, tarayıcı uyumluluğu, IP güvenliği.
 Uçtan uca: tests/e2e/api.e2e.mjs (kimlik, araç, randevu, değerlendirme, ilan, sohbet, hesap güvenliği, girdi güvenliği), tests/e2e/api2.e2e.mjs (destek, teklif, blog/kariyer, duyuru, eşzamanlılık, analitik, öneri rızası, şifre uçları, başlıklar, hız sınırı), tests/e2e/api3.e2e.mjs (OTOMATİK GÜVENLİK MATRİSİ — aşağıya bakın).
 
 ## Otomatik güvenlik matrisi — elle yazılan testin kapatamadığı boşluk
@@ -1411,6 +1411,36 @@ Bu bir "araç sorgu" servisi değildir: yalnızca Fixperto üzerinden yapılmı�
     title: "22. Dağıtım Tuzakları ve Denetim Bulguları",
     summary: "Sunucuyu gerçekten çalıştırınca ortaya çıkan hatalar ve canlıya alırken bozulacak ayarlar.",
     pages: [
+      {
+        id: "ip-guvenligi",
+        title: "22.0 IP GÜVENLİĞİ — ölçülen üç açık",
+        body: `IP bu uygulamadaki BÜTÜN kötüye kullanım korumalarının temeli: giriş ve OTP kaba kuvveti, kayıt seli, VIN kazıma, teklif spam'i, analitik şişirme — hepsi "IP başına N deneme" ile sınırlanıyor. IP yanlış okunursa bu korumaların hiçbiri çalışmaz VE HİÇBİR HATA DA GÖRÜNMEZ. Sessizce kaybolan korumalar en tehlikelileridir.
+
+## 1) SAHTE X-Forwarded-For — hız sınırının tamamı atlanıyordu (KRİTİK)
+Ölçüm şuydu: \`TRUST_PROXY=true\` iken sınırı doldurup 429 aldıktan sonra, isteğe \`X-Forwarded-For: 1.2.3.4\` eklemek 401'e döndürüyordu. Yani saldırgan her isteğe rastgele bir IP yazar ve sınır diye bir şey kalmaz. Bu ayar el kitabının üretim için ÖNERDİĞİ ayardı.
+
+Express'in kendi davranışı aslında doğru: en sağdaki girdiyi alır, onu da vekil yazar. Açık, vekil YOKKEN ya da vekil sayısı yanlışken oluşuyor — yani bir yapılandırma hatası. Ama sessizce bütün korumaları kapattığı için uygulamanın kendini savunması gerekiyordu.
+
+İlk düzeltme denemem "zincir beklenen vekil sayısından kısaysa başlığı yok say" idi. TEK VEKİLLİ kurulumda bu YETMİYOR: istemcinin uydurduğu tek girdili başlık ile vekilin yazdığı tek girdili başlık uzunluk olarak aynıdır. Ayırt etmenin tek güvenilir yolu başlığa değil BAĞLANTIYA bakmaktı: isteği bize kim getirdi? Ters vekil neredeyse her zaman loopback'te ya da özel bir ağdadır (10.x, 172.16–31.x, 192.168.x, fc00::/7). Genel bir adresten gelen istek vekilden GEÇMEMİŞ demektir — vekil atlanmış ya da doğrudan porta gelinmiş — ve o durumda başlık tamamen yok sayılıyor. Egzotik kurulumlar için \`TRUSTED_PROXY_IPS\` ile açıkça liste verilebiliyor.
+
+## 2) IPv6'da sınır anlamsızdı (YÜKSEK)
+IPv6'da bir kullanıcıya tipik olarak /64 blok verilir: 18 kentilyon adres. "Adres başına 10 deneme" demek pratikte SINIRSIZ deneme demek — saldırgan her istekte yeni bir adres kullanır ve hiçbir sınıra takılmaz. Sınırlayıcı anahtarı artık IPv6'da /64 önekine indiriliyor: sınır kişiye uygulanıyor, adrese değil. Komşu /64'ler ayrı kovada, yani bir kişinin denemesi başkasını cezalandırmıyor.
+
+## 3) Aynı istemci iki kovaya düşüyordu (ORTA)
+IPv4 bağlantısı IPv6 soketinde \`::ffff:1.2.3.4\` biçiminde görünüyor. Normalleştirme olmadan aynı kişi bazen \`1.2.3.4\`, bazen \`::ffff:1.2.3.4\` anahtarı üretiyordu — "10 deneme" sınırı fiilen 20 oluyordu. Artık adresler tek biçime indiriliyor (port ve köşeli parantez de ayıklanıyor).
+
+## Ayrıca: sınırlayıcının haritası sınırsız büyüyordu
+Kayıt yalnızca kilidi dolmuş bir anahtar TEKRAR sorgulandığında siliniyordu; kilide ulaşmayan ve bir daha sorulmayan anahtarlar sonsuza kadar kalıyordu. IPv6'da anahtar çeşitliliği pratikte sınırsız olduğu için bu, kimlik doğrulaması gerektirmeyen ucuz bir bellek tüketme yoluydu. Artık süresi geçmişler seyreltiliyor ve sert bir üst sınır var; dolduğunda EN ESKİ kayıt düşüyor (en yeniyi atmak saldırganın kendi izini silmesine yardım etmek olurdu).
+
+## Tek doğruluk kaynağı
+Önceden 12 ayrı rota kendi \`req.ip || req.socket?.remoteAddress\` satırını yazıyordu — trust proxy çözümünü atlayan ve normalleştirme yapmayan bir yol. Aynı mantığın 12 kopyası, 12 farklı şekilde yanlış olabilir. Artık hepsi \`utils/clientIp.js\`ten geçiyor ve yeni bir rota kendi satırını yazarsa test düşüyor. Hız sınırı anahtarı \`rateLimitKey\` (kova), kayıt IP karması ise \`clientIp\` (gerçek adres) kullanıyor — karma kovadan üretilirse aynı /64'teki herkes "aynı kişi" görünürdü.
+
+## Yapılandırma sessizce yanlış olamaz
+Yanlış vekil sayısı iki ayrı şekilde zarar veriyor: fazla güven → sahte IP; eksik güven → bütün kullanıcılar tek kovaya düşer ve bir kişinin hatası siteyi herkese kapatır. İkisi de hiçbir hata üretmediği için açılışta ne yapıldığı günlüğe yazılıyor. \`IP_HASH_SALT\` tanımsızsa da uyarı veriliyor: o durumda salt her açılışta rastgele üretiliyor ve "aynı ağ" sinyali yeniden başlatmadan sonra sessizce çalışmaz hâle geliyor.
+
+## Bu bölümün testi
+\`tests/ip-security.test.mjs\` (48 kontrol) çözüm fonksiyonunu GERÇEKTEN çağırıyor — kaynağa bakıp "şu satır var" demek davranışın doğru olduğunu göstermez. Saldırı senaryolarının çoğu ancak farklı bir soket adresinden gelebileceği için (yerelde taklit edilemez) sahte istek nesneleriyle sınanıyor; ölçülen şey tam olarak sunucunun çalıştırdığı kod. Ayrıca güvenlik matrisinde gerçek sunucuya sahte başlıkla istek atılıp sınırın aşılamadığı doğrulanıyor.`,
+      },
       {
         id: "trust-proxy",
         title: "22.1 Ters vekil arkasında IP (TRUST_PROXY)",

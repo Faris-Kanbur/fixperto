@@ -129,7 +129,9 @@ ok(/conversations\.appendMessages\(/.test(providerSec), "istemci mesaj ekleme u�
 // --- HIZ SINIRI: sayaç sonsuza kadar birikmemeli ----------------------------------------------
 // GERÇEK HATA: çeviri sınırı ömür boyu sayıyordu; uzun bir oturumda sıradan kullanıcı 120 isteği
 // aşınca çeviri 10 dakika boyunca sessizce ölüyordu.
-const authSrc = read("backend", "utils", "auth.js");
+// Sınırlayıcı utils/rateLimiter.js'e taşındı (veritabanına bağlı olmadığı için her ortamda
+// test edilebilsin diye); kurallar aynı, dosya değişti.
+const authSrc = read("backend", "utils", "rateLimiter.js");
 ok(/windowMs = null/.test(authSrc), "kayan pencere desteği var");
 ok(/if \(windowMs && entry\.last && Date\.now\(\) - entry\.last > windowMs\) entry\.count = 0;/.test(authSrc), "pencere dışında sayaç sıfırlanıyor");
 const translateSrc = read("backend", "routes", "translate.js");

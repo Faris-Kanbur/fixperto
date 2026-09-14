@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { seedIfEmpty } from "./db/seed.js";
 import { db } from "./db/db.js";
+import { trustedHops, logIpConfig } from "./utils/clientIp.js";
 import { makeCrudRouter } from "./routes/makeCrudRouter.js";
 import adminRouter from "./routes/admin.js";
 import shareEventsRouter from "./routes/shareEvents.js";
@@ -33,7 +34,22 @@ const app = express();
  * görünür ve sınırları tamamen atlar.
  * Bu yüzden BİLİNÇLİ bir anahtar: yalnızca gerçekten vekil arkasındaysanız TRUST_PROXY=true.
  */
-if (process.env.TRUST_PROXY === "true") app.set("trust proxy", 1);
+/**
+ * DENETİMDE ÖLÇÜLDÜ: `TRUST_PROXY=true` iken sahte bir `X-Forwarded-For` başlığıyla hız sınırı
+ * TAMAMEN atlanıyordu (sınır dolduktan sonra 429 alan istek, uydurma bir başlıkla 401'e dönüyordu).
+ * Express'in kendi davranışı doğru — en sağdaki girdiyi alır, onu da vekil yazar — ama vekil
+ * YOKKEN ya da vekil sayısı yanlışken başlık tamamen saldırgan kontrolünde oluyor.
+ *
+ * Artık IP okuma tek bir yerde ve kendini savunuyor (bkz. utils/clientIp.js): beklenen vekil
+ * sayısı kadar girdi yoksa başlık hiç dikkate alınmıyor. Express'in `trust proxy` ayarı da aynı
+ * sayıdan besleniyor ki `req.ip` ile bizim hesabımız ayrışmasın.
+ *
+ * TRUST_PROXY_HOPS = önündeki vekil sayısı (CDN + nginx varsa 2). Eski TRUST_PROXY=true ayarı
+ * 1 sayılıyor ki mevcut dağıtımlar bozulmasın.
+ */
+const TRUSTED_HOPS = trustedHops();
+if (TRUSTED_HOPS > 0) app.set("trust proxy", TRUSTED_HOPS);
+logIpConfig();
 
 // GÜVENLİK BAŞLIKLARI (site geneli denetimde eksik bulundu).
 // Yeni bir bağımlılık (helmet) EKLEMİYORUZ: bu API yalnızca JSON döndürüyor, helmet'in başlıklarının

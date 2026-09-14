@@ -491,6 +491,32 @@ try {
     eq(r.headers["referrer-policy"], "no-referrer", `${label}: yönlendiren adres sızmıyor`);
   }
 
+  // ================================================================ 6d) IP: SAHTE BAŞLIK SINIRI AŞAMAZ
+  /**
+   * BULUNAN AÇIK (ölçüldü): TRUST_PROXY=true iken sahte bir X-Forwarded-For hız sınırını tamamen
+   * atlıyordu. Buradaki test, sunucu vekil güveni KAPALI (varsayılan) çalışırken başlığın hiç
+   * dikkate alınmadığını GERÇEK istekle doğruluyor — asıl savunma (vekilden gelmeyen isteğin
+   * başlığına güvenmemek) birim testlerinde sınanıyor, çünkü farklı bir soket adresinden istek
+   * atmak yerel olarak taklit edilemiyor.
+   */
+  const vinBody = { vin: "WBA3B5C50DF123456" };
+  let hitLimit = false;
+  for (let i = 0; i < 60; i++) {
+    const r = await api("POST", "/api/vehicle-history/lookup", { token: owner.token, body: { vin: `WBA3B5C50DF1234${String(i % 10)}${i % 7}` } });
+    if (r.status === 429) { hitLimit = true; break; }
+  }
+  eq(hitLimit, true, "VIN sorgulama sınırı devreye giriyor");
+  // Sahte IP başlığıyla aynı isteği tekrarla: sınır AŞILMAMALI.
+  const spoofAttempts = [];
+  for (const fake of ["1.2.3.4", "evil, 1.2.3.4", "9.9.9.9, 8.8.8.8, 7.7.7.7", "::ffff:5.5.5.5"]) {
+    const r = await api("POST", "/api/vehicle-history/lookup", {
+      token: owner.token, body: vinBody, headers: { "X-Forwarded-For": fake },
+    });
+    spoofAttempts.push(r.status);
+  }
+  eq(spoofAttempts.every((s) => s === 429), true,
+    `sahte X-Forwarded-For hız sınırını AŞAMIYOR (dönen kodlar: ${spoofAttempts.join(",")})`);
+
   // ================================================================ 7) YANIT ŞİŞKİNLİĞİ
   /**
    * Bir uç ihtiyacından fazla veri döndürüyorsa, bugün zararsız olan alan yarın hassas hâle gelir.

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { hydrate } from "../db/hydrate.js";
 import { makeRateLimiter, resolveActor } from "../utils/auth.js";
 
@@ -99,7 +100,7 @@ function addSignals(actor, pairs, actionWeight) {
 recommendationsRouter.post("/signal", (req, res) => {
   const actor = resolveActor(req);
   if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
-  const ip = req.ip || req.socket?.remoteAddress || "unknown";
+  const ip = rateLimitKey(req);
   if (signalLimiter.check(ip).blocked) return res.status(429).json({ error: "Çok fazla istek." });
   signalLimiter.registerFailure(ip);
 
