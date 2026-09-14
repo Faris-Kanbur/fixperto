@@ -19,6 +19,7 @@ import blogRouter from "./routes/blog.js";
 import careersRouter from "./routes/careers.js";
 import { quoteRequestsRouter, quoteOffersRouter } from "./routes/quotes.js";
 import { conversationsRouter } from "./routes/conversations.js";
+import { mediaRouter, mediaFileRouter } from "./routes/media.js";
 import { authRouter } from "./routes/auth.js";
 
 seedIfEmpty();
@@ -159,6 +160,22 @@ app.use((err, req, res, next) => {
 });
 
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "fixperto-backend" }));
+
+/**
+ * MEDYA (Faz 4). İki uç, iki ayrı yerde bilerek:
+ *   POST /api/media   → yazma, kimlik doğrulamalı, hız sınırlı
+ *   GET  /media/:name → okuma, herkese açık, bir yıl `immutable` cache
+ *
+ * Okuma yolu `/api` ALTINDA DEĞİL: bir gün doğrudan nginx'e ya da CDN'e verilebilsin. Bugünkü
+ * mimaride görseller kimlik doğrulamalı JSON'un içine gömülü olduğu için cache'lenmeleri
+ * İMKÂNSIZ; bu iki uç o imkânı yaratıyor. Ayrıntılı gerekçe: backend/utils/mediaStore.js.
+ *
+ * SIKIŞTIRMA DIŞINDA TUTULMUYOR AMA GEREKMİYOR DA: compressResponses yalnızca res.json'ı
+ * sarmalıyor, dosya akışına dokunmuyor. JPEG'i gzip'lemek boşa CPU olurdu — kendiliğinden
+ * doğru davranış.
+ */
+app.use("/api/media", mediaRouter);
+app.use("/media", mediaFileRouter);
 
 // GERÇEK OTURUM SİSTEMİ: aşağıdaki authScope seçenekleri, bu oturumda eklenen gerçek owner/mechanic
 // giriş sistemine (bkz. backend/routes/auth.js) bağlanıyor. Her kaynak, "kimin verisi" sorusunu artık

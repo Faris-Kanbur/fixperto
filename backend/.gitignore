@@ -1,4 +1,10 @@
 node_modules/
+# MEDYA DEPOSU (Faz 4) — kullanıcıların yüklediği fotoğraflar. Veritabanının yanında duruyor
+# (FIXPERTO_MEDIA_DIR ile değiştirilebilir) ve tıpkı veritabanı gibi depoya GİRMEZ: bunlar
+# kullanıcı verisi, kaynak kod değil. YEDEKLEMEDE İKİSİ BİRLİKTE alınmalı — veritabanı
+# adresleri, bu klasör baytları tutuyor. Biri yedeklenip diğeri atlanırsa sonuç tamamen
+# kaybetmekten daha kötü olur: kırık görsellerle dolu ama "çalışıyor" görünen bir site.
+db/media/
 db/fixperto.sqlite
 db/fixperto.sqlite-journal
 db/fixperto.sqlite-wal

@@ -38,13 +38,29 @@ export const SERVER_LIMITS = {
  *   quote    1280px → aynı gerekçe
  *   avatar    512px → ekranda 40-120px. Yine de 512: bazı yerlerde 2x/3x ekranda büyük gösteriliyor.
  */
+/**
+ * `hosted` — BU GÖRSEL MEDYA UCUNA GİDER Mİ? (Faz 4)
+ * Bu bayrak bir performans ayarı değil, bir GİZLİLİK kararı ve o yüzden burada, tabloda duruyor:
+ * kodun içine dağılmış if'ler yerine tek yerde okunabilsin ve test edilebilsin.
+ *
+ * `/media/...` adresleri KİMLİK DOĞRULAMASI OLMADAN okunuyor — cache'lenebilir olmanın koşulu bu.
+ * Dolayısıyla oraya yalnızca bugün ZATEN herkese açık olan görseller gidebilir:
+ *   listing / cover / avatar → ilan fotoğrafı, tamirci kapak görseli, profil fotoğrafı. Bunlar
+ *   şu anda anonim ziyaretçiye gönderiliyor; adrese taşınması kimin görebildiğini DEĞİŞTİRMİYOR.
+ *
+ * chat / issue / quote → HAYIR. Sohbet fotoğrafı, arıza fotoğrafı ve teklif fotoğrafı bugün
+ *   yalnızca erişim denetimli JSON içinde dönüyor. Tahmin edilemez ama herkese açık bir adrese
+ *   taşımak GÜVENLİK GERİLEMESİ olurdu: adres bir kez sızarsa (referrer, tarayıcı geçmişi,
+ *   günlük, ekran görüntüsü) kişisel veri kimlik doğrulaması olmadan okunur. Performans kaybı da
+ *   yok — bu görseller büyük liste yanıtlarında değil, istek başına tek kayıt dönen uçlarda.
+ */
 export const IMAGE_PRESETS = {
-  listing: { maxDim: 1600, quality: 0.78, limit: SERVER_LIMITS.image },
-  cover: { maxDim: 1600, quality: 0.78, limit: SERVER_LIMITS.image },
-  chat: { maxDim: 1280, quality: 0.8, limit: SERVER_LIMITS.image },
-  issue: { maxDim: 1280, quality: 0.8, limit: SERVER_LIMITS.image },
-  quote: { maxDim: 1280, quality: 0.8, limit: SERVER_LIMITS.image },
-  avatar: { maxDim: 512, quality: 0.82, limit: SERVER_LIMITS.avatar },
+  listing: { maxDim: 1600, quality: 0.78, limit: SERVER_LIMITS.image, hosted: true, kind: "image" },
+  cover: { maxDim: 1600, quality: 0.78, limit: SERVER_LIMITS.image, hosted: true, kind: "image" },
+  avatar: { maxDim: 512, quality: 0.82, limit: SERVER_LIMITS.avatar, hosted: true, kind: "avatar" },
+  chat: { maxDim: 1280, quality: 0.8, limit: SERVER_LIMITS.image, hosted: false, kind: "image" },
+  issue: { maxDim: 1280, quality: 0.8, limit: SERVER_LIMITS.image, hosted: false, kind: "image" },
+  quote: { maxDim: 1280, quality: 0.8, limit: SERVER_LIMITS.image, hosted: false, kind: "image" },
 } as const;
 
 export type ImagePresetName = keyof typeof IMAGE_PRESETS;
@@ -178,6 +194,38 @@ export function canAppendImage(existing: string[], nextDataUrl: string): string 
     return `Fotoğrafların toplamı çok büyük (${mb(total)}). En fazla ${mb(ARRAY_LIMITS.total)} olabilir.`;
   }
   return null;
+}
+
+/**
+ * HAZIRLANMIŞ GÖRSELİ MEDYA UCUNA GÖNDER (Faz 4).
+ *
+ * `uploader` DIŞARIDAN VERİLİYOR (api.media.upload). Sebebi: bu dosya saf kalsın — ağ katmanına
+ * bağlanırsa test edilemez hâle gelir ve bu dosyadaki karar mantığı (hangi görsel nereye gider,
+ * hata olunca ne olur) tam olarak test edilmesi gereken şey.
+ *
+ * EN ÖNEMLİ ÖZELLİK — BAŞARISIZLIKTA ESKİ DAVRANIŞA DÖNÜŞ:
+ * Yükleme herhangi bir sebeple başarısız olursa (ağ yok, 401, 429, 500, sunucu eski sürüm)
+ * `data:` URI'nin KENDİSİ dönüyor. Yani Faz 4 hiçbir koşulda mevcut çalışan davranıştan KÖTÜ
+ * bir sonuç üretemiyor: en kötü durumda bugünkü hâl. Kullanıcıya hata göstermiyoruz çünkü onun
+ * açısından bir şey bozulmadı — fotoğrafı yine kaydedildi, sadece daha az verimli biçimde.
+ * Sessiz kalınan tek şey bu ve gerekçesi bu; gerçek bir kayıp olsaydı söylerdik.
+ */
+export async function hostPreparedImage(
+  dataUrl: string,
+  preset: ImagePresetName,
+  uploader: (dataUrl: string, kind: "image" | "avatar") => Promise<{ url: string }>,
+): Promise<string> {
+  const spec = IMAGE_PRESETS[preset];
+  if (!spec.hosted) return dataUrl;                 // gizlilik kararı — yukarıdaki tabloya bakın
+  if (!dataUrl || !dataUrl.startsWith("data:")) return dataUrl;  // zaten adres ya da emoji
+  try {
+    const res = await uploader(dataUrl, spec.kind);
+    // Dönen değerin gerçekten adres olduğunu doğruluyoruz: eksik/bozuk yanıtta veriyi kaybetmek
+    // yerine data URI'ye dönüyoruz.
+    return typeof res?.url === "string" && /^https?:\/\//.test(res.url) ? res.url : dataUrl;
+  } catch {
+    return dataUrl;
+  }
 }
 
 export type PreparedDocument = {

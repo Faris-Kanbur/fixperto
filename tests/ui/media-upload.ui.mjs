@@ -236,6 +236,78 @@ ok(mod.IMAGE_PRESETS.avatar.limit < mod.IMAGE_PRESETS.listing.limit, "avatar tav
   eq(lastCanvas, null, "belge yolunda tuval hiç kullanılmıyor (PDF yeniden kodlanmıyor)");
 }
 
+// ============================================================ FAZ 4: HANGİ GÖRSEL ADRESE GİDİYOR
+/**
+ * BU BÖLÜM BİR GİZLİLİK KARARINI KORUYOR, PERFORMANS AYARINI DEĞİL.
+ * `/media/...` adresleri KİMLİK DOĞRULAMASI OLMADAN okunuyor — cache'lenebilir olmanın koşulu bu.
+ * Dolayısıyla oraya yalnızca bugün ZATEN herkese açık görseller gidebilir. Sohbet, arıza ve
+ * teklif fotoğrafı bugün yalnızca erişim denetimli JSON içinde dönüyor; onları tahmin edilemez
+ * ama herkese açık bir adrese taşımak güvenlik gerilemesi olurdu (adres sızarsa kişisel veri
+ * kimlik doğrulaması olmadan okunur).
+ *
+ * Bu testler "hosted bayrağı doğru mu" diye soruyor. Biri ileride performans için chat'i de
+ * hosted yaparsa burada kırmızı yanacak — ve sebebini okuyacak.
+ */
+{
+  const PUBLIC = ["listing", "cover", "avatar"];
+  const PRIVATE = ["chat", "issue", "quote"];
+  for (const p of PUBLIC) ok(mod.IMAGE_PRESETS[p].hosted === true, `${p} herkese açık → medya ucuna gidiyor`);
+  for (const p of PRIVATE) {
+    ok(mod.IMAGE_PRESETS[p].hosted === false,
+      `${p} ÖZEL → data: URI olarak kalıyor (herkese açık adrese taşımak güvenlik gerilemesi olurdu)`);
+  }
+  // Tüm ön ayarlar karar vermiş olmalı: eksik bayrak "undefined" olur ve sessizce özel sayılırdı.
+  for (const [name, spec] of Object.entries(mod.IMAGE_PRESETS)) {
+    ok(typeof spec.hosted === "boolean", `${name} için hosted kararı açıkça verilmiş`);
+    ok(spec.kind === "image" || spec.kind === "avatar", `${name} sunucu tavanı türü belirli (${spec.kind})`);
+  }
+  ok(mod.IMAGE_PRESETS.avatar.kind === "avatar", "avatar, sunucuda AVATAR tavanıyla (1 MB) doğrulanıyor");
+}
+
+// ============================================================ FAZ 4: YÜKLEME BAŞARISIZ OLURSA
+/**
+ * EN ÖNEMLİ FAZ 4 GÜVENCESİ: bu değişiklik hiçbir koşulda mevcut çalışan davranıştan KÖTÜ bir
+ * sonuç üretemez. Yükleme başarısız olursa data URI'nin kendisi dönüyor — yani en kötü durum
+ * bugünkü hâl. Aşağıdaki senaryolar tek tek ölçülüyor.
+ */
+{
+  const img = "data:image/jpeg;base64," + "A".repeat(4000);
+  const okUploader = async () => ({ url: "http://localhost:4000/media/" + "a".repeat(32) + ".jpg" });
+
+  eq(await mod.hostPreparedImage(img, "listing", okUploader), "http://localhost:4000/media/" + "a".repeat(32) + ".jpg",
+    "başarılı yüklemede ADRES kaydediliyor");
+  eq(await mod.hostPreparedImage(img, "chat", okUploader), img,
+    "özel ön ayarda uç HİÇ çağrılmıyor, data URI kalıyor");
+
+  // Uç çağrılmadığını gerçekten doğrula: sayaçla.
+  let calls = 0;
+  const counting = async () => { calls++; return { url: "http://x/media/" + "a".repeat(32) + ".jpg" }; };
+  await mod.hostPreparedImage(img, "issue", counting);
+  eq(calls, 0, "arıza fotoğrafı için medya ucuna istek GİTMİYOR");
+  await mod.hostPreparedImage(img, "cover", counting);
+  eq(calls, 1, "kapak fotoğrafı için medya ucuna istek gidiyor");
+
+  // Başarısızlık biçimleri
+  const failures_ = [
+    ["ağ hatası / 500", async () => { throw new Error("network"); }],
+    ["401 (oturum düşmüş)", async () => { throw Object.assign(new Error("401"), { status: 401 }); }],
+    ["429 (hız sınırı)", async () => { throw new Error("429"); }],
+    ["boş yanıt", async () => ({})],
+    ["url yerine null", async () => ({ url: null })],
+    ["adres değil, metin", async () => ({ url: "coplu-bir-deger" })],
+    ["göreli yol (yanlış biçim)", async () => ({ url: "/media/abc.jpg" })],
+  ];
+  for (const [label, uploader] of failures_) {
+    eq(await mod.hostPreparedImage(img, "listing", uploader), img, `${label} → data URI'ye geri dönüyor (veri kaybı yok)`);
+  }
+
+  // data: olmayan değerler dokunulmadan geçiyor: emoji, https adresi, boş.
+  eq(await mod.hostPreparedImage("🔧", "avatar", counting), "🔧", "emoji yüklemeye çalışılmıyor");
+  eq(await mod.hostPreparedImage("https://ornek.test/a.jpg", "listing", counting), "https://ornek.test/a.jpg",
+    "zaten adres olan değer yeniden yüklenmiyor");
+  eq(await mod.hostPreparedImage("", "listing", counting), "", "boş değer dokunulmadan geçiyor");
+}
+
 // ============================================================ DİZİ TAVANI (FAZ 3'ÜN YAN ETKİSİ)
 /**
  * Arıza ve teklif fotoğraflarında hiç sayı sınırı yoktu ve GEREKMİYORDU: eski kod `blob:`

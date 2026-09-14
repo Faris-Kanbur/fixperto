@@ -170,6 +170,29 @@ okutuyordu. Buraya indeks eklemek ama sorguyu olduğu gibi bırakmak hiçbir şe
 indekssiz 224 ms, indeksli 230 ms → **%2,7 fark** (satır başına ~0,003 ms). Karşılığında istatistik
 sorgusu 5,7 ms → 0,0 ms ve plan `COVERING INDEX` diyor, yani satırlara hiç gidilmiyor.
 
+### C.9-EK — Faz 4 sonrası: adres sorunu çözüldü
+
+`POST /api/media` + `GET /media/:name` eklendi. **Ölçüldü (10 ilan × 6 foto × 250 KB):**
+
+| | data: URI (bugün) | /media/ adresi |
+|---|---|---|
+| `GET /api/listings` | **19,54 MB** | **11,5 KB** |
+| süre | 168 ms | 2 ms |
+| ilan satırı | 2000 KB | 400 bayt |
+
+**Bu sayının dürüst okunuşu:** 1744x olan şey JSON yanıtı, sayfanın TOPLAM ağırlığı DEĞİL.
+Fotoğraflar hâlâ indirilmek zorunda; ilk ziyarette yine ~15 MB görsel iniyor. Değişen dört şey:
+çizimi bekleten yük 19,54 MB'dan 11,5 KB'a indi · ikinci ziyarette fotoğraflar için ~0 bayt
+(bir yıl `immutable`) · Faz 3'te eklenen `loading="lazy"` artık GERÇEKTEN çalışıyor (ekran
+dışındaki fotoğraf hiç indirilmiyor) · ikili veri base64 değil, aynı fotoğraf %25 daha küçük.
+
+**KAPSAM raporda olmayan bir ayrımla daraltıldı.** `/media/...` kimlik doğrulaması olmadan
+okunuyor — cache'lenebilir olmanın koşulu bu. Dolayısıyla yalnızca bugün ZATEN herkese açık
+görseller gidiyor (ilan, kapak, avatar). Sohbet/arıza/teklif fotoğrafı ve CV `data:` URI olarak
+KALDI: onlar bugün yalnızca erişim denetimli JSON'da dönüyor ve tahmin edilemez ama herkese açık
+bir adrese taşımak güvenlik gerilemesi olurdu. Performans kaybı yok — kazancın tamamı zaten
+liste yanıtlarını şişiren herkese açık görsellerde.
+
 ### C.10 — Cache ve CDN yok
 
 Hiçbir yanıtta `Cache-Control` / `ETag` yok. **Ama asıl mesele şu:** görseller kimlik doğrulamalı,
@@ -274,7 +297,7 @@ Bu, gerçekten gerektiğinde yapılacak bir iş.
 | 2 | **Sohbet satırı tavanı**: mesaj başına görsel 6 MB → 1,5 MB; sohbet başına toplam BOYUT tavanı (satır 12 GB'a çıkamaz) | **P0** | **Düşük** | En büyük tek satır riski kapanır |
 | 3 | **Yanıt sıkıştırması** (`compression` middleware) | **P0** | **Düşük** | JSON meta verisinde 5-10x bant genişliği kazancı. Görselleri etkilemez. |
 | 4 | **Eksik indeksler** — ~~6~~ **10 indeks** (liste C.9'da düzeltildi) + sohbet listesi filtresini JS'ten SQL'e taşı | **P1** | **Düşük** | Ölçüldü: sohbet listesi 315 ms → 2 ms; istatistik sorgusu 5,7 ms → 0,0 ms. Yazma maliyeti ölçüldü: **%2,7**. |
-| 5 | **Medya uçları** (`POST /api/media`, `GET /media/:hash`) + içerik karması dosya adı + `immutable` cache | **P1** | **Orta** — yeni uç, yeni dosya sistemi yazımı. Eski veri bozulmaz. | Görseller DB'den çıkar, cache'lenebilir, CDN'e hazır olur. **Asıl kazanç bu.** |
+| 5 | **Medya uçları** (`POST /api/media`, `GET /media/:name`) + içerik karması dosya adı + `immutable` cache — **Faz 4'te yapıldı.** Kapsam raporda olmayan bir ayrımla DARALTILDI: yalnızca herkese açık görseller (gerekçe aşağıda) | **P1** | **Orta** — yeni uç. Eski veri hiç dokunulmadı; yükleme başarısız olursa data URI'ye geri dönülüyor, yani en kötü durum bugünkü hâl. | **Ölçüldü** (10 ilan × 6 foto): `/api/listings` **19,54 MB → 11,5 KB**, 168 ms → 2 ms, ilan satırı 2000 KB → 400 bayt |
 | 6 | **Kalan 6 yükleme yolunu istemcide yeniden boyutlandırmaya geçir** (profil, kapak, sohbet, arıza, teklif fotoğrafı) — **Faz 3'te yapıldı** ve içinde İKİ GERÇEK HATA çıktı: arıza fotoğrafı ve CV `blob:` olarak kaydediliyordu, yani karşı taraf hiç göremiyordu | **P1** | **Düşük** | Ölçüldü (12 MP / 3,5 MB kaynak): sohbet/arıza/teklif **14x** (250 KB), avatar **114x** (31 KB) |
 | 7 | ~~Kalan 22 `<img>` etiketine `loading="lazy"` + `width`/`height`~~ → **düzeltildi:** `width`/`height` GEREKSİZ (35 etiketin 34'ünde kutu Tailwind ile sabit), `lazy` bugün ETKİSİZ (görseller `data:` URI, ertelenecek istek yok). Bugün işe yarayan `decoding="async"` idi ve 9 etikette eksikti. | **P1** | **Düşük** | Lazy kazancı Faz 4'te geliyor. `decoding="async"` bugün ana iş parçacığını serbest bırakıyor. |
 | 8 | **E-posta gönderimini istek dışına al** ("ateşle ve unut" + hata günlüğü) | **P2** | **Düşük** | SMTP yavaşlığı kayıt/giriş yanıtını bekletmez |

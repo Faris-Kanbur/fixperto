@@ -57,6 +57,8 @@ export function skipIfUnsupported(suiteName) {
 const PORT = Number(process.env.E2E_PORT || 4321);
 // Veritabanı yolu porta bağlı: iki takım aynı anda çalışırsa birbirinin dosyasını silmesin.
 const DB_PATH = join(process.env.TMPDIR || "/tmp", `fixperto-e2e-${PORT}.sqlite`);
+// Medya klasörü de porta bağlı: paralel çalışan iki takım birbirinin dosyalarını silmesin.
+const MEDIA_DIR = join(process.env.TMPDIR || "/tmp", `fixperto-e2e-${PORT}-media`);
 export const BASE = `http://127.0.0.1:${PORT}`;
 
 let child = null;
@@ -64,6 +66,16 @@ let dbHandle = null;
 
 export async function startServer() {
   for (const f of [DB_PATH, `${DB_PATH}-wal`, `${DB_PATH}-shm`]) if (existsSync(f)) rmSync(f);
+  /**
+   * MEDYA KLASÖRÜ DE SİLİNİYOR (Faz 4).
+   * İlk hâlde yalnızca veritabanı siliniyordu ve bir test "ilk yüklemede deduped=false" derken
+   * başarısız oldu: dosya ÖNCEKİ ÇALIŞTIRMADAN kalmıştı, içerik karması aynı olduğu için sunucu
+   * haklı olarak "zaten var" dedi. Yani takım kendi geçmişini taşıyordu — sonraki çalıştırmalar
+   * ilkinden farklı davranan bir test, güvenilmez bir testtir.
+   * Aynı zamanda gerçek bir gerçeği gösteriyor: veritabanı ile medya klasörünün ömrü BİRLİKTE.
+   * Biri sıfırlanıp diğeri kalırsa ortaya tutarsız bir durum çıkıyor (bkz. backend/.gitignore).
+   */
+  if (existsSync(MEDIA_DIR)) rmSync(MEDIA_DIR, { recursive: true, force: true });
   // better-sqlite3 çalışıyorsa yükleyici YOK: sunucu üretimdeki hâliyle başlıyor.
   const args = DRIVER?.kind === "node:sqlite"
     ? ["--experimental-loader", join(HERE, "loader.mjs"), join(ROOT, "backend", "server.js")]
@@ -73,6 +85,7 @@ export async function startServer() {
     env: {
       ...process.env,
       FIXPERTO_DB_PATH: DB_PATH,
+      FIXPERTO_MEDIA_DIR: MEDIA_DIR,
       PORT: String(PORT),
       FIXPERTO_ADMIN_EMAIL: "admin@fixperto.test",
       FIXPERTO_ADMIN_PASSWORD: "e2e-admin-password",
@@ -83,6 +96,15 @@ export async function startServer() {
       LOGIN_LIMIT_PER_WINDOW: "500",
       // IP başına OTP sınırı yükseltiliyor; BİLET BAŞINA sınır (5) ayarlanamaz ve testte o doğrulanıyor.
       OTP_IP_LIMIT_PER_WINDOW: "500",
+      /**
+       * MEDYA YÜKLEME: IP tavanı yükseltiliyor, KULLANICI başına sınır VARSAYILANDA kalıyor.
+       * Sebebi tam da o sınırın var olma sebebi: testteki bütün kullanıcılar 127.0.0.1'den
+       * bağlanıyor, yani aynı NAT arkasındaki gerçek kullanıcıların durumunu birebir taklit
+       * ediyorlar. IP tavanı yükseltilmezse bir takımın erken adımları sonraki adımların
+       * kotasını tüketir — ki bu da IP başına sınırın gerçek kullanıcılarda yarattığı sorunun
+       * ta kendisi. Kullanıcı başına sınır (20) varsayılanıyla test ediliyor.
+       */
+      MEDIA_UPLOAD_LIMIT_PER_IP: "5000",
       NODE_NO_WARNINGS: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],

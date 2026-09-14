@@ -35,6 +35,13 @@ const ROUTER_FILE_BASE = {
   "shareEvents.js": "/api/share-events", "translate.js": "/api/translate", "vehicleHistory.js": "/api/vehicle-history",
   "listingInteractions.js": "/api/listings", "jobApplications.js": "/api/jobs", "reviews.js": "/api/mechanics",
   "recommendations.js": "/api/recommendations",
+  /**
+   * media.js tek dosyada İKİ router tanımlıyor ve bilerek iki farklı tabana bağlı:
+   * yazma `/api/media` (kimlik doğrulamalı), okuma `/media` (herkese açık, cache'lenebilir,
+   * bir gün doğrudan CDN'e verilebilsin diye `/api` dışında). Bu yüzden değer bir metin değil,
+   * router değişkeni → taban eşlemesi.
+   */
+  "media.js": { mediaRouter: "/api/media", mediaFileRouter: "/media" },
 };
 
 /** [{ method, path, source }] — metotlar BÜYÜK harf, yollar ":id" biçiminde parametreli. */
@@ -62,9 +69,36 @@ export function allEndpoints() {
       }
       continue;
     }
-    const base = ROUTER_FILE_BASE[file];
-    if (!base) continue;
-    for (const m of src.matchAll(/\w+\.(get|post|patch|delete)\("([^"]*)"/g)) push(m[1], base + m[2], file);
+    const mapping = ROUTER_FILE_BASE[file];
+    /**
+     * Yalnızca adı "router"/"...Router" olan değişkenler. Önceki desen (`\w+\.get(...)`)
+     * media.js'teki `req.get("host")` çağrısını da uç sanıp patladı — yani desen route tanımıyla
+     * herhangi bir `.get()` çağrısını ayırt edemiyordu. Projedeki tüm router değişkenleri bu
+     * adlandırmayı kullanıyor (router, authRouter, conversationsRouter, mediaFileRouter...).
+     */
+    const routes = [...src.matchAll(/\b(router|\w+Router)\.(get|post|patch|delete)\("([^"]*)"/g)];
+    /**
+     * EŞLEMESİZ DOSYA SESSİZCE ATLANMIYOR.
+     * Eski hâlde `if (!base) continue;` vardı ve bu, bu dosyanın var olma sebebine aykırıydı:
+     * yeni bir router dosyası eklenip eşlemeye yazılmadığında uçları listeye hiç girmiyor, yani
+     * otomatik güvenlik matrisi onları DENETLEMİYOR ve her şey yeşil görünüyor. Faz 4'te
+     * media.js eklenirken tam olarak bu oldu. Artık sessizce atlamak yerine patlıyor: gürültülü
+     * bir hata, sessiz bir boşluktan iyidir.
+     */
+    if (!mapping) {
+      if (routes.length === 0) continue;   // yalnızca yardımcı içeren dosya
+      throw new Error(
+        `endpoints.mjs: backend/routes/${file} içinde ${routes.length} uç var ama ROUTER_FILE_BASE'de eşlemesi yok. ` +
+        `Eşlemeyi ekleyin, aksi halde bu uçlar güvenlik matrisinde DENETLENMEZ.`);
+    }
+    for (const [, routerVar, method, p] of routes) {
+      const base = typeof mapping === "string" ? mapping : mapping[routerVar];
+      if (base === undefined) {
+        throw new Error(
+          `endpoints.mjs: backend/routes/${file} içindeki "${routerVar}" router'ının tabanı tanımlı değil.`);
+      }
+      push(method, base + p, file);
+    }
   }
   // Aynı metot+yol iki kez çıkabilir (ör. hem server.js hem router); tekilleştir.
   const seen = new Set();

@@ -4,7 +4,7 @@ import { api, setUnauthorizedHandler } from "../../services/api/client";
 import { validateFields, VEHICLE_FIELD_RULES, LISTING_FIELD_RULES } from "../../utils/validation";
 // Yükleme öncesi hazırlık (küçültme + tavan denetimi) tek yerde: bkz. utils/mediaUpload.ts.
 // Sekiz yükleme yolu oradaki iki işleve bağlı; sınırlar sunucudaki sınırlarla eşleştirilmiş.
-import { prepareImageForUpload, prepareDocumentForUpload, canAppendImage } from "../../utils/mediaUpload";
+import { prepareImageForUpload, prepareDocumentForUpload, canAppendImage, hostPreparedImage } from "../../utils/mediaUpload";
 import { track, setAnalyticsContext } from "../../services/analytics";
 import { T, useT } from "../../data/i18n";
 import {
@@ -4120,13 +4120,18 @@ function useAppLogic() {
    * fotoğrafı) artık kendi hedef boyutunu seçiyor: kapak geniş bantta 1600px, avatarlar 512px.
    * Hepsine aynı boyutu vermek ya kaliteyi ya da yeri boşa harcamak olurdu.
    */
+  /**
+   * Faz 4: hazırlanan görsel, ön ayarı `hosted` ise medya ucuna gönderiliyor ve kaydedilen değer
+   * kilobaytlarca base64 yerine ~80 baytlık bir adres oluyor. Yükleme başarısız olursa
+   * `hostPreparedImage` data URI'nin kendisini döndürüyor — yani en kötü durum bugünkü hâl.
+   */
   const uploadPreparedImage = (e, preset, onDone) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    prepareImageForUpload(file, preset, ({ dataUrl, error }) => {
+    prepareImageForUpload(file, preset, async ({ dataUrl, error }) => {
       if (error) { setToast({ type: "error", text: `⚠️ ${error}` }); return; }
-      onDone(dataUrl);
+      onDone(await hostPreparedImage(dataUrl, preset, api.media.upload));
     });
   };
   const uploadCoverPhoto = (e) => uploadPreparedImage(e, "cover", (dataUrl) => updateMyField("coverPhoto", dataUrl));
@@ -4230,11 +4235,12 @@ function useAppLogic() {
       setToast({ type: "info", text: `⚠️ En fazla ${MAX_LISTING_GALLERY_PHOTOS} ek fotoğraf yüklenebiliyor, ilk ${files.length} fotoğraf eklendi.` });
     }
     files.forEach((file) => {
-      prepareImageForUpload(file, "listing", ({ dataUrl, error }) => {
+      prepareImageForUpload(file, "listing", async ({ dataUrl, error }) => {
         // Çoklu seçimde tek dosyanın büyük olması diğerlerini iptal etmiyor: hangisinin
         // eklenmediğini söyleyip kalanlara devam ediyoruz.
         if (error) { setToast({ type: "error", text: `⚠️ ${file.name}: ${error}` }); return; }
-        setSellForm((f) => ((f.photos || []).length >= MAX_LISTING_GALLERY_PHOTOS ? f : { ...f, photos: [...(f.photos || []), dataUrl] }));
+        const value = await hostPreparedImage(dataUrl, "listing", api.media.upload);
+        setSellForm((f) => ((f.photos || []).length >= MAX_LISTING_GALLERY_PHOTOS ? f : { ...f, photos: [...(f.photos || []), value] }));
       });
     });
     e.target.value = "";

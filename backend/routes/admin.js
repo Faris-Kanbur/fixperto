@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "../db/db.js";
 import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { createAdminSession, destroyAdminSession, isAdminToken, extractBearerToken } from "../utils/auth.js";
+import { mediaStats } from "../utils/mediaStore.js";
 
 // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): admin kimlik bilgilerinin kaynak koda
 // gömülü bir varsayılanı vardı ve depo herkese açık (GitHub) — yani FIXPERTO_ADMIN_* ortam
@@ -165,10 +166,21 @@ router.get("/stats", requireAdminAuth, (req, res) => {
   const openTickets = db.prepare(`SELECT COUNT(*) n FROM support_tickets WHERE status != 'resolved'`).get().n;
   const avgRating = db.prepare(`SELECT AVG(rating) n FROM mechanics`).get().n;
   const totalReviews = db.prepare(`SELECT SUM(reviews) n FROM mechanics`).get().n;
+  /**
+   * MEDYA DEPOSU BOYUTU (Faz 4).
+   * NEDEN İSTATİSTİKTE: içerik karmalı dosyalar SİLİNMİYOR — bir karma yedi ayrı tablodan
+   * referans alınabiliyor ve tek bir atlanan referans kullanıcının gördüğü kalıcı kırık görsel
+   * demek (gerekçe: utils/mediaStore.js). Silmiyorsak en azından GÖRÜNÜR olmalı: klasör
+   * beklenmedik biçimde büyürse burada fark edilir ve karar ölçüme bakılarak elle verilir.
+   * Yetim dosyanın maliyeti diskte birkaç yüz KB; yanlış silmenin maliyeti veri kaybı.
+   */
+  const media = mediaStats();
   res.json({
     totalMechanics, totalOwners, totalAppointments, activeCarListings, openTickets,
     avgRating: avgRating ? Math.round(avgRating * 10) / 10 : 0,
     totalReviews: totalReviews || 0,
+    mediaFiles: media.files,
+    mediaBytes: media.bytes,
   });
 });
 

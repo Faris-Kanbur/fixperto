@@ -416,6 +416,21 @@ export const api = {
     profile: (): Promise<{ consent: boolean; signals: any[] }> => request("/api/recommendations/profile"),
     deleteProfile: (): Promise<{ deleted: number }> => request("/api/recommendations/profile", { method: "DELETE" }),
   },
+  /**
+   * MEDYA (Faz 4) — fotoğrafı veritabanı yerine kalıcı bir ADRESE koyuyor.
+   * ------------------------------------------------------------------------------------------------
+   * Sunucu içerik karmasından bir dosya adı üretip mutlak adresi döndürüyor. Kazanç: o adres
+   * cache'lenebiliyor (bir yıl, `immutable`) — bugünkü `data:` URI'ler kimlik doğrulamalı JSON'un
+   * içine gömülü olduğu için cache'lenmeleri imkânsız.
+   *
+   * YALNIZCA HERKESE AÇIK GÖRSELLER buraya gidiyor; sohbet, arıza, teklif fotoğrafı ve CV `data:`
+   * URI olarak kalıyor çünkü bu adresler kimlik doğrulaması olmadan okunabiliyor (cache'lenebilir
+   * olmanın koşulu bu). Gerekçe: backend/utils/mediaStore.js.
+   */
+  media: {
+    upload: (dataUrl: string, kind: "image" | "avatar" = "image"): Promise<{ url: string; name: string; bytes: number; contentType: string; deduped: boolean }> =>
+      request("/api/media", { method: "POST", body: JSON.stringify({ data: dataUrl, kind }) }),
+  },
   admin: {
     // GÜVENLİK DÜZELTMESİ: backend artık başarılı girişte bir token dönüyor (bkz.
     // backend/routes/admin.js) — bu token bellekte saklanıp aşağıdaki diğer admin çağrılarına

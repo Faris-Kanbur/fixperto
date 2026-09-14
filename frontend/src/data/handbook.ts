@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 29 STATİK takım + 4 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 29 STATİK takım + 5 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -1824,6 +1824,96 @@ Dosya sistemi seçildi, obje deposu değil: sıfır ek bağımlılık, sıfır e
 
 ## Bilinen ve kabul edilen sınır
 SQLite tek yazıcılı. Yüksek eşzamanlı yazmada Postgres gerekecek — ama bu bugünün sorunu değil ve ölçülmeden yapılmamalı.`,
+      },
+      {
+        id: "faz-4-medya",
+        title: "25.6 Faz 4: medya uçları — asıl mimari değişiklik",
+        body: `## Sorun boyut değildi, ADRESSİZLİKTİ
+
+Önceki fazlar fotoğrafları küçülttü. Ama asıl kısıt hiç küçülmedi: **kimlik doğrulamalı, dinamik bir JSON yanıtının içine gömülü bir görsel cache'lenemez.** Ne tarayıcı önbelleği, ne CDN, ne \`immutable\` — hiçbiri çalışmaz, çünkü görselin kendi adresi yoktur. "CDN ekleyelim" demek bu mimaride işe yaramaz: cache'lenecek ayrı bir kaynak yoktur.
+
+Faz 4 o adresi yaratıyor: \`POST /api/media\` (yazma, kimlik doğrulamalı) ve \`GET /media/:name\` (okuma, herkese açık, bir yıl \`immutable\`).
+
+## Ölçüm — 10 ilan × 6 fotoğraf (her biri 250 KB)
+
+| | data: URI (bugün) | /media/ adresi |
+|---|---|---|
+| \`/api/listings\` yanıtı | **19,54 MB** | **11,5 KB** |
+| yanıt süresi | 168 ms | 2 ms |
+| ilan satırı | 2000 KB | 400 bayt |
+
+**Bu sayının dürüst okunuşu:** 1744x olan şey JSON yanıtı, sayfanın TOPLAM ağırlığı değil. Fotoğraflar hâlâ indirilmek zorunda — ilk ziyarette yine ~15 MB görsel iniyor. Değişen dört şey var ve hepsi önemli:
+
+1. **Çizimi bekleten şey artık 19,54 MB değil 11,5 KB.** JSON gelmeden hiçbir şey görünmüyordu; artık sayfa anında çiziliyor, fotoğraflar akarak geliyor.
+2. **İkinci ziyarette fotoğraflar için ~0 bayt.** Bir yıl \`immutable\`, yani tarayıcı sormuyor bile.
+3. **\`loading="lazy"\` artık gerçekten çalışıyor.** Faz 3'te eklendiğinde etkisizdi (veri JSON'un içinde gelmiş oluyordu); şimdi ekran dışındaki fotoğraflar HİÇ indirilmiyor.
+4. **İkili veri, base64 değil** → aynı fotoğraf %25 daha küçük.
+
+Ve veritabanı: ilan satırı 2000 KB'dan 400 bayta indi. 200.000 fotoğrafta tahmin edilen ~45 GB'lık tek SQLite dosyası artık oluşmuyor.
+
+## İçerik karması dosya adı — üç sorunu birden çözüyor
+
+Dosya adı \`<sha256'nın ilk 32 karakteri>.<uzantı>\`.
+
+**1. Cache geçersizleştirme sorunu HİÇ oluşmuyor.** Ad içeriğin karması olduğu için içerik değişince ADRES de değişir. \`immutable\` ve bir yıl bu yüzden dürüst bir söz: o adreste duran baytlar asla değişmeyecek. Kullanıcı profil fotoğrafını değiştirdiğinde eski dosya cache'te kalsa bile kimse ona bakmaz — veritabanındaki adres artık yenisini gösteriyor. Sabit adlı bir dosyada aynı başlığı vermek, kullanıcının bir yıl eski fotoğrafı görmesi olurdu.
+
+**2. Yol atlama (path traversal) YAPISAL OLARAK imkânsız.** Kullanıcının verdiği dosya adı hiç kullanılmıyor — ne kaydederken ne sunarken. \`../../etc/passwd\` diye bir ad üretilemez, çünkü ad kullanıcıdan gelmiyor. Bu, dosya adını temizlemeye (sanitize) çalışmaktan daha sağlam: temizleme atlanabilir, ÜRETME atlanamaz.
+
+**3. Aynı dosya bir kez saklanıyor.** İki kullanıcı aynı görseli yüklerse karma aynı olur, dosya bir kez yazılır. Bedava tekilleştirme.
+
+128 bit ayrıca TAHMİN EDİLEMEZ olmayı sağlıyor: adres sızmadıkça kimse rastgele deneyerek dosya bulamaz.
+
+## İmza denetimi — etikete güvenmemek
+
+MIME türü İSTEMCİDEN geliyor. \`data:image/png;base64,<aslında bir HTML dosyası>\` yazmak hiçbir şey engellemiyor. Uzantıyı ve \`Content-Type\`ı o yalana göre verirsek, dosya indirilip açıldığında içerik farklı yorumlanabilir. Bu yüzden baytların KENDİSİNE bakılıyor (magic bytes): iddia edilen tür gerçek imzayla uyuşmuyorsa reddediliyor. Test bunu gerçek dosyalarla sınıyor — "PNG diye etiketlenmiş JPEG" ve "JPEG diye etiketlenmiş HTML" ikisi de 400 alıyor.
+
+Sunma tarafında \`Content-Type\` UZANTIDAN türetiliyor (dosyanın içinden ya da istekten değil), üstüne \`X-Content-Type-Options: nosniff\` ve yanıt bazında \`Content-Security-Policy: default-src 'none'; sandbox\`. SVG tabloda hiç yok — ne saklanabiliyor ne sunulabiliyor.
+
+## KAPSAM DARALTILDI: yalnızca herkese açık görseller
+
+Raporda bu ayrım yoktu; uygulamada ortaya çıktı. \`/media/...\` adresleri **kimlik doğrulaması olmadan** okunuyor — cache'lenebilir olmanın koşulu tam olarak bu. Dolayısıyla oraya yalnızca bugün ZATEN herkese açık olan görseller gidebilir:
+
+| Görsel | Uca gidiyor? | Neden |
+|---|---|---|
+| ilan fotoğrafı + galeri | ✅ | anonim ziyaretçiye zaten gönderiliyor |
+| tamirci kapak görseli | ✅ | aynı |
+| profil / avatar / çalışan | ✅ | aynı |
+| sohbet fotoğrafı | ❌ | yalnızca erişim denetimli JSON'da dönüyor |
+| arıza fotoğrafı | ❌ | aynı |
+| teklif fotoğrafı | ❌ | aynı |
+| CV, doğrulama belgesi | ❌ | kişisel veri |
+
+Özel görselleri tahmin edilemez ama herkese açık bir adrese taşımak bir **güvenlik gerilemesi** olurdu: adres bir kez sızarsa (referrer başlığı, tarayıcı geçmişi, sunucu günlüğü, ekran görüntüsü paylaşımı) kişisel veri kimlik doğrulaması olmadan okunur. Performans kaybı da yok — kazancın neredeyse tamamı zaten herkese açık görsellerde, çünkü büyük liste yanıtlarını şişiren ve CDN'in cache'leyebileceği tek küme onlar. Özel görseller istek başına tek kayıt dönen uçlarda.
+
+Bu karar \`IMAGE_PRESETS\` tablosundaki \`hosted\` bayrağında, tek yerde duruyor — kodun içine dağılmış if'ler yerine okunabilir ve test edilebilir olsun diye. Biri ileride performans için sohbeti de hosted yaparsa test kırmızı yanıyor.
+
+## Hiçbir koşulda bugünden kötü olamaz
+
+Yükleme herhangi bir sebeple başarısız olursa (ağ yok, 401, 429, 500, eksik yanıt, bozuk adres) \`data:\` URI'nin KENDİSİ kaydediliyor. Yani en kötü durum bugünkü hâl. Kullanıcıya hata göstermiyoruz çünkü onun açısından bir şey bozulmadı — fotoğrafı yine kaydedildi, sadece daha az verimli biçimde. Sessiz kalınan tek şey bu; gerçek bir kayıp olsaydı söylerdik.
+
+Aynı şekilde **mevcut veri hiç dokunulmadı.** Veritabanındaki tüm \`data:\` URI'ler olduğu gibi duruyor ve çalışıyor; \`<img src>\` hem \`data:\` hem \`http(s):\` kabul ettiği için okuma yolunda tek satır değişmedi. Testin bir bölümü sadece bunu ölçüyor: data URI ile ilan hâlâ oluşturulabiliyor mu, veritabanına birebir yazılıyor mu, okurken aynı değer dönüyor mu.
+
+## Hız sınırı: kullanıcı başına, IP başına değil
+
+Bunu test ortaya çıkardı. İlk hâlde sınır IP başınaydı — projedeki diğer sınırlarla tutarlı olsun diye. Test 6. istekte kilitlendi çünkü önceki adımlardaki yüklemeler aynı IP'den (127.0.0.1) gelmişti.
+
+Bu bir test sorunu değil, gerçek kullanıcıların yaşayacağı sorunun aynısı: aynı ofis, aynı okul, aynı mobil operatör NAT'ı arkasındaki kullanıcılar tek kotayı paylaşır. Biri 15 fotoğraflı ilan yüklerken yanındaki masadaki kişi 429 alır.
+
+Giriş ve OTP sınırlarında IP DOĞRU tutamak: saldırganın kimliği yok, elimizdeki tek şey IP. Ama yükleme **kimlik doğrulamalı** — kimin yüklediğini bildiğimiz halde IP'ye bakmak, elimizdeki daha iyi bilgiyi kullanmamak olurdu. Sınır kullanıcı başına dakikada 20'ye çevrildi (arayüz tek seferde en fazla 15 galeri fotoğrafı gönderiyor). IP tavanı ise çok hesap açıp kotayı çarpmaya karşı daha geniş bir ikinci katman olarak kaldı (dakikada 60); hesap açmanın kendi IP sınırı da var, katmanlar birbirini tamamlıyor.
+
+## Yetim dosyalar: ölçülüyor, silinmiyor
+
+Bir karma **yedi ayrı tablodan** referans alınabiliyor (ilan kapak, ilan galerisi, tamirci avatarı, kapak, blog, kariyer, çalışan). Yetim dosyaları silmek için hepsini taramak gerekir ve TEK bir atlanan referans, kullanıcının gördüğü kalıcı bir kırık görsel demektir.
+
+**Ölçmek güvenli, silmek değil.** Bu yüzden yönetici istatistiklerine dosya sayısı ve klasör boyutu eklendi: klasör beklenmedik biçimde büyürse görünür oluyor ve silme kararı ölçüme bakılarak, elle veriliyor. Yetim dosyanın maliyeti diskte birkaç yüz KB; yanlış silmenin maliyeti veri kaybı.
+
+## Yedekleme: veritabanı ve klasör BİRLİKTE
+
+Medya klasörü varsayılan olarak veritabanı dosyasının yanında (\`FIXPERTO_MEDIA_DIR\` ile değiştirilebilir). İkisinin birlikte durması gerekiyor çünkü **veritabanı adresleri, klasör baytları tutuyor.** Biri yedeklenip diğeri atlanırsa sonuç tamamen kaybetmekten daha kötü olur: kırık görsellerle dolu ama "çalışıyor" görünen bir site.
+
+## Bilinen ödünleşim: mutlak adres
+
+Kaydedilen değer mutlak adres (\`http://host/media/...\`). Sebebi: ön yüz API'ye mutlak adresle bağlanıyor, göreli bir \`/media/...\` ön yüzün kendi kökenine çözülür ve 404 verir. Bedeli: alan adı değişirse eski adresler kırılır. Kabul edilebilir, çünkü düzeltmesi tek bir \`UPDATE ... REPLACE(...)\` — ve alternatifi (göreli yol saklamak) ham \`src={...}\` kullanan 14 çizim noktasının hepsine ön ek eklemeyi gerektirirdi; biri atlanırsa kırık görsel oluşur ve bu daha sinsi bir hata olurdu. \`PUBLIC_MEDIA_BASE\` verilirse (ör. CDN alan adı) o kullanılıyor — CDN'e geçiş artık tek bir ortam değişkeni.`,
       },
       {
         id: "faz-3-yukleme",
