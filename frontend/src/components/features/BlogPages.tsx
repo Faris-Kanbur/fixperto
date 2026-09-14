@@ -81,7 +81,7 @@ export function BlogListPage() {
                     yoksa (yer tutucu ikon) yumuşak gri. */}
                 <div className={`h-52 md:h-full flex items-center justify-center ${isImgUrl(lead.coverPhoto) ? "bg-gray-100" : "bg-gray-50"}`}>
                   {isImgUrl(lead.coverPhoto)
-                    ? <img src={imgThumb(lead.coverPhoto, 900)} onError={imgFallbackHandler} alt={lead.title} className="w-full h-full object-cover" />
+                    ? <img decoding="async" src={imgThumb(lead.coverPhoto, 900)} onError={imgFallbackHandler} alt={lead.title} className="w-full h-full object-cover" />
                     : <Wrench size={48} className="text-gray-300" />}
                 </div>
                 <div className="p-6 md:p-8 flex flex-col justify-center">
@@ -101,7 +101,7 @@ export function BlogListPage() {
                 <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-rose-200 transition overflow-hidden flex flex-col">
                   <div className={`h-36 flex items-center justify-center flex-shrink-0 ${isImgUrl(p.coverPhoto) ? "bg-gray-100" : "bg-gray-50"}`}>
                     {isImgUrl(p.coverPhoto)
-                      ? <img src={imgThumb(p.coverPhoto, 500)} onError={imgFallbackHandler} alt={p.title} className="w-full h-full object-cover" />
+                      ? <img loading="lazy" decoding="async" src={imgThumb(p.coverPhoto, 500)} onError={imgFallbackHandler} alt={p.title} className="w-full h-full object-cover" />
                       : <Wrench size={32} className="text-gray-300" />}
                   </div>
                   <div className="p-5 flex-1 flex flex-col">
@@ -217,7 +217,7 @@ export function BlogPostPage() {
                 {blogPost.views > 0 && <span className="flex items-center gap-1"><Eye size={12} /> {t("blogViewsLabel", { n: String(blogPost.views) })}</span>}
               </div>
               {isImgUrl(blogPost.coverPhoto) && (
-                <img src={imgThumb(blogPost.coverPhoto, 1200)} onError={imgFallbackHandler} alt={blogPost.title} className="w-full h-56 md:h-72 object-cover rounded-2xl mb-6" />
+                <img decoding="async" src={imgThumb(blogPost.coverPhoto, 1200)} onError={imgFallbackHandler} alt={blogPost.title} className="w-full h-56 md:h-72 object-cover rounded-2xl mb-6" />
               )}
               <p className="text-base text-gray-600 leading-relaxed mb-6 font-medium">{blogPost.excerpt}</p>
               {/* Üstteki kart: okuyucu yazının tamamını okumadan da aradığı ustaya ulaşabilsin.

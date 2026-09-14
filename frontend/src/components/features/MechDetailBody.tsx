@@ -445,7 +445,7 @@ export function MechDetailBody() {
                   return (
                     <div key={i} className="text-center bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition">
                       <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-2xl mb-2.5 overflow-hidden shadow-md relative`}>
-                        {isImgUrl(s.emoji) ? <img src={s.emoji} loading="lazy" onError={imgFallbackHandler} alt={s.name} className="w-full h-full object-cover" /> : <span className="drop-shadow">{s.emoji}</span>}
+                        {isImgUrl(s.emoji) ? <img src={s.emoji} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={s.name} className="w-full h-full object-cover" /> : <span className="drop-shadow">{s.emoji}</span>}
                         <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 border-2 border-white rounded-full" />
                       </div>
                       <p className="text-xs font-semibold text-gray-800 leading-tight truncate">{s.name}</p>

@@ -252,7 +252,7 @@ export function ListingDetailPage() {
             <div className="relative rounded-3xl overflow-hidden bg-gray-100 border border-gray-200">
               <button onClick={() => setLightboxOpen(true)} className="w-full aspect-[4/3] sm:aspect-[16/10] flex items-center justify-center text-7xl" aria-label={t("enlargePhotoAria")}>
                 {isImgUrl(photos[activeIdx])
-                  ? <img src={imgThumb(photos[activeIdx], 1400)} onError={imgFallbackHandler} alt={t("listingPhotoAlt")} className="w-full h-full object-cover" />
+                  ? <img decoding="async" src={imgThumb(photos[activeIdx], 1400)} onError={imgFallbackHandler} alt={t("listingPhotoAlt")} className="w-full h-full object-cover" />
                   : <span>{photos[activeIdx]}</span>}
               </button>
               {photos.length > 1 && (
@@ -268,7 +268,7 @@ export function ListingDetailPage() {
               <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
                 {photos.map((p, i) => (
                   <button key={i} onClick={() => setPhotoIdx(i)} className={`w-20 h-16 rounded-xl overflow-hidden border-2 flex-shrink-0 transition flex items-center justify-center text-2xl bg-gray-100 ${i === activeIdx ? "border-rose-500" : "border-transparent opacity-70 hover:opacity-100"}`}>
-                    {isImgUrl(p) ? <img src={imgThumb(p, 200)} loading="lazy" onError={imgFallbackHandler} alt="" className="w-full h-full object-cover" /> : <span>{p}</span>}
+                    {isImgUrl(p) ? <img src={imgThumb(p, 200)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt="" className="w-full h-full object-cover" /> : <span>{p}</span>}
                   </button>
                 ))}
               </div>

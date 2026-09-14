@@ -117,7 +117,7 @@ export function AppointmentCard({ a }) {
       <div className="border border-gray-100 rounded-2xl p-4 shadow-sm">
         <div className="flex items-start gap-3 mb-3"><div className="text-2xl bg-rose-50 rounded-xl w-11 h-11 flex items-center justify-center flex-shrink-0">{a.mechanicImg}</div><div className="flex-1"><h4 className="font-semibold text-gray-800 text-sm">{a.mechanicName}</h4><p className="text-xs text-gray-400">{a.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${statusColor(a.status)}`}>{apptStatusLabel(a.status, lang)}</span></div>
         <p className="text-xs text-gray-500 mb-3">{a.issue}</p>
-        {a.issuePhotos && a.issuePhotos.length > 0 && (<div className="flex gap-1.5 mb-3">{a.issuePhotos.map((src, i) => (<img key={i} src={src} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
+        {a.issuePhotos && a.issuePhotos.length > 0 && (<div className="flex gap-1.5 mb-3">{a.issuePhotos.map((src, i) => (<img loading="lazy" decoding="async" key={i} src={src} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
         <div className="flex items-center gap-3 text-xs text-gray-400 mb-3"><span className="flex items-center gap-1"><Calendar size={12} />{a.date}</span><span className="flex items-center gap-1"><Clock size={12} />{a.time}</span></div>
         {cancellable && (
           <div className="flex items-center gap-3 text-[11px] text-rose-500 mb-3">

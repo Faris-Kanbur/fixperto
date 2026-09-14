@@ -2,6 +2,9 @@ import { useState, useMemo, useRef, useEffect, createContext, useContext } from 
 import { Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, Menu, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2 } from "lucide-react";
 import { api, setUnauthorizedHandler } from "../../services/api/client";
 import { validateFields, VEHICLE_FIELD_RULES, LISTING_FIELD_RULES } from "../../utils/validation";
+// Yükleme öncesi hazırlık (küçültme + tavan denetimi) tek yerde: bkz. utils/mediaUpload.ts.
+// Sekiz yükleme yolu oradaki iki işleve bağlı; sınırlar sunucudaki sınırlarla eşleştirilmiş.
+import { prepareImageForUpload, prepareDocumentForUpload, canAppendImage } from "../../utils/mediaUpload";
 import { track, setAnalyticsContext } from "../../services/analytics";
 import { T, useT } from "../../data/i18n";
 import {
@@ -425,7 +428,27 @@ function useAppLogic() {
   const [problemDesc, setProblemDesc] = useState("");
   const [problemPhotos, setProblemPhotos] = useState([]);
   const problemPhotoRef = useRef(null);
-  const addProblemPhoto = (e) => { const file = e.target.files?.[0]; if (!file) return; setProblemPhotos(p => [...p, URL.createObjectURL(file)]); e.target.value = ""; };
+  /**
+   * ARIZA FOTOĞRAFI — GERÇEK HATA DÜZELTMESİ (Faz 3).
+   * Burada `URL.createObjectURL(file)` kullanılıyordu. O değer bu SEKMEYE ÖZEL geçici bir bellek
+   * referansı; randevuyla birlikte sunucuya `blob:http://.../uuid` diye kaydediliyordu. Sonuç:
+   * fotoğrafı görmesi gereken TAMİRCİ her zaman kırık bir görsel görüyordu — yani özellik hiç
+   * çalışmıyordu, ama arayüzde hata da vermiyordu (yükleyen kişi kendi sekmesinde görüyor).
+   * Aynı hata daha önce teklif, sohbet ve kapak fotoğrafında düzeltilmiş, bu yol atlanmıştı.
+   */
+  const addProblemPhoto = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    prepareImageForUpload(file, "issue", ({ dataUrl, error }) => {
+      if (error) { setToast({ type: "error", text: `⚠️ ${error}` }); return; }
+      setProblemPhotos(p => {
+        const full = canAppendImage(p, dataUrl);
+        if (full) { setToast({ type: "info", text: `⚠️ ${full}` }); return p; }
+        return [...p, dataUrl];
+      });
+    });
+  };
   const removeProblemPhoto = (idx) => setProblemPhotos(p => p.filter((_, i) => i !== idx));
   const quotePhotoRef = useRef(null);
   // GERÇEK HATA DÜZELTMESİ: URL.createObjectURL(file) sayfaya özel geçici bir bellek referansı
@@ -433,13 +456,20 @@ function useAppLogic() {
   // artık geçersizdir, fotoğraf sessizce kırık görünür. FileReader.readAsDataURL ile kalıcı,
   // kendi kendine yeten bir "data:" URI'sine çeviriyoruz — normal bir metin sütunu gibi DB'de
   // saklanabilir ve her zaman aynı şekilde render edilir.
+  // Faz 3: ham `readAsDataURL` yerine küçültmeli yol. Telefon kamerasından gelen 3-10 MB'lık
+  // dosya artık olduğu gibi saklanmıyor; ayrıca tavanı aşan dosya için kullanıcıya SEBEP yazılıyor.
   const addQuotePhoto = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { if (typeof reader.result === "string") setQuotePhotos(p => [...p, reader.result as string]); };
-    reader.readAsDataURL(file);
     e.target.value = "";
+    if (!file) return;
+    prepareImageForUpload(file, "quote", ({ dataUrl, error }) => {
+      if (error) { setToast({ type: "error", text: `⚠️ ${error}` }); return; }
+      setQuotePhotos(p => {
+        const full = canAppendImage(p, dataUrl);
+        if (full) { setToast({ type: "info", text: `⚠️ ${full}` }); return p; }
+        return [...p, dataUrl];
+      });
+    });
   };
   const removeQuotePhoto = (idx) => setQuotePhotos(p => p.filter((_, i) => i !== idx));
   const [approveExpensiveService, setApproveExpensiveService] = useState(false);
@@ -3696,13 +3726,16 @@ function useAppLogic() {
   // uploadCoverPhoto'daki aynı düzeltme). Sayfa yenilendiğinde, mesaj başka bir rolden (ör. aynı
   // sohbeti tamirci tarafından açıp bakıldığında) görüntülendiğinde ya da backend'den tekrar
   // çekildiğinde fotoğraf kırık görünürdü. FileReader ile kalıcı bir "data:" URI'sine çevriliyor.
+  // Faz 3: sohbet fotoğrafı da küçültülüyor. Sohbet satırı en pahalı satır (tüm mesajlar tek
+  // TEXT sütununda), o yüzden buradaki kazanç iki kat değerli: hem yükleme hem her okuma.
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { if (typeof reader.result === "string") sendOwnerMessage("📎 Fotoğraf gönderildi", reader.result); };
-    reader.readAsDataURL(file);
     e.target.value = "";
+    if (!file) return;
+    prepareImageForUpload(file, "chat", ({ dataUrl, error }) => {
+      if (error) { setToast({ type: "error", text: `⚠️ ${error}` }); return; }
+      sendOwnerMessage("📎 Fotoğraf gönderildi", dataUrl);
+    });
   };
   /**
    * KALDIRILDI: SAHTE OTOMATİK YANIT.
@@ -4081,12 +4114,22 @@ function useAppLogic() {
   // backend'e kaydedilip sayfa yenilendiğinde (veya profili görüntüleyen bir müşterinin
   // tarayıcısında) artık geçersizdir, fotoğraf sessizce kırık görünür (bkz. addQuotePhoto'daki aynı
   // düzeltme). FileReader ile kalıcı bir "data:" URI'sine çeviriyoruz.
-  const readFileAsDataUrl = (file, onDone) => {
-    const reader = new FileReader();
-    reader.onload = () => { if (typeof reader.result === "string") onDone(reader.result); };
-    reader.readAsDataURL(file);
+  /**
+   * Faz 3: `readFileAsDataUrl` (ham, sıkıştırmasız) KALDIRILDI. Yerine utils/mediaUpload.ts'teki
+   * ortak yol geldi. Tek bir yardımcıyı kullanan üç çağrı (kapak, çalışan avatarı, profil
+   * fotoğrafı) artık kendi hedef boyutunu seçiyor: kapak geniş bantta 1600px, avatarlar 512px.
+   * Hepsine aynı boyutu vermek ya kaliteyi ya da yeri boşa harcamak olurdu.
+   */
+  const uploadPreparedImage = (e, preset, onDone) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    prepareImageForUpload(file, preset, ({ dataUrl, error }) => {
+      if (error) { setToast({ type: "error", text: `⚠️ ${error}` }); return; }
+      onDone(dataUrl);
+    });
   };
-  const uploadCoverPhoto = (e) => { const file = e.target.files?.[0]; if (!file) return; readFileAsDataUrl(file, (dataUrl) => updateMyField("coverPhoto", dataUrl)); };
+  const uploadCoverPhoto = (e) => uploadPreparedImage(e, "cover", (dataUrl) => updateMyField("coverPhoto", dataUrl));
   const removeCoverPhoto = () => updateMyField("coverPhoto", null);
   const addStaff = () => {
     const staff = [...myProfile.staff, { name: "Yeni Çalışan", role: "Görev", emoji: "🧑‍🔧" }];
@@ -4103,8 +4146,11 @@ function useAppLogic() {
     setMechanicsList(list => list.map(m => m.id !== MY_MECHANIC_ID ? m : { ...m, staff }));
     persist(api.mechanics.update(MY_MECHANIC_ID, { staff }), "Çalışan kaydedilemedi");
   };
-  const staffAvatarUpload = (idx, e) => { const file = e.target.files?.[0]; if (!file) return; readFileAsDataUrl(file, (dataUrl) => updateStaffField(idx, "emoji", dataUrl)); };
-  const ownerPhotoUpload = (e) => { const file = e.target.files?.[0]; if (!file) return; readFileAsDataUrl(file, (dataUrl) => { updateMyOwnerField("photo", dataUrl); persist(api.owners.update(MY_OWNER_ID, { photo: dataUrl }), "Fotoğraf kaydedilemedi"); }); };
+  const staffAvatarUpload = (idx, e) => uploadPreparedImage(e, "avatar", (dataUrl) => updateStaffField(idx, "emoji", dataUrl));
+  const ownerPhotoUpload = (e) => uploadPreparedImage(e, "avatar", (dataUrl) => {
+    updateMyOwnerField("photo", dataUrl);
+    persist(api.owners.update(MY_OWNER_ID, { photo: dataUrl }), "Fotoğraf kaydedilemedi");
+  });
   // Çalışma saatleri (mechanicHours) ayrı bir istemci-taraflı yapı; backend'deki mechanics.hoursText
   // alanına insan-okur biçimde yansıtılır (bkz. formatHoursText) — böylece diğer kullanıcılar
   // gerçek zamanlı çalışma saatlerini görebilir. Kaydedilirken o an aktif olan `lang` kullanılır;
@@ -4155,38 +4201,12 @@ function useAppLogic() {
   // yenilendiğinde veya ilanı başka biri görüntülediğinde kırık görünür (bkz. addQuotePhoto'daki
   // aynı düzeltme). Ayrıca telefon kameralarından gelen ham fotoğraflar 3-10MB olabiliyor; bunları
   // olduğu gibi data URI'ye çevirip saklamak hem sayfayı yavaşlatır hem de veritabanını gereksiz
-  // şişirir. Bu yüzden dosya önce canvas üzerinden en uzun kenarı LISTING_PHOTO_MAX_DIM'e
-  // küçültülüp JPEG kalitesi LISTING_PHOTO_QUALITY'e düşürülerek makul boyutlu (genelde birkaç
-  // yüz KB) kalıcı bir data URI'ye dönüştürülüyor.
-  const LISTING_PHOTO_MAX_DIM = 1600;
-  const LISTING_PHOTO_QUALITY = 0.78;
-  const readImageAsCompressedDataUrl = (file, onDone) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") return;
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(1, LISTING_PHOTO_MAX_DIM / Math.max(img.width, img.height));
-        const w = Math.max(1, Math.round(img.width * scale));
-        const h = Math.max(1, Math.round(img.height * scale));
-        const canvas = document.createElement("canvas");
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) { onDone(reader.result as string); return; }
-        ctx.drawImage(img, 0, 0, w, h);
-        onDone(canvas.toDataURL("image/jpeg", LISTING_PHOTO_QUALITY));
-      };
-      img.onerror = () => onDone(reader.result as string);
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  };
-  const sellPhotoUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    readImageAsCompressedDataUrl(file, (dataUrl) => setSellForm(f => ({ ...f, photo: dataUrl })));
-    e.target.value = "";
-  };
+  // şişirir. Bu yüzden dosya önce canvas üzerinden küçültülüp JPEG kalitesi düşürülerek makul
+  // boyutlu (genelde birkaç yüz KB) kalıcı bir data URI'ye dönüştürülüyor.
+  // Faz 3: bu fonksiyonun gövdesi utils/mediaUpload.ts'e taşındı ve orada iki şey kazandı —
+  // saydam PNG'yi JPEG'e çevirip arkasını siyaha boyamıyor, ve sonuç tavanı aşarsa kullanıcıya
+  // sebebini söylüyor. Sekiz yükleme yolunun hepsi artık aynı gövdeyi kullanıyor.
+  const sellPhotoUpload = (e) => uploadPreparedImage(e, "listing", (dataUrl) => setSellForm(f => ({ ...f, photo: dataUrl })));
   // Kapak fotoğrafının yanına eklenen ek galeri fotoğrafları (bkz. ilan detay modalındaki
   // galeri/thumbnail şeridi) — birden fazla dosya birden seçilebilir, hepsi sellForm.photos
   // dizisine eklenir. İlan başına galeri fotoğrafı sayısı MAX_LISTING_GALLERY_PHOTOS ile
@@ -4203,12 +4223,17 @@ function useAppLogic() {
       e.target.value = "";
       return;
     }
-    const files = Array.from(fileList).slice(0, remaining);
+    // `e` bu dosyada tipsiz olduğu için Array.from sonucu `unknown[]` çıkıyor; File olarak
+    // işaretliyoruz ki hata mesajında dosya adını kullanabilelim.
+    const files = (Array.from(fileList) as File[]).slice(0, remaining);
     if (fileList.length > files.length) {
       setToast({ type: "info", text: `⚠️ En fazla ${MAX_LISTING_GALLERY_PHOTOS} ek fotoğraf yüklenebiliyor, ilk ${files.length} fotoğraf eklendi.` });
     }
     files.forEach((file) => {
-      readImageAsCompressedDataUrl(file, (dataUrl) => {
+      prepareImageForUpload(file, "listing", ({ dataUrl, error }) => {
+        // Çoklu seçimde tek dosyanın büyük olması diğerlerini iptal etmiyor: hangisinin
+        // eklenmediğini söyleyip kalanlara devam ediyoruz.
+        if (error) { setToast({ type: "error", text: `⚠️ ${file.name}: ${error}` }); return; }
         setSellForm((f) => ((f.photos || []).length >= MAX_LISTING_GALLERY_PHOTOS ? f : { ...f, photos: [...(f.photos || []), dataUrl] }));
       });
     });
@@ -4992,11 +5017,25 @@ function useAppLogic() {
   };
   const setJobListingStatus = (id, status) => { setJobListings(js => js.map(j => j.id === id ? { ...j, status } : j)); persist(api.jobs.update(id, { status }), "İş ilanı durumu kaydedilemedi"); };
   const removeJobListing = (id) => { setJobListings(js => js.filter(j => j.id !== id)); persist(api.jobs.remove(id), "İş ilanı silinemedi"); setToast({ type: "info", text: "🗑️ İş ilanı silindi." }); };
+  /**
+   * CV YÜKLEME — GERÇEK HATA DÜZELTMESİ (Faz 3).
+   * Burada da `URL.createObjectURL(file)` vardı ve sonuç CV alanında daha da ağırdı: aday CV'sini
+   * ekliyor, "başvuru gönderildi" mesajını görüyor, sunucuya `blob:http://.../uuid` kaydediliyor
+   * ve İŞVEREN dosyayı HİÇ açamıyor. Yani başvuru sistemi CV olmadan çalışıyordu, kimse
+   * fark etmiyordu. utils/helpers.ts'teki safeHref yorumu bile "CV data: URI olarak saklanıyor"
+   * diyor — kod o niyeti karşılamıyordu. Şimdi karşılıyor.
+   *
+   * Tuval YOK: PDF'i yeniden kodlamak dosyayı bozar. Bu yüzden tek koruma tavan denetimi, ve
+   * tavanı aşan dosya SESSİZCE gönderilmiyor — aday sebebini okuyor.
+   */
   const handleCvSelect = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    setJobApplyCv({ name: file.name, url: URL.createObjectURL(file) });
     e.target.value = "";
+    if (!file) return;
+    prepareDocumentForUpload(file, ({ dataUrl, name, error }) => {
+      if (error) { setToast({ type: "error", text: `⚠️ ${error}` }); return; }
+      setJobApplyCv({ name, url: dataUrl });
+    });
   };
   const removeCv = () => { setJobApplyCv(null); if (cvFileRef.current) cvFileRef.current.value = ""; };
   const closeJobApplyForm = () => { setShowJobApplyForm(false); setJobApplyCv(null); };

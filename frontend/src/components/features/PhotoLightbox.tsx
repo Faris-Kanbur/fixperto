@@ -38,7 +38,7 @@ export function PhotoLightbox({ photos, index, onIndexChange, onClose, title = "
         )}
         <div className="max-w-full max-h-full flex items-center justify-center">
           {isImgUrl(current) ? (
-            <img src={current} onError={imgFallbackHandler} alt={t("lightboxPhotoAlt", { title, n: String(safeIndex + 1) })} className="max-w-full max-h-viewport-photo object-contain rounded-lg" />
+            <img decoding="async" src={current} onError={imgFallbackHandler} alt={t("lightboxPhotoAlt", { title, n: String(safeIndex + 1) })} className="max-w-full max-h-viewport-photo object-contain rounded-lg" />
           ) : (
             <span className="text-8xl">{current}</span>
           )}
@@ -51,7 +51,7 @@ export function PhotoLightbox({ photos, index, onIndexChange, onClose, title = "
         <div className="flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0">
           {photos.map((p, i) => (
             <button key={i} onClick={() => onIndexChange(i)} className={`w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border-2 flex items-center justify-center text-xl bg-white/10 ${i === safeIndex ? "border-white" : "border-transparent opacity-50 hover:opacity-80"}`}>
-              {isImgUrl(p) ? <img src={imgThumb(p, 160)} loading="lazy" onError={imgFallbackHandler} alt={t("thumbPhotoAlt", { n: String(i + 1) })} className="w-full h-full object-cover" /> : <span className="text-white">{p}</span>}
+              {isImgUrl(p) ? <img src={imgThumb(p, 160)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("thumbPhotoAlt", { n: String(i + 1) })} className="w-full h-full object-cover" /> : <span className="text-white">{p}</span>}
             </button>
           ))}
         </div>

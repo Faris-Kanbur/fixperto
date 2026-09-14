@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 27 STATİK takım + 4 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 29 STATİK takım + 4 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -1824,6 +1824,86 @@ Dosya sistemi seçildi, obje deposu değil: sıfır ek bağımlılık, sıfır e
 
 ## Bilinen ve kabul edilen sınır
 SQLite tek yazıcılı. Yüksek eşzamanlı yazmada Postgres gerekecek — ama bu bugünün sorunu değil ve ölçülmeden yapılmamalı.`,
+      },
+      {
+        id: "faz-3-yukleme",
+        title: "25.5 Faz 3: yükleme yolları ve iki gizli hata",
+        body: `## Sekiz yükleme yolu, dört farklı yazım, üç hata
+
+Bu projede HTTP dosya yükleme yok: fotoğraf tarayıcıda base64'e çevrilip normal bir JSON alanı gibi kaydediliyor. Dolayısıyla "dosyayı okuma" mantığı sekiz ayrı yerde yazılmıştı ve yazımlar aynı değildi:
+
+| Yol | Eski hâli |
+|---|---|
+| İlan kapak + galeri | Doğru olan: küçültme + JPEG |
+| Sohbet, profil, kapak, çalışan, teklif fotoğrafı | Ham \`readAsDataURL\` — çalışıyor ama 3-10 MB'lık dosyayı olduğu gibi saklıyor |
+| **Arıza fotoğrafı** | \`URL.createObjectURL\` — **bozuk** |
+| **CV** | \`URL.createObjectURL\` — **bozuk** |
+
+## İki gerçek hata
+
+\`URL.createObjectURL(file)\` o SEKMEYE ÖZEL geçici bir bellek referansı döndürür. Sunucuya \`blob:http://.../uuid\` diye kaydediliyordu. Sonucu:
+
+**Arıza fotoğrafı:** araç sahibi randevuya fotoğraf ekliyor, kendi ekranında görüyor, hata da almıyor. Ama fotoğrafı görmesi gereken TAMİRCİ her zaman kırık görsel görüyordu. Yani özellik hiç çalışmıyordu ve arayüzde hiçbir belirti yoktu.
+
+**CV:** aday CV'sini ekliyor, "başvuru gönderildi" mesajını görüyor, ama işveren dosyayı HİÇ açamıyor. Başvuru sistemi CV olmadan çalışıyordu. Üstelik \`utils/helpers.ts\`'teki \`safeHref\` yorumu "CV data: URI olarak saklanıyor" diyordu — kod o niyeti karşılamıyordu. Yorumun koddan daha iyimser olması, bu sınıf hatanın tipik belirtisi.
+
+Aynı hata daha önce teklif, sohbet ve kapak fotoğrafında üç kez düzeltilmiş; bu iki yol atlanmıştı. Sebebi de belli: mantık sekiz yerde kopyalanmıştı. Şimdi tek dosyada (\`utils/mediaUpload.ts\`).
+
+## Hedefler kullanım yerine göre
+
+"Ne kadar küçültebiliriz" değil, "kalite kaybı görünür olmadan ne kadar küçülür":
+
+| Ön ayar | Boyut | Neden |
+|---|---|---|
+| listing / cover | 1600px | Tam genişlik galeri, yakınlaştırma bekleniyor |
+| chat / issue / quote | 1280px | Ekranda en fazla ~600px; 1280 retinada da net |
+| avatar | 512px | Ekranda 40-120px, ama 3x ekran payı bırakıldı |
+
+## Saydam PNG siyaha boyanmıyor
+
+PNG'yi JPEG'e çevirmek saydam bölgeleri SİYAH yapar. Tamirci logosu ya da kurumsal kapak görseli saydam PNG olabiliyor; "%80 küçülttük" deyip logonun arkasını siyaha boyamak iyileştirme değil, görünür bozulmadır. Bu yüzden PNG geldiğinde alfa kanalına bakılıyor ve saydamlık varsa PNG olarak kalıyor (boyutlandırma yine uygulanıyor, kazanç oradan geliyor).
+
+Maliyeti düşük tutmak için kontrol KÜÇÜLTMEDEN SONRA yapılıyor — 10 megapiksellik özgün dosyada değil, en fazla 1600px'lik tuvalde. Ayrıca \`getImageData\` hata verirse (farklı kökenli görselde tuval "kirlenir") güvenli varsayım saydamlık VAR: kayıpsız taraf seçiliyor.
+
+## Üç geri dönüş noktası — hiçbir şey sessizce bozulmuyor
+
+- **Görsel çözülemezse** (bazı tarayıcılarda HEIC, ya da SVG): ham veri dönüyor, kullanıcının dosyası kaybolmuyor. SVG ise sunucu onu zaten reddediyor ve bu doğru davranış.
+- **Sıkıştırma dosyayı BÜYÜTÜRSE** orijinal korunuyor. Gerçek örnek: 2000x2000 düz renkli bir PNG diskte 1 KB olabilir; onu 512px JPEG'e çevirmek onlarca KB üretir.
+- **Tavan aşılırsa** kullanıcı SEBEBİNİ okuyor: kaç MB olduğu, sınırın kaç MB olduğu ve ne yapması gerektiği. Sessizce göndermek sunucudan 400 alırdı ve kimse nedenini anlamazdı.
+
+İstemci tavanları sunucu tavanlarıyla aynı olmalı; ayrışırlarsa kullanıcı anlamsız bir hata görür. Test iki dosyayı doğrudan karşılaştırıyor (\`tests/ui/media-upload.ui.mjs\`).
+
+## Düzeltmenin kendi yan etkisi
+
+Arıza ve teklif fotoğraflarında hiç sayı sınırı yoktu — ve olması da gerekmiyordu: eski kod \`blob:\` bağlantısı saklıyordu, yani her fotoğraf ~50 baytlık bir metindi. Fotoğrafları GERÇEKTEN saklamaya başlayınca her biri ~330 KB oldu. Sınır konmasaydı düzeltme yeni bir hata doğuracaktı: kullanıcı 50 fotoğraf ekler, kaydete basar, randevu sunucudan 400 alıp sessizce kaybolur.
+
+Bu yüzden \`canAppendImage\` eklendi: 10 fotoğraf sayı sınırı (sunucu 20'ye izin veriyor, arayüz kullanıcıyı tavana çarpmaktan korumak için daha erken duruyor) ve toplam boyut kontrolü — 6 fotoğraf sayı sınırının altında kalır ama her biri 2 MB ise toplam tavanı aşar, o yüzden sayı tek başına yetmiyor.
+
+**Bir hatayı düzeltirken doğurduğu yeni sınırı da düşünmek gerekiyor.** Ölçüm yapılmadan "artık gerçek fotoğraf saklıyoruz" demek, sorunu bir yerden alıp başka yere taşımak olurdu.
+
+## Ölçüm (4032x3024 / 12 MP kaynak, 3,5 MB)
+
+| Yol | Hedef | Sonuç | Kazanç |
+|---|---|---|---|
+| ilan/kapak (zaten vardı) | 1600px | 397 KB | 8,8x |
+| sohbet / arıza / teklif (YENİ) | 1280px | 250 KB | 14x |
+| profil / avatar (YENİ) | 512px | 31 KB | 114x |
+
+Veritabanına yazılan değer base64 olduğu için %33 daha büyük: ham hâlde fotoğraf başına ~4,66 MB, sohbet fotoğrafında 333 KB, avatarda 41 KB.
+
+**Bu ölçümün dürüst sınırı:** kaynak, gerçek bir kamera fotoğrafı değil — gerçekçi entropide sentetik bir görüntü (düz renkli bir test görseli gerçek dışı iyi sıkışırdı). Ayrıca kodlayıcı tarayıcının \`canvas.toDataURL\` motoru, ölçüm ise PIL ile yapıldı; oranlar gösterge niteliğinde, ondalık hassasiyette değil. İlan yolu bu boruyu zaten aylardır kullanıyor ve üretimdeki ölçüm (fotoğraf başına ~224 KB) buradaki 397 KB ile aynı büyüklük düzeyinde.
+
+## Görsel öznitelikleri: raporun kısmen yanlış olduğu yer
+
+Rapor "22 \`<img>\` etiketine \`loading="lazy"\` + \`width\`/\`height\` ekle" diyordu. Uygulamada üçü de yeniden değerlendirildi:
+
+**\`width\`/\`height\` GEREKSİZ.** İşleri düzen kaymasını (CLS) önlemek. Ama 35 etiketin 34'ünde kutu zaten Tailwind ile sabit (\`w-full h-full object-cover\`, \`w-12 h-12\`). Kutu sabitse öznitelik hiçbir şey değiştirmez, CSS ile çelişirse zarar verir. Kalan birinde (sohbet balonu) kutuyu üst öğe sınırlıyor. Doğru iş, öznitelik eklemek değil gerekmediğini ölçüp yazmaktı — test bu kararı koruyor: biri Tailwind sınıflarını kaldırırsa kırmızı yanıyor.
+
+**\`loading="lazy"\` BUGÜN etkisiz.** Fotoğraflar \`data:\` URI olarak JSON'un içinde geliyor; sayfa yüklendiğinde baytlar ZATEN gelmiş, ertelenecek ağ isteği yok. Lazy ancak görsellerin kendi adresi olduğunda (Faz 4) işe yarar. Tamamlanmasının sebebi o güne hazır olmak — bugün için bir hız iddiası değil.
+
+**BUGÜN işe yarayan \`decoding="async"\`.** Base64 gömülü bir fotoğrafın çözülmesi ana iş parçacığını meşgul ediyor; veri bellekte olduğu için lazy bunu çözemiyor. 35 etiketin hepsine eklendi — ilk taramada lazy'si olan 9 etiketin decoding'i YOKTU, yani "lazy ekledik" denilen yerlerde bugün işe yarayan öznitelik eksikti.
+
+Lazy dağılımı ölçülerek ayrıldı: 22 liste/küçük görsel lazy, ilk ekran görselleri (ışık kutusunun ana fotoğrafı, ilan detayının ana görseli, tamirci kapak bandı, blog kapağı, başlık avatarları) kasıtlı olarak eager. **Lazy yükleme yanlış yerde iyileştirme değil gerilemedir:** kullanıcının bakmak için tıkladığı fotoğrafı geciktirir. Test her iki yönü de tutuyor.`,
       },
       {
         id: "faz-2-indeksler",
