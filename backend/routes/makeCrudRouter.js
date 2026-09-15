@@ -454,7 +454,31 @@ export function makeCrudRouter(table, {
         return res.status(403).json({ error: "Bu kaydı silme yetkiniz yok." });
       }
     }
-    const info = db.prepare(`DELETE FROM ${table} WHERE ${idColumn} = ?`).run(req.params.id);
+    /**
+     * KISIT HATASI ARTIK 500 DEĞİL (ikinci denetimde ölçüldü).
+     * POST ve PATCH yollarında yabancı anahtar/NOT NULL gibi kısıt hataları özellikle 400'e
+     * çevriliyor ve gerekçesi yazılı: "kullanıcı hatası sunucu hatası gibi görünmemeli". DELETE
+     * yolunda bu dönüşüm YOKTU. Ölçüldü: aracı olan bir kullanıcı için `DELETE /api/owners/:id`
+     * → 500 "Internal server error" (çünkü `vehicles.ownerId` owners(id)'ye bağlı ve
+     * `foreign_keys = ON`). İstemci için bu "bizde bir arıza var, tekrar dene" demek; tekrar
+     * denemek hiçbir zaman işe yaramıyordu.
+     *
+     * 409 (Conflict) seçildi, 400 değil: istek geçerli, kaydın BAĞLI KAYITLARI olduğu için
+     * yapılamıyor. Mesaj ne yapılacağını söylüyor — hesap silmenin doğru yolu /api/auth/
+     * delete-account (orada bağlar kopartılıp kişi anonimleştiriliyor).
+     */
+    let info;
+    try {
+      info = db.prepare(`DELETE FROM ${table} WHERE ${idColumn} = ?`).run(req.params.id);
+    } catch (err) {
+      const msg = String(err?.message || "");
+      if (/FOREIGN KEY|constraint/i.test(msg)) {
+        return res.status(409).json({
+          error: "Bu kayıt başka kayıtlara bağlı olduğu için silinemiyor. Hesabınızı silmek istiyorsanız hesap ayarlarındaki hesap silme adımını kullanın.",
+        });
+      }
+      throw err;
+    }
     if (info.changes === 0) return res.status(404).json({ error: `${table} not found` });
     res.status(204).end();
   });

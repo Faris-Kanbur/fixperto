@@ -107,8 +107,27 @@ authRouter.post("/register", asyncRoute(async (req, res) => {
     if (!cleanName) return res.status(400).json({ error: "Ad soyad zorunludur." });
 
     const table = ROLE_TABLES[role];
-    const existing = db.prepare(`SELECT id FROM ${table} WHERE lower(email) = ?`).get(cleanEmail);
-    if (existing) return res.status(409).json({ error: "Bu e-posta adresiyle zaten bir hesap var. Giriş yapmayı deneyin." });
+    /**
+     * GÜVENLİK DÜZELTMESİ (ikinci denetimde bulundu) — ÇAPRAZ ROL E-POSTA ÇAKIŞMASI.
+     * ---------------------------------------------------------------------------------------------
+     * Burada eskiden yalnızca SEÇİLEN ROLÜN tablosu kontrol ediliyordu. Sonuç: bir araç sahibinin
+     * e-posta adresiyle TAMİRCİ hesabı açılabiliyordu (ölçüldü: 201 döndü ve kurbanın adresine
+     * "hesabınız oluşturuldu, şifreniz: ..." maili gitti).
+     *
+     * Bu, uygulamanın kendi kuralını ihlal ediyordu: `POST /api/auth/change-email` İKİ tabloyu da
+     * kontrol ediyor ve gerekçesini açıkça yazıyor — "giriş e-posta ile yapılıyor, çakışma olursa
+     * hangi hesaba gireceği belirsizleşir". Aynı değişmez (bir e-posta = bir hesap) kaydolma
+     * yolunda korunmuyordu. Yani kapı bir uçta kilitliydi, diğerinde açıktı.
+     *
+     * Somut zararı: (a) kurbanın gelen kutusuna, açmadığı bir hesabın şifresini içeren gerçek bir
+     * Fixperto maili düşüyor (kimlik avı için hazır zemin), (b) rolsüz giriş iki tabloyu sırayla
+     * tarıyor, yani aynı adreste iki hesap varken kullanıcının hangisine girdiği şifresine bağlı
+     * hâle geliyor — hesap karışıklığı.
+     */
+    for (const [, tbl] of Object.entries(ROLE_TABLES)) {
+      const clash = db.prepare(`SELECT id FROM ${tbl} WHERE lower(email) = ?`).get(cleanEmail);
+      if (clash) return res.status(409).json({ error: "Bu e-posta adresiyle zaten bir hesap var. Giriş yapmayı deneyin." });
+    }
 
     const plainPassword = generateRandomPassword();
     const hashed = await hashPassword(plainPassword);
@@ -200,7 +219,45 @@ authRouter.post("/login", asyncRoute(async (req, res) => {
       loginLimiter.registerFailure(ip);
       return res.status(401).json({ error: "Geçersiz e-posta veya şifre." });
     }
-    loginLimiter.reset(ip);
+    // SİLİNMİŞ HESAP GİRİŞ YAPAMAZ (ikinci denetim). Silme artık satırı kaldırmıyor, yerinde
+    // anonimleştiriyor (bkz. /delete-account). E-posta ve şifre zaten kullanılamaz hâle geliyor ama
+    // bu kontrol ayrıca duruyor: kimlik kontrolü tek bir alanın biçimine bağlı kalmamalı.
+    if (String(row.status || "").toLowerCase() === "deleted") {
+      loginLimiter.registerFailure(ip);
+      return res.status(401).json({ error: "Geçersiz e-posta veya şifre." });
+    }
+    /**
+     * GÜVENLİK DÜZELTMESİ (ikinci denetimde ÖLÇÜLDÜ) — BAŞARILI GİRİŞ DE SAYILIYOR.
+     * ---------------------------------------------------------------------------------------------
+     * Sınırlayıcı yalnızca BAŞARISIZ denemeleri sayıyordu ve başarıda `reset(ip)` çağrılıyordu.
+     * Yani geçerli şifresi olan biri (kendi hesabı yeter) `/login`'i SINIRSIZ çağırabiliyordu —
+     * ölçüldü: 40 istek, 40 kez 200, hiç engel yok. Her çağrının iki maliyeti var ve ikisi de
+     * BAŞKA kullanıcıları vuruyor:
+     *   1) Her çağrı bir OTP e-postasını kuyruğa atıyor. Kuyruk sınırlı (mailer.js QUEUE_MAX=500)
+     *      ve PAYLAŞILIYOR: kuyruk dolduğunda yeni işler `skipped` oluyor, yani o an gerçekten
+     *      giriş yapmaya çalışan kullanıcıların OTP'si ve yeni kaydolanların şifre maili HİÇ
+     *      GİTMİYOR. Kimlik doğrulaması bir e-postaya bağlı olduğu için bu, tüm platformda
+     *      "giriş yapılamıyor" demek.
+     *   2) Her çağrı `pendingLogins`'e bir kayıt ekliyor. Map MAX_PENDING_LOGINS'e ulaştığında EN
+     *      ESKİ bekleyen girişi düşürüyor — yani tam o anda kodunu girmek üzere olan meşru
+     *      kullanıcı "Giriş oturumu bulunamadı" alıyor.
+     * Kısacası tek bir hesapla, herkesin girişini bozan ucuz bir yol vardı.
+     *
+     * ÇÖZÜM: `loginLimiter.reset(ip)` KALDIRILDI ve başarılı giriş de sayaca yazılıyor. Sayaç artık
+     * "başarısız deneme" değil "OTP maili tetikleyen istek" sayıyor — korunması gereken kaynak
+     * tam olarak bu. Bir insan bir pencerede 10 kez giriş yapmaz; betik yapar.
+     *
+     * NEDEN `reset` BİR DÜZELTME DEĞİL DE KUSURDU: reset'i bırakıp üstüne registerFailure eklemek
+     * (ilk denediğim şey) sayacı her başarıda 0'a çekip 1'e yazıyor, yani sonsuza kadar 1'de
+     * kalıyordu — düzeltme gibi görünen, hiçbir şeyi değiştirmeyen bir kod. Ölçmeden bıraksam
+     * "eklendi" diye rapor edilecekti.
+     *
+     * KAYBEDİLEN KOLAYLIK, DÜRÜSTÇE: 9 kez şifresini yanlış yazıp 10.'da doğru giren kullanıcının
+     * sayacı artık sıfırlanmıyor, yani sonraki yanlış denemede kilitleniyor. Kilit 15 dakika ve
+     * sınır bir ops ayarı (LOGIN_LIMIT_PER_WINDOW). Bu bedeli, "tek hesapla herkesin girişini
+     * kesme" yolunu açık bırakmaya tercih ediyoruz.
+     */
+    loginLimiter.registerFailure(ip);
 
     // Şifre doğru — ama oturum HENÜZ verilmiyor. Çifte doğrulamanın ikinci adımı olarak e-postaya
     // 6 haneli bir kod gönderiliyor; gerçek oturum token'ı sadece bu kod doğrulanınca üretiliyor.
@@ -447,8 +504,61 @@ authRouter.post("/delete-account", requireSession(["owner", "mechanic"]), asyncR
        * bırakırdı — yani anonimleştirme kâğıt üzerinde kalırdı. Bu tuzak, veriyi iki yerde
        * tutmanın bedeli; o yüzden tek yazma yolu her zaman recompute'tan geçiyor.
        */
+      /**
+       * ====== İKİNCİ DENETİMDE BULUNAN KRİTİK HATA: SİLİNEN ID YENİDEN KULLANILIYORDU ======
+       * -------------------------------------------------------------------------------------------
+       * Burada eskiden `DELETE FROM owners WHERE id = ?` vardı. İki ayrı gerçek sorun doğuruyordu:
+       *
+       * 1) ID GERİ DÖNÜYOR. `owners.id` sütunu `INTEGER PRIMARY KEY` — yani rowid'in takma adı — ve
+       *    AUTOINCREMENT YOK. SQLite'ta AUTOINCREMENT'siz bir rowid tablosunda yeni satırın id'si
+       *    `max(rowid) + 1`'dir. En yüksek id'li kullanıcı silindiğinde o id BOŞALIR ve bir sonraki
+       *    kaydolan kişiye AYNI ID verilir. Ölçüldü: silinen owner id=9009, hemen ardından kaydolan
+       *    yeni kullanıcı da id=9009 aldı.
+       *
+       * 2) ARTIK KAYITLAR SAHİPSİZ KALIYOR. Bu blok `appointments`, `quote_requests`,
+       *    `conversations`, `vehicles`, `listings` ve `mechanic_reviews`'ü ele alıyordu ama
+       *    `support_tickets.fromId` (KİŞİSEL ŞİKÂYET METİNLERİ), `listings.sellerId`,
+       *    `mechanic_reviews.authorId`, `profile_views`, `share_events` id'yi taşımaya devam
+       *    ediyordu.
+       *
+       * İKİSİ BİR ARADA ŞU OLUYOR (ampirik olarak doğrulandı, varsayım değil): hesabını silen
+       * kullanıcıdan sonra kaydolan YENİ kişi, silinen kişinin id'sini alıyor ve sahiplik kontrolü
+       * `row.fromId === actor.id` olduğu için o kayıtların MEŞRU SAHİBİ oluyordu. Sonda şunları
+       * ölçtü: yeni kullanıcı silinen kişinin destek talebini `GET /api/tickets/:id` ile 200 okudu
+       * ve `status='removed'` yapılmış ilanını `PATCH` ile yeniden 'active' yayına aldı.
+       *
+       * ÇÖZÜM: owner kolu artık tamirci koluyla AYNI deseni izliyor — satır SİLİNMİYOR, yerinde
+       * anonimleştiriliyor ve `status='deleted'` ile işaretleniyor. Bunu tercih etme sebepleri:
+       *   - id asla boşalmıyor, dolayısıyla asla yeniden verilmiyor (sorunun KÖKÜ bu),
+       *   - sahiplik zinciri kopmuyor, yani bir daha "sahipsiz ama id'si eşleşen" kayıt olmuyor,
+       *   - yabancı anahtar kısıtı ihlal edilmiyor (bkz. makeCrudRouter DELETE düzeltmesi: aracı
+       *     olan bir kullanıcıda `DELETE FROM owners` zaten 500 veriyordu),
+       *   - "unutulma hakkı" karşılanıyor: kişiyi TANIMLAYAN her alan gerçekten yok ediliyor
+       *     (ad, e-posta, telefon, adres, fotoğraf, şifre, favoriler, kayıtlı aramalar).
+       * Kısacası silinen şey KİŞİ, korunan şey yalnızca karşı tarafın da tarafı olduğu kayıtların
+       * bütünlüğü — zaten bu dosyanın başındaki politika da buydu, owner kolunda uygulanmamıştı.
+       */
+      db.prepare(`
+        UPDATE owners SET
+          name = ?, email = ?, phone = NULL, address = NULL, city = NULL, photo = '',
+          password = ?, status = 'deleted', recsConsent = 0, recsConsentAt = NULL, signupIpHash = NULL,
+          favoriteMechanicIds = '[]', likedReviewIds = '[]', savedSearches = '[]', favoriteIds = '[]'
+        WHERE id = ?
+      `).run(anonName, `deleted-${id}@fixperto.invalid`, crypto.randomBytes(32).toString("hex"), id);
+      /**
+       * Destek talepleri: kaydı silmiyoruz (yönetici tarafının işlem geçmişi) ama METNİ ve kişiyi
+       * çıkarıyoruz. Önceden bu tabloya HİÇ dokunulmuyordu; id yeniden kullanıldığında yeni
+       * kullanıcının okuyabildiği şey tam olarak burasıydı.
+       */
+      db.prepare(`UPDATE support_tickets SET fromName = ?, description = ?, relatedNote = '', fromId = NULL WHERE fromId = ? AND (fromType IS NULL OR fromType = 'owner')`)
+        .run(anonName, "(kullanıcı hesabını sildi, içerik kaldırıldı)", id);
+      // İlan artık 'removed' ama sellerId duruyordu → aynı id'yi alan kişi yeniden yayına
+      // alabiliyordu. Bağı koparıyoruz.
+      db.prepare(`UPDATE listings SET sellerId = NULL WHERE sellerId = ? AND (sellerType IS NULL OR sellerType = 'owner')`).run(id);
+      // Yorumun METNİ ve puanı kalıyor (tamircinin işletme geçmişi) ama yazar bağı koparılıyor:
+      // aksi halde yeni kullanıcı silinen kişinin yorumlarını düzenleyebiliyor/silebiliyordu.
+      db.prepare(`UPDATE mechanic_reviews SET authorId = NULL WHERE authorId = ? AND (authorType IS NULL OR authorType = 'owner')`).run(id);
       for (const mechanicId of touchedMechanics) recomputeMechanicReviews(mechanicId);
-      db.prepare(`DELETE FROM owners WHERE id = ?`).run(id);
     } else {
       // Tamirci kaydı silinirse randevu/ilan geçmişi sahipsiz kalır; kaydı anonimleştirip
       // yayından kaldırıyoruz (profil aramada çıkmasın, iletişim bilgisi kalmasın).
@@ -456,6 +566,27 @@ authRouter.post("/delete-account", requireSession(["owner", "mechanic"]), asyncR
         .run(anonName, `deleted-${id}@fixperto.invalid`, id);
       db.prepare(`UPDATE listings SET status = 'removed' WHERE sellerId = ? AND sellerType = 'mechanic'`).run(id);
       db.prepare(`UPDATE job_listings SET status = 'closed' WHERE mechanicId = ?`).run(id);
+      /**
+       * İKİNCİ DENETİMDE BULUNAN İKİ ASİMETRİ — owner kolunda düşünülmüş, burada atlanmış.
+       *
+       * 1) RANDEVUDAKİ AD KOPYASI. `appointments.mechanicName` tamirci adının JSON/metin bir
+       *    KOPYASI (okuma yolunu hızlandırmak için). `mechanics.name` anonimleştirilip kopya
+       *    bırakıldığında silinen tamircinin GERÇEK ADI her randevu kaydında görünmeye devam
+       *    ediyordu. Bu, owner kolunda `reviewList` önbelleği için özellikle düzeltilen hatanın
+       *    birebir aynısı — oradaki yorum "kopyayı bırakmak anonimleştirmeyi kâğıt üzerinde
+       *    bırakır" diyor; burada tam olarak o oluyordu. Ölçüldü: mechanics.name="Silinmiş
+       *    kullanıcı" iken appointments.mechanicName="Silinecek Tamirci".
+       *
+       * 2) TAMİRCİNİN YAZDIĞI YORUMLAR. Bir tamirci başka tamircilere yorum bırakabiliyor
+       *    (authorType='mechanic'). Owner kolu bu yorumları anonimleştiriyor, tamirci kolu hiç
+       *    dokunmuyordu → silinen tamircinin adı başka profillerde kalıyordu.
+       */
+      db.prepare(`UPDATE appointments SET mechanicName = ?, mechanicImg = '' WHERE mechanicId = ?`).run(anonName, id);
+      const touchedByMe = db.prepare(
+        `SELECT DISTINCT mechanicId FROM mechanic_reviews WHERE authorId = ? AND authorType = 'mechanic'`
+      ).all(id).map((r) => r.mechanicId);
+      db.prepare(`UPDATE mechanic_reviews SET author = ?, authorId = NULL WHERE authorId = ? AND authorType = 'mechanic'`).run(anonName, id);
+      for (const mechanicId of touchedByMe) recomputeMechanicReviews(mechanicId);
     }
   });
   tx();

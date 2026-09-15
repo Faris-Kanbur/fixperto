@@ -104,12 +104,23 @@ const LIST_ONLY_SENSITIVE_FIELDS = {
    * Yönetici tam listeyi görmeye devam ediyor (hydrateAll yalnızca BAŞKALARININ gördüğü
    * listede gizliyor) ve kullanıcı kendi kaydını tekil uçtan tam olarak alıyor.
    *
-   * KALAN BİLİNEN RİSK: `favoriteIds` listede kalıyor, çünkü "bu ilanı N kişi favorilere ekledi"
-   * sayacı buna dayanıyor. Yani "hangi isim hangi ilanları favorilemiş" hâlâ görülebiliyor.
-   * Doğru çözümü sayacı sunucuda hesaplamak; o ayrı bir iş ve burada sessizce özelliği
-   * kırmamak için bırakıldı — gizlemek sayacı bozardı.
+   * ÖNCEKİ DENETİMİN "KABUL EDİLEN RİSKİ" ARTIK KAPATILDI (ikinci denetim).
+   * -------------------------------------------------------------------------------------------
+   * Burada şöyle yazıyordu: "`favoriteIds` listede kalıyor, çünkü 'bu ilanı N kişi favorilere
+   * ekledi' sayacı buna dayanıyor... gizlemek sayacı bozardı." Bu, riski kabul etmek için yeterli
+   * bir gerekçe DEĞİLDİ ve ikinci denetimde bağımsız olarak yeniden değerlendirildi:
+   *
+   *   - Sızan şey bir SAYI değil, KİŞİ↔İLAN EŞLEŞMESİ: hangi kullanıcının hangi araçları
+   *     favorilediği. Ad ve şehir aynı listede olduğu için bu doğrudan profillemeye açık
+   *     ("bu kişi 600.000₺ üstü SUV arıyor" gibi) ve kullanıcının paylaşmayı seçtiği bir bilgi değil.
+   *   - Özelliğin ihtiyacı olan şey bir SAYI. Sayıyı istemciye tüm listeyi vererek hesaplatmak,
+   *     ihtiyaçtan çok daha fazla veri dağıtmaktı. Doğru yer sunucu.
+   *
+   * Bu yüzden alan artık listeden ÇIKIYOR ve sayaç sunucuda toplanıyor:
+   * `GET /api/listings/favorite-counts` → { listingId: kaçKişi }. Yani özellik korunuyor, eşleşme
+   * sızmıyor. Kullanıcı kendi `favoriteIds` listesini kendi kaydında (hydrate) görmeye devam ediyor.
    */
-  owners: ["favoriteMechanicIds", "likedReviewIds", "savedSearches", "email", "phone", "address"],
+  owners: ["favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches", "email", "phone", "address"],
 };
 
 // JSON sütunlarının tamamı DİZİ tutuyor; tek istisna vehicles.reminderOverrides (nesne).

@@ -24,21 +24,38 @@ const limitWrites = (req, res, next) => {
 };
 
 router.post("/", limitWrites, (req, res) => {
-  const { targetType, targetId, channel, refCode, sharedBy } = req.body || {};
+  const { targetType, targetId, channel, refCode } = req.body || {};
   if (!targetType || !targetId || !channel || !refCode) {
     return res.status(400).json({ error: "targetType, targetId, channel ve refCode zorunludur." });
   }
+  /**
+   * GÜVENLİK DÜZELTMESİ (ikinci denetimde ölçüldü) — ATIF SAHTECİLİĞİ.
+   * `sharedBy` İSTEMCİDEN geliyordu. Ölçüldü: girişsiz bir istek paylaşımı `owner:9008` adına
+   * kaydetti. Bu alan "bu paylaşımı kim yaptı" sorusunun cevabı; onu paylaşan kişinin kendisinin
+   * beyan etmesi, imzayı imzalayanın yazmasına benziyor. Bugün yalnızca analitik ama bir gün
+   * davet/ödül programına bağlanırsa doğrudan para anlamına gelir. Artık OTURUMDAN türetiliyor:
+   * girişsiz paylaşım `null` (anonim) olarak kaydediliyor, yalancı bir kimlikle değil.
+   */
+  const actor = resolveActor(req);
+  const sharedBy = actor && actor.role !== "admin" ? `${actor.role}:${actor.id}` : null;
   try {
     const stmt = db.prepare(
       `INSERT INTO share_events (targetType, targetId, channel, refCode, sharedBy) VALUES (@targetType,@targetId,@channel,@refCode,@sharedBy)`
     );
-    const info = stmt.run({ targetType, targetId, channel, refCode, sharedBy: sharedBy || null });
+    const info = stmt.run({ targetType, targetId, channel, refCode, sharedBy });
     const created = db.prepare(`SELECT * FROM share_events WHERE id = ?`).get(info.lastInsertRowid);
     res.status(201).json(created);
   } catch (err) {
-    // refCode UNIQUE çakışması gibi beklenmedik durumlarda paylaşımın kendisini bozmasın diye
-    // sessizce 200 dönüyoruz — bu sadece analitik verisi, kritik bir işlem değil.
-    res.status(200).json({ ok: false, error: err.message });
+    /**
+     * GÜVENLİK DÜZELTMESİ (ikinci denetimde ölçüldü) — HAM SQL HATA METNİ SIZIYORDU.
+     * Burada `error: err.message` dönüyordu. Ölçüldü: yanıt "UNIQUE constraint failed:
+     * share_events.refCode" — yani tablo adı, sütun adı ve kısıt türü. makeCrudRouter'ın aynı
+     * durumdaki açık politikası bunun tersi ("mesajda sütun adı/SQL detayı verilmiyor — iç yapıyı
+     * sızdırmamak için"); bu dosya o politikanın dışında kalmıştı. Sebep sunucu günlüğüne yazılıyor,
+     * istemciye yalnızca ne olduğu söyleniyor.
+     */
+    console.error("[share-events] kayıt hatası:", err?.message);
+    res.status(200).json({ ok: false, error: "Paylaşım kaydedilemedi." });
   }
 });
 

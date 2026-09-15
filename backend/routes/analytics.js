@@ -83,6 +83,24 @@ router.post("/events", (req, res) => {
     INSERT INTO analytics_events (name, visitorId, sessionId, targetType, targetId, role, source, country, device, lang, meta)
     VALUES (@name, @visitorId, @sessionId, @targetType, @targetId, @role, @source, @country, @device, @lang, @meta)
   `);
+  /**
+   * ====== İKİNCİ DENETİMDE BULUNAN SORUN: ROL İSTEMCİDEN GELİYORDU ======
+   * ---------------------------------------------------------------------------------------------
+   * `role` alanı doğrudan `r.role` idi, yani girişsiz bir istek kendini "mechanic" ya da "owner"
+   * ilan edebiliyordu. Bu tablo yönetici panelindeki TÜM analitiği besliyor (overview, breakdown,
+   * comparisons, searches, timeseries, top-targets). Ölçüldü: kimliksiz 6 istekte 300 uydurma olay
+   * kabul edildi ve `GET /api/analytics/overview` bunları "50 ziyaretçi" olarak saydı.
+   *
+   * Ziyaretçi analitiği doğası gereği girişsiz yazılır (asıl amacı girişsiz ziyaretçiyi ölçmek) —
+   * yani "kimlik zorunlu" doğru çözüm değil. Ama ROL bir KİMLİK BEYANIDIR ve beyan edilemez:
+   * oturumdan türetiliyor. Girişsiz olayın rolü artık "guest", uydurulan değer yok sayılıyor.
+   * Böylece "kaç tamirci baktı" gibi rol kırılımlı ekranlar en azından yalan söylemiyor.
+   *
+   * ZİYARETÇİ SAYISI HÂLÂ ŞİŞİRİLEBİLİR ve bunu saklamıyoruz: `visitorId` tarayıcının ürettiği
+   * bir değer, sunucunun doğrulayabileceği bir karşılığı yok. Burada yapılabilecek olan hacmi
+   * sınırlamak (aşağıdaki tavan) ve rol gibi doğrulanabilir alanları istemciden almamak.
+   */
+  const actorRole = resolveActor(req)?.role || "guest";
   let accepted = 0;
   const insertMany = db.transaction((rows) => {
     for (const r of rows) {
@@ -93,7 +111,7 @@ router.post("/events", (req, res) => {
         sessionId: clip(r.sessionId),
         targetType: clip(r.targetType),
         targetId: Number.isFinite(Number(r.targetId)) ? Number(r.targetId) : null,
-        role: clip(r.role),
+        role: actorRole,
         source: clip(r.source),
         country: clip(r.country),
         device: clip(r.device),
@@ -104,8 +122,36 @@ router.post("/events", (req, res) => {
     }
   });
   insertMany(items);
+  pruneEvents();
   res.status(201).json({ accepted });
 });
+
+/**
+ * TABLO ÜST SINIRI (ikinci denetimde eklendi) — SINIRSIZ BÜYÜME KAPATILIYOR.
+ * ------------------------------------------------------------------------------------------------
+ * `analytics_events` kimlik doğrulaması olmadan yazılabilen ve HİÇ TEMİZLENMEYEN bir tabloydu:
+ * istek başına 50 olay, IP başına 300 istek/pencere. Yani diski doldurmak için hesap bile
+ * gerekmiyordu; üstelik tablo büyüdükçe yönetici panelindeki toplama sorguları da yavaşlıyordu.
+ *
+ * NEDEN ZAMAN BAZLI DEĞİL SATIR BAZLI: zaman bazlı saklama ("90 günden eskiyi sil") saldırganın
+ * 90 gün içinde ne kadar yazabileceğine sınır koymaz — asıl korunması gereken kaynak disk. Satır
+ * tavanı en kötü durumu ÜSTTEN bağlıyor. En eski satırlar düşüyor; analitikte en değerli veri en
+ * yenidir.
+ *
+ * SESSİZCE KIRPMIYORUZ: budama olduğunda günlüğe yazılıyor, yani veri kaybı görünür oluyor.
+ */
+const MAX_EVENT_ROWS = Number(process.env.ANALYTICS_MAX_ROWS) > 0 ? Number(process.env.ANALYTICS_MAX_ROWS) : 200_000;
+let lastPruneCheck = 0;
+function pruneEvents() {
+  // Her istekte COUNT(*) çalıştırmıyoruz; dakikada bir yeterli (tavan yumuşak bir tavan).
+  if (Date.now() - lastPruneCheck < 60_000) return;
+  lastPruneCheck = Date.now();
+  const n = db.prepare(`SELECT COUNT(*) n FROM analytics_events`).get().n;
+  if (n <= MAX_EVENT_ROWS) return;
+  const excess = n - MAX_EVENT_ROWS;
+  const info = db.prepare(`DELETE FROM analytics_events WHERE id IN (SELECT id FROM analytics_events ORDER BY id LIMIT ?)`).run(excess);
+  console.warn(`[analytics] tablo tavanı aşıldı (${n} > ${MAX_EVENT_ROWS}); en eski ${info.changes} olay silindi.`);
+}
 
 // --------------------------- ADMIN OKUMA UÇLARI ---------------------------
 function requireAdmin(req, res, next) {

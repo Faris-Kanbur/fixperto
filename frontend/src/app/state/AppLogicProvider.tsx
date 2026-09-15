@@ -1155,7 +1155,8 @@ function useAppLogic() {
     // sayaç şişmesin diye saymıyoruz.
     if (selectedMechanicId == null || selectedMechanicId === MY_MECHANIC_ID) { activeMechanicViewIdRef.current = null; return; }
     api.profileViews.create("mechanic", selectedMechanicId)
-      .then((v) => { activeMechanicViewIdRef.current = v.id; })
+      // Jetonu da saklıyoruz: dönüşüm damgası artık id ile değil bu jetonla yapılıyor.
+      .then((v) => { activeMechanicViewIdRef.current = { id: v.id, token: v.convertToken }; })
       .catch(() => { activeMechanicViewIdRef.current = null; });
   }, [selectedMechanicId]);
   useEffect(() => {
@@ -1177,17 +1178,36 @@ function useAppLogic() {
   const [listingViewStats, setListingViewStats] = useState(null);
   useEffect(() => {
     if (selectedListingId == null) { setListingViewStats(null); return; }
+    // Rozet yalnızca İLAN SAHİBİNE gösteriliyordu ama istek herkes için atılıyordu. Hedef bazlı
+    // istatistik artık sahiplik istiyor (ikinci denetim: başka herkesin dönüşüm hunisi açıktı),
+    // yani yabancı bir ilanda bu istek 403 dönerdi. Gereksiz isteği hiç atmıyoruz.
+    const listingForStats = listings.find((l) => l.id === selectedListingId);
+    if (!listingForStats || !isMyListing(listingForStats)) { setListingViewStats(null); return; }
     api.profileViews.stats("listing", selectedListingId).then(setListingViewStats).catch(() => setListingViewStats(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedListingId]);
   const recordProfileViewConversion = () => {
-    if (!activeMechanicViewIdRef.current) return;
-    persist(api.profileViews.convert(activeMechanicViewIdRef.current), "Ziyaret dönüşümü kaydedilemedi");
+    const view = activeMechanicViewIdRef.current;
+    if (!view) return;
+    persist(api.profileViews.convert(view.id, view.token), "Ziyaret dönüşümü kaydedilemedi");
     activeMechanicViewIdRef.current = null;
   };
-  // Kleinanzeigen tarzı: bir ilanın kaç farklı kullanıcının favorilerinde olduğu, owners.favoriteIds
-  // dizilerinin tamamı taranarak anlık hesaplanıyor — ayrı bir sayaç sütunu tutmaya gerek yok, zaten
-  // favoriler backend'de kalıcı (bkz. toggleFavorite).
-  const listingFavoriteCount = (listingId) => ownersDirectory.filter((o) => (o.favoriteIds || []).includes(listingId)).length;
+  /**
+   * Kleinanzeigen tarzı "kaç kişi favorilere ekledi" sayacı — ARTIK SUNUCUDA TOPLANIYOR.
+   * ---------------------------------------------------------------------------------------------
+   * Eskiden şöyleydi: `ownersDirectory.filter((o) => o.favoriteIds.includes(listingId)).length`.
+   * Yani bir SAYI gösterebilmek için sunucu her kullanıcının favori ilan listesini herkese
+   * gönderiyordu; aynı listede ad ve şehir de olduğu için "hangi kişi hangi araçları arıyor"
+   * dışarıdan okunabiliyordu (ikinci denetim bulgusu — önceki denetim bunu "kabul edilen risk"
+   * olarak bırakmıştı, çünkü alanı gizlemenin sayacı bozacağı düşünülmüştü). Sayım sunucuya
+   * taşındı (GET /api/listings/favorite-counts), alan da toplu listeden kaldırıldı: özellik aynı,
+   * eşleşme sızmıyor.
+   */
+  const [favoriteCounts, setFavoriteCounts] = useState({});
+  useEffect(() => {
+    api.listings.favoriteCounts().then(setFavoriteCounts).catch(() => { /* sessizce geç — sadece sayaç */ });
+  }, [favoriteIds]);
+  const listingFavoriteCount = (listingId) => favoriteCounts[listingId] || 0;
   // Tamircinin kendi "Analiz" sekmesindeki "Profil Ziyaretleri" ve "Yıllık Özet Raporu" bölümleri
   // için — sadece o sekme açıldığında çekilir (her uygulama açılışında değil).
   const [myProfileViewStats, setMyProfileViewStats] = useState(null);

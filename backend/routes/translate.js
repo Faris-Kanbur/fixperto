@@ -89,8 +89,29 @@ const readCache = (from, to, text) => db.prepare(
   `SELECT translatedText FROM translation_cache WHERE fromLang = ? AND toLang = ? AND sourceText = ?`
 ).get(from, to, text)?.translatedText;
 
+/**
+ * ÖNBELLEK ÜST SINIRI (ikinci denetimde eklendi).
+ * ------------------------------------------------------------------------------------------------
+ * `translation_cache` kimlik doğrulaması olmadan yazılabilen ve HİÇ TEMİZLENMEYEN bir tabloydu.
+ * Önceki denetim uzunluk ve hız sınırı koymuştu ama TOPLAM BÜYÜMEYE sınır yoktu: 5 dakikada 200
+ * istek × 60 metin × 5000 karakter, süresiz. Yani sabırlı bir betik diski doldurabiliyordu ve
+ * kayıtlar asla düşmüyordu. Satır tavanı en kötü durumu üstten bağlıyor; en eskiler düşüyor
+ * (önbellekte en değerli veri en yeni olandır).
+ */
+const MAX_CACHE_ROWS = Number(process.env.TRANSLATE_CACHE_MAX_ROWS) > 0 ? Number(process.env.TRANSLATE_CACHE_MAX_ROWS) : 50_000;
+let lastCachePrune = 0;
+function pruneCache() {
+  if (Date.now() - lastCachePrune < 60_000) return;
+  lastCachePrune = Date.now();
+  const n = db.prepare(`SELECT COUNT(*) n FROM translation_cache`).get().n;
+  if (n <= MAX_CACHE_ROWS) return;
+  const info = db.prepare(`DELETE FROM translation_cache WHERE id IN (SELECT id FROM translation_cache ORDER BY id LIMIT ?)`).run(n - MAX_CACHE_ROWS);
+  console.warn(`[translate] önbellek tavanı aşıldı (${n} > ${MAX_CACHE_ROWS}); en eski ${info.changes} kayıt silindi.`);
+}
+
 const writeCache = (from, to, text, translated) => {
   try {
+    pruneCache();
     db.prepare(
       `INSERT OR IGNORE INTO translation_cache (fromLang, toLang, sourceText, translatedText) VALUES (?, ?, ?, ?)`
     ).run(from, to, text, translated);
@@ -139,7 +160,9 @@ router.post("/batch", asyncRoute(async (req, res) => {
     pending.get(key).push(id);
   }
 
-  if (pending.size === 0) return res.json({ results, cached: true });
+  // `cached` bayrağı KALDIRILDI — bkz. tekil uçtaki oracle yorumu (aynı yan kanal toplu uçta da
+  // vardı: 60 metni tek istekte sorup hangilerinin platformda geçtiğini öğrenmek daha da ucuzdu).
+  if (pending.size === 0) return res.json({ results });
 
   // Dış servise gidiyoruz: hız sınırı sayacı SADECE burada işliyor.
   translateLimiter.registerFailure(ip);
@@ -183,8 +206,26 @@ router.post("/", asyncRoute(async (req, res) => {
   const toLang = SUPPORTED_LANGS.has(to) ? to : "tr";
   if (fromLang === toLang || !text.trim()) return res.json({ translatedText: text });
 
+  /**
+   * ÇAPRAZ KULLANICI ORACLE'I KAPATILIYOR (ikinci denetimde ÖLÇÜLDÜ).
+   * ---------------------------------------------------------------------------------------------
+   * Burada `{ translatedText, cached: true }` dönüyordu. `cached` bayrağı, gönderilen metnin bu
+   * platformda DAHA ÖNCE çevrilip çevrilmediğini kimlik doğrulaması olmadan doğruluyordu. Ölçüldü:
+   * önbellekte olan metin `cached:true`, olmayan metin `cached:undefined, fallback:true` döndü —
+   * yani iki durum istemciden net biçimde ayırt edilebiliyordu.
+   *
+   * NEDEN ÖNEMLİ: önbellek SAHİPSİZ, anahtarı yalnızca (kaynak dil, hedef dil, metin). Sohbet
+   * mesajları da bu yoldan çevriliyor. Yani bir saldırgan, tahmin ettiği bir özel mesaj metnini
+   * gönderip "bu cümle bu sitede yazıldı mı?" sorusunu cevaplayabiliyordu. Kısa ve kalıplı
+   * mesajlarda ("yarın 10'da gelebilirim", bir telefon numarası, bir adres) bu tahmin hiç de zor
+   * değil. Bayrak istemcide hiçbir yerde OKUNMUYOR (arandı) — yani hiçbir işe yaramayan bir alan,
+   * gerçek bir yan kanal açıyordu.
+   *
+   * Zamanlama farkı (önbellek isabeti ~1ms, dış servis ~200ms+) tamamen kapatılamaz; kapatılabilen
+   * şey açık bir "evet/hayır" sinyali vermemekti.
+   */
   const cached = readCache(fromLang, toLang, text);
-  if (cached !== undefined) return res.json({ translatedText: cached, cached: true });
+  if (cached !== undefined) return res.json({ translatedText: cached });
 
   // Sayaç yalnızca DIŞ SERVİSE giden istekleri sayıyor (bkz. yukarıdaki yorum).
   translateLimiter.registerFailure(ip);

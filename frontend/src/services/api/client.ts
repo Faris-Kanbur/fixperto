@@ -325,6 +325,12 @@ export const api = {
       request(`/api/listings/${id}/offers`, { method: "POST", body: JSON.stringify({ amount, currency }) }),
     addMessage: (id: number | string, text: string): Promise<{ listing: Listing }> =>
       request(`/api/listings/${id}/messages`, { method: "POST", body: JSON.stringify({ text }) }),
+    /**
+     * "Bu ilanı N kişi favorilere ekledi" — { listingId: sayı }.
+     * Sayım sunucuda: eskiden bu sayı, her kullanıcının favori ilan listesi istemciye gönderilerek
+     * hesaplanıyordu (bkz. backend/db/hydrate.js owners yorumu, ikinci denetim bulgusu).
+     */
+    favoriteCounts: (): Promise<Record<string, number>> => request("/api/listings/favorite-counts"),
   },
   conversations: {
     ...crud<Conversation>("conversations"),
@@ -508,9 +514,16 @@ export const api = {
   // stats() parametresiz çağrılırsa platform geneli (admin), targetType+targetId verilirse tek bir
   // hedef için (tamircinin/ilan sahibinin kendi sayfası) sonuç döner.
   profileViews: {
-    create: (targetType: string, targetId: number | string): Promise<{ id: number }> =>
+    /**
+     * `convertToken`: görüntülemeyi kaydeden istemciye verilen tek kullanımlık jeton. Dönüşüm
+     * damgası artık id bilmekle DEĞİL bu jetonla yapılıyor — id ardışık tamsayı olduğu için
+     * `/:id/convert` girişsiz bir betikle tüm tabloyu dönüşüme çevirebiliyordu (bkz.
+     * backend/routes/profileViews.js, ikinci denetim bulgusu).
+     */
+    create: (targetType: string, targetId: number | string): Promise<{ id: number; convertToken?: string }> =>
       request("/api/profile-views", { method: "POST", body: JSON.stringify({ targetType, targetId }) }),
-    convert: (id: number | string): Promise<unknown> => request(`/api/profile-views/${id}/convert`, { method: "POST" }),
+    convert: (id: number | string, convertToken?: string): Promise<unknown> =>
+      request(`/api/profile-views/${id}/convert`, { method: "POST", body: JSON.stringify({ convertToken }) }),
     // `days` verilirse (bkz. tamirci Analiz sekmesi zaman aralığı filtresi), yanıt ayrıca o
     // pencereye göre `viewsInRange`/`conversionsInRange` alanlarını da içerir.
     // Parametresiz (platform geneli) varyant artık admin token'ı gerektiriyor — bkz. güvenlik

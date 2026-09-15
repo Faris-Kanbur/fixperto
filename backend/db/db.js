@@ -533,6 +533,15 @@ function ensureColumn(table, columnDef) {
   // GERÇEK OTURUM SİSTEMİ: mechanics tablosunda daha önce hiç email sütunu yoktu (owners'ta vardı) —
   // gerçek e-posta+şifre ile giriş/kayıt için (bkz. backend/routes/auth.js) artık gerekli.
   ["mechanics", "email TEXT"],
+  /**
+   * DÖNÜŞÜM JETONU (ikinci denetimde eklendi — KİMLİKSİZ IDOR YAZMA kapatılıyor).
+   * `POST /api/profile-views/:id/convert` kimlik/sahiplik kontrolü olmadan HERHANGİ bir satırı
+   * dönüşüm olarak damgalıyordu ve id ardışık tamsayıydı (ölçüldü: girişsiz istekle id=1
+   * damgalandı). Görüntülenmeyi kaydeden istemciye tek kullanımlık bir jeton veriyoruz; damga
+   * artık id bilmekle değil, o jetonla yapılıyor. Eski satırlarda jeton NULL → yalnızca yönetici
+   * işaretleyebilir (bkz. routes/profileViews.js).
+   */
+  ["profile_views", "convertToken TEXT"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 // GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): owners/mechanics.password sütunu şimdiye kadar düz

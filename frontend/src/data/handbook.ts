@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 30 STATİK takım + 7 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 30 STATİK takım + 8 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -2405,10 +2405,132 @@ Ayrıca güvenlik matrisinin "meşru sahip düzenleyebiliyor" kontrolü tablodan
 ## Kabul edilmiş ödünleşimler (kalan riskler)
 
 - **Tamirci telefonu herkese açık** — kasıtlı: müşteri arayacak. E-posta listeden çıktı (spam/oltalama listesi olurdu), telefon kaldı.
-- **\`favoriteIds\` owners listesinde kalıyor** — "bu ilanı N kişi favorilere ekledi" sayacı buna dayanıyor, yani "hangi isim hangi ilanları favorilemiş" hâlâ görülebiliyor. Doğru çözüm sayacı sunucuda hesaplamak; gizlemek sayacı bozardı.
+- ~~**\`favoriteIds\` owners listesinde kalıyor**~~ — **BU ÖDÜNLEŞİM İKİNCİ DENETİMDE KAPATILDI.** Gerekçe ("gizlemek sayacı bozardı") yeterli değildi: sayaç bir SAYI istiyordu, sunucu ise EŞLEŞMEYİ gönderiyordu. Sayım \`GET /api/listings/favorite-counts\`e taşındı. Bkz. 25.13.
 - **Süresi geçmiş öne çıkarma okuma anında değil, 10 dakikalık süpürücüyle kapanıyor.** Okuma yollarının her birine kontrol eklemek, biri atlandığında sessizce yanlış davranan bir sistem demek.
 - **Ödeme doğrulaması yok** — sağlayıcı yok.
-- **Şifre düz metin** (şemada belgeli), **oturum jetonu localStorage'da** (XSS ödünleşimi, CSP ile azaltılmış).`,
+- **Oturum jetonu localStorage'da** (XSS ödünleşimi, CSP ile azaltılmış).
+
+> **BU LİSTEDE BİR YANLIŞ VARDI (ikinci denetimde bulundu).** Burada "**Şifre düz metin** (şemada belgeli)" yazıyordu. Bu artık DOĞRU DEĞİLDİ: gerçek oturum sistemi eklenirken şifreler bcrypt ile hash'lenmeye başladı ve \`backend/db/db.js\` her açılışta hash'siz kalanları göç ettiriyor (\`looksHashed\` kontrolü). Yani belge, ÇÖZÜLMÜŞ bir açığı hâlâ açık gibi gösteriyordu. Bu iki yönden de kötü: okuyan ya gereksiz paniğe kapılır ya da "belge eski" deyip diğer maddelere de güvenmez.`,
+      },
+      {
+        id: "ikinci-adversarial-denetim",
+        title: "25.13 İkinci (adversarial) denetim — önceki denetimin atladıkları",
+        body: `## Neden ikinci bir denetim
+
+Birinci denetim "PASS" ile kapanmıştı: 24 bulgu bulunmuş, düzeltilmiş, 2364 test geçiyordu. İkinci tur sondası yalnızca 2 şey döndürmüştü ve ikisi de "kabul edilmiş ödünleşim" olarak not edilmişti.
+
+Bu ikinci denetimin kuralı şuydu: **birinci denetime, onun bulgularına, "düzeltildi" işaretlerine ve GEÇEN TESTLERİNE güvenme.** Amaç yeni bir tur atmak değil, **birincinin gözünden kaçanı bulmak**. Sonuç: **12 yeni bulgu** — biri CRITICAL, üçü HIGH.
+
+En önemli mesaj şu: birinci denetim yanlış bir şey yapmadı; **yanlış yere baktı.** Düzelttiği her yolu tekrar kontrol etti, ama o kuralların KONMADIĞI komşu yolları kontrol etmedi.
+
+## Kör nokta nerede olduğu ölçüldü, tahmin edilmedi
+
+İlk iş, birinci denetimin hangi uçlara hiç dokunmadığını saymaktı: 135 ucun **73'ü** o denetimin test ve sonda dosyalarında hiç geçmiyordu. \`analytics.js\`, \`blog.js\`, \`careers.js\`, \`profileViews.js\`, \`shareEvents.js\`, \`translate.js\`, \`auth.js\` — yani kimlik sisteminin kendisi dâhil. On iki bulgunun onu tam olarak bu dosyalardan çıktı.
+
+Uç listesi de bağımsız olarak yeniden türetildi (\`endpoints.mjs\`e güvenilmedi): her router değişkeni, her mount noktası, ve \`put\`/\`all\` gibi hiç kullanılmayan metotlar da tarandı. Üretici bu sefer temiz çıktı — bu, onu KONTROL ETTİĞİMİZ için söylenebilen bir şey.
+
+## CRITICAL: silinen hesabın id'si bir sonraki kullanıcıya veriliyordu
+
+\`owners.id\` sütunu \`INTEGER PRIMARY KEY\` — yani rowid'in takma adı — ve **AUTOINCREMENT yok**. SQLite'ta böyle bir tabloda yeni satırın id'si \`max(rowid) + 1\`'dir. En yüksek id'li kullanıcı silinince o id BOŞALIR.
+
+\`delete-account\` da satırı gerçekten siliyordu. Ve bazı bağları koparmıyordu: \`support_tickets.fromId\`, \`listings.sellerId\`, \`mechanic_reviews.authorId\`.
+
+İkisi birleşince şu oldu (**varsayım değil, ölçüldü**):
+
+1. Kullanıcı hesabını sildi → id 9009 boşaldı.
+2. Sonraki kaydolan kullanıcı da id 9009 aldı.
+3. Sahiplik kontrolü \`row.fromId === actor.id\` olduğu için yeni kullanıcı, silinen kişinin kayıtlarının **meşru sahibi** oldu.
+4. \`GET /api/tickets/:id\` → **200**, silinen kişinin kişisel şikâyet metni okundu.
+5. \`PATCH /api/listings/:id {status:"active"}\` → **200**, yayından kaldırılmış ilan yeniden yayına alındı.
+
+Hiçbir yetki kontrolü atlanmadı. Sistem tutarlı davrandı; yanlış olan **kimliğin kendisinin yeniden kullanılabilir olması**ydı.
+
+**Düzeltme:** owner kolu artık tamirci koluyla aynı deseni izliyor — satır silinmiyor, yerinde anonimleştirilip \`status='deleted'\` işaretleniyor. id asla boşalmıyor, bağlar kopmuyor, ve kişiyi tanımlayan her alan (ad, e-posta, telefon, adres, fotoğraf, şifre, favoriler, kayıtlı aramalar) gerçekten yok ediliyor. Ayrıca \`support_tickets\` metni siliniyor, \`listings.sellerId\` ve \`mechanic_reviews.authorId\` bağları koparılıyor.
+
+**Bu düzeltme iki TESTİ kırdı** — ve kırdığı için değerliydi: \`api.e2e.mjs\` ve \`api3.e2e.mjs\` "satır veritabanından SİLİNDİ" diye doğruluyordu. Yani **o testler açığın kendisini koruyordu.** İkisi de artık gerçek sözleşmeyi ölçüyor: satır duruyor mu, kişi gitti mi, eski şifreyle girilebiliyor mu, id yeniden veriliyor mu.
+
+## HIGH: durum makinesi tek yazma yoluna konmuştu
+
+Birinci denetim randevulara bir durum makinesi eklemişti ve iyi çalışıyordu:
+
+\`\`\`
+PATCH {status:"İptal Edildi"}  →  409  "Bu geçiş yapılamaz: Tamamlandı → İptal Edildi."
+\`\`\`
+
+Ama \`DELETE\` o router'da **hiç yoktu**. İstek arkadaki jenerik CRUD'a düşüyordu ve orada tek kontrol "bu satır senin mi" idi:
+
+\`\`\`
+DELETE (aynı randevu, aynı kullanıcı)  →  204,  KAYIT SİLİNDİ
+\`\`\`
+
+Yani müşteri, tamircinin tamamlanmış iş ve ciro kaydını tek taraflı yok edebiliyordu. "Gelmedi" damgalı randevu da silinebiliyordu — randevuya gelmeyen kullanıcı kendi sicilini temizliyordu. Üstelik tamamlanmış randevu, yorum yazma ve doğrulanmış servis geçmişi hakkının ön koşulu.
+
+**Bu denetimin ana dersi bu:** bir kaydı koruyan kural TEK BİR yazma yoluna konursa, o kayda dokunan diğer yolların hepsi sessiz bir bypass olur. **Kural role değil, KAYDA ait olmalı.** Artık "Tamamlandı" ve "Gelmedi" durumundaki randevuyu iki taraftan hiçbiri silemiyor (yalnızca yönetici, moderasyon için).
+
+## HIGH: aynı değişmez iki uçta farklı korunuyordu
+
+\`POST /api/auth/change-email\` e-posta çakışmasını **iki tabloda da** kontrol ediyor ve gerekçesini açıkça yazıyor: *"giriş e-posta ile yapılıyor, çakışma olursa hangi hesaba gireceği belirsizleşir."*
+
+\`POST /api/auth/register\` ise **yalnızca seçilen rolün tablosunu** kontrol ediyordu. Ölçüldü: bir araç sahibinin e-postasıyla tamirci hesabı açıldı, **201** döndü ve kurbanın gelen kutusuna "hesabınız oluşturuldu, şifreniz: ..." maili gitti.
+
+Kural yazılıydı, bir uçta uygulanıyordu, diğerinde uygulanmıyordu.
+
+## HIGH: sınırlayıcı yanlış şeyi sayıyordu
+
+Giriş hız sınırlayıcısı yalnızca **başarısız** denemeleri sayıyor, başarıda \`reset(ip)\` çağırıyordu. Yani geçerli şifresi olan biri \`/login\`'i sınırsız çağırabiliyordu — ölçüldü: **40 istek, 40 kez 200, hiç engel yok.**
+
+Her çağrının maliyeti BAŞKA kullanıcılara biniyordu: (1) her çağrı bir OTP maili kuyruğa atıyor, kuyruk sınırlı (500) ve PAYLAŞILIYOR → dolduğunda gerçekten giriş yapmaya çalışanların OTP'si hiç gitmiyor, yani tüm platformda "giriş yapılamıyor"; (2) her çağrı \`pendingLogins\`'e kayıt ekliyor, tavana ulaşınca **en eski** bekleyen giriş düşüyor → tam o anda kodunu giren meşru kullanıcı "giriş oturumu bulunamadı" alıyor.
+
+**Denedim ve yanlıştı:** ilk düzeltmem \`reset\`'i bırakıp üstüne \`registerFailure\` eklemekti. Bu sayacı her başarıda 0'a çekip 1'e yazıyor, yani **sonsuza kadar 1'de kalıyordu** — düzeltme gibi görünen, hiçbir şeyi değiştirmeyen kod. Ölçmeden bıraksam "eklendi" diye rapor edilecekti. \`reset\` tamamen kaldırıldı.
+
+**Ve bir yan bulgu:** giriş hız sınırını sınayan **hiçbir test yoktu.** Test altyapısı sınırı sabit 500'e ayarlıyordu ve yanındaki yorum "sınırın KENDİSİ ayrıca test ediliyor" diyordu. Kontrol edildi: edilmiyordu. Yani altyapı korumayı sessizce devre dışı bırakıyor ve bu "sınır çalışıyor" gibi görünüyordu. Sınır artık çağıran süreçten ezilebiliyor.
+
+Bir hipotezim de **çürütüldü:** "başarılı giriş sayacı sıfırlıyorsa, arada bir kendi hesabına girerek kaba kuvvet sınırı süresiz bypass edilir" diye düşündüm. Ölçtüm: olmuyor, çünkü 429 kontrolü şifre doğrulamasından ÖNCE çalışıyor — kilitliyken doğru şifre de 429 alıyor. Raporda tutuluyor, çünkü **ölçülen bir "hayır" da bir sonuçtur.**
+
+## Kapı kilitli, pencere açık — dördüncü ve beşinci kez
+
+Birinci denetim bu deseni üç kez bulmuştu. İkincisi iki kez daha buldu:
+
+- **Profil görüntülenme istatistikleri.** Parametresiz \`/stats\` (platform toplamı) admin'e kapatılmıştı, gerekçesi yazılıydı: *"rakipler dâhil herkes gerçek trafik ve dönüşüm verisini tek istekle çekebiliyordu."* Ama hedef bazlı yol (\`?targetType=mechanic&targetId=5\`) kimliksiz açıktı — yorumda "kullanıcıların kendi analiz ekranları için açık" yazıyordu ama kodda **"kendi" diye bir kontrol yoktu.** Üstelik \`/stats/bulk\` tek istekte 200 hedef alıyordu, yani toplu kapıyı kilitleyen düzeltmeyi **fiilen geri alıyordu.**
+- **Dönüşüm damgası.** \`POST /api/profile-views/:id/convert\` kimlik ve sahiplik kontrolü olmadan herhangi bir satırı dönüşüm işaretliyordu, id de ardışık tamsayıydı. Tabloyu 1'den dolaşan bir betik platformdaki tüm dönüşüm oranlarını sahteleştirebilirdi. Artık görüntülemeyi kaydeden istemciye tek kullanımlık jeton veriliyor; id bilmek yetmiyor.
+
+## Sessiz sızıntılar
+
+- **Analitik olaylarında \`role\` istemciden geliyordu.** Girişsiz bir betik kendini "mechanic" ilan edip yönetici panelinin tüm rol kırılımını uydurabiliyordu — ölçüldü, 6 istekte 300 uydurma olay kabul edildi ve \`/overview\` bunları saydı. Artık rol oturumdan yazılıyor (girişsiz → "guest"). \`visitorId\` hâlâ doğrulanamıyor ve bunu saklamıyoruz; yapılabilen, hacmi sınırlamak ve doğrulanabilir alanları istemciden almamaktı.
+- **Çeviri önbelleği çapraz kullanıcı oracle'ıydı.** Yanıt \`cached: true\` bayrağı döndürüyordu; önbellek sahipsiz ve anahtarı sadece (dil, dil, metin). Sohbet mesajları da bu yoldan çevriliyor. Yani tahmin edilen bir özel mesaj gönderilip **"bu cümle bu sitede yazıldı mı?"** sorusu kimliksiz cevaplanabiliyordu — ve önbellekteki çevirinin kendisi de dönüyordu. Bayrak istemcide hiçbir yerde okunmuyordu: **hiçbir işe yaramayan bir alan, gerçek bir yan kanal açıyordu.**
+- **\`share-events\` ham SQL hata metni döndürüyordu:** "UNIQUE constraint failed: share_events.refCode" — tablo, sütun, kısıt. \`makeCrudRouter\`'ın açık politikası bunun tersi; bu dosya politikanın dışında kalmıştı. Aynı uçta \`sharedBy\` de istemciden geliyordu (atıf sahteciliği); artık oturumdan.
+- **\`DELETE /api/owners/:id\` 500 veriyordu.** POST ve PATCH kısıt hatalarını özellikle 400'e çeviriyor ("kullanıcı hatası sunucu hatası gibi görünmemeli"); DELETE'te bu dönüşüm yoktu. Aracı olan her kullanıcı için 500 "Internal server error" — istemci "tekrar dene" diyor, tekrar denemek hiçbir zaman işe yaramıyor. Artık 409 ve mesaj doğru yolu söylüyor.
+- **Sınırsız büyüyen iki tablo:** \`analytics_events\` ve \`translation_cache\` kimliksiz yazılabiliyor ve hiç temizlenmiyordu. İkisine de satır tavanı kondu. Tavan zaman bazlı değil satır bazlı: "90 günden eskiyi sil" saldırganın 90 günde ne kadar yazacağına sınır koymaz, oysa korunan kaynak disktir.
+
+## Birinci denetimin düzeltmeleri yeniden saldırıya uğradı
+
+Her düzeltme yedi yoldan tekrar denendi: ön yüz, doğrudan API, değiştirilmiş id, değiştirilmiş rol, değiştirilmiş gövde, farklı kullanıcı, eşzamanlı istek. **Tutanlar** (hepsi ölçüldü): rakibin teklif fiyatını değiştirme 403; tamircinin kendi teklifini kabul etmesi 403; ilgisiz kullanıcının kabul etmesi 403; ikinci kez kabul 409; **aynı talepte iki teklifin eşzamanlı kabulü → tam olarak biri kabul edildi**; randevusu olmayan kullanıcının yorum yazması 403; tamircinin kendine yorum yazması 403; alıcının kendi teklifini kabul etmesi 403; yabancı ilanı öne çıkarma 403; yabancı sohbeti okuma/yazma/silme 403; başvuru durumunu ilan sahibi olmayanın değiştirmesi 403; medya yol kaçışı 404; admin uçları kimliksiz 401; oturum jetonunun sorgu dizesinden kabulü 401; admin girişi 11 denemede kilitlendi.
+
+Ve özellikle istenen kontrol: **reddedilen isteğin veritabanına dokunmadığı.** Yetkisiz alan içeren bir randevu PATCH'i 403 döndü ve satır **bit bit aynı kaldı** — kısmi mutasyon yok. Bu takımın kendi kuralı artık bu: bir yazma reddedildiyse durum kodu YETMEZ, veritabanı durumu da kontrol edilir. \`api8.e2e.mjs\`teki kontrollerin her reddedilen isteğinden sonra bir de satır okunuyor.
+
+## Test aracı altıncı kez yanlış şeyi ölçtü
+
+İki yeni statik kontrol kırmızı yandı, ama düzeltmeler doğruydu: \`cached: true\` ve \`loginLimiter.reset(ip)\` desenleri, **o satırların neden KALDIRILDIĞINI açıklayan yorumların içinde** bulundu.
+
+Bir şeyi kaldırdığımızda neden kaldırdığımızı yazarken kaldırılan kodu alıntılamak zorundayız. Yani kaynak metninde "yok" arayan her kontrol, düzeltmenin belgelenmesi yüzünden kırılır — ve bu insanı **yorumları silmeye** teşvik eder. Kötü bir teşvik. \`tests/_harness.mjs\`e \`stripComments\` eklendi: statik yoklamalar artık yalnızca KODA bakıyor.
+
+(O düzeltmeyi yaparken de bir hata yaptım: indeksleri ham metinden alıp temizlenmiş metni dilimledim, yani tamamen yanlış bir parçayı okudum. Dilimlemenin doğru yerden başladığı artık ayrı bir kontrolle doğrulanıyor.)
+
+## Kapatılan "kabul edilmiş ödünleşim"
+
+Birinci denetim \`favoriteIds\`'i listede bırakmıştı: *"sayaç buna dayanıyor, gizlemek sayacı bozardı."* Bağımsız olarak yeniden değerlendirildi ve kabul edilmedi:
+
+- Sızan şey bir SAYI değil, **kişi↔ilan eşleşmesi**: hangi kullanıcının hangi araçları favorilediği. Aynı listede ad ve şehir de olduğu için bu doğrudan profillemeye açık.
+- Özelliğin ihtiyacı olan şey bir sayı. Sayıyı istemciye **tüm listeyi vererek** hesaplatmak, ihtiyaçtan çok fazla veri dağıtmaktı.
+
+Sayım \`GET /api/listings/favorite-counts\`e taşındı (SQLite \`json_each\` ile), alan toplu listeden çıktı. Özellik aynı, eşleşme gizli. **Ders: "ödünleşim" demek, alternatifi aradığımızı kanıtlamaz.**
+
+## Hâlâ açık olanlar (dürüst sınırlar)
+
+- \`mechanics.email\` veritabanı düzeyinde UNIQUE **değil** — sütun \`ALTER TABLE\` ile sonradan eklendiği için SQLite UNIQUE koyamıyor (\`owners.email\` UNIQUE). Uygulama katmanı artık iki tabloyu da kontrol ediyor; veritabanı katmanındaki bu asimetri tablo yeniden kurulmadan kapatılamaz.
+- \`analytics_events.visitorId\` doğrulanamaz — ziyaretçi sayısı hâlâ şişirilebilir. Sınırlanan şey hacim.
+- Çeviri önbelleği, çevrilen metinlerin (sohbet mesajları dâhil) düz metin kopyasını tutuyor. Bir çeviri önbelleğinin doğası bu; açık sinyal (\`cached\`) kapatıldı, zamanlama farkı kapatılamaz.
+- Tarayıcı, responsive ve erişilebilirlik testi bu ortamda **yapılamıyor** (tarayıcı yok, ön yüz derlenemiyor). İkinci denetim de bu konuda birinciden daha ileri gidemedi ve bunu bir başarı gibi sunmuyor.`,
       },
 
     ],

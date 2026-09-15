@@ -38,6 +38,37 @@ const MAX_MESSAGES_PER_LISTING = 500;
 // Teklif/soru yazma: IP başına dakikalık tavan. Gerçek bir alıcı dakikada 20 teklif yazmaz.
 const writeLimiter = makeRateLimiter({ maxAttempts: 20, lockoutMs: 5 * 60 * 1000, windowMs: 60 * 1000 });
 
+/**
+ * GET /api/listings/favorite-counts — "bu ilanı N kişi favorilere ekledi" (ikinci denetimde eklendi).
+ * ================================================================================================
+ * NEDEN VAR: bu sayaç önceden ön yüzde hesaplanıyordu — `ownersDirectory.filter((o) =>
+ * o.favoriteIds.includes(listingId)).length` (bkz. AppLogicProvider.tsx listingFavoriteCount).
+ * Yani bir SAYI gösterebilmek için sunucu, HER kullanıcının favori ilan listesini herkese
+ * gönderiyordu. Önceki denetim bunu "kabul edilen risk" olarak not etmişti ("gizlemek sayacı
+ * bozardı"); ikinci denetimde yeniden değerlendirildi ve kabul edilmedi: sızan şey bir sayı değil,
+ * kişi↔ilan eşleşmesiydi ve aynı listede ad/şehir de olduğu için doğrudan profilleme demekti.
+ *
+ * Sayım artık burada, toplu hâlde yapılıyor: kimse başka birinin favori listesini görmüyor.
+ * Kimlik doğrulaması ARANMIYOR — çıktı zaten anonim bir toplam ve ilan kartları girişsiz de
+ * görünüyor (401 döndürmek açılış ekranını kırardı, bkz. hydrate.js owners yorumu).
+ *
+ * `json_each` kullanılıyor: favoriteIds bir JSON metin sütunu, SQLite bunu tabloya açıp
+ * gruplayabiliyor — tüm kullanıcıları Node'a çekip saymaktan çok daha ucuz.
+ */
+listingInteractionsRouter.get("/favorite-counts", (req, res) => {
+  const counts = {};
+  for (const table of ["owners", "mechanics"]) {
+    const rows = db.prepare(`
+      SELECT CAST(j.value AS INTEGER) AS listingId, COUNT(*) AS n
+      FROM ${table} t, json_each(COALESCE(t.favoriteIds, '[]')) j
+      WHERE json_valid(COALESCE(t.favoriteIds, '[]'))
+      GROUP BY listingId
+    `).all();
+    for (const r of rows) counts[r.listingId] = (counts[r.listingId] || 0) + r.n;
+  }
+  res.json(counts);
+});
+
 function actorContext(req, res) {
   const actor = resolveActor(req);
   if (!actor) { res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." }); return null; }

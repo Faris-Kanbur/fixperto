@@ -293,4 +293,48 @@ appointmentsRouter.patch("/:id", (req, res) => {
   res.json(hydrate("appointments", db.prepare(`SELECT * FROM appointments WHERE id = ?`).get(existing.id)));
 });
 
+/**
+ * DELETE /api/appointments/:id — İKİNCİ DENETİMDE BULUNAN AÇIK.
+ * ================================================================================================
+ * Bu router PATCH'e bir durum makinesi koyuyor: müşteri "Tamamlandı" bir randevuyu iptal EDEMİYOR
+ * (409 alıyor). Ama DELETE bu router'da HİÇ YOKTU — istek arkadaki jenerik CRUD router'ına düşüyor
+ * ve orada tek kontrol "bu satır senin mi" idi. Sonuç ÖLÇÜLDÜ:
+ *
+ *   PATCH {status:"İptal Edildi"}  → 409  "Bu geçiş yapılamaz: Tamamlandı → İptal Edildi."
+ *   DELETE (aynı randevu, aynı kullanıcı) → 204, KAYIT SİLİNDİ.
+ *
+ * Yani durum makinesinin koruduğu her şey, tek bir farklı HTTP metoduyla dolaşılabiliyordu:
+ *   - tamircinin TAMAMLANMIŞ iş ve ciro kaydı müşteri tarafından tek taraflı yok edilebiliyordu,
+ *   - "Gelmedi" damgası (ölçüldü: o da 204 ile silindi) müşteri tarafından temizlenebiliyordu —
+ *     yani randevuya gelmeyen kullanıcı kendi sicilini siliyordu,
+ *   - tamamlanmış randevu aynı zamanda yorum yazma ve doğrulanmış servis geçmişi hakkının ön
+ *     koşulu; kaydı silmek bağlı yorumu sahipsiz bırakıyordu.
+ *
+ * DERS (bu denetimin ana bulgusu): bir kaydı koruyan kural TEK BİR YAZMA YOLUNA konursa, o kayda
+ * dokunan DİĞER yolların hepsi sessiz bir bypass olur. Kural kaydın kendisine ait olmalı.
+ *
+ * POLİTİKA: "Tamamlandı" ve "Gelmedi" birer İŞLETME KAYDI — taraflar silemez, yalnızca yönetici
+ * (moderasyon, değişiklik günlüğüne yazılıyor). Diğer durumlar (Onay Bekliyor, Sırada, Reddedildi,
+ * İptal Edildi) kendi listesini temizlemek isteyen taraf için silinebilir kalıyor.
+ */
+const UNDELETABLE = new Set([STATUS.DONE, STATUS.NO_SHOW]);
+
+appointmentsRouter.delete("/:id", (req, res) => {
+  const existing = db.prepare(`SELECT * FROM appointments WHERE id = ?`).get(req.params.id);
+  if (!existing) return res.status(404).json({ error: "appointments not found" });
+
+  const actor = resolveActor(req);
+  if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+  if (actor.role !== "admin" && !isParty(actor, existing)) {
+    return res.status(403).json({ error: "Bu randevuyu silme yetkiniz yok." });
+  }
+  if (actor.role !== "admin" && UNDELETABLE.has(existing.status)) {
+    return res.status(409).json({
+      error: `"${existing.status}" durumundaki bir randevu silinemez — bu kayıt her iki tarafın işlem geçmişidir.`,
+    });
+  }
+  db.prepare(`DELETE FROM appointments WHERE id = ?`).run(existing.id);
+  res.status(204).end();
+});
+
 export default appointmentsRouter;

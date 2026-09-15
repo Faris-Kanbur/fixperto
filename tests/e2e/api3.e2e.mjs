@@ -404,7 +404,18 @@ try {
 
   eq((await api("POST", "/api/auth/delete-account", { token: doomed.token, body: { currentPassword: doomed.password } })).status, 200,
     "hesap silinebiliyor");
-  eq(rows("SELECT id FROM owners WHERE id = ?", doomed.id).length, 0, "kullanıcı kaydı gerçekten silindi");
+  /**
+   * DEĞİŞTİ (ikinci denetim): "satır silindi" artık doğru sözleşme DEĞİL — silinen id yeniden
+   * veriliyor ve artık kayıtlar yeni kullanıcıya geçiyordu (bkz. api.e2e.mjs'teki uzun gerekçe ve
+   * backend/routes/auth.js delete-account yorumu). Ölçtüğümüz şey artık "kişi gitti mi".
+   */
+  const doomedRow = row("SELECT * FROM owners WHERE id = ?", doomed.id);
+  ok(doomedRow, "satır id'yi rezerve etmek için duruyor");
+  eq(doomedRow.status, "deleted", "hesap 'deleted' işaretli");
+  eq(doomedRow.name, "Silinmiş kullanıcı", "kişi anonimleştirildi");
+  // BAĞ KOPTU: aynı id'yi alan biri olsa bile bu ilanı sahiplenemez.
+  eq(row("SELECT sellerId FROM listings WHERE id = ?", doomedListing.body.id).sellerId, null,
+    "sahipsiz kalan ilanın sellerId bağı koparıldı (yeni kullanıcı devralamaz)");
   // (a) GİZLİLİK: öneri profili de gitmeli.
   eq(rows("SELECT value FROM taste_signals WHERE userId = ? AND role = 'owner'", doomed.id).length, 0,
     "hesap silinince öneri profili de siliniyor");

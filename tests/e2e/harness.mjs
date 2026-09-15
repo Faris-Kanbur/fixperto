@@ -90,12 +90,19 @@ export async function startServer() {
       FIXPERTO_ADMIN_EMAIL: "admin@fixperto.test",
       FIXPERTO_ADMIN_PASSWORD: "e2e-admin-password",
       IP_HASH_SALT: "e2e-salt",
-      // Testte onlarca hesap açılıyor; kayıt sınırı bir ops ayarı (bkz. auth.js REGISTER_MAX).
-      REGISTER_LIMIT_PER_HOUR: "500",
-      // Kimlik akışını test etmek için giriş sınırı yükseltiliyor; sınırın KENDİSİ ayrıca test ediliyor.
-      LOGIN_LIMIT_PER_WINDOW: "500",
-      // IP başına OTP sınırı yükseltiliyor; BİLET BAŞINA sınır (5) ayarlanamaz ve testte o doğrulanıyor.
-      OTP_IP_LIMIT_PER_WINDOW: "500",
+      /**
+       * SINIRLAR YÜKSELTİLİYOR AMA ARTIK ÇAĞIRAN TARAF EZEBİLİYOR (ikinci denetimde bulundu).
+       * ---------------------------------------------------------------------------------------
+       * Bu üç değer SABİT "500" olarak yazılıydı ve yanındaki yorum "sınırın KENDİSİ ayrıca test
+       * ediliyor" diyordu. Kontrol edildi: EDİLMİYORDU. Yani giriş hız sınırını sınayan bir test
+       * yazmak, bu altyapıyı kullandığı sürece İMKÂNSIZDI — sınır her zaman 500'e ayarlanıyordu,
+       * 14 yanlış denemede hiçbir şey olmuyordu ve bu "sınır çalışıyor" gibi görünüyordu.
+       * Bu, testin ölçtüğünü sandığı şeyi ölçmemesinin bir örneği: altyapı sessizce korumayı
+       * devre dışı bırakıyordu. Artık çağıran süreç değeri geçebiliyor, geçmezse eski davranış.
+       */
+      REGISTER_LIMIT_PER_HOUR: process.env.E2E_REGISTER_LIMIT || "500",
+      LOGIN_LIMIT_PER_WINDOW: process.env.E2E_LOGIN_LIMIT || "500",
+      OTP_IP_LIMIT_PER_WINDOW: process.env.E2E_OTP_LIMIT || "500",
       /**
        * MEDYA YÜKLEME: IP tavanı yükseltiliyor, KULLANICI başına sınır VARSAYILANDA kalıyor.
        * Sebebi tam da o sınırın var olma sebebi: testteki bütün kullanıcılar 127.0.0.1'den

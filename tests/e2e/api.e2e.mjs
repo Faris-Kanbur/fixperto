@@ -345,7 +345,39 @@ try {
   await api("POST", "/api/vehicles", { token: delTarget.token, body: { brand: "Fiat", model: "Egea", plate: "06XYZ01" } });
   eq((await api("POST", "/api/auth/delete-account", { token: delTarget.token, body: { currentPassword: delTarget.password } })).status, 200,
     "doğru şifreyle hesap silindi");
-  eq(row("SELECT id FROM owners WHERE id = ?", delTarget.id), undefined, "hesap satırı veritabanından SİLİNDİ");
+  /**
+   * BU KONTROL DEĞİŞTİ (ikinci denetim) — eski hâli HATALI DAVRANIŞI doğruluyordu.
+   * ------------------------------------------------------------------------------------------------
+   * Eskiden: `eq(row("SELECT id FROM owners WHERE id=?"), undefined, "satır SİLİNDİ")`. Satırın
+   * silinmesi tam olarak kritik hatanın kaynağıydı: `owners.id` AUTOINCREMENT'siz bir rowid takma
+   * adı, yani en yüksek id silinince o id BOŞALIYOR ve bir sonraki kaydolana VERİLİYOR. Silmede
+   * kopmayan bağlar (support_tickets.fromId, listings.sellerId, mechanic_reviews.authorId) ile
+   * birleşince yeni kullanıcı silinen kişinin kayıtlarının MEŞRU SAHİBİ oluyordu — ölçüldü, yeni
+   * kullanıcı silinen kişinin destek talebini okudu ve kaldırılmış ilanını yeniden yayına aldı.
+   *
+   * Yani bu test geçtiği için güvendiğimiz şey, açığın kendisiydi. Doğru sözleşme "satır yok"
+   * değil, "KİŞİ yok": satır duruyor (id rezerve kalsın, bağlar kopmasın) ama kişiyi tanımlayan
+   * hiçbir alan kalmıyor ve hesap kullanılamıyor. Aşağıda bunların hepsi TEK TEK ölçülüyor.
+   */
+  const deletedRow = row("SELECT * FROM owners WHERE id = ?", delTarget.id);
+  ok(deletedRow, "satır id'yi REZERVE ETMEK için duruyor (silinen id yeniden verilmesin)");
+  eq(deletedRow.status, "deleted", "hesap 'deleted' olarak işaretlendi");
+  eq(deletedRow.name, "Silinmiş kullanıcı", "ad anonimleştirildi");
+  eq(deletedRow.email, `deleted-${delTarget.id}@fixperto.invalid`, "e-posta kullanılamaz hâle geldi");
+  for (const f of ["phone", "address", "city"]) {
+    ok(deletedRow[f] === null || deletedRow[f] === "", `${f} temizlendi`);
+  }
+  for (const f of ["favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches"]) {
+    eq(deletedRow[f], "[]", `${f} temizlendi (kişisel ilgi verisi)`);
+  }
+  ok(deletedRow.password !== delTarget.password, "şifre kullanılamaz hâle geldi");
+  eq(rows("SELECT id FROM vehicles WHERE ownerId = ?", delTarget.id).length, 0, "araçlar gerçekten silindi");
+  // ESKİ ŞİFREYLE GİRİŞ ARTIK ÇALIŞMIYOR — "hesap silindi" demenin davranışsal karşılığı bu.
+  eq((await api("POST", "/api/auth/login", { body: { email: "silinecek@example.com", password: delTarget.password } })).status, 401,
+    "silinen hesaba eski e-posta/şifreyle girilemiyor");
+  // VE EN ÖNEMLİSİ: id yeniden verilmiyor.
+  const afterDelete = await createUser("owner", { name: "Silmeden Sonra", email: "silmeden-sonra@example.com", phone: "+905321239998" });
+  ok(afterDelete.id !== delTarget.id, `silinen id (${delTarget.id}) yeni kullanıcıya VERİLMEDİ (yeni id ${afterDelete.id})`);
   eq(rows("SELECT id FROM vehicles WHERE ownerId = ?", delTarget.id).length, 0, "araçları da silindi");
   eq(rows("SELECT tokenHash FROM sessions WHERE userId = ? AND role = 'owner'", delTarget.id).length, 0, "oturumları kapatıldı");
   eq((await api("GET", "/api/auth/me", { token: delTarget.token })).status, 401, "silinen hesabın token'ı geçersiz");
