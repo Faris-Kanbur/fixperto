@@ -63,8 +63,51 @@ export const BASE = `http://127.0.0.1:${PORT}`;
 
 let child = null;
 let dbHandle = null;
+/**
+ * Bu koşuya ait örnek kimliği: sunucu bunu /api/health'te geri söylüyor, böylece "bir sunucu
+ * yanıt veriyor" ile "BENİM sunucum yanıt veriyor" ayırt edilebiliyor (bkz. startServer yorumu).
+ */
+const INSTANCE_ID = `e2e-${PORT}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+/** Sağlık ucunu yokla. null → kimse cevap vermiyor. */
+async function probeHealth() {
+  try {
+    const r = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(1500) });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
 
 export async function startServer() {
+  /**
+   * ====== PORT ZATEN MEŞGUL MU? (kullanıcının makinesinde ortaya çıkan gerçek hata) ======
+   * ================================================================================================
+   * Bu kontrol olmadan şu oluyordu: çökmüş bir önceki koşudan kalan sunucu süreci portu dinlemeye
+   * devam ediyor → aşağıdaki `spawn` yeni süreci başlatıyor → yeni süreç EADDRINUSE ile ölüyor →
+   * ama sağlık yoklaması YANIT ALIYOR (eski süreçten) → harness "hazır" deyip devam ediyor ve
+   * bütün testler BAYAT bir veritabanına karşı koşuyor.
+   *
+   * Belirtisi şuydu: api8'in İLK `createUser` çağrısı 409 "bu e-posta adresiyle zaten bir hesap
+   * var" dedi — çünkü o kullanıcı önceki koşuda açılmıştı ve veritabanı silinse bile istekler
+   * eski sürece gidiyordu.
+   *
+   * En kötü tarafı testin patlaması DEĞİL: testlerin bayat bir sunucuya karşı GEÇEBİLMESİ. Yeşil
+   * bir koşu, hiç çalıştırılmamış kodu doğruluyormuş gibi görünebilirdi — yani bu takımın bütün
+   * anlamını sessizce boşa çıkaran bir hata.
+   *
+   * İki katmanlı çözüm: (1) başlamadan önce port boş mu diye bakıyoruz ve doluysa ANLAŞILIR bir
+   * hatayla duruyoruz, (2) sunucu kendi örnek kimliğini geri söylüyor ve yalnızca BİZİM
+   * kimliğimizi döndüren yanıtı "hazır" sayıyoruz (bkz. backend/server.js /api/health yorumu).
+   */
+  const stale = await probeHealth();
+  if (stale) {
+    throw new Error(
+      `Port ${PORT} zaten kullanımda: orada çalışan BAŞKA bir sunucu var (instance: ${stale.instance ?? "bilinmiyor"}).\n`
+      + `Muhtemelen çökmüş bir önceki test koşusundan kalmış. Testler o sunucunun ESKİ veritabanına\n`
+      + `karşı koşacağı için durduruldu. Şununla temizleyebilirsin:\n`
+      + `  lsof -ti tcp:${PORT} | xargs kill -9`,
+    );
+  }
   for (const f of [DB_PATH, `${DB_PATH}-wal`, `${DB_PATH}-shm`]) if (existsSync(f)) rmSync(f);
   /**
    * MEDYA KLASÖRÜ DE SİLİNİYOR (Faz 4).
@@ -87,6 +130,7 @@ export async function startServer() {
       FIXPERTO_DB_PATH: DB_PATH,
       FIXPERTO_MEDIA_DIR: MEDIA_DIR,
       PORT: String(PORT),
+      FIXPERTO_INSTANCE_ID: INSTANCE_ID,
       FIXPERTO_ADMIN_EMAIL: "admin@fixperto.test",
       FIXPERTO_ADMIN_PASSWORD: "e2e-admin-password",
       IP_HASH_SALT: "e2e-salt",
@@ -119,12 +163,33 @@ export async function startServer() {
   const logs = [];
   child.stdout.on("data", (d) => logs.push(String(d)));
   child.stderr.on("data", (d) => logs.push(String(d)));
+  /**
+   * HAZIR OLMA KONTROLÜ ARTIK KİMLİK DE SORUYOR.
+   * Eskiden koşul `r.ok` idi — yani "bir şey yanıt verdi". Artık yanıtın BİZİM örneğimizden
+   * geldiğini de doğruluyoruz. Ayrıca çocuk süreç ölürse beklemeye devam etmiyoruz: sunucunun
+   * açılamama SEBEBİ (ör. EADDRINUSE) günlüğünde yazıyor ve onu göstermek, 20 saniye bekleyip
+   * "açılmadı" demekten çok daha yararlı.
+   */
+  let childExit = null;
+  child.on("exit", (code, signal) => { childExit = { code, signal }; });
   const deadline = Date.now() + 20000;
   while (Date.now() < deadline) {
-    try {
-      const r = await fetch(`${BASE}/api/health`);
-      if (r.ok) return { logs };
-    } catch { /* henüz ayakta değil */ }
+    const health = await probeHealth();
+    if (health) {
+      if (health.instance === INSTANCE_ID) return { logs, instance: INSTANCE_ID };
+      // Yanıt var ama bizim sürecimizden değil — tam olarak yukarıda anlatılan bayat sunucu durumu.
+      stopServer();
+      throw new Error(
+        `Port ${PORT}'te BAŞKA bir sunucu yanıt veriyor (beklenen instance: ${INSTANCE_ID}, gelen: ${health.instance ?? "yok"}).\n`
+        + `Testler onun veritabanına karşı koşardı. Temizlik:  lsof -ti tcp:${PORT} | xargs kill -9\n`
+        + `Sunucu günlüğü:\n${logs.join("")}`,
+      );
+    }
+    if (childExit) {
+      throw new Error(
+        `Sunucu süreci açılmadan kapandı (kod ${childExit.code}, sinyal ${childExit.signal}).\n${logs.join("")}`,
+      );
+    }
     await new Promise((r) => setTimeout(r, 250));
   }
   throw new Error(`Sunucu açılmadı:\n${logs.join("")}`);

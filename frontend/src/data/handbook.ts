@@ -2650,7 +2650,45 @@ Ayrıca **tutan** kurallar tek tek ölçüldü: mesaj göndereni oturumdan damga
 - **Araç silinince ona bağlı ilanın \`vehicleId\` bağı sahipsiz kalıyor.** Ölçüldü ve regresyon testinde açıkça yazılı (gizlemek yerine belgeledik). Veri sızıntısı değil — ilan satıcısına ait ve araç kaydı gitmiş olduğu için oradan bilgi çıkmıyor — ama tutarsız bir bağ.
 - **Kabul edilen teklif ile oluşan randevu arasında kayıt YOK.** Müşteri teklifi kabul ediyor, sonra randevuyu ayrıca alıyor; "bu randevu şu teklifin sonucudur" bilgisi hiçbir yerde tutulmuyor. Zincirin bu halkası veritabanında kopuk.
 - **VIN hâlâ bir beyandır.** Resmî tescil kaydına bağlanmadığı sürece doğrulanamaz; artık yalnızca "başkasının kaydına yazma" kapatıldı.
-- Tarayıcı/responsive/erişilebilirlik testi bu ortamda yapılamıyor (önceki denetimlerle aynı sınır).`,
+- Tarayıcı/responsive/erişilebilirlik testi bu ortamda yapılamıyor (önceki denetimlerle aynı sınır).
+
+## Sonradan çıkan ve bu denetimden daha önemli olan hata: BAYAT SUNUCU
+
+Bu değişiklikler senin makinende koşturulduğunda \`api8\` ilk satırında patladı:
+
+\`\`\`
+register(a8-a@example.com) → 409 {"error":"Bu e-posta adresiyle zaten bir hesap var."}
+\`\`\`
+
+İlk bakışta "test kullanıcısı çakışması" gibi görünüyor. Değildi. Sebep şuydu:
+
+1. Çökmüş bir önceki koşudan kalan sunucu süreci portu dinlemeye devam ediyordu.
+2. Harness yeni sunucuyu başlattı; yeni süreç \`EADDRINUSE\` ile öldü.
+3. Ama hazır olma kontrolü \`GET /api/health\` yokluyordu ve **cevap geldi** — eski süreçten.
+4. Harness "hazır" deyip devam etti. Veritabanı dosyasını silmesi hiçbir işe yaramadı, çünkü
+   istekler eski sürece, onun eski veritabanına gidiyordu.
+
+**Bunun en kötü tarafı testin patlaması değil.** Bayat sunucunun şeması ve verisi uyumlu olduğu
+sürece testler GEÇEBİLİR de. Yani yeşil bir koşu, o an hiç çalıştırılmamış kodu doğruluyormuş gibi
+görünebilirdi — bu takımın bütün anlamını sessizce boşa çıkaran bir hata. Bu oturumdaki bütün
+denetimlerin dayanağı "ölçtüm" cümlesiydi; bu hata "neyi ölçtüm" sorusunu belirsiz bırakıyordu.
+
+Düzeltme iki katmanlı:
+
+- **Başlamadan önce port yoklanıyor.** Doluysa koşu, ne yapılacağını söyleyen bir hatayla duruyor
+  (\`lsof -ti tcp:PORT | xargs kill -9\`) — sessizce devam etmiyor.
+- **Sunucu kendi örnek kimliğini geri söylüyor.** Harness rastgele bir kimlik üretip env ile
+  geçiyor; \`/api/health\` o kimliği döndürmedikçe sunucu "hazır" sayılmıyor. Böylece "bir sunucu
+  yanıt veriyor" ile "BENİM sunucum yanıt veriyor" ayırt ediliyor. Üretimde bu değişken tanımlı
+  olmadığı için alan \`null\` döner ve hiçbir şey değişmez.
+- Ayrıca çocuk süreç açılmadan ölürse artık 20 saniye beklenmiyor: çıkış kodu ve sunucu günlüğü
+  hemen gösteriliyor, yani sebep ("port kullanımda") görünür oluyor.
+
+Senaryo kurulup **ölçüldü**: sahte bir "bayat sunucu" aynı porta bağlandığında harness artık
+doğru hatayı veriyor ve testleri hiç başlatmıyor.
+
+Ders, bu oturumun tekrar eden dersinin test altyapısındaki hâli: **bir cevap almak, doğru
+kaynaktan cevap almak demek değil.**`,
       },
 
     ],

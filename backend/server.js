@@ -170,7 +170,31 @@ app.use((err, req, res, next) => {
   return next(err);
 });
 
-app.get("/api/health", (req, res) => res.json({ ok: true, service: "fixperto-backend" }));
+/**
+ * SAĞLIK UCU — ve `instance` alanının NEDEN VAR OLDUĞU.
+ * ================================================================================================
+ * Uçtan uca test altyapısı sunucuyu kendi başlatıyor ve "ayakta mı" diye bu ucu yokluyordu. Ama
+ * "bir sunucu yanıt veriyor" ile "BENİM başlattığım sunucu yanıt veriyor" aynı şey değil ve bu
+ * fark gerçek bir soruna yol açtı (kullanıcının makinesinde ortaya çıktı):
+ *
+ *   Çökmüş bir önceki koşudan kalan sunucu süreci portu dinlemeye devam ediyor → harness yeni
+ *   sunucuyu başlatıyor → yeni süreç EADDRINUSE ile ölüyor → ama /api/health YANIT VERİYOR
+ *   (eski süreçten) → harness "hazır" deyip devam ediyor ve BÜTÜN testler BAYAT veritabanına
+ *   karşı koşuyor. Belirtisi: ilk `createUser` 409 "bu e-posta zaten var" diyor, çünkü o kullanıcı
+ *   önceki koşuda açılmış.
+ *
+ * Bunun en kötü tarafı testin patlaması değil: testlerin bayat bir sunucuya karşı GEÇEBİLMESİ.
+ * Yani yeşil bir koşu, hiç çalıştırılmamış kodu doğruluyormuş gibi görünebilirdi.
+ *
+ * Çözüm: sunucu, kendisine verilen örnek kimliğini geri söylüyor. Harness kimliği üretip env ile
+ * geçiyor ve yanıttaki değerin KENDİ ürettiği değer olduğunu doğruluyor. Üretimde bu değişken
+ * tanımlı olmadığı için alan `null` dönüyor ve hiçbir şey değişmiyor.
+ */
+app.get("/api/health", (req, res) => res.json({
+  ok: true,
+  service: "fixperto-backend",
+  instance: process.env.FIXPERTO_INSTANCE_ID || null,
+}));
 
 /**
  * MEDYA (Faz 4). İki uç, iki ayrı yerde bilerek:
