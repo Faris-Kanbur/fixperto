@@ -1470,6 +1470,25 @@ Uygulama bu ucu artık hiç çağırmıyordu ama uç açıktı ve hız sınırı
 Bir yönetici şifre sıfırlıyorsa sebebi genelde "hesap ele geçirildi"dir. Saldırganın token'ı ayakta kalırsa sıfırlama hiçbir işe yaramaz; bu yüzden sıfırlama hedefin bütün oturumlarını siler ve kaç oturum kapandığını döner.`,
       },
       {
+        id: "denetim-bulgulari",
+        title: "22.3 Sunucuyu çalıştırınca çıkan hatalar",
+        body: `Hepsi statik testlerin GÖREMEDİĞİ, yalnızca gerçek istek atınca ortaya çıkan hatalardı.
+
+## 1) Analitik uçları ?days olmadan 500 veriyordu
+Sorgular \`.all({ cutoff })\` ile çağrılıyordu; \`cutoff\` tanımsızken SQLite bağlama hatası veriyordu. Yani gün filtresi seçilmeden açılan her analitik ekranı boş dönüyordu. Düzeltme: \`const bind = (cutoff) => (cutoff ? { cutoff } : {})\`.
+
+## 2) Eksi teklif kabul ediliyordu
+Tutar "rakam olmayan her şeyi at" mantığıyla ayrıştırılıyordu: "-5" gönderildiğinde eksi işareti atılıyor ve 5 TL'lik GEÇERLİ bir teklif oluyordu. Doğrulama girdiyi DÜZELTMEK için değil REDDETMEK için vardır: önce sayıya çevir, sonra tam sayı/pozitif/üst sınır kontrolü yap.
+
+## 3) Veritabanı kısıtı 500 dönüyordu
+Zorunlu alan eksik bırakılınca NOT NULL/UNIQUE hatası kullanıcıya "sunucu hatası" olarak gidiyordu. Bunlar kullanıcı hatasıdır: artık 400 ve anlaşılır Türkçe mesaj.
+
+## 4) Aynı ağdan kaydolmak tamircinin puanını sıfırlıyordu
+Yorum yazan ile tamirci aynı IP'den kaydolmuşsa yorum "rakip" diye işaretleniyor, işaretli yorumlar ortalamaya girmediği için puan sıfırlanıyordu. Aynı ev, aynı ofis, aynı kafe, mobil operatörün CGNAT'ı — hepsi aynı IP'yi paylaşır; bu kanıt değil. Ağ eşleşmesi artık yalnızca inceleme için \`sameNetworkSignal\` olarak kaydediliyor, puanı etkilemiyor. Puanı yalnızca gerçek bir bağ (aynı e-posta/telefonla açılmış işletme hesabı) etkiler.
+
+## Yöntem notu
+Bu dördü, "kodu okuyup kural arayan" 1000'den fazla iddianın arasından geçmişti. Bir davranışın doğru olduğunu iddia etmenin tek dürüst yolu onu çalıştırıp sonucu veritabanından okumaktır.`,
+      },      {
         id: "matris-bulgulari",
         title: "22.4 Otomatik matrisin bulduğu açıklar",
         body: `Uç listesi koddan üretilip 128 ucun tamamına aynı sorular sorulduğunda, ELLE yazılan 250'den fazla uçtan uca kontrolün kaçırdığı yedi sorun çıktı. Ortak özellikleri: hiçbiri "ekranda görünen" bir hata değil.
@@ -1558,26 +1577,7 @@ Sunucu hiç çerez kullanmıyor; oturum jetonu Authorization başlığında. Tar
 ## Sunucu-sunucu testin GÖREMEDİĞİ bir hata
 \`X-Total-Count\` başlığı eklendiğinde testler geçiyordu ama tarayıcıda okunamıyordu: çapraz kaynaklı yanıtta tarayıcı, \`Access-Control-Expose-Headers\` ile açıkça izin verilmeyen her başlığı JS'ten GİZLER. Test istemcisi tarayıcı olmadığı için CORS kuralları ona uygulanmıyordu. Ders şu: tarayıcıya bağlı bir davranışı sunucu-sunucu testle doğrulamak yetmez — yapılandırmanın kendisi de sınanmalı.`,
       },
-      {
-        id: "denetim-bulgulari",
-        title: "22.3 Sunucuyu çalıştırınca çıkan hatalar",
-        body: `Hepsi statik testlerin GÖREMEDİĞİ, yalnızca gerçek istek atınca ortaya çıkan hatalardı.
 
-## 1) Analitik uçları ?days olmadan 500 veriyordu
-Sorgular \`.all({ cutoff })\` ile çağrılıyordu; \`cutoff\` tanımsızken SQLite bağlama hatası veriyordu. Yani gün filtresi seçilmeden açılan her analitik ekranı boş dönüyordu. Düzeltme: \`const bind = (cutoff) => (cutoff ? { cutoff } : {})\`.
-
-## 2) Eksi teklif kabul ediliyordu
-Tutar "rakam olmayan her şeyi at" mantığıyla ayrıştırılıyordu: "-5" gönderildiğinde eksi işareti atılıyor ve 5 TL'lik GEÇERLİ bir teklif oluyordu. Doğrulama girdiyi DÜZELTMEK için değil REDDETMEK için vardır: önce sayıya çevir, sonra tam sayı/pozitif/üst sınır kontrolü yap.
-
-## 3) Veritabanı kısıtı 500 dönüyordu
-Zorunlu alan eksik bırakılınca NOT NULL/UNIQUE hatası kullanıcıya "sunucu hatası" olarak gidiyordu. Bunlar kullanıcı hatasıdır: artık 400 ve anlaşılır Türkçe mesaj.
-
-## 4) Aynı ağdan kaydolmak tamircinin puanını sıfırlıyordu
-Yorum yazan ile tamirci aynı IP'den kaydolmuşsa yorum "rakip" diye işaretleniyor, işaretli yorumlar ortalamaya girmediği için puan sıfırlanıyordu. Aynı ev, aynı ofis, aynı kafe, mobil operatörün CGNAT'ı — hepsi aynı IP'yi paylaşır; bu kanıt değil. Ağ eşleşmesi artık yalnızca inceleme için \`sameNetworkSignal\` olarak kaydediliyor, puanı etkilemiyor. Puanı yalnızca gerçek bir bağ (aynı e-posta/telefonla açılmış işletme hesabı) etkiler.
-
-## Yöntem notu
-Bu dördü, "kodu okuyup kural arayan" 1000'den fazla iddianın arasından geçmişti. Bir davranışın doğru olduğunu iddia etmenin tek dürüst yolu onu çalıştırıp sonucu veritabanından okumaktır.`,
-      },
     ],
   },
   {
@@ -1606,6 +1606,29 @@ Bir ay önceki ilgi dünkü kadar güçlü değil; ağırlıklar okunurken yaşa
 Netflix'in "X izlediğin için" satırının karşılığı. İki sebeple zorunlu: gerekçesiz öneri rastgele görünür ve güven kazanmaz; ayrıca kişiselleştirmenin neye dayandığını göstermeden "verini işliyoruz" demek rızayı biçimsel bir onay kutusuna indirger.`,
       },
       {
+        id: "veri-ve-izin",
+        title: "23.2 Hangi veri tutuluyor, izin nasıl çalışıyor",
+        body: `## Gezinme geçmişi SAKLANMIYOR
+Ham "şu ilana şu saatte baktı" kaydı tutulmuyor. Onun yerine baktıklarından çıkarılmış küçük bir ZEVK PROFİLİ var: "Volkswagen: 3,0", "Dizel: 1,5", "300–500 bin bandı: 2,0". Üç faydası:
+1. Çok daha az veri — neyi sevdiğin, ne zaman ne yaptığın değil.
+2. Amaca bağlı — bu özetten geçmişin geri kurulamaz.
+3. GÖSTERİLEBİLİR — ayarlarda "hakkımda ne tutuyorsunuz" ile ekrana basılıyor.
+
+## Varsayılan KAPALI
+Davranıştan profil çıkarmak profillemedir ve açık rıza ister. "Zaten kabul etmiş sayılır" varsaymak hukuken de ahlaken de yanlış olur. Rızanın ne zaman verildiği (recsConsentAt) kaydediliyor; ispat yükümlülüğü bizde.
+
+## Kapatınca SİLİNİYOR
+Kapatmak yalnızca yeni yazmayı durdurmaz; birikmiş profil de silinir. Veriyi elde tutmak da işlemedir.
+
+## Kontrol SUNUCUDA
+İstemci "sakla" dese bile izin yoksa hiçbir şey yazılmaz ve yanıt {stored:false} döner. İstemcide bir "izin var mı" bayrağı taşıyıp ona güvenmek, o bayrağı bozan her hatayı sessiz bir gizlilik ihlaline çevirirdi.
+
+## Özellikleri istemci belirlemiyor
+İstemci yalnızca "şu ilana baktım" der; hangi özelliklerin saklanacağına sunucu, ilanı veritabanından okuyarak karar verir. Aksi halde biri kendi profiline istediği değerleri yazdırıp öneri sıralamasını manipüle edebilirdi. Serbest metin arama sorgusu hiç saklanmaz — kişisel bilgi içerebilir.
+
+## İzin vermeyen cezalandırılmıyor
+Kapalıyken bölüm kaybolmuyor: ürün-ürün benzerliği ve "şu sıralar çok bakılıyor" gösteriliyor, etiketi de dürüstçe "popüler" oluyor. Reddedeni boş ekranla cezalandırmak, rızayı gönüllü olmaktan çıkarır.`,
+      },      {
         id: "sifir-sonuc",
         title: "23.3 Sıfır sonuç — \"tam uyan yok ama şunlar\"",
         body: `Sıfır sonuç, ARAMANIN başarısızlığıdır, kullanıcının değil. Katı bir filtre listeyi boşaltıyorsa doğru davranış filtreleri gevşetip yaklaşanları göstermektir. Bu desenin adı SORGU GEVŞETME (query relaxation); arama altyapılarının (Bloomreach, Elastic, OpenSearch) standart özelliği ve ticaret sitelerinde "tam eşleşme yok — benzerleri" bölümü olarak görünür.
@@ -1632,30 +1655,7 @@ BİLİNÇLİ SINIR: araç aramasının 35'in üzerinde filtresi var; hepsini bu 
 
 Sıralama ve eleme kuralları saf bir işlevde (helpers.ts scoreNearMisses) — React'e bağlı olmadığı için testlerde gerçekten çalıştırılarak denetleniyor.`,
       },
-      {
-        id: "veri-ve-izin",
-        title: "23.2 Hangi veri tutuluyor, izin nasıl çalışıyor",
-        body: `## Gezinme geçmişi SAKLANMIYOR
-Ham "şu ilana şu saatte baktı" kaydı tutulmuyor. Onun yerine baktıklarından çıkarılmış küçük bir ZEVK PROFİLİ var: "Volkswagen: 3,0", "Dizel: 1,5", "300–500 bin bandı: 2,0". Üç faydası:
-1. Çok daha az veri — neyi sevdiğin, ne zaman ne yaptığın değil.
-2. Amaca bağlı — bu özetten geçmişin geri kurulamaz.
-3. GÖSTERİLEBİLİR — ayarlarda "hakkımda ne tutuyorsunuz" ile ekrana basılıyor.
 
-## Varsayılan KAPALI
-Davranıştan profil çıkarmak profillemedir ve açık rıza ister. "Zaten kabul etmiş sayılır" varsaymak hukuken de ahlaken de yanlış olur. Rızanın ne zaman verildiği (recsConsentAt) kaydediliyor; ispat yükümlülüğü bizde.
-
-## Kapatınca SİLİNİYOR
-Kapatmak yalnızca yeni yazmayı durdurmaz; birikmiş profil de silinir. Veriyi elde tutmak da işlemedir.
-
-## Kontrol SUNUCUDA
-İstemci "sakla" dese bile izin yoksa hiçbir şey yazılmaz ve yanıt {stored:false} döner. İstemcide bir "izin var mı" bayrağı taşıyıp ona güvenmek, o bayrağı bozan her hatayı sessiz bir gizlilik ihlaline çevirirdi.
-
-## Özellikleri istemci belirlemiyor
-İstemci yalnızca "şu ilana baktım" der; hangi özelliklerin saklanacağına sunucu, ilanı veritabanından okuyarak karar verir. Aksi halde biri kendi profiline istediği değerleri yazdırıp öneri sıralamasını manipüle edebilirdi. Serbest metin arama sorgusu hiç saklanmaz — kişisel bilgi içerebilir.
-
-## İzin vermeyen cezalandırılmıyor
-Kapalıyken bölüm kaybolmuyor: ürün-ürün benzerliği ve "şu sıralar çok bakılıyor" gösteriliyor, etiketi de dürüstçe "popüler" oluyor. Reddedeni boş ekranla cezalandırmak, rızayı gönüllü olmaktan çıkarır.`,
-      },
     ],
   },
   {
@@ -1826,202 +1826,146 @@ Dosya sistemi seçildi, obje deposu değil: sıfır ek bağımlılık, sıfır e
 SQLite tek yazıcılı. Yüksek eşzamanlı yazmada Postgres gerekecek — ama bu bugünün sorunu değil ve ölçülmeden yapılmamalı.`,
       },
       {
-        id: "fiyat-piyasa-karsilastirma",
-        title: "25.10 Fiyatın piyasadaki yeri — ve neden çoğu zaman görünmüyor",
-        body: `## İstek ve ilk dürüst ölçüm
+        id: "faz-2-indeksler",
+        title: "25.4 Faz 2: indeksler ve sorgu planları",
+        body: `## Önce bir düzeltme: ilk rapor yanlıştı
 
-Randevu alırken tamircinin fiyatının diğerlerine göre nerede durduğu gösterilsin — "çok iyi / iyi / ortalama / yüksek".
+İlk performans raporu "6 indeks eksik" diyordu. Faz 2'de her sorgunun planı \`EXPLAIN QUERY PLAN\` ile okundu ve o listenin **3 satırı yanlış, 5 satırı eksik** çıktı.
 
-**Bugünkü tohum verisinde bu satır hiç görünmüyor** ve bunu baştan yazmak gerekiyor. Sebep: 10 tamircide 17 farklı hizmet var; en yoğun iki hizmette (yağ değişimi, periyodik bakım) üç tamircinin sabit fiyatı var, ama karşılaştırılan tamirci havuzdan çıkarıldığı için geriye iki tamirci kalıyor — asgari örneklemin altında.
+Yanlış olanlar: \`vehicle_history.vin\` zaten indeksliydi; \`share_events.refCode\` ve \`blog_posts.slug\` ise \`UNIQUE\` tanımlı olduğu için SQLite kendiliğinden indeks üretiyordu. Eksik olanlar: \`appointments.mechanicId\`, \`conversations.ownerId\`, \`conversations.mechanicId\`, \`support_tickets(fromId, fromType)\` ve \`profile_views\`.
 
-İlk ölçümümde "2 hizmette çıkar" yazmıştım ve **yanlıştı**: saydığım şey fiyat veren tamirci sayısıydı, oysa karşılaştırmada kişinin kendisi havuza girmiyor. Testi gerçek tohum verisiyle çalıştırınca fark ettim. Test artık bu sayıyı (0) yazılı tutuyor — ileride biri "neden hiç görünmüyor" diye sorduğunda cevap orada.
+Hatanın sebebi yöntemdi: ilk rapor kaynak kodda \`CREATE INDEX\` arayıp sorgu sayısı saymıştı. İkisi de vekil ölçüt. Doğru ölçüt SQLite'ın o sorgu için ne YAPTIĞI:
 
-Eşiği 2'ye indirip özelliği "çalışır" göstermek mümkündü. Yapmadım: iki fiyatın "medyanı" ikisinin ortasıdır, hangisinin normal olduğunu söylemez. **İki tamircinin fiyatına bakıp "bu çok iyi" demek bir bilgi değil, uydurmadır.** Özellik platform büyüdükçe kendiliğinden anlamlı hâle geliyor.
+- \`SCAN <tablo>\` → tablo baştan sona okunuyor
+- \`SEARCH <tablo> USING INDEX\` → indeksten gidiliyor
 
-## Medyan, "ortalama" değil
+Bir indeksin VAR OLMASI ile KULLANILMASI ayrı şeyler: sütun sırası yanlışsa, sütuna bir işlev uygulanmışsa ya da karşılaştırma olumsuzsa (\`!=\`) indeks orada durur ama plan yine taramadır. Bu yüzden testler (\`tests/e2e/api4.e2e.mjs\`) indeksin varlığına değil PLANA bakıyor, hem de gerçek \`db.js\`'in kurduğu gerçek veritabanı üzerinde.
 
-İstek "ortalama" diyordu ama aritmetik ortalama tek bir aykırı değere karşı savunmasız. Sayıyla:
+## En büyük kazanç bir indeks değildi
 
-| Fiyatlar | Ortalama | Medyan |
+\`GET /api/conversations\` hiç \`WHERE\` cümlesi kullanmıyordu: tüm sohbetleri okuyup JS'te süzüyordu. Gizlilik açısından doğruydu — kimse başkasının sohbetini görmüyordu — ama mesajlar gömülü fotoğraflarıyla birlikte satırın İÇİNDE olduğu için "mesajlarım" ekranını açan her kullanıcı veritabanındaki HERKESİN fotoğraflarını diskten okutup belleğe alıyordu.
+
+Buraya indeks eklemek ve sorguyu olduğu gibi bırakmak hiçbir şeyi değiştirmezdi — "körlemesine indeks eklemek" tam olarak budur. O yüzden filtre SQL'e taşındı; kural birebir aynı:
+
+| Rol | Eskiden (JS) | Şimdi (SQL) |
 |---|---|---|
-| 300, 300, 300, 5000 | **1.475₺** | **300₺** |
+| admin | \`true\` | WHERE yok |
+| owner | \`row.ownerId === actor.id\` | \`WHERE ownerId = ?\` |
+| mechanic | \`row.mechanicId === actor.id\` | \`WHERE mechanicId = ?\` |
 
-Ortalamayla karşılaştırırsak 300₺'lik bir fiyat "piyasanın belirgin altında" görünür — oysa piyasanın ortası hâlâ 300₺ ve o fiyat tam ortada. Arayüzde gösterilen sayı medyan ve adı "piyasa ortası"; kullanıcıya aritmetik ortalama diye sunulmuyor.
+**Ölçüm — 301 sohbet, 390 MB mesaj verisi: 315 ms → 2 ms.**
 
-## Karşılaştırmanın YAPILMADIĞI durumlar
+Bir performans değişikliğinin en sinsi hatası gizlilik kuralını farkında olmadan gevşetmektir: SQL bir satır FAZLA döndürürse o iyileştirme değil, sızıntıdır. Bu yüzden testler dört rolü de ayrı ayrı sınıyor, listeyi tekil GET ile karşılaştırıyor (listede görünmeyen bir sohbet id'si tahmin edilince okunabiliyor mu?) ve \`ownerId\` NULL olan eski kayıtların kimseye görünmediğini doğruluyor.
 
-Testlerin ağırlık merkezi burada. Yanlış bir "çok iyi" etiketi kullanıcıyı yanlış tamirciye gönderir ve tamirciye de haksızlık eder; **hiç etiket göstermemek her zaman daha iyidir.**
+## Eklenen 10 indeks
 
-- **Katalog anahtarı yok.** Tamircinin kendi yazdığı serbest metin hizmetlerde "aynı işi mi anlatıyor" sorusu cevaplanamaz — "Fren bakımı" ile "Fren balata değişimi" aynı şey olabilir de olmayabilir.
-- **Fiyat değişken.** "Değişken" demek fiyat henüz belli değil demek. Oradaki sayıyı kesin fiyatlarla aynı havuza koymak iki tarafı da yanlış gösterir. Havuzdaki değişken fiyatlı tamirciler de örnekleme sayılmıyor.
-- **Örneklem 3'ün altında.** Sayı yine döndürülüyor ki çağıran taraf isterse sebebini söyleyebilsin — sessizce kaybolmak yerine.
-- **Tamircinin kendisi havuzda değil.** Aksi hâlde herkes kendi fiyatını da medyana katardı.
+\`vehicles(ownerId)\` · \`appointments(ownerId)\` · \`appointments(mechanicId)\` · \`conversations(ownerId)\` · \`conversations(mechanicId)\` · \`support_tickets(fromId, fromType)\` · \`profile_views(targetType, targetId, createdAt)\` · \`quote_offers(requestId)\` · \`vehicle_history(ownerId, serviceDate DESC)\` · \`listings(status)\`
 
-## Marka fiyatı tutarlı kullanılıyor
+Üç tasarım kararı:
 
-Tamirciler marka başına farklı fiyat verebiliyor (\`brandPrices\`). Havuzda kimi tamircinin marka fiyatını, kiminin taban fiyatını almak karşılaştırmayı anlamsız yapardı.
+**Randevularda İKİ indeks var.** Rol hangi sütunla sorgulandığını belirliyor: araç sahibi için \`ownerId\`, tamirci için \`mechanicId\`. Sadece biri eklenirse diğer rolün ekranı taramada kalır.
 
-Kural: **her tamirci için "bu aracı getirsem bana ne yazar" değeri alınıyor** — marka fiyatı varsa o, yoksa taban fiyat. Marka zammı olmayan bir tamircinin taban fiyatı zaten o araç için geçerli fiyattır. Test bunu ölçüyor: BMW karşılaştırmasında marka fiyatı 900₺ olan iki tamirci ile marka zammı olmayan (300₺) bir tamirci aynı havuzda ve medyan 900₺ çıkıyor.
+**Destek talepleri BİLEŞİK.** Sorgu her zaman iki sütunu birlikte kullanıyor (\`fromId = ? AND fromType = ?\`), çünkü owner #7 ile mechanic #7 farklı kişiler. İki ayrı indeks aynı işi yapmaz.
 
-## Eşikler ve sınır yönü
+**Sütun sırası profil görüntülemelerinde önemli.** \`(targetType, targetId, createdAt)\` — eşitlikler önce, aralık en sonda. Ters sırada indeks aralık sütunundan sonrasını kullanamaz. Sorgular yalnızca \`COUNT\`/\`SUM\` istediği için plan \`COVERING INDEX\` diyor: satırlara hiç gidilmiyor. **200.000 satırda 5,7 ms → 0,0 ms**, ve istatistik ekranı bu tabloda beş ayrı sorgu çalıştırıyor.
 
-| Medyana oran | Etiket |
+## Yazma maliyeti — tahmin değil, ölçüm
+
+Her indeks, sütun değiştiğinde fazladan bir B-ağacı yazması demek. Ölçüldü: 200.000 satırlık tabloya 2000 ekleme indekssiz 224 ms, indeksli 230 ms → **%2,7** (satır başına ~0,003 ms).
+
+Bu kadar küçük olmasının sebebi şu: eklenen sütunların hepsi SAHİPLİK/HEDEF alanı, yani satır oluşturulurken bir kez yazılıp bir daha neredeyse hiç değişmiyor (bir randevunun \`ownerId\`'si güncellenmiyor). Maliyet "her güncellemede" değil, "kayıt başına bir kez". Okuma kazancı ise her sayfa açılışında tekrar ediyor.
+
+## Kasıtlı olarak EKLENMEYENLER
+
+Körlemesine eklememek de bir karar, o yüzden gerekçeleri yazılı — hatta testlerde kayıt altında:
+
+- **\`sessions(createdAt)\`:** tek okuyucusu süresi dolmuş oturumları silen periyodik iş. Karşılığında her GİRİŞTE fazladan yazma gelirdi — en sık yazılan yolu yavaşlatıp en seyrek okunan işi hızlandırmak. Üstelik tablo 7 günlük TTL ile kendiliğinden sınırlı.
+- **\`listings(sellerId, sellerType)\`:** ilan listesi herkese açık ve filtresiz dönüyor, yani liste sorgusunda işe yaramaz. Tek kullanıcısı hesap silme (kullanıcı başına bir kez).
+- **\`quote_requests(ownerId)\`:** aynı gerekçe.
+- **\`mechanics\` filtre sütunları (price, rating, verified):** arama BUGÜN istemcide yapılıyor, sunucuya böyle bir sorgu hiç gitmiyor. Var olmayan bir sorgu için indeks eklemek ölçmeden karar vermek olurdu. Sunucu tarafı filtreleme yapıldığı gün birlikte eklenir.
+
+## İyi haber olarak bulunanlar
+
+Denetim sırasında en çok korkulan yer zaten sağlamdı: \`sessions.tokenHash\` her kimlik doğrulamalı istekte sorgulanıyor ve \`PRIMARY KEY\` olduğu için indeksli. Aynı şekilde \`owners.email\`/\`mechanics.email\` (giriş) ve \`translation_cache(fromLang, toLang, sourceText)\` (çeviri önbelleği) de \`UNIQUE\` sayesinde indeksli.`,
+      },      {
+        id: "faz-3-yukleme",
+        title: "25.5 Faz 3: yükleme yolları ve iki gizli hata",
+        body: `## Sekiz yükleme yolu, dört farklı yazım, üç hata
+
+Bu projede HTTP dosya yükleme yok: fotoğraf tarayıcıda base64'e çevrilip normal bir JSON alanı gibi kaydediliyor. Dolayısıyla "dosyayı okuma" mantığı sekiz ayrı yerde yazılmıştı ve yazımlar aynı değildi:
+
+| Yol | Eski hâli |
 |---|---|
-| ≤ 0,80 | Piyasanın belirgin altında |
-| 0,80 – 0,95 | Piyasanın altında |
-| 0,95 – 1,05 | Piyasa ortalamasında |
-| 1,05 – 1,25 | Piyasanın üstünde |
-| > 1,25 | Piyasanın belirgin üstünde |
+| İlan kapak + galeri | Doğru olan: küçültme + JPEG |
+| Sohbet, profil, kapak, çalışan, teklif fotoğrafı | Ham \`readAsDataURL\` — çalışıyor ama 3-10 MB'lık dosyayı olduğu gibi saklıyor |
+| **Arıza fotoğrafı** | \`URL.createObjectURL\` — **bozuk** |
+| **CV** | \`URL.createObjectURL\` — **bozuk** |
 
-±%5 bandı bilerek "ortalama": 300₺ ile 310₺ arasındaki farkı "daha iyi" diye sunmak kullanıcıyı yanlış yönlendirir. O bantta renk de nötr ve ok da yok — olmayan bir farkı varmış gibi göstermemek için.
+## İki gerçek hata
 
-Sınır değerleri **alt banda** düşüyor (\`<=\`). İlk testimde "tam %25 üstü yüksek olmalı" diye varsaymıştım ve test haklı olarak kırıldı; kodun davranışı tutarlı ve kullanıcı lehine olan yön bu — sınırda olan bir fiyatı daha ağır etikete atmıyoruz.
+\`URL.createObjectURL(file)\` o SEKMEYE ÖZEL geçici bir bellek referansı döndürür. Sunucuya \`blob:http://.../uuid\` diye kaydediliyordu. Sonucu:
 
-## Metin fiyat hakkında, tamirci hakkında değil
+**Arıza fotoğrafı:** araç sahibi randevuya fotoğraf ekliyor, kendi ekranında görüyor, hata da almıyor. Ama fotoğrafı görmesi gereken TAMİRCİ her zaman kırık görsel görüyordu. Yani özellik hiç çalışmıyordu ve arayüzde hiçbir belirti yoktu.
 
-"Bu tamirci çok iyi" demek karşılaştırmanın söyleyebileceğinden fazlasını iddia etmek olurdu: **ucuz olmak iyi tamirci olmak demek değil.** Söylenen tek şey fiyatın piyasa ortasına göre nerede durduğu. Bilgi balonu da bunu açıkça yazıyor.
+**CV:** aday CV'sini ekliyor, "başvuru gönderildi" mesajını görüyor, ama işveren dosyayı HİÇ açamıyor. Başvuru sistemi CV olmadan çalışıyordu. Üstelik \`utils/helpers.ts\`'teki \`safeHref\` yorumu "CV data: URI olarak saklanıyor" diyordu — kod o niyeti karşılamıyordu. Yorumun koddan daha iyimser olması, bu sınıf hatanın tipik belirtisi.
 
-Örneklem sayısı her zaman görünüyor ("3 tamircinin fiyatına göre"). Üç tamirciden çıkan bir karşılaştırmayı otuz tamirciden çıkmış gibi sunmak, kullanıcıya olduğundan fazla güven vermek olurdu.
+Aynı hata daha önce teklif, sohbet ve kapak fotoğrafında üç kez düzeltilmiş; bu iki yol atlanmıştı. Sebebi de belli: mantık sekiz yerde kopyalanmıştı. Şimdi tek dosyada (\`utils/mediaUpload.ts\`).
 
-## Nerede hesaplanıyor
+## Hedefler kullanım yerine göre
 
-İstemcide, saf bir işlevle (\`comparePriceToMarket\`). Yeni bir API ucu yok: tamirci listesi zaten tamamen indirilmiş durumda (mevcut mimari böyle) ve karşılaştırma o veriden çıkıyor. Saf işlev olması testte gerçekten çağrılabilmesini sağlıyor — 40'tan fazla kontrol doğrudan işlevi çalıştırıyor.`,
-      },
-      {
-        id: "randevu-sonuc-popup",
-        title: "25.9 Randevu sonucu: ekran değil popup",
-        body: `## Önce ayrı bir ekran vardı
+"Ne kadar küçültebiliriz" değil, "kalite kaybı görünür olmadan ne kadar küçülür":
 
-Randevu kaydedilince uygulama \`screen === "confirmed"\` ile tamamen başka bir ekrana geçiyordu. Sorunu şuydu: sayfa değişiyor, kullanıcı nereden geldiğini kaybediyor ve o ekranda iki düğmeden başka hiçbir şey yok — tam bir çıkmaz sokak.
-
-Artık sayfanın ortasında bir popup. Arkadaki sayfa yerinde kalıyor, sonuç hemen okunuyor.
-
-## İki durum, iki ayrı cümle
-
-Bu ayrım bir üslup tercihi değil:
-
-| Otomatik onay | Rozet | Başlık | Açıklama |
-|---|---|---|---|
-| AÇIK | Onaylandı | Randevunuz Onaylandı! | Randevunuz **kesinleşti**. Tamircinin onayını beklemenize gerek yok. |
-| KAPALI | Onay bekliyor | Randevu Talebiniz Gönderildi! | Talebiniz tamirciye **iletildi**. Onaylandığında bildirim alacaksınız. |
-
-İkisini aynı cümleyle geçmek kullanıcıyı yanıltır: "onaylandı" sanıp tamircinin hiç kabul etmediği bir saate gelen, ya da onay bekleyip beklemediğini bilmeyen biri çıkar. Test iki metnin de var olduğunu, üç dilde çevrildiğini **ve** \`autoAccepted\` değerine göre gerçekten SEÇİLDİĞİNİ denetliyor — iki metni yazıp hep aynısını göstermek mümkün olurdu.
-
-## Değerler sunucudan geliyor
-
-Popup tamirci adı, araç, tarih ve saati gösteriyor. Bunlar sunucudan dönen kayıttan alınıyor, ekrandaki state'ten değil: popup açıldığında form ZATEN temizlenmiş oluyor (bu sıra bilinçli — istek başarısız olursa kullanıcı verilerini kaybetmesin diye temizlik \`await\`ten sonra yapılıyor).
-
-Popup da ancak kayıt **başarılı** olduktan sonra açılıyor. Aksi hâlde kaydedilmemiş bir randevu için "onaylandı" göstermiş olurduk — bu sınıf hata bu projede daha önce bir kez yaşandı ve testte kayıt altında.
-
-## Hiçbir çıkış yolu boşta bırakmıyor
-
-Arkadaki sayfada form temizlenmiş durumda, yani popup'ı kapatıp orada bırakmak kullanıcıyı boş bir ekranda bırakmak olurdu. Üç yol da bir yere götürüyor: "Randevumu Görüntüle" ve arka plana tıklama aktif randevulara, ikinci düğme ana sayfaya. "Aktif" sekmesinin açıkça ayarlanması da eski bir hatanın karşılığı — bir kez "Geçmiş"e bakan kişi yeni randevusunu almasının ardından bu düğmeye basınca geçmiş listesine düşüyor ve randevusunu göremiyordu.
-
-## Kaldırılan ekran geri bırakılmadı
-
-\`screen === "confirmed"\` bloğu silindi. Ulaşılamayan bir ekranı "belki lazım olur" diye bırakmak, sonraki geliştiriciye yanlış bilgi veren ölü koddur; test artık o ekranın hem işaretçisinin hem kendisinin kalmadığını doğruluyor.`,
-      },
-      {
-        id: "faz-6-kod-bolme",
-        title: "25.8 Faz 6: kod bölme — ve ölçemediğim şey",
-        body: `## Önce dürüst sınır
-
-**Bu ortamda ön yüz derlenemiyor.** \`vite build\` rollup'ın yerel ikilisini istiyor; kurulu olan darwin-arm64, çalıştığım makine linux-aarch64. esbuild için de aynı durum ve npm kayıt defterine erişim yok. Yani **paket boyutu ölçülemiyor.** "İlk paket şu kadar küçüldü" diyemem — o sayıyı üretecek araç çalışmıyor.
-
-Aşağıdaki boyutlar \`node_modules\`'daki gerçek dağıtım dosyalarının boyutları, yani **bölünen kodun büyüklüğü**; paketleyicinin son çıktısı değil. Parçanın tarayıcıda ayrı bir dosya olarak indiği de doğrulanamıyor — bunun için gerçek bir tarayıcı gerekiyor.
-
-Doğrulanabilenler: statik bağımlılığın gerçekten kalktığı (derlenmiş çıktı denetleniyor), dinamik import'un çözüldüğü ve PDF'in hâlâ üretildiği (işlev gerçekten çağrılıyor), Suspense sınırının var olduğu.
-
-## jspdf ilk paketten çıktı
-
-\`utils/analyticsReport.ts\` \`jspdf\` ve \`jspdf-autotable\`'ı statik içe alıyordu. Statik import demek, paketleyicinin onları ana pakete koyması demek — siteyi ilk açan **herkes**, hiç PDF indirmeyecek olsa bile o kodu indiriyordu. Oysa rapor yalnızca tamirci panelinin "Analiz" sekmesindeki bir düğmeyle üretiliyor.
-
-| Dosya | Boyut | gzip |
+| Ön ayar | Boyut | Neden |
 |---|---|---|
-| \`jspdf/dist/jspdf.es.min.js\` | 352 KB | ~116 KB |
-| \`jspdf-autotable/dist/...min.js\` | 39 KB | ~12 KB |
-| **Toplam** | **391 KB** | **~128 KB** |
+| listing / cover | 1600px | Tam genişlik galeri, yakınlaştırma bekleniyor |
+| chat / issue / quote | 1280px | Ekranda en fazla ~600px; 1280 retinada da net |
+| avatar | 512px | Ekranda 40-120px, ama 3x ekran payı bırakıldı |
 
-Çözüm: \`import type\` (çalışma zamanında hiçbir şey getirmez, TypeScript siler) + işlevin içinde dinamik \`import()\`. İki modül \`Promise.all\` ile **paralel** yükleniyor; sırayla beklemek gecikmeyi iki katına çıkarırdı.
+## Saydam PNG siyaha boyanmıyor
 
-Bu bir bileşen değil, saf bir işlev — o yüzden \`React.lazy\` değil doğrudan \`import()\`. Suspense sınırına ihtiyaç duymadığı için hatalı kurulmuş bir sınır yüzünden beyaz ekran riski de yok.
+PNG'yi JPEG'e çevirmek saydam bölgeleri SİYAH yapar. Tamirci logosu ya da kurumsal kapak görseli saydam PNG olabiliyor; "%80 küçülttük" deyip logonun arkasını siyaha boyamak iyileştirme değil, görünür bozulmadır. Bu yüzden PNG geldiğinde alfa kanalına bakılıyor ve saydamlık varsa PNG olarak kalıyor (boyutlandırma yine uygulanıyor, kazanç oradan geliyor).
 
-## El kitabı ayrı parçada
+Maliyeti düşük tutmak için kontrol KÜÇÜLTMEDEN SONRA yapılıyor — 10 megapiksellik özgün dosyada değil, en fazla 1600px'lik tuvalde. Ayrıca \`getImageData\` hata verirse (farklı kökenli görselde tuval "kirlenir") güvenli varsayım saydamlık VAR: kayıpsız taraf seçiliyor.
 
-\`HandbookPanel\` yönetici panelindeki bir sekme ve içeriğini bu dosyadan (\`data/handbook.ts\`, 174 KB) alıyor. Statik import demek, hiç yönetici olmayan ziyaretçinin de o 174 KB'ı indirmesi. \`React.lazy\` + \`Suspense\` ile parça yalnızca sekmeye girildiğinde iniyor. Bileşenin kendisi değişmedi.
+## Üç geri dönüş noktası — hiçbir şey sessizce bozulmuyor
 
-## Bölmediklerim — ve neden
+- **Görsel çözülemezse** (bazı tarayıcılarda HEIC, ya da SVG): ham veri dönüyor, kullanıcının dosyası kaybolmuyor. SVG ise sunucu onu zaten reddediyor ve bu doğru davranış.
+- **Sıkıştırma dosyayı BÜYÜTÜRSE** orijinal korunuyor. Gerçek örnek: 2000x2000 düz renkli bir PNG diskte 1 KB olabilir; onu 512px JPEG'e çevirmek onlarca KB üretir.
+- **Tavan aşılırsa** kullanıcı SEBEBİNİ okuyor: kaç MB olduğu, sınırın kaç MB olduğu ve ne yapması gerektiği. Sessizce göndermek sunucudan 400 alırdı ve kimse nedenini anlamazdı.
 
-**Yönetici panelinin tamamı.** Ayrı bir bileşen DEĞİL, \`AppShell.tsx\`in (584 KB) içine gömülü. Onu ayırmak büyük bir refactor olur ve bu denetimin kuralı açık: çalışan yapıyı büyük değişikliklerle riske atma. El kitabı ise zaten ayrı bir bileşendi — sınırı çizmek için hiçbir şeyi taşımak gerekmedi. Aradaki fark bu.
+İstemci tavanları sunucu tavanlarıyla aynı olmalı; ayrışırlarsa kullanıcı anlamsız bir hata görür. Test iki dosyayı doğrudan karşılaştırıyor (\`tests/ui/media-upload.ui.mjs\`).
 
-**i18n (201 KB).** Her ekranda gerekiyor. Bölmek ilk çizimi geciktirirdi, hızlandırmazdı.
+## Düzeltmenin kendi yan etkisi
 
-## İki hatam ve ikisinin de cevabı
+Arıza ve teklif fotoğraflarında hiç sayı sınırı yoktu — ve olması da gerekmiyordu: eski kod \`blob:\` bağlantısı saklıyordu, yani her fotoğraf ~50 baytlık bir metindi. Fotoğrafları GERÇEKTEN saklamaya başlayınca her biri ~330 KB oldu. Sınır konmasaydı düzeltme yeni bir hata doğuracaktı: kullanıcı 50 fotoğraf ekler, kaydete basar, randevu sunucudan 400 alıp sessizce kaybolur.
 
-**1. \`autoTable is not a function\`.** Dinamik \`import()\`te modül nesnesi elimize geliyor ve şekli ortama göre değişiyor: Node'un CJS köprüsünde işlev \`m.default.default\` içinde, paketleyicinin ESM çıktısında \`m.default\` doğrudan işlev. Bunu Node'da işlevi **gerçekten çağırarak** buldum. Dürüst olmak gerekirse bu tarayıcıda da olacağını kanıtladığım bir hata değil — orada \`.default\` muhtemelen çalışırdı. Ama üç satırla iki şekli de kapsamak, hangisinin doğru olduğunu varsaymaktan iyi; hiçbiri işlev değilse artık sessiz kalmıyor, açık hata veriyor.
+Bu yüzden \`canAppendImage\` eklendi: 10 fotoğraf sayı sınırı (sunucu 20'ye izin veriyor, arayüz kullanıcıyı tavana çarpmaktan korumak için daha erken duruyor) ve toplam boyut kontrolü — 6 fotoğraf sayı sınırının altında kalır ama her biri 2 MB ise toplam tavanı aşar, o yüzden sayı tek başına yetmiyor.
 
-**2. Testim işlevi gözlemleyemiyordu.** \`jsPDF.prototype.save\`i yamalayıp "PDF üretildi mi" diye bakmaya çalıştım. jsPDF her metodu (\`save\` dâhil) **örneğin kendi özelliği** olarak atıyor, prototipte hiçbiri yok — yani dışarıdan yamalamak imkânsız. Testim sessizce hiçbir şey yakalamadı ama "hata vermedi" diye yeşil yanabilirdi.
+**Bir hatayı düzeltirken doğurduğu yeni sınırı da düşünmek gerekiyor.** Ölçüm yapılmadan "artık gerçek fotoğraf saklıyoruz" demek, sorunu bir yerden alıp başka yere taşımak olurdu.
 
-Çözüm testi zorlamak değil, **işlevi gözlemlenebilir yapmak** oldu: artık ne ürettiğini döndürüyor (dosya adı + sayfa sayısı). İkisi de zaten hesaplanmış değerler, ek maliyet yok, test-özel bir kanca da değil.
+## Ölçüm (4032x3024 / 12 MP kaynak, 3,5 MB)
 
-**Üçüncü olarak:** "sayfa sayısı ≥ 2" diye bir kontrol yazdım ve bu bir varsayımdı — küçük veri kümesi tek sayfaya sığıyor, test haklı olarak kırmızı yandı. Sayıyı düşürüp geçmek kolay olurdu ama o zaman test hiçbir şey kanıtlamazdı. Doğru kanıt veri miktarını artırıp sayfa sayısının arttığını görmek: autoTable hiç çalışmasaydı satır sayısının sayfa sayısına etkisi olmazdı.`,
-      },
-      {
-        id: "faz-5-izleme",
-        title: "25.7 Faz 5: e-posta kuyruğu ve basit izleme",
-        body: `## E-posta istek yolundan çıktı
+| Yol | Hedef | Sonuç | Kazanç |
+|---|---|---|---|
+| ilan/kapak (zaten vardı) | 1600px | 397 KB | 8,8x |
+| sohbet / arıza / teklif (YENİ) | 1280px | 250 KB | 14x |
+| profil / avatar (YENİ) | 512px | 31 KB | 114x |
 
-Kayıt ve giriş uçları \`await sendMail(...)\` yapıyordu. SMTP dış bir servis — bizim denetimimizde değil. Yavaşladığında kullanıcının **kayıt ve giriş yanıtı** o kadar bekliyordu.
+Veritabanına yazılan değer base64 olduğu için %33 daha büyük: ham hâlde fotoğraf başına ~4,66 MB, sohbet fotoğrafında 333 KB, avatarda 41 KB.
 
-**Ölçüm** (2 saniye gecikmeli SMTP taklidi): istek 2006 ms bekliyordu, kuyruğa alma ~5 ms. Kazanç kritik olan yerde: kayıt bir kez yapılır, **giriş her gün** yapılır.
+**Bu ölçümün dürüst sınırı:** kaynak, gerçek bir kamera fotoğrafı değil — gerçekçi entropide sentetik bir görüntü (düz renkli bir test görseli gerçek dışı iyi sıkışırdı). Ayrıca kodlayıcı tarayıcının \`canvas.toDataURL\` motoru, ölçüm ise PIL ile yapıldı; oranlar gösterge niteliğinde, ondalık hassasiyette değil. İlan yolu bu boruyu zaten aylardır kullanıyor ve üretimdeki ölçüm (fotoğraf başına ~224 KB) buradaki 397 KB ile aynı büyüklük düzeyinde.
 
-**Neden Redis/BullMQ değil:** kuyruğa alınacak tek bir iş var — e-posta göndermek. Yeni bir servis, yeni bir bağımlılık ve ayakta tutulması gereken yeni bir altyapı, bu iş için karşılığı olmayan bir karmaşıklık. Süreç içi sıralı kuyruk 40 satır.
+## Görsel öznitelikleri: raporun kısmen yanlış olduğu yer
 
-**Neden sıralı (tek seferde bir tane):** SMTP sağlayıcıları eşzamanlı bağlantıyı sınırlıyor. Bekleyen 50 e-postayı paralel göndermek sağlayıcının hepsini reddetmesine yol açabilir — "hızlandırmak" için yapılan şey teslimatı tamamen bozar.
+Rapor "22 \`<img>\` etiketine \`loading="lazy"\` + \`width\`/\`height\` ekle" diyordu. Uygulamada üçü de yeniden değerlendirildi:
 
-**Sınırlı kuyruk (500).** Sınırsız bir dizi, SMTP takıldığında bellek sızıntısına dönüşür; aynı sınıf hata bu projede daha önce oturum ve hız sınırı haritalarında da düzeltildi. Sınıra gelindiğinde **en eskisi** atılıyor: en eski OTP muhtemelen zaten süresi dolmuş, en yenisi hâlâ işe yarar.
+**\`width\`/\`height\` GEREKSİZ.** İşleri düzen kaymasını (CLS) önlemek. Ama 35 etiketin 34'ünde kutu zaten Tailwind ile sabit (\`w-full h-full object-cover\`, \`w-12 h-12\`). Kutu sabitse öznitelik hiçbir şey değiştirmez, CSS ile çelişirse zarar verir. Kalan birinde (sohbet balonu) kutuyu üst öğe sınırlıyor. Doğru iş, öznitelik eklemek değil gerekmediğini ölçüp yazmaktı — test bu kararı koruyor: biri Tailwind sınıflarını kaldırırsa kırmızı yanıyor.
 
-**Bir kez yeniden deneme.** SMTP hatalarının büyük kısmı geçici (bağlantı zaman aşımı, anlık hız sınırı). Sonsuz deneme yapmıyoruz: kalıcı bir hata (yanlış şifre, geçersiz alıcı) kuyruğu sonsuza kadar meşgul edip arkasındaki e-postaları bloke ederdi.
+**\`loading="lazy"\` BUGÜN etkisiz.** Fotoğraflar \`data:\` URI olarak JSON'un içinde geliyor; sayfa yüklendiğinde baytlar ZATEN gelmiş, ertelenecek ağ isteği yok. Lazy ancak görsellerin kendi adresi olduğunda (Faz 4) işe yarar. Tamamlanmasının sebebi o güne hazır olmak — bugün için bir hız iddiası değil.
 
-### Dürüst sınırlar
+**BUGÜN işe yarayan \`decoding="async"\`.** Base64 gömülü bir fotoğrafın çözülmesi ana iş parçacığını meşgul ediyor; veri bellekte olduğu için lazy bunu çözemiyor. 35 etiketin hepsine eklendi — ilk taramada lazy'si olan 9 etiketin decoding'i YOKTU, yani "lazy ekledik" denilen yerlerde bugün işe yarayan öznitelik eksikti.
 
-**Kuyruk süreç içinde.** Sunucu yeniden başlarsa bekleyen e-postalar kaybolur. Kabul edilebilir çünkü kuyruk tipik olarak boş ve bekleyen işin ömrü saniyeler — ama kabul edilebilir olması "yok" demek değil. Kalıcılık gerektiğinde doğru adım e-postaları bir tabloya yazıp oradan işlemek olur.
-
-**\`mailSent\` alanının anlamı değişti.** Kaldırılmadı (API sözleşmesi bozulmasın) ama artık "gönderildi" değil "gerçek gönderim mümkün" demek, yani SMTP yapılandırılmış mı. Kuyruğa alınan bir işin sonucunu senkron bilmek zaten imkânsız. Bu alan ön yüzde hiçbir yerde okunmuyor (arandı, kullanım yok) — pratikte bir şey değişmiyor.
-
-**Bir davranış değişikliği var ve bilinçli:** eskiden SMTP yapılandırılmış ama gönderim başarısız olduğunda, üretim dışı ortamlarda OTP yanıtın içinde dönüyordu. Artık dönmüyor. Bu kaybedilen bir kolaylık ama aynı zamanda kapatılan bir zayıflık — bir OTP'nin SMTP hıçkırığı yüzünden HTTP yanıtında görünmesi istenen bir şey değil. SMTP hiç yapılandırılmamışken \`devOtp\` hâlâ dönüyor, yani geliştirme ve test akışı aynen çalışıyor.
-
-## "Atlandı" ile "başarısız" ayrı sayılıyor
-
-Ölçüm yaparken çıkan bir hata. İlk hâlde SMTP yapılandırılmamışken her e-posta \`failed\` sayılıyor ve hata günlüğü basıyordu. Sonucu: geliştirmede sayaç sürekli artıyor, konsol hata mesajıyla doluyor.
-
-**Sürekli kırmızı yanan bir ölçüm, kimsenin bakmadığı ölçümdür** — gerçek bir SMTP arızası o gürültünün içinde kaybolur. "Yapılandırılmamış" bilinen ve kasıtlı bir durum; ayrı sayılıyor.
-
-## İzleme: \`GET /api/admin/metrics\`
-
-Bu uygulamada hiçbir izleme yoktu, yani bir uç yavaşlarsa ancak kullanıcı şikâyet edince öğreniyorduk. Denetimin kendisi bunu gösterdi: sohbet listesinin veritabanındaki **tüm fotoğrafları** okuması aylardır doğruydu ve kimse fark etmemişti, çünkü bakacak bir sayı yoktu.
-
-Toplananlar: istek sayısı, durum sınıfına göre kırılım (2xx/3xx/4xx/5xx), sunucu hata oranı, ortalama ve en yavaş süre, süre kovaları, uç başına özet, veritabanı boyutu, medya klasörü, bellek, e-posta kuyruğu.
-
-**Neden Prometheus/OpenTelemetry değil:** ikisi de doğru araçlar ama bir toplama altyapısı gerektiriyor (scrape eden sunucu, saklama, panolar). Burada amaç gözlemlenebilirlik platformu değil, **sorunun varlığını görebilmek**. 100 satır, sıfır bağımlılık. Gerçek bir platform gerektiğinde bu sayılar oraya beslenir.
-
-**Neden yönetici arkasında:** hata oranı, yavaş uçlar ve veritabanı boyutu hem işletme hem saldırı istihbaratıdır. "Şu uç yavaş ve 500 veriyor" bilgisi, nereye yükleneceğini arayan birine bedava ipucu olur. \`/api/health\` kasıtlı olarak yalın kaldı: yük dengeleyicinin sorduğu soru "ayakta mısın", başka bir şey değil. Test bunu da ölçüyor — sağlık ucunda \`requests\`, \`dbBytes\`, \`routes\` gibi alanların BULUNMADIĞINI doğruluyor.
-
-### Üç tasarım kararı
-
-**Süre kovaları, p95 değil.** Gerçek bir yüzdelik için bütün süreleri saklamak gerekir — sınırsız bellek. Ortalama tek başına yeterli değil: 1000 hızlı istek 10 çok yavaş isteği gizler. Altı kova (\`<5ms\` … \`>2s\`) sabit yer kaplayıp sorulan soruya cevap veriyor.
-
-**4xx ayrı tutuluyor.** 404 ve 400 çoğu zaman istemci hatası, sunucu arızası değil. İkisini tek "hata oranına" katmak gerçek arızayı 404 gürültüsünün içinde gizlerdi. \`serverErrorRate\` yalnızca 5xx'e bakıyor.
-
-**Uç kırılımı sınırlı sayıda anahtar.** Ham yol ile anahtarlamak \`/api/listings/1\`, \`/api/listings/2\`… diye sınırsız harita üretirdi. Yol kaynak adına indiriliyor ve harita 60'la sınırlı; dolduğunda yeni yol **eklenmiyor** (eskiyi atmak yerine), toplamlar yine doğru kalıyor.
-
-## Test iki hatamı yakaladı
-
-**1. Express yolu yeniden yazıyor.** Ölçüm \`res.on("finish")\` içinde \`req.path\` okuyordu. Express bir alt router'a girerken \`req.url\`i mount noktasına göre YENİDEN YAZIYOR: \`/api/listings/900001\` isteği \`makeCrudRouter\` içinde \`/900001\` oluyor ve yanıt o sırada bittiği için dinleyici kırpılmış yolu görüyordu. Sonuç: her kayıt kimliği ayrı bir anahtar — yani engellemek istediğim sınırsız harita büyümesinin ta kendisi. Test 40 farklı kimlikle 46 anahtar sayarak yakaladı. Yol artık ara katmanın BAŞINDA, \`originalUrl\`den alınıyor.
-
-**2. "İlk iki segmenti al" medyada çöküyordu.** \`/media/<karma>.jpg\` iki segment ve ikincisi her dosyada farklı — her fotoğraf yeni bir anahtar. Üst sınır belleği korur ama kırılımı işe yaramaz yapardı (60 anahtarın 59'u tek fotoğraf). İkinci segment artık yalnızca kaynak adı gibi görünüyorsa tutuluyor: harf ve tire, nokta yok, tamamı rakam değil.
-
-Testin bir bölümü de ölçümün kendisinin **sızıntı yapmadığını** doğruluyor: yanıtta dosya sistemi yolu, veritabanı dosya adı ya da medya klasörü yolu yok — boyut bilgisi işe yarar, yol bilgisi yaramaz.`,
+Lazy dağılımı ölçülerek ayrıldı: 22 liste/küçük görsel lazy, ilk ekran görselleri (ışık kutusunun ana fotoğrafı, ilan detayının ana görseli, tamirci kapak bandı, blog kapağı, başlık avatarları) kasıtlı olarak eager. **Lazy yükleme yanlış yerde iyileştirme değil gerilemedir:** kullanıcının bakmak için tıkladığı fotoğrafı geciktirir. Test her iki yönü de tutuyor.`,
       },
       {
         id: "faz-4-medya",
@@ -2114,148 +2058,204 @@ Medya klasörü varsayılan olarak veritabanı dosyasının yanında (\`FIXPERTO
 Kaydedilen değer mutlak adres (\`http://host/media/...\`). Sebebi: ön yüz API'ye mutlak adresle bağlanıyor, göreli bir \`/media/...\` ön yüzün kendi kökenine çözülür ve 404 verir. Bedeli: alan adı değişirse eski adresler kırılır. Kabul edilebilir, çünkü düzeltmesi tek bir \`UPDATE ... REPLACE(...)\` — ve alternatifi (göreli yol saklamak) ham \`src={...}\` kullanan 14 çizim noktasının hepsine ön ek eklemeyi gerektirirdi; biri atlanırsa kırık görsel oluşur ve bu daha sinsi bir hata olurdu. \`PUBLIC_MEDIA_BASE\` verilirse (ör. CDN alan adı) o kullanılıyor — CDN'e geçiş artık tek bir ortam değişkeni.`,
       },
       {
-        id: "faz-3-yukleme",
-        title: "25.5 Faz 3: yükleme yolları ve iki gizli hata",
-        body: `## Sekiz yükleme yolu, dört farklı yazım, üç hata
+        id: "faz-5-izleme",
+        title: "25.7 Faz 5: e-posta kuyruğu ve basit izleme",
+        body: `## E-posta istek yolundan çıktı
 
-Bu projede HTTP dosya yükleme yok: fotoğraf tarayıcıda base64'e çevrilip normal bir JSON alanı gibi kaydediliyor. Dolayısıyla "dosyayı okuma" mantığı sekiz ayrı yerde yazılmıştı ve yazımlar aynı değildi:
+Kayıt ve giriş uçları \`await sendMail(...)\` yapıyordu. SMTP dış bir servis — bizim denetimimizde değil. Yavaşladığında kullanıcının **kayıt ve giriş yanıtı** o kadar bekliyordu.
 
-| Yol | Eski hâli |
-|---|---|
-| İlan kapak + galeri | Doğru olan: küçültme + JPEG |
-| Sohbet, profil, kapak, çalışan, teklif fotoğrafı | Ham \`readAsDataURL\` — çalışıyor ama 3-10 MB'lık dosyayı olduğu gibi saklıyor |
-| **Arıza fotoğrafı** | \`URL.createObjectURL\` — **bozuk** |
-| **CV** | \`URL.createObjectURL\` — **bozuk** |
+**Ölçüm** (2 saniye gecikmeli SMTP taklidi): istek 2006 ms bekliyordu, kuyruğa alma ~5 ms. Kazanç kritik olan yerde: kayıt bir kez yapılır, **giriş her gün** yapılır.
 
-## İki gerçek hata
+**Neden Redis/BullMQ değil:** kuyruğa alınacak tek bir iş var — e-posta göndermek. Yeni bir servis, yeni bir bağımlılık ve ayakta tutulması gereken yeni bir altyapı, bu iş için karşılığı olmayan bir karmaşıklık. Süreç içi sıralı kuyruk 40 satır.
 
-\`URL.createObjectURL(file)\` o SEKMEYE ÖZEL geçici bir bellek referansı döndürür. Sunucuya \`blob:http://.../uuid\` diye kaydediliyordu. Sonucu:
+**Neden sıralı (tek seferde bir tane):** SMTP sağlayıcıları eşzamanlı bağlantıyı sınırlıyor. Bekleyen 50 e-postayı paralel göndermek sağlayıcının hepsini reddetmesine yol açabilir — "hızlandırmak" için yapılan şey teslimatı tamamen bozar.
 
-**Arıza fotoğrafı:** araç sahibi randevuya fotoğraf ekliyor, kendi ekranında görüyor, hata da almıyor. Ama fotoğrafı görmesi gereken TAMİRCİ her zaman kırık görsel görüyordu. Yani özellik hiç çalışmıyordu ve arayüzde hiçbir belirti yoktu.
+**Sınırlı kuyruk (500).** Sınırsız bir dizi, SMTP takıldığında bellek sızıntısına dönüşür; aynı sınıf hata bu projede daha önce oturum ve hız sınırı haritalarında da düzeltildi. Sınıra gelindiğinde **en eskisi** atılıyor: en eski OTP muhtemelen zaten süresi dolmuş, en yenisi hâlâ işe yarar.
 
-**CV:** aday CV'sini ekliyor, "başvuru gönderildi" mesajını görüyor, ama işveren dosyayı HİÇ açamıyor. Başvuru sistemi CV olmadan çalışıyordu. Üstelik \`utils/helpers.ts\`'teki \`safeHref\` yorumu "CV data: URI olarak saklanıyor" diyordu — kod o niyeti karşılamıyordu. Yorumun koddan daha iyimser olması, bu sınıf hatanın tipik belirtisi.
+**Bir kez yeniden deneme.** SMTP hatalarının büyük kısmı geçici (bağlantı zaman aşımı, anlık hız sınırı). Sonsuz deneme yapmıyoruz: kalıcı bir hata (yanlış şifre, geçersiz alıcı) kuyruğu sonsuza kadar meşgul edip arkasındaki e-postaları bloke ederdi.
 
-Aynı hata daha önce teklif, sohbet ve kapak fotoğrafında üç kez düzeltilmiş; bu iki yol atlanmıştı. Sebebi de belli: mantık sekiz yerde kopyalanmıştı. Şimdi tek dosyada (\`utils/mediaUpload.ts\`).
+### Dürüst sınırlar
 
-## Hedefler kullanım yerine göre
+**Kuyruk süreç içinde.** Sunucu yeniden başlarsa bekleyen e-postalar kaybolur. Kabul edilebilir çünkü kuyruk tipik olarak boş ve bekleyen işin ömrü saniyeler — ama kabul edilebilir olması "yok" demek değil. Kalıcılık gerektiğinde doğru adım e-postaları bir tabloya yazıp oradan işlemek olur.
 
-"Ne kadar küçültebiliriz" değil, "kalite kaybı görünür olmadan ne kadar küçülür":
+**\`mailSent\` alanının anlamı değişti.** Kaldırılmadı (API sözleşmesi bozulmasın) ama artık "gönderildi" değil "gerçek gönderim mümkün" demek, yani SMTP yapılandırılmış mı. Kuyruğa alınan bir işin sonucunu senkron bilmek zaten imkânsız. Bu alan ön yüzde hiçbir yerde okunmuyor (arandı, kullanım yok) — pratikte bir şey değişmiyor.
 
-| Ön ayar | Boyut | Neden |
-|---|---|---|
-| listing / cover | 1600px | Tam genişlik galeri, yakınlaştırma bekleniyor |
-| chat / issue / quote | 1280px | Ekranda en fazla ~600px; 1280 retinada da net |
-| avatar | 512px | Ekranda 40-120px, ama 3x ekran payı bırakıldı |
+**Bir davranış değişikliği var ve bilinçli:** eskiden SMTP yapılandırılmış ama gönderim başarısız olduğunda, üretim dışı ortamlarda OTP yanıtın içinde dönüyordu. Artık dönmüyor. Bu kaybedilen bir kolaylık ama aynı zamanda kapatılan bir zayıflık — bir OTP'nin SMTP hıçkırığı yüzünden HTTP yanıtında görünmesi istenen bir şey değil. SMTP hiç yapılandırılmamışken \`devOtp\` hâlâ dönüyor, yani geliştirme ve test akışı aynen çalışıyor.
 
-## Saydam PNG siyaha boyanmıyor
+## "Atlandı" ile "başarısız" ayrı sayılıyor
 
-PNG'yi JPEG'e çevirmek saydam bölgeleri SİYAH yapar. Tamirci logosu ya da kurumsal kapak görseli saydam PNG olabiliyor; "%80 küçülttük" deyip logonun arkasını siyaha boyamak iyileştirme değil, görünür bozulmadır. Bu yüzden PNG geldiğinde alfa kanalına bakılıyor ve saydamlık varsa PNG olarak kalıyor (boyutlandırma yine uygulanıyor, kazanç oradan geliyor).
+Ölçüm yaparken çıkan bir hata. İlk hâlde SMTP yapılandırılmamışken her e-posta \`failed\` sayılıyor ve hata günlüğü basıyordu. Sonucu: geliştirmede sayaç sürekli artıyor, konsol hata mesajıyla doluyor.
 
-Maliyeti düşük tutmak için kontrol KÜÇÜLTMEDEN SONRA yapılıyor — 10 megapiksellik özgün dosyada değil, en fazla 1600px'lik tuvalde. Ayrıca \`getImageData\` hata verirse (farklı kökenli görselde tuval "kirlenir") güvenli varsayım saydamlık VAR: kayıpsız taraf seçiliyor.
+**Sürekli kırmızı yanan bir ölçüm, kimsenin bakmadığı ölçümdür** — gerçek bir SMTP arızası o gürültünün içinde kaybolur. "Yapılandırılmamış" bilinen ve kasıtlı bir durum; ayrı sayılıyor.
 
-## Üç geri dönüş noktası — hiçbir şey sessizce bozulmuyor
+## İzleme: \`GET /api/admin/metrics\`
 
-- **Görsel çözülemezse** (bazı tarayıcılarda HEIC, ya da SVG): ham veri dönüyor, kullanıcının dosyası kaybolmuyor. SVG ise sunucu onu zaten reddediyor ve bu doğru davranış.
-- **Sıkıştırma dosyayı BÜYÜTÜRSE** orijinal korunuyor. Gerçek örnek: 2000x2000 düz renkli bir PNG diskte 1 KB olabilir; onu 512px JPEG'e çevirmek onlarca KB üretir.
-- **Tavan aşılırsa** kullanıcı SEBEBİNİ okuyor: kaç MB olduğu, sınırın kaç MB olduğu ve ne yapması gerektiği. Sessizce göndermek sunucudan 400 alırdı ve kimse nedenini anlamazdı.
+Bu uygulamada hiçbir izleme yoktu, yani bir uç yavaşlarsa ancak kullanıcı şikâyet edince öğreniyorduk. Denetimin kendisi bunu gösterdi: sohbet listesinin veritabanındaki **tüm fotoğrafları** okuması aylardır doğruydu ve kimse fark etmemişti, çünkü bakacak bir sayı yoktu.
 
-İstemci tavanları sunucu tavanlarıyla aynı olmalı; ayrışırlarsa kullanıcı anlamsız bir hata görür. Test iki dosyayı doğrudan karşılaştırıyor (\`tests/ui/media-upload.ui.mjs\`).
+Toplananlar: istek sayısı, durum sınıfına göre kırılım (2xx/3xx/4xx/5xx), sunucu hata oranı, ortalama ve en yavaş süre, süre kovaları, uç başına özet, veritabanı boyutu, medya klasörü, bellek, e-posta kuyruğu.
 
-## Düzeltmenin kendi yan etkisi
+**Neden Prometheus/OpenTelemetry değil:** ikisi de doğru araçlar ama bir toplama altyapısı gerektiriyor (scrape eden sunucu, saklama, panolar). Burada amaç gözlemlenebilirlik platformu değil, **sorunun varlığını görebilmek**. 100 satır, sıfır bağımlılık. Gerçek bir platform gerektiğinde bu sayılar oraya beslenir.
 
-Arıza ve teklif fotoğraflarında hiç sayı sınırı yoktu — ve olması da gerekmiyordu: eski kod \`blob:\` bağlantısı saklıyordu, yani her fotoğraf ~50 baytlık bir metindi. Fotoğrafları GERÇEKTEN saklamaya başlayınca her biri ~330 KB oldu. Sınır konmasaydı düzeltme yeni bir hata doğuracaktı: kullanıcı 50 fotoğraf ekler, kaydete basar, randevu sunucudan 400 alıp sessizce kaybolur.
+**Neden yönetici arkasında:** hata oranı, yavaş uçlar ve veritabanı boyutu hem işletme hem saldırı istihbaratıdır. "Şu uç yavaş ve 500 veriyor" bilgisi, nereye yükleneceğini arayan birine bedava ipucu olur. \`/api/health\` kasıtlı olarak yalın kaldı: yük dengeleyicinin sorduğu soru "ayakta mısın", başka bir şey değil. Test bunu da ölçüyor — sağlık ucunda \`requests\`, \`dbBytes\`, \`routes\` gibi alanların BULUNMADIĞINI doğruluyor.
 
-Bu yüzden \`canAppendImage\` eklendi: 10 fotoğraf sayı sınırı (sunucu 20'ye izin veriyor, arayüz kullanıcıyı tavana çarpmaktan korumak için daha erken duruyor) ve toplam boyut kontrolü — 6 fotoğraf sayı sınırının altında kalır ama her biri 2 MB ise toplam tavanı aşar, o yüzden sayı tek başına yetmiyor.
+### Üç tasarım kararı
 
-**Bir hatayı düzeltirken doğurduğu yeni sınırı da düşünmek gerekiyor.** Ölçüm yapılmadan "artık gerçek fotoğraf saklıyoruz" demek, sorunu bir yerden alıp başka yere taşımak olurdu.
+**Süre kovaları, p95 değil.** Gerçek bir yüzdelik için bütün süreleri saklamak gerekir — sınırsız bellek. Ortalama tek başına yeterli değil: 1000 hızlı istek 10 çok yavaş isteği gizler. Altı kova (\`<5ms\` … \`>2s\`) sabit yer kaplayıp sorulan soruya cevap veriyor.
 
-## Ölçüm (4032x3024 / 12 MP kaynak, 3,5 MB)
+**4xx ayrı tutuluyor.** 404 ve 400 çoğu zaman istemci hatası, sunucu arızası değil. İkisini tek "hata oranına" katmak gerçek arızayı 404 gürültüsünün içinde gizlerdi. \`serverErrorRate\` yalnızca 5xx'e bakıyor.
 
-| Yol | Hedef | Sonuç | Kazanç |
-|---|---|---|---|
-| ilan/kapak (zaten vardı) | 1600px | 397 KB | 8,8x |
-| sohbet / arıza / teklif (YENİ) | 1280px | 250 KB | 14x |
-| profil / avatar (YENİ) | 512px | 31 KB | 114x |
+**Uç kırılımı sınırlı sayıda anahtar.** Ham yol ile anahtarlamak \`/api/listings/1\`, \`/api/listings/2\`… diye sınırsız harita üretirdi. Yol kaynak adına indiriliyor ve harita 60'la sınırlı; dolduğunda yeni yol **eklenmiyor** (eskiyi atmak yerine), toplamlar yine doğru kalıyor.
 
-Veritabanına yazılan değer base64 olduğu için %33 daha büyük: ham hâlde fotoğraf başına ~4,66 MB, sohbet fotoğrafında 333 KB, avatarda 41 KB.
+## Test iki hatamı yakaladı
 
-**Bu ölçümün dürüst sınırı:** kaynak, gerçek bir kamera fotoğrafı değil — gerçekçi entropide sentetik bir görüntü (düz renkli bir test görseli gerçek dışı iyi sıkışırdı). Ayrıca kodlayıcı tarayıcının \`canvas.toDataURL\` motoru, ölçüm ise PIL ile yapıldı; oranlar gösterge niteliğinde, ondalık hassasiyette değil. İlan yolu bu boruyu zaten aylardır kullanıyor ve üretimdeki ölçüm (fotoğraf başına ~224 KB) buradaki 397 KB ile aynı büyüklük düzeyinde.
+**1. Express yolu yeniden yazıyor.** Ölçüm \`res.on("finish")\` içinde \`req.path\` okuyordu. Express bir alt router'a girerken \`req.url\`i mount noktasına göre YENİDEN YAZIYOR: \`/api/listings/900001\` isteği \`makeCrudRouter\` içinde \`/900001\` oluyor ve yanıt o sırada bittiği için dinleyici kırpılmış yolu görüyordu. Sonuç: her kayıt kimliği ayrı bir anahtar — yani engellemek istediğim sınırsız harita büyümesinin ta kendisi. Test 40 farklı kimlikle 46 anahtar sayarak yakaladı. Yol artık ara katmanın BAŞINDA, \`originalUrl\`den alınıyor.
 
-## Görsel öznitelikleri: raporun kısmen yanlış olduğu yer
+**2. "İlk iki segmenti al" medyada çöküyordu.** \`/media/<karma>.jpg\` iki segment ve ikincisi her dosyada farklı — her fotoğraf yeni bir anahtar. Üst sınır belleği korur ama kırılımı işe yaramaz yapardı (60 anahtarın 59'u tek fotoğraf). İkinci segment artık yalnızca kaynak adı gibi görünüyorsa tutuluyor: harf ve tire, nokta yok, tamamı rakam değil.
 
-Rapor "22 \`<img>\` etiketine \`loading="lazy"\` + \`width\`/\`height\` ekle" diyordu. Uygulamada üçü de yeniden değerlendirildi:
-
-**\`width\`/\`height\` GEREKSİZ.** İşleri düzen kaymasını (CLS) önlemek. Ama 35 etiketin 34'ünde kutu zaten Tailwind ile sabit (\`w-full h-full object-cover\`, \`w-12 h-12\`). Kutu sabitse öznitelik hiçbir şey değiştirmez, CSS ile çelişirse zarar verir. Kalan birinde (sohbet balonu) kutuyu üst öğe sınırlıyor. Doğru iş, öznitelik eklemek değil gerekmediğini ölçüp yazmaktı — test bu kararı koruyor: biri Tailwind sınıflarını kaldırırsa kırmızı yanıyor.
-
-**\`loading="lazy"\` BUGÜN etkisiz.** Fotoğraflar \`data:\` URI olarak JSON'un içinde geliyor; sayfa yüklendiğinde baytlar ZATEN gelmiş, ertelenecek ağ isteği yok. Lazy ancak görsellerin kendi adresi olduğunda (Faz 4) işe yarar. Tamamlanmasının sebebi o güne hazır olmak — bugün için bir hız iddiası değil.
-
-**BUGÜN işe yarayan \`decoding="async"\`.** Base64 gömülü bir fotoğrafın çözülmesi ana iş parçacığını meşgul ediyor; veri bellekte olduğu için lazy bunu çözemiyor. 35 etiketin hepsine eklendi — ilk taramada lazy'si olan 9 etiketin decoding'i YOKTU, yani "lazy ekledik" denilen yerlerde bugün işe yarayan öznitelik eksikti.
-
-Lazy dağılımı ölçülerek ayrıldı: 22 liste/küçük görsel lazy, ilk ekran görselleri (ışık kutusunun ana fotoğrafı, ilan detayının ana görseli, tamirci kapak bandı, blog kapağı, başlık avatarları) kasıtlı olarak eager. **Lazy yükleme yanlış yerde iyileştirme değil gerilemedir:** kullanıcının bakmak için tıkladığı fotoğrafı geciktirir. Test her iki yönü de tutuyor.`,
+Testin bir bölümü de ölçümün kendisinin **sızıntı yapmadığını** doğruluyor: yanıtta dosya sistemi yolu, veritabanı dosya adı ya da medya klasörü yolu yok — boyut bilgisi işe yarar, yol bilgisi yaramaz.`,
       },
       {
-        id: "faz-2-indeksler",
-        title: "25.4 Faz 2: indeksler ve sorgu planları",
-        body: `## Önce bir düzeltme: ilk rapor yanlıştı
+        id: "faz-6-kod-bolme",
+        title: "25.8 Faz 6: kod bölme — ve ölçemediğim şey",
+        body: `## Önce dürüst sınır
 
-İlk performans raporu "6 indeks eksik" diyordu. Faz 2'de her sorgunun planı \`EXPLAIN QUERY PLAN\` ile okundu ve o listenin **3 satırı yanlış, 5 satırı eksik** çıktı.
+**Bu ortamda ön yüz derlenemiyor.** \`vite build\` rollup'ın yerel ikilisini istiyor; kurulu olan darwin-arm64, çalıştığım makine linux-aarch64. esbuild için de aynı durum ve npm kayıt defterine erişim yok. Yani **paket boyutu ölçülemiyor.** "İlk paket şu kadar küçüldü" diyemem — o sayıyı üretecek araç çalışmıyor.
 
-Yanlış olanlar: \`vehicle_history.vin\` zaten indeksliydi; \`share_events.refCode\` ve \`blog_posts.slug\` ise \`UNIQUE\` tanımlı olduğu için SQLite kendiliğinden indeks üretiyordu. Eksik olanlar: \`appointments.mechanicId\`, \`conversations.ownerId\`, \`conversations.mechanicId\`, \`support_tickets(fromId, fromType)\` ve \`profile_views\`.
+Aşağıdaki boyutlar \`node_modules\`'daki gerçek dağıtım dosyalarının boyutları, yani **bölünen kodun büyüklüğü**; paketleyicinin son çıktısı değil. Parçanın tarayıcıda ayrı bir dosya olarak indiği de doğrulanamıyor — bunun için gerçek bir tarayıcı gerekiyor.
 
-Hatanın sebebi yöntemdi: ilk rapor kaynak kodda \`CREATE INDEX\` arayıp sorgu sayısı saymıştı. İkisi de vekil ölçüt. Doğru ölçüt SQLite'ın o sorgu için ne YAPTIĞI:
+Doğrulanabilenler: statik bağımlılığın gerçekten kalktığı (derlenmiş çıktı denetleniyor), dinamik import'un çözüldüğü ve PDF'in hâlâ üretildiği (işlev gerçekten çağrılıyor), Suspense sınırının var olduğu.
 
-- \`SCAN <tablo>\` → tablo baştan sona okunuyor
-- \`SEARCH <tablo> USING INDEX\` → indeksten gidiliyor
+## jspdf ilk paketten çıktı
 
-Bir indeksin VAR OLMASI ile KULLANILMASI ayrı şeyler: sütun sırası yanlışsa, sütuna bir işlev uygulanmışsa ya da karşılaştırma olumsuzsa (\`!=\`) indeks orada durur ama plan yine taramadır. Bu yüzden testler (\`tests/e2e/api4.e2e.mjs\`) indeksin varlığına değil PLANA bakıyor, hem de gerçek \`db.js\`'in kurduğu gerçek veritabanı üzerinde.
+\`utils/analyticsReport.ts\` \`jspdf\` ve \`jspdf-autotable\`'ı statik içe alıyordu. Statik import demek, paketleyicinin onları ana pakete koyması demek — siteyi ilk açan **herkes**, hiç PDF indirmeyecek olsa bile o kodu indiriyordu. Oysa rapor yalnızca tamirci panelinin "Analiz" sekmesindeki bir düğmeyle üretiliyor.
 
-## En büyük kazanç bir indeks değildi
-
-\`GET /api/conversations\` hiç \`WHERE\` cümlesi kullanmıyordu: tüm sohbetleri okuyup JS'te süzüyordu. Gizlilik açısından doğruydu — kimse başkasının sohbetini görmüyordu — ama mesajlar gömülü fotoğraflarıyla birlikte satırın İÇİNDE olduğu için "mesajlarım" ekranını açan her kullanıcı veritabanındaki HERKESİN fotoğraflarını diskten okutup belleğe alıyordu.
-
-Buraya indeks eklemek ve sorguyu olduğu gibi bırakmak hiçbir şeyi değiştirmezdi — "körlemesine indeks eklemek" tam olarak budur. O yüzden filtre SQL'e taşındı; kural birebir aynı:
-
-| Rol | Eskiden (JS) | Şimdi (SQL) |
+| Dosya | Boyut | gzip |
 |---|---|---|
-| admin | \`true\` | WHERE yok |
-| owner | \`row.ownerId === actor.id\` | \`WHERE ownerId = ?\` |
-| mechanic | \`row.mechanicId === actor.id\` | \`WHERE mechanicId = ?\` |
+| \`jspdf/dist/jspdf.es.min.js\` | 352 KB | ~116 KB |
+| \`jspdf-autotable/dist/...min.js\` | 39 KB | ~12 KB |
+| **Toplam** | **391 KB** | **~128 KB** |
 
-**Ölçüm — 301 sohbet, 390 MB mesaj verisi: 315 ms → 2 ms.**
+Çözüm: \`import type\` (çalışma zamanında hiçbir şey getirmez, TypeScript siler) + işlevin içinde dinamik \`import()\`. İki modül \`Promise.all\` ile **paralel** yükleniyor; sırayla beklemek gecikmeyi iki katına çıkarırdı.
 
-Bir performans değişikliğinin en sinsi hatası gizlilik kuralını farkında olmadan gevşetmektir: SQL bir satır FAZLA döndürürse o iyileştirme değil, sızıntıdır. Bu yüzden testler dört rolü de ayrı ayrı sınıyor, listeyi tekil GET ile karşılaştırıyor (listede görünmeyen bir sohbet id'si tahmin edilince okunabiliyor mu?) ve \`ownerId\` NULL olan eski kayıtların kimseye görünmediğini doğruluyor.
+Bu bir bileşen değil, saf bir işlev — o yüzden \`React.lazy\` değil doğrudan \`import()\`. Suspense sınırına ihtiyaç duymadığı için hatalı kurulmuş bir sınır yüzünden beyaz ekran riski de yok.
 
-## Eklenen 10 indeks
+## El kitabı ayrı parçada
 
-\`vehicles(ownerId)\` · \`appointments(ownerId)\` · \`appointments(mechanicId)\` · \`conversations(ownerId)\` · \`conversations(mechanicId)\` · \`support_tickets(fromId, fromType)\` · \`profile_views(targetType, targetId, createdAt)\` · \`quote_offers(requestId)\` · \`vehicle_history(ownerId, serviceDate DESC)\` · \`listings(status)\`
+\`HandbookPanel\` yönetici panelindeki bir sekme ve içeriğini bu dosyadan (\`data/handbook.ts\`, 174 KB) alıyor. Statik import demek, hiç yönetici olmayan ziyaretçinin de o 174 KB'ı indirmesi. \`React.lazy\` + \`Suspense\` ile parça yalnızca sekmeye girildiğinde iniyor. Bileşenin kendisi değişmedi.
 
-Üç tasarım kararı:
+## Bölmediklerim — ve neden
 
-**Randevularda İKİ indeks var.** Rol hangi sütunla sorgulandığını belirliyor: araç sahibi için \`ownerId\`, tamirci için \`mechanicId\`. Sadece biri eklenirse diğer rolün ekranı taramada kalır.
+**Yönetici panelinin tamamı.** Ayrı bir bileşen DEĞİL, \`AppShell.tsx\`in (584 KB) içine gömülü. Onu ayırmak büyük bir refactor olur ve bu denetimin kuralı açık: çalışan yapıyı büyük değişikliklerle riske atma. El kitabı ise zaten ayrı bir bileşendi — sınırı çizmek için hiçbir şeyi taşımak gerekmedi. Aradaki fark bu.
 
-**Destek talepleri BİLEŞİK.** Sorgu her zaman iki sütunu birlikte kullanıyor (\`fromId = ? AND fromType = ?\`), çünkü owner #7 ile mechanic #7 farklı kişiler. İki ayrı indeks aynı işi yapmaz.
+**i18n (201 KB).** Her ekranda gerekiyor. Bölmek ilk çizimi geciktirirdi, hızlandırmazdı.
 
-**Sütun sırası profil görüntülemelerinde önemli.** \`(targetType, targetId, createdAt)\` — eşitlikler önce, aralık en sonda. Ters sırada indeks aralık sütunundan sonrasını kullanamaz. Sorgular yalnızca \`COUNT\`/\`SUM\` istediği için plan \`COVERING INDEX\` diyor: satırlara hiç gidilmiyor. **200.000 satırda 5,7 ms → 0,0 ms**, ve istatistik ekranı bu tabloda beş ayrı sorgu çalıştırıyor.
+## İki hatam ve ikisinin de cevabı
 
-## Yazma maliyeti — tahmin değil, ölçüm
+**1. \`autoTable is not a function\`.** Dinamik \`import()\`te modül nesnesi elimize geliyor ve şekli ortama göre değişiyor: Node'un CJS köprüsünde işlev \`m.default.default\` içinde, paketleyicinin ESM çıktısında \`m.default\` doğrudan işlev. Bunu Node'da işlevi **gerçekten çağırarak** buldum. Dürüst olmak gerekirse bu tarayıcıda da olacağını kanıtladığım bir hata değil — orada \`.default\` muhtemelen çalışırdı. Ama üç satırla iki şekli de kapsamak, hangisinin doğru olduğunu varsaymaktan iyi; hiçbiri işlev değilse artık sessiz kalmıyor, açık hata veriyor.
 
-Her indeks, sütun değiştiğinde fazladan bir B-ağacı yazması demek. Ölçüldü: 200.000 satırlık tabloya 2000 ekleme indekssiz 224 ms, indeksli 230 ms → **%2,7** (satır başına ~0,003 ms).
+**2. Testim işlevi gözlemleyemiyordu.** \`jsPDF.prototype.save\`i yamalayıp "PDF üretildi mi" diye bakmaya çalıştım. jsPDF her metodu (\`save\` dâhil) **örneğin kendi özelliği** olarak atıyor, prototipte hiçbiri yok — yani dışarıdan yamalamak imkânsız. Testim sessizce hiçbir şey yakalamadı ama "hata vermedi" diye yeşil yanabilirdi.
 
-Bu kadar küçük olmasının sebebi şu: eklenen sütunların hepsi SAHİPLİK/HEDEF alanı, yani satır oluşturulurken bir kez yazılıp bir daha neredeyse hiç değişmiyor (bir randevunun \`ownerId\`'si güncellenmiyor). Maliyet "her güncellemede" değil, "kayıt başına bir kez". Okuma kazancı ise her sayfa açılışında tekrar ediyor.
+Çözüm testi zorlamak değil, **işlevi gözlemlenebilir yapmak** oldu: artık ne ürettiğini döndürüyor (dosya adı + sayfa sayısı). İkisi de zaten hesaplanmış değerler, ek maliyet yok, test-özel bir kanca da değil.
 
-## Kasıtlı olarak EKLENMEYENLER
-
-Körlemesine eklememek de bir karar, o yüzden gerekçeleri yazılı — hatta testlerde kayıt altında:
-
-- **\`sessions(createdAt)\`:** tek okuyucusu süresi dolmuş oturumları silen periyodik iş. Karşılığında her GİRİŞTE fazladan yazma gelirdi — en sık yazılan yolu yavaşlatıp en seyrek okunan işi hızlandırmak. Üstelik tablo 7 günlük TTL ile kendiliğinden sınırlı.
-- **\`listings(sellerId, sellerType)\`:** ilan listesi herkese açık ve filtresiz dönüyor, yani liste sorgusunda işe yaramaz. Tek kullanıcısı hesap silme (kullanıcı başına bir kez).
-- **\`quote_requests(ownerId)\`:** aynı gerekçe.
-- **\`mechanics\` filtre sütunları (price, rating, verified):** arama BUGÜN istemcide yapılıyor, sunucuya böyle bir sorgu hiç gitmiyor. Var olmayan bir sorgu için indeks eklemek ölçmeden karar vermek olurdu. Sunucu tarafı filtreleme yapıldığı gün birlikte eklenir.
-
-## İyi haber olarak bulunanlar
-
-Denetim sırasında en çok korkulan yer zaten sağlamdı: \`sessions.tokenHash\` her kimlik doğrulamalı istekte sorgulanıyor ve \`PRIMARY KEY\` olduğu için indeksli. Aynı şekilde \`owners.email\`/\`mechanics.email\` (giriş) ve \`translation_cache(fromLang, toLang, sourceText)\` (çeviri önbelleği) de \`UNIQUE\` sayesinde indeksli.`,
+**Üçüncü olarak:** "sayfa sayısı ≥ 2" diye bir kontrol yazdım ve bu bir varsayımdı — küçük veri kümesi tek sayfaya sığıyor, test haklı olarak kırmızı yandı. Sayıyı düşürüp geçmek kolay olurdu ama o zaman test hiçbir şey kanıtlamazdı. Doğru kanıt veri miktarını artırıp sayfa sayısının arttığını görmek: autoTable hiç çalışmasaydı satır sayısının sayfa sayısına etkisi olmazdı.`,
       },
+      {
+        id: "randevu-sonuc-popup",
+        title: "25.9 Randevu sonucu: ekran değil popup",
+        body: `## Önce ayrı bir ekran vardı
+
+Randevu kaydedilince uygulama \`screen === "confirmed"\` ile tamamen başka bir ekrana geçiyordu. Sorunu şuydu: sayfa değişiyor, kullanıcı nereden geldiğini kaybediyor ve o ekranda iki düğmeden başka hiçbir şey yok — tam bir çıkmaz sokak.
+
+Artık sayfanın ortasında bir popup. Arkadaki sayfa yerinde kalıyor, sonuç hemen okunuyor.
+
+## İki durum, iki ayrı cümle
+
+Bu ayrım bir üslup tercihi değil:
+
+| Otomatik onay | Rozet | Başlık | Açıklama |
+|---|---|---|---|
+| AÇIK | Onaylandı | Randevunuz Onaylandı! | Randevunuz **kesinleşti**. Tamircinin onayını beklemenize gerek yok. |
+| KAPALI | Onay bekliyor | Randevu Talebiniz Gönderildi! | Talebiniz tamirciye **iletildi**. Onaylandığında bildirim alacaksınız. |
+
+İkisini aynı cümleyle geçmek kullanıcıyı yanıltır: "onaylandı" sanıp tamircinin hiç kabul etmediği bir saate gelen, ya da onay bekleyip beklemediğini bilmeyen biri çıkar. Test iki metnin de var olduğunu, üç dilde çevrildiğini **ve** \`autoAccepted\` değerine göre gerçekten SEÇİLDİĞİNİ denetliyor — iki metni yazıp hep aynısını göstermek mümkün olurdu.
+
+## Değerler sunucudan geliyor
+
+Popup tamirci adı, araç, tarih ve saati gösteriyor. Bunlar sunucudan dönen kayıttan alınıyor, ekrandaki state'ten değil: popup açıldığında form ZATEN temizlenmiş oluyor (bu sıra bilinçli — istek başarısız olursa kullanıcı verilerini kaybetmesin diye temizlik \`await\`ten sonra yapılıyor).
+
+Popup da ancak kayıt **başarılı** olduktan sonra açılıyor. Aksi hâlde kaydedilmemiş bir randevu için "onaylandı" göstermiş olurduk — bu sınıf hata bu projede daha önce bir kez yaşandı ve testte kayıt altında.
+
+## Hiçbir çıkış yolu boşta bırakmıyor
+
+Arkadaki sayfada form temizlenmiş durumda, yani popup'ı kapatıp orada bırakmak kullanıcıyı boş bir ekranda bırakmak olurdu. Üç yol da bir yere götürüyor: "Randevumu Görüntüle" ve arka plana tıklama aktif randevulara, ikinci düğme ana sayfaya. "Aktif" sekmesinin açıkça ayarlanması da eski bir hatanın karşılığı — bir kez "Geçmiş"e bakan kişi yeni randevusunu almasının ardından bu düğmeye basınca geçmiş listesine düşüyor ve randevusunu göremiyordu.
+
+## Kaldırılan ekran geri bırakılmadı
+
+\`screen === "confirmed"\` bloğu silindi. Ulaşılamayan bir ekranı "belki lazım olur" diye bırakmak, sonraki geliştiriciye yanlış bilgi veren ölü koddur; test artık o ekranın hem işaretçisinin hem kendisinin kalmadığını doğruluyor.`,
+      },
+      {
+        id: "fiyat-piyasa-karsilastirma",
+        title: "25.10 Fiyatın piyasadaki yeri — ve neden çoğu zaman görünmüyor",
+        body: `## İstek ve ilk dürüst ölçüm
+
+Randevu alırken tamircinin fiyatının diğerlerine göre nerede durduğu gösterilsin — "çok iyi / iyi / ortalama / yüksek".
+
+**Bugünkü tohum verisinde bu satır hiç görünmüyor** ve bunu baştan yazmak gerekiyor. Sebep: 10 tamircide 17 farklı hizmet var; en yoğun iki hizmette (yağ değişimi, periyodik bakım) üç tamircinin sabit fiyatı var, ama karşılaştırılan tamirci havuzdan çıkarıldığı için geriye iki tamirci kalıyor — asgari örneklemin altında.
+
+İlk ölçümümde "2 hizmette çıkar" yazmıştım ve **yanlıştı**: saydığım şey fiyat veren tamirci sayısıydı, oysa karşılaştırmada kişinin kendisi havuza girmiyor. Testi gerçek tohum verisiyle çalıştırınca fark ettim. Test artık bu sayıyı (0) yazılı tutuyor — ileride biri "neden hiç görünmüyor" diye sorduğunda cevap orada.
+
+Eşiği 2'ye indirip özelliği "çalışır" göstermek mümkündü. Yapmadım: iki fiyatın "medyanı" ikisinin ortasıdır, hangisinin normal olduğunu söylemez. **İki tamircinin fiyatına bakıp "bu çok iyi" demek bir bilgi değil, uydurmadır.** Özellik platform büyüdükçe kendiliğinden anlamlı hâle geliyor.
+
+## Medyan, "ortalama" değil
+
+İstek "ortalama" diyordu ama aritmetik ortalama tek bir aykırı değere karşı savunmasız. Sayıyla:
+
+| Fiyatlar | Ortalama | Medyan |
+|---|---|---|
+| 300, 300, 300, 5000 | **1.475₺** | **300₺** |
+
+Ortalamayla karşılaştırırsak 300₺'lik bir fiyat "piyasanın belirgin altında" görünür — oysa piyasanın ortası hâlâ 300₺ ve o fiyat tam ortada. Arayüzde gösterilen sayı medyan ve adı "piyasa ortası"; kullanıcıya aritmetik ortalama diye sunulmuyor.
+
+## Karşılaştırmanın YAPILMADIĞI durumlar
+
+Testlerin ağırlık merkezi burada. Yanlış bir "çok iyi" etiketi kullanıcıyı yanlış tamirciye gönderir ve tamirciye de haksızlık eder; **hiç etiket göstermemek her zaman daha iyidir.**
+
+- **Katalog anahtarı yok.** Tamircinin kendi yazdığı serbest metin hizmetlerde "aynı işi mi anlatıyor" sorusu cevaplanamaz — "Fren bakımı" ile "Fren balata değişimi" aynı şey olabilir de olmayabilir.
+- **Fiyat değişken.** "Değişken" demek fiyat henüz belli değil demek. Oradaki sayıyı kesin fiyatlarla aynı havuza koymak iki tarafı da yanlış gösterir. Havuzdaki değişken fiyatlı tamirciler de örnekleme sayılmıyor.
+- **Örneklem 3'ün altında.** Sayı yine döndürülüyor ki çağıran taraf isterse sebebini söyleyebilsin — sessizce kaybolmak yerine.
+- **Tamircinin kendisi havuzda değil.** Aksi hâlde herkes kendi fiyatını da medyana katardı.
+
+## Marka fiyatı tutarlı kullanılıyor
+
+Tamirciler marka başına farklı fiyat verebiliyor (\`brandPrices\`). Havuzda kimi tamircinin marka fiyatını, kiminin taban fiyatını almak karşılaştırmayı anlamsız yapardı.
+
+Kural: **her tamirci için "bu aracı getirsem bana ne yazar" değeri alınıyor** — marka fiyatı varsa o, yoksa taban fiyat. Marka zammı olmayan bir tamircinin taban fiyatı zaten o araç için geçerli fiyattır. Test bunu ölçüyor: BMW karşılaştırmasında marka fiyatı 900₺ olan iki tamirci ile marka zammı olmayan (300₺) bir tamirci aynı havuzda ve medyan 900₺ çıkıyor.
+
+## Eşikler ve sınır yönü
+
+| Medyana oran | Etiket |
+|---|---|
+| ≤ 0,80 | Piyasanın belirgin altında |
+| 0,80 – 0,95 | Piyasanın altında |
+| 0,95 – 1,05 | Piyasa ortalamasında |
+| 1,05 – 1,25 | Piyasanın üstünde |
+| > 1,25 | Piyasanın belirgin üstünde |
+
+±%5 bandı bilerek "ortalama": 300₺ ile 310₺ arasındaki farkı "daha iyi" diye sunmak kullanıcıyı yanlış yönlendirir. O bantta renk de nötr ve ok da yok — olmayan bir farkı varmış gibi göstermemek için.
+
+Sınır değerleri **alt banda** düşüyor (\`<=\`). İlk testimde "tam %25 üstü yüksek olmalı" diye varsaymıştım ve test haklı olarak kırıldı; kodun davranışı tutarlı ve kullanıcı lehine olan yön bu — sınırda olan bir fiyatı daha ağır etikete atmıyoruz.
+
+## Metin fiyat hakkında, tamirci hakkında değil
+
+"Bu tamirci çok iyi" demek karşılaştırmanın söyleyebileceğinden fazlasını iddia etmek olurdu: **ucuz olmak iyi tamirci olmak demek değil.** Söylenen tek şey fiyatın piyasa ortasına göre nerede durduğu. Bilgi balonu da bunu açıkça yazıyor.
+
+Örneklem sayısı her zaman görünüyor ("3 tamircinin fiyatına göre"). Üç tamirciden çıkan bir karşılaştırmayı otuz tamirciden çıkmış gibi sunmak, kullanıcıya olduğundan fazla güven vermek olurdu.
+
+## Nerede hesaplanıyor
+
+İstemcide, saf bir işlevle (\`comparePriceToMarket\`). Yeni bir API ucu yok: tamirci listesi zaten tamamen indirilmiş durumda (mevcut mimari böyle) ve karşılaştırma o veriden çıkıyor. Saf işlev olması testte gerçekten çağrılabilmesini sağlıyor — 40'tan fazla kontrol doğrudan işlevi çalıştırıyor.`,
+      },
+
     ],
   },
 ];

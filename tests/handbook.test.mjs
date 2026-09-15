@@ -95,6 +95,36 @@ for (const limit of ["slot kilidi yok", "backend doğrulaması", "httpOnly", "su
   ok(bookLower.includes(lc(limit)), `bilinen sınır belgelenmiş: ${limit}`);
 }
 
+/**
+ * SAYFA NUMARALARI SIRALI MI — yönetici panelinde okunan sıra bu.
+ * ------------------------------------------------------------------------------------------------
+ * GERÇEK HATA (kullanıcı sordu: "bunu panele ekledin mi"): bölüm 25'te sayfalar
+ * 25.1 25.2 25.3 25.10 25.9 25.8 25.7 25.6 25.5 25.4 sırasıyla duruyordu. Sebebi basit ve
+ * tekrar etmeye çok müsait: her yeni bölümü var olanın ÖNÜNE eklemişim, yani en yenisi en üstte
+ * çıkmış. Belge panelde bu sırayla okunuyor, dolayısıyla 25.10'dan 25.4'e atlayan bir içindekiler
+ * listesi görünüyordu — içerik doğru ama belge bozuk görünüyor, ki bu belgeye olan güveni bitirir.
+ * Tarama bölüm 22 ve 23'te de aynı hatayı buldu (22.6 → 22.3, 23.3 → 23.2).
+ *
+ * Bu kontrol o hatanın bir daha oluşmasını engelliyor. Sayfa EKLEMEK kolay olsun diye numarasız
+ * sayfalara karışmıyor; yalnızca "S.N" biçiminde numaralanmış sayfaların kendi bölümü içinde
+ * artan sırada olmasını şart koşuyor.
+ */
+{
+  const numbered = [...handbookSrc.matchAll(/title: "(\d+)\.(\d+)([^"]*)"/g)]
+    .map((m) => ({ sec: Number(m[1]), page: Number(m[2]), title: `${m[1]}.${m[2]}` }));
+  ok(numbered.length > 50, `numaralı el kitabı sayfası bulundu (${numbered.length})`);
+  const outOfOrder = [];
+  for (let i = 1; i < numbered.length; i++) {
+    const a = numbered[i - 1], b = numbered[i];
+    if (a.sec === b.sec && b.page < a.page) outOfOrder.push(`${a.title} → ${b.title}`);
+  }
+  ok(outOfOrder.length === 0,
+    `sayfa numaraları bölüm içinde artan sırada (bozuk geçiş: ${outOfOrder.join(", ") || "yok"})`);
+  // Aynı numaranın iki kez kullanılması da belgeyi bozar: hangisi doğru belli olmaz.
+  const dupes = numbered.map((n) => n.title).filter((t, i, arr) => arr.indexOf(t) !== i);
+  ok(dupes.length === 0, `aynı sayfa numarası iki kez kullanılmamış (tekrar: ${[...new Set(dupes)].join(", ") || "yok"})`);
+}
+
 // --- Panelde gerçekten bağlı mı ----------------------------------------------------------------
 const shell = readFileSync(join(SRC, "app", "AppShell.tsx"), "utf8");
 ok(/key: "handbook"/.test(shell), "yönetici panelinde El Kitabı sekmesi var");
