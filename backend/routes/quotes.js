@@ -206,14 +206,37 @@ quoteOffersRouter.get("/:id", (req, res) => {
 // tarafında bekleyen) ve "submitted" (otomatik demo teklifleri gibi baştan fiyatlı) kabul ediliyor;
 // başka bir status gönderilirse reddediliyor. "submitted" olarak oluşturuluyorsa fiyat da (PATCH'teki
 // gibi) pozitif bir sayı olmalı — aksi halde daha önce fiyat hiç doğrulanmadan kaydedilebiliyordu.
+// NOT: yorumun eski hâli "otomatik demo teklifleri gibi baştan fiyatlı" diyordu. O demo davranışı
+// KALDIRILDI (uydurma fiyat üretiyordu); "submitted" artık yalnızca teklifin sahibi tamirci
+// tarafından, kendi oturumuyla oluşturulabiliyor.
 const ALLOWED_OFFER_CREATE_STATUSES = new Set(["pending", "submitted"]);
 
-// GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): oturum açmadan kimse teklif oluşturamaz. İki meşru
-// senaryo var: (1) araç sahibi, KENDİ isteğine davet ettiği tamirciler için demo/otomatik teklifler
-// oluşturuyor (bkz. frontend submitQuoteRequest — bu uygulamada gerçek 2. bir tamirci girişi
-// olmadan çalışan bilinen, kasıtlı bir demo davranışı) — bu durumda sadece o isteğin GERÇEK sahibi
-// olabilir; (2) bir tamirci kendi mechanicId'siyle kendi teklifini oluşturuyor — mechanicId
-// İSTEMCİDEN DEĞİL oturumdan alınıyor, başka bir tamirci adına teklif oluşturulamaz.
+/**
+ * TEKLİF OLUŞTURMA — KİM NE OLUŞTURABİLİR.
+ * ================================================================================================
+ * GÜVENLİK AÇIĞI (kullanıcı bildirdi ve incelerken bunu buldum): bu uç, ARAÇ SAHİBİNİN
+ * `status: "submitted"` ve İSTEDİĞİ FİYATLA, İSTEDİĞİ tamirci adına teklif oluşturmasına izin
+ * veriyordu. Tek kontrol "bu senin isteğin mi" idi; teklifin ÜZERİNDEKİ tamircinin o teklifi
+ * gerçekten verip vermediği hiç sorulmuyordu.
+ *
+ * Sonucu şu: bir müşteri, hiç konuşmadığı bir tamirci adına "500₺" diye bir teklif kaydedip
+ * sonra onu KABUL edebilirdi. Karşı tarafta hiç kimse o fiyatı kabul etmemiş olurdu. PATCH yolu
+ * doğru kilitlenmişti (fiyatı yalnızca o teklifin sahibi tamirci gönderebiliyor) ama OLUŞTURMA
+ * yolu açık kalmıştı — yani kilit kapıdaydı, pencere açıktı.
+ *
+ * YENİ KURAL: FİYATLI bir teklifi (`submitted`) yalnızca O TAMİRCİ oluşturabilir.
+ *   - tamirci  → kendi mechanicId'siyle, fiyatlı teklif oluşturabilir (mechanicId istemciden
+ *                değil OTURUMDAN alınıyor, başkası adına oluşturulamaz)
+ *   - araç sahibi → yalnızca KENDİ isteğinde, yalnızca `pending` (fiyatsız) yer tutucu satır
+ *                oluşturabilir. Bu satır "şu tamirciden teklif istedim" kaydıdır, teklifin
+ *                kendisi değil.
+ *   - yönetici → fiyatlı teklif oluşturamaz. Bir tamircinin adına fiyat yazmak yönetim işi
+ *                değil, veri uydurmaktır.
+ *
+ * Fiyat alanları araç sahibi tarafından gönderilse bile SİLİNİYOR (400 ile reddetmek yerine):
+ * eski istemciler bu alanları gönderiyordu ve isteği tamamen reddetmek, teklif isteme akışını
+ * çalışmaz hâle getirirdi. Değeri atmak hem güvenli hem geriye dönük uyumlu.
+ */
 quoteOffersRouter.post("/", (req, res) => {
   const actor = resolveActor(req);
   if (!actor || (actor.role !== "admin" && actor.role !== "owner" && actor.role !== "mechanic")) {
@@ -229,9 +252,20 @@ quoteOffersRouter.post("/", (req, res) => {
     return res.status(403).json({ error: "Bu isteğe teklif ekleme yetkiniz yok." });
   }
   if (actor.role === "mechanic") body.mechanicId = actor.id; // kendi kimliğin dışında bir tamirci adına teklif oluşturulamaz
-  const status = body.status || "pending";
+  let status = body.status || "pending";
   if (!ALLOWED_OFFER_CREATE_STATUSES.has(status)) {
     return res.status(400).json({ error: "Bir teklif yalnızca 'pending' veya 'submitted' durumuyla oluşturulabilir." });
+  }
+  /**
+   * FİYATLI TEKLİFİ YALNIZCA O TAMİRCİ OLUŞTURABİLİR (bkz. yukarıdaki açıklama).
+   * `isOwnerOfOffer` kontrolü mechanicId üzerinden: tamirci oturumunda mechanicId yukarıda
+   * oturumdan yazıldığı için bu her zaman kendi kimliği oluyor. Diğer herkes için `pending`e
+   * düşürülüyor ve fiyat bilgileri temizleniyor — böylece "teklif istendi" kaydı yine oluşuyor,
+   * ama kimsenin vermediği bir fiyat sisteme girmiyor.
+   */
+  const isOfferOwner = actor.role === "mechanic" && body.mechanicId === actor.id;
+  if (status === "submitted" && !isOfferOwner) {
+    status = "pending";
   }
   body.status = status;
   if (status === "submitted") {
@@ -241,7 +275,11 @@ quoteOffersRouter.post("/", (req, res) => {
     }
     body.price = price;
   } else {
+    // `pending` bir teklif FİYAT TAŞIMAZ. etaDays ve note de tamircinin cevabının parçası —
+    // biri bunları yer tutucu satıra yazarsa müşteri, verilmemiş bir söz görür.
     body.price = null;
+    body.etaDays = null;
+    body.note = null;
   }
   if (parentReq.status !== "open") {
     return res.status(409).json({ error: "Bu teklif isteği artık açık değil." });

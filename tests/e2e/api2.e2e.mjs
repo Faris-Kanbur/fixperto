@@ -57,6 +57,84 @@ try {
   eq((await api("POST", "/api/quote-offers", { token: owner2.token, body: { requestId: qrId, mechanicId: 12345, price: "1" } })).status, 403,
     "ilgisiz kullanıcı bu isteğe teklif veremiyor");
 
+  /**
+   * GÜVENLİK AÇIĞI — KULLANICI BİLDİRDİ, İNCELERKEN SEBEBİ ÇIKTI.
+   * ==============================================================================================
+   * Bildirilen belirti: "5 tamirciden teklif istedim, tamirci hesabına hiç girmediğim halde fiyat
+   * teklifi gelmiş görünüyor." Sebebi İKİ katmandaydı:
+   *
+   * 1) İSTEMCİ her tamirci için `Math.random()` ile fiyat ÜRETİP `submitted` olarak kaydediyordu
+   *    ("demo amaçlı" diye yazılmış, ama yerini alan gerçek akış geldikten sonra da kalmış).
+   * 2) SUNUCU buna İZİN VERİYORDU: araç sahibi, kendi isteğinde İSTEDİĞİ tamirci adına, İSTEDİĞİ
+   *    fiyatla `submitted` teklif oluşturabiliyordu. Tek kontrol "bu senin isteğin mi" idi.
+   *
+   * İkincisi asıl güvenlik sorunu: istemciyi düzeltmek yeterli değil, çünkü uç doğrudan da
+   * çağrılabilir. Bir müşteri hiç konuşmadığı bir tamirci adına "1₺" teklif kaydedip onu KABUL
+   * edebilirdi — karşı tarafta o fiyatı kabul etmiş kimse olmadan.
+   *
+   * PATCH yolu doğru kilitlenmişti (fiyatı yalnızca o tamirci gönderebiliyor) ama OLUŞTURMA yolu
+   * açıktı: kilit kapıdaydı, pencere açıktı. Aşağıdaki kontroller pencereyi de ölçüyor.
+   */
+  {
+    const qr2 = await api("POST", "/api/quote-requests", {
+      token: owner.token,
+      body: { issue: "Fren sesi", mechanicIds: [mech.id], vehicle: "Opel Astra", status: "open" },
+    });
+    eq(qr2.status, 201, "ikinci teklif isteği oluşturuldu");
+    const rid = qr2.body.id;
+
+    // ARAÇ SAHİBİ fiyatlı teklif oluşturmaya çalışıyor — kabul edilir ama FİYATSIZ kaydedilir.
+    const faked = await api("POST", "/api/quote-offers", {
+      token: owner.token,
+      body: { requestId: rid, mechanicId: mech.id, mechanicName: "Test", status: "submitted", price: 1, etaDays: 1, note: "uydurma" },
+    });
+    eq(faked.status, 201, "araç sahibi 'teklif istendi' kaydı oluşturabiliyor (akış çalışmaya devam ediyor)");
+    const stored = row("SELECT status, price, etaDays, note FROM quote_offers WHERE id = ?", faked.body.id);
+    eq(stored.status, "pending", "araç sahibinin gönderdiği 'submitted' PENDING'e düşürüldü");
+    eq(stored.price, null, "UYDURMA FİYAT KAYDEDİLMEDİ");
+    eq(stored.etaDays, null, "uydurma teslim süresi kaydedilmedi");
+    eq(stored.note ?? null, null, "uydurma not kaydedilmedi");
+    // Müşterinin gördüğü şey de fiyatsız olmalı — veritabanı temiz ama yanıt kirli olmasın.
+    eq(faked.body.price ?? null, null, "yanıtta da fiyat yok");
+    eq(faked.body.status, "pending", "yanıtta durum pending");
+
+    // YÖNETİCİ de bir tamirci adına fiyat yazamaz: bu yönetim işi değil, veri uydurmaktır.
+    const qr3 = await api("POST", "/api/quote-requests", {
+      token: owner.token, body: { issue: "Debriyaj", mechanicIds: [mech.id], vehicle: "Ford Focus", status: "open" },
+    });
+    const byAdmin = await api("POST", "/api/quote-offers", {
+      token: admin,
+      body: { requestId: qr3.body.id, mechanicId: mech.id, status: "submitted", price: 5, note: "yönetici yazdı" },
+    });
+    eq(byAdmin.status, 201, "yönetici kayıt oluşturabiliyor");
+    eq(row("SELECT status, price FROM quote_offers WHERE id = ?", byAdmin.body.id).status, "pending",
+      "YÖNETİCİNİN fiyatlı teklifi de pending'e düşürüldü");
+    eq(row("SELECT price FROM quote_offers WHERE id = ?", byAdmin.body.id).price, null,
+      "yöneticinin yazdığı fiyat kaydedilmedi");
+
+    // TAMİRCİ kendi teklifini fiyatlı oluşturabiliyor — meşru yol bozulmadı.
+    const qr4 = await api("POST", "/api/quote-requests", {
+      token: owner.token, body: { issue: "Amortisör", mechanicIds: [mech.id], vehicle: "VW Polo", status: "open" },
+    });
+    const real = await api("POST", "/api/quote-offers", {
+      token: mech.token,
+      body: { requestId: qr4.body.id, mechanicId: mech.id, status: "submitted", price: 2400, etaDays: 2, note: "Parça dahil" },
+    });
+    eq(real.status, 201, "TAMİRCİ kendi fiyatlı teklifini oluşturabiliyor (meşru yol çalışıyor)");
+    const realRow = row("SELECT status, price, etaDays FROM quote_offers WHERE id = ?", real.body.id);
+    eq(realRow.status, "submitted", "tamircinin teklifi submitted kaldı");
+    eq(realRow.price, 2400, "tamircinin girdiği fiyat kaydedildi");
+    eq(realRow.etaDays, 2, "tamircinin girdiği süre kaydedildi");
+
+    /**
+     * VE ASIL SENARYO: müşteri uydurma bir fiyatı KABUL EDEMİYOR.
+     * Açık kapalı olmasa bile en kötü sonuç buydu — kimsenin vermediği bir fiyat üzerinden
+     * "anlaşma" oluşması. Fiyat null kaldığı için kabul yolunun ne yaptığını da ölçüyoruz.
+     */
+    const accept = await api("POST", `/api/quote-offers/${faked.body.id}/accept`, { token: owner.token });
+    eq(accept.status >= 400, true, `fiyatsız (uydurma) teklif KABUL EDİLEMİYOR (${accept.status})`);
+  }
+
   // ============================================================ BLOG (herkese açık okuma / admin yazma)
   eq((await api("POST", "/api/blog", { token: owner.token, body: { title: "Sahte", slug: "sahte", status: "published" } })).status, 401,
     "blog yazısı kullanıcı tarafından oluşturulamıyor");

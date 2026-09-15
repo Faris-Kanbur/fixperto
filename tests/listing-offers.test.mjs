@@ -129,4 +129,75 @@ for (const key of ["offerSentToast", "offerUpdatedToast", "offerResentToast", "o
   for (const lang of ["tr:", "en:", "de:"]) ok(line.includes(lang), `${key} ${lang} dilinde var`);
 }
 
+// ================================================================ UYDURMA VERİ TARAMASI
+/**
+ * KULLANICI BİLDİRDİ: "5 tamirciden teklif istedim, tamirci hesabına hiç girmediğim halde fiyat
+ * teklifi gelmiş görünüyor." Sebebi şuydu: istemci her tamirci için `Math.random()` ile bir fiyat
+ * ÜRETİP `status: "submitted"` olarak kaydediyordu. Gerekçe olarak yorumda "demo amaçlı" yazıyordu
+ * ve o gerekçe ARTIK GEÇERSİZDİ — yerini alan gerçek akış (tamirci kendi oturumuyla fiyat girer)
+ * çoktan eklenmişti, ama kısayol kodda kalmıştı.
+ *
+ * BU, AYNI SINIF HATANIN İKİNCİ KEZ ÇIKIŞI. Birincisi sohbetteki sahte otomatik yanıttı: araç
+ * sahibi mesaj yazdıktan 0,9 saniye sonra tamircinin ağzından uydurma bir cevap ÜRETİLİYOR ve
+ * sunucuya kaydediliyordu. İkisinin de ortak yanı "demo amaçlı" diye yazılmış olması ve yerini
+ * alan gerçek özellik geldikten sonra silinmemesi. Orada uydurulan bir cümleydi; burada PARA.
+ *
+ * Bu tarama o kısayolların geri gelmesini engelliyor. Aradığı şey desen değil DAVRANIŞ: fiyat,
+ * puan, teklif gibi TİCARİ bir alanın rastgele üretilmesi.
+ */
+{
+  const stripComments = (t) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const providerCode = stripComments(provider);
+  const shellCode = stripComments(read("frontend", "src", "app", "AppShell.tsx"));
+
+  /**
+   * 1) TİCARİ BİR ALANA rastgele değer ATANMAMALI.
+   *
+   * İLK YAZDIĞIM KURAL YANLIŞTI ve yine aynı hatayı yapmıştım: "satırda hem Math.random hem
+   * ticari bir kelime varsa" diye baktım. Bu bir VEKİL ölçüt ve hemen yanlış alarm verdi —
+   * ilan taslağı tek satırda hem `px: 20 + Math.random() * 60` (harita iğnesinin konumu, tamamen
+   * kozmetik) hem `offers: []` içeriyor. İkisinin aynı satırda olması bir hata değil.
+   *
+   * Doğru ölçüt YAKINLIK değil ATAMA: rastgele değer ticari bir ALANIN DEĞERİ mi oluyor?
+   * Desen bunu soruyor, o yüzden `px`/`py` eşleşmiyor ama `price: ...Math.random...` eşleşiyor.
+   */
+  const COMMERCIAL_ASSIGN = /\b(price|etaDays|rating|reviews|totalEarnings|offerPrice|servicePrice)\s*:\s*[^,;}\n]*Math\.random/i;
+  for (const [label, code] of [["AppLogicProvider", providerCode], ["AppShell", shellCode]]) {
+    const hits = [...code.matchAll(new RegExp(COMMERCIAL_ASSIGN, "gi"))].map((m) => m[0].slice(0, 60));
+    ok(hits.length === 0,
+      `${label}: ticari bir alana rastgele değer atanmıyor (bulunan: ${hits.join(" | ") || "yok"})`);
+  }
+  // Kozmetik rastgelelik (harita iğnesi konumu) SORUN DEĞİL ve kalmalı — kuralın onu
+  // yakalamadığını da doğruluyoruz, yoksa test yarın birinin onu "düzeltmesine" yol açar.
+  ok(/px: 20 \+ Math\.random\(\) \* 60/.test(providerCode),
+    "harita iğnesi konumundaki rastgelelik korunuyor (kozmetik, ticari veri değil)");
+
+  // 2) Teklif yer tutucusu FİYATSIZ oluşturuluyor mu — asıl düzeltme bu.
+  const draftBlock = providerCode.match(/const offerDrafts = selectedMechIds\.map\([\s\S]{0,700}?\}\);/)?.[0] || "";
+  ok(draftBlock.length > 0, "teklif taslağı bloğu bulundu");
+  ok(/status: "pending"/.test(draftBlock), "her davet edilen tamirci için PENDING kaydı oluşuyor");
+  ok(/price: null/.test(draftBlock), "yer tutucuda fiyat YOK");
+  ok(/etaDays: null/.test(draftBlock), "yer tutucuda teslim süresi YOK");
+  ok(!/Math\.random/.test(draftBlock), "taslakta rastgele değer üretimi YOK");
+  ok(!/MY_MECHANIC_ID/.test(draftBlock),
+    "ayrıcalıklı 'benim tamircim' istisnası kalmadı — her tamirci gerçek tamirci");
+  ok(!/submitted/.test(draftBlock), "istemci hiçbir tamirci adına 'submitted' teklif oluşturmuyor");
+
+  // 3) SUNUCU da bunu zorunlu kılıyor mu — istemciyi düzeltmek yeterli değil, uç doğrudan çağrılabilir.
+  const quotes = read("backend", "routes", "quotes.js");
+  ok(/const isOfferOwner = actor\.role === "mechanic" && body\.mechanicId === actor\.id;/.test(quotes),
+    "sunucu 'bu teklif gerçekten bu tamircinin mi' diye soruyor");
+  ok(/if \(status === "submitted" && !isOfferOwner\)/.test(quotes),
+    "başkası adına fiyatlı teklif PENDING'e düşürülüyor");
+  // Yer tutucudan fiyat/süre/not temizleniyor mu.
+  const elseBlock = quotes.match(/\} else \{[\s\S]{0,400}?body\.note = null;/)?.[0] || "";
+  ok(/body\.price = null/.test(elseBlock), "sunucu pending teklifte fiyatı siliyor");
+  ok(/body\.etaDays = null/.test(elseBlock), "sunucu pending teklifte süreyi siliyor");
+  ok(/body\.note = null/.test(elseBlock), "sunucu pending teklifte notu siliyor");
+
+  // 4) Sohbetteki İLK uydurma (sahte otomatik yanıt) geri gelmiş mi — aynı sınıf, aynı tarama.
+  ok(!/setTimeout\([^)]*sendMechanicMessage|fireAutoReply/.test(providerCode),
+    "sohbette sahte otomatik yanıt geri gelmedi");
+}
+
 report("ilan teklifleri");

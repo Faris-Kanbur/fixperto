@@ -2255,6 +2255,62 @@ Sınır değerleri **alt banda** düşüyor (\`<=\`). İlk testimde "tam %25 üs
 
 İstemcide, saf bir işlevle (\`comparePriceToMarket\`). Yeni bir API ucu yok: tamirci listesi zaten tamamen indirilmiş durumda (mevcut mimari böyle) ve karşılaştırma o veriden çıkıyor. Saf işlev olması testte gerçekten çağrılabilmesini sağlıyor — 40'tan fazla kontrol doğrudan işlevi çalıştırıyor.`,
       },
+      {
+        id: "uydurma-teklif-kaldirildi",
+        title: "25.11 Uydurma fiyat teklifleri — aynı hatanın ikinci kez çıkışı",
+        body: `## Belirti
+
+Kullanıcı bildirdi: "5 tamirciden teklif istedim, tamirci hesabına hiç girmediğim halde fiyat teklifi gelmiş görünüyor."
+
+Haklıydı. Sebebi iki katmandaydı ve ikisi de ayrı ayrı düzeltildi.
+
+## 1. katman: istemci fiyat UYDURUYORDU
+
+\`submitQuoteRequest\` içinde, seçilen her tamirci için (kendi tamirci hesabı hariç) şu yapılıyordu:
+
+\`\`\`
+const variance = Math.round((basePrice * (0.85 + Math.random() * 0.3)) / 10) * 10;
+status: "submitted", price: variance, etaDays: 1 + Math.floor(Math.random() * 3)
+\`\`\`
+
+Yani müşteri, **hiç kimsenin vermediği bir fiyatı** o tamircinin teklifi olarak görüyordu. Fiyat her istekte rastgele değiştiği için aynı tamirci farklı fiyatlar "veriyordu". Ve müşteri o teklifi **kabul edebiliyordu** — karşı tarafta o fiyatı kabul etmiş kimse yoktu.
+
+Gerekçe olarak yorumda "backend'de gerçek bir tamirci tarafında yanıt akışı yok — demo" yazıyordu. Bu **artık doğru değildi:** gerçek akış eklenmişti (tamirci kendi oturumuyla \`PATCH /api/quote-offers/:id\` ile fiyat gönderiyor). Demo kısayolu, yerini alan gerçek özellik geldikten sonra da kodda kalmıştı.
+
+## 2. katman: sunucu buna İZİN VERİYORDU
+
+Asıl güvenlik sorunu buydu — istemciyi düzeltmek yeterli değil, çünkü uç doğrudan da çağrılabilir.
+
+\`POST /api/quote-offers\` araç sahibinin **istediği tamirci adına, istediği fiyatla** \`submitted\` teklif oluşturmasına izin veriyordu. Tek kontrol "bu senin isteğin mi" idi; teklifin üzerindeki tamircinin o teklifi gerçekten verip vermediği hiç sorulmuyordu.
+
+\`PATCH\` yolu doğru kilitlenmişti (fiyatı yalnızca o teklifin sahibi tamirci gönderebiliyor) ama **oluşturma yolu açıktı**: kilit kapıdaydı, pencere açıktı.
+
+### Yeni kural
+
+| Kim | Ne oluşturabilir |
+|---|---|
+| Tamirci | Kendi \`mechanicId\`siyle **fiyatlı** teklif (mechanicId istemciden değil oturumdan) |
+| Araç sahibi | Yalnızca kendi isteğinde **fiyatsız** yer tutucu ("şu tamirciden teklif istedim" kaydı) |
+| Yönetici | Fiyatlı teklif **oluşturamaz** — bir tamircinin adına fiyat yazmak yönetim işi değil, veri uydurmaktır |
+
+Fiyat alanları başkası tarafından gönderilse bile 400 ile reddedilmiyor, **siliniyor**: eski istemciler bu alanları gönderiyordu ve isteği tamamen reddetmek teklif isteme akışını çalışmaz hâle getirirdi. Değeri atmak hem güvenli hem geriye dönük uyumlu. \`price\`, \`etaDays\` ve \`note\` birlikte temizleniyor — üçü de tamircinin cevabının parçası, biri yer tutucuya sızarsa müşteri verilmemiş bir söz görür.
+
+## Bu, aynı sınıf hatanın İKİNCİ kez çıkışı
+
+Birincisi sohbetteki **sahte otomatik yanıt**tı: araç sahibi mesaj yazdıktan 0,9 saniye sonra tamircinin ağzından uydurma bir cevap üretiliyor ve sunucuya kaydediliyordu.
+
+İkisinin ortak yanı: "demo amaçlı" diye yazılmış olmaları ve yerini alan gerçek özellik geldikten sonra silinmemeleri. Orada uydurulan bir cümleydi; **burada para.**
+
+Bu yüzden düzeltme tek başına yetmez, taramaya bağlandı (\`tests/listing-offers.test.mjs\`): ticari bir alana (\`price\`, \`etaDays\`, \`rating\`…) rastgele değer **atanamaz**, teklif yer tutucusu fiyatsız oluşmalı, sunucu bunu zorunlu kılmalı, ve sohbetteki ilk uydurma geri gelmemeli.
+
+Test kuralını yazarken de kendi hatamı tekrarladım: ilk hâli "satırda hem \`Math.random\` hem ticari bir kelime varsa" diye bakıyordu ve hemen yanlış alarm verdi — ilan taslağı tek satırda hem \`px: 20 + Math.random() * 60\` (harita iğnesi konumu, tamamen kozmetik) hem \`offers: []\` içeriyor. Doğru ölçüt yakınlık değil **atama**: rastgele değer ticari bir alanın *değeri* mi oluyor? Kural buna çevrildi ve kozmetik rastgeleliğin korunduğu da ayrıca test ediliyor — yoksa yarın biri onu "düzeltmeye" kalkar.
+
+## Veritabanındaki eski kayıtlar
+
+**Önceden oluşmuş uydurma teklifler programatik olarak ayırt edilemiyor.** \`quote_offers\` tablosunda "bunu kim oluşturdu" bilgisi yok; uydurma bir teklif, gerçek bir tekliften veri olarak farksız görünüyor. Bu yüzden otomatik bir temizlik yazmadım — gerçek bir teklifi silme riski, eski test kayıtlarını elde silmenin zahmetinden ağır.
+
+Test amaçlı oluşturulmuş teklif istekleri elle silinebilir; bundan sonra oluşacak kayıtlarda bu sorun yok.`,
+      },
 
     ],
   },

@@ -1953,14 +1953,38 @@ function useAppLogic() {
     try {
       const createdReq = await api.quoteRequests.create(draft);
       setQuoteRequests(qs => [createdReq, ...qs]);
-      // Demo amaçlı: gerçek bir tamirci (MY_MECHANIC_ID) hariç diğerleri için otomatik örnek
-      // teklifler üretiliyor (backend'de gerçek bir tamirci tarafında yanıt akışı yok — demo).
+      /**
+       * KALDIRILDI: UYDURMA OTOMATİK FİYAT TEKLİFLERİ.
+       * ----------------------------------------------------------------------------------------
+       * KULLANICI BİLDİRDİ: "5 tamirciden teklif istedim, tamirci hesabına hiç girmediğim halde
+       * fiyat teklifi gelmiş görünüyor." Haklıydı ve sebebi buydu.
+       *
+       * Eski kod, MY_MECHANIC_ID dışındaki HER tamirci için `Math.random()` ile bir fiyat
+       * ÜRETİYOR ve bunu `status: "submitted"` olarak sunucuya kaydediyordu. Yani:
+       *   - müşteri, hiç kimsenin vermediği bir fiyatı o tamircinin teklifi olarak görüyordu
+       *   - o teklifi KABUL edebiliyordu; karşı tarafta o fiyatı kabul etmiş kimse yoktu
+       *   - fiyat her istekte rastgele değiştiği için aynı tamirci farklı fiyatlar "veriyordu"
+       *
+       * Yorumda gerekçe olarak "backend'de gerçek bir tamirci tarafında yanıt akışı yok — demo"
+       * yazıyordu ve bu ARTIK DOĞRU DEĞİLDİ: gerçek akış var (tamirci kendi oturumuyla
+       * PATCH /api/quote-offers/:id ile fiyat gönderiyor, bkz. submitQuoteOffer). Yani demo
+       * kısayolu, yerini alan gerçek özellik geldikten sonra da kodda kalmıştı.
+       *
+       * Bu, bu projede daha önce sohbette bulunan SAHTE OTOMATİK YANIT hatasının aynısı — ama
+       * orada uydurulan şey bir cümleydi, burada PARA. Aynı sınıf hatanın ikinci kez çıkması,
+       * "demo amaçlı" kısayolların kalıcı olma eğiliminin ne kadar güçlü olduğunu gösteriyor.
+       *
+       * ŞİMDİ: her seçilen tamirci için YALNIZCA bir "teklif istendi" yer tutucusu oluşuyor —
+       * fiyatsız, süresiz, notsuz. Fiyatı ancak o tamirci kendi hesabından girebiliyor
+       * (sunucu tarafı da artık bunu zorunlu kılıyor, bkz. backend/routes/quotes.js).
+       */
       const offerDrafts = selectedMechIds.map(mid => {
         const mech = mechanicsList.find(m => m.id === mid);
-        const isMe = mid === MY_MECHANIC_ID;
-        const basePrice = mech?.price || 400;
-        const variance = Math.round((basePrice * (0.85 + Math.random() * 0.3)) / 10) * 10;
-        return { requestId: createdReq.id, mechanicId: mid, mechanicName: mech?.name || "Tamirci", mechanicImg: mech?.img || "🔧", status: isMe ? "pending" : "submitted", price: isMe ? null : variance, etaDays: isMe ? null : (1 + Math.floor(Math.random() * 3)), note: "" };
+        return {
+          requestId: createdReq.id, mechanicId: mid,
+          mechanicName: mech?.name || "Tamirci", mechanicImg: mech?.img || "🔧",
+          status: "pending", price: null, etaDays: null, note: "",
+        };
       });
       const offerResults = await Promise.allSettled(offerDrafts.map(o => api.quoteOffers.create(o)));
       const createdOffers = offerResults.filter(r => r.status === "fulfilled").map(r => r.value);
