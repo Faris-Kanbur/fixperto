@@ -542,6 +542,23 @@ function ensureColumn(table, columnDef) {
    * işaretleyebilir (bkz. routes/profileViews.js).
    */
   ["profile_views", "convertToken TEXT"],
+  /**
+   * RANDEVU ↔ ARAÇ: GERÇEK BİR BAĞ (ilişki denetiminde bulundu).
+   * ------------------------------------------------------------------------------------------------
+   * `appointments` tablosunda aracı gösteren tek alan `vehicle TEXT` idi — yani "VW Golf · 34ABC01"
+   * gibi bir METİN. Hangi GERÇEK araç kaydının servise girdiği veritabanında hiç yazmıyordu.
+   * Somut sonuçları:
+   *   - `vehicle_history` (doğrulanmış servis geçmişi) VIN'i randevudan TÜRETEMİYOR; kod, randevu
+   *     metninin içinde plaka arıyor (`apptText.includes(v.plate)`). Plaka metne yazılmamışsa ya da
+   *     biçimi farklıysa eşleşme başarısız oluyor ve VIN'i tamircinin elle yazması gerekiyor.
+   *     Yani uygulamanın en güçlü güven özelliği bir metin eşleşmesine bağlıydı.
+   *   - Araç silinince randevu bunu bilmiyor; "hangi araç" sorusu cevapsız kalıyor.
+   *   - Aynı marka/modelden iki aracı olan bir kullanıcının hangisinin servise girdiği ayırt
+   *     edilemiyor.
+   * Sütun eklendi; randevu oluşturulurken SUNUCU dolduruyor ve aracın gerçekten randevuyu açan
+   * kişiye ait olduğunu doğruluyor (bkz. routes/appointments.js).
+   */
+  ["appointments", "vehicleId INTEGER REFERENCES vehicles(id)"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 // GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): owners/mechanics.password sütunu şimdiye kadar düz

@@ -180,6 +180,30 @@ appointmentsRouter.post("/", (req, res) => {
   body.mechanicName = mech.name;
   body.mechanicImg = mech.img;
 
+  /**
+   * ====== RANDEVU ↔ ARAÇ: ARTIK GERÇEK BİR BAĞ (ilişki denetiminde bulundu) ======
+   * ---------------------------------------------------------------------------------------------
+   * Randevuda aracı gösteren tek alan `vehicle` METNİ idi ("VW Golf · 34ABC01"). Yani hangi araç
+   * kaydının servise girdiği veritabanında yazmıyordu — bkz. db.js'deki sütun yorumu. En somut
+   * bedeli: doğrulanmış servis geçmişi (`vehicle_history`) VIN'i randevudan çözemiyor, randevu
+   * METNİNİN İÇİNDE plaka arıyordu (`apptText.includes(v.plate)`).
+   *
+   * Artık `vehicleId` saklanıyor ve İKİ şey doğrulanıyor:
+   *   1) araç gerçekten var,
+   *   2) araç randevuyu açan kişiye ait — aksi halde biri başkasının aracı için randevu alıp o
+   *      aracın kaydını (ve dolaylı olarak servis geçmişi zincirini) kendi işine bağlayabilirdi.
+   * `vehicleId` GÖNDERİLMEZSE eski davranış aynen sürüyor (metin alanı yeterli): mevcut istemciyi
+   * kırmamak için zorunlu KILINMADI, ama gönderildiğinde artık anlamı olan bir bağ.
+   */
+  if (body.vehicleId != null && body.vehicleId !== "") {
+    const veh = db.prepare(`SELECT id, ownerId FROM vehicles WHERE id = ?`).get(body.vehicleId);
+    if (!veh) return res.status(400).json({ error: "Seçilen araç bulunamadı." });
+    if (actor.role !== "admin" && veh.ownerId !== body.ownerId) {
+      return res.status(403).json({ error: "Bu araç size ait değil." });
+    }
+    body.vehicleId = veh.id;
+  }
+
   const clean = onlyRealColumns(body);
   const cols = Object.keys(clean);
   if (cols.length === 0) return res.status(400).json({ error: "Kaydedilecek alan yok." });

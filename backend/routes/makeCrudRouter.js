@@ -118,6 +118,45 @@ const columnsOf = (table) => {
  */
 const mediaWriteLimiter = makeRateLimiter({ maxAttempts: 30, lockoutMs: 10 * 60 * 1000, windowMs: 60 * 1000 });
 
+/**
+ * ====== İLİŞKİ SÜTUNLARI: "BU KAYDA BAĞLANMA HAKKIN VAR MI" ======
+ * ================================================================================================
+ * BULUNAN SORUN (ilişki denetiminde ÖLÇÜLDÜ): sahiplik kontrolleri "bu SATIR senin mi" sorusunu
+ * doğru cevaplıyordu, ama bir satırın İÇİNDEKİ yabancı anahtarlar hiç doğrulanmıyordu. Ölçülenler:
+ *   - Customer A, Customer B'nin aracının id'sini `vehicleId` olarak göndererek kendi ilanını
+ *     B'nin aracına bağladı (201, listings.vehicleId = B'nin aracı).
+ *   - Customer A, kendi aracının `listingId`'sini B'nin ilanına işaret edecek şekilde güncelledi.
+ *
+ * Neden gerçek bir sorun: bu sütunlar sıradan veri değil, İLİŞKİ. Uygulamanın her yerinde "bu
+ * ilanın aracı", "bu aracın ilanı", "bu talebin aracı" diye okunuyorlar — servis geçmişi zinciri
+ * (araç → randevu → vehicle_history → ilanda "doğrulanmış geçmiş") tam olarak bu bağlar üzerinden
+ * yürüyor. Yabancı bir kayda bağlanabiliyorsa, iki farklı kişinin verisi tek bir iş akışında
+ * birleşiyor ve hangi verinin kime ait olduğu belirsizleşiyor.
+ *
+ * KURAL: bir yazma, ancak AKTÖRÜN SAHİP OLDUĞU bir kayda işaret eden ilişki değeri taşıyabilir.
+ * Tablo başına tanımlanıyor; tanımlı olmayan tablo etkilenmiyor (yani mevcut davranış korunuyor).
+ * Sessizce düşürmek yerine 403: kullanıcı bağladığını sandığı aracın bağlanmadığını bilmeli.
+ */
+const RELATION_RULES = {
+  listings: [{ field: "vehicleId", table: "vehicles", ownerColumn: "ownerId", roles: ["owner"], label: "araç" }],
+  vehicles: [{ field: "listingId", table: "listings", ownerColumn: "sellerId", roles: ["owner"], label: "ilan" }],
+};
+
+/** null → sorun yok; { error } → reddet. */
+function checkRelations(table, body, actor) {
+  const rules = RELATION_RULES[table];
+  if (!rules || !actor || actor.role === "admin") return null;
+  for (const rule of rules) {
+    const value = body[rule.field];
+    if (value == null || value === "") continue;         // bağ kaldırma serbest
+    if (!rule.roles.includes(actor.role)) continue;      // kural bu rol için tanımlı değil
+    const target = db.prepare(`SELECT ${rule.ownerColumn} AS own FROM ${rule.table} WHERE id = ?`).get(value);
+    if (!target) return { error: `Seçilen ${rule.label} bulunamadı.` };
+    if (target.own !== actor.id) return { error: `Bu ${rule.label} size ait değil.` };
+  }
+  return null;
+}
+
 export function makeCrudRouter(table, {
   idColumn = "id",
   shareCountColumn = null,
@@ -315,6 +354,9 @@ export function makeCrudRouter(table, {
         if (f.typeField) body[f.typeField] = f.typeValue;
       }
     }
+    // İLİŞKİ SÜTUNLARI: yabancı bir kayda bağlanma denemesi (bkz. RELATION_RULES yorumu).
+    const relErr = checkRelations(table, body, actor);
+    if (relErr) return res.status(403).json(relErr);
     /**
      * MEDYA DOĞRULAMASI — tür + boyut. Mevcut geçerli biçimler (emoji, https adresi) kabul
      * edilmeye devam ediyor; yalnızca zararlı (SVG) ya da aşırı büyük data URI reddediliyor.
@@ -373,6 +415,10 @@ export function makeCrudRouter(table, {
     }
     if (passwordVerify) delete body.password;
     if (authScope) for (const f of scopeFields) delete body[f.field]; // sahiplik alanı PATCH ile devredilemez
+    // İLİŞKİ SÜTUNLARI (bkz. RELATION_RULES yorumu) — güncellemede de geçerli: ölçülen açık tam
+    // olarak buradaydı (kendi aracını BAŞKASININ ilanına bağlamak bir PATCH'ti).
+    const relPatchErr = checkRelations(table, body, actorForBody);
+    if (relPatchErr) return res.status(403).json(relPatchErr);
     const mediaPatchErr = validateMediaBody(table, body);
     if (mediaPatchErr) return res.status(400).json({ error: mediaPatchErr });
     if (bodyCarriesMedia(table, body)) {

@@ -77,6 +77,38 @@ quoteRequestsRouter.post("/", (req, res) => {
   // teklif isteği oluşturamaz (admin, gövdede belirtilen ownerId ile demo/test amaçlı oluşturabilir).
   body.ownerId = actor.role === "owner" ? actor.id : body.ownerId;
   if (!body.ownerId) return res.status(400).json({ error: "ownerId zorunludur." });
+  /**
+   * ====== İLİŞKİ BÜTÜNLÜĞÜ (ilişki denetiminde bulundu) ======
+   * ---------------------------------------------------------------------------------------------
+   * `ownerId` oturumdan yazılıyordu — doğru. Ama `vehicleId` İSTEMCİDEN geliyor ve hiç
+   * doğrulanmıyordu. Ölçüldü: Customer A, Customer B'nin aracının id'sini göndererek kendi adına
+   * teklif isteği açtı (201) ve istek satırı B'nin aracına bağlandı.
+   *
+   * Neden önemli: `vehicleId` bir YABANCI ANAHTAR, yani "bu iş şu araç için" demek. Yabancı bir
+   * araca bağlanabiliyorsa:
+   *   - araç sahibinin garajındaki bir kayıt, hiç izni olmayan birinin talebine iliştirilebiliyor,
+   *   - tamircinin gördüğü "araç" ile veritabanındaki araç farklı kişilere ait olabiliyor,
+   *   - servis geçmişi zinciri (randevu → vehicle_history → ilan) yanlış araca dayanabiliyor.
+   * Kısacası ilişki tablosu doğru görünüyor ama YANLIŞ İKİ KAYDI birleştiriyor.
+   *
+   * Aynı gerekçe `mechanicIds` için de geçerli: var olmayan ya da silinmiş tamirci id'leri listeye
+   * yazılabiliyordu; o zaman istek hiç kimseye ulaşmayan bir kayda dönüşüyor (müşteri "5 tamirciye
+   * gönderdim" görüyor, gerçekte 2'sine gitmiş oluyor). Sessiz filtreleme YAPMIYORUZ — geçersiz
+   * id varsa isteği reddediyoruz, çünkü sessizce eksiltmek müşteriye yanlış bilgi verir.
+   */
+  if (body.vehicleId != null && body.vehicleId !== "") {
+    const veh = db.prepare(`SELECT id, ownerId FROM vehicles WHERE id = ?`).get(body.vehicleId);
+    if (!veh) return res.status(400).json({ error: "Seçilen araç bulunamadı." });
+    if (actor.role !== "admin" && veh.ownerId !== body.ownerId) {
+      return res.status(403).json({ error: "Bu araç size ait değil." });
+    }
+  }
+  const knownMechanics = db.prepare(
+    `SELECT COUNT(*) n FROM mechanics WHERE id IN (${mechanicIds.map(() => "?").join(",")})`
+  ).get(...mechanicIds).n;
+  if (knownMechanics !== new Set(mechanicIds).size) {
+    return res.status(400).json({ error: "Seçilen tamircilerden bazıları bulunamadı." });
+  }
   // Yeni bir istek her zaman "open" başlar — istemci başka bir şey gönderse bile yok sayılır.
   body.status = "open";
   const cols = Object.keys(body);
@@ -252,6 +284,28 @@ quoteOffersRouter.post("/", (req, res) => {
     return res.status(403).json({ error: "Bu isteğe teklif ekleme yetkiniz yok." });
   }
   if (actor.role === "mechanic") body.mechanicId = actor.id; // kendi kimliğin dışında bir tamirci adına teklif oluşturulamaz
+  /**
+   * ====== DAVET KONTROLÜ: OKUMA KAPALIYDI, YAZMA AÇIKTI (ilişki denetiminde ÖLÇÜLDÜ) ======
+   * ---------------------------------------------------------------------------------------------
+   * `requestVisibleTo` (bu dosyanın başı) okumayı doğru kısıtlıyor: bir tamirci ancak kendi id'si
+   * `mechanicIds` içinde geçiyorsa isteği görebiliyor. Ama BU uç o kontrolü hiç çağırmıyordu.
+   * Ölçüldü: Mechanic B isteği `GET` ile OKUYAMADI (403) ama aynı isteğe fiyatlı teklif VERDİ
+   * (201, price=1). Yani müşteri hiç seçmediği bir tamirciden fiyat görüyordu.
+   *
+   * İki ayrı zarar:
+   *   1) İSTENMEYEN TEKLİF: teklif isteme özelliğinin tüm anlamı "ben bu 5 tamirciden fiyat
+   *      istiyorum" demek. Davetsiz teklif, özelliği bir spam kanalına çeviriyor.
+   *   2) NUMARALANDIRMA KANALI: yanıt kodları birbirinden ayırt edilebiliyordu (404 = istek yok,
+   *      409 = var ama kapalı / zaten teklifim var, 201 = var ve açık). Yani okuma 403 verse bile
+   *      bir tamirci, YAZMA yoluyla başka müşterilerin isteklerinin varlığını ve durumunu
+   *      sayabiliyordu. Bu, "okuma kapalı" korumasını dolaylı olarak boşa çıkarıyor.
+   *
+   * Artık davet edilmemiş tamirci, isteğin var olup olmadığını bile öğrenemiyor: `requestVisibleTo`
+   * ile aynı kaynağı kullanıyoruz, böylece kural iki yolda AYRI AYRI yazılmıyor — tek yerde duruyor.
+   */
+  if (!requestVisibleTo(parentReq, actor)) {
+    return res.status(403).json({ error: "Bu isteğe teklif ekleme yetkiniz yok." });
+  }
   let status = body.status || "pending";
   if (!ALLOWED_OFFER_CREATE_STATUSES.has(status)) {
     return res.status(400).json({ error: "Bir teklif yalnızca 'pending' veya 'submitted' durumuyla oluşturulabilir." });

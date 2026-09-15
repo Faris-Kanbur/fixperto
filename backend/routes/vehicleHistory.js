@@ -94,13 +94,45 @@ router.post("/", (req, res) => {
   // Tamirci araç sahibinin garajını GÖREMEZ; bu eşleştirme yalnızca sunucuda yapılıyor ve
   // sonucunda tamirciye aracın VIN'i dönmüyor (yanıt kendi kaydı, zaten ona ait).
   let vin = normalizeVin(req.body?.vin);
-  if (!vin && appt.ownerId != null) {
-    const candidates = db.prepare(`SELECT plate, vin FROM vehicles WHERE ownerId = ? AND vin IS NOT NULL AND vin != ''`).all(appt.ownerId);
-    const apptText = String(appt.vehicle || "");
-    const match = candidates.find((v) => v.plate && apptText.includes(v.plate));
-    if (match) vin = normalizeVin(match.vin);
+  if (!vin) {
+    /**
+     * VIN ÇÖZÜMÜ ARTIK ÖNCE GERÇEK BAĞDAN (ilişki denetiminde eklendi).
+     * Randevu artık `vehicleId` taşıyor (bkz. routes/appointments.js). Önceden tek yol randevu
+     * METNİNİN içinde plaka aramaktı — plaka metne yazılmadıysa ya da biçimi farklıysa eşleşme
+     * sessizce başarısız oluyor ve doğrulanmış servis geçmişi hiç oluşmuyordu. Metin eşleşmesi
+     * GERİYE DÖNÜK UYUM için duruyor (vehicleId'si olmayan eski randevular), ama artık yedek yol.
+     */
+    if (appt.vehicleId != null) {
+      const linked = db.prepare(`SELECT vin FROM vehicles WHERE id = ? AND ownerId IS ?`).get(appt.vehicleId, appt.ownerId);
+      if (linked?.vin) vin = normalizeVin(linked.vin);
+    }
+    if (!vin && appt.ownerId != null) {
+      const candidates = db.prepare(`SELECT plate, vin FROM vehicles WHERE ownerId = ? AND vin IS NOT NULL AND vin != ''`).all(appt.ownerId);
+      const apptText = String(appt.vehicle || "");
+      const match = candidates.find((v) => v.plate && apptText.includes(v.plate));
+      if (match) vin = normalizeVin(match.vin);
+    }
   }
   if (!isValidVin(vin)) return res.status(400).json({ error: "Geçersiz ya da eksik şasi (VIN) numarası." });
+  /**
+   * BAŞKASININ ARACINA KAYIT YAZILAMAZ (ilişki denetiminde bulundu).
+   * ---------------------------------------------------------------------------------------------
+   * VIN'i tamirci elle yazabiliyor ve bu kasıtlı: aracı fiziksel olarak görüyor, numara ön camın
+   * altında. Ama hiç kontrol edilmiyordu — yani bir tamirci, elindeki HERHANGİ bir tamamlanmış
+   * randevuyu kullanarak BAŞKA birinin garajında kayıtlı bir VIN'e servis kaydı yazabiliyordu.
+   * O kayıt `ownerId = randevunun sahibi` ile açılıyor, yani gerçek araç sahibi kendi VIN'ini
+   * sorguladığında (POST /lookup) hiç yaptırmadığı bir işi "doğrulanmış" olarak görüyordu.
+   * Servis geçmişi bu uygulamanın en güçlü güven sinyali; başkasının geçmişine yazmak onu
+   * anlamsızlaştırır.
+   *
+   * KURAL: VIN sistemde KAYITLI bir araca aitse, o araç randevunun sahibine ait olmalı. VIN hiç
+   * kayıtlı değilse (henüz kimse o aracı garajına eklemedi) yazılabilir — tamircinin gerçekten
+   * yaptığı işi kaydetmesinin önünü kesmiyoruz, yalnızca BAŞKASININ kaydına yazmayı engelliyoruz.
+   */
+  const vinOwners = db.prepare(`SELECT DISTINCT ownerId FROM vehicles WHERE vin = ? AND ownerId IS NOT NULL`).all(vin);
+  if (vinOwners.length > 0 && !vinOwners.some((v) => v.ownerId === appt.ownerId)) {
+    return res.status(403).json({ error: "Bu şasi numarası başka bir kullanıcının aracına kayıtlı." });
+  }
 
   const mech = db.prepare(`SELECT name FROM mechanics WHERE id = ?`).get(actor.id);
   // Paylaşım izni: aracın sahibi VIN paylaşımını kapattıysa kayıt yine tutulur ama kapalı doğar.

@@ -159,6 +159,24 @@ conversationsRouter.post("/", (req, res) => {
     }
   }
   if (actor.role === "owner") body.ownerId = actor.id;
+  /**
+   * KARŞI TARAFIN AD/GÖRSEL KOPYASI İSTEMCİDEN ALINMIYOR (ilişki denetiminde bulundu).
+   * ---------------------------------------------------------------------------------------------
+   * `mechanicName`, `mechanicImg` ve `mechanicLang` sohbet satırında tutulan KOPYALAR (liste
+   * ekranını hızlandırmak için). Bu üç alan gövdeden olduğu gibi kaydediliyordu. Ölçüldü:
+   * `mechanicName: "SAHTE AD"` gönderildi ve aynen kaydedildi.
+   *
+   * Tek başına ciddi değil ama gerçek bir tutarsızlık: sohbet listesinde tamircinin adı, tamirci
+   * kaydındaki addan farklı görünebiliyor — yani kullanıcı KİMİNLE yazıştığını yanlış bilebilir
+   * (bir tamirciyi başka bir tamirci gibi göstermek, oltalama için yeterli bir zemin). Aynı sınıf
+   * hata bu denetimde randevularda da vardı (mechanicName kopyası anonimleşmiyordu).
+   * Kural: kopya alanın DEĞERİ her zaman kaynak satırdan okunur.
+   */
+  const mechRow = db.prepare(`SELECT name, img, lang FROM mechanics WHERE id = ?`).get(body.mechanicId);
+  if (!mechRow) return res.status(400).json({ error: "Geçersiz mechanicId." });
+  body.mechanicName = mechRow.name;
+  body.mechanicImg = mechRow.img || "";
+  body.mechanicLang = mechRow.lang || "tr";
   if ("messages" in req.body) {
     const err = validateMessages(req.body.messages);
     if (err) return res.status(400).json({ error: err });

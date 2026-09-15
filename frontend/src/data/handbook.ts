@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 30 STATİK takım + 8 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 30 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -2531,6 +2531,126 @@ Sayım \`GET /api/listings/favorite-counts\`e taşındı (SQLite \`json_each\` i
 - \`analytics_events.visitorId\` doğrulanamaz — ziyaretçi sayısı hâlâ şişirilebilir. Sınırlanan şey hacim.
 - Çeviri önbelleği, çevrilen metinlerin (sohbet mesajları dâhil) düz metin kopyasını tutuyor. Bir çeviri önbelleğinin doğası bu; açık sinyal (\`cached\`) kapatıldı, zamanlama farkı kapatılamaz.
 - Tarayıcı, responsive ve erişilebilirlik testi bu ortamda **yapılamıyor** (tarayıcı yok, ön yüz derlenemiyor). İkinci denetim de bu konuda birinciden daha ileri gidemedi ve bunu bir başarı gibi sunmuyor.`,
+      },
+      {
+        id: "iliski-denetimi",
+        title: "25.14 İlişki denetimi — müşteri ↔ araç ↔ tamirci zinciri",
+        body: `## Sorulan soru farklıydı
+
+Önceki iki denetim "bu satıra kim dokunabilir" diye soruyordu. Bu denetim "bu satır DOĞRU İKİ KAYDI mı birleştiriyor" diye sordu. Fark önemli: yetkilendirme kusursuz olabilir ve sistem hâlâ yanlış veriyi birbirine bağlayabilir.
+
+İlk iş ilişki modelini koddan çıkarmak oldu. 24 tablo, sahiplik/ilişki sütunları ve rol ayırt edicileri (\`sellerType\`, \`fromType\`, \`authorType\`) tarandı. Çıkan gerçek zincir şu:
+
+\`\`\`
+owners ──< vehicles ──< quote_requests ──< quote_offers
+   │           │              │                 │
+   │           │              └── (kabul) ──> istek kapanır
+   │           └──< listings ──< offers[] / messages[] (JSON)
+   └──< appointments ──> vehicle_history ──> ilanda "doğrulanmış geçmiş"
+   └──< conversations ──> messages[] (JSON)
+   └──< mechanic_reviews ──< review_helpful
+   └──< support_tickets      taste_signals / profile_views / share_events
+\`\`\`
+
+Bu haritanın kendisi iki şeyi hemen gösterdi: **sipariş ve ödeme diye bir şey yok** (o yüzden "Orders/Payments PASS" demek yanlış olurdu — yoklar), ve **bildirim tablosu yok**.
+
+## En ciddi bulgu: kural okumada var, yazmada yoktu
+
+\`quotes.js\` içinde \`requestVisibleTo\` diye bir fonksiyon var ve doğru çalışıyor: bir tamirci ancak kendi id'si isteğin \`mechanicIds\` listesinde geçiyorsa o isteği görebiliyor. Ama **teklif oluşturma yolu o fonksiyonu hiç çağırmıyordu.** Ölçüldü:
+
+\`\`\`
+GET  /api/quote-requests/12   (Mechanic B)  → 403   "erişim yetkiniz yok"
+POST /api/quote-offers {requestId:12, price:1, status:"submitted"}  → 201
+\`\`\`
+
+Yani davet edilmemiş bir tamirci isteği OKUYAMIYOR ama içine fiyat YAZABİLİYORDU. Müşteri, hiç seçmediği bir tamirciden fiyat teklifi görüyordu. İkinci ve daha sinsi zarar: yanıt kodları ayırt edilebiliyordu (404 = istek yok, 409 = var ama kapalı, 201 = var ve açık), yani bir tamirci **yazma yolunu kullanarak** başka müşterilerin isteklerini sayabiliyordu — okuma tarafındaki 403'ü dolaylı olarak boşa çıkaran bir numaralandırma kanalı.
+
+Düzeltme, kuralı ikinci kez yazmak DEĞİL: yazma yolu artık aynı \`requestVisibleTo\` fonksiyonunu çağırıyor. Kural tek yerde duruyor, iki yolda da aynı.
+
+## İkinci bulgu: yabancı anahtarlar hiç doğrulanmıyordu
+
+Sahiplik kontrolleri "bu SATIR senin mi" sorusunu doğru cevaplıyordu. Ama bir satırın İÇİNDEKİ ilişki sütunları hiç kontrol edilmiyordu. Ölçülenler:
+
+| Gönderilen | Sonuç (önce) |
+|---|---|
+| \`POST /api/quote-requests {vehicleId: B'nin aracı}\` | 201 — talep B'nin aracına bağlandı |
+| \`POST /api/listings {vehicleId: B'nin aracı}\` | 201 — ilan B'nin aracına bağlandı |
+| \`PATCH /api/vehicles/:id {listingId: B'nin ilanı}\` | 200 — araç B'nin ilanına bağlandı |
+
+Bunlar sıradan veri değil. Uygulamanın her yerinde "bu ilanın aracı", "bu talebin aracı" diye okunuyorlar ve **doğrulanmış servis geçmişi zinciri** tam olarak bu bağlar üzerinden yürüyor. Yabancı bir kayda bağlanabiliyorsa iki farklı kişinin verisi tek iş akışında birleşiyor.
+
+Düzeltme \`makeCrudRouter\`'a tablo bazlı bir **ilişki kuralı** olarak kondu (\`RELATION_RULES\`): bir yazma, ancak aktörün SAHİP OLDUĞU bir kayda işaret eden ilişki değeri taşıyabiliyor. Tanımlı olmayan tablo etkilenmiyor — yani mevcut davranış korunuyor. Sessizce düşürmek yerine 403: kullanıcı bağladığını sandığı aracın bağlanmadığını bilmeli.
+
+## Üçüncü bulgu: randevu ↔ araç ilişkisi hiç YOKTU
+
+\`appointments\` tablosunda aracı gösteren tek alan \`vehicle TEXT\` idi — yani **"VW Golf · 34ABC01" gibi bir metin.** Hangi gerçek araç kaydının servise girdiği veritabanında hiç yazmıyordu.
+
+En somut bedeli şuydu: doğrulanmış servis geçmişi (\`vehicle_history\`) VIN'i randevudan çözemiyor, **randevu metninin içinde plaka arıyordu**:
+
+\`\`\`js
+const match = candidates.find((v) => v.plate && apptText.includes(v.plate));
+\`\`\`
+
+Plaka metne yazılmadıysa ya da biçimi farklıysa eşleşme sessizce başarısız oluyor ve uygulamanın en güçlü güven özelliği hiç oluşmuyordu. Aynı marka/modelden iki aracı olan kullanıcıda hangisinin servise girdiği de ayırt edilemiyordu.
+
+\`vehicleId\` sütunu eklendi, sunucu dolduruyor ve aracın randevuyu açan kişiye ait olduğunu doğruluyor. VIN çözümü artık önce bu gerçek bağdan yapılıyor; metin eşleşmesi yalnızca eski kayıtlar için yedek yol olarak duruyor. Alan **zorunlu kılınmadı** — gönderilmezse eski davranış aynen sürüyor, yani mevcut istemci kırılmadı.
+
+## Dördüncü bulgu: başkasının aracına servis geçmişi yazılabiliyordu
+
+VIN'i tamircinin elle yazabilmesi kasıtlı ve doğru (aracı fiziksel olarak görüyor). Ama hiç kontrol edilmiyordu: bir tamirci, elindeki HERHANGİ bir tamamlanmış randevuyu kullanarak **başka birinin garajında kayıtlı bir VIN'e** servis kaydı yazabiliyordu. Kayıt \`ownerId = randevunun sahibi\` ile açıldığı için, gerçek araç sahibi kendi VIN'ini sorguladığında hiç yaptırmadığı bir işi "doğrulanmış" olarak görüyordu.
+
+Yeni kural: VIN sistemde kayıtlı bir araca aitse, o araç randevunun sahibine ait olmalı. VIN hiç kayıtlı değilse yazılabiliyor — tamircinin gerçekten yaptığı işi kaydetmesinin önü kesilmiyor, yalnızca **başkasının kaydına yazmak** engelleniyor.
+
+## Beşinci bulgu: iyimser yazmalar geri alınmıyordu
+
+\`persist()\` yardımcısı 86 çağrı yerinde kullanılıyor ve deseni şuydu:
+
+\`\`\`js
+setFavoriteIds(next);                                   // ekran HEMEN güncellenir
+persistMyPrefs({ favoriteIds: next }, "Favori kaydedilemedi");  // gönder ve unut
+\`\`\`
+
+İstek başarısız olduğunda yapılan tek şey uyarı toast'ı göstermekti; **yerel durum geri alınmıyordu.** Kullanıcı ekranda "favorilere eklendi" görmeye devam ediyor, sayfayı yenilediğinde favori yok. Bu, tam olarak bu denetimde aranan "frontend'de çalışıyor gibi görünen ama kalıcı olmayan" durum.
+
+İlginç ayrıntı: **doğru desen uygulamada zaten vardı.** \`toggleReviewHelpful\` başarısızlıkta sayacı ve beğeni listesini eski hâline döndürüyor ve yorumunda "sayaç ekranda yanlış kalmasın" diyor. Ders bir yerde öğrenilmiş, kardeş çağrı yerlerine taşınmamıştı — bu üç denetimin en çok tekrarlayan bulgusu.
+
+\`persist\` artık üçüncü bir argüman alıyor: başarısızlıkta çalışan geri alma. Argüman zorunlu değil (86 çağrıyı birden değiştirmek düzeltilenden çok hata üretir); iyimser olarak yerel durumu değiştiren yerlere eklendi — favoriler, favori tamirciler, VIN paylaşım tercihi. Yan etki de updater'ın DIŞINA taşındı: React bir güncelleyiciyi iki kez çağırabilir, içinde istek atmak isteğin iki kez gitmesi demekti.
+
+## Sohbetteki kopya alanlar
+
+\`conversations.mechanicName / mechanicImg / mechanicLang\` sohbet satırında tutulan kopyalar ve gövdeden olduğu gibi kaydediliyordu. Ölçüldü: \`mechanicName: "SAHTE AD"\` aynen kaydedildi. Tek başına ciddi değil ama bir kullanıcının KİMİNLE yazıştığını yanlış bilmesi demek — oltalama için yeterli bir zemin. Üç alan da artık kaynak satırdan okunuyor. (Aynı sınıf hata ikinci denetimde randevularda da vardı: \`mechanicName\` kopyası anonimleşmiyordu. Kural: kopya alanın değeri her zaman kaynaktan gelir.)
+
+## Temiz çıkanlar — ve bunu nasıl biliyoruz
+
+Çapraz erişim matrisi 4 kullanıcıyla (Customer A/B, Mechanic A/B) ve girişsiz ziyaretçiyle, 7 kayıt türü × GET/PATCH/DELETE olarak koşuldu. Sonuç tablo hâlinde:
+
+\`\`\`
+araç           CB: 403/403/403   MB: 403/403/403   girişsiz: 401/401/401
+randevu        CB: 403/403/403   MB: 403/403/403   girişsiz: 401/401/401
+sohbet         CB: 403/403/403   MB: 403/403/403   girişsiz: 401/401/401
+teklif isteği  CB: 403/403/403   MB: 403/403/403   girişsiz: 401/401/401
+destek talebi  CB: 404/404/404   MB: 404/404/404   girişsiz: 404/404/404
+araç sahibi    CB: 200/403/403   MB: 200/403/403   girişsiz: 200/401/401
+ilan           CB: 200/403/403   MB: 200/403/403   girişsiz: 200/401/401
+\`\`\`
+
+(Son iki satırdaki 200 kasıtlı: ilan ve satıcı adı herkese açık olmalı, ama kişisel alanlar listeden çıkarılmış — bkz. hydrate.js.)
+
+Ayrıca **tutan** kurallar tek tek ölçüldü: mesaj göndereni oturumdan damgalanıyor ve yabancı sohbete yazamıyor (reddedilen mesaj diziye EKLENMİYOR); yorum yalnızca tamamlanmış randevusu olan müşteriden geliyor, ikinci yorum 409, yazarı dışında kimse (hakkındaki tamirci dahil) silemiyor; puan **sunucuda** hesaplanıyor ve tamirci kendi puanını yazamıyor; "faydalı" oyu kişi başına bir kez ve sayaç sayılıyor, tutulmuyor; favoriler veritabanında ve yabancı dokunamıyor; teklifi yalnızca isteğin sahibi kabul edebiliyor, ikinci kabul 409.
+
+## Var olmayan özellikler — "PASS" demek yanlış olurdu
+
+- **Sipariş ve ödeme YOK.** Ne tablo, ne uç. \`appointments.depositPaid\` diye bir sütun var ama hiçbir yazma yolu ona dokunamıyor (bilerek: ödeme sağlayıcısı yok, para alanını yazabilen taraf olmamalı). Yani "Payments: PASS" demek uydurma olurdu; doğru cevap "bu özellik yok".
+- **Block/unblock YOK.** Şikâyet yolu \`support_tickets\`.
+- **Realtime/WebSocket YOK.** Veri istek üzerine çekiliyor. Bu yüzden "yanlış kullanıcıya event gidiyor mu" sorusunun konusu yok.
+- **Bildirim sunucuda YOK — bu gerçek bir sınır.** \`notifLog\` saf React state'i. Sonuçları dürüstçe: bildirimler sayfa yenilendiğinde kaybolur, ikinci cihazda görünmez, "okundu" durumu saklanmaz, okunmamış sayısı oturumlar arasında taşınmaz. Yani "yeni mesajınız var" bildirimi veritabanındaki mesajdan ÜRETİLMİYOR; o oturumda olan bir olaydan üretiliyor. Bunu yarım yamalak kurmak (ör. yalnızca yazma tarafı) daha kötü olurdu; kalıcı bildirim ayrı ve gerçek bir iş.
+
+## Hâlâ açık olanlar
+
+- **Araç silinince ona bağlı ilanın \`vehicleId\` bağı sahipsiz kalıyor.** Ölçüldü ve regresyon testinde açıkça yazılı (gizlemek yerine belgeledik). Veri sızıntısı değil — ilan satıcısına ait ve araç kaydı gitmiş olduğu için oradan bilgi çıkmıyor — ama tutarsız bir bağ.
+- **Kabul edilen teklif ile oluşan randevu arasında kayıt YOK.** Müşteri teklifi kabul ediyor, sonra randevuyu ayrıca alıyor; "bu randevu şu teklifin sonucudur" bilgisi hiçbir yerde tutulmuyor. Zincirin bu halkası veritabanında kopuk.
+- **VIN hâlâ bir beyandır.** Resmî tescil kaydına bağlanmadığı sürece doğrulanamaz; artık yalnızca "başkasının kaydına yazma" kapatıldı.
+- Tarayıcı/responsive/erişilebilirlik testi bu ortamda yapılamıyor (önceki denetimlerle aynı sınır).`,
       },
 
     ],

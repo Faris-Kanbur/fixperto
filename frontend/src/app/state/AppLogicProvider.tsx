@@ -219,13 +219,20 @@ function useAppLogic() {
   // başarısız oluyordu. Sonuç: tamirci hesabında favoriye ekleme, arama kaydetme, yorum beğenme
   // ve dil tercihi kaydetme özelliklerinin HİÇBİRİ çalışmıyordu (arayüz bir an tepki verip
   // eski hâline dönüyordu). Artık hangi hesapla giriş yapıldıysa O tablonun satırına yazıyoruz.
-  const persistMyPrefs = (patch, failMessage) => {
-    if (MY_OWNER_ID != null) return persist(api.owners.update(MY_OWNER_ID, patch), failMessage);
+  const persistMyPrefs = (patch, failMessage, rollback?) => {
+    if (MY_OWNER_ID != null) return persist(api.owners.update(MY_OWNER_ID, patch), failMessage, rollback);
     if (MY_MECHANIC_ID != null) {
       // Tamircinin kendi kaydını yerel listede de güncelle — aksi halde sayfa yenilenene kadar
       // eski değer görünürdü (owners tarafında bu iş ownersDirectory üzerinden yürüyor).
+      const before = mechanicsList.find((m) => m.id === MY_MECHANIC_ID);
       setMechanicsList((list) => list.map((m) => (m.id === MY_MECHANIC_ID ? { ...m, ...patch } : m)));
-      return persist(api.mechanics.update(MY_MECHANIC_ID, patch), failMessage);
+      // Bu iyimser liste güncellemesi de geri alınıyor: aksi halde yazma başarısız olsa bile
+      // tamircinin kendi profili ekranda değişmiş görünüyordu (çağıranın kendi geri alması varsa
+      // o da çalışıyor).
+      return persist(api.mechanics.update(MY_MECHANIC_ID, patch), failMessage, () => {
+        if (before) setMechanicsList((list) => list.map((m) => (m.id === MY_MECHANIC_ID ? before : m)));
+        if (typeof rollback === "function") rollback();
+      });
     }
     // Misafir: buraya gelinmemeli (çağıranlar requireAuth/ensureAuth ile korunuyor) ama sessiz kal.
   };
@@ -242,11 +249,17 @@ function useAppLogic() {
       // Favoriden ÇIKARMA sinyal değil: vazgeçmenin ne anlama geldiği belirsiz.
       sendRecSignal({ action: "favorite", listingId: id });
     }
-    setFavoriteIds(f => {
-      const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
-      persistMyPrefs({ favoriteIds: next }, "Favori kaydedilemedi");
-      return next;
-    });
+    /**
+     * GERİ ALMA (ilişki denetiminde eklendi). Yan etki artık updater'ın DIŞINDA: React bir
+     * güncelleyici fonksiyonu iki kez çağırabilir (StrictMode/eşzamanlı render) ve içeride istek
+     * atmak isteğin iki kez gitmesine yol açar — üstelik "önceki değer" de oradan güvenilir
+     * biçimde okunamaz. Önce sonucu hesaplıyoruz, sonra yazıyoruz, başarısızlıkta ESKİ DEĞERE
+     * dönüyoruz (bkz. persist yorumundaki gerekçe).
+     */
+    const prev = favoriteIds;
+    const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    setFavoriteIds(next);
+    persistMyPrefs({ favoriteIds: next }, "Favori kaydedilemedi", () => setFavoriteIds(prev));
   }, t("authGateReasonFavorite"));
   // Tamirci favorileri ayrı bir dizide tutulur: listings ve mechanics aynı sayısal id aralığını
   // paylaştığı için (ör. mechanic id=1 ve listing id=1), tek bir favoriteIds dizisi kullanmak
@@ -256,11 +269,11 @@ function useAppLogic() {
     // Araç favorileri izleniyordu ama TAMİRCİ favorileri hiç izlenmiyordu — panelde
     // "kaç kişi bu tamirciyi favoriye ekledi" verisi bu yüzden hep boştu.
     if (!favoriteMechanicIds.includes(id)) track("favorite_added", { targetType: "mechanic", targetId: id });
-    setFavoriteMechanicIds(f => {
-      const next = f.includes(id) ? f.filter(x => x !== id) : [...f, id];
-      persistMyPrefs({ favoriteMechanicIds: next }, "Favori kaydedilemedi");
-      return next;
-    });
+    // Geri alma: favoriteIds ile aynı desen (bkz. oradaki gerekçe).
+    const prev = favoriteMechanicIds;
+    const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
+    setFavoriteMechanicIds(next);
+    persistMyPrefs({ favoriteMechanicIds: next }, "Favori kaydedilemedi", () => setFavoriteMechanicIds(prev));
   }, t("authGateReasonFavorite"));
   // Kayıtlı aramalar (favorilenen aramalar): favoriteIds/favoriteMechanicIds ile aynı desen —
   // owners.savedSearches sütununda kalıcı, ama gösterimi role'e bağlı DEĞİL (demo'nun tek
@@ -956,11 +969,46 @@ function useAppLogic() {
   // Arka planda backend'e kalıcı hale getirme yardımcı fonksiyonu: yerel state güncellemesi
   // senkron/anında kalsın diye (mevcut UX bozulmasın), API çağrısı ARKA PLANDA yapılır.
   // Başarısız olursa kullanıcıya toast ile haber verilir (veri sessizce kaybolmasın).
-  const persist = (promise, failMessage) => {
+  /**
+   * ====== İYİMSER YAZMA ARTIK GERİ ALINABİLİYOR (ilişki denetiminde bulundu) ======
+   * ================================================================================================
+   * BULUNAN SORUN: bu yardımcı 86 çağrı yerinde kullanılıyor ve deseni şuydu:
+   *
+   *     setFavoriteIds(next);                                  // ekran HEMEN güncellenir
+   *     persistMyPrefs({ favoriteIds: next }, "Favori kaydedilemedi");   // gönder ve unut
+   *
+   * İstek başarısız olduğunda (çevrimdışı, 403, 500) yapılan tek şey bir uyarı toast'ı göstermekti;
+   * YEREL DURUM GERİ ALINMIYORDU. Yani kullanıcı ekranda "favorilere eklendi" görmeye devam ediyor,
+   * sayfayı yenilediğinde favori yok. Kullanıcı açısından bu "kaydettim ama kayboldu" demek — bu
+   * denetimde aranan "frontend'de çalışıyor gibi görünen ama kalıcı olmayan" durumun tam örneği.
+   *
+   * İLGİNÇ AYRINTI: doğru desen uygulamada ZATEN VARDI — `toggleReviewHelpful` başarısızlıkta
+   * sayacı ve beğeni listesini eski hâline döndürüyor ve yorumunda "Rollback — istek gerçekten
+   * başarısız oldu, sayaç ekranda yanlış kalmasın" diyor. Yani ders bir yerde öğrenilmiş,
+   * kardeş çağrı yerlerine taşınmamıştı. (Bu denetimlerin tekrar eden bulgusu: koruma var, ama
+   * sadece bir yolda.)
+   *
+   * ÇÖZÜM: `persist` üçüncü bir argüman alıyor — başarısızlıkta çalışacak GERİ ALMA. Argüman
+   * ZORUNLU DEĞİL: 86 çağrı yerini birden değiştirmek, düzeltilenden çok yeni hata üretme riski
+   * taşır. Geri alma, iyimser olarak yerel durumu değiştiren çağrı yerlerine eklendi (favoriler,
+   * favori tamirciler, VIN paylaşımı, yönetici geri alma) — yani ekranda YANLIŞ BİR ŞEY KALMASI
+   * mümkün olan yerlere. Geri alma verilmeyen yerler, yerel durumu iyimser değiştirmeyen
+   * (yanıtı bekleyip yazan) çağrılar.
+   */
+  const persist = (promise, failMessage, rollback?) => {
     promise.catch((err) => {
       if (typeof window !== "undefined" && (import.meta as any)?.env?.DEV) console.error("[persist]", failMessage, err);
+      // GERİ ALMA ÖNCE: kullanıcı mesajı okuduğunda ekran zaten doğru durumda olsun.
+      if (typeof rollback === "function") {
+        try { rollback(); } catch (rollbackErr) {
+          // Geri alma da patlarsa sessiz kalmıyoruz: ekran ile sunucu arasında bilinen bir
+          // tutarsızlık var ve kullanıcı bunu bilmeli.
+          if (typeof window !== "undefined" && (import.meta as any)?.env?.DEV) console.error("[persist] geri alma başarısız", rollbackErr);
+        }
+      }
       setToast({ type: "info", text: `⚠️ ${failMessage}: ${err?.message || "Sunucuya kaydedilemedi."}` });
     });
+    return promise;
   };
 
   /**
@@ -1074,9 +1122,14 @@ function useAppLogic() {
   // oluşacak kayıtlar için) ve o VIN'e ait MEVCUT kayıtlara (geçmişe dönük olarak).
   const setVehicleHistoryShared = (vehicle, shared) => {
     if (!vehicle?.vin) return;
+    // VIN PAYLAŞIMI BİR GİZLİLİK AYARI — geri alma burada en kritik. Yazma başarısız olduğunda
+    // ekranda "paylaşım açık" görünüp sunucuda kapalı (ya da tersi) kalmak, kullanıcının kendi
+    // gizlilik tercihi hakkında yanlış bilgilendirilmesi demek.
+    const prevVehicles = vehicles;
     setVehicles(vs => vs.map(v => v.id === vehicle.id ? { ...v, vinShared: shared } : v));
-    persist(api.vehicles.update(vehicle.id, { vinShared: shared }), "Paylaşım tercihi kaydedilemedi");
-    persist(api.vehicleHistory.setShared(vehicle.vin, shared).then(refreshMyHistory), "Paylaşım tercihi kaydedilemedi");
+    const undo = () => setVehicles(prevVehicles);
+    persist(api.vehicles.update(vehicle.id, { vinShared: shared }), "Paylaşım tercihi kaydedilemedi", undo);
+    persist(api.vehicleHistory.setShared(vehicle.vin, shared).then(refreshMyHistory), "Paylaşım tercihi kaydedilemedi", undo);
   };
 
   // ShareButton'da (mekanik profili, araç ilanı, iş ilanı) gerçek bir paylaşım eylemi olduğunda
