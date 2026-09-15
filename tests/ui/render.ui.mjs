@@ -146,6 +146,205 @@ eqJson(scoreNearMisses(CARS, []).items.length, 0, "kriter yokken boş dönüyor"
 eqJson(scoreNearMisses(CARS, CRITERIA, 1).items.length, 1, "üst sınıra uyuluyor");
 eqJson(scoreNearMisses(null, CRITERIA).items.length, 0, "bozuk girdide çökmüyor");
 
+// ---------------------------------------------------------------- 6b) FİYATIN PİYASADAKİ YERİ
+/**
+ * Kullanıcı isteği: randevu alırken bu tamircinin fiyatının diğerlerine göre nerede durduğu
+ * görünsün. İşlev SAF olduğu için burada gerçekten çağrılıp sonucu ölçülüyor.
+ *
+ * BU TESTİN ASIL DERDİ: karşılaştırmanın YAPILMADIĞI durumlar. Yanlış bir "çok iyi" etiketi
+ * kullanıcıyı yanlış tamirciye gönderir ve tamirciye de haksızlık eder; hiç etiket göstermemek
+ * her zaman daha iyidir. O yüzden testlerin yarısı "null dönüyor mu" diye soruyor.
+ */
+/**
+ * Tohum verisini OKUYAN yardımcılar. Neden kaynak dosyayı ayrıştırıyorum: seed.js sunucu tarafı
+ * bir modül ve better-sqlite3'e bağlı; burada içe alınamıyor. Ama karşılaştırmanın bugünkü veride
+ * ne kadar çıktığı GERÇEK veriyle ölçülmeli — uydurma bir havuzla ölçmek, tam olarak kaçınmak
+ * istediğim şey olurdu.
+ */
+function readFileSyncForSeed() {
+  const { readFileSync: rf } = require_fs;
+  return rf(seedPath, "utf8");
+}
+function parseSeedMechanics(src) {
+  const out = [];
+  let id = 100;
+  for (const block of [...src.matchAll(/services:\s*(\[[^\n]*\])/g)].map((m) => m[1])) {
+    const services = [];
+    for (const m of block.matchAll(/\{\s*key:\s*"([a-z_]+)"[^}]*?price:\s*"([^"]*)"[^}]*?fixed:\s*(true|false)/g)) {
+      services.push({ key: m[1], price: m[2], fixed: m[3] === "true" });
+    }
+    if (services.length > 0) out.push({ id: id++, services });
+  }
+  return out;
+}
+const require_fs = await import("node:fs");
+const seedPath = (await import("node:path")).join(
+  (await import("node:path")).dirname((await import("node:url")).fileURLToPath(import.meta.url)),
+  "..", "..", "backend", "db", "seed.js",
+);
+
+const { comparePriceToMarket, medianOf, PRICE_COMPARE_MIN_SAMPLE } =
+  await import("../../frontend/src/utils/helpers.ts");
+
+// --- medyan: aykırı değere dayanıklı mı (ortalama yerine medyan seçmenin bütün sebebi) ---
+eqJson(medianOf([300, 300, 300]), 300, "üç eşit fiyatın medyanı");
+eqJson(medianOf([200, 300, 400]), 300, "tek sayıda elemanda ortadaki");
+eqJson(medianOf([200, 300, 400, 500]), 350, "çift sayıda elemanda ortadaki ikisinin ortası");
+/**
+ * ORTALAMA vs MEDYAN — sayıyla gösteriyorum, çünkü bu kararın tamamı buna dayanıyor.
+ * Üç tamirci 300₺ isterken dördüncüsü 5.000₺ yazarsa: ortalama 1.475₺, medyan 300₺.
+ * Ortalamayla karşılaştırırsak 300₺'lik fiyat "piyasanın belirgin altında" görünür — oysa
+ * piyasanın ortası hâlâ 300₺ ve o fiyat tam ortalama. Medyan bu bozulmayı yaşamıyor.
+ */
+{
+  const withOutlier = [300, 300, 300, 5000];
+  const mean = Math.round(withOutlier.reduce((a, b) => a + b, 0) / withOutlier.length);
+  eqJson(mean, 1475, "tek aykırı değer ortalamayı 1475'e çekiyor");
+  eqJson(medianOf(withOutlier), 300, "aynı veride medyan 300'de kalıyor (aykırı değere dayanıklı)");
+}
+eqJson(medianOf([]), null, "boş dizide medyan yok");
+eqJson(medianOf([0, -5, 300]), 300, "sıfır ve negatif fiyatlar sayılmıyor");
+
+// --- Yardımcı: tamirci havuzu kur ---
+const shop = (id, key, price, extra = {}) => ({ id, services: [{ key, name: key, price, fixed: true, ...extra }] });
+const compare = (myPrice, others, opts = {}) => comparePriceToMarket({
+  serviceKey: "oil_change",
+  service: { key: "oil_change", price: myPrice, fixed: true, ...(opts.myExtra || {}) },
+  mechanics: others,
+  excludeMechanicId: 1,
+  brand: opts.brand || null,
+});
+
+// --- KARŞILAŞTIRMA YAPILMAYAN DURUMLAR (testlerin ağırlık merkezi) ---
+{
+  const pool = [shop(2, "oil_change", "300"), shop(3, "oil_change", "300"), shop(4, "oil_change", "300")];
+  eqJson(comparePriceToMarket({ serviceKey: null, service: { price: "300", fixed: true }, mechanics: pool, excludeMechanicId: 1 }), null,
+    "katalog anahtarı YOKSA karşılaştırma yok (serbest metin hizmet aynı işi mi anlatıyor bilinmiyor)");
+  eqJson(compare("", pool)?.level ?? null, null, "kendi fiyatı yoksa karşılaştırma yok");
+  eqJson(compare("300", pool, { myExtra: { fixed: false } })?.level ?? null, null,
+    "kendi fiyatı DEĞİŞKENSE karşılaştırma yok (değişken fiyat, fiyat değildir)");
+  // Örneklem eşiği: 2 tamirci yeterli değil.
+  const two = [shop(2, "oil_change", "300"), shop(3, "oil_change", "300")];
+  eqJson(compare("300", two).level, null, `${PRICE_COMPARE_MIN_SAMPLE}'ün altında örneklemde seviye YOK`);
+  eqJson(compare("300", two).sampleSize, 2, "yetersiz örneklemde sayı yine bildiriliyor (sessizce kaybolmuyor)");
+  // Havuzdaki DEĞİŞKEN fiyatlar örnekleme sayılmamalı.
+  const mixed = [shop(2, "oil_change", "300"), shop(3, "oil_change", "300"), shop(4, "oil_change", "300", { fixed: false })];
+  eqJson(compare("300", mixed).level, null, "havuzdaki değişken fiyatlı tamirci örnekleme SAYILMIYOR");
+  // Başka hizmet veren tamirciler sayılmamalı.
+  const otherService = [shop(2, "brake_pads", "300"), shop(3, "brake_pads", "300"), shop(4, "brake_pads", "300")];
+  eqJson(compare("300", otherService).level, null, "farklı hizmet veren tamirciler havuza girmiyor");
+  // Kendisi havuzdan çıkarılıyor: aksi halde her tamirci kendini de sayardı.
+  const withSelf = [shop(1, "oil_change", "9999"), shop(2, "oil_change", "300"), shop(3, "oil_change", "300"), shop(4, "oil_change", "300")];
+  eqJson(compare("300", withSelf).sampleSize, 3, "tamircinin KENDİSİ havuzdan çıkarılıyor");
+  eqJson(compare("300", withSelf).median, 300, "kendi fiyatı medyanı etkilemiyor");
+}
+
+// --- SEVİYELER: eşikler gerçekten ayırıyor mu ---
+{
+  const pool = [shop(2, "oil_change", "400"), shop(3, "oil_change", "400"), shop(4, "oil_change", "400")];
+  const level = (p) => compare(String(p), pool).level;
+  eqJson(compare("400", pool).median, 400, "medyan 400");
+  eqJson(level(400), "average", "medyanla aynı fiyat: ortalama");
+  eqJson(level(410), "average", "%2,5 üstü: hâlâ ortalama (olmayan farkı varmış gibi göstermiyoruz)");
+  eqJson(level(390), "average", "%2,5 altı: hâlâ ortalama");
+  eqJson(level(360), "good", "%10 altı: iyi");
+  eqJson(level(300), "veryGood", "%25 altı: çok iyi");
+  eqJson(level(440), "aboveAverage", "%10 üstü: ortalamanın üstünde");
+  eqJson(level(600), "high", "%50 üstü: yüksek");
+  // Sınır değerleri tam olarak nereye düşüyor — eşik kayarsa test söyler.
+  eqJson(level(320), "veryGood", "tam %20 altı sınırı 'çok iyi' tarafında");
+  eqJson(level(380), "good", "tam %5 altı sınırı 'iyi' tarafında");
+  eqJson(level(420), "average", "tam %5 üstü sınırı 'ortalama' tarafında");
+  /**
+   * SINIR YÖNÜ: eşikler `<=` ile karşılaştırılıyor, yani sınır değeri ALT banda düşüyor.
+   * İlk yazdığımda "tam %25 üstü yüksek olmalı" diye varsaymıştım ve test haklı olarak kırıldı.
+   * Kodun davranışı tutarlı (0,8 → çok iyi, 0,95 → iyi, 1,05 → ortalama, 1,25 → üstünde) ve
+   * kullanıcı lehine olan yön bu: sınırda olan bir fiyatı daha ağır etikete atmıyoruz.
+   */
+  eqJson(level(500), "aboveAverage", "tam %25 üstü sınırı ALT bantta ('üstünde', 'yüksek' değil)");
+  eqJson(level(501), "high", "sınırın bir lira üstü 'yüksek'");
+}
+
+// --- MARKA FİYATI TUTARLI KULLANILIYOR MU ---
+/**
+ * Tamirciler marka başına farklı fiyat verebiliyor. Havuzda kimi tamircinin marka fiyatını,
+ * kiminin taban fiyatını almak karşılaştırmayı anlamsız yapardı. Kural: HER tamirci için
+ * "bu aracı getirsem bana ne yazar" değeri alınıyor.
+ */
+{
+  const pool = [
+    shop(2, "oil_change", "300", { brandPrices: { BMW: "900" } }),
+    shop(3, "oil_change", "300", { brandPrices: { BMW: "900" } }),
+    // Marka zammı OLMAYAN tamirci: BMW için de 300 yazar, o yüzden 300 sayılmalı.
+    shop(4, "oil_change", "300"),
+  ];
+  const r = comparePriceToMarket({
+    serviceKey: "oil_change",
+    service: { key: "oil_change", price: "300", fixed: true, brandPrices: { BMW: "900" } },
+    mechanics: pool, excludeMechanicId: 1, brand: "BMW",
+  });
+  eqJson(r.median, 900, "BMW karşılaştırmasında marka fiyatları kullanılıyor (medyan 900)");
+  eqJson(r.level, "average", "BMW için 900 yazan tamirci ortalamada");
+  // Marka verilmezse taban fiyatlar kullanılıyor.
+  const base = comparePriceToMarket({
+    serviceKey: "oil_change",
+    service: { key: "oil_change", price: "300", fixed: true, brandPrices: { BMW: "900" } },
+    mechanics: pool, excludeMechanicId: 1, brand: null,
+  });
+  eqJson(base.median, 300, "marka bilinmiyorsa taban fiyatlar karşılaştırılıyor");
+}
+
+// --- BOZUK GİRDİDE ÇÖKMÜYOR ---
+eqJson(comparePriceToMarket({ serviceKey: "oil_change", service: null, mechanics: null, excludeMechanicId: 1 }), null, "null girdide çökmüyor");
+eqJson(comparePriceToMarket({}), null, "boş nesnede çökmüyor");
+{
+  const broken = [null, undefined, { id: 2 }, { id: 3, services: null }, { id: 4, services: [null] }];
+  eqJson(comparePriceToMarket({ serviceKey: "oil_change", service: { key: "oil_change", price: "300", fixed: true }, mechanics: broken, excludeMechanicId: 1 }).level, null,
+    "bozuk tamirci kayıtları havuzu çökertmiyor");
+}
+
+// --- GERÇEK TOHUM VERİSİ: bugün kaç hizmette karşılaştırma ÇIKIYOR ---
+/**
+ * Dürüstlük kontrolü. Tohum verisinde 17 hizmet var ve yalnızca ikisinde üç ya da daha fazla
+ * tamircinin fiyatı bulunuyor. Yani bugün 15 hizmette bu satır HİÇ GÖRÜNMEYECEK. Bu bir eksiklik
+ * değil, doğru davranış — ve testte yazılı olması, ileride biri "neden çıkmıyor" diye sorduğunda
+ * cevabın kayıtlı olması için.
+ */
+{
+  const seedSrc = readFileSyncForSeed();
+  const pool = parseSeedMechanics(seedSrc);
+  eqJson(pool.length >= 8, true, `tohum verisinde ${pool.length} tamirci okundu`);
+  const keys = [...new Set(pool.flatMap((m) => m.services.map((s) => s.key)))];
+  const comparable = keys.filter((key) => {
+    const subject = pool.find((m) => m.services.some((s) => s.key === key));
+    const svc = subject.services.find((s) => s.key === key);
+    return comparePriceToMarket({ serviceKey: key, service: svc, mechanics: pool, excludeMechanicId: subject.id })?.level != null;
+  });
+  eqJson(keys.length >= 15, true, `tohum verisinde ${keys.length} farklı hizmet var`);
+  /**
+   * BU SATIR BİR HATAMI DÜZELTİYOR. İlk ölçümümde "2 hizmette karşılaştırma çıkar" yazmıştım;
+   * saydığım şey fiyat veren tamirci sayısıydı, oysa karşılaştırmada kişinin KENDİSİ havuza
+   * girmiyor. En yoğun hizmette 3 tamirci var → kendisi çıkınca 2 kalıyor → eşiğin altında.
+   * Yani BUGÜN hiçbir hizmette çıkmıyor. Testin bunu YAZILI tutması önemli: ileride biri
+   * "neden hiç görünmüyor" diye sorduğunda cevap burada.
+   */
+  eqJson(comparable.length, 0,
+    "bugünkü tohum verisinde hiçbir hizmette karşılaştırma çıkmıyor (kendisi hariç 3 tamirci yok) — doğru davranış");
+  // Özelliğin ölü OLMADIĞI yukarıdaki sentetik havuzlarla kanıtlanıyor; burada ölçülen şey
+  // gerçek verinin bugünkü yetersizliği, işlevin bozukluğu değil.
+  {
+    const enough = [...pool];
+    const key = "oil_change";
+    // Havuza iki tamirci daha ekleyince (yani gerçek platform biraz büyüyünce) çıkıyor mu?
+    enough.push({ id: 900, services: [{ key, price: "300", fixed: true }] });
+    enough.push({ id: 901, services: [{ key, price: "320", fixed: true }] });
+    const subject = pool.find((m) => m.services.some((s) => s.key === key));
+    const svc = subject.services.find((s) => s.key === key);
+    const r = comparePriceToMarket({ serviceKey: key, service: svc, mechanics: enough, excludeMechanicId: subject.id });
+    eqJson(r.level != null, true, `havuza iki tamirci eklenince karşılaştırma çıkıyor (${r.sampleSize} tamirci, medyan ${r.median})`);
+  }
+}
+
 // ---------------------------------------------------------------- 7) TOPLU ÇİZİM TARAMASI
 /**
  * Her bileşeni BOŞ veri ile bir kez çiziyoruz. Amaç doğruluk değil DAYANIKLILIK: React'te tek bir

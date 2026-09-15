@@ -173,6 +173,21 @@ export const T = {
   appointmentRequestSentBody: { tr: "Talebiniz tamirciye iletildi. Onaylandığında bildirim alacaksınız.", en: "Your request was sent to the shop. You'll get a notification once it's approved.", de: "Ihre Anfrage wurde an die Werkstatt gesendet. Sie erhalten eine Benachrichtigung, sobald sie bestätigt ist." },
   appointmentPopupWaitingBadge: { tr: "Onay bekliyor", en: "Awaiting approval", de: "Warten auf Bestätigung" },
   appointmentPopupConfirmedBadge: { tr: "Onaylandı", en: "Confirmed", de: "Bestätigt" },
+  /**
+   * FİYATIN PİYASADAKİ YERİ (kullanıcı isteği).
+   * Metinler bilinçli olarak FİYAT hakkında, tamirci hakkında değil: ucuz olmak iyi tamirci
+   * olmak demek değil. "Bu tamirci çok iyi" demek karşılaştırmanın söyleyebileceğinden fazlasını
+   * iddia etmek olurdu — söylenen tek şey fiyatın piyasa ortasına göre nerede durduğu.
+   */
+  priceCompareVeryGood: { tr: "Piyasanın belirgin altında", en: "Well below market", de: "Deutlich unter Marktniveau" },
+  priceCompareGood: { tr: "Piyasanın altında", en: "Below market", de: "Unter Marktniveau" },
+  priceCompareAverage: { tr: "Piyasa ortalamasında", en: "In line with market", de: "Marktüblich" },
+  priceCompareAboveAverage: { tr: "Piyasanın üstünde", en: "Above market", de: "Über Marktniveau" },
+  priceCompareHigh: { tr: "Piyasanın belirgin üstünde", en: "Well above market", de: "Deutlich über Marktniveau" },
+  // Ayrıntı satırı: örneklem sayısı AÇIKÇA yazılıyor — 3 tamirciden çıkan bir karşılaştırmayı
+  // 30 tamirciden çıkmış gibi sunmak, kullanıcıya olduğundan fazla güven vermek olurdu.
+  priceCompareDetail: { tr: "{count} tamircinin fiyatına göre · piyasa ortası {median}₺", en: "Based on {count} other shops · market middle {median}₺", de: "Basierend auf {count} Werkstätten · Marktmitte {median}₺" },
+  priceCompareTip: { tr: "Aynı hizmete fiyat veren diğer tamircilerin ORTA değeri (medyan) ile karşılaştırılıyor — aracınızın markası için geçerli fiyatlar kullanılıyor. Ortalama yerine orta değer kullanılıyor çünkü tek bir aşırı fiyat ortalamayı bozar. Bu bir fiyat karşılaştırmasıdır; tamircinin işçilik kalitesi hakkında bir şey söylemez.", en: "Compared against the MEDIAN of other shops that price the same service, using the prices that apply to your car's brand. Median instead of average because a single extreme price distorts an average. This compares price only — it says nothing about workmanship.", de: "Verglichen mit dem MEDIAN anderer Werkstätten, die dieselbe Leistung bepreisen, mit den für Ihre Fahrzeugmarke gültigen Preisen. Median statt Durchschnitt, weil ein einzelner Extremwert den Durchschnitt verzerrt. Dies vergleicht nur den Preis — nichts über die Arbeitsqualität." },
   backToHomeBtn: { tr: "Ana Sayfaya Dön", en: "Back to Home", de: "Zurück zur Startseite" },
 
   // --- Araç satış ilanı formu (sell form) ---

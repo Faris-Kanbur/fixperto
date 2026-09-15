@@ -1826,6 +1826,68 @@ Dosya sistemi seçildi, obje deposu değil: sıfır ek bağımlılık, sıfır e
 SQLite tek yazıcılı. Yüksek eşzamanlı yazmada Postgres gerekecek — ama bu bugünün sorunu değil ve ölçülmeden yapılmamalı.`,
       },
       {
+        id: "fiyat-piyasa-karsilastirma",
+        title: "25.10 Fiyatın piyasadaki yeri — ve neden çoğu zaman görünmüyor",
+        body: `## İstek ve ilk dürüst ölçüm
+
+Randevu alırken tamircinin fiyatının diğerlerine göre nerede durduğu gösterilsin — "çok iyi / iyi / ortalama / yüksek".
+
+**Bugünkü tohum verisinde bu satır hiç görünmüyor** ve bunu baştan yazmak gerekiyor. Sebep: 10 tamircide 17 farklı hizmet var; en yoğun iki hizmette (yağ değişimi, periyodik bakım) üç tamircinin sabit fiyatı var, ama karşılaştırılan tamirci havuzdan çıkarıldığı için geriye iki tamirci kalıyor — asgari örneklemin altında.
+
+İlk ölçümümde "2 hizmette çıkar" yazmıştım ve **yanlıştı**: saydığım şey fiyat veren tamirci sayısıydı, oysa karşılaştırmada kişinin kendisi havuza girmiyor. Testi gerçek tohum verisiyle çalıştırınca fark ettim. Test artık bu sayıyı (0) yazılı tutuyor — ileride biri "neden hiç görünmüyor" diye sorduğunda cevap orada.
+
+Eşiği 2'ye indirip özelliği "çalışır" göstermek mümkündü. Yapmadım: iki fiyatın "medyanı" ikisinin ortasıdır, hangisinin normal olduğunu söylemez. **İki tamircinin fiyatına bakıp "bu çok iyi" demek bir bilgi değil, uydurmadır.** Özellik platform büyüdükçe kendiliğinden anlamlı hâle geliyor.
+
+## Medyan, "ortalama" değil
+
+İstek "ortalama" diyordu ama aritmetik ortalama tek bir aykırı değere karşı savunmasız. Sayıyla:
+
+| Fiyatlar | Ortalama | Medyan |
+|---|---|---|
+| 300, 300, 300, 5000 | **1.475₺** | **300₺** |
+
+Ortalamayla karşılaştırırsak 300₺'lik bir fiyat "piyasanın belirgin altında" görünür — oysa piyasanın ortası hâlâ 300₺ ve o fiyat tam ortada. Arayüzde gösterilen sayı medyan ve adı "piyasa ortası"; kullanıcıya aritmetik ortalama diye sunulmuyor.
+
+## Karşılaştırmanın YAPILMADIĞI durumlar
+
+Testlerin ağırlık merkezi burada. Yanlış bir "çok iyi" etiketi kullanıcıyı yanlış tamirciye gönderir ve tamirciye de haksızlık eder; **hiç etiket göstermemek her zaman daha iyidir.**
+
+- **Katalog anahtarı yok.** Tamircinin kendi yazdığı serbest metin hizmetlerde "aynı işi mi anlatıyor" sorusu cevaplanamaz — "Fren bakımı" ile "Fren balata değişimi" aynı şey olabilir de olmayabilir.
+- **Fiyat değişken.** "Değişken" demek fiyat henüz belli değil demek. Oradaki sayıyı kesin fiyatlarla aynı havuza koymak iki tarafı da yanlış gösterir. Havuzdaki değişken fiyatlı tamirciler de örnekleme sayılmıyor.
+- **Örneklem 3'ün altında.** Sayı yine döndürülüyor ki çağıran taraf isterse sebebini söyleyebilsin — sessizce kaybolmak yerine.
+- **Tamircinin kendisi havuzda değil.** Aksi hâlde herkes kendi fiyatını da medyana katardı.
+
+## Marka fiyatı tutarlı kullanılıyor
+
+Tamirciler marka başına farklı fiyat verebiliyor (\`brandPrices\`). Havuzda kimi tamircinin marka fiyatını, kiminin taban fiyatını almak karşılaştırmayı anlamsız yapardı.
+
+Kural: **her tamirci için "bu aracı getirsem bana ne yazar" değeri alınıyor** — marka fiyatı varsa o, yoksa taban fiyat. Marka zammı olmayan bir tamircinin taban fiyatı zaten o araç için geçerli fiyattır. Test bunu ölçüyor: BMW karşılaştırmasında marka fiyatı 900₺ olan iki tamirci ile marka zammı olmayan (300₺) bir tamirci aynı havuzda ve medyan 900₺ çıkıyor.
+
+## Eşikler ve sınır yönü
+
+| Medyana oran | Etiket |
+|---|---|
+| ≤ 0,80 | Piyasanın belirgin altında |
+| 0,80 – 0,95 | Piyasanın altında |
+| 0,95 – 1,05 | Piyasa ortalamasında |
+| 1,05 – 1,25 | Piyasanın üstünde |
+| > 1,25 | Piyasanın belirgin üstünde |
+
+±%5 bandı bilerek "ortalama": 300₺ ile 310₺ arasındaki farkı "daha iyi" diye sunmak kullanıcıyı yanlış yönlendirir. O bantta renk de nötr ve ok da yok — olmayan bir farkı varmış gibi göstermemek için.
+
+Sınır değerleri **alt banda** düşüyor (\`<=\`). İlk testimde "tam %25 üstü yüksek olmalı" diye varsaymıştım ve test haklı olarak kırıldı; kodun davranışı tutarlı ve kullanıcı lehine olan yön bu — sınırda olan bir fiyatı daha ağır etikete atmıyoruz.
+
+## Metin fiyat hakkında, tamirci hakkında değil
+
+"Bu tamirci çok iyi" demek karşılaştırmanın söyleyebileceğinden fazlasını iddia etmek olurdu: **ucuz olmak iyi tamirci olmak demek değil.** Söylenen tek şey fiyatın piyasa ortasına göre nerede durduğu. Bilgi balonu da bunu açıkça yazıyor.
+
+Örneklem sayısı her zaman görünüyor ("3 tamircinin fiyatına göre"). Üç tamirciden çıkan bir karşılaştırmayı otuz tamirciden çıkmış gibi sunmak, kullanıcıya olduğundan fazla güven vermek olurdu.
+
+## Nerede hesaplanıyor
+
+İstemcide, saf bir işlevle (\`comparePriceToMarket\`). Yeni bir API ucu yok: tamirci listesi zaten tamamen indirilmiş durumda (mevcut mimari böyle) ve karşılaştırma o veriden çıkıyor. Saf işlev olması testte gerçekten çağrılabilmesini sağlıyor — 40'tan fazla kontrol doğrudan işlevi çalıştırıyor.`,
+      },
+      {
         id: "randevu-sonuc-popup",
         title: "25.9 Randevu sonucu: ekran değil popup",
         body: `## Önce ayrı bir ekran vardı

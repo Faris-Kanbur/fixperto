@@ -1,5 +1,38 @@
 // `lazy` ve `Suspense`: el kitabı parçası için (bkz. aşağıdaki HandbookPanel notu).
 import { lazy, Suspense } from "react";
+/**
+ * FİYAT KARŞILAŞTIRMA GÖRÜNÜMÜ — üç ayrı eşleme, modül düzeyinde.
+ * Renk, ok ve metin anahtarı ayrı tutuluyor çünkü üçü ayrı sorulara cevap veriyor: renk
+ * "iyi mi kötü mü", ok "hangi yönde", metin "ne kadar". Bir nesnede birleştirmek okunabilirliği
+ * artırmıyor; render içinde if/else zinciri kurmak ise her çizimde yeniden yaratılan kod olurdu
+ * (bkz. tests/ui.test.mjs KURAL 8 — sabitler modül düzeyinde).
+ *
+ * ORTALAMA bandında (±%5) renk NÖTR: 300₺ ile 310₺ arasındaki farkı yeşil/kırmızı ile
+ * göstermek, olmayan bir farkı varmış gibi sunmak olurdu.
+ */
+const PRICE_COMPARE_LABEL_KEY = {
+  veryGood: "priceCompareVeryGood",
+  good: "priceCompareGood",
+  average: "priceCompareAverage",
+  aboveAverage: "priceCompareAboveAverage",
+  high: "priceCompareHigh",
+};
+const PRICE_COMPARE_TONE = {
+  veryGood: "text-emerald-600",
+  good: "text-emerald-600",
+  average: "text-gray-500",
+  aboveAverage: "text-amber-600",
+  high: "text-red-500",
+};
+// Ok yönü metni TEKRARLAMIYOR, hızlı taramayı kolaylaştırıyor. "Ortalama" bandında ok YOK:
+// gösterilecek bir yön olmadığı için ok koymak yanıltıcı olurdu.
+const PRICE_COMPARE_ARROW = {
+  veryGood: <TrendingDown size={11} className="flex-shrink-0" />,
+  good: <TrendingDown size={11} className="flex-shrink-0" />,
+  average: null,
+  aboveAverage: <TrendingUp size={11} className="flex-shrink-0" />,
+  high: <TrendingUp size={11} className="flex-shrink-0" />,
+};
 import { useApp } from "./state/AppLogicProvider";
 import { MONTH_ABBR_BY_LANG } from "../data/i18n";
 import { BookOpen, Sparkles, Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download, Scale, TrendingDown, Maximize2 } from "lucide-react";
@@ -2929,9 +2962,28 @@ export function AppShell() {
                         const isSel = bookingService && !bookingService.other && bookingService.name === s.name;
                         return (
                           <button key={i} onClick={() => setBookingService({ name: s.name, price: s.price, other: false, fixed: s.fixed })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 hover:border-rose-300"}`}>
-                            <span className="text-sm font-medium flex items-center gap-2 min-w-0">
-                              <ToolIcon size={13} className={`flex-shrink-0 ${isSel ? "text-white" : "text-rose-400"}`} />
-                              <span className="truncate">{s.name}</span>
+                            <span className="text-sm font-medium flex flex-col gap-0.5 min-w-0">
+                              <span className="flex items-center gap-2 min-w-0">
+                                <ToolIcon size={13} className={`flex-shrink-0 ${isSel ? "text-white" : "text-rose-400"}`} />
+                                <span className="truncate">{s.name}</span>
+                              </span>
+                              {/* FİYATIN PİYASADAKİ YERİ (kullanıcı isteği).
+                                  Yalnızca YETERLİ ÖRNEKLEM varsa çıkıyor: `level` null ise hiçbir
+                                  şey gösterilmiyor. İki tamircinin fiyatına bakıp "bu çok iyi"
+                                  demek bir bilgi değil, uydurmadır — bugünkü veride 17 hizmetin
+                                  15'inde bu satır hiç görünmeyecek ve bu doğru davranış.
+                                  Metin FİYAT hakkında, tamirci hakkında değil: ucuz olmak iyi
+                                  tamirci olmak demek değil. */}
+                              {s.marketCompare?.level && (
+                                <span className={`text-[10px] font-semibold flex items-center gap-1 flex-wrap ${isSel ? "text-white/90" : PRICE_COMPARE_TONE[s.marketCompare.level]}`}>
+                                  {PRICE_COMPARE_ARROW[s.marketCompare.level]}
+                                  {t(PRICE_COMPARE_LABEL_KEY[s.marketCompare.level])}
+                                  <span className={isSel ? "text-white/60 font-normal" : "text-gray-400 font-normal"}>
+                                    · {t("priceCompareDetail", { count: String(s.marketCompare.sampleSize), median: String(s.marketCompare.median) })}
+                                  </span>
+                                  <InfoTip inline text={t("priceCompareTip")} label={t("infoTipAria")} />
+                                </span>
+                              )}
                             </span>
                             <span className="flex items-center gap-2 flex-shrink-0">
                               {/* Marka rozeti: bu fiyatın SENİN aracın için olduğunu açıkça söyler. */}

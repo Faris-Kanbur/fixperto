@@ -595,6 +595,124 @@ export function brandPriceFor(service, brand) {
   return key != null && has(bp[key]) ? String(bp[key]) : null;
 }
 
+/**
+ * FİYATIN PİYASAYA GÖRE YERİ — "çok iyi / iyi / ortalama / yüksek".
+ * ================================================================================================
+ * Kullanıcı isteği: randevu alırken bu tamircinin fiyatının diğerlerine göre nerede durduğu
+ * görünsün. Saf bir işlev olarak burada duruyor — girdi verilir, çıktı alınır; React'e ya da ağa
+ * bağlı değil, yani gerçekten çalıştırılarak test edilebiliyor.
+ *
+ * ÖNCE DÜRÜST BİR ÖLÇÜM — BUGÜNKÜ TOHUM VERİSİNDE BU HİÇ GÖRÜNMEYECEK:
+ * Tohum verisini saydım. 10 tamircide 17 farklı hizmet var. En yoğun iki hizmette (yağ değişimi,
+ * periyodik bakım) ÜÇ tamircinin sabit fiyatı var — ama karşılaştırılan tamirci havuzdan
+ * çıkarıldığı için geriye İKİ tamirci kalıyor, yani asgari örneklemin altında.
+ * SONUÇ: bugünkü veride 17 hizmetin 17'sinde karşılaştırma çıkmıyor.
+ *
+ * İlk ölçümümde "2 hizmette çıkar" yazmıştım ve YANLIŞTI: saydığım sayı fiyat veren tamirci
+ * sayısıydı, oysa karşılaştırmada kişinin KENDİSİ havuza girmiyor. Testi yazıp gerçek tohum
+ * verisiyle çalıştırınca fark ettim.
+ *
+ * Bu bir eksiklik değil, doğru davranış: iki tamircinin fiyatına bakıp "bu çok iyi" demek bir
+ * bilgi değil, uydurmadır. Eşiği 2'ye indirip özelliği "çalışır" göstermek mümkündü ama iki
+ * fiyatın "medyanı" ikisinin ortasıdır — hangisinin normal olduğunu söylemez. Özellik platform
+ * büyüdükçe kendiliğinden anlamlı hâle geliyor; o güne kadar hiçbir şey göstermiyor.
+ *
+ * NEDEN MEDYAN, "ORTALAMA" DEĞİL:
+ * İstek "ortalama" diyordu ama aritmetik ortalama tek bir aykırı değere karşı savunmasız:
+ * üç tamirci 300₺ isterken dördüncüsü 5.000₺ yazarsa ortalama 1.475₺ olur ve 300₺'lik fiyat
+ * "çok iyi" görünür — oysa piyasanın ortası hâlâ 300₺. Medyan bu bozulmayı yaşamıyor.
+ * Arayüzde gösterilen sayı da medyan, ve "piyasa ortası" diye adlandırılıyor; kullanıcıya
+ * aritmetik ortalama diye sunulmuyor.
+ *
+ * NEDEN MARKA FİYATI TUTARLI KULLANILIYOR:
+ * Tamirciler marka başına farklı fiyat verebiliyor (`brandPrices`). Karşılaştırma havuzunda
+ * kimi tamircinin marka fiyatını, kiminin taban fiyatını almak yanlış olurdu. Kural şu: HER
+ * tamirci için "bu aracı getirsem bana ne yazar" değeri alınıyor — marka fiyatı varsa o, yoksa
+ * taban fiyat. Marka zammı olmayan bir tamircinin taban fiyatı zaten o araç için geçerli fiyattır.
+ *
+ * NEDEN DEĞİŞKEN FİYATLI HİZMETLER KARŞILAŞTIRILMIYOR:
+ * "Değişken" demek fiyat henüz belli değil demek. Oradaki sayı bir tahmin ya da başlangıç
+ * değeri; onu kesin fiyatlarla aynı havuza koymak iki tarafı da yanlış gösterir.
+ */
+
+/** Sıralı sayı dizisinin medyanı. Çift sayıda eleman varsa ortadaki ikisinin ortası. */
+export function medianOf(numbers) {
+  const sorted = (numbers || []).filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b);
+  if (sorted.length === 0) return null;
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+}
+
+/**
+ * ASGARİ ÖRNEKLEM. Üçün altında karşılaştırma yapılmıyor.
+ * Neden 3: iki fiyatın "medyanı" ikisinin ortasıdır, yani hangisinin normal olduğunu söylemez —
+ * sadece ikisini birbirine böler. Üç değerde gerçek bir orta nokta oluşuyor. Daha yükseğe
+ * çekmek (ör. 5) istatistiksel olarak daha iyi olurdu ve bugünkü veride fark yaratmazdı — çünkü
+ * 3'te de hiçbir hizmet eşiği geçmiyor. 3'te kalmasının sebebi gelecekteki veri: platform
+ * büyüdükçe önce 3'e ulaşılacak ve o noktada gösterilen bilgi zayıf da olsa gerçek olacak.
+ * Örneklem sayısı kullanıcıya AÇIKÇA söyleniyor, yani az veriyi çok gibi göstermiyoruz.
+ */
+export const PRICE_COMPARE_MIN_SAMPLE = 3;
+
+/**
+ * EŞİKLER — medyana oran olarak.
+ * Sayılar keyfi değil, iki kısıttan çıkıyor: (1) ±%5 bandı "ortalama" sayılmalı, çünkü 300₺ ile
+ * 310₺ arasındaki farkı "daha iyi" diye sunmak kullanıcıyı yanlış yönlendirir; (2) bantlar
+ * kullanıcının gerçekten hissedeceği farklara karşılık gelmeli — %20 daha ucuz hissedilir,
+ * %7 hissedilmez.
+ */
+const PRICE_LEVELS = [
+  { max: 0.8, level: "veryGood" },        // medyanın %20+ altı
+  { max: 0.95, level: "good" },           // %5-20 altı
+  { max: 1.05, level: "average" },        // ±%5 — fark yok sayılıyor
+  { max: 1.25, level: "aboveAverage" },   // %5-25 üstü
+  { max: Infinity, level: "high" },       // %25+ üstü
+];
+
+/** Bir tamircinin BU ARAÇ için bu hizmete yazdığı sayısal fiyat. Yoksa/değişkense null. */
+function comparablePrice(service, brand) {
+  if (!service) return null;
+  // Değişken fiyat karşılaştırılabilir bir fiyat değil (bkz. yukarıdaki gerekçe).
+  if (service.fixed === false) return null;
+  const override = brandPriceFor(service, brand);
+  const raw = override != null ? override : service.price;
+  const n = parsePriceNumber(raw);
+  return n > 0 ? n : null;
+}
+
+/**
+ * BU TAMİRCİNİN FİYATI PİYASANIN NERESİNDE?
+ *
+ * Dönüş `null` ise KARŞILAŞTIRMA YAPILMAMALI — çağıran taraf hiçbir şey göstermemeli.
+ * `null` dönen durumlar ve hepsi kasıtlı:
+ *   - hizmetin katalog anahtarı yok (tamircinin kendi yazdığı serbest metin: aynı işi mi
+ *     anlatıyor bilinmiyor, "Fren bakımı" ile "Fren balata değişimi" aynı şey olabilir de olmayabilir)
+ *   - bu tamircinin fiyatı yok ya da değişken
+ *   - havuzda asgari örneklem kadar başka tamirci yok
+ */
+export function comparePriceToMarket({ serviceKey, service, mechanics, excludeMechanicId, brand }) {
+  if (!serviceKey) return null;
+  const mine = comparablePrice(service, brand);
+  if (mine == null) return null;
+
+  const others = [];
+  for (const m of mechanics || []) {
+    if (m?.id === excludeMechanicId) continue;
+    const match = (m?.services || []).find((s) => s?.key === serviceKey);
+    const price = comparablePrice(match, brand);
+    if (price != null) others.push(price);
+  }
+  if (others.length < PRICE_COMPARE_MIN_SAMPLE) {
+    // Örneklem yetersiz. Çağıran taraf isterse "karşılaştırma için yeterli veri yok" diyebilsin
+    // diye sayıyı da veriyoruz — sessizce kaybolmak yerine sebebini söylemek.
+    return { level: null, sampleSize: others.length, median: null, ratio: null, myPrice: mine };
+  }
+  const median = medianOf(others);
+  const ratio = median > 0 ? mine / median : null;
+  const level = ratio == null ? null : PRICE_LEVELS.find((b) => ratio <= b.max).level;
+  return { level, sampleSize: others.length, median, ratio, myPrice: mine };
+}
+
 // ---------------------------------------------------------------------------------------------
 // setPageMeta — sayfa başlığı ve arama motoru / paylaşım meta etiketleri
 // ---------------------------------------------------------------------------------------------

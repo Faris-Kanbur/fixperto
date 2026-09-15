@@ -33,7 +33,7 @@ import {
   listingCurrency, isValidEmail, validatePhone, validateVin, normalizeVin, computeReminders, mockTranslate, statusColor,
   isImgUrl, monthsBetween, initials, listingStatusMeta, slugifyForEmail, ticketDaysOpen, ticketSlaBreached,
   parseDecimalField, listingMarketPriceTier, initialSiteLang, detectCountryCode, rememberSiteLang,
-  brandPriceFor, canonicalBrand, readNavSession, writeNavSession,
+  brandPriceFor, canonicalBrand, readNavSession, writeNavSession, comparePriceToMarket,
   slotsFromHoursText, isSlotInPast, scoreNearMisses,
 } from "../../utils/helpers";
 import { PriceLevelDots } from "../../components/ui/PriceLevelDots";
@@ -1341,6 +1341,22 @@ function useAppLogic() {
       fixed: s.fixed !== undefined ? !!s.fixed : isFixedPriceService(s.name),
       fromCatalog: false,
       brandPriced: brandPriceFor(s, bookingVehicleBrand) != null,
+      /**
+       * FİYATIN PİYASADAKİ YERİ (kullanıcı isteği).
+       * `key` olmadan karşılaştırma yapılamıyor: tamircinin kendi yazdığı serbest metin
+       * hizmetlerde "aynı iş mi" sorusu cevaplanamaz ("Fren bakımı" ile "Fren balata değişimi"
+       * aynı şey olabilir de olmayabilir). O yüzden anahtar da taşınıyor.
+       * Karşılaştırma AYNI ARAÇ MARKASI için yapılıyor — havuzdaki her tamirci için "bu aracı
+       * getirsem ne yazar" değeri alınıyor (bkz. comparePriceToMarket).
+       */
+      key: s.key || null,
+      marketCompare: comparePriceToMarket({
+        serviceKey: s.key,
+        service: s,
+        mechanics: mechanicsList,
+        excludeMechanicId: selectedMechanic?.id,
+        brand: bookingVehicleBrand,
+      }),
     }));
     const ownKeys = (selectedMechanic?.services || []).map(s => (s.name || "").toLocaleLowerCase("tr-TR"));
     const extras = ATU_FIXED_CATALOG.filter(c => !ownKeys.some(k => k.includes(c.matchKey) || c.matchKey.includes(k))).map(c => ({ name: SERVICE_BY_KEY[c.key] ? (SERVICE_BY_KEY[c.key][lang] || c.name) : c.name, price: c.price, other: false, fixed: true, fromCatalog: true, brandPriced: false }));
