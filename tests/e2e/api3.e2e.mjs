@@ -167,8 +167,24 @@ try {
     const stillThere = rows(`SELECT id FROM ${m.table} WHERE id = ?`, id).length === 1;
     if (!stillThere) idorProblems.push(`${m.base}: 4xx döndü AMA kayıt gerçekten silinmiş`);
 
-    // Sahibi kendi kaydını düzenleyebilmeli — kural sadece kısıtlamamalı, meşru işi bozmamalı.
-    const own = await api("PATCH", `${m.base}/${id}`, { token: owner.token, body: { status: "active" } });
+    /**
+     * Sahibi kendi kaydını düzenleyebilmeli — kural sadece kısıtlamamalı, meşru işi bozmamalı.
+     *
+     * GÖVDE TABLOYA GÖRE: eskiden her tablo için `{ status: "active" }` gönderiliyordu ve bu,
+     * durum doğrulaması olmayan tablolarda çalışıyordu. Tam uygulama denetiminde randevulara
+     * DURUM MAKİNESİ eklendi ve "active" randevu durumu olmadığı için istek haklı olarak 400
+     * döndü — yani matrisin gövdesi geçerli bir düzenleme DEĞİLDİ. Tablodan bağımsız bir gövde,
+     * doğrulama sıkılaştıkça yanlış alarm üretir; o yüzden her tablo için o tabloda GERÇEKTEN
+     * meşru olan bir alan yazıyoruz.
+     */
+    const LEGIT_PATCH = {
+      appointments: { issue: "sahibi tarafından güncellendi" },
+      vehicles: { tireType: "yaz" },
+      support_tickets: { subject: "güncellendi" },
+    };
+    const own = await api("PATCH", `${m.base}/${id}`, {
+      token: owner.token, body: LEGIT_PATCH[m.table] || { status: "active" },
+    });
     if (own.status >= 400) idorProblems.push(`${m.base}: SAHİBİ kendi kaydını düzenleyemiyor (${own.status})`);
   }
   eq(idorProblems, [], "sahiplikli kaynaklarda IDOR yok ve meşru sahip engellenmiyor");

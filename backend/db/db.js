@@ -503,6 +503,22 @@ function ensureColumn(table, columnDef) {
   ["listings", "inspectionReportUrl TEXT"],
   ["listings", "featured INTEGER DEFAULT 0"],
   ["listings", "adminRemoved INTEGER DEFAULT 0"],
+  /**
+   * RANDEVU OTOMATİK KABUL AYARI — SUNUCUYA TAŞINDI (tam uygulama denetiminde bulundu).
+   * Ayar tamircinin kendi ayarlar ekranında vardı ama YALNIZCA istemci state'inde tutuluyordu
+   * (`useState(true)`), sunucuya hiç yazılmıyordu. Daha kötüsü: randevu oluşturulurken
+   * `autoAccepted` değerini MÜŞTERİNİN tarayıcısı gönderiyordu ve orada varsayılan `true` idi.
+   * Yani tamirci "randevularımı ben onaylayacağım" dediğinde bu ayarın HİÇBİR ETKİSİ yoktu.
+   * Varsayılan 1: bugünkü gözlenen davranış (her randevu otomatik kabul) BİREBİR korunuyor,
+   * ama artık tamirci gerçekten kapatabiliyor ve karar sunucuda veriliyor.
+   */
+  ["mechanics", "autoAcceptBookings INTEGER DEFAULT 1"],
+  /**
+   * ÖNE ÇIKARMA SÜRESİ (tam uygulama denetiminde bulundu): arayüz "7 gün öne çıkarıldı" diyordu
+   * ama süreyi takip eden hiçbir şey yoktu — bir kez öne çıkan ilan SONSUZA KADAR öyle kalıyordu.
+   * Ücretli bir özelliğin süresiz verilmesi hem verilen sözün tutulmaması hem gelir kaybı.
+   */
+  ["listings", "featuredUntil TEXT"],
   ["mechanics", "phone TEXT"],
   ["mechanics", "password TEXT DEFAULT 'demo1234'"],
   ["listings", "createdAt TEXT"],
@@ -978,6 +994,35 @@ CREATE INDEX IF NOT EXISTS idx_vehicle_history_owner ON vehicle_history (ownerId
 -- kazancı satır sayısı değil, satılmış/kaldırılmış ilanların fotoğraflarını hiç okumamak.
 CREATE INDEX IF NOT EXISTS idx_listings_status ON listings (status);
 `);
+
+/**
+ * SÜRESİ DOLAN ÖNE ÇIKARMALARI KAPAT (tam uygulama denetiminde eklendi).
+ * ------------------------------------------------------------------------------------------------
+ * `featuredUntil` yazılıyor ama onu OKUYAN bir şey olmazsa hiçbir şey değişmezdi — süre yazmak
+ * tek başına süreyi uygulamak değil. Temizlik hem sunucu açılışında hem periyodik olarak
+ * çalışıyor:
+ *   - açılışta: sunucu kapalıyken geçen süre de hesaba katılsın
+ *   - periyodik: uzun süre çalışan sunucuda süre gerçekten dolsun
+ * `unref`: bu zamanlayıcı sürecin kapanmasını engellemiyor (testler takılmasın).
+ *
+ * NEDEN OKUMA ANINDA HESAPLAMIYORUZ: ilanlar onlarca farklı yerden okunuyor (liste, öneri motoru,
+ * yönetici paneli, arama). Her okuma yoluna "süresi geçti mi" kontrolü eklemek, biri atlandığında
+ * sessizce yanlış davranan bir sistem demek. Tek yerde yazmak daha güvenli.
+ */
+function expireFeaturedListings() {
+  try {
+    const info = db.prepare(
+      `UPDATE listings SET featured = 0, featuredUntil = NULL
+       WHERE featured = 1 AND featuredUntil IS NOT NULL AND featuredUntil < ?`
+    ).run(new Date().toISOString());
+    if (info.changes > 0) console.log(`[listings] süresi dolan ${info.changes} öne çıkarma kapatıldı.`);
+  } catch (err) {
+    console.error("[listings] öne çıkarma süresi temizliği başarısız:", err?.message);
+  }
+}
+expireFeaturedListings();
+const featuredSweep = setInterval(expireFeaturedListings, 10 * 60 * 1000);
+if (typeof featuredSweep.unref === "function") featuredSweep.unref();
 
 /** Önbellek sütunlarını (reviewList/reviews/rating) tablodan yeniden üretir. Tek doğruluk kaynağı tablo. */
 export function recomputeMechanicReviews(mechanicId) {

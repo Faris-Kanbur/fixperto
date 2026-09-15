@@ -21,6 +21,7 @@ import careersRouter from "./routes/careers.js";
 import { quoteRequestsRouter, quoteOffersRouter } from "./routes/quotes.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { mediaRouter, mediaFileRouter } from "./routes/media.js";
+import { appointmentsRouter } from "./routes/appointments.js";
 import { authRouter } from "./routes/auth.js";
 
 seedIfEmpty();
@@ -212,6 +213,14 @@ app.use("/api/owners", makeCrudRouter("owners", {
 app.use("/api/vehicles", makeCrudRouter("vehicles", {
   authScope: { fields: [{ field: "ownerId", role: "owner" }], publicRead: false },
 }));
+/**
+ * RANDEVULAR: özel router CRUD'DAN ÖNCE (tam uygulama denetiminde eklendi).
+ * Randevu satırı İKİ TARAFIN paylaştığı tek kayıt; sahiplik kontrolü "bu satır senin mi" sorusunu
+ * doğru cevaplıyor ama randevuda asıl soru "bu ALANI sen yazabilir misin" — denetimde müşterinin
+ * status/servicePrice/depositPaid/noShow/autoAccepted gibi karşı tarafa ait kararları yazabildiği
+ * ÖLÇÜLDÜ. Özel router alan ve durum kontrolünü yapıyor; GET ve DELETE jenerik CRUD'da kalıyor.
+ */
+app.use("/api/appointments", appointmentsRouter);
 app.use("/api/appointments", makeCrudRouter("appointments", {
   authScope: { fields: [{ field: "ownerId", role: "owner" }, { field: "mechanicId", role: "mechanic" }], publicRead: false },
 }));

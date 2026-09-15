@@ -427,6 +427,25 @@ export const api = {
    * URI olarak kalıyor çünkü bu adresler kimlik doğrulaması olmadan okunabiliyor (cache'lenebilir
    * olmanın koşulu bu). Gerekçe: backend/utils/mediaStore.js.
    */
+  /**
+   * İLAN ETKİLEŞİMLERİ — SATICININ MEŞRU İŞLEMLERİ (tam uygulama denetiminde eklendi).
+   * Önceden bunlar jenerik `listings.update(id, { offers })` ile yapılıyordu, yani satıcı teklif
+   * dizisinin TAMAMINI yeniden yazıyordu — uydurma teklif yazmak ya da gelenleri silmek mümkündü.
+   * Artık sunucu mevcut diziyi okuyup yalnızca izin verilen alanı değiştiriyor.
+   */
+  listingOffers: {
+    markSeen: (listingId: number | string): Promise<{ listing: any }> =>
+      request(`/api/listings/${listingId}/offers/seen`, { method: "POST" }),
+    respond: (listingId: number | string, offerId: number | string, status: "accepted" | "rejected"): Promise<{ listing: any }> =>
+      request(`/api/listings/${listingId}/offers/${offerId}/respond`, { method: "POST", body: JSON.stringify({ status }) }),
+  },
+  listingFeature: {
+    // `featured` artık jenerik PATCH'ten yazılamıyor: süre de sunucuda yazılıyor (7 gün).
+    buy: (listingId: number | string): Promise<{ listing: any; featuredUntil: string; days: number }> =>
+      request(`/api/listings/${listingId}/feature`, { method: "POST" }),
+    remove: (listingId: number | string): Promise<{ listing: any }> =>
+      request(`/api/listings/${listingId}/unfeature`, { method: "POST" }),
+  },
   media: {
     upload: (dataUrl: string, kind: "image" | "avatar" = "image"): Promise<{ url: string; name: string; bytes: number; contentType: string; deduped: boolean }> =>
       request("/api/media", { method: "POST", body: JSON.stringify({ data: dataUrl, kind }) }),

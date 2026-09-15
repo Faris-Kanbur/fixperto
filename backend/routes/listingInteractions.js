@@ -175,4 +175,110 @@ listingInteractionsRouter.post("/:id/messages", (req, res) => {
   res.status(201).json({ listing: hydrate("listings", fresh) });
 });
 
+/**
+ * SATICININ TEKLİFLER ÜZERİNDEKİ MEŞRU İŞLEMLERİ — ÖZEL UÇLAR (tam uygulama denetiminde eklendi).
+ * ================================================================================================
+ * BULUNAN SORUN: satıcının "teklifi gördüm" ve "teklifi kabul/reddet" işlemleri jenerik
+ * `PATCH /api/listings/:id { offers: [...] }` ile yapılıyordu — yani satıcı teklif dizisinin
+ * TAMAMINI yeniden yazıyordu. Ölçüldü: satıcı bu yolla var olmayan bir alıcıdan uydurma teklif
+ * yazabiliyor ("ilgi var" izlenimi) ya da gelen teklifleri silebiliyordu.
+ *
+ * Alanı yönetici-only yapmak kolaydı ama İKİ MEŞRU AKIŞI kırardı. Doğru çözüm, yapılabilecek
+ * işlemleri SUNUCUDA tanımlamak: sunucu mevcut diziyi okuyor ve yalnızca izin verilen alanı
+ * değiştiriyor. Alıcının verisi (kim, ne kadar, ne zaman) satıcının elinden geçmiyor.
+ */
+
+/** Yalnızca ilanın SAHİBİ. Yönetici de kabul ediliyor (moderasyon). */
+function sellerContext(req, res) {
+  const actor = resolveActor(req);
+  if (!actor) { res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." }); return null; }
+  const listing = db.prepare(`SELECT * FROM listings WHERE id = ?`).get(req.params.id);
+  if (!listing) { res.status(404).json({ error: "İlan bulunamadı." }); return null; }
+  if (actor.role !== "admin" && !isOwnListing(listing, actor)) {
+    res.status(403).json({ error: "Bu ilan sizin değil." });
+    return null;
+  }
+  return { actor, listing };
+}
+
+/** POST /:id/offers/seen — gelen teklifleri "görüldü" işaretle. Başka hiçbir alan değişmiyor. */
+listingInteractionsRouter.post("/:id/offers/seen", (req, res) => {
+  const ctx = sellerContext(req, res);
+  if (!ctx) return;
+  const offers = JSON.parse(ctx.listing.offers || "[]");
+  // `seen` DIŞINDA hiçbir alana dokunulmuyor — satıcının eli tutara, alıcıya, tarihe değmiyor.
+  const updated = offers.map((o) => (o?.seen ? o : { ...o, seen: true }));
+  db.prepare(`UPDATE listings SET offers = ? WHERE id = ?`).run(JSON.stringify(updated), ctx.listing.id);
+  const fresh = db.prepare(`SELECT * FROM listings WHERE id = ?`).get(ctx.listing.id);
+  res.json({ listing: hydrate("listings", fresh) });
+});
+
+/**
+ * POST /:id/offers/:offerId/respond — teklifi kabul et ya da reddet.
+ * Durum makinesi: yalnızca `pending` bir teklif yanıtlanabilir. Bir teklife iki kez yanıt
+ * verilmesi (ya da reddedileni sonradan kabul etmek) engelleniyor.
+ */
+/**
+ * KABUL EDİLEN YANIT DEĞERLERİ — uygulamanın GERÇEKTE kullandığı sözlük.
+ * İlk yazdığımda "declined" demiştim ve YANLIŞTI: bu akışın her yeri (teklif tekrar verme kuralı,
+ * "replaced" arşivleme, arayüzdeki düğmeler) "rejected" kullanıyor. Kendi kelimemi dayatmak,
+ * reddedilmiş bir teklifin arşivlenmesini ve alıcının yeniden teklif verebilmesini sessizce
+ * bozardı. Test bunu yakaladı (409 yerine 201 bekleniyordu).
+ */
+const OFFER_RESPONSES = new Set(["accepted", "rejected"]);
+listingInteractionsRouter.post("/:id/offers/:offerId/respond", (req, res) => {
+  const ctx = sellerContext(req, res);
+  if (!ctx) return;
+  const status = String(req.body?.status || "");
+  if (!OFFER_RESPONSES.has(status)) {
+    return res.status(400).json({ error: "Yanıt 'accepted' veya 'declined' olmalı." });
+  }
+  const offers = JSON.parse(ctx.listing.offers || "[]");
+  const idx = offers.findIndex((o) => String(o?.id) === String(req.params.offerId));
+  if (idx === -1) return res.status(404).json({ error: "Teklif bulunamadı." });
+  const current = offers[idx];
+  if (current.status && current.status !== "pending") {
+    return res.status(409).json({ error: "Bu teklife zaten yanıt verilmiş." });
+  }
+  // Yalnızca `status` ve `seen` değişiyor; tutar ve alıcı bilgisi olduğu gibi kalıyor.
+  offers[idx] = { ...current, status, seen: true };
+  db.prepare(`UPDATE listings SET offers = ? WHERE id = ?`).run(JSON.stringify(offers), ctx.listing.id);
+  const fresh = db.prepare(`SELECT * FROM listings WHERE id = ?`).get(ctx.listing.id);
+  res.json({ listing: hydrate("listings", fresh) });
+});
+
+/**
+ * POST /:id/feature — ilanı öne çıkar (ve SÜRESİNİ yaz).
+ *
+ * İKİ SORUN BİRDEN DÜZELİYOR:
+ * 1) `featured` jenerik PATCH'ten serbestçe yazılabiliyordu; arayüzdeki 49₺'lik "ödeme" adımını
+ *    hiç görmeden doğrudan API'den açmak mümkündü.
+ * 2) Arayüz "ilanınız 7 gün öne çıkarıldı" diyordu ama HİÇBİR ŞEY süreyi takip etmiyordu —
+ *    yani bir kez öne çıkan ilan SONSUZA KADAR öne çıkmış kalıyordu. Ücretli bir özelliğin
+ *    süresiz verilmesi hem gelir kaybı hem de "7 gün" sözünün tutulmaması.
+ *
+ * DÜRÜST SINIR — BU UYGULAMADA ÖDEME SAĞLAYICISI YOK: arayüzdeki ödeme adımı bir gösterim
+ * ("Ödeme alındı (demo)"). Sunucu bir ödemeyi DOĞRULAYAMAZ, çünkü doğrulanacak bir ödeme yok.
+ * Bu uç yapılabilecek en fazlasını yapıyor: yetkiyi kontrol ediyor, süreyi yazıyor ve kaydı
+ * denetlenebilir hâle getiriyor. Gerçek ödeme entegrasyonu geldiğinde doğrulama BURAYA eklenir.
+ */
+const FEATURE_DAYS = 7;
+listingInteractionsRouter.post("/:id/feature", (req, res) => {
+  const ctx = sellerContext(req, res);
+  if (!ctx) return;
+  const until = new Date(Date.now() + FEATURE_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  db.prepare(`UPDATE listings SET featured = 1, featuredUntil = ? WHERE id = ?`).run(until, ctx.listing.id);
+  const fresh = db.prepare(`SELECT * FROM listings WHERE id = ?`).get(ctx.listing.id);
+  res.json({ listing: hydrate("listings", fresh), featuredUntil: until, days: FEATURE_DAYS });
+});
+
+/** POST /:id/unfeature — satıcı kendi ilanını öne çıkarmadan çıkarabilir. */
+listingInteractionsRouter.post("/:id/unfeature", (req, res) => {
+  const ctx = sellerContext(req, res);
+  if (!ctx) return;
+  db.prepare(`UPDATE listings SET featured = 0, featuredUntil = NULL WHERE id = ?`).run(ctx.listing.id);
+  const fresh = db.prepare(`SELECT * FROM listings WHERE id = ?`).get(ctx.listing.id);
+  res.json({ listing: hydrate("listings", fresh) });
+});
+
 export default listingInteractionsRouter;

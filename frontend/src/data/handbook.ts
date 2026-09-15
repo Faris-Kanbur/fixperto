@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 30 STATİK takım + 6 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 30 STATİK takım + 7 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -2310,6 +2310,105 @@ Test kuralını yazarken de kendi hatamı tekrarladım: ilk hâli "satırda hem 
 **Önceden oluşmuş uydurma teklifler programatik olarak ayırt edilemiyor.** \`quote_offers\` tablosunda "bunu kim oluşturdu" bilgisi yok; uydurma bir teklif, gerçek bir tekliften veri olarak farksız görünüyor. Bu yüzden otomatik bir temizlik yazmadım — gerçek bir teklifi silme riski, eski test kayıtlarını elde silmenin zahmetinden ağır.
 
 Test amaçlı oluşturulmuş teklif istekleri elle silinebilir; bundan sonra oluşacak kayıtlarda bu sorun yok.`,
+      },
+      {
+        id: "tam-uygulama-denetimi",
+        title: "25.12 Bağımsız tam uygulama denetimi — 24 bulgu",
+        body: `## Yöntem: önce anla, sonra saldır
+
+Bildirilmiş hata listesine bakmadan, uygulamanın tamamı bağımsız olarak denetlendi. Sıra: mimariyi ve izin modelini KODDAN çıkar → saldırgan gibi gerçek HTTP istekleri at → bulguları sınıflandır → düzelt → İKİNCİ KEZ tara.
+
+Önemli ayrım: keşif aracı ile test aracı ayrı. \`tests/e2e/audit-probe.mjs\` **raporlar, iddia etmez** — "şunu denedim, sonuç şu" der ve bulgu listesi üretir. Test ise "şu doğru olmalı" der. Denetimin başında neyin kırık olduğu bilinmediği için ilki gerekliydi; bulgular düzeltildikten sonra kalıcı olanlar \`api7.e2e.mjs\`e iddia olarak taşındı (104 kontrol).
+
+**İlk tur: 22 bulgu. Düzeltmelerden sonra ikinci tur: 2 (ikisi de kabul edilmiş ödünleşim).** Sonra iki bulgu daha çıktı (iş başvuruları, öne çıkarma süresi) → toplam 24.
+
+## En ciddi bulgu: müşteri listesi herkese açıktı
+
+\`GET /api/owners\` **oturumsuz** 200 dönüyordu ve her müşterinin adı, e-postası, telefonu ve adresini içeriyordu. Siteyi bilen herkes tek istekle tüm müşteri listesini indirebilirdi.
+
+İlginç ayrıntı: tekil kayıt (\`/api/owners/1\`) DOĞRU biçimde 404 veriyordu. **Kapı kilitliydi, pencere açıktı** — ve bu desen bu denetimde üç kez çıktı (teklif oluşturma vs. PATCH, owners tekil vs. liste, offers dizisi).
+
+Liste tamamen kapatılamadı: ön yüz açılışta (girişten önce) çekiyor ve ilandaki satıcının adı/şehri, sohbetteki karşı tarafın dili gibi meşru yerlerde kullanıyor — 401 döndürmek siteyi misafirlere kapatırdı. Doğru çözüm alanı daraltmak: iletişim bilgileri listeden çıktı, yönetici tam listeyi görmeye devam ediyor, kullanıcı kendi kaydını tekil uçtan tam alıyor.
+
+## Yazılmış bir korumayı öldüren yazım hatası
+
+\`ADMIN_ONLY_FIELDS\` içinde \`job_listings\` anahtarı **iki kez** tanımlıydı. JavaScript ikinciyi geçerli sayıp birinciyi sessizce eziyor:
+
+\`\`\`
+job_listings: ["applicants"],   ← bu satır hiç çalışmıyordu
+...
+job_listings: ["shareCount"],   ← yalnızca bu geçerliydi
+\`\`\`
+
+Yani gerekçesi yorumla belgelenmiş bir güvenlik kontrolü bir yazım hatasıyla ölmüştü. Ölçüldü: tamirci kendi ilanının başvuru listesini uydurma kayıtlarla değiştirebiliyordu.
+
+## Randevu: dokuz alan, karşı tarafın kararları
+
+Randevu satırı iki tarafın paylaştığı tek kayıt. Sahiplik kontrolü "bu satır senin mi" sorusunu doğru cevaplıyordu — ama randevuda asıl soru **"bu ALANI sen yazabilir misin"**. Müşteri kendi randevusunda şunları yazabiliyordu:
+
+| Alan | Sonucu |
+|---|---|
+| \`status: "Tamamlandı"\` | yapılmamış işi tamamlanmış gösterme |
+| \`servicePrice: 1\` | hizmet bedelini kendi belirleme |
+| \`depositPaid: 99999\` | ödenmemiş kaporayı ödenmiş gösterme |
+| \`depositRefunded\` | yapılmamış iadeyi yapılmış gösterme |
+| \`noShow\` | gelen müşteriyi "gelmedi" işaretleme |
+| \`autoAccepted\` | tamircinin onayını atlamış gösterme |
+| \`warrantyEndDate\` | verilmemiş garantiyi uydurma |
+| \`mechanicName\` | kaydın tamircisini değiştirme |
+| \`ownerId\`/\`mechanicId\` | randevuyu başkasına devretme |
+
+Hiçbiri sahiplik ihlali değil — hepsi kendi satırında. O yüzden sahiplik kontrolü bunları hiç görmedi.
+
+Çözüm alan bazlı, **rol bazlı beyaz liste** (varsayılan RET) + durum makinesi. Beyaz liste seçildi çünkü kara listede yeni bir sütun varsayılan olarak AÇIK olur — bu hatanın tam olarak sebebi buydu.
+
+İzinsiz alanlar sessizce düşürülmüyor, **403 ile reddediliyor**: sessizce düşürmek "kaydettim" yanılgısı üretir (kullanıcı değer girer, arayüz gösterir, sunucu yok sayar, yenilemede kaybolur).
+
+**Zincir önemliydi:** tamamlanmış randevu, DOĞRULANMIŞ SERVİS GEÇMİŞİNİN ön koşulu. Yani müşteri randevusunu tamamlanmış yapıp araç satarken alıcıya "platformda gerçekleşmiş bakım" gösterebilirdi. O uç ayrıca "yalnızca işi yapan tamirci" kontrolü yapıyor ve saldırıyı orada da durdurdu — ama iki savunma hattının ikisi de gerekli.
+
+## İki iş kuralı hatası: ayarlar kurguydu
+
+**"Randevuları otomatik kabul et"** ayarı tamircinin ayarlar ekranında vardı ama yalnızca istemci state'indeydi (\`useState(true)\`). İki sonucu: sayfa yenilenince kayboluyordu, ve daha kötüsü randevu durumunu **müşterinin tarayıcısı** belirliyordu (orada varsayılan açık). Yani tamirci "randevularımı ben onaylayacağım" dediğinde ayarın **hiçbir etkisi yoktu**. Artık \`mechanics.autoAcceptBookings\` sütununda ve kararı sunucu veriyor.
+
+**"7 gün öne çıkarma"** (49₺): \`featured\` jenerik PATCH'ten serbestçe yazılabiliyordu (ödeme adımını hiç görmeden) ve süreyi takip eden hiçbir şey yoktu — bir kez öne çıkan ilan **sonsuza kadar** öyle kalıyordu. Artık özel uç, \`featuredUntil\` ve periyodik süre temizliği var.
+
+**Dürüst sınır:** bu uygulamada ödeme sağlayıcısı yok; arayüzdeki ödeme bir gösterim. Sunucu doğrulanacak bir ödeme bulamaz. Uç yapılabilecek en fazlasını yapıyor (yetki + süre + denetlenebilir kayıt); gerçek doğrulama entegrasyon geldiğinde oraya eklenir.
+
+## Tamamen ölü bir özellik: iş başvuruları
+
+Sunucu \`job.status !== "open"\` diye bakıyordu. Ama iş ilanı sözlüğünde "open" **yok**: veritabanı varsayılanı, ön yüzün gönderdiği değer, tohum verisi ve tip tanımı hepsi \`"active"\`. Yani her ilan doğduğu anda "başvuru almıyor" sayılıyordu — **sitedeki hiç kimse hiçbir iş ilanına başvuramıyordu.**
+
+Üstelik hata mesajı yanıltıcıydı: "bu ilan artık başvuru almıyor" diyerek adaya ilanın kapandığını düşündürüyordu, oysa özellik kırıktı.
+
+Düzeltmede AÇIK olanları saymak yerine **KAPALI olanları** sayıyorum. Sebebi: "hangi değerler açıktır" listesi eksik kalırsa sonuç yine sessizce her şeyi reddetmek olur (bu hatanın ta kendisi). Kapalı listesi eksik kalırsa en kötü sonuç kapanmış bir ilana başvuru gelmesi — kıyaslanamaz biçimde daha az zararlı.
+
+## Yarış koşulu: aynı saate 10 randevu
+
+10 eşzamanlı istek 10 kayıt üretti. Slot kontrolü yalnızca istemcideydi ve **istemci kontrolü kontrol değildir.** Artık tek bir işlem (transaction) içinde kontrol ediliyor; SQLite tek yazıcılı olduğu için eşzamanlı isteklerde de doğru. İptal edilen randevu slotu serbest bırakıyor — aksi halde bir kez iptal edilen saat sonsuza kadar kapanırdı.
+
+## Diğer düzeltmeler
+
+- **Satıcı, alıcıların tekliflerini uydurabiliyordu/silebiliyordu** (\`offers\` dizisinin tamamını PATCH ediyordu). Meşru iki işlem — "görüldü" ve "kabul/ret" — sunucuda tanımlı uçlara taşındı: sunucu mevcut diziyi okuyup yalnızca izin verilen alanı değiştiriyor, tutar ve alıcı bilgisi satıcının elinden geçmiyor.
+- **Satıcı, yöneticinin kaldırdığı ilanı geri açabiliyordu** (\`adminRemoved: 0\`) — moderasyon kararını kararın muhatabı iptal ediyordu.
+- **Kullanıcı kendi destek talebine "yönetici yanıtı" uydurabiliyor**, "iade edildi" işaretleyebiliyor ve talebi "çözüldü" yapabiliyordu.
+- **İş başvurusu reddinde e-posta eşlemesi** kaldırıldı: sunucu başvuranın kimliğini zaten oturumdan yazıyor. Eski yol hem çalışması için tüm müşterilerin e-postasının açık olmasını gerektiriyordu hem de aday farklı e-posta yazdıysa sessizce başarısız oluyordu.
+
+## Kendi düzeltmelerimin ürettiği iki regresyon
+
+Bir güvenlik düzeltmesinin başka bir şeyi bozması bu işin en sık tuzağı; ikisi de test tarafından yakalandı:
+
+1. **Randevu router'ında bilinmeyen sütun.** Ayrı router yazarken jenerik CRUD fabrikasının "tabloda olmayan alanı at" adımını tekrarlamayı atladım. Mevcut istemci \`service: "Bakım"\` gönderiyor ve öyle bir sütun yok → INSERT hatası → **500 ve randevu almak tamamen kırıktı.** Fabrikanın çözdüğü bir sorunu yeni dosyada yeniden üretmek, ayrı router yazmanın bilinen bedeli.
+2. **Teklif yanıt sözlüğü.** Uca \`"declined"\` yazdım, oysa uygulamanın her yeri \`"rejected"\` kullanıyor. Kendi kelimemi dayatmak, reddedilen teklifin arşivlenmesini ve alıcının yeniden teklif verebilmesini sessizce bozardı.
+
+Ayrıca güvenlik matrisinin "meşru sahip düzenleyebiliyor" kontrolü tablodan bağımsız \`{ status: "active" }\` gönderiyordu; randevulara durum makinesi eklendikten sonra bu geçerli bir düzenleme olmaktan çıktı ve haklı olarak kırıldı. Matris tabloya duyarlı hâle getirildi — tablodan bağımsız bir gövde, doğrulama sıkılaştıkça yanlış alarm üretir.
+
+## Kabul edilmiş ödünleşimler (kalan riskler)
+
+- **Tamirci telefonu herkese açık** — kasıtlı: müşteri arayacak. E-posta listeden çıktı (spam/oltalama listesi olurdu), telefon kaldı.
+- **\`favoriteIds\` owners listesinde kalıyor** — "bu ilanı N kişi favorilere ekledi" sayacı buna dayanıyor, yani "hangi isim hangi ilanları favorilemiş" hâlâ görülebiliyor. Doğru çözüm sayacı sunucuda hesaplamak; gizlemek sayacı bozardı.
+- **Süresi geçmiş öne çıkarma okuma anında değil, 10 dakikalık süpürücüyle kapanıyor.** Okuma yollarının her birine kontrol eklemek, biri atlandığında sessizce yanlış davranan bir sistem demek.
+- **Ödeme doğrulaması yok** — sağlayıcı yok.
+- **Şifre düz metin** (şemada belgeli), **oturum jetonu localStorage'da** (XSS ödünleşimi, CSP ile azaltılmış).`,
       },
 
     ],

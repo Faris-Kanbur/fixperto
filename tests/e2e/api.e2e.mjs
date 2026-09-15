@@ -163,13 +163,40 @@ try {
   eq(offersDb[0].amount, "820000", "görülmemiş teklifin tutarı güncellendi");
 
   // Satıcı teklifi gördü → yeni teklif engelli.
-  await api("PATCH", `/api/listings/${listingId}`, { token: owner.token, body: { offers: offersDb.map((o) => ({ ...o, seen: true })) } });
+  /**
+   * "GÖRÜLDÜ" ARTIK ÖZEL UÇTAN. Önceden satıcı teklif dizisinin TAMAMINI jenerik PATCH ile
+   * yeniden yazıyordu; tam uygulama denetiminde bu yolla uydurma teklif yazılabildiği ve gelen
+   * tekliflerin silinebildiği ÖLÇÜLDÜ. Alan yönetici-only yapıldı ve satıcının meşru iki işlemi
+   * (görüldü / kabul-ret) sunucuda tanımlı uçlara taşındı: sunucu mevcut diziyi okuyup yalnızca
+   * izin verilen alanı değiştiriyor.
+   */
+  const seenRes = await api("POST", `/api/listings/${listingId}/offers/seen`, { token: owner.token });
+  eq(seenRes.status, 200, "satıcı teklifleri 'görüldü' işaretleyebiliyor");
+  eq(JSON.parse(row("SELECT offers FROM listings WHERE id = ?", listingId).offers)[0].seen, true, "görüldü bayrağı yazıldı");
+  // Satıcı jenerik PATCH ile artık teklif dizisine DOKUNAMIYOR.
+  const tamper = await api("PATCH", `/api/listings/${listingId}`, {
+    token: owner.token, body: { offers: [{ id: 99, buyerName: "Hayalet", amount: "1" }] },
+  });
+  eq(JSON.parse(row("SELECT offers FROM listings WHERE id = ?", listingId).offers).some((o) => o.buyerName === "Hayalet"), false,
+    `satıcı jenerik PATCH ile uydurma teklif YAZAMIYOR (istek durumu ${tamper.status})`);
   const blocked = await api("POST", `/api/listings/${listingId}/offers`, { token: owner2.token, body: { amount: "830000" } });
   eq([blocked.status, blocked.body.reason], [409, "seen"], "görülmüş teklif varken yeni teklif engelli");
 
   // Reddedildi → yeni teklif serbest, eskisi arşivleniyor.
-  const rejected = JSON.parse(row("SELECT offers FROM listings WHERE id = ?", listingId).offers).map((o) => ({ ...o, status: "rejected" }));
-  await api("PATCH", `/api/listings/${listingId}`, { token: owner.token, body: { offers: rejected } });
+  // Ret de özel uçtan: sunucu yalnızca o teklifin `status` alanını değiştiriyor.
+  const pendingOffer = JSON.parse(row("SELECT offers FROM listings WHERE id = ?", listingId).offers).find((o) => o.status === "pending");
+  const rejectRes = await api("POST", `/api/listings/${listingId}/offers/${pendingOffer.id}/respond`, {
+    token: owner.token, body: { status: "rejected" },
+  });
+  eq(rejectRes.status, 200, "satıcı teklifi reddedebiliyor");
+  // Aynı teklife ikinci yanıt engelli (durum makinesi).
+  eq((await api("POST", `/api/listings/${listingId}/offers/${pendingOffer.id}/respond`, {
+    token: owner.token, body: { status: "accepted" },
+  })).status, 409, "reddedilmiş teklif sonradan KABUL edilemiyor");
+  // Başka bir kullanıcı teklifi yanıtlayamıyor (ilan onun değil).
+  eq((await api("POST", `/api/listings/${listingId}/offers/${pendingOffer.id}/respond`, {
+    token: owner2.token, body: { status: "accepted" },
+  })).status, 403, "ilan sahibi olmayan teklifi yanıtlayamıyor");
   eq((await api("POST", `/api/listings/${listingId}/offers`, { token: owner2.token, body: { amount: "840000" } })).status, 201,
     "reddedilen tekliften sonra yeni teklif serbest");
   offersDb = JSON.parse(row("SELECT offers FROM listings WHERE id = ?", listingId).offers);

@@ -42,6 +42,9 @@ const ROUTER_FILE_BASE = {
    * router değişkeni → taban eşlemesi.
    */
   "media.js": { mediaRouter: "/api/media", mediaFileRouter: "/media" },
+  // Randevular: özel router CRUD'dan ÖNCE bağlı (alan + durum kontrolü). Jenerik CRUD aynı
+  // tabanda GET/DELETE'i sürdürüyor, bu yüzden tekilleştirme zaten çakışmayı hallediyor.
+  "appointments.js": "/api/appointments",
 };
 
 /** [{ method, path, source }] — metotlar BÜYÜK harf, yollar ":id" biçiminde parametreli. */

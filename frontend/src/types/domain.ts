@@ -52,6 +52,12 @@ export interface Mechanic {
   rating: number;
   reviews: number;
   verified: boolean;
+  /**
+   * Randevuları otomatik kabul et (tamircinin ayarı). Tam uygulama denetiminde sunucuya taşındı:
+   * önce yalnızca istemci state'indeydi, bu yüzden hem sayfa yenilenince kayboluyor hem de
+   * randevu durumunu MÜŞTERİNİN tarayıcısı belirliyordu — yani ayarın hiçbir etkisi yoktu.
+   */
+  autoAcceptBookings?: number | boolean;
   avgResponseMinutes: number;
   specialty: string;
   img: string;

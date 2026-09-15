@@ -47,7 +47,28 @@ jobApplicationsRouter.post("/:id/applications", (req, res) => {
 
   const job = db.prepare(`SELECT * FROM job_listings WHERE id = ?`).get(req.params.id);
   if (!job) return res.status(404).json({ error: "İlan bulunamadı." });
-  if (job.status && job.status !== "open") return res.status(400).json({ error: "Bu ilan artık başvuru almıyor." });
+  /**
+   * GERÇEK HATA (tam uygulama denetiminde bulundu) — İŞ BAŞVURUSU ÖZELLİĞİ TAMAMEN ÖLÜYDÜ.
+   * ------------------------------------------------------------------------------------------------
+   * Bu kontrol `job.status !== "open"` diyordu. Ama iş ilanı sözlüğünde "open" DİYE BİR DURUM YOK:
+   *   - veritabanı varsayılanı        → 'active'   (db.js: status TEXT DEFAULT 'active')
+   *   - ön yüz ilan oluştururken      → 'active'   (submitJobListing draft)
+   *   - tohum verisindeki 3 ilan      → 'active'
+   *   - tip tanımı                    → "active" | "closed"
+   *   - arayüzdeki aç/kapa düğmesi    → 'active' ↔ 'closed'
+   * Yani HER ilan 'active' olarak doğuyor ve bu kontrol HEPSİNİ reddediyordu: sitedeki hiç kimse
+   * hiçbir iş ilanına başvuramıyordu. Üstelik hata mesajı YANILTICIYDI — "bu ilan artık başvuru
+   * almıyor" diyerek adaya ilanın kapandığını düşündürüyordu, oysa özellik kırıktı.
+   *
+   * Düzeltmede AÇIK olanları saymak yerine KAPALI olanları sayıyorum. Sebebi: "hangi değerler
+   * açıktır" listesi eksik kalırsa sonuç yine sessizce her şeyi reddetmek olur (bu hatanın ta
+   * kendisi). Kapalı listesi eksik kalırsa en kötü sonuç kapanmış bir ilana başvuru gelmesi —
+   * kıyaslanamaz biçimde daha az zararlı.
+   */
+  const CLOSED_JOB_STATUSES = new Set(["closed", "filled", "paused", "archived", "cancelled", "removed"]);
+  if (job.status && CLOSED_JOB_STATUSES.has(String(job.status).toLowerCase())) {
+    return res.status(400).json({ error: "Bu ilan artık başvuru almıyor.", reason: "closed" });
+  }
   if (actor.role === "mechanic" && job.mechanicId === actor.id) {
     return res.status(403).json({ error: "Kendi ilanınıza başvuramazsınız." });
   }

@@ -534,6 +534,18 @@ function useAppLogic() {
   const [showEditVehicle, setShowEditVehicle] = useState(false);
   const [editVehicleForm, setEditVehicleForm] = useState(null);
   const [appointments, setAppointments] = useState([]);
+/**
+ * RANDEVULARI OTOMATİK KABUL — TAMİRCİNİN AYARI, ARTIK SUNUCUDA.
+ * ------------------------------------------------------------------------------------------------
+ * BULUNAN HATA (tam uygulama denetimi): bu ayar tamircinin ayarlar ekranında vardı ama YALNIZCA
+ * burada, istemci state'inde yaşıyordu. İki sonucu vardı:
+ *   1) Sayfa yenilenince ayar KAYBOLUYORDU (varsayılana, açık hâle dönüyordu).
+ *   2) Daha kötüsü: randevu oluşturulurken bu değeri MÜŞTERİNİN tarayıcısı gönderiyordu ve orada
+ *      varsayılan `true` idi. Yani tamirci ayarı kapattığında bile her randevu otomatik kabul
+ *      ediliyordu — ayar tamamen bir kurguydu.
+ * Artık `mechanics.autoAcceptBookings` sütununda duruyor, tamirci değiştirince sunucuya yazılıyor
+ * ve randevu durumunu SUNUCU o sütundan okuyarak belirliyor.
+ */
   const [autoAccept, setAutoAccept] = useState(true);
   const [toast, setToast] = useState(null);
   const [successPulse, setSuccessPulse] = useState(null);
@@ -842,6 +854,8 @@ function useAppLogic() {
             if (full?.favoriteMechanicIds) setFavoriteMechanicIds(full.favoriteMechanicIds);
             if (full?.likedReviewIds) setLikedReviewIds(full.likedReviewIds);
             if (full?.savedSearches) setSavedSearches(full.savedSearches);
+            // Otomatik kabul ayarı artık sunucuda: sayfa yenilenince eski hâline dönmesin.
+            if (full?.autoAcceptBookings != null) setAutoAccept(!!Number(full.autoAcceptBookings));
           }).catch(() => { /* profil ayarları ekranı boş IBAN ile açılır, kritik değil */ });
         }
         if (MY_OWNER_ID != null) {
@@ -2151,6 +2165,14 @@ function useAppLogic() {
       return;
     }
     track("appointment_booked", { targetType: "mechanic", targetId: selectedMechanicId });
+    /**
+     * DURUMU ARTIK SUNUCU BELİRLİYOR (tam uygulama denetiminde bulundu).
+     * Buradaki `autoAccept` MÜŞTERİNİN istemci state'iydi ve varsayılanı `true` — yani tamircinin
+     * "randevularımı ben onaylayacağım" ayarının hiçbir etkisi yoktu, her randevu otomatik
+     * kabul edilmiş düşüyordu. Karar artık sunucuda, TAMİRCİNİN kendi kaydından okunuyor
+     * (mechanics.autoAcceptBookings). Aşağıdaki değer yalnızca iyimser arayüz için tahmin;
+     * sunucudan dönen kayıt gerçeği söylüyor ve popup onu gösteriyor.
+     */
     const status = autoAccept ? "Sırada" : "Onay Bekliyor";
     const bookingVehicle = vehicles.find(v => v.id === selectedBookingVehicleId) || vehicles[0];
     const isPayableNow = bookingService && bookingService.fixed && !bookingService.other;
@@ -3448,7 +3470,9 @@ function useAppLogic() {
     if (!rescheduleDate || !rescheduleTime) return;
     const appt = appointments.find(a => a.id === reschedulingApptId);
     const newDate = rescheduleDate.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
-    const patch = { date: newDate, time: rescheduleTime, status: autoAccept ? "Sırada" : "Onay Bekliyor", autoAccepted: autoAccept };
+    // `autoAccepted` ARTIK GÖNDERİLMİYOR: o alan tamircinin politikasından türetiliyor ve
+    // sunucu istemciden kabul etmiyor (bkz. routes/appointments.js beyaz listesi).
+    const patch = { date: newDate, time: rescheduleTime };
     setAppointments(apps => apps.map(a => a.id === reschedulingApptId ? { ...a, ...patch } : a));
     persist(api.appointments.update(reschedulingApptId, patch), "Randevu güncellenemedi");
     setReschedulingApptId(null);
@@ -3952,6 +3976,21 @@ function useAppLogic() {
     setMechChatInput("");
   };
   const updateMyField = (field, value) => { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m)); persist(api.mechanics.update(MY_MECHANIC_ID, { [field]: value }), "Profil bilgisi kaydedilemedi"); };
+  /**
+   * OTOMATİK KABUL AYARINI SUNUCUYA YAZ.
+   * `updateMyField` hem ekran state'ini hem sunucuyu güncelliyor (kendi içinde `persist` çağırıyor),
+   * bu yüzden burada ikinci bir sarmalama YOK — ilk yazışımda `persist(updateMyField(...))` diye
+   * sarmalamıştım ve bu yanlıştı: `updateMyField` bir söz döndürmüyor, yani `persist` boş bir
+   * değeri bekliyordu ve hata durumunda kullanıcıya hiçbir şey söylenmezdi.
+   * Bu işlev `updateMyField`ın HEMEN ARDINDA duruyor; önce yazdığımda çok yukarıdaydı ve henüz
+   * tanımlanmamış bir işlevi çağırıyordu — çalışıyordu (çağrı çizimden sonra oluyor) ama okuyan
+   * için yanıltıcıydı.
+   */
+  const toggleAutoAccept = () => {
+    const next = !autoAccept;
+    setAutoAccept(next);
+    updateMyField("autoAcceptBookings", next ? 1 : 0);
+  };
   // Dil DEĞİŞTİRME (kullanıcının açık tercihi). Üç yere birden yazılıyor:
   //   1) ekran state'i — arayüz anında değişsin,
   //   2) localStorage — aynı cihazda bir daha otomatik tespitle ezilmesin,
@@ -4775,7 +4814,7 @@ function useAppLogic() {
     if (!listing) return;
     if (listing.featured) {
       setListings(l => l.map(x => x.id === id ? { ...x, featured: false } : x));
-      persist(api.listings.update(id, { featured: false }), "İlan güncellenemedi");
+      persist(api.listingFeature.remove(id), "İlan güncellenemedi");
       setToast({ type: "info", text: "İlan öne çıkarmadan kaldırıldı." });
       return;
     }
@@ -4786,8 +4825,16 @@ function useAppLogic() {
     const listing = listings.find(x => x.id === id);
     setShowFeaturedUpsell(false);
     if (!listing) return;
+    /**
+     * ÖNE ÇIKARMA ARTIK SUNUCUDA SÜRELİ (tam uygulama denetiminde bulundu).
+     * Önceden `featured: true` jenerik PATCH ile yazılıyordu ve arayüz "7 gün" diyordu ama
+     * SÜREYİ TAKİP EDEN HİÇBİR ŞEY YOKTU — bir kez öne çıkan ilan sonsuza kadar öyle kalıyordu.
+     * Artık bitiş tarihini sunucu yazıyor ve süresi dolanları periyodik olarak kapatıyor.
+     * Ödeme adımı hâlâ bir gösterim: bu uygulamada ödeme sağlayıcısı yok ve sunucu doğrulanacak
+     * bir ödeme bulamaz — bu sınır kodda ve el kitabında açıkça yazılı.
+     */
     setListings(l => l.map(x => x.id === id ? { ...x, featured: true } : x));
-    persist(api.listings.update(id, { featured: true }), "İlan güncellenemedi");
+    persist(api.listingFeature.buy(id), "İlan güncellenemedi");
     setToast({ type: "info", text: `⭐ Ödeme alındı (demo), ilanınız ${FEATURED_LISTING_DAYS} gün öne çıkarıldı.` });
   };
   const removeListing = (id) => {
@@ -5037,10 +5084,21 @@ function useAppLogic() {
   const respondOffer = (listingIdx, offerId, status) => {
     const listing = listings.find(l => l.id === listingIdx);
     const offer = listing?.offers.find(o => o.id === offerId);
+    /**
+     * TEKLİF YANITI ARTIK ÖZEL UÇTAN (tam uygulama denetiminde değişti).
+     * Önceden teklif dizisinin TAMAMI `listings.update(id, { offers })` ile yeniden yazılıyordu;
+     * yani satıcı uydurma teklif yazabiliyor ya da gelenleri silebiliyordu (ölçüldü). Artık
+     * sunucu mevcut diziyi okuyup yalnızca `status` alanını değiştiriyor — tutar ve alıcı
+     * bilgisi satıcının elinden geçmiyor.
+     * İlanın "sold" olması AYRI bir istek: o satıcının kendi kararı ve zaten kendi alanı.
+     */
     const offers = listing ? listing.offers.map(o => o.id === offerId ? { ...o, status } : o) : [];
-    const listingPatch = { offers, ...(status === "accepted" ? { status: "sold" } : {}) };
-    setListings(l => l.map(x => x.id === listingIdx ? { ...x, ...listingPatch } : x));
-    persist(api.listings.update(listingIdx, listingPatch), "Teklif kaydedilemedi");
+    setListings(l => l.map(x => x.id === listingIdx
+      ? { ...x, offers, ...(status === "accepted" ? { status: "sold" } : {}) } : x));
+    persist(api.listingOffers.respond(listingIdx, offerId, status).then(async (r) => {
+      if (status === "accepted") await api.listings.update(listingIdx, { status: "sold" });
+      return r;
+    }), "Teklif kaydedilemedi");
     // Teklifi veren araç sahibi mi tamirci mi — bildirim tercihini ona göre kontrol ediyoruz.
     // buyerId/buyerType varsa öncelikli, yoksa (eski teklif) isimle eşleştirmeye düşer.
     const buyerIsMechanic = offer && (offer.buyerType != null ? offer.buyerType === "mechanic" : (myProfile && offer.from === myProfile.name));
@@ -5055,9 +5113,10 @@ function useAppLogic() {
   const markOffersSeen = (listingId) => {
     const listing = listings.find(l => l.id === listingId);
     if (!listing || !listing.offers.some(o => !o.seen)) return;
+    // Özel uç: sunucu yalnızca `seen` alanını değiştiriyor (bkz. respondOffer notu).
     const offers = listing.offers.map(o => o.seen ? o : { ...o, seen: true });
     setListings(l => l.map(x => x.id === listingId ? { ...x, offers } : x));
-    persist(api.listings.update(listingId, { offers }), "Teklif kaydedilemedi");
+    persist(api.listingOffers.markSeen(listingId), "Teklif kaydedilemedi");
   };
   const clearListingFilters = () => setListingFilters({ ...EMPTY_LISTING_FILTERS });
   const clearJobFilters = () => setJobFilters({ employmentType: "all", experienceLevel: "all" });
@@ -5185,9 +5244,17 @@ function useAppLogic() {
     // Aday sitede kayıtlı bir araç sahibi değilse (ownerId bulunamazsa) mesaj yine kaydediliyor ama
     // hiçbir araç sahibinin gelen kutusuna düşmüyor — bu, önceki "herkes görebilir" davranışından
     // kasıtlı olarak daha kısıtlı.
-    const applicantEmail = (applicant.email || "").trim().toLowerCase();
-    const applicantOwnerId = applicantEmail
-      ? (ownersDirectory.find(o => (o.email || "").trim().toLowerCase() === applicantEmail)?.id ?? null)
+    /**
+     * ADAYIN KİMLİĞİ ARTIK E-POSTA EŞLEMESİYLE DEĞİL, SUNUCUNUN YAZDIĞI KİMLİKLE bulunuyor.
+     * Eski yol `ownersDirectory` içinde e-posta arıyordu ve iki sorunu vardı:
+     *   1) GİZLİLİK: çalışması için tüm müşterilerin e-postasının toplu listede bulunması
+     *      gerekiyordu — tam uygulama denetiminde bu listenin OTURUMSUZ okunabildiği ölçüldü.
+     *   2) DOĞRULUK: aday başvuruda başka bir e-posta yazdıysa eşleşme sessizce başarısız oluyordu.
+     * Sunucu başvuruyu kaydederken `applicantId`/`applicantType` alanlarını OTURUMDAN yazıyor
+     * (bkz. routes/jobApplications.js) — doğru kaynak o.
+     */
+    const applicantOwnerId = (applicant.applicantType || "owner") === "owner"
+      ? (applicant.applicantId ?? null)
       : null;
     const existing = conversations.find(c => c.mechanicId === myProfile.id && (applicantOwnerId == null || c.ownerId === applicantOwnerId));
     const newMsg = { id: msgId++, sender: "mechanic" as const, text: rejectionText, lang: myProfile.lang || "tr", isRejectionNotice: true };
@@ -5711,7 +5778,7 @@ function useAppLogic() {
     selectedVehicle, showMaintenanceHistory, setShowMaintenanceHistory, showAddVehicle, setShowAddVehicle, newVehicle, setNewVehicle, editingReminderKind,
     setEditingReminderKind, reminderEditForm, setReminderEditForm, showAddReminderForm, setShowAddReminderForm, newReminderForm, setNewReminderForm, showEditVehicle,
     saveVehicleToGarage, setSaveVehicleToGarage, aboutSection, setAboutSection, careerPosts, setCareerPosts,
-    setShowEditVehicle, editVehicleForm, setEditVehicleForm, appointments, setAppointments, autoAccept, setAutoAccept, toast,
+    setShowEditVehicle, editVehicleForm, setEditVehicleForm, appointments, setAppointments, autoAccept, setAutoAccept, toggleAutoAccept, toast,
     setToast, successPulse, setSuccessPulse, bookingResult, setBookingResult, showOnboarding, setShowOnboarding, onboardStep, setOnboardStep, showDayFullPrompt,
     setShowDayFullPrompt, dayFullNotified, setDayFullNotified, completingApptId, setCompletingApptId, warrantyDaysForm, setWarrantyDaysForm, replyingReviewId,
     setReplyingReviewId, replyDraft, setReplyDraft, onboardingVisible, smsLog, setSmsLog, conversations, setConversations,

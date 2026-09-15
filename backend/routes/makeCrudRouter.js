@@ -64,15 +64,36 @@ const ACCOUNT_CRITICAL_FIELDS = {
   mechanics: ["email", "password"],
 };
 
+/**
+ * ADMIN_ONLY_FIELDS — kullanıcının KENDİ satırında bile yazamayacağı sütunlar.
+ *
+ * GERÇEK HATA (tam uygulama denetiminde bulundu): bu nesnede `job_listings` anahtarı İKİ KEZ
+ * tanımlıydı. JavaScript'te ikinci anahtar birincisini SESSİZCE eziyor, yani `["applicants"]`
+ * korumasının hiçbir etkisi yoktu — yazılmış, gerekçesi yorumla belgelenmiş ve bir yazım hatasıyla
+ * yok edilmiş bir güvenlik kontrolü. Ölçüldü: tamirci kendi ilanının başvuru listesini uydurma
+ * kayıtlarla değiştirebiliyordu. İki liste birleştirildi.
+ *
+ * Aynı denetimde eklenen diğer alanlar ve gerekçeleri:
+ *   listings.featured      → ÜCRETLİ/ayrıcalıklı öne çıkarma. Satıcı kendi ilanını bedavaya
+ *                            öne çıkarabiliyordu (ölçüldü).
+ *   listings.adminRemoved  → yöneticinin KALDIRMA kararı. Satıcı bunu 0 yapıp kaldırılan ilanını
+ *                            geri açabiliyordu (ölçüldü) — moderasyonu ihlal edenin iptal etmesi.
+ *   listings.offers/messages → ALICILARIN verisi. Tek yazma yolu listingInteractionsRouter.
+ *                            Satıcı genel PATCH ile gelen teklifleri silebiliyor ya da uydurma
+ *                            teklif yazabiliyordu (ölçüldü) — "ilgi var" izlenimi üretme yolu.
+ *   support_tickets.adminReplies/refunded/status/priority → bunlar DESTEK EKİBİNİN kararları.
+ *                            Talebi açan kişi kendi talebine "yönetici yanıtı" yazabiliyor,
+ *                            "iade edildi" işaretleyebiliyor ve talebi "çözüldü" yapabiliyordu.
+ */
 const ADMIN_ONLY_FIELDS = {
   // reviewList/reviews/rating: yorum akışının TEK yazma yolu reviewsRouter (puanı sunucu hesaplar).
+  mechanics: ["verified", "verificationDocs", "shareCount", "avgResponseMinutes", "distance", "reviewList", "reviews", "rating"],
   // applicants: başvuruların tek yazma yolu jobApplicationsRouter. Genel PATCH'ten yazılabilseydi
   // tamirci kendi ilanındaki başvuruları topluca silebilir, aday da durumunu değiştirebilirdi.
-  mechanics: ["verified", "verificationDocs", "shareCount", "avgResponseMinutes", "distance", "reviewList", "reviews", "rating"],
-  job_listings: ["applicants"],
+  job_listings: ["applicants", "shareCount"],
   owners: ["status", "vehicleCount", "apptCount"],
-  listings: ["shareCount"],
-  job_listings: ["shareCount"],
+  listings: ["shareCount", "featured", "adminRemoved", "offers", "messages"],
+  support_tickets: ["adminReplies", "refunded", "status", "priority"],
 };
 
 // Tablonun GERÇEK sütunları. Gövdeden gelen tanınmayan anahtarlar (yazım hatası, eski istemci,

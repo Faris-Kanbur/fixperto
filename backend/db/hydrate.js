@@ -85,8 +85,31 @@ const LIST_ONLY_SENSITIVE_FIELDS = {
   // herkese açık bilgi ama belgeler değil — vergi levhası, ruhsat, kimlik gibi şeyler olabilir.
   // Girişsiz tamirci listesinde olduğu gibi dönüyordu. Kendi profilini görüntüleyen tamirci ve
   // yönetici hâlâ görüyor (hydrateAll yalnızca BAŞKALARININ gördüğü listede gizliyor).
-  mechanics: ["iban", "bankName", "accountHolder", "favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches", "verificationDocs"],
-  owners: ["favoriteMechanicIds", "likedReviewIds", "savedSearches"],
+  mechanics: ["iban", "bankName", "accountHolder", "favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches", "verificationDocs",
+    // E-POSTA (tam uygulama denetiminde bulundu): tamircinin telefonu herkese açık olmalı —
+    // müşteri arayacak. E-postası ise toplu listede hiçbir işe yaramıyor ve tek istekle
+    // çekilebilen bir spam/oltalama listesi oluşturuyor. Kendi profilinde ve yöneticide duruyor.
+    "email"],
+  /**
+   * OWNERS LİSTESİ — EN CİDDİ GİZLİLİK BULGUSU (tam uygulama denetiminde ölçüldü).
+   * `GET /api/owners` OTURUMSUZ olarak 200 dönüyordu ve her müşterinin AD, E-POSTA, TELEFON ve
+   * ADRESİNİ içeriyordu. Yani siteyi bilen herkes tek istekle tüm müşteri listesini indirebilirdi.
+   * İlginç ayrıntı: tekil kayıt (`GET /api/owners/1`) DOĞRU biçimde 404 veriyordu — yani kapı
+   * kilitliydi, pencere açıktı. (Aynı desen bu denetimde üçüncü kez çıktı.)
+   *
+   * NEDEN LİSTE TAMAMEN KAPATILMADI: ön yüz açılışta (girişten ÖNCE) bu listeyi çekiyor ve
+   * ilandaki satıcının adı/şehri, sohbetteki karşı tarafın dili, favori sayacı gibi meşru
+   * yerlerde kullanıyor. 401 döndürmek açılış isteğini kırıp siteyi misafirlere kapatırdı.
+   * Doğru çözüm alanı daraltmak: kimliğe doğrudan bağlanan İLETİŞİM bilgileri listeden çıktı.
+   * Yönetici tam listeyi görmeye devam ediyor (hydrateAll yalnızca BAŞKALARININ gördüğü
+   * listede gizliyor) ve kullanıcı kendi kaydını tekil uçtan tam olarak alıyor.
+   *
+   * KALAN BİLİNEN RİSK: `favoriteIds` listede kalıyor, çünkü "bu ilanı N kişi favorilere ekledi"
+   * sayacı buna dayanıyor. Yani "hangi isim hangi ilanları favorilemiş" hâlâ görülebiliyor.
+   * Doğru çözümü sayacı sunucuda hesaplamak; o ayrı bir iş ve burada sessizce özelliği
+   * kırmamak için bırakıldı — gizlemek sayacı bozardı.
+   */
+  owners: ["favoriteMechanicIds", "likedReviewIds", "savedSearches", "email", "phone", "address"],
 };
 
 // JSON sütunlarının tamamı DİZİ tutuyor; tek istisna vehicles.reminderOverrides (nesne).

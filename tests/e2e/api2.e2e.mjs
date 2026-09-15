@@ -258,11 +258,21 @@ try {
   const reviewers = [];
   for (let i = 0; i < 4; i++) {
     const u = await createUser("owner", { name: `Yorumcu ${i}`, email: `yorumcu${i}@example.com`, phone: `+90532123002${i}` });
+    /**
+     * SAAT HER MÜŞTERİ İÇİN FARKLI — testin ilk hâli dördünü de "2026-01-01 10:00"a yazıyordu.
+     * Tam uygulama denetiminde eklenen SLOT KİLİDİ (aynı tamirci + aynı tarih + aynı saat) bunu
+     * doğru biçimde 409 ile reddetti ve test kırıldı. Kilit doğru; kurulum yanlıştı — dört farklı
+     * müşterinin aynı tamirciye aynı dakikaya randevu alması gerçek hayatta da olmamalı.
+     */
     const appt = await api("POST", "/api/appointments", {
       token: u.token,
-      body: { mechanicId: revMech.id, service: "Bakım", date: "2026-01-01", time: "10:00", status: "Onay Bekliyor" },
+      body: { mechanicId: revMech.id, service: "Bakım", date: "2026-01-01", time: `1${i}:00` },
     });
-    await api("PATCH", `/api/appointments/${appt.body.id}`, { token: revMech.token, body: { status: "Tamamlandı" } });
+    eq(appt.status, 201, `yorumcu ${i} için randevu oluştu`);
+    // Randevuyu TAMİRCİ tamamlıyor — müşteri kendi randevusunu "Tamamlandı" yapamıyor artık
+    // (durum makinesi), ki bu da denetimde bulunan bir hataydı.
+    const done = await api("PATCH", `/api/appointments/${appt.body.id}`, { token: revMech.token, body: { status: "Tamamlandı" } });
+    eq(done.status, 200, `yorumcu ${i} randevusu tamirci tarafından tamamlandı`);
     reviewers.push(u);
   }
 
