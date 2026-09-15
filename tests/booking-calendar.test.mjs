@@ -127,4 +127,94 @@ eq(guard({ time: "14:00", past: true, taken: false }), true, "geçmiş saat redd
 eq(guard({ time: "14:00", past: false, taken: true }), true, "dolu saat reddediliyor");
 eq(guard({ time: "14:00", past: false, taken: false }), false, "uygun saat kabul ediliyor");
 
+// ================================================================ RANDEVU SONUCU POPUP'I
+/**
+ * Kullanıcı isteği: randevu alındıktan sonra sayfanın ORTASINDA bir popup çıksın; otomatik
+ * onaylandıysa onaylandığını, tamirci onayı bekleniyorsa "iletildi" dediğini yazsın.
+ *
+ * BU TESTİN ASIL DERDİ İKİ DURUMUN AYRI KALMASI. Onları aynı cümleyle geçmek bir tasarım
+ * tercihi değil, kullanıcıyı yanıltmaktır: "onaylandı" sanıp gelmeyeceği bir saate gelen ya da
+ * onay bekleyip beklemediğini bilmeyen biri çıkar. O yüzden iki metnin de var olduğu ve
+ * `autoAccepted` değerine göre SEÇİLDİĞİ denetleniyor.
+ */
+const shell = readFileSync(join(ROOT, "frontend", "src", "app", "AppShell.tsx"), "utf8");
+// `provider` yukarıda zaten okunmuş (satır ~110) — ikinci kez tanımlamıyoruz.
+const i18nSrc = readFileSync(join(ROOT, "frontend", "src", "data", "i18n.ts"), "utf8");
+
+// Eski AYRI EKRAN kaldırıldı: ulaşılamayan bir ekran bırakmak, kaldırmamaktan kötüdür.
+const shellCode = shell.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
+eq(/screen === "confirmed"/.test(shellCode), false, "ayrı onay EKRANI kaldırıldı (artık popup)");
+eq(/setScreen\("confirmed"\)/.test(provider), false, "hiçbir yer artık o ekrana geçmiyor");
+
+// Popup, sonucu SUNUCUDAN dönen kayıttan kuruyor: açıldığında form zaten temizlenmiş oluyor.
+const resultCall = provider.match(/setBookingResult\(\{[\s\S]{0,400}?\}\);/)?.[0] || "";
+ok(resultCall.length > 0, "randevu kaydedilince popup verisi kuruluyor");
+ok(/autoAccepted: !!autoAccept/.test(resultCall), "otomatik onay durumu popup verisine yazılıyor");
+for (const field of ["mechanicName", "vehicle", "date", "time"]) {
+  ok(new RegExp(`${field}:`).test(resultCall), `popup verisinde ${field} var`);
+}
+ok(/created\./.test(resultCall), "değerler sunucudan dönen kayıttan alınıyor (istemci tahmininden değil)");
+
+// Popup BAŞARIDAN SONRA kuruluyor: istek başarısız olursa sahte bir "onaylandı" gösterilmemeli.
+const tryIdx = provider.indexOf("const created = await api.appointments.create(draft);");
+const resultIdx = provider.indexOf("setBookingResult({");
+ok(tryIdx > 0 && resultIdx > tryIdx, "popup ancak kayıt BAŞARILI olduktan sonra açılıyor");
+
+// İki durum ayrı metinlerle.
+const popup = shell.slice(shell.indexOf("{bookingResult && (() => {"), shell.indexOf("{showDayFullPrompt"));
+ok(popup.length > 200, "popup bloğu bulundu");
+ok(/const auto = bookingResult\.autoAccepted/.test(popup), "popup otomatik onay durumuna bakıyor");
+for (const [key, which] of [
+  ["appointmentConfirmedTitle", "onaylandı başlığı"],
+  ["appointmentRequestSentTitle", "iletildi başlığı"],
+  ["appointmentConfirmedBody", "onaylandı açıklaması"],
+  ["appointmentRequestSentBody", "iletildi açıklaması"],
+  ["appointmentPopupConfirmedBadge", "onaylandı rozeti"],
+  ["appointmentPopupWaitingBadge", "onay bekliyor rozeti"],
+]) {
+  ok(popup.includes(key), `popup ${which} metnini kullanıyor`);
+  ok(new RegExp(`\\b${key}:`).test(i18nSrc), `${key} çevirisi tanımlı`);
+  const line = i18nSrc.split("\n").find((l) => l.trim().startsWith(`${key}:`)) || "";
+  for (const lang of ["tr:", "en:", "de:"]) ok(line.includes(lang), `${key} ${lang} dilinde var`);
+}
+// Seçim gerçekten koşullu mu — iki metni yazıp hep aynısını göstermek mümkün olurdu.
+ok(/auto \? t\("appointmentConfirmedTitle"\) : t\("appointmentRequestSentTitle"\)/.test(popup),
+  "başlık otomatik onaya göre SEÇİLİYOR");
+ok(/auto \? t\("appointmentConfirmedBody"\) : t\("appointmentRequestSentBody"\)/.test(popup),
+  "açıklama otomatik onaya göre SEÇİLİYOR");
+ok(/auto \? t\("appointmentPopupConfirmedBadge"\) : t\("appointmentPopupWaitingBadge"\)/.test(popup),
+  "rozet otomatik onaya göre SEÇİLİYOR");
+
+// "İletildi" metni gerçekten beklemeyi anlatıyor mu (kullanıcının istediği şey buydu).
+const sentBody = i18nSrc.split("\n").find((l) => l.trim().startsWith("appointmentRequestSentBody:")) || "";
+/**
+ * İlk yazdığım kural şuydu: "metin 'onaylandı' İÇERMEMELİ ya da 'bekle' içermeli". Test kırmızı
+ * yandı ve haklıydı — Türkçe metin "Onaylandığında bildirim alacaksınız" diyor, yani içinde
+ * "Onaylandı" geçiyor ama GELECEK zaman kipinde, bir iddia olarak değil. Kural yanlış şeyi
+ * ölçüyordu: kelime varlığına bakmak, cümlenin NE SÖYLEDİĞİNİ ölçmez.
+ * Ayırt edici olan şu: onaylanan durumda "kesinleşti" deniyor, bekleyen durumda denmiyor.
+ * Ve iki metin BİRBİRİNDEN FARKLI olmak zorunda — asıl kural bu.
+ */
+const confirmedBody = i18nSrc.split("\n").find((l) => l.trim().startsWith("appointmentConfirmedBody:")) || "";
+ok(/iletildi/i.test(sentBody), "bekleyen durumda 'iletildi' deniyor (kullanıcının istediği kelime)");
+eq(/iletildi/i.test(confirmedBody), false, "onaylanan durumda 'iletildi' DENMİYOR");
+ok(/kesinleş/i.test(confirmedBody), "onaylanan durumda randevunun kesinleştiği söyleniyor");
+eq(/kesinleş/i.test(sentBody), false, "bekleyen durumda kesinleştiği söylenMİYOR");
+ok(sentBody.trim() !== confirmedBody.trim(), "iki durumun metni birbirinden FARKLI");
+
+// ORTADA olmalı: kullanıcı "sayfamın ortasında" dedi.
+ok(/flex items-center justify-center/.test(popup), "popup ekranın ortasında konumlanıyor");
+ok(/fixed inset-0/.test(popup), "popup sayfanın üstünde (modal) duruyor");
+
+/**
+ * HİÇBİR ÇIKIŞ YOLU KULLANICIYI BOŞTA BIRAKMAMALI. Arkadaki sayfada form ZATEN temizlenmiş
+ * durumda; popup'ı kapatıp orada bırakmak boş bir ekranda bırakmak olurdu. Üç yol da (düğme,
+ * ikinci düğme, arka plana tıklama) bir yere götürüyor.
+ */
+ok(/onClick=\{goAppointments\}[\s\S]{0,200}stopPropagation/.test(popup)
+  || popup.indexOf("onClick={goAppointments}") < popup.indexOf("stopPropagation"),
+  "arka plana tıklamak da randevulara götürüyor (boş ekranda bırakmıyor)");
+ok(/goHome\(\)/.test(popup), "ikinci düğme ana sayfaya götürüyor");
+ok((popup.match(/setBookingResult\(null\)/g) || []).length >= 2, "her çıkış yolu popup'ı kapatıyor");
+
 report("randevu takvimi");

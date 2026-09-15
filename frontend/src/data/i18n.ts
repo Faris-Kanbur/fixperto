@@ -168,6 +168,11 @@ export const T = {
   appointmentConfirmedTitle: { tr: "Randevunuz Onaylandı!", en: "Your Appointment is Confirmed!", de: "Ihr Termin ist bestätigt!" },
   appointmentRequestSentTitle: { tr: "Randevu Talebiniz Gönderildi!", en: "Your Appointment Request Was Sent!", de: "Ihre Terminanfrage wurde gesendet!" },
   viewMyAppointmentBtn: { tr: "Randevumu Görüntüle", en: "View My Appointment", de: "Meinen Termin ansehen" },
+  // RANDEVU SONUCU POPUP'I — iki ayrı durum, iki ayrı cümle (bkz. AppLogicProvider bookingResult).
+  appointmentConfirmedBody: { tr: "Randevunuz kesinleşti. Tamircinin onayını beklemenize gerek yok.", en: "Your appointment is set. No need to wait for the shop to approve it.", de: "Ihr Termin steht fest. Sie müssen nicht auf die Bestätigung der Werkstatt warten." },
+  appointmentRequestSentBody: { tr: "Talebiniz tamirciye iletildi. Onaylandığında bildirim alacaksınız.", en: "Your request was sent to the shop. You'll get a notification once it's approved.", de: "Ihre Anfrage wurde an die Werkstatt gesendet. Sie erhalten eine Benachrichtigung, sobald sie bestätigt ist." },
+  appointmentPopupWaitingBadge: { tr: "Onay bekliyor", en: "Awaiting approval", de: "Warten auf Bestätigung" },
+  appointmentPopupConfirmedBadge: { tr: "Onaylandı", en: "Confirmed", de: "Bestätigt" },
   backToHomeBtn: { tr: "Ana Sayfaya Dön", en: "Back to Home", de: "Zurück zur Startseite" },
 
   // --- Araç satış ilanı formu (sell form) ---

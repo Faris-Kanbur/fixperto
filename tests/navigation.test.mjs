@@ -124,8 +124,20 @@ eq(restore({ screen: "hicboylebirekranyok" }, true), null, "bilinmeyen ekran ad�
 // Bir kez "Geçmiş"e bakan kişi, yeni randevusunu almasının hemen ardından "Randevumu Görüntüle"ye
 // basınca GEÇMİŞ randevular listesine düşüyor ve az önce aldığı randevuyu göremiyordu.
 const shellSrc = readFileSync(join(SRC_DIR, "app", "AppShell.tsx"), "utf8");
-const confirmBtn = shellSrc.slice(shellSrc.indexOf('viewMyAppointmentBtn') - 400, shellSrc.indexOf('viewMyAppointmentBtn'));
-ok(/setOwnerApptView\("active"\)/.test(confirmBtn), "onay ekranındaki buton aktif randevuları açıyor");
+/**
+ * Onay artık ayrı bir EKRAN değil, sayfanın ortasında bir POPUP (kullanıcı isteği). Eski test
+ * düğmeden geriye 400 karakter okuyup içinde `setOwnerApptView("active")` arıyordu; popup'ta
+ * o çağrı ortak bir `goAppointments` yardımcısına taşındığı için pencere artık yetmiyordu.
+ * Soru değişmedi — "Randevumu Görüntüle" AKTİF randevuları mı açıyor? — o yüzden test yardımcıyı
+ * bulup onun içine bakıyor. (Yaşanan hata: bir kez "Geçmiş"e bakan kişi yeni randevusunu
+ * almasının ardından bu düğmeye basınca GEÇMİŞ listesine düşüyor ve randevusunu göremiyordu.)
+ */
+const goAppointmentsFn = shellSrc.match(/const goAppointments = \(\) => \{[^}]*\}/)?.[0] || "";
+ok(/setOwnerApptView\("active"\)/.test(goAppointmentsFn), "onay popup'ındaki buton aktif randevuları açıyor");
+ok(/setBookingResult\(null\)/.test(goAppointmentsFn), "popup kapanıyor (açık kalıp arkada takılmıyor)");
+// Düğme gerçekten o yardımcıyı çağırıyor mu — yardımcının doğru olması tek başına yetmez.
+const btnLine = shellSrc.split("\n").find((l) => l.includes("viewMyAppointmentBtn")) || "";
+ok(/onClick=\{goAppointments\}/.test(btnLine), "'Randevumu Görüntüle' düğmesi o yardımcıya bağlı");
 const providerSrc2 = readFileSync(join(SRC_DIR, "app", "state", "AppLogicProvider.tsx"), "utf8");
 const apptCase = providerSrc2.slice(providerSrc2.indexOf('case "appointment":'), providerSrc2.indexOf('case "quoteOwner"'));
 ok(/setOwnerApptView\("active"\)/.test(apptCase), "randevu bildirimine tıklayınca da aktif sekme açılıyor");

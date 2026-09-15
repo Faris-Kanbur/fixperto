@@ -155,7 +155,7 @@ export function AppShell() {
     selectedVehicle, showMaintenanceHistory, setShowMaintenanceHistory, showAddVehicle, setShowAddVehicle, newVehicle, setNewVehicle, editingReminderKind,
     setEditingReminderKind, reminderEditForm, setReminderEditForm, showAddReminderForm, setShowAddReminderForm, newReminderForm, setNewReminderForm, showEditVehicle,
     setShowEditVehicle, editVehicleForm, setEditVehicleForm, appointments, setAppointments, autoAccept, setAutoAccept, toast,
-    setToast, successPulse, setSuccessPulse, showOnboarding, setShowOnboarding, onboardStep, setOnboardStep, showDayFullPrompt,
+    setToast, successPulse, setSuccessPulse, bookingResult, setBookingResult, showOnboarding, setShowOnboarding, onboardStep, setOnboardStep, showDayFullPrompt,
     setShowDayFullPrompt, dayFullNotified, setDayFullNotified, completingApptId, setCompletingApptId, warrantyDaysForm, setWarrantyDaysForm, replyingReviewId,
     setReplyingReviewId, replyDraft, setReplyDraft, onboardingVisible, smsLog, setSmsLog, conversations, setConversations,
     activeConvoId, setActiveConvoId, chatInput, setChatInput, showTranslated, setShowTranslated, fileInputRef, mechActiveConvoId,
@@ -440,6 +440,50 @@ export function AppShell() {
           </div>
         </div>
       )}
+      {/* RANDEVU SONUCU POPUP'I (kullanıcı isteği).
+          ÖNCE ayrı bir ekran vardı (`screen === "confirmed"`): sayfa tamamen değişiyor, kullanıcı
+          nereden geldiğini kaybediyor ve ekranda iki düğmeden başka hiçbir şey olmuyordu — çıkmaz
+          sokak. Artık sayfanın ortasında popup: arkadaki sayfa yerinde kalıyor.
+
+          İKİ DURUM, İKİ AYRI CÜMLE — ayrım önemli:
+            otomatik onay AÇIK  → randevu KESİN ("Onaylandı"), tarih ve saat bağlayıcı
+            otomatik onay KAPALI → talep İLETİLDİ ("Onay bekliyor"), tamirci onaylamadı
+          İkisini aynı cümleyle geçmek kullanıcıyı yanıltır: "onaylandı" sanıp gelmeyeceği bir
+          saate gelen ya da onay bekleyip beklemediğini bilmeyen biri çıkar.
+
+          Kapatma yolları BİLEREK hepsi bir yere götürüyor: arkadaki sayfada form zaten
+          temizlenmiş, yani orada bırakmak kullanıcıyı boş bir ekranda bırakmak olurdu. */}
+      {bookingResult && (() => {
+        const auto = bookingResult.autoAccepted;
+        const goAppointments = () => { setBookingResult(null); setScreen("owner"); setOwnerTab("appointments"); setOwnerApptView("active"); };
+        return (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9400 }} onClick={goAppointments}>
+            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${auto ? "bg-green-100" : "bg-amber-50"}`}>
+                {auto ? <Check size={32} className="text-green-600" /> : <Clock size={30} className="text-amber-500" />}
+              </div>
+              <span className={`inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full mb-2 ${auto ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+                {auto ? t("appointmentPopupConfirmedBadge") : t("appointmentPopupWaitingBadge")}
+              </span>
+              <h3 className="text-lg font-bold text-gray-900 mb-1.5">
+                {auto ? t("appointmentConfirmedTitle") : t("appointmentRequestSentTitle")}
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                {auto ? t("appointmentConfirmedBody") : t("appointmentRequestSentBody")}
+              </p>
+              {/* Randevunun kendi bilgileri: popup açıldığında form ZATEN temizlenmiş oluyor,
+                  bu yüzden değerler sunucudan dönen kayıttan taşınıyor. */}
+              <div className="bg-gray-50 rounded-2xl p-3 text-left space-y-1.5 mb-5">
+                <div className="flex items-center gap-2 text-sm text-gray-700"><Wrench size={14} className="text-gray-400 flex-shrink-0" /><span className="truncate">{bookingResult.mechanicName}</span></div>
+                {bookingResult.vehicle && <div className="flex items-center gap-2 text-sm text-gray-700"><Car size={14} className="text-gray-400 flex-shrink-0" /><span className="truncate">{bookingResult.vehicle}</span></div>}
+                <div className="flex items-center gap-2 text-sm text-gray-700"><Calendar size={14} className="text-gray-400 flex-shrink-0" /><span>{bookingResult.date}{bookingResult.time ? ` · ${bookingResult.time}` : ""}</span></div>
+              </div>
+              <button onClick={goAppointments} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2">{t("viewMyAppointmentBtn")}</button>
+              <button onClick={() => { setBookingResult(null); goHome(); }} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button>
+            </div>
+          </div>
+        );
+      })()}
       {showDayFullPrompt && role === "mechanic" && (
         <div className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => setShowDayFullPrompt(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
@@ -3013,7 +3057,6 @@ export function AppShell() {
           </div>
           );
         })()}
-        {screen === "confirmed" && (<div className="w-full flex-1 flex flex-col"><PageTopBar /><div className="max-w-md mx-auto w-full flex-1 px-5 py-10 flex flex-col items-center text-center"><div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4"><Check size={40} className="text-green-500" /></div><h2 className="text-lg font-bold text-gray-800 mb-1">{autoAccept ? t("appointmentConfirmedTitle") : t("appointmentRequestSentTitle")}</h2><button onClick={() => { setScreen("owner"); setOwnerTab("appointments"); setOwnerApptView("active"); }} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2 mt-4">{t("viewMyAppointmentBtn")}</button><button onClick={goHome} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button></div></div>)}
         {screen === "mechBrowse" && (
           <>
             <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
@@ -3910,7 +3953,16 @@ export function AppShell() {
                       diğer kategori başlıkları ekranda kalıyor. (Aynı desen: tamirci sayfasındaki
                       uzun hizmet listesi, bkz. el kitabı 4.2.) */}
                   {(() => {
-                    const SECTION_SCROLL_ROWS = 7;
+                    /**
+                     * KAYMA EŞİĞİ: bir kategoride bu sayıdan fazla hizmet varsa o bölüm kendi
+                     * içinde kayıyor. 7 ile başladı, kullanıcı isteğiyle 3'e indirildi — gerekçe
+                     * sayfanın toplam uzunluğu: 7'de bile birkaç dolu kategori üst üste gelince
+                     * profil sayfası metrelerce uzuyor ve kategori başlıkları ekrandan çıkıyordu.
+                     * 3'te her kategori başlığı görünür kalıyor, yani "hangi kategoriler var"
+                     * sorusu tek bakışta cevaplanıyor; bölüm içindeki kayma da tam olarak bunun
+                     * bedeli oluyor.
+                     */
+                    const SECTION_SCROLL_ROWS = 3;
                     const SERVICE_ROW_PX = 62;   // bir hizmet satırının yüksekliği
                     const withIndex = myProfile.services.map((svc, idx) => ({ svc, idx }));
                     const groups = SERVICE_CATALOG

@@ -182,7 +182,16 @@ eq(/Fiyata bakılacak|upon inspection|nach Besichtigung/.test(priceLine), false,
 
 // --- Tamirci profilinde hizmetler KATEGORİYE göre gruplanıyor ----------------------------------
 // Kullanıcı bildirdi: çok hizmet seçince liste uzayıp gidiyor ve karışıyordu.
-ok(/const SECTION_SCROLL_ROWS = 7;/.test(shell), "bölüm başına 7 satır tavanı");
+/**
+ * Eşik 7'den 3'e indirildi (kullanıcı isteği). Test sayıyı SABİT olarak tutuyor çünkü asıl
+ * soru "kaç" değil: eşik kaydırmayı tetikleyen değer ve `maxHeight` hesabı da aynı sabitten
+ * besleniyor. İkisi ayrışırsa bölüm ya hiç kaymaz ya da yanlış yükseklikte kalır — bu yüzden
+ * aşağıda ikisinin AYNI sabiti kullandığı da denetleniyor.
+ */
+const scrollRows = Number(shell.match(/const SECTION_SCROLL_ROWS = (\d+);/)?.[1]);
+eq(scrollRows, 3, "bölüm başına satır tavanı 3");
+ok(/g\.rows\.length > SECTION_SCROLL_ROWS/.test(shell), "kaydırma kararı aynı sabitten geliyor");
+ok(/maxHeight: SECTION_SCROLL_ROWS \* SERVICE_ROW_PX/.test(shell), "yükseklik hesabı da aynı sabitten geliyor");
 ok(/serviceCategoryOf\(svc\) === cat\.key/.test(shell), "hizmetler kategoriye göre gruplanıyor");
 ok(/customServicesGroupLabel/.test(shell), "katalog dışı hizmetler kendi başlığında");
 ok(/scrollable \? "overflow-y-auto pr-1" : ""/.test(shell), "kalabalık bölüm kendi içinde kayıyor");

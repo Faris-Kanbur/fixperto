@@ -537,6 +537,24 @@ function useAppLogic() {
   const [autoAccept, setAutoAccept] = useState(true);
   const [toast, setToast] = useState(null);
   const [successPulse, setSuccessPulse] = useState(null);
+/**
+ * RANDEVU SONUCU POPUP'I (kullanıcı isteği).
+ * ------------------------------------------------------------------------------------------------
+ * ÖNCE: randevu kaydedilince uygulama AYRI BİR EKRANA geçiyordu (`screen === "confirmed"`).
+ * O ekranın sorunu şuydu: sayfa tamamen değişiyor, kullanıcı nereden geldiğini kaybediyor ve
+ * ekran iki düğmeden başka hiçbir şey göstermiyordu — yani tam bir çıkmaz sokak.
+ *
+ * SONRA: sayfanın ortasında bir popup. Arkadaki sayfa yerinde kalıyor, sonuç HEMEN okunuyor.
+ * Popup iki farklı şey söylüyor ve bu ayrım önemli:
+ *   otomatik onay AÇIK  → randevu KESİN, tarih ve saat belli
+ *   otomatik onay KAPALI → talep İLETİLDİ, tamircinin onayı bekleniyor
+ * İkisini aynı cümleyle geçmek kullanıcıyı yanıltır: "onaylandı" sanıp gitmeyeceği bir saate
+ * gelen ya da onay bekleyip beklemediğini bilmeyen biri çıkar.
+ *
+ * İçinde randevunun kendi bilgileri (tamirci, araç, tarih, saat) taşınıyor — popup açıldığında
+ * form ZATEN temizlenmiş oluyor, yani ekrandaki state'ten okunamaz.
+ */
+  const [bookingResult, setBookingResult] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardStep, setOnboardStep] = useState(0);
   const [showDayFullPrompt, setShowDayFullPrompt] = useState(false);
@@ -2122,7 +2140,19 @@ function useAppLogic() {
       setProblemPhotos([]);
       setApproveExpensiveService(false);
       setShareHistoryConsent(true);
-      setScreen("confirmed");
+      /**
+       * Ekran DEĞİŞTİRMİYORUZ; popup açılıyor (bkz. bookingResult notu). `created` sunucudan
+       * dönen kayıt: tarih/saat/durum sunucunun yazdığı hâliyle gösteriliyor, istemcinin
+       * tahminiyle değil.
+       */
+      setBookingResult({
+        id: created.id,
+        autoAccepted: !!autoAccept,
+        mechanicName: created.mechanicName || selectedMechanic.name,
+        vehicle: created.vehicle,
+        date: created.date,
+        time: created.time,
+      });
       // Sadece gerçekten etkileşimli tamirci hesabına (MY_MECHANIC_ID) yapılan randevularda gerçek
       // bildirim gönderilir — demo/örnek tamircilere randevu alınırken bildirim ateşlenmez, çünkü o
       // tamirci panelinde bu randevu zaten hiç görünmeyecek.
@@ -5642,7 +5672,7 @@ function useAppLogic() {
     setEditingReminderKind, reminderEditForm, setReminderEditForm, showAddReminderForm, setShowAddReminderForm, newReminderForm, setNewReminderForm, showEditVehicle,
     saveVehicleToGarage, setSaveVehicleToGarage, aboutSection, setAboutSection, careerPosts, setCareerPosts,
     setShowEditVehicle, editVehicleForm, setEditVehicleForm, appointments, setAppointments, autoAccept, setAutoAccept, toast,
-    setToast, successPulse, setSuccessPulse, showOnboarding, setShowOnboarding, onboardStep, setOnboardStep, showDayFullPrompt,
+    setToast, successPulse, setSuccessPulse, bookingResult, setBookingResult, showOnboarding, setShowOnboarding, onboardStep, setOnboardStep, showDayFullPrompt,
     setShowDayFullPrompt, dayFullNotified, setDayFullNotified, completingApptId, setCompletingApptId, warrantyDaysForm, setWarrantyDaysForm, replyingReviewId,
     setReplyingReviewId, replyDraft, setReplyDraft, onboardingVisible, smsLog, setSmsLog, conversations, setConversations,
     activeConvoId, setActiveConvoId, chatInput, setChatInput, showTranslated, setShowTranslated, fileInputRef, mechActiveConvoId,

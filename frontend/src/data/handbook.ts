@@ -296,7 +296,7 @@ Sabit fiyatlı hizmetler önceden bilinen tutarlıdır; değişkenler ekspertiz 
 Eskiden tek bir düğme vardı ve üzerinde MEVCUT durum yazıyordu. "Değişken" yazan düğmeye basmak "değişkeni seç" değil "sabite geçir" demekti; fiyat vermek istemeyen tamirci "Değişken"e bastığında "önce bir fiyat girin" uyarısı alıyordu — yani uyarı, kullanıcının niyetinin TAM TERSİNİ engelliyordu. Artık iki ayrı seçenek var. "Değişken" her zaman serbesttir, hiçbir rakam gerektirmez; uyarı yalnızca tamirci açıkça "Sabit" dediğinde çıkar, çünkü rakamsız sabit fiyat müşteriye hiçbir şey anlatmaz.
 
 ## Tamircinin kendi hizmet listesi kategoriye göre gruplanır
-Tamirci 50 hizmet seçtiğinde profil düzenleme ekranı düz bir liste olarak metrelerce uzuyor ve aranan hizmet bulunamıyordu. Artık hizmet SEÇİCİSİNDEKİ ile aynı düzen: kategori başlıkları ve altlarında o kategorinin hizmetleri. Bir kategoride 7'den fazla hizmet varsa o BÖLÜM kendi içinde kaydırılır — sayfa uzamaz, diğer başlıklar ekranda kalır. Katalogda olmayan (tamircinin kendi yazdığı) hizmetler kendi başlığı altında toplanır.
+Tamirci 50 hizmet seçtiğinde profil düzenleme ekranı düz bir liste olarak metrelerce uzuyor ve aranan hizmet bulunamıyordu. Artık hizmet SEÇİCİSİNDEKİ ile aynı düzen: kategori başlıkları ve altlarında o kategorinin hizmetleri. Bir kategoride 3'ten fazla hizmet varsa o BÖLÜM kendi içinde kaydırılır — sayfa uzamaz, diğer başlıklar ekranda kalır. (Eşik 7 ile başladı, kullanıcı isteğiyle 3'e indi: 7'de bile birkaç dolu kategori üst üste gelince sayfa metrelerce uzuyor ve kategori başlıkları ekrandan çıkıyordu. 3'te her başlık görünür kalıyor, yani "hangi kategoriler var" sorusu tek bakışta cevaplanıyor; bölüm içindeki kayma da tam olarak bunun bedeli.) Katalogda olmayan (tamircinin kendi yazdığı) hizmetler kendi başlığı altında toplanır.
 
 ## Uzun hizmet listesi sayfayı ele geçirmez
 Tamirci sayfasında kapalı hâlde 6 hizmet gösterilir. "Tümünü gör" listeyi OLDUĞU GİBİ açıyordu; 50 hizmeti olan bir tamircide sayfa metrelerce uzuyor, altındaki çalışma saatleri ve yorumlar pratikte erişilemez hâle geliyordu. Artık açık hâlde de bir tavan var: 10 satır görünür, gerisi kutunun KENDİ İÇİNDE kaydırılır. 10 ve altı hizmette kaydırma kutusu hiç açılmaz — gereksiz bir kutu, düz listeden kötüdür. Kaydırılabildiği ayrıca yazıyla da söylenir ("{total} hizmetten {shown} tanesi görünüyor"), çünkü kullanıcı listenin bittiğini sanıp kaydırmayı denemeyebilir.
@@ -1824,6 +1824,40 @@ Dosya sistemi seçildi, obje deposu değil: sıfır ek bağımlılık, sıfır e
 
 ## Bilinen ve kabul edilen sınır
 SQLite tek yazıcılı. Yüksek eşzamanlı yazmada Postgres gerekecek — ama bu bugünün sorunu değil ve ölçülmeden yapılmamalı.`,
+      },
+      {
+        id: "randevu-sonuc-popup",
+        title: "25.9 Randevu sonucu: ekran değil popup",
+        body: `## Önce ayrı bir ekran vardı
+
+Randevu kaydedilince uygulama \`screen === "confirmed"\` ile tamamen başka bir ekrana geçiyordu. Sorunu şuydu: sayfa değişiyor, kullanıcı nereden geldiğini kaybediyor ve o ekranda iki düğmeden başka hiçbir şey yok — tam bir çıkmaz sokak.
+
+Artık sayfanın ortasında bir popup. Arkadaki sayfa yerinde kalıyor, sonuç hemen okunuyor.
+
+## İki durum, iki ayrı cümle
+
+Bu ayrım bir üslup tercihi değil:
+
+| Otomatik onay | Rozet | Başlık | Açıklama |
+|---|---|---|---|
+| AÇIK | Onaylandı | Randevunuz Onaylandı! | Randevunuz **kesinleşti**. Tamircinin onayını beklemenize gerek yok. |
+| KAPALI | Onay bekliyor | Randevu Talebiniz Gönderildi! | Talebiniz tamirciye **iletildi**. Onaylandığında bildirim alacaksınız. |
+
+İkisini aynı cümleyle geçmek kullanıcıyı yanıltır: "onaylandı" sanıp tamircinin hiç kabul etmediği bir saate gelen, ya da onay bekleyip beklemediğini bilmeyen biri çıkar. Test iki metnin de var olduğunu, üç dilde çevrildiğini **ve** \`autoAccepted\` değerine göre gerçekten SEÇİLDİĞİNİ denetliyor — iki metni yazıp hep aynısını göstermek mümkün olurdu.
+
+## Değerler sunucudan geliyor
+
+Popup tamirci adı, araç, tarih ve saati gösteriyor. Bunlar sunucudan dönen kayıttan alınıyor, ekrandaki state'ten değil: popup açıldığında form ZATEN temizlenmiş oluyor (bu sıra bilinçli — istek başarısız olursa kullanıcı verilerini kaybetmesin diye temizlik \`await\`ten sonra yapılıyor).
+
+Popup da ancak kayıt **başarılı** olduktan sonra açılıyor. Aksi hâlde kaydedilmemiş bir randevu için "onaylandı" göstermiş olurduk — bu sınıf hata bu projede daha önce bir kez yaşandı ve testte kayıt altında.
+
+## Hiçbir çıkış yolu boşta bırakmıyor
+
+Arkadaki sayfada form temizlenmiş durumda, yani popup'ı kapatıp orada bırakmak kullanıcıyı boş bir ekranda bırakmak olurdu. Üç yol da bir yere götürüyor: "Randevumu Görüntüle" ve arka plana tıklama aktif randevulara, ikinci düğme ana sayfaya. "Aktif" sekmesinin açıkça ayarlanması da eski bir hatanın karşılığı — bir kez "Geçmiş"e bakan kişi yeni randevusunu almasının ardından bu düğmeye basınca geçmiş listesine düşüyor ve randevusunu göremiyordu.
+
+## Kaldırılan ekran geri bırakılmadı
+
+\`screen === "confirmed"\` bloğu silindi. Ulaşılamayan bir ekranı "belki lazım olur" diye bırakmak, sonraki geliştiriciye yanlış bilgi veren ölü koddur; test artık o ekranın hem işaretçisinin hem kendisinin kalmadığını doğruluyor.`,
       },
       {
         id: "faz-6-kod-bolme",
