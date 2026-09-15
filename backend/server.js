@@ -4,6 +4,7 @@ import { seedIfEmpty } from "./db/seed.js";
 import { db } from "./db/db.js";
 import { trustedHops, logIpConfig } from "./utils/clientIp.js";
 import { compressResponses } from "./utils/compress.js";
+import { measureRequests } from "./utils/metrics.js";
 import { makeCrudRouter } from "./routes/makeCrudRouter.js";
 import adminRouter from "./routes/admin.js";
 import shareEventsRouter from "./routes/shareEvents.js";
@@ -58,6 +59,15 @@ logIpConfig();
 // büyük kısmı HTML sunan sunucular için. İhtiyaç duyulan dört başlık elle yazıldığında hem daha az
 // bağımlılık hem de her başlığın NEDEN orada olduğu okunur oluyor.
 app.disable("x-powered-by"); // "Express" bilgisini saldırgana bedavaya vermeyelim
+
+/**
+ * ÖLÇÜM ARA KATMANI (Faz 5) — EN BAŞTA, bilerek.
+ * Buradan önce hiçbir şey olmadığı için ölçülen süre kullanıcının GERÇEKTEN beklediği süre:
+ * güvenlik başlıkları, CORS, gövde ayrıştırma, sıkıştırma — hepsi ölçümün içinde. Ara katmanı
+ * rotalara yakın koymak, kendi ara katmanlarımızın maliyetini görünmez yapardı.
+ * Toplanan sayılar yalnızca yönetici ucundan okunuyor (bkz. routes/admin.js metrics).
+ */
+app.use(measureRequests);
 app.use((req, res, next) => {
   // Tarayıcı, Content-Type'ı tahmin etmeye çalışmasın. Bir kullanıcı içeriği yanlışlıkla
   // text/html gibi yorumlanırsa XSS'e dönüşebilir.

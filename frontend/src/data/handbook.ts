@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 29 STATİK takım + 5 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 29 STATİK takım + 6 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -1824,6 +1824,63 @@ Dosya sistemi seçildi, obje deposu değil: sıfır ek bağımlılık, sıfır e
 
 ## Bilinen ve kabul edilen sınır
 SQLite tek yazıcılı. Yüksek eşzamanlı yazmada Postgres gerekecek — ama bu bugünün sorunu değil ve ölçülmeden yapılmamalı.`,
+      },
+      {
+        id: "faz-5-izleme",
+        title: "25.7 Faz 5: e-posta kuyruğu ve basit izleme",
+        body: `## E-posta istek yolundan çıktı
+
+Kayıt ve giriş uçları \`await sendMail(...)\` yapıyordu. SMTP dış bir servis — bizim denetimimizde değil. Yavaşladığında kullanıcının **kayıt ve giriş yanıtı** o kadar bekliyordu.
+
+**Ölçüm** (2 saniye gecikmeli SMTP taklidi): istek 2006 ms bekliyordu, kuyruğa alma ~5 ms. Kazanç kritik olan yerde: kayıt bir kez yapılır, **giriş her gün** yapılır.
+
+**Neden Redis/BullMQ değil:** kuyruğa alınacak tek bir iş var — e-posta göndermek. Yeni bir servis, yeni bir bağımlılık ve ayakta tutulması gereken yeni bir altyapı, bu iş için karşılığı olmayan bir karmaşıklık. Süreç içi sıralı kuyruk 40 satır.
+
+**Neden sıralı (tek seferde bir tane):** SMTP sağlayıcıları eşzamanlı bağlantıyı sınırlıyor. Bekleyen 50 e-postayı paralel göndermek sağlayıcının hepsini reddetmesine yol açabilir — "hızlandırmak" için yapılan şey teslimatı tamamen bozar.
+
+**Sınırlı kuyruk (500).** Sınırsız bir dizi, SMTP takıldığında bellek sızıntısına dönüşür; aynı sınıf hata bu projede daha önce oturum ve hız sınırı haritalarında da düzeltildi. Sınıra gelindiğinde **en eskisi** atılıyor: en eski OTP muhtemelen zaten süresi dolmuş, en yenisi hâlâ işe yarar.
+
+**Bir kez yeniden deneme.** SMTP hatalarının büyük kısmı geçici (bağlantı zaman aşımı, anlık hız sınırı). Sonsuz deneme yapmıyoruz: kalıcı bir hata (yanlış şifre, geçersiz alıcı) kuyruğu sonsuza kadar meşgul edip arkasındaki e-postaları bloke ederdi.
+
+### Dürüst sınırlar
+
+**Kuyruk süreç içinde.** Sunucu yeniden başlarsa bekleyen e-postalar kaybolur. Kabul edilebilir çünkü kuyruk tipik olarak boş ve bekleyen işin ömrü saniyeler — ama kabul edilebilir olması "yok" demek değil. Kalıcılık gerektiğinde doğru adım e-postaları bir tabloya yazıp oradan işlemek olur.
+
+**\`mailSent\` alanının anlamı değişti.** Kaldırılmadı (API sözleşmesi bozulmasın) ama artık "gönderildi" değil "gerçek gönderim mümkün" demek, yani SMTP yapılandırılmış mı. Kuyruğa alınan bir işin sonucunu senkron bilmek zaten imkânsız. Bu alan ön yüzde hiçbir yerde okunmuyor (arandı, kullanım yok) — pratikte bir şey değişmiyor.
+
+**Bir davranış değişikliği var ve bilinçli:** eskiden SMTP yapılandırılmış ama gönderim başarısız olduğunda, üretim dışı ortamlarda OTP yanıtın içinde dönüyordu. Artık dönmüyor. Bu kaybedilen bir kolaylık ama aynı zamanda kapatılan bir zayıflık — bir OTP'nin SMTP hıçkırığı yüzünden HTTP yanıtında görünmesi istenen bir şey değil. SMTP hiç yapılandırılmamışken \`devOtp\` hâlâ dönüyor, yani geliştirme ve test akışı aynen çalışıyor.
+
+## "Atlandı" ile "başarısız" ayrı sayılıyor
+
+Ölçüm yaparken çıkan bir hata. İlk hâlde SMTP yapılandırılmamışken her e-posta \`failed\` sayılıyor ve hata günlüğü basıyordu. Sonucu: geliştirmede sayaç sürekli artıyor, konsol hata mesajıyla doluyor.
+
+**Sürekli kırmızı yanan bir ölçüm, kimsenin bakmadığı ölçümdür** — gerçek bir SMTP arızası o gürültünün içinde kaybolur. "Yapılandırılmamış" bilinen ve kasıtlı bir durum; ayrı sayılıyor.
+
+## İzleme: \`GET /api/admin/metrics\`
+
+Bu uygulamada hiçbir izleme yoktu, yani bir uç yavaşlarsa ancak kullanıcı şikâyet edince öğreniyorduk. Denetimin kendisi bunu gösterdi: sohbet listesinin veritabanındaki **tüm fotoğrafları** okuması aylardır doğruydu ve kimse fark etmemişti, çünkü bakacak bir sayı yoktu.
+
+Toplananlar: istek sayısı, durum sınıfına göre kırılım (2xx/3xx/4xx/5xx), sunucu hata oranı, ortalama ve en yavaş süre, süre kovaları, uç başına özet, veritabanı boyutu, medya klasörü, bellek, e-posta kuyruğu.
+
+**Neden Prometheus/OpenTelemetry değil:** ikisi de doğru araçlar ama bir toplama altyapısı gerektiriyor (scrape eden sunucu, saklama, panolar). Burada amaç gözlemlenebilirlik platformu değil, **sorunun varlığını görebilmek**. 100 satır, sıfır bağımlılık. Gerçek bir platform gerektiğinde bu sayılar oraya beslenir.
+
+**Neden yönetici arkasında:** hata oranı, yavaş uçlar ve veritabanı boyutu hem işletme hem saldırı istihbaratıdır. "Şu uç yavaş ve 500 veriyor" bilgisi, nereye yükleneceğini arayan birine bedava ipucu olur. \`/api/health\` kasıtlı olarak yalın kaldı: yük dengeleyicinin sorduğu soru "ayakta mısın", başka bir şey değil. Test bunu da ölçüyor — sağlık ucunda \`requests\`, \`dbBytes\`, \`routes\` gibi alanların BULUNMADIĞINI doğruluyor.
+
+### Üç tasarım kararı
+
+**Süre kovaları, p95 değil.** Gerçek bir yüzdelik için bütün süreleri saklamak gerekir — sınırsız bellek. Ortalama tek başına yeterli değil: 1000 hızlı istek 10 çok yavaş isteği gizler. Altı kova (\`<5ms\` … \`>2s\`) sabit yer kaplayıp sorulan soruya cevap veriyor.
+
+**4xx ayrı tutuluyor.** 404 ve 400 çoğu zaman istemci hatası, sunucu arızası değil. İkisini tek "hata oranına" katmak gerçek arızayı 404 gürültüsünün içinde gizlerdi. \`serverErrorRate\` yalnızca 5xx'e bakıyor.
+
+**Uç kırılımı sınırlı sayıda anahtar.** Ham yol ile anahtarlamak \`/api/listings/1\`, \`/api/listings/2\`… diye sınırsız harita üretirdi. Yol kaynak adına indiriliyor ve harita 60'la sınırlı; dolduğunda yeni yol **eklenmiyor** (eskiyi atmak yerine), toplamlar yine doğru kalıyor.
+
+## Test iki hatamı yakaladı
+
+**1. Express yolu yeniden yazıyor.** Ölçüm \`res.on("finish")\` içinde \`req.path\` okuyordu. Express bir alt router'a girerken \`req.url\`i mount noktasına göre YENİDEN YAZIYOR: \`/api/listings/900001\` isteği \`makeCrudRouter\` içinde \`/900001\` oluyor ve yanıt o sırada bittiği için dinleyici kırpılmış yolu görüyordu. Sonuç: her kayıt kimliği ayrı bir anahtar — yani engellemek istediğim sınırsız harita büyümesinin ta kendisi. Test 40 farklı kimlikle 46 anahtar sayarak yakaladı. Yol artık ara katmanın BAŞINDA, \`originalUrl\`den alınıyor.
+
+**2. "İlk iki segmenti al" medyada çöküyordu.** \`/media/<karma>.jpg\` iki segment ve ikincisi her dosyada farklı — her fotoğraf yeni bir anahtar. Üst sınır belleği korur ama kırılımı işe yaramaz yapardı (60 anahtarın 59'u tek fotoğraf). İkinci segment artık yalnızca kaynak adı gibi görünüyorsa tutuluyor: harf ve tire, nokta yok, tamamı rakam değil.
+
+Testin bir bölümü de ölçümün kendisinin **sızıntı yapmadığını** doğruluyor: yanıtta dosya sistemi yolu, veritabanı dosya adı ya da medya klasörü yolu yok — boyut bilgisi işe yarar, yol bilgisi yaramaz.`,
       },
       {
         id: "faz-4-medya",

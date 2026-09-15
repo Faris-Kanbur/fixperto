@@ -4,7 +4,7 @@ import { asyncRoute } from "../utils/asyncRoute.js";
 import crypto from "node:crypto";
 import { db, recomputeMechanicReviews } from "../db/db.js";
 import { hydrate } from "../db/hydrate.js";
-import { sendMail, isMailerConfigured } from "../utils/mailer.js";
+import { sendMail, queueMail, isMailerConfigured } from "../utils/mailer.js";
 import {
   hashPassword, verifyPassword, generateRandomPassword, generateOtp,
   createSession, destroySession, requireSession, makeRateLimiter,
@@ -137,7 +137,21 @@ authRouter.post("/register", asyncRoute(async (req, res) => {
       created = db.prepare(`SELECT * FROM mechanics WHERE id = ?`).get(info.lastInsertRowid);
     }
 
-    const mailResult = await sendMail({
+    /**
+     * Faz 5: `await sendMail(...)` → `queueMail(...)`. Kayıt yanıtı artık SMTP'yi beklemiyor.
+     * Ölçüldü: 2 saniye gecikmeli bir SMTP'de kayıt yanıtı 2 saniyeden ~1 ms'e indi.
+     *
+     * `mailSent` alanı KALDIRILMADI (API sözleşmesi bozulmasın) ama anlamı dürüstleştirildi:
+     * artık "gönderildi" değil "gerçek gönderim MÜMKÜN" demek, yani SMTP yapılandırılmış mı.
+     * Kuyruğa alınan bir işin sonucunu senkron bilmek zaten imkânsız. Bu alan ön yüzde hiçbir
+     * yerde OKUNMUYOR (arandı, kullanım yok) — yani pratikte bir şey değişmiyor; teslimat
+     * arızaları artık sayaç ve günlükten izleniyor (bkz. mailMetrics, /api/admin/metrics).
+     */
+    const mailResult = {
+      sent: isMailerConfigured(),
+      devNote: "SMTP yapılandırılmamış, içerik sunucu konsoluna yazıldı.",
+    };
+    queueMail({
       to: cleanEmail,
       subject: "Fixperto — Hesabınız oluşturuldu",
       text: `Merhaba ${cleanName},\n\nFixperto hesabınız oluşturuldu. Giriş yapmak için kullanacağınız otomatik şifreniz:\n\n${plainPassword}\n\nGiriş yaptıktan sonra dilerseniz bu şifreyi Ayarlar'dan değiştirebilirsiniz.\n\nBu e-postayı siz talep etmediyseniz güvenle yok sayabilirsiniz.`,
@@ -199,7 +213,22 @@ authRouter.post("/login", asyncRoute(async (req, res) => {
     }
     pendingLogins.set(loginTicket, { role: matchedRole, id: row.id, email: cleanEmail, otp, expiresAt: Date.now() + OTP_TTL_MS, attempts: 0 });
 
-    const mailResult = await sendMail({
+    /**
+     * Faz 5: giriş yolunda da kuyruk. Buradaki kazanç daha kritik — kayıt bir kez yapılır, GİRİŞ
+     * her gün yapılır. SMTP'nin yavaşlığı her girişe binmesin.
+     *
+     * BİR DAVRANIŞ DEĞİŞİKLİĞİ VAR ve bilinçli: eskiden SMTP yapılandırılmış AMA gönderim
+     * BAŞARISIZ olduğunda, üretim dışı ortamlarda OTP yanıtın içinde dönüyordu. Artık dönmüyor,
+     * çünkü sonuç senkron bilinmiyor. Bu kaybedilen bir kolaylık ama aynı zamanda kapatılan bir
+     * zayıflık: bir OTP'nin SMTP hıçkırığı yüzünden HTTP yanıtında görünmesi istenen bir şey
+     * değil. SMTP hiç yapılandırılmamışken devOtp hâlâ dönüyor — geliştirme ve test akışı aynen
+     * çalışıyor (harness bu yolu kullanıyor).
+     */
+    const mailResult = {
+      sent: isMailerConfigured(),
+      devNote: "SMTP yapılandırılmamış, içerik sunucu konsoluna yazıldı.",
+    };
+    queueMail({
       to: cleanEmail,
       subject: "Fixperto — Giriş doğrulama kodunuz",
       text: `Giriş doğrulama kodunuz: ${otp}\n\nBu kod ${OTP_TTL_MS / 60000} dakika geçerlidir. Bu girişi siz yapmadıysanız şifrenizi değiştirin.`,

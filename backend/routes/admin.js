@@ -3,6 +3,8 @@ import { db } from "../db/db.js";
 import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { createAdminSession, destroyAdminSession, isAdminToken, extractBearerToken } from "../utils/auth.js";
 import { mediaStats } from "../utils/mediaStore.js";
+import { snapshot } from "../utils/metrics.js";
+import { mailMetrics } from "../utils/mailer.js";
 
 // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): admin kimlik bilgilerinin kaynak koda
 // gömülü bir varsayılanı vardı ve depo herkese açık (GitHub) — yani FIXPERTO_ADMIN_* ortam
@@ -156,6 +158,28 @@ router.patch("/change-log/:id", requireAdminAuth, (req, res) => {
   db.prepare(`UPDATE admin_change_log SET reverted = 1 WHERE id = ?`).run(id);
   const row = db.prepare(`SELECT * FROM admin_change_log WHERE id = ?`).get(id);
   res.json({ ...row, reverted: !!row.reverted, before: row.before ? JSON.parse(row.before) : null, after: row.after ? JSON.parse(row.after) : null });
+});
+
+/**
+ * İŞLETME ÖLÇÜMLERİ (Faz 5) — YÖNETİCİ ARKASINDA, bilerek.
+ * ================================================================================================
+ * NEDEN herkese açık `/api/health`'e EKLENMEDİ: hata oranı, yavaş uçlar, veritabanı boyutu ve
+ * e-posta kuyruğu durumu hem işletme hem SALDIRI istihbaratıdır. "Şu uç yavaş ve 500 veriyor"
+ * bilgisi, nereye yükleneceğini arayan birine bedava ipucu olur. /api/health yalın kaldı: yük
+ * dengeleyicinin sorduğu soru "ayakta mısın", başka bir şey değil.
+ *
+ * NEDEN VAR: bu uygulamada hiçbir izleme yoktu, yani bir uç yavaşlarsa ancak kullanıcı şikâyet
+ * edince öğreniyorduk. Denetimin kendisi de bunu gösterdi — sohbet listesinin veritabanındaki
+ * tüm fotoğrafları okuması aylardır doğruydu ve kimse fark etmemişti, çünkü bakacak sayı yoktu.
+ */
+router.get("/metrics", requireAdminAuth, (req, res) => {
+  res.json({
+    ...snapshot(),
+    // Medya ve e-posta, istek ölçümlerinden AYRI kaynaklardan geliyor; tek yanıtta birleşiyor ki
+    // "sistem nasıl" sorusu tek çağrıyla cevaplanabilsin.
+    media: (() => { const m = mediaStats(); return { files: m.files, bytes: m.bytes }; })(),
+    mail: mailMetrics(),
+  });
 });
 
 router.get("/stats", requireAdminAuth, (req, res) => {
