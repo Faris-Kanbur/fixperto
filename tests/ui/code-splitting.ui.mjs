@@ -111,6 +111,17 @@ ok(/Promise\.all\(/.test(reportSrc), "iki modül paralel yükleniyor (sıralı b
    * KANITLAMADIĞI: tarayıcıda parçanın ayrı bir dosya olarak indiği (derleme yapılamıyor).
    */
   const mod = await import(ROOT + "frontend/src/utils/analyticsReport.ts");
+  /**
+   * GEÇİCİ KLASÖRE GEÇ — jsPDF'in `save()`i Node'da ÇALIŞMA KLASÖRÜNE DOSYA YAZIYOR.
+   * Bunu fark etmemin yolu hoş değildi: test iki PDF'i frontend/ klasörüne bıraktı ve onlar
+   * commit'e girdi. Bir test, çalıştığı depoya iz BIRAKMAMALI — bıraktığı iz bir gün birinin
+   * "bu dosya ne" diye sorduğu, sonra da depoya yerleşen çöp olur.
+   * Modül çözümlemesi dosya URL'sine göre yapıldığı için klasör değiştirmek import'ları bozmuyor.
+   */
+  const os = await import("node:os");
+  const cwdBefore = process.cwd();
+  process.chdir(os.tmpdir());
+  try {
   eq(mod.generateAnalyticsPdf.constructor.name, "AsyncFunction",
     "işlev async (jspdf'i beklemek zorunda)");
 
@@ -158,6 +169,9 @@ ok(/Promise\.all\(/.test(reportSrc), "iki modül paralel yükleniyor (sıralı b
   });
   ok(big.pageCount > result.pageCount,
     `80 satırlık tablo sayfa sayısını artırdı (${result.pageCount} → ${big.pageCount}) — autoTable gerçekten çiziyor`);
+  } finally {
+    process.chdir(cwdBefore);
+  }
 }
 
 /**

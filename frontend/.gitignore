@@ -2,3 +2,9 @@ node_modules/
 dist/
 .env
 src/app_header.txt
+
+# TEST KALINTISI: jsPDF'in save()'i Node'da çalışma klasörüne dosya yazıyor. Test artık geçici
+# klasöre geçiyor (bkz. tests/ui/code-splitting.ui.mjs) ama ikinci bir ağ olarak buraya da
+# yazıyorum: bir test kalıntısının depoya yerleşmesi, silinmesi kolay ama fark edilmesi zor bir
+# kirlilik. İlk denememde tam olarak bu oldu ve iki PDF commit'e girdi.
+fixperto-analiz-raporu-*.pdf
