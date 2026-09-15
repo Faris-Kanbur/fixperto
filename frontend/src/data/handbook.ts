@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 29 STATİK takım + 6 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 30 STATİK takım + 6 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -1824,6 +1824,51 @@ Dosya sistemi seçildi, obje deposu değil: sıfır ek bağımlılık, sıfır e
 
 ## Bilinen ve kabul edilen sınır
 SQLite tek yazıcılı. Yüksek eşzamanlı yazmada Postgres gerekecek — ama bu bugünün sorunu değil ve ölçülmeden yapılmamalı.`,
+      },
+      {
+        id: "faz-6-kod-bolme",
+        title: "25.8 Faz 6: kod bölme — ve ölçemediğim şey",
+        body: `## Önce dürüst sınır
+
+**Bu ortamda ön yüz derlenemiyor.** \`vite build\` rollup'ın yerel ikilisini istiyor; kurulu olan darwin-arm64, çalıştığım makine linux-aarch64. esbuild için de aynı durum ve npm kayıt defterine erişim yok. Yani **paket boyutu ölçülemiyor.** "İlk paket şu kadar küçüldü" diyemem — o sayıyı üretecek araç çalışmıyor.
+
+Aşağıdaki boyutlar \`node_modules\`'daki gerçek dağıtım dosyalarının boyutları, yani **bölünen kodun büyüklüğü**; paketleyicinin son çıktısı değil. Parçanın tarayıcıda ayrı bir dosya olarak indiği de doğrulanamıyor — bunun için gerçek bir tarayıcı gerekiyor.
+
+Doğrulanabilenler: statik bağımlılığın gerçekten kalktığı (derlenmiş çıktı denetleniyor), dinamik import'un çözüldüğü ve PDF'in hâlâ üretildiği (işlev gerçekten çağrılıyor), Suspense sınırının var olduğu.
+
+## jspdf ilk paketten çıktı
+
+\`utils/analyticsReport.ts\` \`jspdf\` ve \`jspdf-autotable\`'ı statik içe alıyordu. Statik import demek, paketleyicinin onları ana pakete koyması demek — siteyi ilk açan **herkes**, hiç PDF indirmeyecek olsa bile o kodu indiriyordu. Oysa rapor yalnızca tamirci panelinin "Analiz" sekmesindeki bir düğmeyle üretiliyor.
+
+| Dosya | Boyut | gzip |
+|---|---|---|
+| \`jspdf/dist/jspdf.es.min.js\` | 352 KB | ~116 KB |
+| \`jspdf-autotable/dist/...min.js\` | 39 KB | ~12 KB |
+| **Toplam** | **391 KB** | **~128 KB** |
+
+Çözüm: \`import type\` (çalışma zamanında hiçbir şey getirmez, TypeScript siler) + işlevin içinde dinamik \`import()\`. İki modül \`Promise.all\` ile **paralel** yükleniyor; sırayla beklemek gecikmeyi iki katına çıkarırdı.
+
+Bu bir bileşen değil, saf bir işlev — o yüzden \`React.lazy\` değil doğrudan \`import()\`. Suspense sınırına ihtiyaç duymadığı için hatalı kurulmuş bir sınır yüzünden beyaz ekran riski de yok.
+
+## El kitabı ayrı parçada
+
+\`HandbookPanel\` yönetici panelindeki bir sekme ve içeriğini bu dosyadan (\`data/handbook.ts\`, 174 KB) alıyor. Statik import demek, hiç yönetici olmayan ziyaretçinin de o 174 KB'ı indirmesi. \`React.lazy\` + \`Suspense\` ile parça yalnızca sekmeye girildiğinde iniyor. Bileşenin kendisi değişmedi.
+
+## Bölmediklerim — ve neden
+
+**Yönetici panelinin tamamı.** Ayrı bir bileşen DEĞİL, \`AppShell.tsx\`in (584 KB) içine gömülü. Onu ayırmak büyük bir refactor olur ve bu denetimin kuralı açık: çalışan yapıyı büyük değişikliklerle riske atma. El kitabı ise zaten ayrı bir bileşendi — sınırı çizmek için hiçbir şeyi taşımak gerekmedi. Aradaki fark bu.
+
+**i18n (201 KB).** Her ekranda gerekiyor. Bölmek ilk çizimi geciktirirdi, hızlandırmazdı.
+
+## İki hatam ve ikisinin de cevabı
+
+**1. \`autoTable is not a function\`.** Dinamik \`import()\`te modül nesnesi elimize geliyor ve şekli ortama göre değişiyor: Node'un CJS köprüsünde işlev \`m.default.default\` içinde, paketleyicinin ESM çıktısında \`m.default\` doğrudan işlev. Bunu Node'da işlevi **gerçekten çağırarak** buldum. Dürüst olmak gerekirse bu tarayıcıda da olacağını kanıtladığım bir hata değil — orada \`.default\` muhtemelen çalışırdı. Ama üç satırla iki şekli de kapsamak, hangisinin doğru olduğunu varsaymaktan iyi; hiçbiri işlev değilse artık sessiz kalmıyor, açık hata veriyor.
+
+**2. Testim işlevi gözlemleyemiyordu.** \`jsPDF.prototype.save\`i yamalayıp "PDF üretildi mi" diye bakmaya çalıştım. jsPDF her metodu (\`save\` dâhil) **örneğin kendi özelliği** olarak atıyor, prototipte hiçbiri yok — yani dışarıdan yamalamak imkânsız. Testim sessizce hiçbir şey yakalamadı ama "hata vermedi" diye yeşil yanabilirdi.
+
+Çözüm testi zorlamak değil, **işlevi gözlemlenebilir yapmak** oldu: artık ne ürettiğini döndürüyor (dosya adı + sayfa sayısı). İkisi de zaten hesaplanmış değerler, ek maliyet yok, test-özel bir kanca da değil.
+
+**Üçüncü olarak:** "sayfa sayısı ≥ 2" diye bir kontrol yazdım ve bu bir varsayımdı — küçük veri kümesi tek sayfaya sığıyor, test haklı olarak kırmızı yandı. Sayıyı düşürüp geçmek kolay olurdu ama o zaman test hiçbir şey kanıtlamazdı. Doğru kanıt veri miktarını artırıp sayfa sayısının arttığını görmek: autoTable hiç çalışmasaydı satır sayısının sayfa sayısına etkisi olmazdı.`,
       },
       {
         id: "faz-5-izleme",

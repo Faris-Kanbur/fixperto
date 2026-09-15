@@ -1,5 +1,25 @@
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+/**
+ * KOD BÖLME (Faz 6) — jspdf ARTIK İLK PAKETTE DEĞİL.
+ * ================================================================================================
+ * SORUN: bu dosya `jspdf` ve `jspdf-autotable`'ı statik olarak içe alıyordu. Statik import demek,
+ * paketleyicinin onları ANA PAKETE koyması demek — yani siteyi ilk açan HERKES, hiç PDF
+ * indirmeyecek olsa bile o kodu indiriyordu. Oysa bu rapor yalnızca TAMİRCİ panelinin "Analiz"
+ * sekmesindeki bir düğmeyle üretiliyor.
+ *
+ * ÖLÇÜLEN BÜYÜKLÜK (node_modules'daki gerçek dağıtım dosyaları, tahmin değil):
+ *   jspdf/dist/jspdf.es.min.js          352 KB   (gzip ~116 KB)
+ *   jspdf-autotable/dist/...min.js       39 KB   (gzip  ~12 KB)
+ *   TOPLAM                              391 KB   (gzip ~128 KB)
+ *
+ * ÇÖZÜM: `import type` (çalışma zamanında hiçbir şey getirmez, TypeScript siler) + işlevin İÇİNDE
+ * dinamik `import()`. Böylece paketleyici jspdf'i ayrı bir parçaya koyuyor ve o parça yalnızca
+ * düğmeye BASILDIĞINDA indiriliyor.
+ *
+ * NEDEN `React.lazy` DEĞİL: bu bir bileşen değil, saf bir işlev. Dinamik `import()` doğrudan
+ * karşılığı ve Suspense sınırına ihtiyaç duymuyor — yani hatalı kurulmuş bir sınır yüzünden
+ * beyaz ekran riski de yok.
+ */
+import type { jsPDF } from "jspdf";
 
 // Tamirci "Analiz" sekmesindeki verilerden profesyonel görünümlü, indirilebilir bir PDF raporu
 // üretir (bkz. AppShell.tsx mechTab === "analytics", downloadAnalyticsReport). Sunucu tarafında
@@ -67,7 +87,41 @@ function formatMoney(n: number, suffix: string) {
   return `${Math.round(n).toLocaleString("tr-TR")}${suffix}`;
 }
 
-export function generateAnalyticsPdf(data: AnalyticsReportData) {
+/**
+ * İşlev ARTIK `async`: jspdf düğmeye basıldığında indiriliyor (bkz. dosya başındaki not).
+ * Çağıran taraf `await` ediyor ve hata yönetimi aynı `try/catch` içinde kalıyor — yani indirme
+ * başarısız olursa (ağ koptu, parça yüklenemedi) kullanıcı zaten var olan hata mesajını görüyor,
+ * sessiz bir başarısızlık oluşmuyor (bkz. AppShell handleDownloadPdf).
+ *
+ * İki modül PARALEL yükleniyor: birini bekleyip sonra diğerini istemek gecikmeyi iki katına
+ * çıkarırdı, oysa aralarında bağımlılık yok.
+ */
+export async function generateAnalyticsPdf(data: AnalyticsReportData) {
+  const [{ jsPDF }, autoTableModule] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
+  /**
+   * `jspdf-autotable`ın ÇAĞRILABİLİR hâlini bul.
+   *
+   * NEDEN BU KADAR DİKKATLİ: statik `import autoTable from "jspdf-autotable"` yazımında
+   * paketleyici birlikte çalışmayı kendisi hallediyordu. Dinamik `import()`te modül nesnesi
+   * ELİMİZE GELİYOR ve şekli çalıştığı ortama göre değişiyor — Node'un CJS köprüsünde
+   * `m.default` bir NESNE, işlev `m.default.default` içinde; paketleyicinin ESM çıktısında
+   * `m.default` doğrudan işlev.
+   *
+   * DÜRÜST OL: bunu Node'da işlevi GERÇEKTEN çağırarak buldum ("autoTable is not a function").
+   * Yani bu, tarayıcıda da olacağını KANITLADIĞIM bir hata değil; tarayıcıda `.default`
+   * muhtemelen doğrudan çalışırdı. Ama üç satırla iki ortamı da kapsamak, hangisinin doğru
+   * olduğunu varsaymaktan iyi — ve asıl kazanç şu: işlev artık Node'da çalıştırılabiliyor,
+   * yani PDF üretimi gerçekten test edilebiliyor (bkz. tests/ui/code-splitting.ui.mjs).
+   */
+  const m = autoTableModule as any;
+  const autoTable: (doc: jsPDF, opts: any) => void =
+    [m?.default?.default, m?.default, m].find((c) => typeof c === "function");
+  if (typeof autoTable !== "function") {
+    throw new Error("jspdf-autotable yüklenemedi: çağrılabilir bir dışa aktarım bulunamadı.");
+  }
   const suffix = data.currencySuffix || "₺";
   const L = data.labels;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -264,5 +318,17 @@ export function generateAnalyticsPdf(data: AnalyticsReportData) {
   }
 
   const fileSafeDate = data.generatedAtLabel.replace(/[^\d]/g, "-");
-  doc.save(`fixperto-analiz-raporu-${fileSafeDate}.pdf`);
+  const fileName = `fixperto-analiz-raporu-${fileSafeDate}.pdf`;
+  doc.save(fileName);
+  /**
+   * DÖNÜŞ DEĞERİ (Faz 6) — TEST EDİLEBİLİRLİK İÇİN EKLENDİ, ama test-özel bir kanca DEĞİL.
+   * Neden gerekti: jsPDF'in bütün metotları (`save` dâhil) her ÖRNEĞİN KENDİ özelliği,
+   * prototipte değil. Yani dışarıdan yamalayıp "PDF gerçekten üretildi mi" diye bakmak mümkün
+   * değil — testim tam olarak bunu denedi ve sessizce hiçbir şey yakalamadı.
+   * Çözüm testi zorlamak değil, işlevi gözlemlenebilir yapmak oldu: ne ürettiğini söylüyor.
+   * `pageCount` işin GERÇEKTEN yapıldığının kanıtı: tablolar çizilmediyse sayfa da oluşmaz.
+   * Çağıran taraf dönüşü kullanmak zorunda değil (kullanmıyor da) — ek bir maliyeti yok, çünkü
+   * iki değer de zaten hesaplanmış durumda.
+   */
+  return { fileName, pageCount };
 }

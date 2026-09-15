@@ -98,7 +98,19 @@ for (const limit of ["slot kilidi yok", "backend doğrulaması", "httpOnly", "su
 // --- Panelde gerçekten bağlı mı ----------------------------------------------------------------
 const shell = readFileSync(join(SRC, "app", "AppShell.tsx"), "utf8");
 ok(/key: "handbook"/.test(shell), "yönetici panelinde El Kitabı sekmesi var");
-ok(/adminTab === "handbook" && <HandbookPanel \/>/.test(shell), "sekme paneli render ediyor");
+/**
+ * Faz 6'da panel `React.lazy` ile yükleniyor, yani kullanım yeri artık bir Suspense sınırının
+ * içinde. Eski desen (`&& <HandbookPanel />` birebir) bu yüzden kırıldı. Sorulan soru değişmedi:
+ * sekmeye basılınca panel çiziliyor mu? Bu yüzden desen İKİ PARÇAYA ayrıldı — sekme koşulu var,
+ * ve panel o koşulun içinde çiziliyor.
+ */
+ok(/adminTab === "handbook" &&/.test(shell), "sekme koşulu var");
+{
+  const block = shell.match(/adminTab === "handbook" &&([\s\S]{0,900}?)\n {14}\)\}/)?.[1]
+    || shell.match(/adminTab === "handbook" &&([\s\S]{0,900})/)?.[1] || "";
+  ok(/<HandbookPanel \/>/.test(block), "sekme paneli render ediyor");
+  ok(/<Suspense/.test(block), "lazy panel Suspense sınırı içinde (sınırsız lazy = beyaz ekran)");
+}
 const panel = readFileSync(join(SRC, "components", "features", "HandbookPanel.tsx"), "utf8");
 ok(/lc\(p\.body\)\.includes\(q\)/.test(panel), "arama gövdede de arıyor (sadece başlıkta değil)");
 eq(/dangerouslySetInnerHTML/.test(panel), false, "el kitabı içeriği HTML olarak basılmıyor");

@@ -90,7 +90,22 @@ ok(noClass.length === 0,
 
 const cls = (tag) => (tag.match(/className="([^"]*)"/) || [])[1] || (/className=\{/.test(tag) ? "<dinamik>" : "");
 const lazy = (t) => /loading="lazy"/.test(t.tag);
-const at = (file, line) => all.find((t) => t.file === file && t.line === line);
+/**
+ * ETİKETİ İÇERİĞİNDEN BUL — SATIR NUMARASINDAN DEĞİL.
+ * İlk hâlde her etiket `dosya:satır` ile aranıyordu ve BU KIRILGANDI: Faz 6'da AppShell'in
+ * başına birkaç satır import eklendi, bütün numaralar kaydı ve testin 10 kontrolü birden
+ * kırmızı yandı — oysa hiçbir görsel değişmemişti. Böyle bir test kurt masalı anlatır: her
+ * ilgisiz değişiklikte bağırır, insan da bir süre sonra bakmayı bırakır.
+ * Artık etiketler AYIRT EDİCİ İÇERİKLERİNDEN bulunuyor: hangi kaynağı gösterdikleri, hangi
+ * sınıfları taşıdıkları. Bunlar bir satır eklenince değişmiyor; görselin kendisi değişince
+ * değişiyor — yani test doğru şeye bağlı.
+ */
+const find = (file, ...needles) =>
+  all.filter((t) => t.file === file && needles.every((n) => t.tag.includes(n)));
+const one = (file, ...needles) => {
+  const hits = find(file, ...needles);
+  return hits.length === 1 ? hits[0] : null;
+};
 
 // ============================================================ 1) HEPSİNDE decoding VAR MI
 /**
@@ -113,22 +128,30 @@ ok(all.every((t) => /decoding="async"/.test(t.tag)), "decoding değeri her yerde
  * olabiliyor — ilk hâlde dosya bazında bakıyordum ve doğru kurulmuş bu ayrımı hata sanmıştı.
  */
 const MUST_BE_EAGER = [
-  ["components/features/PhotoLightbox.tsx", 41, "ışık kutusunun ANA görseli — kullanıcı tam buna bakmak için tıkladı"],
-  ["components/features/ListingDetailPage.tsx", 255, "ilan detayının ana fotoğrafı — sayfanın konusu"],
-  ["components/features/MechDetailBody.tsx", 271, "tamirci profilinin kapak bandı — ilk ekran"],
-  ["components/features/BlogPages.tsx", 84, "blog listesinin öne çıkan yazısı — en üstte"],
-  ["components/features/BlogPages.tsx", 220, "blog yazısının kapak görseli — sayfanın konusu"],
-  ["app/AppShell.tsx", 2429, "ilan modalının ana fotoğrafı"],
-  ["app/AppShell.tsx", 1658, "başlıktaki profil avatarı — her zaman görünür"],
-  ["app/AppShell.tsx", 1682, "masaüstü başlığındaki profil avatarı"],
-  ["app/AppShell.tsx", 1931, "profil sayfasının kendi fotoğrafı — sayfanın tepesi"],
-  ["app/AppShell.tsx", 4030, "tamircinin kendi kapak fotoğrafı — bölümün tepesi"],
-  ["app/AppShell.tsx", 4455, "satış formundaki önizleme — kullanıcı fotoğrafı AZ ÖNCE seçti"],
+  ["components/features/PhotoLightbox.tsx", ["src={current}"], "ışık kutusunun ANA görseli — kullanıcı tam buna bakmak için tıkladı"],
+  ["components/features/ListingDetailPage.tsx", ["photos[activeIdx], 1400"], "ilan detayının ana fotoğrafı — sayfanın konusu"],
+  ["components/features/MechDetailBody.tsx", ["coverPhoto, 1600"], "tamirci profilinin kapak bandı — ilk ekran"],
+  ["components/features/BlogPages.tsx", ["lead.coverPhoto"], "blog listesinin öne çıkan yazısı — en üstte"],
+  ["components/features/BlogPages.tsx", ["blogPost.coverPhoto"], "blog yazısının kapak görseli — sayfanın konusu"],
+  ["app/AppShell.tsx", ["activePhoto, 900"], "ilan modalının ana fotoğrafı"],
+  ["app/AppShell.tsx", ["myProfile.coverPhoto, 700"], "tamircinin kendi kapak fotoğrafı — bölümün tepesi"],
+  ["app/AppShell.tsx", ["sellForm.photo, 200"], "satış formundaki önizleme — kullanıcı fotoğrafı AZ ÖNCE seçti"],
 ];
-for (const [file, line, reason] of MUST_BE_EAGER) {
-  const t = at(file, line);
-  ok(!!t, `${file}:${line} konumunda <img> var`);
-  if (t) ok(!lazy(t), `${file}:${line} lazy DEĞİL — ${reason}`);
+for (const [file, needles, reason] of MUST_BE_EAGER) {
+  const t = one(file, ...needles);
+  ok(!!t, `${file} içinde ${needles.join("+")} etiketi TEK olarak bulundu`);
+  if (t) ok(!lazy(t), `${file}:${t.line} lazy DEĞİL — ${reason}`);
+}
+
+/**
+ * Başlıktaki ve profil sayfasındaki avatarlar: üçü de `src={ownerProfile.photo}` kullanıyor,
+ * yani tek tek ayırt etmek yerine GRUP olarak denetleniyor. Hepsi ilk ekranda, hepsi eager.
+ */
+{
+  const avatars = find("app/AppShell.tsx", "src={ownerProfile.photo}");
+  ok(avatars.length >= 3, `profil fotoğrafı etiketleri bulundu (${avatars.length})`);
+  ok(avatars.every((t) => !lazy(t)), "profil/avatar fotoğrafları lazy DEĞİL (ilk ekranda, hep görünür)");
+  ok(avatars.every((t) => /decoding="async"/.test(t.tag)), "profil fotoğraflarında decoding=async var");
 }
 
 // ============================================================ 3) LİSTE GÖRSELLERİ LAZY OLMALI
@@ -136,22 +159,37 @@ for (const [file, line, reason] of MUST_BE_EAGER) {
  * Ekranın altında kalan, kaydırılarak görülen görseller. Bugünkü kazanç sıfıra yakın (veri zaten
  * data: URI olarak geldi); Faz 4'te görsellerin kendi adresi olunca gerçek kazanca dönüşecek.
  */
+/**
+ * İĞNELER AYIRT EDİCİ OLMALI. İlk denemede küçük resim şeridi için `w-full h-full object-cover`
+ * yazdım; o sınıf aynı dosyadaki ANA görselde de var, yani eşleşme iki etiketi birden yakaladı
+ * ve test "ana görsel lazy değil" diye haklı biçimde kırmızı yandı. Artık her satır o etikete
+ * ÖZGÜ bir şey gösteriyor (ör. küçük resmin kendi genişlik parametresi).
+ */
 const MUST_BE_LAZY = [
-  ["components/features/AppointmentCard.tsx", 120, "randevu kartındaki arıza fotoğrafı küçükleri"],
-  ["components/features/ChatBubble.tsx", 129, "sohbet geçmişi — eski mesajlar ekran dışında"],
-  ["components/features/MechCard.tsx", 122, "tamirci listesi kartının kapak görseli"],
-  ["components/features/PhotoLightbox.tsx", 54, "ışık kutusunun küçük resim ŞERİDİ (ana görsel değil)"],
-  ["components/features/ListingDetailPage.tsx", 271, "ilan galerisinin küçük resim şeridi"],
-  ["components/features/BlogPages.tsx", 104, "blog liste kartları"],
-  ["app/AppShell.tsx", 289, "karşılaştırma çubuğundaki küçük avatarlar"],
-  ["app/AppShell.tsx", 317, "karşılaştırma listesindeki ilan kartları"],
-  ["app/AppShell.tsx", 3170, "randevu listesindeki arıza fotoğrafı küçükleri"],
-  ["app/AppShell.tsx", 4034, "ekip (çalışan) avatarları"],
+  ["components/features/AppointmentCard.tsx", ["w-12 h-12 rounded-lg object-cover"], "randevu kartındaki arıza fotoğrafı küçükleri"],
+  ["components/features/ChatBubble.tsx", ["src={msg.image}"], "sohbet geçmişi — eski mesajlar ekran dışında"],
+  ["components/features/MechCard.tsx", ["m.coverPhoto, 500"], "tamirci listesi kartının kapak görseli"],
+  ["components/features/PhotoLightbox.tsx", ["imgThumb(p, 160)"], "ışık kutusunun küçük resim ŞERİDİ (ana görsel değil)"],
+  ["components/features/ListingDetailPage.tsx", ["imgThumb(p, 200)"], "ilan galerisinin küçük resim şeridi"],
+  ["components/features/BlogPages.tsx", ["p.coverPhoto, 500"], "blog liste kartları"],
+  ["app/AppShell.tsx", ["cl.photo, 60"], "karşılaştırma çubuğundaki küçük avatarlar"],
+  ["app/AppShell.tsx", ["cl.photo, 400"], "karşılaştırma listesindeki ilan kartları"],
+  ["app/AppShell.tsx", ["s.emoji"], "ekip (çalışan) avatarları"],
 ];
-for (const [file, line, reason] of MUST_BE_LAZY) {
-  const t = at(file, line);
-  ok(!!t, `${file}:${line} konumunda <img> var`);
-  if (t) ok(lazy(t), `${file}:${line} lazy — ${reason}`);
+for (const [file, needles, reason] of MUST_BE_LAZY) {
+  const hits = find(file, ...needles);
+  ok(hits.length >= 1, `${file} içinde ${needles.join("+")} etiketi bulundu`);
+  ok(hits.every((t) => lazy(t)), `${file} lazy — ${reason}`);
+}
+
+/**
+ * Randevu listesindeki arıza fotoğrafı küçükleri AppShell'de iki yerde geçiyor (araç sahibi ve
+ * tamirci görünümü); ikisi de aynı sınıfları kullanıyor, o yüzden grup olarak denetleniyor.
+ */
+{
+  const issueThumbs = find("app/AppShell.tsx", "issuePhotoAlt");
+  ok(issueThumbs.length >= 2, `arıza fotoğrafı küçükleri bulundu (${issueThumbs.length})`);
+  ok(issueThumbs.every((t) => lazy(t)), "arıza fotoğrafı küçükleri lazy (randevu listesi, ekran altı)");
 }
 
 // Oran kontrolü: çoğunluk lazy olmalı ama "hepsi lazy" de yanlış olurdu (ilk ekran görselleri var).
@@ -169,13 +207,18 @@ ok(lazyCount < all.length, "hepsi lazy DEĞİL — ilk ekran görselleri eager k
  * öğede sınırlı (`max-w-[75%]`), yüksekliği `max-h-40`. Yani kutu yine sınırlı, sadece sınır
  * başka yerde tanımlı. İstisnayı gizlemek yerine adını yazıyorum.
  */
-const BOX_EXCEPTIONS = new Set(["components/features/ChatBubble.tsx:129"]);
+/**
+ * İSTİSNA DA İÇERİKLE tanımlı (satır numarasıyla değil, aynı kırılganlık sebebiyle).
+ * Sohbet balonundaki fotoğrafın genişliği kendi sınıfında değil, üst öğede sınırlı.
+ */
+const isBoxException = (t) =>
+  t.file === "components/features/ChatBubble.tsx" && t.tag.includes("src={msg.image}");
 const fixedBox = (c) =>
   /\bh-\d|\bh-full|\bh-screen|aspect-|max-h-/.test(c) && /\bw-\d|\bw-full|\bw-screen|max-w-/.test(c);
 const unconstrained = all.filter((t) => {
   const c = cls(t.tag);
   if (c === "<dinamik>") return false;           // sınıf hesaplanıyor; üst öğe sınırlıyor
-  if (BOX_EXCEPTIONS.has(`${t.file}:${t.line}`)) return false;
+  if (isBoxException(t)) return false;
   return !fixedBox(c);
 });
 ok(unconstrained.length === 0,

@@ -1,3 +1,5 @@
+// `lazy` ve `Suspense`: el kitabı parçası için (bkz. aşağıdaki HandbookPanel notu).
+import { lazy, Suspense } from "react";
 import { useApp } from "./state/AppLogicProvider";
 import { MONTH_ABBR_BY_LANG } from "../data/i18n";
 import { BookOpen, Sparkles, Search, MapPin, Star, Clock, Calendar, ChevronLeft, Check, User, Wrench, Mail, Lock, Eye, EyeOff, Phone, Car, Plus, History, ChevronRight, CircleDot, CheckCircle2, MessageCircle, Image as ImageIcon, Send, Globe, Banknote, ClipboardList, Settings, Bell, X, ThumbsUp, ThumbsDown, Users, Wrench as ToolIcon, Navigation, Pencil, Trash2, Save, SlidersHorizontal, Map as MapIcon, BadgeCheck, Camera, Gauge, Tag, Compass, Heart, Fuel, Cog, Zap, CalendarDays, Palette, Briefcase, GraduationCap, FileText, Paperclip, Shield, LayoutDashboard, LifeBuoy, LogOut, Ban, AlertTriangle, ShieldAlert, TrendingUp, Megaphone, Flag, Share2, CreditCard, Repeat, DoorOpen, PaintBucket, Leaf, Droplet, BatteryCharging, Download, Scale, TrendingDown, Maximize2 } from "lucide-react";
@@ -14,7 +16,23 @@ import { BrandSelect, ModelSelect } from "../components/features/BrandSelect";
 import { BookingCalendar } from "../components/features/BookingCalendar";
 import { WelcomeTour } from "../components/features/WelcomeTour";
 import { OwnerChatsPanel } from "../components/features/OwnerChatsPanel";
-import { HandbookPanel } from "../components/features/HandbookPanel";
+/**
+ * KOD BÖLME (Faz 6) — EL KİTABI AYRI PARÇADA.
+ * ------------------------------------------------------------------------------------------------
+ * `HandbookPanel` YÖNETİCİ panelindeki bir sekme ve içeriğini `data/handbook.ts`ten alıyor;
+ * o dosya 174 KB (bu depodaki üçüncü en büyük kaynak dosya). Statik import demek, siteyi ilk
+ * açan HERKESİN — hiç yönetici olmayan, o sekmeyi hiç görmeyecek ziyaretçinin — o 174 KB'ı
+ * indirmesi demek.
+ *
+ * `React.lazy` + `Suspense` ile parça yalnızca sekmeye GİRİLDİĞİNDE indiriliyor.
+ * Bileşenin KENDİSİ değişmedi; yalnızca nasıl yüklendiği değişti.
+ *
+ * NEDEN SADECE BU ve yönetici panelinin tamamı değil: yönetici paneli ayrı bir bileşen DEĞİL,
+ * bu dosyanın (584 KB) içine gömülü. Onu ayırmak büyük bir refactor olur ve bu denetimin
+ * kuralı açık: çalışan yapıyı büyük değişikliklerle riske atma. El kitabı ise zaten ayrı bir
+ * bileşen — yani sınırı çizmek için hiçbir şeyi taşımak gerekmiyor.
+ */
+const HandbookPanel = lazy(() => import("../components/features/HandbookPanel").then((m) => ({ default: m.HandbookPanel })));
 import { SavedSearchList } from "../components/features/SavedSearchList";
 import { SavedSearchEditModal } from "../components/features/SavedSearchEditModal";
 import { EmojiPicker } from "../components/features/EmojiPicker";
@@ -1362,7 +1380,17 @@ export function AppShell() {
                 {/* EL KİTABI: sitenin nasıl çalıştığı ve hangi standartlara göre tasarlandığı.
                     Bölüm → sayfa hiyerarşisi + arama. Bkz. data/handbook.ts ve HandbookPanel.tsx. */}
                 {adminTab === "careers" && <AdminCareersPanel />}
-                {adminTab === "handbook" && <HandbookPanel />}
+                {adminTab === "handbook" && (
+                  /**
+                   * Suspense sınırı ZORUNLU: `lazy` bir bileşen sınır olmadan çalışma zamanında
+                   * hata fırlatır (beyaz ekran). Yedek içerik bilerek sade ve yerel — parça
+                   * genelde milisaniyeler içinde geliyor, yanıp kaybolan büyük bir iskelet
+                   * yerleşimi kaydırmaktan başka bir şey yapmazdı.
+                   */
+                  <Suspense fallback={<div className="py-10 text-center text-sm text-gray-400">El kitabı yükleniyor…</div>}>
+                    <HandbookPanel />
+                  </Suspense>
+                )}
                 {adminTab === "history" && (
                   <div>
                     <h1 className="text-xl font-bold text-gray-900 mb-1">Değişiklik Geçmişi</h1>
@@ -3482,9 +3510,15 @@ export function AppShell() {
               const rangeViews = stats ? (analyticsRange === "all" ? stats.totalViews : (stats.viewsInRange ?? stats.viewsThisYear)) : 0;
               const rangeConversions = stats ? (analyticsRange === "all" ? stats.conversions : (stats.conversionsInRange ?? stats.conversionsThisYear)) : 0;
               const viewConvRate = rangeViews > 0 ? Math.round((rangeConversions / rangeViews) * 100) : 0;
-              const handleDownloadPdf = () => {
+              /**
+               * Faz 6: jspdf artık ilk pakette değil, bu düğmeye basılınca indiriliyor
+               * (391 KB / gzip ~128 KB — bkz. utils/analyticsReport.ts). Bu yüzden işlev `async`
+               * ve burada `await` ediliyor. try/catch aynı kalıyor: parça indirilemezse
+               * kullanıcı zaten var olan hata mesajını görüyor.
+               */
+              const handleDownloadPdf = async () => {
                 try {
-                  generateAnalyticsPdf({
+                  await generateAnalyticsPdf({
                     mechanicName: myProfile?.name || t("myBusinessFallback"),
                     mechanicSpecialty: myProfile?.specialty || "",
                     rangeLabel: t(RANGE_LABEL_KEYS[analyticsRange]),
