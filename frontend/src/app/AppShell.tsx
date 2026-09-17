@@ -378,8 +378,30 @@ export function AppShell() {
         @media (prefers-reduced-motion: reduce) { .section-flash { animation: none; outline: 2px solid rgba(225,29,72,0.5); } }
         button { transition: transform 0.12s ease, background-color 0.15s ease, opacity 0.15s ease; }
       `}</style>
-      {toast && (<div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md"><div className={`rounded-2xl shadow-lg p-3 flex items-start gap-2 text-xs ${toast.type === "sms" ? "bg-green-600 text-white" : "bg-gray-800 text-white"}`}><Bell size={16} className="flex-shrink-0 mt-0.5" /><span className="flex-1">{toast.text}</span><button onClick={() => setToast(null)} aria-label={t("dismissToastAria")} className="p-2 -m-2"><X size={14} /></button></div></div>)}
-      {successPulse && (<div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none"><div className="success-pulse-badge bg-white rounded-3xl shadow-2xl px-6 py-5 flex flex-col items-center gap-2"><div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center"><Check size={30} className="text-green-500" strokeWidth={3} /></div><p className="text-sm font-semibold text-gray-800 text-center max-w-[220px]">{successPulse}</p></div></div>)}
+      {/**
+        * ====== UYARI/BİLGİ MESAJI EN ÜST KATMAN (z-[10001]) ======
+        * ==========================================================================================
+        * BULUNAN HATA (kullanıcı bildirdi: "araç ilanı yayınlanınca fiyatı doldurun uyarısı geride
+        * kalıyor, önde olması gerekli"): bu kutu `z-50` kullanıyordu, oysa uygulamadaki modaller
+        * 9400–9999 arası katmanlarda. Yani MODAL AÇIKKEN GÖSTERİLEN HER UYARI modalın arkasında
+        * kalıyor ve kullanıcı hiç görmüyordu.
+        *
+        * Bu tek bir ekranın kusuru değildi: uyarıların çoğu tam olarak bir form modalı açıkken
+        * çıkıyor ("geçerli bir fiyat girin", "favori kaydedilemedi", "sunucuya kaydedilemedi"...).
+        * Yani uygulama kullanıcıya sorunu SÖYLÜYOR ama söylediği yer görünmüyordu — kullanıcı
+        * açısından "butona bastım, hiçbir şey olmadı" demek.
+        *
+        * 10001 seçimi keyfi değil: en yüksek modal katmanı 9999. Geri bildirim, üzerine bindiği
+        * şeyden bağımsız olarak HER ZAMAN görünmek zorunda; bu yüzden hepsinin üstünde. Kural bir
+        * testle korunuyor (tests/layering.test.mjs): kod tabanındaki en yüksek katman artarsa bu
+        * değer de artmak zorunda, yoksa test kırmızı yanıyor.
+        */}
+      {toast && (<div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001] w-[92%] max-w-md"><div className={`rounded-2xl shadow-lg p-3 flex items-start gap-2 text-xs ${toast.type === "sms" ? "bg-green-600 text-white" : "bg-gray-800 text-white"}`}><Bell size={16} className="flex-shrink-0 mt-0.5" /><span className="flex-1">{toast.text}</span><button onClick={() => setToast(null)} aria-label={t("dismissToastAria")} className="p-2 -m-2"><X size={14} /></button></div></div>)}
+      {/* Başarı animasyonu da modallerin ÜSTÜNDE (z-[10000]) ama uyarı mesajının ALTINDA:
+          ikisi aynı anda çıkarsa okunması gereken şey mesajdır, animasyon süslemedir.
+          Önce z-[70] idi — yani modal açıkken hiç görünmüyordu, tıpkı uyarı gibi.
+          `pointer-events-none` korunuyor: üstte durur ama tıklamayı engellemez. */}
+      {successPulse && (<div className="fixed inset-0 z-[10000] flex items-center justify-center pointer-events-none"><div className="success-pulse-badge bg-white rounded-3xl shadow-2xl px-6 py-5 flex flex-col items-center gap-2"><div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center"><Check size={30} className="text-green-500" strokeWidth={3} /></div><p className="text-sm font-semibold text-gray-800 text-center max-w-[220px]">{successPulse}</p></div></div>)}
       {compareListingIds.length > 0 && !showCompareModal && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md">
           <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3">

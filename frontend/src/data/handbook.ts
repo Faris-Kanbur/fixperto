@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 33 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 34 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -2944,7 +2944,44 @@ arama modalı) — o üçünde üst çubuk YOK, yani \`top-0\` doğru. Hepsini d
 **Bekçi genişletildi ve kanıtlandı:** üç kusur tek tek geri konuldu, her biri ayrı bir kontrolü
 kırmızı yaktı, geri alındı, yeşile döndü. Ayrıca aracın "hiç logo görmediği için 0 bulgu"
 durumuna düşmediği de ölçülüyor — üst çubuğu olmayan sayfaların kendi logosunu basmaya devam
-ettiği ayrıca doğrulanıyor.`,
+ettiği ayrıca doğrulanıyor.
+
+## Üçüncü tur: uyarı mesajı modalın arkasında kalıyordu
+
+Kullanıcı bildirdi: *"araç ilanı yayınlanınca fiyatı doldurun uyarısı geride kalıyor, önde olması
+gerekli."* Sebep tek satırlıktı ama kapsamı tek ekran değildi.
+
+Uyarı/bilgi kutusu \`z-50\` kullanıyordu. Uygulamadaki modaller ise **9400–9999** arası
+katmanlarda. Yani **modal açıkken gösterilen HER uyarı** modalın arkasında kalıyor ve kullanıcı
+hiç görmüyordu. Uyarıların neredeyse tamamı da tam olarak bir form modalı açıkken çıkıyor
+("geçerli bir fiyat girin", "favori kaydedilemedi", "sunucuya kaydedilemedi"…). Kullanıcı
+açısından bu "butona bastım, hiçbir şey olmadı" demek — uygulama sorunu söylüyor ama söylediği yer
+görünmüyor.
+
+Aynı kusur **başarı animasyonunda** da vardı (\`z-[70]\`): modal açıkken o da görünmüyordu.
+
+Yeni sıra: **uyarı (10001) > başarı animasyonu (10000) > modaller (≤9999) > üst çubuk (45) >
+kapak öğeleri (40) > yapışkan sekme (20) > kart (10)**. Uyarı en üstte, çünkü ikisi çakıştığında
+okunması gereken şey mesajdır; animasyon süslemedir.
+
+**Katmanı yükseltmenin yan etkisi ayrıca düşünüldü:** başarı animasyonu tam ekran bir katman, en
+üste çıkarıldığında \`pointer-events-none\` olmasa altındaki modalı tamamen kullanılamaz hâle
+getirirdi. O nitelik korunuyor ve bir testle şart koşuluyor.
+
+### Test SABİT bir sayı beklemiyor — bağıl
+
+\`tests/layering.test.mjs\` bugün 10001 yazıp geçmiyor. Kod tabanındaki **en yüksek katmanı
+hesaplıyor** ve geri bildirim katmanlarının onun üstünde olmasını şart koşuyor. Yarın biri
+\`z-99999\`'lu bir modal eklerse test kırmızı yanar ve ne yapılacağını söyler. Sabit bir eşik, aynı
+hatayı sessizce geri getirirdi.
+
+İki biçimi birlikte tarıyor (\`z-[9999]\` sınıfı **ve** \`zIndex: 9999\` satır içi stili) — yalnızca
+birine bakmak en yüksek değeri kaçırmak olurdu; nitekim en yüksek modal satır içi stille yazılmış.
+Beklenen sıralama testte tek bir cümle hâlinde yazılı, böylece yeni bir katman ekleyen kişi nereye
+koyacağını tahmin etmek zorunda kalmıyor.
+
+**Kanıtlandı:** \`z-50\` geri konulduğunda üç kontrol kırmızı yandı; \`pointer-events-none\`
+kaldırıldığında yan etki kontrolü kırmızı yandı; ikisi geri alındığında yeşile döndü.`,
       },
       {
         id: "teklif-on-secimi",
