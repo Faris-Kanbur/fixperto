@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 31 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 32 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -2810,6 +2810,73 @@ olmadığı, 320-375px'te gerçek akış, dokunma hedefi boyutu. Bunlar için ta
 (Playwright + axe-core) gerekiyor ve bu ortamda ön yüz derlenemediği için kurulamıyor. Kapatılan
 boşluk: 7 başlık artık ölçülüyor ve bozulursa test kırmızı yanıyor (\`tests/a11y.test.mjs\`, 18
 kontrol).`,
+      },
+      {
+        id: "tek-geri-tusu",
+        title: "25.16 Tek geri tuşu — üçüncü kez bildirilen hata",
+        body: `## Kullanıcı bunu üç kez söyledi
+
+Üçüncüsünde ekran görüntüsü geldi: üstte standart üst çubuğun geri oku, hemen altında kapak
+görselinin üzerinde yüzen ikinci bir geri oku. İki tuş, iki farklı yer — biri listeye, biri panoya
+gidiyordu. Kullanıcının sorusu haklıydı: hangisi nereye götürüyor?
+
+**Utanç verici kısmı:** \`AppShell.tsx\` içinde şu yorum ZATEN yazılıydı —
+*"TEK GERİ TUŞU (kullanıcı bildirdi: 'burada iki tane geri tuşu var')... Artık her sayfada olduğu
+gibi TEK üst çubuk."* Yani sorun bir kez bulunmuş, **bulunduğu sayfada** düzeltilmiş ve kardeş
+sayfalara hiç bakılmamış. Bu oturumun en çok tekrarlayan bulgusu, bu kez arayüz tarafında.
+
+## Dört sayfa, üç farklı kusur
+
+| Sayfa | Durum |
+|---|---|
+| Tamirci detayı | \`PageTopBar\` **+** kapakta yüzen ok → **ekran görüntüsündeki sayfa** |
+| İlan detay sayfası | İki ayrı **yapışkan çubuk** üst üste (ikisi de \`top-0\`), ikisinde de geri |
+| Araç sahibi sohbeti | \`PageTopBar\` **+** sohbet bandında ikinci geri |
+| Araç sahibi profili | **Hiç üst çubuk yok** — ters tutarsızlık: logo bile görünmüyordu |
+| Araç sahibi ayarları | **Üçüncü varyant**: logo bandın ortasında, geri solda yüzüyor |
+
+Son ikisi "çift geri" değildi ama aynı işin üç ayrı görünümü demekti: kullanıcı her sayfada geri
+okunu başka yerde arıyordu.
+
+## Düzeltmeler
+
+- **Tamirci detayı:** kapaktaki yüzen ok kaldırıldı. Favori ve paylaş kapakta KALDI — onlar
+  görsele ait eylemler (Airbnb deseni) ve tek örnekleri o. Geri ise bir *gezinme* eylemi; yeri
+  üst çubuk.
+- **İlan sayfası:** sayfaya özel çubuk tamamen kaldırıldı. \`PageTopBar\` bunun için zaten bir
+  \`right\` yuvası sunuyordu; favori ve paylaş oraya taşındı. Üst üste binen iki yapışkan katman
+  da böylece bitti. Kaybedilen işlev yok.
+- **Sohbet:** banttaki geri kaldırıldı; bant artık yalnızca karşı tarafın adını gösteriyor.
+- **Profil ve ayarlar:** ikisi de standart \`PageTopBar\`a geçirildi. Artık beş sayfanın hepsi
+  aynı: solda geri, ortada logo, sağda varsa eylemler.
+
+## Bekçi test — ve kuralı bulmak için üç deneme
+
+Aynı hatanın dördüncü kez çıkmaması için \`tests/back-button.test.mjs\` yazıldı. Ama doğru kuralı
+bulmak üç deneme aldı ve üçünü de yazıyorum, çünkü ikisi **yanlış alarm** üretti:
+
+1. **"Her ekran bloğunda tüm geri afordanslarını say."** Üç bulgu verdi, üçü de yanlıştı:
+   \`detail\` bloğunda sayılan iki ok, iki AYRI tam ekran modalın kapatma okuydu (ikisi aynı anda
+   asla görünmüyor); \`chat\` bloğu \`booking\` ekranını yuttu çünkü blok sınırı yakalanamadı;
+   \`mechProfilePage\` dosya sonuna kadar uzayıp arkasındaki modalleri içine aldı. Ders: JSX'i
+   statik okuyarak "aynı anda ekranda görünür mü" sorusu güvenilir biçimde cevaplanamıyor.
+2. **"Üst çubuk varsa hiç yüzen ok olmasın."** Bu da tam ekran modallerin meşru tek oklarını
+   bulguladı.
+3. **Çalışan kural:** yüzen okun ÖNÜNDE en son ne geliyor — bir \`PageTopBar\` mı (ok bir SAYFAYA
+   ait, yani çift geri) yoksa bir tam ekran modal kabı (\`fixed inset-0\`) mı (ok MODALA ait, tek).
+   Bağlam belirlenebilir, tahmin yok.
+
+Testin kendisi de iki kez yanlış şeyi ölçtü: "ikinci yapışkan çubuk kaldırıldı" kontrolü, o
+çubuğun neden kaldırıldığını anlatan **kendi yorumundaki** \`sticky top-0 z-20\` metnine takıldı
+(\`stripComments\` ile çözüldü) — ve yorumları silmek satır numaralarını kaydırdığı için bulgular
+**yanlış satırda** gösteriliyordu. \`stripComments\` artık yorum yerine aynı sayıda satır sonu
+bırakıyor, yani desen eşleşmesi için yorum yok ama adres doğru. Yanlış adres, insanı olmayan bir
+hatayı aramaya gönderir.
+
+**Bekçi kanıtlandı:** hata bilerek geri konuldu (tamirci detayına yüzen ok yeniden eklendi), test
+iki kontrolde kırmızı yandı, hata geri alındı, yeşile döndü. Ayrıca araç "hiçbir şey görmediği
+için 0 bulgu" durumuna düşmesin diye, modal bağlamındaki okları GÖRDÜĞÜNÜ ama doğru şekilde muaf
+tuttuğunu da ölçen bir kontrol var.`,
       },
 
     ],

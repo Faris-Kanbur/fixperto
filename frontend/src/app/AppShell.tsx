@@ -1937,9 +1937,15 @@ export function AppShell() {
             sade başlık, geri düğmesi, dar okunur kolon. Sekme çubuğu yok çünkü burada sekme yok. */}
         {screen === "ownerSettings" && (
           <div className="w-full bg-gray-50 min-h-screen">
+{/* ÜÇÜNCÜ VARYANT DA HİZALANDI. Bu sayfada ne PageTopBar vardı ne de sitenin geri kalanıyla
+                aynı yerleşim: logo bandın ORTASINDA küçük boyutta, geri oku ise solda yüzüyordu.
+                Tek geri tuşu kuralını ihlal etmiyordu (bir tane vardı) ama aynı işin üç farklı
+                görünümü demekti — kullanıcı her sayfada geri okunu başka yerde arıyordu.
+                Artık araç sahibi profili ve tamirci profiliyle birebir aynı: solda geri, ortada logo. */}
+            <PageTopBar onBack={() => { if (ownerSettingsTab === "support") setOwnerSettingsTab("settings"); else setScreen("ownerProfilePage"); }} />
             <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50 relative">
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40"><BrandMark size="sm" /></div>
-              <button onClick={() => { if (ownerSettingsTab === "support") setOwnerSettingsTab("settings"); else setScreen("ownerProfilePage"); }} aria-label={t("back")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
+              
+              
             </div>
             <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10">
               <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
@@ -2053,6 +2059,13 @@ export function AppShell() {
         )}
         {screen === "ownerProfilePage" && (
           <div className="w-full bg-gray-50 min-h-screen">
+            {/* TEK ÜST ÇUBUK — burada TERS tutarsızlık vardı: bu sayfada hiç üst çubuk YOKTU,
+                yalnızca kapak bandının üstünde yüzen bir geri oku duruyordu. Yani kullanıcı bu
+                sayfada logoyu (ana sayfaya dönüş yolunu) hiç görmüyordu, oysa sitenin geri kalanı
+                her sayfada gösteriyor. Tamirci profil sayfasında aynı hizalama zaten yapılmıştı;
+                burada atlanmış. Artık ikisi de aynı: solda geri, ortada logo — ve aşağıdaki yüzen
+                ok kaldırıldı ki yine iki geri tuşu olmasın. */}
+            <PageTopBar onBack={() => setScreen("owner")} />
             {/* ---- ARAÇ SAHİBİ PANELİ (tam sayfa web düzeni) ----
                 Tamirci panosu ve araç/tamirci detay sayfalarıyla AYNI tasarım dili: tam genişlikte
                 degrade bant, üzerine binen beyaz özet kartı, yapışkan alt-çizgili sekme çubuğu,
@@ -2074,7 +2087,7 @@ export function AppShell() {
                 <button onClick={() => setScreen("owner")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Search size={16} /></button>
                 <button onClick={() => { setScreen("ownerSettings"); setOwnerSettingsTab("settings"); }} title={t("settingsLabel")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
               </div>
-              <button onClick={() => setScreen("owner")} aria-label={t("back")} className="absolute top-4 left-4 z-40 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
+              {/* Yüzen geri oku kaldırıldı — geri artık yukarıdaki tek üst çubukta. */}
             </div>
             <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10">
               <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6">
@@ -2885,7 +2898,9 @@ export function AppShell() {
             {/* Logo sohbette de var: kullanıcı yazışmanın ortasındayken ana sayfaya dönebilmeli. */}
             <PageTopBar onBack={() => setScreen("owner")} />
             <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
-            <div className="bg-white text-gray-900 px-5 pt-6 pb-4 border-b border-gray-200 shadow-sm"><button onClick={() => setScreen("owner")} className="flex items-center gap-1 text-gray-500 mb-3 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button><div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="text-2xl bg-rose-50 rounded-xl w-11 h-11 flex items-center justify-center">{activeConvo.mechanicImg}</div><h1 className="text-base font-bold text-gray-900">{activeConvo.mechanicName}</h1></div><select value={ownerLang} onChange={(e) => setOwnerLang(e.target.value)} className="bg-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1 border-none outline-none"><option className="text-black" value="tr">🇹🇷 TR</option><option className="text-black" value="en">🇬🇧 EN</option><option className="text-black" value="de">🇩🇪 DE</option></select></div></div>
+            <div className="bg-white text-gray-900 px-5 pt-6 pb-4 border-b border-gray-200 shadow-sm">{/* GERİ TUŞU KALDIRILDI: bu sayfa yukarıda PageTopBar kullanıyor ve orada zaten bir geri
+                    oku var (kullanıcı bildirdi: "iki tane geri tuşu saçma"). Bant artık yalnızca
+                    karşı tarafın adını ve durumunu gösteriyor. */}<div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="text-2xl bg-rose-50 rounded-xl w-11 h-11 flex items-center justify-center">{activeConvo.mechanicImg}</div><h1 className="text-base font-bold text-gray-900">{activeConvo.mechanicName}</h1></div><select value={ownerLang} onChange={(e) => setOwnerLang(e.target.value)} className="bg-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1 border-none outline-none"><option className="text-black" value="tr">🇹🇷 TR</option><option className="text-black" value="en">🇬🇧 EN</option><option className="text-black" value="de">🇩🇪 DE</option></select></div></div>
             <div className="flex-1 px-5 py-4 overflow-y-auto">{activeConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={ownerLang} mine={m.sender === "owner"} />))}</div>
             {activeConvo.messages.length > 0 && activeConvo.messages[activeConvo.messages.length - 1].isRejectionNotice ? (
               <div className="px-5 pb-6 pt-2 border-t border-gray-100"><div className="bg-gray-100 text-gray-500 text-xs text-center py-3 rounded-xl">{t("applicationRejectedNotice")}</div></div>

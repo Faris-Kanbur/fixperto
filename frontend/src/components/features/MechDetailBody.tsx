@@ -271,7 +271,12 @@ export function MechDetailBody() {
           {selectedMechanic.coverPhoto && !coverBroken && <img src={imgThumb(selectedMechanic.coverPhoto, 1600)} loading="eager" decoding="async" onError={() => setCoverBroken(true)} alt={t("mechCoverAlt", { name: selectedMechanic.name })} className="absolute inset-0 w-full h-full object-cover" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-black/25" />
         </div>
-        <button onClick={goBack} aria-label={t("backToListBtn")} className="absolute top-4 left-4 z-10 w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
+        {/* YÜZEN GERİ TUŞU KALDIRILDI (kullanıcı ekran görüntüsüyle bildirdi: "iki tane geri tuşu
+             saçma"). Bu sayfa yukarıda standart `PageTopBar` kullanıyor ve onun kendi geri oku
+             var; kapak görselinin üstündeki bu ikinci yüzen ok, ekranın sol üstünde iki geri
+             tuşunun üst üste görünmesine yol açıyordu.
+             Favori ve paylaş burada KALIYOR: onlar görsele ait eylemler (Airbnb deseni) ve tek
+             örnekleri bu. Geri ise bir GEZİNME eylemi ve onun yeri üst çubuk. */}
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
           <button onClick={() => toggleFavoriteMechanic(selectedMechanic.id)} aria-label={t("addToFavoritesAria")} className="w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-105 transition flex items-center justify-center"><Heart size={16} className={(favoriteMechanicIds || []).includes(selectedMechanic.id) ? "fill-rose-600 text-rose-600" : "text-gray-600"} /></button>
           <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — ${t("discoverOnFixperto")}`} path={`?mechanic=${selectedMechanic.id}`} onShare={(channel, refCode) => recordShare("mechanic", selectedMechanic.id, channel, refCode)} />

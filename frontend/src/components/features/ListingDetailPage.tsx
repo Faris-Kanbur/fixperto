@@ -225,25 +225,36 @@ export function ListingDetailPage() {
     <>
       {/* Logo bu sayfada da olsun: kullanıcı ilanın ortasındayken tek tıkla ana sayfaya
           dönebilmeli. Geri oku ilan listesine, logo ana sayfaya götürüyor. */}
-      <PageTopBar onBack={closeListingPage} />
-      <div className="w-full bg-gray-50 min-h-screen pb-24 lg:pb-8">
-      {/* ---- ÜST ÇUBUK ---- */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-5 md:px-8 py-3 flex items-center justify-between gap-3">
-          <button onClick={closeListingPage} className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
-          <div className="flex items-center gap-2">
-            {/* NOT: burada "Hızlı Görüntüle" butonu YOK. Hızlı görünüm, listede karttan ayrılmadan
-                bakmak içindir; kullanıcı zaten tam detay sayfasındayken aynı ilanı DAHA AZ bilgiyle
-                gösteren bir modal açmak geriye doğru bir adım olurdu. Geçiş tek yönlü: liste →
-                (göz ikonu) hızlı görünüm → "Tüm Detayları Gör" → bu sayfa. */}
-            {/* AutoScout24'te de ilan sayfasının üstünde "Merken / Teilen" (favori / paylaş) ikili
-                duruyor — favori butonu sadece aşağıdaki satıcı kartında kalmasın, sayfanın en
-                üstünde de erişilebilsin. */}
+      {/**
+       * TEK ÜST ÇUBUK, TEK GERİ TUŞU (kullanıcı üçüncü kez bildirdi: "iki tane geri tuşu saçma").
+       * ------------------------------------------------------------------------------------------
+       * Burada İKİ AYRI yapışkan çubuk üst üste duruyordu ve her ikisinin de geri oku vardı:
+       *   1) standart `PageTopBar` (sticky top-0 z-30) → geri oku + logo
+       *   2) bu sayfanın kendi çubuğu (sticky top-0 z-20) → "‹ Geri" + favori/paylaş
+       * İkisi de `top-0` olduğu için üst üste biniyor, ekranın üstünde iki katman ve iki farklı
+       * geri tuşu görünüyordu. Kullanıcı açısından soru şuydu: hangisi nereye götürüyor?
+       *
+       * ÇÖZÜM: sayfaya özel çubuk tamamen kaldırıldı. `PageTopBar` bunun için zaten bir `right`
+       * yuvası sunuyor — favori ve paylaş oraya taşındı. Böylece geri oku TEK, logo TEK, eylemler
+       * aynı hizada. Kaybedilen hiçbir işlev yok.
+       *
+       * AutoScout24'teki "Merken / Teilen" ikilisi hâlâ sayfanın en üstünde erişilebilir; sadece
+       * ikinci bir çubuk yaratmadan.
+       *
+       * NOT: burada "Hızlı Görüntüle" butonu YOK. Hızlı görünüm, listede karttan ayrılmadan bakmak
+       * içindir; kullanıcı zaten tam detay sayfasındayken aynı ilanı DAHA AZ bilgiyle gösteren bir
+       * modal açmak geriye doğru bir adım olurdu.
+       */}
+      <PageTopBar
+        onBack={closeListingPage}
+        right={(
+          <>
             <button onClick={() => toggleFavorite(l.id)} aria-label={t("addToFavoritesAria")} className="w-9 h-9 rounded-full border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
             <ShareButton title={`${l.brand} ${l.model}`} text={`${l.brand} ${l.model} — ${l.price}`} path={`?listing=${l.id}`} onShare={(channel, refCode) => recordShare("listing", l.id, channel, refCode)} />
-          </div>
-        </div>
-      </div>
+          </>
+        )}
+      />
+      <div className="w-full bg-gray-50 min-h-screen pb-24 lg:pb-8">
 
       <div className="max-w-7xl mx-auto px-5 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 items-start">
         <div className="lg:col-span-2 space-y-10">

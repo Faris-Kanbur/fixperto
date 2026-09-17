@@ -53,9 +53,19 @@ export function throws(fn, name) {
  * uçtan uca test etmek doğru araçtır.
  */
 export function stripComments(src) {
+  /**
+   * SATIR SAYISI KORUNUYOR — ve bu ayrıntı bir hataya yol açtı.
+   * İlk sürüm yorumları tamamen siliyordu; dosyadaki satır numaraları kayıyor ve bu yardımcıyı
+   * kullanan testler bulguları YANLIŞ SATIRDA gösteriyordu ("AppShell/chat:45" diye bir yer
+   * aradım, orada o kod yoktu). Ölçüm doğruydu, adres yanlıştı — ve yanlış adres, insanı olmayan
+   * bir hatayı aramaya gönderiyor.
+   * Çözüm: yorumun yerine aynı sayıda satır sonu bırakılıyor. Desen eşleşmesi için yorum yok,
+   * satır numarası için dosya aynı uzunlukta.
+   */
+  const keepLines = (m) => "\n".repeat((m.match(/\n/g) || []).length);
   return src
-    .replace(/\/\*[\s\S]*?\*\//g, "")   // blok yorumlar (JSDoc dâhil)
-    .replace(/(^|\s)\/\/[^\n]*/g, "$1"); // satır yorumları ("https://" yanlış eşleşmesin)
+    .replace(/\/\*[\s\S]*?\*\//g, keepLines)   // blok yorumlar (JSDoc dâhil)
+    .replace(/(^|\s)\/\/[^\n]*/g, "$1");        // satır yorumları ("https://" yanlış eşleşmesin)
 }
 
 export function report(suiteName) {
