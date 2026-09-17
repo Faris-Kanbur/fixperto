@@ -2691,7 +2691,46 @@ Senaryo kurulup **ölçüldü**: sahte bir "bayat sunucu" aynı porta bağlandı
 doğru hatayı veriyor ve testleri hiç başlatmıyor.
 
 Ders, bu oturumun tekrar eden dersinin test altyapısındaki hâli: **bir cevap almak, doğru
-kaynaktan cevap almak demek değil.**`,
+kaynaktan cevap almak demek değil.**
+
+## İKİNCİ TUR: tespit etmek yetmedi, sebebi de kapatmak gerekti
+
+Kullanıcı aynı hatayı bir kez daha yaşadı — ama bu sefer bekçi çalıştı ve doğru mesajı verdi:
+*"Port 4407 zaten kullanımda… instance: e2e-4407-…"*. Yani tespit doğruydu. Ama iki eksik vardı:
+
+**1) Çözümü insana yıkıyordum.** Harness hatayı basıp duruyor ve kullanıcıya elle \`kill\` komutu
+yazdırıyordu. Portta oturan sunucunun kimliği \`e2e-<port>-\` ile başlıyorsa o sunucu **bizim
+kendi test altyapımızın** bıraktığı bir artıktır: kendi geçici veritabanına bağlı, kimsenin işine
+yaramıyor, tanımı gereği atılabilir. Artık otomatik kapatılıyor, ne yapıldığı yazdırılıyor ve
+portun gerçekten boşaldığı **doğrulanıyor** ("öldürdüm" demekle öldüğünü bilmek aynı şey değil).
+Tanımadığımız bir süreçse hâlâ dokunulmuyor — bir testin alabileceği en tehlikeli özgürlük,
+bilmediği bir süreci öldürmesi olurdu.
+
+**2) Orphan'ın OLUŞMASINI hiç engellememiştim.** \`stopServer()\` yalnızca \`finally\` çalışırsa
+çağrılıyordu. Ctrl-C, zaman aşımı, yakalanmamış hata ya da dışarıdan SIGTERM → \`finally\` hiç
+çalışmıyor ve sunucu sahipsiz kalıyor. Artık sürecin **bütün kapanış yolları** aynı temizliğe
+bağlı: \`exit\`, SIGINT/SIGTERM/SIGHUP, \`uncaughtException\`, \`unhandledRejection\`. SIGKILL
+yakalanamaz ve bunu saklamıyoruz — o durumda (1)'deki otomatik temizlik devreye giriyor. İki
+katman birlikte: "hiç oluşmasın" + "oluştuysa sessizce zarar vermesin".
+
+### Düzeltmemin içinde bulduğum hata: \`lsof\` fazla şey öldürüyordu
+
+İlk yazdığım komut \`lsof -ti tcp:PORT | xargs kill -9\` idi. Ölçerken şunu gördüm: temizlik mesajı
+basıldı, sonra **hiçbir şey olmadı**. Sebep şu — \`lsof -ti tcp:PORT\` o porta ilişkin *tüm*
+soketleri listeliyor: dinleyen sunucuyu **ve o porta bağlanmış istemcileri**. Test süreci sağlık
+yoklaması için \`fetch\` yaptığı anda kendisi de o listeye giriyor, yani komut **testi çalıştıran
+süreci öldürüyordu.** \`-sTCP:LISTEN\` eklendi ve kendi PID'imiz açıkça dışarıda bırakıldı.
+
+Bu, bu oturumda yazdığım bir düzeltmenin kendi içinde taşıdığı en sessiz hataydı: "çalışmadı" değil
+"çalıştı ama beni de götürdü" biçiminde görünüyordu.
+
+### Üç senaryo da ölçüldü
+
+| Senaryo | Sonuç |
+|---|---|
+| Portta önceki koşudan kalan test sunucusu | Otomatik kapatıldı, port doğrulandı, istekler **bizim** sunucuya gitti |
+| Test süreci kasıtlı çöktürüldü (\`finally\` hiç çalışmadı) | Port boş kaldı — orphan oluşmadı |
+| Ctrl-C (SIGINT) | Port boş kaldı — orphan oluşmadı |`,
       },
       {
         id: "kalan-riskler-kapatildi",

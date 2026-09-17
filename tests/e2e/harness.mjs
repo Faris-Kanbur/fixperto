@@ -15,7 +15,7 @@
 //     yönlendiriyor (sqlite-adapter.mjs). UYGULAMA KODU YİNE DEĞİŞMİYOR.
 //   - İkisi de yoksa takım HATA VERMİYOR, "atlandı" deyip çıkıyor: çalıştıramadığın bir testin
 //     kırmızı yanması, gerçek bir hatayı gördüğünde ona güvenmemene yol açar.
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import { rmSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -99,12 +99,56 @@ export async function startServer() {
    * hatayla duruyoruz, (2) sunucu kendi örnek kimliğini geri söylüyor ve yalnızca BİZİM
    * kimliğimizi döndüren yanıtı "hazır" sayıyoruz (bkz. backend/server.js /api/health yorumu).
    */
-  const stale = await probeHealth();
+  /**
+   * ====== SAHİPSİZ KALMIŞ KENDİ SUNUCUMUZU OTOMATİK TEMİZLİYORUZ (ikinci tur) ======
+   * ------------------------------------------------------------------------------------------------
+   * İlk sürüm bayat sunucuyu DOĞRU tespit ediyordu ama her durumda hata verip duruyordu ve
+   * kullanıcıya elle `kill` komutu yazdırıyordu. Kullanıcı bunu iki kez yaşadı. Dürüst değerlendirme:
+   * tespit etmek doğruydu, ÇÖZÜMÜ İNSANA YIKMAK yanlıştı.
+   *
+   * Ayrım şu: portta oturan sunucu BİZİM test altyapımızın bıraktığı bir artık mı, yoksa
+   * tanımadığımız bir süreç mi?
+   *   - `instance` değeri `e2e-<port>-` ile başlıyorsa o sunucu BU harness tarafından, geçmiş bir
+   *     koşuda başlatılmış ve terk edilmiş. Tanımı gereği atılabilir: kendi geçici veritabanına
+   *     bağlı, kimsenin işine yaramıyor. Otomatik kapatıyoruz ve NE YAPTIĞIMIZI yazdırıyoruz.
+   *   - Başka herhangi bir şey (gerçek bir geliştirme sunucusu, başka bir uygulama) → DOKUNMUYORUZ.
+   *     Tanımadığımız bir süreci öldürmek, bir testin alabileceği en tehlikeli özgürlük olurdu.
+   *
+   * Öldürme POSIX araçlarıyla (`lsof` + `kill`) yapılıyor; bulunamazsa sessizce eski davranışa
+   * (anlaşılır hata + elle komut) düşüyor — yani Windows'ta da anlamlı bir mesaj çıkıyor.
+   *
+   * `-sTCP:LISTEN` HAYATİ — ve bunu ilk sürümde atladım, ölçerken yakaladım.
+   * `lsof -ti tcp:PORT` o porta İLİŞKİN TÜM soketleri listeliyor: yalnızca DİNLEYEN sunucuyu değil,
+   * o porta BAĞLANMIŞ istemcileri de. Test süreci sağlık yoklaması için fetch yaptığı anda kendisi
+   * de o listeye giriyor — yani komut, testi çalıştıran süreci ÖLDÜRÜYORDU. Ölçüm sırasında tam
+   * bunu gördüm: temizlik mesajı basıldı, sonra hiçbir şey olmadı, çünkü betik kendini öldürmüştü.
+   * `-sTCP:LISTEN` yalnızca dinleyen soketi seçiyor. Ayrıca kendi PID'imizi açıkça dışarıda
+   * bırakıyoruz: bir aracın kendini öldürebilmesi kabul edilebilir bir risk değil.
+   */
+  let stale = await probeHealth();
+  if (stale && typeof stale.instance === "string" && stale.instance.startsWith(`e2e-${PORT}-`)) {
+    console.log(`[harness] Port ${PORT}'te önceki bir koşudan kalan test sunucusu bulundu (${stale.instance}) — kapatılıyor.`);
+    try {
+      const listeners = execFileSync("bash", ["-c", `lsof -ti tcp:${PORT} -sTCP:LISTEN || true`], { encoding: "utf8" })
+        .split("\n").map((x) => x.trim()).filter(Boolean)
+        .filter((pid) => Number(pid) !== process.pid);      // kendimizi asla öldürmüyoruz
+      for (const pid of listeners) { try { process.kill(Number(pid), "SIGKILL"); } catch { /* bu arada kapanmış */ } }
+    } catch { /* lsof yok ya da süreç bu arada kendi kapandı — aşağıdaki yoklama karar verecek */ }
+    // Portun gerçekten boşaldığını DOĞRULUYORUZ; "öldürdüm" demekle öldüğünü bilmek aynı şey değil.
+    for (let i = 0; i < 20 && stale; i += 1) {
+      await new Promise((r) => setTimeout(r, 150));
+      stale = await probeHealth();
+    }
+    if (!stale) console.log(`[harness] Port ${PORT} temizlendi, teste devam.`);
+  }
   if (stale) {
+    const mine = typeof stale.instance === "string" && stale.instance.startsWith("e2e-");
     throw new Error(
       `Port ${PORT} zaten kullanımda: orada çalışan BAŞKA bir sunucu var (instance: ${stale.instance ?? "bilinmiyor"}).\n`
-      + `Muhtemelen çökmüş bir önceki test koşusundan kalmış. Testler o sunucunun ESKİ veritabanına\n`
-      + `karşı koşacağı için durduruldu. Şununla temizleyebilirsin:\n`
+      + (mine
+        ? `Bu bizim test sunucumuz ama otomatik kapatılamadı (lsof bu ortamda yok olabilir).\n`
+        : `Bu BİZİM test sunucumuz DEĞİL — tanımadığımız bir süreci öldürmüyoruz.\n`)
+      + `Testler o sunucunun ESKİ veritabanına karşı koşacağı için durduruldu. Elle temizlik:\n`
       + `  lsof -ti tcp:${PORT} | xargs kill -9`,
     );
   }
@@ -123,6 +167,9 @@ export async function startServer() {
   const args = DRIVER?.kind === "node:sqlite"
     ? ["--experimental-loader", join(HERE, "loader.mjs"), join(ROOT, "backend", "server.js")]
     : [join(ROOT, "backend", "server.js")];
+  // Sunucuyu başlatmadan ÖNCE kapanış korumalarını kur: spawn ile ilk hata arasında süreç ölürse
+  // bile temizlik çalışsın (bkz. installOrphanGuards yorumu).
+  installOrphanGuards();
   child = spawn(process.execPath, args, {
     cwd: ROOT,
     env: {
@@ -198,6 +245,45 @@ export async function startServer() {
 export function stopServer() {
   if (dbHandle) { try { dbHandle.close(); } catch { /* zaten kapalı */ } dbHandle = null; }
   if (child) { child.kill("SIGKILL"); child = null; }
+}
+
+/**
+ * ====== ORPHAN SUNUCU ARTIK OLUŞMUYOR (asıl sebebin çözümü) ======
+ * ================================================================================================
+ * Yukarıdaki tespit ve otomatik temizlik, sorunun SONUCUNU ele alıyor. Sebebi ise şu: `stopServer()`
+ * yalnızca `finally` bloğu çalışırsa çağrılıyor. Süreç Ctrl-C ile kesilirse, zaman aşımına uğrarsa,
+ * yakalanmamış bir hatayla ölürse ya da dışarıdan SIGKILL alırsa `finally` HİÇ çalışmıyor ve
+ * başlattığımız sunucu sahipsiz kalıyor — portu tutmaya devam ediyor, sonraki koşuyu zehirliyor.
+ * Kullanıcı bunu iki kez yaşadı; ikisinde de artık sunucular kendi harness'imizin bıraktıklarıydı.
+ *
+ * Bu yüzden temizlik tek bir yola (`finally`) bırakılmıyor. Süreç kapanışının BÜTÜN yolları aynı
+ * temizliğe bağlanıyor:
+ *   - `exit`          → normal ya da hatalı çıkış (process.exit dâhil; test koşucusu bunu kullanıyor)
+ *   - SIGINT / SIGTERM → Ctrl-C ve dışarıdan kapatma
+ *   - `uncaughtException` / `unhandledRejection` → testin kendi hatası (en sık sebep)
+ * SIGKILL yakalanamaz ve bunu saklamıyoruz: o durumda yukarıdaki otomatik temizlik devreye giriyor.
+ * İki katman birlikte, "orphan hiç oluşmasın" ile "oluştuysa sessizce zarar vermesin" demek.
+ *
+ * `once: true` ve `unref` YOK: dinleyiciler sürecin kapanışını engellemiyor çünkü yalnızca kapanış
+ * anında bir kez çalışıyorlar.
+ */
+let cleanupInstalled = false;
+function installOrphanGuards() {
+  if (cleanupInstalled) return;
+  cleanupInstalled = true;
+  const cleanup = () => { try { stopServer(); } catch { /* kapanışta gürültü yapmıyoruz */ } };
+  process.once("exit", cleanup);
+  for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) {
+    process.once(sig, () => {
+      cleanup();
+      // Sinyali kendi anlamıyla devam ettiriyoruz: dinleyici koyduğumuz için varsayılan davranış
+      // (sürecin ölmesi) devre dışı kalıyor, biz elle yapıyoruz.
+      process.exit(sig === "SIGINT" ? 130 : 143);
+    });
+  }
+  // Hatalı çıkışlarda da sunucu kalmıyor; hatayı GİZLEMİYORUZ, yazdırıp aynı kodla çıkıyoruz.
+  process.once("uncaughtException", (err) => { cleanup(); console.error(err); process.exit(1); });
+  process.once("unhandledRejection", (err) => { cleanup(); console.error(err); process.exit(1); });
 }
 
 /** Veritabanına DOĞRUDAN bakmak için — "API başarılı dedi" yetmez, satır gerçekten değişti mi? */
