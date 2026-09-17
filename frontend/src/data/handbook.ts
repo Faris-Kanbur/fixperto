@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 32 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 33 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -2877,6 +2877,63 @@ hatayı aramaya gönderir.
 iki kontrolde kırmızı yandı, hata geri alındı, yeşile döndü. Ayrıca araç "hiçbir şey görmediği
 için 0 bulgu" durumuna düşmesin diye, modal bağlamındaki okları GÖRDÜĞÜNÜ ama doğru şekilde muaf
 tuttuğunu da ölçen bir kontrol var.`,
+      },
+      {
+        id: "teklif-on-secimi",
+        title: "25.17 Teklif isteğinde ön seçim — ve eklerken çıkan tuzak",
+        body: `## İstek
+
+*"Ücretsiz teklif al tuşunu eğer tamircinin profilinden seçiyorsa o tamirci seçili olarak
+görünsün."* Beklenti doğru: bir tamircinin sayfasındayken "teklif al" demek **bu** tamirciden
+teklif almak demektir. Önceden modal tamamen boş açılıyordu ve kullanıcı, zaten sayfasında olduğu
+tamirciyi listede yeniden aramak zorunda kalıyordu.
+
+## Çözüm ve iki tasarım kararı
+
+\`openQuoteModal(preselectMechanicId)\` — verilen tamirci **normal seçili listeye** yazılıyor.
+
+- **Ayrı/kilitli bir alan DEĞİL.** Kullanıcı isterse onu kaldırabiliyor ve üstüne başka tamirciler
+  ekleyebiliyor. "Şu tamirci sabit" gibi bir özel durum yaratmak, kullanıcının kararını kilitlemek
+  olurdu — teklif isteme akışının tamamı "kimden isteyeceğini SEN seç" üzerine kurulu.
+- **Limit kontrolü kopyalanmadı.** Ön seçim tek tamirci ve limitler (5 / premium 10) en az 1
+  olduğu için ihlal mümkün değil; kural yalnızca kullanıcı ekleme yaptığında devreye giriyor
+  (\`toggleQuoteMechanic\`). Aynı kontrolün iki kopyası zamanla birbirinden ayrılır.
+
+## Eklerken ortaya çıkan gerçek tuzak
+
+Ön seçimi yazdıktan sonra şunu farkettim: tamirci listesi önce **aramaya**, sonra **filtrelere**
+göre eleniyor. Kullanıcının o an açık bir filtresi varsa (ör. "5 km'den yakın") ve profilinden
+teklif istediği tamirci o filtreye uymuyorsa, sayaç **"1 seçili"** yazarken tamirci listede
+**hiç görünmüyordu.** Kullanıcı ne seçtiğini göremez, kaldıramaz — sessiz ve kafa karıştırıcı.
+
+Kural eklendi: **bir tamirci seçiliyse her zaman listede ve en üstte.** Bu ön seçime özel bir yama
+değil — kullanıcı elle seçip sonra arama yazdığında da aynı sorun oluyordu. Sıralama seçili
+*olmayanlar* arasında bozulmuyor: öne alma, kullanıcının seçtiği sıralama (mesafe/fiyat/puan)
+uygulandıktan **sonra** yapılıyor.
+
+\`useMemo\` bağımlılığına \`quoteSelectedMechIds\` eklendi. Unutulsa ön seçili tamirci ilk açılışta
+listede görünmezdi — sessiz ve teşhisi zor bir hata.
+
+## İki kez kendi kendimi düzelttim
+
+- Koda ilk yazdığım gerekçe şuydu: *"\`closeOverlays()\` seçili tamirciyi temizlediği için id önce
+  okunuyor."* **Kontrol ettim, yanlıştı** — o fonksiyon yalnızca harita katmanlarını kapatıyor.
+  Id'yi yine önce okuyoruz ama gerekçesi dürüst olanı: çağrı sırası ileride değişirse ön seçim
+  sessizce çalışmaz hâle gelir, bir satır maliyetle o risk kapanıyor. Yanlış bir gerekçe, doğru
+  koddan daha zararlı olabilir — sonraki geliştirici ona dayanarak karar verir.
+- Testte \`"1,3"\` bekledim, \`"1"\` geldi. Kodu değil **kendi beklentimi** düzeltmem gerekti: test
+  verisindeki üçüncü tamircinin mesafesi 10 km, filtre 5 km — elenmesi doğru davranış.
+
+## Test (\`tests/quote-preselect.test.mjs\`, 20 kontrol)
+
+İki şey ayrı ayrı ölçülüyor, çünkü yalnızca birincisini ölçen bir test özelliği "çalışıyor"
+gösterip kullanıcıyı kafası karışmış bırakabilirdi:
+
+1. **Kablolama:** buton id'yi geçiyor, modal onu seçili listeye yazıyor, başka yerden açılınca ön
+   seçim olmuyor (rastgele biri seçili gelmemeli).
+2. **Davranış:** filtre/arama mantığı test içinde veriyle **gerçekten çalıştırılıyor** — filtreye
+   uymayan seçili tamirci görünüyor mu, en üstte mi, kaldırılınca filtre yine geçerli mi,
+   sıralama korunuyor mu.`,
       },
 
     ],

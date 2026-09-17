@@ -1609,8 +1609,23 @@ function useAppLogic() {
   // teklif isteği gönderebiliyordu. Artık `filtered` ile birebir aynı filtre setini uyguluyor.
   const quoteFilteredMechanics = useMemo(() => {
     let list = mechanicsList.map(m => ({ ...m, effectiveDistance: getEffectiveDistance(m) }));
-    if (quoteMechSearch.trim()) { const qm = lc(quoteMechSearch).trim(); list = list.filter(m => lc(m.name).includes(qm) || lc(m.specialty).includes(qm)); }
-    list = list.filter(m => mechanicPassesFilters(m, filters));
+    /**
+     * SEÇİLİ TAMİRCİ ARAMA/FİLTREYLE GİZLENEMEZ — ve bu, ön seçim eklenirken ortaya çıkan gerçek
+     * bir tuzağın kapatılması.
+     * Liste önce aramaya, sonra filtrelere göre eleniyordu. Kullanıcı bir tamircinin profilinden
+     * "teklif al" dediğinde o tamirci seçili geliyor; ama kullanıcının o an açık bir filtresi varsa
+     * (ör. "5 km'den yakın") ve seçilen tamirci o filtreye uymuyorsa, sayaç "1 seçili" yazıyor
+     * ama tamirci listede HİÇ görünmüyordu. Yani kullanıcı ne gördüğünü ne de nasıl kaldıracağını
+     * bilemiyordu — sessiz ve kafa karıştırıcı bir durum.
+     * Kural: bir tamirci SEÇİLİYSE her zaman listede ve EN ÜSTTE. Bu ön seçime özel bir yama değil;
+     * kullanıcı elle seçip sonra arama yazdığında da aynı sorun oluyordu.
+     */
+    const selectedSet = new Set(quoteSelectedMechIds);
+    // Sıralama aşağıda yapılıyor; seçili olanları EN SONDA öne alıyoruz ki kullanıcının seçtiği
+    // sıralama (mesafe/fiyat/puan) seçili olmayanlar arasında bozulmasın.
+    const selectedFirst = (arr) => [...arr].sort((a, b) => Number(selectedSet.has(b.id)) - Number(selectedSet.has(a.id)));
+    if (quoteMechSearch.trim()) { const qm = lc(quoteMechSearch).trim(); list = list.filter(m => selectedSet.has(m.id) || lc(m.name).includes(qm) || lc(m.specialty).includes(qm)); }
+    list = list.filter(m => selectedSet.has(m.id) || mechanicPassesFilters(m, filters));
     if (sortBy === "distance") list = [...list].sort((a, b) => {
       // Mesafesi bilinmeyenler HER İKİ yönde de en sonda kalır. Infinity kullansaydık azalan
       // sıralamada ("en uzak önce") bilinmeyenler en BAŞA gelirdi — "bilinmiyor" ile "çok uzak"
@@ -1623,8 +1638,13 @@ function useAppLogic() {
     });
     if (sortBy === "price") list = [...list].sort((a, b) => sortDir === "asc" ? a.price - b.price : b.price - a.price);
     if (sortBy === "rating") list = [...list].sort((a, b) => sortDir === "asc" ? a.rating - b.rating : b.rating - a.rating);
-    return list;
-  }, [quoteMechSearch, sortBy, sortDir, mechanicsList, filters, userLocation]);
+    // SEÇİLİ OLANLAR EN ÜSTTE — sıralamadan sonra, ki kullanıcının seçtiği sıralama
+    // (mesafe/fiyat/puan) seçili olmayanlar arasında bozulmasın.
+    return selectedFirst(list);
+    // quoteSelectedMechIds bağımlılığa EKLENDİ: seçim listeyi etkiliyor (seçili olan hiç
+    // elenmiyor ve en üste çıkıyor), dolayısıyla seçim değişince liste yeniden hesaplanmalı.
+    // Unutulsa, ön seçili tamirci ilk açılışta listede görünmezdi.
+  }, [quoteMechSearch, sortBy, sortDir, mechanicsList, filters, userLocation, quoteSelectedMechIds]);
   const filteredListings = useMemo(() => {
     // Şablon dizesi kullanılıyordu: `${null} ${null}` → "null null" (çökmüyordu ama "null"
     // yazan bir arama sonuç veriyordu). lc() ile boş dizeye çevriliyor.
@@ -2406,7 +2426,29 @@ function useAppLogic() {
   };
   // Çoklu fiyat teklifi akışı, kullanıcının KAYITLI ARAÇLARI üzerinden çalıştığı için (misafirin
   // aracı yok) modal açılırken kapılanıyor — diğer akışlardaki "son adımda sor" deseninden farkı bu.
-  const openQuoteModal = () => requireAuth(() => setShowQuoteModal(true), t("authGateReasonQuote"));
+  /**
+   * TEKLİF MODALINI AÇ — İSTEĞE BAĞLI ÖN SEÇİMLE.
+   * ------------------------------------------------------------------------------------------------
+   * Kullanıcı isteği: "ücretsiz teklif al tuşunu eğer tamircinin profilinden seçiyorsa o tamirci
+   * seçili olarak görünsün." Haklı bir beklenti — bir tamircinin sayfasındayken "teklif al" demek
+   * "BU tamirciden teklif al" demektir. Önceden modal tamamen boş açılıyordu ve kullanıcı, zaten
+   * sayfasında olduğu tamirciyi listede yeniden aramak zorunda kalıyordu.
+   *
+   * ÖN SEÇİM LİSTEYE YAZILIYOR, AYRI BİR ALANA DEĞİL: böylece kullanıcı isterse onu kaldırabiliyor
+   * ve üstüne başka tamirciler ekleyebiliyor. "Şu tamirci sabit" gibi bir özel durum yaratmak,
+   * kullanıcının kararını kilitlemek olurdu — teklif isteme akışının tamamı "kimden isteyeceğini
+   * SEN seç" üzerine kurulu.
+   *
+   * Limit kontrolü BURADA tekrarlanmıyor: ön seçim tek bir tamirci ve limitler (5/10) en az 1
+   * olduğu için ihlal mümkün değil. Limit yalnızca kullanıcı EKLEME yaptığında devreye giriyor
+   * (bkz. toggleQuoteMechanic) — aynı kuralı iki yere yazmıyoruz.
+   */
+  const openQuoteModal = (preselectMechanicId = null) => requireAuth(() => {
+    setQuoteSelectedMechIds(preselectMechanicId != null ? [preselectMechanicId] : []);
+    // Arama kutusu önceki oturumdan kalmış olabilir; ön seçtiğimiz tamirciyi gizleyebilirdi.
+    setQuoteMechSearch("");
+    setShowQuoteModal(true);
+  }, t("authGateReasonQuote"));
   // Araç ekleme de kapılanıyor. Araç kişinin HESABINA kaydediliyor (vehicles.ownerId); oturum
   // yokken kaydedilecek bir yer yok. Eskiden misafir formu baştan sona doldurup "Araç Ekle"ye
   // basıyor, istek sessizce boşa gidiyordu — emek boşa gitmesin diye giriş EN BAŞTA isteniyor.

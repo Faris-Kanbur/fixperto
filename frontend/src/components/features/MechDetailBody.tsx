@@ -237,7 +237,15 @@ export function MechDetailBody() {
         <>
           <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="w-full bg-rose-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-rose-700 active:scale-[0.99] transition shadow-md shadow-rose-200 flex items-center justify-center gap-2 whitespace-nowrap"><Calendar size={16} /> {t("bookNow")}</button>
           <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} className="w-full mt-2 border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2 whitespace-nowrap"><MessageCircle size={16} /> {t("sendMessage")}</button>
-          <button onClick={() => { closeOverlays(); openQuoteModal(); }} className="w-full mt-2 border border-dashed border-rose-300 text-rose-600 py-3 rounded-2xl font-semibold text-sm hover:bg-rose-50 transition flex items-center justify-center gap-2 whitespace-nowrap"><Banknote size={16} /> {t("mechFreeQuoteBtn")}</button>
+          {/* BU TAMİRCİ ÖN SEÇİLİ AÇILIYOR (kullanıcı isteği: "eğer tamircinin profilinden seçiyorsa
+              o tamirci seçili olarak görünsün").
+              İlk yazdığım yorum `closeOverlays()`'in seçili tamirciyi temizlediğini söylüyordu —
+              KONTROL ETTİM, YANLIŞTI: o fonksiyon yalnızca harita katmanlarını kapatıyor
+              (setMapDetailOpen/setShowMapMobile). Id'yi yine de önce okuyoruz, ama gerekçesi
+              farklı ve dürüst olanı şu: çağrı sırası ileride değişirse (araya gerçekten seçimi
+              temizleyen bir şey girerse) ön seçim SESSİZCE çalışmaz hâle gelir. Bir satır maliyetle
+              o riski baştan kapatıyoruz. */}
+          <button onClick={() => { const preselectId = selectedMechanic.id; closeOverlays(); openQuoteModal(preselectId); }} className="w-full mt-2 border border-dashed border-rose-300 text-rose-600 py-3 rounded-2xl font-semibold text-sm hover:bg-rose-50 transition flex items-center justify-center gap-2 whitespace-nowrap"><Banknote size={16} /> {t("mechFreeQuoteBtn")}</button>
           {selectedMechanic.phone && (
             <a href={`tel:${selectedMechanic.phone}`} className="w-full mt-2 text-gray-500 py-2 rounded-2xl font-medium text-xs hover:text-rose-600 transition flex items-center justify-center gap-1.5"><Phone size={13} /> {t("mechCallBtn")} · {selectedMechanic.phone}</a>
           )}
