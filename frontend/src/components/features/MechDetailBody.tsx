@@ -328,8 +328,11 @@ export function MechDetailBody() {
 
       {/* ---- BÖLÜM NAVİGASYONU (yapışkan) ---- yalnızca tam sayfada; uzun profillerde kullanıcı
            doğrudan ilgilendiği bölüme atlayabiliyor. */}
+      {/* top-14: üst çubuğun ALTINA yapışıyor. `top-0` olduğunda üst çubukla aynı yere yapışıp
+          katmanı düşük olduğu için (z-20 < z-45) onun altında kayboluyordu. Koşul PageTopBar ile
+          AYNI (`!compact`), yani çubuk yokken bu da yok — boşluk oluşmuyor. */}
       {!compact && (
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6 hidden md:block">
+        <div className="sticky top-14 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6 hidden md:block">
           <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
             {[
               { id: "mech-about", label: t("mechNavAbout") },

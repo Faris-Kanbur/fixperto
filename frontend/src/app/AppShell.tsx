@@ -2075,13 +2075,21 @@ export function AppShell() {
                 sayfalara "satır bağlantısı" ile inen bir menü vardı — telefonda mantıklı, geniş
                 ekranda hem okunmaz hem gereksiz derindi. Artık alt sayfalar gerçek sekme. */}
             <div className="h-24 md:h-32 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
-              {/* Logo panolarda da var: kullanıcı hangi ekranda olursa olsun tek tıkla ana
-                  sayfaya dönebilmeli — web'de logonun en temel işlevi bu. */}
-              <div className="absolute top-4 left-4 md:left-8 z-40"><BrandMark /></div>
+              {/* İKİNCİ LOGO KALDIRILDI (kullanıcı ekran görüntüsüyle bildirdi: "Fixperto logosu
+                  geri tuşunun arkasında kalıyor, üst üste biniyor").
+                  Bu sayfaya standart üst çubuk (PageTopBar) eklendiğinde o çubuk kendi logosunu
+                  getirdi; kapak bandındaki bu logo İKİNCİ bir kopya olarak kaldı. Üstelik bandın
+                  katmanı z-40, üst çubuk ise z-30 olduğu için sayfa kaydırıldıkça bandın logosu
+                  çubuğun ÜSTÜNDEN geçiyor ve çubuğun geri okuyla çakışıyordu — ekran görüntüsündeki
+                  durum tam olarak bu.
+                  Logo kaldırıldı (üst çubukta var) ve ayrıca üst çubuğun katmanı bandın üstüne
+                  çıkarıldı, böylece banttaki DİĞER öğeler (bildirim zili, arama, ayarlar) de
+                  kaydırırken çubuğun üstüne binemiyor. */}
               {/* KATMAN NOTU: bu kapsayıcı z-40 — aşağıdaki başlık kartı z-10 ve yapışkan sekme
                   çubuğu z-20. Bildirim paneli buradan açıldığı için kartın üstünde kalmalı
                   (tamirci tarafında tam tersi bir sıralama panelin kartın arkasında açılmasına
-                  yol açmıştı; tests/ui.test.mjs bu sırayı artık denetliyor). */}
+                  yol açmıştı; tests/ui.test.mjs bu sırayı artık denetliyor).
+                  Üst çubuk bunların HEPSİNİN üstünde (z-[45]) — sayfa chrome'unun en üst katmanı o. */}
               <div className="absolute top-4 right-4 md:right-8 z-40 flex items-center gap-2">
                 <NotifBell />
                 <button onClick={() => setScreen("owner")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Search size={16} /></button>
@@ -2118,7 +2126,13 @@ export function AppShell() {
                 </div>
               </div>
             </div>
-            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6">
+{/* YAPIŞKAN SEKME ÇUBUĞU ÜST ÇUBUĞUN ALTINA YAPIŞIYOR (top-14), top-0'a DEĞİL.
+                Bulunan sorun: bu çubuk da `top-0` kullanıyordu, yani sayfa kaydırıldığında üst
+                çubukla AYNI yere yapışıyor ve katmanı daha düşük olduğu için (z-20 < z-45) onun
+                ALTINA saklanıyordu — sekmeler kısmen ya da tamamen görünmez oluyordu.
+                14 = üst çubuğun yüksekliği (h-14). İkisi artık üst üste binmiyor, alt alta
+                yapışıyor. */}
+            <div className="sticky top-14 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6">
               <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
                 {/* SEKME SIRASI — işin akışına göre: önce kendin ve garajın, sonra günlük iş
                     (randevu → mesaj → teklif), sonra ikincil iş kolu (ilanlar) ve kaydedilenler. */}

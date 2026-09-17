@@ -195,4 +195,71 @@ function backAffordances(block, label) {
     "profil/ayarlar/sohbet/randevu sayfalarının hepsi standart üst çubuğu kullanıyor");
 }
 
+// --- 4) ÜST ÇUBUK ÇAKIŞMALARI: çift logo ve katman sırası ------------------------------------
+/**
+ * Kullanıcı ekran görüntüsüyle bildirdi: "Fixperto logosu geri tuşunun arkasında kalıyor, üst üste
+ * biniyor." Sebep tek bir şey değildi, ÜÇ AYRI kusur aynı yerde birleşiyordu:
+ *
+ *   1) ÇİFT LOGO. Araç sahibi profil sayfasına standart üst çubuk eklendiğinde o çubuk kendi
+ *      logosunu getirdi; kapak bandındaki eski logo İKİNCİ bir kopya olarak kaldı.
+ *   2) KATMAN TERS. Kapak bandı ve içindeki öğeler z-40, üst çubuk z-30 idi. Sayfa kaydırıldıkça
+ *      bandın içeriği yapışkan çubuğun ÜSTÜNDEN geçiyordu — görüntüdeki çakışma tam olarak bu.
+ *   3) İKİ YAPIŞKAN ÖĞE AYNI YERE. Sekme çubuğu da `top-0` kullanıyordu, yani üst çubukla aynı
+ *      noktaya yapışıp katmanı düşük olduğu için (z-20) onun ALTINA saklanıyordu.
+ *
+ * Üçü de ölçülebilir kurallara dönüştürüldü. Bu, "geri tuşu" ile aynı aile: sayfa chrome'unun
+ * (üst çubuk + logo + sekmeler) tek ve tutarlı olması.
+ */
+{
+  const shell = read("app", "AppShell.tsx");
+
+  // (1) Üst çubuk kullanan bir sayfa KENDİ logosunu ayrıca basmıyor.
+  // Ölçüm birimi ekran: AppShell'de bazı ekranlarda (ör. tamirci panosu) üst çubuk YOK ve kendi
+  // logosunu basmak DOĞRU — bu yüzden dosya toplamına bakmak yanlış olurdu.
+  const screenStarts = [...shell.matchAll(/\n {8}\{\(?screen === "(\w+)"/g)].map((m) => ({ name: m[1], at: m.index }));
+  const doubleLogo = [];
+  screenStarts.forEach((sc, i) => {
+    const end = i + 1 < screenStarts.length ? screenStarts[i + 1].at : shell.length;
+    const block = shell.slice(sc.at, end);
+    const hasTopBar = /<PageTopBar/.test(block);
+    const ownLogos = (block.match(/<BrandMark/g) || []).length;
+    if (hasTopBar && ownLogos > 0) doubleLogo.push(`${sc.name} (${ownLogos} ek logo)`);
+  });
+  eq(doubleLogo.length, 0,
+    `üst çubuklu sayfalar ikinci bir logo basmıyor${doubleLogo.length ? ` — ${doubleLogo.join(", ")}` : ""}`);
+  // Araç yanlışlıkla "hiç logo görmüyor" durumuna düşmesin: üst çubuğu OLMAYAN sayfalarda kendi
+  // logosunun bulunduğunu da doğruluyoruz (o davranış doğru ve korunmalı).
+  ok((shell.match(/<BrandMark/g) || []).length >= 1, "üst çubuğu olmayan sayfalar kendi logosunu basmaya devam ediyor");
+
+  // (2) Üst çubuk, kapak bandı öğelerinin ÜSTÜNDE ama modallerin ALTINDA.
+  const topBar = read("components", "features", "BrandMark.tsx");
+  const zMatch = /sticky top-0 z-\[(\d+)\]/.exec(topBar);
+  ok(zMatch, "üst çubuğun katmanı açıkça yazılmış");
+  const topBarZ = Number(zMatch[1]);
+  ok(topBarZ > 40, `üst çubuk kapak bandı öğelerinin (z-40) üstünde (z-${topBarZ})`);
+  ok(topBarZ < 50, `üst çubuk tam ekran modallerin (z-50+) altında (z-${topBarZ})`);
+
+  // (3) Üst çubuklu bir sayfada BAŞKA bir `sticky top-0` olamaz — aynı noktaya yapışırlar.
+  const conflicting = [];
+  screenStarts.forEach((sc, i) => {
+    const end = i + 1 < screenStarts.length ? screenStarts[i + 1].at : shell.length;
+    const block = shell.slice(sc.at, end);
+    if (!/<PageTopBar/.test(block)) return;          // üst çubuk yoksa top-0 doğru
+    if (/sticky top-0/.test(block)) conflicting.push(sc.name);
+  });
+  eq(conflicting.length, 0,
+    `üst çubuklu sayfalarda ikinci bir "sticky top-0" yok${conflicting.length ? ` — ${conflicting.join(", ")}` : ""}`);
+
+  // Aynı kural sayfa bileşenlerinde de geçerli.
+  for (const file of ["components/features/MechDetailBody.tsx", "components/features/ListingDetailPage.tsx"]) {
+    const src = read(...file.split("/"));
+    if (!/<PageTopBar/.test(src)) continue;
+    eq(/sticky top-0/.test(src), false, `${file.split("/").pop()}: üst çubuk varken ikinci "sticky top-0" yok`);
+  }
+  // Ve yapışkan sekme çubukları gerçekten üst çubuğun ALTINA yapışıyor.
+  ok(/sticky top-14 z-20/.test(shell), "araç sahibi profilinin sekme çubuğu üst çubuğun altına yapışıyor");
+  ok(/sticky top-14 z-20/.test(read("components", "features", "MechDetailBody.tsx")),
+    "tamirci detayının sekme çubuğu üst çubuğun altına yapışıyor");
+}
+
 report("tek geri tuşu");

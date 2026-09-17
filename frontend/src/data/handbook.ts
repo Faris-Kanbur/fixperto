@@ -2915,7 +2915,36 @@ hatayı aramaya gönderir.
 **Bekçi kanıtlandı:** hata bilerek geri konuldu (tamirci detayına yüzen ok yeniden eklendi), test
 iki kontrolde kırmızı yandı, hata geri alındı, yeşile döndü. Ayrıca araç "hiçbir şey görmediği
 için 0 bulgu" durumuna düşmesin diye, modal bağlamındaki okları GÖRDÜĞÜNÜ ama doğru şekilde muaf
-tuttuğunu da ölçen bir kontrol var.`,
+tuttuğunu da ölçen bir kontrol var.
+
+## Aynı yerin ikinci turu: logo geri tuşunun arkasında kalıyordu
+
+Kullanıcı bir ekran görüntüsü daha gönderdi: *"Fixperto logosu geri tuşunun arkasında kalıyor, üst
+üste biniyor."* Sebep tek bir şey değildi — **bir önceki turda yaptığım düzeltmenin yan etkisi**
+olarak üç kusur aynı yerde birleşmişti:
+
+**1) Çift logo.** Araç sahibi profil sayfasına standart üst çubuğu eklediğimde o çubuk kendi
+logosunu getirdi; kapak bandındaki eski logo İKİNCİ bir kopya olarak kaldı. Yani bir önceki turda
+"logo bile görünmüyordu" diye eklediğim çubuk, farkında olmadan logoyu ikiye çıkardı.
+
+**2) Katman ters dönmüş.** Kapak bandı ve içindeki öğeler (logo, bildirim zili, arama, ayarlar)
+\`z-40\`, yapışkan üst çubuk ise \`z-30\` kullanıyordu. Sayfa kaydırıldıkça bandın içeriği çubuğun
+ÜSTÜNDEN geçiyordu — ekran görüntüsündeki çakışmanın asıl mekanizması bu. Üst çubuk \`z-[45]\`
+oldu: kapak öğelerinin üstünde, ama tam ekran modallerin (\`z-50\` ve inline \`z-9000\`'ler) altında.
+Sıralama artık açık: kart(10) < yapışkan sekme(20) < kapak öğeleri(40) < **üst çubuk(45)** < modaller(50+).
+
+**3) İki yapışkan öğe aynı noktaya yapışıyordu.** Sekme çubuğu da \`top-0\` kullanıyordu; üst çubukla
+aynı yere yapışıp katmanı düşük olduğu için (\`z-20\`) onun ALTINDA kayboluyordu. \`top-14\` oldu
+(üst çubuğun yüksekliği) — artık üst üste binmiyor, alt alta yapışıyorlar. Aynı kusur tamirci
+detay sayfasında da vardı ve orada da düzeltildi.
+
+Taradığımda üç yerde \`sticky top-0\` daha buldum (tamirci panosu, açılış sayfası başlığı, kayıtlı
+arama modalı) — o üçünde üst çubuk YOK, yani \`top-0\` doğru. Hepsini değiştirmek yanlış olurdu.
+
+**Bekçi genişletildi ve kanıtlandı:** üç kusur tek tek geri konuldu, her biri ayrı bir kontrolü
+kırmızı yaktı, geri alındı, yeşile döndü. Ayrıca aracın "hiç logo görmediği için 0 bulgu"
+durumuna düşmediği de ölçülüyor — üst çubuğu olmayan sayfaların kendi logosunu basmaya devam
+ettiği ayrıca doğrulanıyor.`,
       },
       {
         id: "teklif-on-secimi",

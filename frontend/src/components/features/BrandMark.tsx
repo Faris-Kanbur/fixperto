@@ -38,7 +38,18 @@ export function BrandMark({ size = "md", className = "" }: { size?: "sm" | "md";
 export function PageTopBar({ onBack = null, right = null }: { onBack?: (() => void) | null; right?: React.ReactNode }) {
   const { t } = useApp();
   return (
-    <div className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-gray-100">
+    /**
+     * KATMAN: z-[45] — SAYFA CHROME'UNUN EN ÜST KATMANI.
+     * Önce z-30 idi ve bu gerçek bir çakışmaya yol açıyordu: bazı sayfaların kapak bandı ve o
+     * bandın içindeki öğeler (logo, bildirim zili, arama/ayarlar düğmeleri) z-40 kullanıyor.
+     * Yapışkan çubuk yukarıda sabit dururken bant kaydırılıp altına girdiğinde, z-40 > z-30
+     * olduğu için bandın içeriği ÇUBUĞUN ÜSTÜNDEN geçiyordu — kullanıcı bunu logo ile geri okunun
+     * üst üste binmesi olarak gördü.
+     * 45 seçildi, 50 DEĞİL: tam ekran modaller z-50 ve üstünü (inline z-9000'ler dâhil) kullanıyor;
+     * üst çubuk onların ÖNÜNE geçmemeli, yoksa modal açıkken arkadaki çubuk üste çıkardı.
+     * Yani sıralama: kart(10) < yapışkan sekme(20) < kapak öğeleri(40) < ÜST ÇUBUK(45) < modaller(50+).
+     */
+    <div className="sticky top-0 z-[45] bg-white/95 backdrop-blur border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-5 md:px-8 h-14 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           {onBack && (
