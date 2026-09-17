@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 30 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 31 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -2527,10 +2527,13 @@ Sayım \`GET /api/listings/favorite-counts\`e taşındı (SQLite \`json_each\` i
 
 ## Hâlâ açık olanlar (dürüst sınırlar)
 
-- \`mechanics.email\` veritabanı düzeyinde UNIQUE **değil** — sütun \`ALTER TABLE\` ile sonradan eklendiği için SQLite UNIQUE koyamıyor (\`owners.email\` UNIQUE). Uygulama katmanı artık iki tabloyu da kontrol ediyor; veritabanı katmanındaki bu asimetri tablo yeniden kurulmadan kapatılamaz.
-- \`analytics_events.visitorId\` doğrulanamaz — ziyaretçi sayısı hâlâ şişirilebilir. Sınırlanan şey hacim.
-- Çeviri önbelleği, çevrilen metinlerin (sohbet mesajları dâhil) düz metin kopyasını tutuyor. Bir çeviri önbelleğinin doğası bu; açık sinyal (\`cached\`) kapatıldı, zamanlama farkı kapatılamaz.
-- Tarayıcı, responsive ve erişilebilirlik testi bu ortamda **yapılamıyor** (tarayıcı yok, ön yüz derlenemiyor). İkinci denetim de bu konuda birinciden daha ileri gidemedi ve bunu bir başarı gibi sunmuyor.`,
+> **BU DÖRT MADDE 25.15'TE KAPATILDI.** Aşağıdaki hâlleri, kapatılmadan önceki durumu gösteriyor —
+> ve biri (\`mechanics.email\`) benim yanlış bir teknik iddiamdı. Güncel durum için bkz. 25.15.
+
+- ~~\`mechanics.email\` veritabanı düzeyinde UNIQUE **değil** — tablo yeniden kurulmadan kapatılamaz.~~ → **YANLIŞ İDDİA:** ALTER TABLE UNIQUE *kısıt* ekleyemez ama var olan sütuna UNIQUE *indeks* kurulabilir. Kuruldu (kısmi, \`lower(email)\` üzerinde).
+- ~~\`analytics_events.visitorId\` doğrulanamaz.~~ → Doğrulanamayan şey istemcinin GÖNDERDİĞİ değerdi; sayım artık sunucuda IP karmasından türetiliyor.
+- ~~Çeviri önbelleği özel metinlerin düz kopyasını tutuyor.~~ → Kapsam ayrımı eklendi: yalnızca herkese açık metin önbellekleniyor.
+- ~~Tarayıcı/responsive/erişilebilirlik testi yapılamıyor.~~ → Tarayıcı gerektirenler için hâlâ doğru, ama koddan ölçülebilen 7 başlık artık ölçülüyor ve **gerçek bir hata buldu** (30 modal Escape ile kapanmıyordu).`,
       },
       {
         id: "iliski-denetimi",
@@ -2689,6 +2692,124 @@ doğru hatayı veriyor ve testleri hiç başlatmıyor.
 
 Ders, bu oturumun tekrar eden dersinin test altyapısındaki hâli: **bir cevap almak, doğru
 kaynaktan cevap almak demek değil.**`,
+      },
+      {
+        id: "kalan-riskler-kapatildi",
+        title: "25.15 \"Kalan riskler\" listesinin kapatılması",
+        body: `## Neden bu sayfa var
+
+Üç denetimin sonunda hep aynı dört madde "dürüst sınırlar" başlığı altında duruyordu. Kullanıcı
+haklı olarak "bunu da düzelt" dedi. Dördünü tek tek ele aldım ve **birinde kendi iddiam yanlış
+çıktı**, ikisinde ise "doğal sınır" sandığım şey aslında yapmadığım bir ayrımdı.
+
+## 1) \`mechanics.email\` UNIQUE değil — İDDİAM YANLIŞTI
+
+Şöyle yazmıştım: *"sütun ALTER TABLE ile sonradan eklendiği için SQLite UNIQUE koyamıyor; tablo
+yeniden kurulmadan kapatılamaz."*
+
+Doğrusu: SQLite \`ALTER TABLE ... ADD COLUMN\` ile **UNIQUE KISIT** ekleyemez, ama var olan bir
+sütun üzerine **UNIQUE INDEX** kurabilir. Kısıt ile indeks farklı şeyler; ben ikisini aynı
+sanmışım. Üstelik bu dosyada örneği zaten vardı (\`idx_review_one_per_author\`). Yani engel teknik
+değil, benim yanlış varsayımımdı — ve "dürüst sınır" diye üç denetim boyunca taşındı.
+
+İndeks **kısmi** ve \`lower(email)\` üzerinde. İkisi de gerekli:
+
+- \`WHERE email IS NOT NULL AND email != ''\` → eski/demo kayıtlarda e-posta boş olabiliyor. SQLite
+  NULL'ları birbirinden farklı sayar ama **boş dizeyi saymaz**; bu koşul olmasa iki boş e-postalı
+  tamirci indeksi ihlal eder ve uygulama hiç açılmazdı.
+- \`lower(email)\` → uygulama karşılaştırmayı \`WHERE lower(email) = ?\` ile yapıyor. İndeks aynı
+  ifadeyi kullanmazsa "Ali@x.com" veritabanı için farklı, uygulama için aynı olur — yani kural iki
+  katmanda **çelişirdi**. Aynı hizalama \`owners.email\` için de eklendi (oradaki sütun kısıtı
+  harf duyarlıydı).
+
+Ölçüldü: uygulama katmanı atlanıp doğrudan veritabanına \`"A9-MA@EXAMPLE.COM"\` yazılmaya
+çalışıldı — **reddedildi**. Mevcut veride çakışma varsa indeks kurulamaz; o durumda uygulama
+çökmüyor ama çakışan adresler günlüğe yazılıyor. Veriyi kendiliğinden birleştirmek bu katmanın işi
+değil: hangi hesabın gerçek olduğuna kod karar veremez.
+
+## 2) \`visitorId\` doğrulanamaz — YANLIŞ SORU
+
+"Doğrulanamaz" olan şey istemcinin **gönderdiği** değerdi. Ama sayımı ona dayandırmak zorunda
+değildik; ben öyle varsaymışım.
+
+Önce: \`visitorId: clip(r.visitorId)\`. Yönetici panelindeki bütün "kaç ziyaretçi" sayıları
+\`COUNT(DISTINCT visitorId)\` ile hesaplanıyor (15+ yerde). Yani tek bir betik her olayda farklı bir
+kimlik üretip istediği kadar "tekil ziyaretçi" uydurabiliyordu: 300 istek × 50 olay = **15.000
+sahte ziyaretçi**, hiç kimlik gerekmeden.
+
+Şimdi: değer sunucuda IP karmasından türetiliyor (\`hashIp\`, \`owners.signupIpHash\` ile aynı desen).
+Ölçüldü: 20 uydurma kimlikle gönderilen 20 olay veritabanında **tek** ziyaretçiye indi.
+
+**Dürüst bedeli:** aynı NAT/ofis/ev arkasındaki farklı kişiler tek ziyaretçi sayılıyor, yani sayı
+artık **eksik** sayabiliyor. Bir güven metriğinde eksik saymak şişirilebilir olmaktan iyidir —
+yanlış tarafa doğru hata yapıyoruz ve bunu biliyoruz. Ölçtüğümüz şey artık "kaç kişi" değil
+**"kaç ağ noktası"**. Sütun adı değişmedi, o yüzden 15 sorgu olduğu gibi çalışmaya devam ediyor.
+
+**Kalan sınır:** \`sessionId\` istemcinin değeriyle IP karmasının karışımı; aynı IP'den hız sınırı
+kadar oturum uydurulabilir. Ama bir IP artık başka bir IP'nin oturumunu taklit edemiyor.
+
+## 3) Çeviri önbelleği düz metin tutuyor — YAPMADIĞIM AYRIM
+
+"Bir çeviri önbelleğinin doğası bu" demiştim. Doğru olan kısmı: çeviriyi önbelleklemek metnin bir
+kopyasını tutmaktır. **Yanlış olan kısmı:** bundan "o zaman her metni önbelleklemek zorundayız"
+sonucunu çıkarmam. Çevrilen metinler iki ayrı sınıfa ayrılıyor ve bu ayrımı hiç yapmamıştım:
+
+- **Herkese açık** — ilan açıklaması, iş ilanı metni, yorum, tamircinin yorum yanıtı, ilandaki
+  soru-cevap. Bunlar zaten girişsiz herkese görünüyor; paylaşılan önbellekte tutmanın ek gizlilik
+  maliyeti **yok**, kazancı büyük.
+- **Özel** — sohbet mesajları, randevu/teklif arıza açıklaması, iş başvurusu mesajı.
+
+Artık \`scope: "public"\` gelen metinler önbellekten okunuyor ve önbelleğe yazılıyor; **diğer her
+şey (kapsam verilmemiş dahil) ne yazılıyor ne okunuyor.** Bu, ikinci denetimde bulunan
+"bu cümle bu sitede yazıldı mı" oracle'ını özel metin için tamamen kapatıyor — artık bakılacak bir
+kayıt yok.
+
+**Varsayılan "özel" (fail-closed)** bilinçli: yeni bir ekran kapsam vermeyi unutursa sonuç
+"gizlilik sızdı" değil "önbellek kullanılmadı" olur. Kullanıcı deneyimi bozulmuyor: istemcinin
+kendi localStorage önbelleği özel metinler için de çalışıyor, yani aynı sohbeti tekrar açan
+kullanıcı çeviriyi yine anında görüyor.
+
+## 4) Tarayıcı/erişilebilirlik testi yapılamıyor — DOĞRU AMA TAMAM DEĞİL
+
+O satır doğruydu ama iki farklı şeyi aynı kefeye koyuyordu: gerçekten tarayıcı gerektirenler
+(kontrast, odak sırası, ekran okuyucu çıktısı, 320px'te akış) ile **kaynak koddan ölçülebilenler**.
+İkincisi hiç denenmemişti.
+
+Denendi ve **gerçek bir hata çıktı:** bu dosyadaki **30 modalın hepsi** arka plana tıklayarak
+kapanıyordu ama **hiçbiri Escape'i dinlemiyordu**. Fare kullanamayan biri açılan modalın içinde
+kalıyordu. Utanç verici tarafı: el kitabının kendi kuralı bunu zaten yazıyor — *"Escape ile
+kapanmalı; kullanıcıyı içeride hapsetmemeli"* — ve küçük bileşenler (PhotoLightbox, EmojiPicker,
+ComboBox, WelcomeTour, ShareButton) bunu **doğru** yapıyor. Yine aynı desen: ders bir yerde
+öğrenilmiş, kardeşlerine taşınmamış.
+
+Düzeltme 30 ayrı düzenleme değil: arka planlara **salt ekleme** bir işaret (\`data-modal-backdrop\`)
+konuldu ve tek bir Escape işleyicisi işaretlilerin **en üstündekini** tıklıyor. Böylece kapatma
+mantığı tek yerde (modalın kendi \`onClick\`'i) kalıyor ve üst üste modalda yalnızca en üstteki
+kapanıyor. Yeni modal eklendiğinde işareti koymayı **bir test zorluyor**.
+
+Ayrıca: bir \`<img>\`de eksik \`alt\` bulundu ve 7 gerçek ikon düğmesine \`aria-label\` eklendi
+(yeni i18n anahtarları, üç dilde).
+
+### Ölçüm aracım iki kez yanlış şeyi ölçtü — ve bu önemli
+
+İlk taramam **73 "etiketsiz input"** ve **62 "klavyeyle erişilemez div"** bildirdi. İkisi de büyük
+ölçüde yanlış pozitifti: inputların bir kısmı gizli dosya seçicisi, div'lerin neredeyse tamamı
+modal arka planı (WCAG bunların klavyeyle erişilebilir olmasını istemiyor; **modalın kapanabilmesini**
+istiyor). Ham sayıya bakıp 135 "hata" bildirmek, gerçek bulguyu gürültünün içinde gizlerdi.
+
+Sonra düğme kuralını yazarken **iki hata daha yaptım**: (1) gövdeyi \`src.indexOf(t.text)\` ile
+arıyordum — aynı açılış etiketi dosyada iki kez geçince her zaman **ilk** kopyayı bulup başka bir
+düğmenin gövdesini okuyordu; (2) "metin var mı" kuralı yalnızca harf arıyordu, oysa gövde \`{tm}\`
+gibi bir **değişken** de olabilir ve o ekranda metin basar. İkisi birlikte 2 gerçek bulguyu 13
+yanlış alarmın içine gömüyordu. Düzeltildi.
+
+### Ne ÖLÇÜLMÜYOR (uydurmuyoruz)
+
+Gerçek renk kontrastı, odak sırası ve odak tuzağı, ekran okuyucunun okuduğunun **anlamlı** olup
+olmadığı, 320-375px'te gerçek akış, dokunma hedefi boyutu. Bunlar için tarayıcı tabanlı bir araç
+(Playwright + axe-core) gerekiyor ve bu ortamda ön yüz derlenemediği için kurulamıyor. Kapatılan
+boşluk: 7 başlık artık ölçülüyor ve bozulursa test kırmızı yanıyor (\`tests/a11y.test.mjs\`, 18
+kontrol).`,
       },
 
     ],

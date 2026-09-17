@@ -8,7 +8,11 @@ import { useApp } from "../../app/state/AppLogicProvider";
 // bileşen. `id` alanı translationCache'te GLOBAL olarak benzersiz olmalı — bu yüzden çağıran
 // taraf her zaman bir önek kullanmalı (örn. "appt-issue-101"), aksi halde farklı bir mesaj
 // kimliğiyle çakışıp yanlış çeviri gösterebilir.
-export function TranslatedText({ id, text, fromLang, viewerLang, className = "", compact = false }) {
+// `scope`: metin HERKESE AÇIK mı (ilan açıklaması, yorum, iş ilanı) yoksa ÖZEL mi (randevu arıza
+// açıklaması, iş başvurusu mesajı)? Yalnızca açık olanlar sunucunun PAYLAŞILAN çeviri önbelleğine
+// yazılıyor — bkz. backend/routes/translate.js isPublicScope. Varsayılan ÖZEL: çağıran unutursa
+// kaybedilen şey gizlilik değil, yalnızca önbellek.
+export function TranslatedText({ id, text, fromLang, viewerLang, className = "", compact = false, scope = "private" }) {
   const { translationCache, translateMessage, showTranslated, toggleTranslate, t } = useApp();
   const needsTranslation = !!text && !!fromLang && !!viewerLang && fromLang !== viewerLang;
   const manuallySet = showTranslated[id];
@@ -17,7 +21,7 @@ export function TranslatedText({ id, text, fromLang, viewerLang, className = "",
   const translated = translationCache[cacheKey];
   const isTranslating = needsTranslation && showTr && translated === undefined;
   useEffect(() => {
-    if (needsTranslation && translated === undefined) translateMessage({ id, text, lang: fromLang }, viewerLang);
+    if (needsTranslation && translated === undefined) translateMessage({ id, text, lang: fromLang }, viewerLang, scope);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needsTranslation, id, viewerLang, translated, text]);
   if (!text) return null;

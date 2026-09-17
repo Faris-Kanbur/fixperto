@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
+import crypto from "node:crypto";
 import { clientIp, rateLimitKey } from "../utils/clientIp.js";
-import { makeRateLimiter, resolveActor } from "../utils/auth.js";
+import { makeRateLimiter, resolveActor, hashIp } from "../utils/auth.js";
 
 /**
  * ANALİTİK UÇLARI
@@ -101,14 +102,45 @@ router.post("/events", (req, res) => {
    * sınırlamak (aşağıdaki tavan) ve rol gibi doğrulanabilir alanları istemciden almamak.
    */
   const actorRole = resolveActor(req)?.role || "guest";
+  /**
+   * ====== ZİYARETÇİ KİMLİĞİ ARTIK SUNUCU TÜRETİYOR ======
+   * ================================================================================================
+   * ÖNCEKİ DENETİMDE "doğrulanamaz, bunu saklamıyoruz" diye bıraktığım madde buydu. Doğrulanamaz
+   * olan şey istemcinin GÖNDERDİĞİ değerdi — ama sayımı ona dayandırmak zorunda değildik.
+   *
+   * ÖNCE: `visitorId: clip(r.visitorId)`. Yönetici panelindeki bütün "kaç ziyaretçi" sayıları
+   * `COUNT(DISTINCT visitorId)` ile hesaplanıyor (15+ yerde). Yani tek bir betik, her olayda farklı
+   * bir `visitorId` üreterek istediği kadar "tekil ziyaretçi" uydurabiliyordu: 300 istek × 50 olay
+   * = 15.000 sahte ziyaretçi, hiç kimlik gerekmeden.
+   *
+   * ŞİMDİ: değer sunucuda, IP karmasından türetiliyor (`hashIp`, aynı tuzu kullanan
+   * `owners.signupIpHash` ile aynı desen). Böylece şişirme artık "farklı IP bulmak" kadar pahalı.
+   *
+   * DÜRÜST BEDELİ — ve neden bu yönde hata yapmayı seçtik:
+   *   - Aynı NAT/ofis/ev arkasındaki farklı kişiler TEK ziyaretçi sayılıyor. Yani sayı artık EKSİK
+   *     sayabilir. Bir güven metriğinde eksik saymak, şişirilebilir olmaktan iyidir: yanlış tarafa
+   *     doğru hata yapıyoruz ve bunu biliyoruz.
+   *   - Kişinin tarayıcısı/çerezi değişse bile aynı IP aynı ziyaretçi sayılıyor; IP değişince
+   *     (mobil ağ) yeni ziyaretçi görünüyor. "Kaç kişi" değil "kaç ağ noktası" ölçüyoruz.
+   * Bu yüzden ham IP DEĞİL karması saklanıyor ve sütun adı değişmedi: 15 sorgunun hepsi olduğu
+   * gibi çalışmaya devam ediyor, sadece besledikleri değer artık uydurulabilir değil.
+   *
+   * OTURUM (sessionId): istemcinin değeri IP karmasıyla birlikte karılıyor. Aynı IP'den çok oturum
+   * uydurulabilir (hız sınırı kadar) — bu kalan bir sınır ve el kitabında yazılı. Ama bir IP artık
+   * BAŞKA bir IP'nin oturumunu taklit edemiyor.
+   */
+  const visitorKey = hashIp(clientIp(req)) || "bilinmiyor";
+  const sessionKey = crypto.createHash("sha256")
+    .update(`${visitorKey}:${clip(req.body?.sessionId) ?? ""}`).digest("hex").slice(0, 32);
   let accepted = 0;
   const insertMany = db.transaction((rows) => {
     for (const r of rows) {
       if (!ALLOWED_EVENTS.has(r.name)) continue; // bilinmeyen olay sessizce atılır
       stmt.run({
         name: r.name,
-        visitorId: clip(r.visitorId),
-        sessionId: clip(r.sessionId),
+        // İstemcinin gönderdiği visitorId/sessionId YOK SAYILIYOR (bkz. yukarıdaki gerekçe).
+        visitorId: visitorKey,
+        sessionId: sessionKey,
         targetType: clip(r.targetType),
         targetId: Number.isFinite(Number(r.targetId)) ? Number(r.targetId) : null,
         role: actorRole,

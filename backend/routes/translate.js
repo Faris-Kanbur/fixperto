@@ -133,6 +133,38 @@ const writeCache = (from, to, text, translated) => {
 const MAX_BATCH_ITEMS = 60;
 const CONCURRENCY = 8;
 
+/**
+ * ====== PAYLAŞILAN ÖNBELLEK ARTIK ÖZEL METİN TUTMUYOR ======
+ * ================================================================================================
+ * ÖNCEKİ DENETİMDE "bir çeviri önbelleğinin doğası bu" diye bıraktığım madde buydu. Doğru olan
+ * kısmı: bir çeviriyi önbelleklemek, metnin bir kopyasını tutmak demektir. YANLIŞ olan kısmı:
+ * bundan "o zaman her metni önbelleklemek zorundayız" sonucunu çıkarmam. Çevrilen metinler iki
+ * ayrı sınıfa ayrılıyor ve bu ayrımı hiç yapmamıştım:
+ *
+ *   HERKESE AÇIK  → ilan açıklaması, iş ilanı metni, yorum ve tamircinin yorum yanıtı, ilandaki
+ *                   soru-cevap. Bunlar zaten girişsiz herkese görünüyor. Paylaşılan önbellekte
+ *                   tutmanın ek bir gizlilik maliyeti YOK ve kazancı büyük (aynı ilan açıklaması
+ *                   binlerce kez okunur, bir kez çevrilir).
+ *   ÖZEL          → sohbet mesajları, randevu/teklif arıza açıklaması, iş başvurusu mesajı.
+ *                   Bunlar iki tarafa ait. Paylaşılan bir tabloda düz metin kopyasını tutmak,
+ *                   ikinci denetimde bulunan "bu cümle bu sitede yazıldı mı" oracle'ının da
+ *                   kaynağıydı.
+ *
+ * ARTIK: `scope: "public"` gelen metinler önbellekten OKUNUYOR ve önbelleğe YAZILIYOR. Diğer her
+ * şey (scope verilmemiş dahil) önbelleğe ne yazılıyor ne de oradan okunuyor — yani özel metin için
+ * oracle da tamamen kapanıyor, çünkü artık bakılacak bir kayıt yok.
+ *
+ * VARSAYILAN "ÖZEL" (fail-closed): `scope` gönderilmezse metin özel sayılıyor. Bu bilinçli — yeni
+ * bir ekran çeviri eklerken unutulursa sonuç "gizlilik sızdı" değil "önbellek kullanılmadı" olur.
+ * Aynı beyaz-liste/varsayılan-ret ilkesi randevu alan yetkilerinde de kullanılıyor.
+ *
+ * KULLANICI DENEYİMİ BOZULMUYOR: istemcinin kendi localStorage önbelleği (TRANSLATION_STORE_KEY)
+ * özel metinler için de çalışmaya devam ediyor — yani aynı sohbeti tekrar açan kullanıcı çeviriyi
+ * yine anında görüyor. Kaybedilen tek şey, ÖZEL bir metnin çevirisinin BAŞKA kullanıcılar için de
+ * hazır olması; bu zaten istenen bir şey değildi.
+ */
+const isPublicScope = (scope) => scope === "public";
+
 router.post("/batch", asyncRoute(async (req, res) => {
   const ip = rateLimitKey(req);
   if (translateLimiter.check(ip).blocked) {
@@ -153,9 +185,15 @@ router.post("/batch", asyncRoute(async (req, res) => {
     if (text.length > MAX_TRANSLATE_TEXT_LEN) { results[id] = text; continue; }
     const fromLang = SUPPORTED_LANGS.has(item.from) ? item.from : "tr";
     if (fromLang === toLang) { results[id] = text; continue; }
-    const cached = readCache(fromLang, toLang, text);
-    if (cached !== undefined) { results[id] = cached; continue; }
-    const key = `${fromLang}\u0000${text}`;
+    // KAPSAM METİN BAŞINA: tek istekte hem ilan açıklaması hem sohbet mesajı olabilir.
+    const pub = isPublicScope(item.scope);
+    if (pub) {
+      const cached = readCache(fromLang, toLang, text);
+      if (cached !== undefined) { results[id] = cached; continue; }
+    }
+    // Anahtarda kapsam da var: aynı metin bir yerde açık bir yerde özelse, özel olan yanlışlıkla
+    // açık olanın önbelleğine yazılmasın.
+    const key = `${fromLang}\u0000${pub ? "P" : "X"}\u0000${text}`;
     if (!pending.has(key)) pending.set(key, []);
     pending.get(key).push(id);
   }
@@ -175,11 +213,13 @@ router.post("/batch", asyncRoute(async (req, res) => {
       const key = keys[cursor++];
       const sep = key.indexOf("\u0000");
       const fromLang = key.slice(0, sep);
-      const text = key.slice(sep + 1);
+      const isPub = key[sep + 1] === "P";
+      const text = key.slice(sep + 3);
       const translated = await translateText(text, fromLang, toLang);
       const ids = pending.get(key);
       if (translated) {
-        writeCache(fromLang, toLang, text, translated);
+        // Yalnızca HERKESE AÇIK metin paylaşılan önbelleğe yazılıyor (bkz. isPublicScope yorumu).
+        if (isPub) writeCache(fromLang, toLang, text, translated);
         for (const id of ids) results[id] = translated;
       } else {
         // Servis ulaşılamadı: orijinali döndürüyoruz ama "fallback" diyoruz ki istemci bunu
@@ -224,8 +264,11 @@ router.post("/", asyncRoute(async (req, res) => {
    * Zamanlama farkı (önbellek isabeti ~1ms, dış servis ~200ms+) tamamen kapatılamaz; kapatılabilen
    * şey açık bir "evet/hayır" sinyali vermemekti.
    */
-  const cached = readCache(fromLang, toLang, text);
-  if (cached !== undefined) return res.json({ translatedText: cached });
+  const publicScope = isPublicScope(req.body?.scope);
+  if (publicScope) {
+    const cached = readCache(fromLang, toLang, text);
+    if (cached !== undefined) return res.json({ translatedText: cached });
+  }
 
   // Sayaç yalnızca DIŞ SERVİSE giden istekleri sayıyor (bkz. yukarıdaki yorum).
   translateLimiter.registerFailure(ip);
@@ -237,7 +280,7 @@ router.post("/", asyncRoute(async (req, res) => {
     return res.json({ translatedText: text, fallback: true });
   }
 
-  writeCache(fromLang, toLang, text, translated);
+  if (publicScope) writeCache(fromLang, toLang, text, translated);
   res.json({ translatedText: translated });
 }));
 

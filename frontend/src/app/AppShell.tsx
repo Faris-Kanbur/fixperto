@@ -1,5 +1,5 @@
 // `lazy` ve `Suspense`: el kitabı parçası için (bkz. aşağıdaki HandbookPanel notu).
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 /**
  * FİYAT KARŞILAŞTIRMA GÖRÜNÜMÜ — üç ayrı eşleme, modül düzeyinde.
  * Renk, ok ve metin anahtarı ayrı tutuluyor çünkü üçü ayrı sorulara cevap veriyor: renk
@@ -258,6 +258,53 @@ export function AppShell() {
     compareListingIds, setCompareListingIds, showCompareModal, setShowCompareModal, toggleCompareListing, openCompareModal, clearCompareListings, MAX_COMPARE_LISTINGS,
     isAuthed, requireAuth, requireAuthForTab, openQuoteModal, toggleAddVehicle, saveVehicleToGarage, setSaveVehicleToGarage, authGateOpen, authGateStep, setAuthGateStep, authGateReason, openAuthGate, closeAuthGate,
   } = useApp();
+
+  /**
+   * ====== MODALLAR ARTIK ESCAPE İLE KAPANIYOR ======
+   * ================================================================================================
+   * BULUNAN GERÇEK ERİŞİLEBİLİRLİK HATASI: bu dosyadaki 30 modalın hepsi arka plana TIKLAYARAK
+   * kapanıyordu ama HİÇBİRİ Escape tuşunu dinlemiyordu. Yani fare kullanamayan biri açılan bir
+   * modalın içinde kalıyordu (modalda bir kapat düğmesi olsa bile ona sekmeyle ulaşmak her zaman
+   * mümkün değil; arka plan tıklaması klavyeyle hiç erişilemez).
+   *
+   * Bunun özellikle utanç verici tarafı: el kitabının kendi kuralı bunu zaten yazıyor —
+   * "Escape ile kapanmalı; kullanıcıyı içeride hapsetmemeli." Ve küçük, tekrar kullanılabilir
+   * bileşenler (PhotoLightbox, EmojiPicker, ComboBox, WelcomeTour, ShareButton) bunu DOĞRU yapıyor.
+   * Yani ders bir yerde öğrenilmiş, kardeş kullanım yerlerine taşınmamıştı — bu oturumun en çok
+   * tekrarlayan bulgusu, bu kez erişilebilirlik tarafında.
+   *
+   * NEDEN BU YAKLAŞIM (30 ayrı düzenleme yerine tek işleyici):
+   * Her modalın kendi kapatma fonksiyonu var ve o fonksiyon ZATEN arka planın `onClick`'inde
+   * bağlı. Otuz yere ayrı ayrı `useEffect` eklemek hem çok fazla el değişikliği hem de her birinde
+   * "hangi state açık" koşulunu yeniden yazmak demekti — yani 30 yeni hata fırsatı. Onun yerine
+   * arka planlara SALT EKLEME bir işaret (`data-modal-backdrop`) konuldu ve Escape bu işaretli
+   * öğelerin EN ÜSTTEKİNİ tıklıyor. Böylece kapatma mantığı tek bir yerde tanımlı kalıyor: modalın
+   * kendi `onClick`'i. Yeni bir modal eklendiğinde arka plana işareti koymak yeterli (bunu bir test
+   * zorluyor: tests/ui/a11y.ui.mjs).
+   *
+   * "EN ÜSTTEKİ" seçimi z-index'e göre: üst üste iki modal açıkken (ör. filtre modalı üstünde
+   * onay diyaloğu) Escape yalnızca en üsttekini kapatıyor — hepsini birden kapatmak kullanıcının
+   * kaybolmasına yol açar.
+   */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      const backdrops = Array.from(document.querySelectorAll<HTMLElement>("[data-modal-backdrop]"))
+        .filter((el) => el.offsetParent !== null);
+      if (backdrops.length === 0) return;
+      const zOf = (el) => {
+        const inline = Number(el.style?.zIndex);
+        if (Number.isFinite(inline) && inline !== 0) return inline;
+        const computed = Number(window.getComputedStyle(el).zIndex);
+        return Number.isFinite(computed) ? computed : 0;
+      };
+      const top = backdrops.reduce((best, el) => (zOf(el) >= zOf(best) ? el : best), backdrops[0]);
+      top.click();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-gray-50"}`}>
       {darkMode && (<style>{`
@@ -351,7 +398,7 @@ export function AppShell() {
         const minPrice = Math.min(...compareListings.map(l => parsePriceNumber(l.price)));
         const minKm = Math.min(...compareListings.map(l => Number(l.km) || Infinity));
         return (
-          <div className="fixed inset-0 bg-black/50 z-[9500] flex items-end md:items-center justify-center" onClick={() => setShowCompareModal(false)}>
+          <div className="fixed inset-0 bg-black/50 z-[9500] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowCompareModal(false)}>
             <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-5xl md:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col">
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
                 <h3 className="font-bold text-gray-800 flex items-center gap-2"><Scale size={18} /> {t("compareModalTitle")}</h3>
@@ -416,7 +463,7 @@ export function AppShell() {
           ilan bilgileri...) yerinde duruyor; giriş tamamlanınca popup kapanıp işlem otomatik
           devam ediyor — bkz. AppLogicProvider.tsx requireAuth / submitOtpVerify. */}
       {authGateOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[9900] flex items-end md:items-center justify-center" onClick={closeAuthGate}>
+        <div className="fixed inset-0 bg-black/50 z-[9900] flex items-end md:items-center justify-center" data-modal-backdrop onClick={closeAuthGate}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl max-h-[92vh] overflow-y-auto">
             <div className="px-5 pt-5 pb-4">
               <div className="flex items-start justify-between gap-3 mb-3">
@@ -490,7 +537,7 @@ export function AppShell() {
         const auto = bookingResult.autoAccepted;
         const goAppointments = () => { setBookingResult(null); setScreen("owner"); setOwnerTab("appointments"); setOwnerApptView("active"); };
         return (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9400 }} onClick={goAppointments}>
+          <div data-modal-backdrop className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9400 }} onClick={goAppointments}>
             <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center">
               <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${auto ? "bg-green-100" : "bg-amber-50"}`}>
                 {auto ? <Check size={32} className="text-green-600" /> : <Clock size={30} className="text-amber-500" />}
@@ -518,7 +565,7 @@ export function AppShell() {
         );
       })()}
       {showDayFullPrompt && role === "mechanic" && (
-        <div className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => setShowDayFullPrompt(false)}>
+        <div data-modal-backdrop className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => setShowDayFullPrompt(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
             <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mb-3"><Calendar size={22} className="text-red-500" /></div>
             <h3 className="font-bold text-gray-900 text-base mb-1">{t("dayFullPromptTitle")}</h3>
@@ -531,7 +578,7 @@ export function AppShell() {
         </div>
       )}
       {completingApptId && (
-        <div className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); setCompleteVinInput(""); }}>
+        <div data-modal-backdrop className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); setCompleteVinInput(""); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
             <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center mb-3"><CheckCircle2 size={22} className="text-green-600" /></div>
             <h3 className="font-bold text-gray-900 text-base mb-1">{t("completeApptModalTitle")}</h3>
@@ -551,7 +598,7 @@ export function AppShell() {
         </div>
       )}
       {confirmDialog && (
-        <div className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9800 }} onClick={() => setConfirmDialog(null)}>
+        <div data-modal-backdrop className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9800 }} onClick={() => setConfirmDialog(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${confirmDialog.danger ? "bg-red-50" : "bg-rose-50"}`}><AlertTriangle size={22} className={confirmDialog.danger ? "text-red-500" : "text-rose-600"} /></div>
             <h3 className="font-bold text-gray-900 text-base mb-1">{confirmDialog.title}</h3>
@@ -564,7 +611,7 @@ export function AppShell() {
         </div>
       )}
       {showLocationPrompt && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9600 }} onClick={dismissLocationPrompt}>
+        <div data-modal-backdrop className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9600 }} onClick={dismissLocationPrompt}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
             <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mb-3"><MapPin size={22} className="text-rose-600" /></div>
             <h3 className="font-bold text-gray-900 text-base mb-1">{t("locationPromptTitle")}</h3>
@@ -581,7 +628,7 @@ export function AppShell() {
         if (!doc) return null;
         return (
           <>
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" style={{ zIndex: 9700 }} onClick={() => setLegalModalTopic(null)} />
+            <div data-modal-backdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" style={{ zIndex: 9700 }} onClick={() => setLegalModalTopic(null)} />
             <div className="fixed inset-0 bg-white flex flex-col max-w-md md:max-w-2xl mx-auto md:my-6 md:rounded-3xl md:shadow-2xl overflow-hidden" style={{ zIndex: 9701 }}>
               <div className="px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
                 <button onClick={() => setLegalModalTopic(null)} className="flex items-center gap-1 text-gray-500 mb-2 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
@@ -615,7 +662,7 @@ export function AppShell() {
         );
       })()}
       {showQuoteModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] flex items-center justify-center p-4 overflow-y-auto" style={{ zIndex: 9000 }} onClick={closeQuoteModal}>
+        <div data-modal-backdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] flex items-center justify-center p-4 overflow-y-auto" style={{ zIndex: 9000 }} onClick={closeQuoteModal}>
           {showQuotePremiumUpsell && (
             <div style={{ zIndex: 9500 }} className="fixed top-5 left-1/2 -translate-x-1/2 w-[92%] max-w-sm pointer-events-none">
               <div className="bg-amber-50 border border-amber-200 rounded-2xl shadow-lg p-3 text-center">
@@ -652,8 +699,8 @@ export function AppShell() {
                 <label className="text-xs font-semibold text-gray-700 mb-1.5 block">{t("describeIssueLabel")}</label>
                 <textarea value={quoteIssue} onChange={(e) => setQuoteIssue(e.target.value)} rows={3} placeholder={t("issueDescPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  {quotePhotos.map((src, i) => (<div key={i} className="relative"><img loading="lazy" decoding="async" src={src} alt={t("quotePhotoAlt", { n: String(i + 1) })} className="w-14 h-14 rounded-lg object-cover border border-gray-100" /><button onClick={() => removeQuotePhoto(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center text-white"><X size={10} /></button></div>))}
-                  <button onClick={() => quotePhotoRef.current?.click()} className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:border-rose-300 hover:text-rose-500 transition"><Camera size={16} /></button>
+                  {quotePhotos.map((src, i) => (<div key={i} className="relative"><img loading="lazy" decoding="async" src={src} alt={t("quotePhotoAlt", { n: String(i + 1) })} className="w-14 h-14 rounded-lg object-cover border border-gray-100" /><button aria-label={t("a11yRemovePhoto")} onClick={() => removeQuotePhoto(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center text-white"><X size={10} /></button></div>))}
+                  <button aria-label={t("a11yAddPhoto")} onClick={() => quotePhotoRef.current?.click()} className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:border-rose-300 hover:text-rose-500 transition"><Camera size={16} /></button>
                   <input ref={quotePhotoRef} type="file" accept="image/*" className="hidden" onChange={addQuotePhoto} />
                 </div>
               </div>
@@ -1529,7 +1576,7 @@ export function AppShell() {
               </div>
             </div>
             {selectedAdminUser && adminEditForm && (
-              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4" onClick={() => { setSelectedAdminUser(null); setAdminEditForm(null); }}>
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4" data-modal-backdrop onClick={() => { setSelectedAdminUser(null); setAdminEditForm(null); }}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[88vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-start justify-between mb-1">
                     <h3 className="text-base font-bold text-gray-900">Kullanıcıyı Düzenle</h3>
@@ -1592,7 +1639,7 @@ export function AppShell() {
               </div>
             )}
             {selectedTicket && (
-              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4" onClick={() => setSelectedTicketId(null)}>
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setSelectedTicketId(null)}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-start justify-between mb-3">
                     <div><span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{ADMIN_TICKET_TYPE_LABELS[selectedTicket.type]}</span><h3 className="text-base font-bold text-gray-900 mt-2">{selectedTicket.subject}</h3></div>
@@ -1661,7 +1708,7 @@ export function AppShell() {
               </div>
             )}
             {showBroadcastModal && (
-              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[85] flex items-center justify-center p-4" onClick={() => setShowBroadcastModal(false)}>
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[85] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setShowBroadcastModal(false)}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
                   <h3 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2"><Megaphone size={16} className="text-rose-600" /> Duyuru Gönder</h3>
                   <p className="text-xs text-gray-400 mb-4">Tüm platforma ya da seçtiğin gruba anlık duyuru gönder (demo).</p>
@@ -1681,7 +1728,7 @@ export function AppShell() {
               </div>
             )}
             {analyzingUser && adminUserAnalytics && (
-              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[85] flex items-center justify-center p-4" onClick={() => setAdminAnalyzeUserKey(null)}>
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[85] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setAdminAnalyzeUserKey(null)}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-start justify-between mb-4">
                     <div><span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{analyzingUser.type === "mechanic" ? "Tamirci Analizi" : "Araç Sahibi Analizi"}</span><h3 className="text-base font-bold text-gray-900 mt-2">{analyzingUser.name}</h3></div>
@@ -2492,7 +2539,7 @@ export function AppShell() {
         )}
         {(screen === "detail" || mapDetailOpen) && selectedMechanic && (
           mapDetailOpen ? (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4 overflow-y-auto" onClick={() => setMapDetailOpen(false)}>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center p-4 overflow-y-auto" data-modal-backdrop onClick={() => setMapDetailOpen(false)}>
               <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg md:max-w-xl my-auto max-h-[90vh] flex flex-col overflow-hidden">
                 <MechDetailBody />
               </div>
@@ -2508,13 +2555,13 @@ export function AppShell() {
           )
         )}
         {selectedListingId && selectedListing && (<>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setSelectedListingId(null)} />
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" data-modal-backdrop onClick={() => setSelectedListingId(null)} />
           <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md md:max-w-2xl mx-auto md:my-6 md:rounded-3xl md:shadow-2xl overflow-hidden">
             <div className="relative">
-              <button onClick={() => setSelectedListingId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white"><ChevronLeft size={18} /></button>
+              <button aria-label={t("a11yBack")} onClick={() => setSelectedListingId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white"><ChevronLeft size={18} /></button>
               <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
                 <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} onShare={(channel, refCode) => recordShare("listing", selectedListing.id, channel, refCode)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition" />
-                <button onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
+                <button aria-label={t("a11yToggleFavorite")} onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
               </div>
               {(() => {
                 const galleryPhotos = (selectedListing.photos && selectedListing.photos.length > 0) ? [selectedListing.photo, ...selectedListing.photos] : [selectedListing.photo];
@@ -2621,7 +2668,7 @@ export function AppShell() {
                   </div>
                 );
               })()}
-              <p className="text-sm text-gray-600 mt-4 leading-relaxed whitespace-pre-line"><TranslatedText id={`listing-desc-${selectedListing.id}`} text={selectedListing.description} fromLang={selectedListing.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
+              <p className="text-sm text-gray-600 mt-4 leading-relaxed whitespace-pre-line"><TranslatedText id={`listing-desc-${selectedListing.id}`} scope="public" text={selectedListing.description} fromLang={selectedListing.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
               {(selectedListing.ownerCount || selectedListing.paintedParts !== undefined || selectedListing.changedParts !== undefined || selectedListing.tradeIn) && (
                 <div className="mt-4">
                   <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Shield size={15} className="text-rose-500" /> {t("vehicleHistoryTitle")}</h3>
@@ -2743,7 +2790,7 @@ export function AppShell() {
                     )}
                     {selectedListing.messages.length > 0 && (<>
                       <h3 className="font-semibold text-gray-800 text-sm mt-5 mb-2 flex items-center gap-2"><MessageCircle size={15} className="text-rose-500" /> {t("questionsTitle")}</h3>
-                      <div className="space-y-2">{selectedListing.messages.map(m => (<div key={m.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs"><span className="font-medium text-gray-700">{m.from}{m.isSellerReply && <span className="ml-1 text-[9px] font-bold uppercase text-emerald-600 bg-emerald-50 rounded px-1 py-0.5">{t("sellerReplyBadge")}</span>}:</span> <span className="text-gray-600"><TranslatedText id={`listingmsg-${m.id}`} text={m.text} fromLang={m.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></span></div>))}</div>
+                      <div className="space-y-2">{selectedListing.messages.map(m => (<div key={m.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs"><span className="font-medium text-gray-700">{m.from}{m.isSellerReply && <span className="ml-1 text-[9px] font-bold uppercase text-emerald-600 bg-emerald-50 rounded px-1 py-0.5">{t("sellerReplyBadge")}</span>}:</span> <span className="text-gray-600"><TranslatedText id={`listingmsg-${m.id}`} scope="public" text={m.text} fromLang={m.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></span></div>))}</div>
                       {/* SATICININ CEVABI — eksik olan yarı. Alıcı soru sorabiliyordu ama satıcının
                           cevap verecek bir yeri yoktu; soru ilan yönetiminde okunup orada kalıyordu. */}
                       <div className="flex gap-2 mt-2">
@@ -2779,10 +2826,10 @@ export function AppShell() {
           </div>
         </>)}
         {selectedJobId && selectedJob && (() => { const isOwnJob = role === "mechanic" && (selectedJob.mechanicId != null ? selectedJob.mechanicId === MY_MECHANIC_ID : selectedJob.mechanicName === myProfile?.name); return (<>
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setSelectedJobId(null)} />
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" data-modal-backdrop onClick={() => setSelectedJobId(null)} />
           <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md md:max-w-2xl mx-auto md:my-6 md:rounded-3xl md:shadow-2xl overflow-hidden">
             <div className="bg-white text-gray-900 px-5 pt-6 pb-6 relative flex-shrink-0 border-b border-gray-200 shadow-sm">
-              <button onClick={() => setSelectedJobId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"><ChevronLeft size={18} /></button>
+              <button aria-label={t("a11yBack")} onClick={() => setSelectedJobId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"><ChevronLeft size={18} /></button>
               <div className="absolute top-4 right-4 z-10">
                 <ShareButton title={selectedJob.title} text={`${selectedJob.title} — ${selectedJob.mechanicName}`} path={`?job=${selectedJob.id}`} onShare={(channel, refCode) => recordShare("job", selectedJob.id, channel, refCode)} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" />
               </div>
@@ -2802,7 +2849,7 @@ export function AppShell() {
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full text-white ${jobStatusMeta(selectedJob.status, t).color}`}>{jobStatusMeta(selectedJob.status, t).label}</span>
               </div>
               <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("positionDescriptionTitle")}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed mb-5">{selectedJob.description ? <TranslatedText id={`job-desc-${selectedJob.id}`} text={selectedJob.description} fromLang={selectedJob.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /> : "—"}</p>
+              <p className="text-sm text-gray-600 leading-relaxed mb-5">{selectedJob.description ? <TranslatedText id={`job-desc-${selectedJob.id}`} scope="public" text={selectedJob.description} fromLang={selectedJob.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /> : "—"}</p>
               {selectedJob.requirements.length > 0 && (<>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("requiredQualificationsTitle")}</h3>
                 <div className="space-y-1.5 mb-5">{selectedJob.requirements.map((r, i) => (<div key={i} className="flex items-start gap-2 text-sm text-gray-600"><CheckCircle2 size={14} className="text-rose-500 flex-shrink-0 mt-0.5" /><span>{r}</span></div>))}</div>
@@ -4154,7 +4201,7 @@ export function AppShell() {
                           <div className="flex items-center justify-between mb-2"><span className="text-xs text-gray-500">{t("dayOpenLabel")}</span><button onClick={() => toggleDayOpen(key)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-11 h-6 rounded-full transition relative ${day.open ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition ${day.open ? "left-6" : "left-1"}`} /></div></button></div>
                           {day.open && (<>
                             <div className="flex flex-wrap gap-1.5 mb-3">{slots.map(slot => { const closed = day.closedSlots.includes(slot); return (<button key={slot} onClick={() => toggleSlotClosed(key, slot)} className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition ${closed ? "bg-red-50 text-red-400 border-red-100 line-through" : "bg-green-50 text-green-600 border-green-100"}`}>{slot}</button>); })}</div>
-                            <div className="flex items-center gap-2"><input type="time" value={expandedDay === key ? newSlotTime : ""} onChange={(e) => setNewSlotTime(e.target.value)} step="1800" className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><button onClick={() => { addExtraSlot(key, newSlotTime); setNewSlotTime(""); }} className="w-8 h-8 bg-rose-600 text-white rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-rose-700 transition"><Plus size={16} /></button></div>
+                            <div className="flex items-center gap-2"><input type="time" value={expandedDay === key ? newSlotTime : ""} onChange={(e) => setNewSlotTime(e.target.value)} step="1800" className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><button aria-label={t("a11yAddSlot")} onClick={() => { addExtraSlot(key, newSlotTime); setNewSlotTime(""); }} className="w-8 h-8 bg-rose-600 text-white rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-rose-700 transition"><Plus size={16} /></button></div>
                           </>)}
                         </div>
                       )}
@@ -4169,7 +4216,7 @@ export function AppShell() {
                 </div>
                 <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
                 <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={16} className="text-rose-500" /> {t("team")}</h3><button onClick={addStaff} className="text-sm text-rose-700 font-semibold flex items-center gap-1 hover:text-rose-800"><Plus size={15} /> {t("genericAddBtn")}</button></div>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-rose-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img loading="lazy" decoding="async" src={s.emoji} alt={s.name || t("staffPhotoFallbackAlt")} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder={t("fullNamePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder={t("rolePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /></div><button onClick={() => removeStaff(i)} aria-label={t("removeStaffAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-rose-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img loading="lazy" decoding="async" src={s.emoji} alt={s.name || t("staffPhotoFallbackAlt")} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button aria-label={t("a11yEditStaff")} onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder={t("fullNamePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder={t("rolePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /></div><button onClick={() => removeStaff(i)} aria-label={t("removeStaffAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
                 </div>
                 <div className="flex flex-wrap gap-3 mb-6">
                   <button onClick={saveMyProfile} className="bg-rose-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
@@ -4371,7 +4418,7 @@ export function AppShell() {
         )}
       </div>
       {showFilterModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" style={{ zIndex: 9500 }} onClick={() => setShowFilterModal(false)}>
+        <div data-modal-backdrop className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" style={{ zIndex: 9500 }} onClick={() => setShowFilterModal(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><SlidersHorizontal size={18} /> {t("filterBtn")}</h3><button onClick={() => setShowFilterModal(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             {ownerMode === "mechanics" ? (
@@ -4562,7 +4609,7 @@ export function AppShell() {
       )}
       {showMapMobile && (<div className="fixed inset-0 bg-white z-50 flex flex-col md:hidden"><div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"><h3 className="font-bold text-gray-800">{t("mapMechanicsTitle")}</h3><button onClick={() => setShowMapMobile(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><MapPanel className="flex-1 m-4" items={filtered} onPick={openMapDetail} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /><div className="p-4"><button onClick={() => setShowMapMobile(false)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm">{t("backToListBtn")}</button></div></div>)}
       {showSellVehiclePicker && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4" onClick={() => setShowSellVehiclePicker(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4" data-modal-backdrop onClick={() => setShowSellVehiclePicker(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-t-3xl md:rounded-3xl p-5 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Car size={18} className="text-rose-600" /> {t("whichVehicleSellTitle")}</h3><button onClick={() => setShowSellVehiclePicker(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{t("selectRegisteredVehicleHint")}</p>
@@ -4587,10 +4634,10 @@ export function AppShell() {
         </div>
       )}
       {showSellForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" onClick={() => setShowSellForm(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowSellForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Tag size={18} className="text-rose-600" /> {sellForm._editingId ? t("editListing") : t("sellFormTitle")}</h3><button onClick={() => setShowSellForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
-            <div className="flex justify-center mb-4"><div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-4xl overflow-hidden">{isImgUrl(sellForm.photo) ? <img decoding="async" src={imgThumb(sellForm.photo, 200)} onError={imgFallbackHandler} alt={t("vehiclePhotoAlt")} className="w-full h-full object-cover" /> : sellForm.photo}<input ref={sellPhotoRef} type="file" accept="image/*" onChange={sellPhotoUpload} className="hidden" /><button onClick={() => sellPhotoRef.current?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={20} /></button></div></div>
+            <div className="flex justify-center mb-4"><div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-4xl overflow-hidden">{isImgUrl(sellForm.photo) ? <img decoding="async" src={imgThumb(sellForm.photo, 200)} onError={imgFallbackHandler} alt={t("vehiclePhotoAlt")} className="w-full h-full object-cover" /> : sellForm.photo}<input ref={sellPhotoRef} type="file" accept="image/*" onChange={sellPhotoUpload} className="hidden" /><button onClick={() => sellPhotoRef.current?.click()} aria-label={t("a11yChangeProfilePhoto")} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={20} /></button></div></div>
             <div className="space-y-2">
               <div className="flex gap-2 items-start"><BrandSelect className="w-1/2" value={sellForm.brand} onChange={(b) => setSellForm({ ...sellForm, brand: b, model: "" })} /><ModelSelect className="w-1/2" brand={sellForm.brand} value={sellForm.model} onChange={(m) => setSellForm({ ...sellForm, model: m })} /></div>
               <div className="flex gap-2"><input value={sellForm.year} onChange={(e) => setSellForm({ ...sellForm, year: e.target.value })} placeholder={t("yearRequiredPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.km} onChange={(e) => setSellForm({ ...sellForm, km: e.target.value })} placeholder={t("kmRequiredPlaceholder")} type="number" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
@@ -4681,7 +4728,7 @@ export function AppShell() {
         </div>
       )}
       {showJobForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" onClick={() => setShowJobForm(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowJobForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-rose-500" /> {jobForm._editingId ? t("editJobListingTitle") : t("newJobListingTitle")}</h3><button onClick={() => setShowJobForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <div className="space-y-2">
@@ -4698,7 +4745,7 @@ export function AppShell() {
         </div>
       )}
       {showOfferForm && selectedListing && (() => { const currency = listingCurrency(selectedListing.price); const existingOffer = myPendingOfferOn(selectedListing); const isUpdate = existingOffer && !existingOffer.seen; return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setShowOfferForm(false)}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setShowOfferForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-5">
             <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800">{isUpdate ? t("updateOfferBtn") : t("makeOffer")}</h3><button onClick={() => setShowOfferForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{selectedListing.brand} {selectedListing.model} · {selectedListing.price}</p>
@@ -4708,7 +4755,7 @@ export function AppShell() {
         </div>
       ); })()}
       {showFeaturedUpsell && selectedListing && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setShowFeaturedUpsell(false)}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setShowFeaturedUpsell(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-5">
             <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2">{t("featuredUpsellTitle")}</h3><button onClick={() => setShowFeaturedUpsell(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{selectedListing.brand} {selectedListing.model} · {selectedListing.price}</p>
@@ -4721,9 +4768,9 @@ export function AppShell() {
           </div>
         </div>
       )}
-      {showListingMsgForm && (<div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={() => setShowListingMsgForm(false)}><div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5"><div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800">{t("messageSeller")}</h3><button onClick={() => setShowListingMsgForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><textarea value={listingMsg} onChange={(e) => setListingMsg(e.target.value)} rows={3} placeholder={t("listingMsgPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" /><button onClick={submitListingMsg} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{t("sendReviewBtn")}</button></div></div>)}
+      {showListingMsgForm && (<div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowListingMsgForm(false)}><div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5"><div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800">{t("messageSeller")}</h3><button onClick={() => setShowListingMsgForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><textarea value={listingMsg} onChange={(e) => setListingMsg(e.target.value)} rows={3} placeholder={t("listingMsgPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" /><button onClick={submitListingMsg} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{t("sendReviewBtn")}</button></div></div>)}
       {showJobApplyForm && selectedJob && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={closeJobApplyForm}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" data-modal-backdrop onClick={closeJobApplyForm}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl ring-1 ring-black/5 max-h-[88vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
               <h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-rose-500" /> {t("applicationTitle")}</h3>
@@ -4761,18 +4808,18 @@ export function AppShell() {
         </div>
       )}
       {reviewingApptId && (() => { const revAppt = appointments.find(a => a.id === reviewingApptId); return (
-        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={() => setReviewingApptId(null)}>
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setReviewingApptId(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
             <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800">{t("writeReviewTitle")}</h3><button onClick={() => setReviewingApptId(null)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{revAppt?.mechanicName}</p>
-            <div className="flex items-center gap-1.5 mb-4 justify-center">{[1, 2, 3, 4, 5].map(n => (<button key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))}><Star size={30} className={n <= reviewForm.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} /></button>))}</div>
+            <div className="flex items-center gap-1.5 mb-4 justify-center">{[1, 2, 3, 4, 5].map(n => (<button key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))} aria-label={t("a11yRateStars", { n: String(n) })}><Star size={30} className={n <= reviewForm.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} /></button>))}</div>
             <textarea value={reviewForm.comment} onChange={(e) => setReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder={t("shareExperiencePlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" />
             <button onClick={submitReview} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{t("sendReviewBtn")}</button>
           </div>
         </div>
       ); })()}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={closePasswordModal}>
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={closePasswordModal}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
             <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Lock size={18} /> {t("changePasswordTitle")}</h3><button onClick={closePasswordModal} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <div className="space-y-2">
@@ -4789,7 +4836,7 @@ export function AppShell() {
           çoklu seçim yapılan tam ekran modal. Tamircinin serbest metin yazmasına gerek kalmıyor;
           seçilen hizmetler üç dile otomatik çevriliyor ve aramada gerçekten eşleşiyor. */}
       {servicePickerOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-end md:items-center justify-center md:p-6" onClick={() => setServicePickerOpen(false)}>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-end md:items-center justify-center md:p-6" data-modal-backdrop onClick={() => setServicePickerOpen(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-4xl rounded-t-3xl md:rounded-3xl flex flex-col max-h-[92vh] md:max-h-[85vh] overflow-hidden">
             <div className="px-5 md:px-6 pt-5 pb-4 border-b border-gray-100">
               <div className="flex items-start justify-between gap-3 mb-1">
@@ -4851,7 +4898,7 @@ export function AppShell() {
         </div>
       )}
       {showNewTicketForm && (
-        <div style={{ zIndex: 9999 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-4" onClick={() => setShowNewTicketForm(false)}>
+        <div data-modal-backdrop style={{ zIndex: 9999 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-4" onClick={() => setShowNewTicketForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-t-3xl md:rounded-3xl p-5 max-h-[88vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-1"><h3 className="text-base font-bold text-gray-900">{t("newSupportTicketTitle")}</h3><button onClick={() => setShowNewTicketForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{t("ticketSummaryHint")}</p>
@@ -4887,7 +4934,7 @@ export function AppShell() {
           yalnızca oturum token'ıyla değiştirilebilseydi, çalınmış bir token hesabın kalıcı
           kontrolünü ele geçirmeye yeterdi. */}
       {emailChangeForm.open && (
-        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={() => setEmailChangeForm({ open: false, email: "", password: "", loading: false })}>
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setEmailChangeForm({ open: false, email: "", password: "", loading: false })}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
             <h3 className="font-bold text-gray-900 mb-1">{t("changeEmailBtn")}</h3>
             <p className="text-xs text-gray-400 mb-4 leading-relaxed">{t("changeEmailDesc")}</p>
@@ -4903,7 +4950,7 @@ export function AppShell() {
         </div>
       )}
       {showDeleteAccountModal && (() => { const deleteReady = deleteConfirmText.trim().toLocaleUpperCase("tr-TR") === "SİL"; const closeDeleteModal = () => { setShowDeleteAccountModal(false); setDeleteConfirmText(""); setDeleteAccountPassword(""); }; return (
-        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" onClick={closeDeleteModal}>
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={closeDeleteModal}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-3 mx-auto"><Trash2 size={26} className="text-red-500" /></div>
             <h3 className="font-bold text-gray-800 text-center mb-1">{t("deleteBusinessOrAccountQuestion", { who: role === "mechanic" ? t("deleteBusinessSubject") : t("deleteAccountSubject") })}</h3>

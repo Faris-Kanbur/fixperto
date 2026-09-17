@@ -247,12 +247,25 @@ try {
   const secret = `gizli randevu notu ${Date.now()}`;
   db().prepare(`INSERT OR IGNORE INTO translation_cache (fromLang,toLang,sourceText,translatedText) VALUES ('tr','en',?,?)`)
     .run(secret, "secret appointment note");
-  const hit = await api("POST", "/api/translate", { body: { text: secret, from: "tr", to: "en" } });
+  /**
+   * BU KONTROL GENİŞLEDİ (kalan-riskler turunda): o zaman önbellek HER metni tutuyordu ve tek
+   * düzeltme `cached` bayrağını kaldırmaktı. Artık kapsam ayrımı var — paylaşılan önbellek
+   * yalnızca HERKESE AÇIK metni tutuyor. Yani iki ayrı şeyi doğrulamamız gerekiyor:
+   *   (a) bayrak hâlâ yok (oracle sinyali kapalı),
+   *   (b) ÖZEL kapsamda önbellekten hiç okunmuyor — yani oracle'ın kendisi de kapalı,
+   *   (c) HERKESE AÇIK kapsamda önbellek çalışmaya devam ediyor (özellik bozulmadı).
+   */
+  const hit = await api("POST", "/api/translate", { body: { text: secret, from: "tr", to: "en", scope: "public" } });
   ok(!("cached" in (hit.body || {})), "önbellek isabeti istemciye BİLDİRİLMİYOR");
-  eq(hit.body.translatedText, "secret appointment note", "ama önbellek yine çalışıyor (özellik bozulmadı)");
-  const batch = await api("POST", "/api/translate/batch", { body: { to: "en", items: [{ id: "x", text: secret, from: "tr" }] } });
+  eq(hit.body.translatedText, "secret appointment note", "HERKESE AÇIK kapsamda önbellek çalışıyor");
+  const asPrivate = await api("POST", "/api/translate", { body: { text: secret, from: "tr", to: "en" } });
+  ok(asPrivate.body.translatedText !== "secret appointment note",
+    "ÖZEL kapsamda önbellekten OKUNMUYOR (oracle tamamen kapalı)");
+  const batch = await api("POST", "/api/translate/batch", { body: { to: "en", items: [{ id: "x", text: secret, from: "tr", scope: "public" }] } });
   ok(!("cached" in (batch.body || {})), "toplu uçta da bayrak yok");
-  eq(batch.body.results.x, "secret appointment note", "toplu uçta önbellek çalışıyor");
+  eq(batch.body.results.x, "secret appointment note", "toplu uçta herkese açık önbellek çalışıyor");
+  const batchPriv = await api("POST", "/api/translate/batch", { body: { to: "en", items: [{ id: "y", text: secret, from: "tr" }] } });
+  ok(batchPriv.body.results.y !== "secret appointment note", "toplu uçta ÖZEL kapsam önbellekten okumuyor");
 
   report("uçtan uca ikinci denetim");
 } finally {

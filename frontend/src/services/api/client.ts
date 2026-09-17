@@ -540,11 +540,18 @@ export const api = {
   broadcasts: crud<Broadcast>("broadcasts"),
   // Sohbet mesajı çevirisi — bkz. backend/routes/translate.js. Sunucu tarafında SQLite önbelleği
   // var, bu yüzden aynı metin/dil çifti ikinci kez asla dış servise gitmiyor.
-  translate: (text: string, from: string, to: string): Promise<TranslateResult> =>
-    request("/api/translate", { method: "POST", body: JSON.stringify({ text, from, to }) }),
+  /**
+   * `scope`: "public" → çeviri PAYLAŞILAN sunucu önbelleğine yazılabilir (ilan açıklaması, yorum
+   * gibi zaten herkese açık metinler). Verilmezse metin ÖZEL sayılır ve paylaşılan önbelleğe ne
+   * yazılır ne oradan okunur (bkz. backend/routes/translate.js isPublicScope yorumu). Varsayılanın
+   * "özel" olması bilinçli: yeni bir ekran kapsam vermeyi unutursa sonuç gizlilik sızması değil,
+   * yalnızca önbellekten yararlanmamak olur.
+   */
+  translate: (text: string, from: string, to: string, scope?: "public" | "private"): Promise<TranslateResult> =>
+    request("/api/translate", { method: "POST", body: JSON.stringify({ text, from, to, scope }) }),
   // TOPLU ÇEVİRİ: bir ekrandaki tüm mesajlar TEK istekte gider. Tek tek istek atmak, tarayıcının
   // aynı sunucuya ~6 eşzamanlı bağlantı sınırı yüzünden çeviriyi görünür şekilde yavaşlatıyordu.
-  translateBatch: (items: { id: string; text: string; from: string }[], to: string): Promise<{ results: Record<string, string>; failed?: string[]; cached?: boolean }> =>
+  translateBatch: (items: { id: string; text: string; from: string; scope?: "public" | "private" }[], to: string): Promise<{ results: Record<string, string>; failed?: string[] }> =>
     request("/api/translate/batch", { method: "POST", body: JSON.stringify({ items, to }) }),
   // ARACIN GEÇMİŞİ (şasi/VIN numarasına bağlı, sahipten bağımsız) — bkz. backend/routes/vehicleHistory.js.
   // Sorgulama POST: şasi numarası bir URL'de (adres çubuğunda, sunucu kayıtlarında, tarayıcı

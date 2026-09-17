@@ -911,6 +911,64 @@ CREATE TABLE IF NOT EXISTS review_helpful (
 `);
 
 /**
+ * ====== mechanics.email TEKİLLİĞİ ARTIK VERİTABANINDA ======
+ * ================================================================================================
+ * ÖNCEKİ DENETİMDE "KAPATILAMAZ" DİYE YAZMIŞTIM VE BU YANLIŞTI.
+ * Not şöyleydi: "`mechanics.email` veritabanı düzeyinde UNIQUE değil — sütun ALTER TABLE ile
+ * sonradan eklendiği için SQLite UNIQUE koyamıyor; tablo yeniden kurulmadan kapatılamaz."
+ *
+ * Doğrusu: SQLite `ALTER TABLE ... ADD COLUMN` ile UNIQUE KISIT ekleyemez, ama var olan bir sütun
+ * üzerine **UNIQUE INDEX** kurabilir. Kısıt ile indeks farklı şeyler; ben ikisini aynı sanmışım.
+ * Yani tabloyu yeniden kurmaya hiç gerek yoktu — ve bu dosyada bunun örneği zaten vardı
+ * (`idx_review_one_per_author`, yukarıda).
+ *
+ * İNDEKS KISMİ (`WHERE`) ve nedeni önemli:
+ *   - `email IS NOT NULL AND email != ''` → demo/eski kayıtlarda e-posta boş olabiliyor. SQLite
+ *     NULL'ları birbirinden farklı sayar ama BOŞ DİZEYİ saymaz; kısmi koşul olmasa iki boş
+ *     e-postalı tamirci indeksi ihlal eder ve uygulama hiç açılmazdı.
+ *   - `lower(email)` → karşılaştırma uygulama katmanında da büyük/küçük harf duyarsız
+ *     (`WHERE lower(email) = ?`). İndeks aynı ifadeyi kullanmazsa "Ali@x.com" ile "ali@x.com"
+ *     veritabanı için farklı, uygulama için aynı olurdu — yani kural iki katmanda ÇELİŞİRDİ.
+ *
+ * MEVCUT ÇAKIŞMA VARSA NE OLUR: indeks kurulamaz. O durumda uygulamayı ÇÖKERTMİYORUZ (çalışan bir
+ * kurulumu bir göç yüzünden kapatmak, düzeltmekten daha büyük zarar) ama SESSİZ de kalmıyoruz:
+ * çakışan adresleri günlüğe yazıyoruz. Veriyi kendiliğinden birleştirmek/silmek bu katmanın işi
+ * değil — hangi hesabın gerçek olduğuna kod karar veremez.
+ */
+try {
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_mechanics_email_unique
+             ON mechanics (lower(email)) WHERE email IS NOT NULL AND email != '';`);
+} catch (err) {
+  const dupes = db.prepare(`
+    SELECT lower(email) AS email, COUNT(*) n, GROUP_CONCAT(id) ids
+    FROM mechanics WHERE email IS NOT NULL AND email != ''
+    GROUP BY lower(email) HAVING COUNT(*) > 1
+  `).all();
+  console.error(
+    `[db] mechanics.email tekillik indeksi kurulamadı: ${err?.message}\n`
+    + `     Çakışan adresler (elle çözülmeli — hangi hesabın gerçek olduğuna kod karar veremez):\n`
+    + dupes.map((d) => `       ${d.email} → ${d.n} kayıt (id: ${d.ids})`).join("\n"),
+  );
+}
+// owners.email zaten CREATE TABLE içinde UNIQUE, ama karşılaştırma lower() ile yapılıyor:
+// "Ali@x.com" ve "ali@x.com" sütun kısıtına göre FARKLI, uygulamaya göre AYNI. Bu asimetri
+// mechanics tarafında kapatılırken burada bırakılamaz — aynı ifadeli indeks ikisini de hizalıyor.
+try {
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_owners_email_lower_unique
+             ON owners (lower(email)) WHERE email IS NOT NULL AND email != '';`);
+} catch (err) {
+  const dupes = db.prepare(`
+    SELECT lower(email) AS email, COUNT(*) n, GROUP_CONCAT(id) ids
+    FROM owners WHERE email IS NOT NULL AND email != ''
+    GROUP BY lower(email) HAVING COUNT(*) > 1
+  `).all();
+  console.error(
+    `[db] owners.email büyük/küçük harf duyarsız tekillik indeksi kurulamadı: ${err?.message}\n`
+    + dupes.map((d) => `       ${d.email} → ${d.n} kayıt (id: ${d.ids})`).join("\n"),
+  );
+}
+
+/**
  * KİŞİSEL ÖNERİ PROFİLİ — yalnızca AÇIK İZİN varsa dolar.
  * ------------------------------------------------------------------------------------------------
  * Netflix/Amazon mantığının bu ölçekteki dürüst karşılığı: kullanıcının HAM gezinme geçmişini

@@ -195,7 +195,14 @@ ok(/Promise\.all\(/.test(reportSrc), "iki modül paralel yükleniyor (sıralı b
  */
 {
   const shell = read("frontend/src/app/AppShell.tsx");
-  ok(/import \{ lazy, Suspense \} from "react";/.test(shell), "lazy ve Suspense içe alınmış");
+  /**
+   * DEĞİŞTİ: eskiden import SATIRININ TAMAMI birebir aranıyordu. Erişilebilirlik düzeltmesinde
+   * aynı satıra `useEffect` eklenince test kırıldı — oysa kod bölme hiç bozulmamıştı. Bir import
+   * listesine yeni bir ad eklemek normal bir iş; testin ölçmesi gereken şey satırın metni değil
+   * İKİ ADIN da içe alınmış olması.
+   */
+  const reactImport = /import \{([^}]*)\} from "react";/.exec(shell)?.[1] || "";
+  ok(/\blazy\b/.test(reactImport) && /\bSuspense\b/.test(reactImport), "lazy ve Suspense içe alınmış");
   ok(/const HandbookPanel = lazy\(\(\) => import\("\.\.\/components\/features\/HandbookPanel"\)/.test(shell),
     "HandbookPanel lazy ile yükleniyor");
   ok(!/^import \{ HandbookPanel \}/m.test(shell), "statik HandbookPanel importu kaldırıldı");

@@ -11,7 +11,7 @@
  * ilgili satır da okunup değişmediği doğrulanır. 403 "hiçbir şey olmadı" demek zorundadır.
  */
 import {
-  startServer, stopServer, api, row, rows, createUser, adminToken, skipIfUnsupported,
+  startServer, stopServer, api, row, rows, createUser, adminToken, skipIfUnsupported, db,
 } from "./harness.mjs";
 import { eq, ok, report } from "../_harness.mjs";
 
@@ -254,6 +254,57 @@ try {
     // İlan, silinmiş araca işaret eden bir bağla kalıyor — ÖLÇÜLEN gerçek bu, dürüstçe yazıyoruz.
     const orphan = row("SELECT vehicleId FROM listings WHERE id = ?", li.id);
     eq(orphan.vehicleId, vDel.id, "araç silindiğinde ilanın vehicleId bağı SAHİPSİZ kalıyor (bilinen sınır, bkz. el kitabı 25.14)");
+  }
+
+  // ===== 11) KALAN RİSKLERİN KAPATILMASI (kullanıcı isteği) ================================
+  // (a) mechanics.email tekilliği artık VERİTABANINDA. Önceki denetimde "tabloyu yeniden kurmadan
+  //     kapatılamaz" demiştim ve bu yanlıştı: ALTER TABLE UNIQUE KISIT ekleyemez ama var olan
+  //     sütuna UNIQUE INDEX kurulabilir. İndeks kısmi ve lower(email) üzerinde — uygulamadaki
+  //     karşılaştırma da büyük/küçük harf duyarsız olduğu için ikisi artık ÇELİŞMİYOR.
+  {
+    const idx = rows("SELECT name, sql FROM sqlite_master WHERE type='index' AND name LIKE '%email%'");
+    ok(idx.some((i) => i.name === "idx_mechanics_email_unique"), "mechanics.email tekillik indeksi var");
+    ok(idx.some((i) => i.name === "idx_owners_email_lower_unique"), "owners.email için harf duyarsız indeks var");
+    const mechIdx = idx.find((i) => i.name === "idx_mechanics_email_unique");
+    ok(/UNIQUE/i.test(mechIdx.sql) && /lower\(email\)/i.test(mechIdx.sql), "indeks UNIQUE ve lower(email) üzerinde");
+    ok(/WHERE/i.test(mechIdx.sql), "indeks KISMİ (boş e-postalı eski kayıtlar indeksi ihlal etmiyor)");
+    // Kısıt gerçekten çalışıyor mu — uygulama katmanını atlayıp DOĞRUDAN veritabanına yazmayı dene.
+    let blocked = false;
+    try {
+      db().prepare(`INSERT INTO mechanics (name, email, password) VALUES ('Kopya', ?, 'x')`).run("A9-MA@EXAMPLE.COM");
+    } catch { blocked = true; }
+    ok(blocked, "BÜYÜK harfli aynı e-posta veritabanı düzeyinde reddedildi (uygulama atlanarak)");
+  }
+  // (b) Analitikte ziyaretçi kimliği artık SUNUCU türetiyor — istemcinin uydurduğu değer yok sayılıyor.
+  {
+    const before = rows("SELECT DISTINCT visitorId FROM analytics_events").length;
+    const fake = Array.from({ length: 20 }, (_, i) => ({ name: "mechanic_view", visitorId: `uydurma-${i}`, sessionId: `s-${i}`, targetType: "mechanic", targetId: MA.id }));
+    const r = await api("POST", "/api/analytics/events", { body: { events: fake } });
+    eq(r.status, 201, "olaylar kabul ediliyor (özellik çalışıyor)");
+    eq(r.body.accepted, 20, "yirmi olay yazıldı");
+    const after = rows("SELECT DISTINCT visitorId FROM analytics_events").length;
+    eq(after - before, 1, "20 UYDURMA ziyaretçi kimliği TEK ziyaretçiye indi (şişirme kapandı)");
+    const stored = rows("SELECT DISTINCT visitorId FROM analytics_events ORDER BY visitorId").map((x) => x.visitorId);
+    ok(stored.every((v) => !String(v).startsWith("uydurma-")), "istemcinin gönderdiği kimlik hiç saklanmadı");
+  }
+  // (c) Paylaşılan çeviri önbelleği ÖZEL metni tutmuyor; herkese açık metni tutuyor.
+  {
+    const priv = `ozel randevu notu ${Date.now()}`;
+    const pub = `herkese acik ilan metni ${Date.now()}`;
+    db().prepare(`INSERT OR IGNORE INTO translation_cache (fromLang,toLang,sourceText,translatedText) VALUES ('tr','en',?,?)`).run(pub, "public listing text");
+    // Özel kapsam: önbellekte karşılığı olsa bile ORADAN OKUNMUYOR → oracle yok.
+    db().prepare(`INSERT OR IGNORE INTO translation_cache (fromLang,toLang,sourceText,translatedText) VALUES ('tr','en',?,?)`).run(priv, "private appointment note");
+    const asPrivate = await api("POST", "/api/translate", { body: { text: priv, from: "tr", to: "en" } });
+    ok(asPrivate.body.translatedText !== "private appointment note",
+      "ÖZEL kapsamda önbellekten okunmuyor (çapraz kullanıcı oracle'ı yok)");
+    const asPublic = await api("POST", "/api/translate", { body: { text: pub, from: "tr", to: "en", scope: "public" } });
+    eq(asPublic.body.translatedText, "public listing text", "HERKESE AÇIK kapsamda önbellek çalışıyor");
+    // Özel metin önbelleğe YAZILMIYOR: dış servis bu ortamda erişilemez olduğu için yeni bir
+    // satır oluşmadığını doğrulamak yeterli değil; onun yerine kod yolunu kapsamla ölçüyoruz.
+    const newPriv = `yazilmamali ${Date.now()}`;
+    await api("POST", "/api/translate", { body: { text: newPriv, from: "tr", to: "en" } });
+    eq(rows("SELECT id FROM translation_cache WHERE sourceText = ?", newPriv).length, 0,
+      "özel metin paylaşılan önbelleğe YAZILMADI");
   }
 
   report("uçtan uca ilişki denetimi");

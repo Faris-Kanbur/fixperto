@@ -685,6 +685,17 @@ export const T = {
   describeIssueLabel: { tr: "Arızayı anlat", en: "Describe the issue", de: "Problem beschreiben" },
   issueDescPlaceholderExample: { tr: "Örn. Fren yaparken ön taraftan ses geliyor...", en: "E.g. There's a noise from the front when braking...", de: "Z. B. Beim Bremsen kommt ein Geräusch von vorne..." },
   quotePhotoAlt: { tr: "Teklif fotoğrafı {n}", en: "Quote photo {n}", de: "Angebotsfoto {n}" },
+  // ERİŞİLEBİLİRLİK (statik erişilebilirlik denetiminde eklendi): yalnızca ikon içeren düğmelerin
+  // ekran okuyucuya söyleyecek bir adı olmalı. Ekranda metin GÖRÜNMEDİĞİ için bu etiketler
+  // görsel düzeni hiç değiştirmiyor; sadece klavye/ekran okuyucu kullanıcısı için var.
+  a11yRemovePhoto: { tr: "Fotoğrafı kaldır", en: "Remove photo", de: "Foto entfernen" },
+  a11yAddPhoto: { tr: "Fotoğraf ekle", en: "Add photo", de: "Foto hinzufügen" },
+  a11yBack: { tr: "Geri dön", en: "Go back", de: "Zurück" },
+  a11yToggleFavorite: { tr: "Favorilere ekle veya çıkar", en: "Add to or remove from favourites", de: "Zu Favoriten hinzufügen oder entfernen" },
+  a11yAddSlot: { tr: "Saat ekle", en: "Add time slot", de: "Zeitfenster hinzufügen" },
+  a11yEditStaff: { tr: "Çalışanı düzenle", en: "Edit staff member", de: "Mitarbeiter bearbeiten" },
+  a11yChangeProfilePhoto: { tr: "Profil fotoğrafını değiştir", en: "Change profile photo", de: "Profilfoto ändern" },
+  a11yRateStars: { tr: "{n} yıldız ver", en: "Give {n} stars", de: "{n} Sterne geben" },
   selectMechanicLabel: { tr: "Tamirci seç", en: "Select mechanics", de: "Werkstatt auswählen" },
   selectedCountSuffix: { tr: "{n} seçili", en: "{n} selected", de: "{n} ausgewählt" },
   // GERÇEK HATA DÜZELTMESİ: bu metin önceden "istediğiniz sayıda tamirci seçebilirsiniz" diyerek

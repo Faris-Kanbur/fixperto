@@ -3986,7 +3986,7 @@ function useAppLogic() {
       byLang.get(item.to).push(item);
     }
     for (const [toLang, items] of byLang) {
-      api.translateBatch(items.map((i) => ({ id: i.key, text: i.text, from: i.from })), toLang)
+      api.translateBatch(items.map((i) => ({ id: i.key, text: i.text, from: i.from, scope: i.scope })), toLang)
         .then((res) => {
           const results = res?.results || {};
           const failed = new Set(res?.failed || []);
@@ -4010,7 +4010,17 @@ function useAppLogic() {
         });
     }
   };
-  const translateMessage = (msg, toLang) => {
+  /**
+   * `scope` (üçüncü argüman): metnin HERKESE AÇIK mı ÖZEL mi olduğu. Yalnızca "public" olanlar
+   * sunucunun PAYLAŞILAN çeviri önbelleğine yazılıyor; sohbet mesajı, randevu arıza açıklaması ve
+   * iş başvurusu metni gibi özel içerikler yazılmıyor (bkz. backend/routes/translate.js).
+   * Varsayılan ÖZEL — çağıran unutursa gizlilik değil, yalnızca önbellek kaybedilir.
+   *
+   * İSTEMCİNİN KENDİ localStorage ÖNBELLEĞİ ÖZEL METİNLER İÇİN DE ÇALIŞIYOR: aynı sohbeti tekrar
+   * açan kullanıcı çeviriyi yine anında görüyor. Kaybedilen tek şey, özel bir metnin çevirisinin
+   * BAŞKA kullanıcılar için hazır olması — ki bu zaten istenen bir şey değildi.
+   */
+  const translateMessage = (msg, toLang, scope = "private") => {
     if (!msg?.text || !toLang) return;
     const fromLang = msg.lang || "tr";
     if (fromLang === toLang) return;
@@ -4021,7 +4031,7 @@ function useAppLogic() {
     if (known !== undefined) { setTranslationCache((c) => ({ ...c, [key]: known })); return; }
     // 2+3) Kuyruğa ekle, bir sonraki karede hepsi tek istekte gitsin.
     translationInFlightRef.current.add(key);
-    translationQueueRef.current.push({ key, text: msg.text, from: fromLang, to: toLang });
+    translationQueueRef.current.push({ key, text: msg.text, from: fromLang, to: toLang, scope });
     if (translationTimerRef.current == null) translationTimerRef.current = setTimeout(flushTranslationQueue, 16);
   };
   const mechConvo = conversations.find(c => c.id === mechActiveConvoId);
