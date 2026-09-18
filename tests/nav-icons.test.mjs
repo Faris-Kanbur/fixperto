@@ -128,11 +128,21 @@ eq(all, [],
     ok(/size=\{16\}/.test(block), `sekme ${i + 1}: ikon boyutu 16`);
   }
 
-  // Teklif düğmesi sekmelerle AYNI ölçüde: yan yana duran iki öğe farklı boyda olmamalı.
-  const cta = /<button onClick=\{openQuoteModal\} className="flex items-center gap-2[^"]*"/.exec(shell);
+  /**
+   * Teklif düğmesi sekmelerle AYNI ölçüde: yan yana duran iki öğe farklı boyda olmamalı.
+   *
+   * DESEN GÜNCELLENDİ: burada eskiden `onClick={openQuoteModal}` aranıyordu. O yazım 25.20'de
+   * düzeltildi (React'in tıklama olayı parametre sanılıyordu) ve düzeltme bu testi ÇÖKERTTİ —
+   * `exec` null döndü, bir sonraki satır `cta[0]` dedi. Ders iki katmanlı: (a) deseni koda
+   * bağlarken çağrı biçimine değil işleve bağla, (b) bir eşleşme bulunamadığında test ÇÖKMEMELİ,
+   * neyin bulunamadığını SÖYLEMELİ — çöken bir test, sebebini gizler.
+   */
+  const cta = /<button onClick=\{\(\) => openQuoteModal\(\)\} className="([^"]*)"/.exec(shell);
   ok(cta, "masaüstü teklif düğmesi bulundu");
-  ok(/text-sm font-semibold/.test(cta[0]), "teklif düğmesi sekmelerle aynı ölçüde (text-sm font-semibold)");
-  ok(!/text-xs/.test(cta[0]), "teklif düğmesi artık sekmelerden küçük değil");
+  const ctaClass = cta ? cta[1] : "";
+  ok(/text-sm/.test(ctaClass) && /font-semibold/.test(ctaClass),
+    "teklif düğmesi sekmelerle aynı ölçüde (text-sm font-semibold)");
+  ok(!/text-xs/.test(ctaClass), "teklif düğmesi artık sekmelerden küçük değil");
 }
 
 report("gezinme ikonları");

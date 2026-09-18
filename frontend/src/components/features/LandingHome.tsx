@@ -92,7 +92,7 @@ export function LandingHome() {
             <button onClick={() => goToBrowse("jobs")} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition">{t("jobListingsNavLabel")}</button>
             {/* Çoklu fiyat teklifi, diğer ana gezinme bağlantılarıyla AYNI seviyede duruyor
                 (kullanıcı isteği) — vurgulu görünsün diye hafif arka planlı bir hap biçiminde. */}
-            <button onClick={openQuoteModal} title={t("landingQuoteCtaNote")} className="text-sm font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 whitespace-nowrap"><Users size={14} /> {t("landingQuoteCta")}</button>
+            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="text-sm font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 whitespace-nowrap"><Users size={14} /> {t("landingQuoteCta")}</button>
           </nav>
           {/* NOT: Buradaki TR/EN/DE seçicisi KALDIRILDI — dil artık kullanıcının bulunduğu ülkeye
               göre otomatik seçiliyor (bkz. helpers.ts initialSiteLang). Yine de kimse yanlış dilde
@@ -164,7 +164,7 @@ export function LandingHome() {
             <button onClick={() => { requestLocation(); setSortBy("distance"); setSortDir("asc"); goToBrowse("mechanics"); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 px-3.5 py-2 rounded-full hover:border-gray-900 transition"><Navigation size={13} className="text-rose-600" /> {t("landingNearMe")}</button>
             {/* Çoklu fiyat teklifi masaüstünde üst gezinme çubuğunda (diğer bağlantılarla aynı
                 seviyede) duruyor; üst çubuk mobilde gizlendiği için burada SADECE mobilde gösteriliyor. */}
-            <button onClick={openQuoteModal} title={t("landingQuoteCtaNote")} className="md:hidden inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 px-3.5 py-2 rounded-full hover:bg-rose-100 transition"><Users size={13} /> {t("landingQuoteCta")}</button>
+            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="md:hidden inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 px-3.5 py-2 rounded-full hover:bg-rose-100 transition"><Users size={13} /> {t("landingQuoteCta")}</button>
             <span className="text-xs text-gray-400 ml-1">{t("landingPopularPrefix")}</span>
             {popularServices.slice(0, 4).map(s => (
               <button key={s.name} onClick={() => searchService(s.name)} className="text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-100 px-3 py-1.5 rounded-full transition">{s.name}</button>

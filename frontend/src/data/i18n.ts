@@ -893,6 +893,7 @@ export const T = {
   deleteWordTr: { tr: "SİL", en: "SİL", de: "SİL" },
   jobListingsNavLabel: { tr: "İş İlanları", en: "Job Listings", de: "Stellenanzeigen" },
   multiQuoteBtn: { tr: "Fiyat Teklifi İste", en: "Request a Quote", de: "Angebot anfordern" },
+  quoteNoMechanicSelected: { tr: "Lütfen en az bir tamirci seçin.", en: "Please select at least one mechanic.", de: "Bitte wählen Sie mindestens eine Werkstatt aus." },
   searchBrandModelPlaceholder: { tr: "Marka veya model ara...", en: "Search brand or model...", de: "Marke oder Modell suchen..." },
   searchPositionSkillPlaceholder: { tr: "Pozisyon veya beceri ara...", en: "Search position or skill...", de: "Position oder Fähigkeit suchen..." },
   searchBtn: { tr: "Ara", en: "Search", de: "Suchen" },

@@ -33,8 +33,20 @@ const mechDetail = read("components", "features", "MechDetailBody.tsx");
 {
   ok(/const openQuoteModal = \(preselectMechanicId = null\) =>/.test(provider),
     "openQuoteModal isteğe bağlı bir ön seçim parametresi alıyor");
-  ok(/setQuoteSelectedMechIds\(preselectMechanicId != null \? \[preselectMechanicId\] : \[\]\)/.test(provider),
+  /**
+   * GÜNCELLENDİ (bkz. el kitabı 25.20): burası eskiden
+   * `preselectMechanicId != null ? [preselectMechanicId] : []` ifadesini arıyordu — yani ölçtüğü
+   * satır, sonradan GERÇEK BİR HATAYA yol açan satırın ta kendisiydi. Bir olay nesnesi de null
+   * değildir; `onClick={openQuoteModal}` yazılan yerlerde React'in tıklama olayı ön seçim listesine
+   * yazılıyor ve gönderim anında JSON'a çevrilemiyordu.
+   *
+   * Test o hâliyle yeşil yanmaya devam ederdi, çünkü ölçtüğü şey "ön seçim listeye yazılıyor mu"
+   * idi — "listeye YAZILAN ŞEY bir tamirci id'si mi" değil. Kontrol artık ikincisini de sabitliyor.
+   */
+  ok(/setQuoteSelectedMechIds\(Number\.isFinite\(id\) \? \[id\] : \[\]\)/.test(provider),
     "ön seçim NORMAL seçili listeye yazılıyor (ayrı/kilitli bir alana değil)");
+  ok(/const id = Number\(preselectMechanicId\)/.test(provider),
+    "listeye yalnızca SAYI yazılıyor — olay nesnesi/çöp parametre eleniyor");
   ok(/setQuoteMechSearch\(""\)/.test(provider.slice(provider.indexOf("const openQuoteModal"), provider.indexOf("const openQuoteModal") + 600)),
     "modal açılırken eski arama metni temizleniyor");
 

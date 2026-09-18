@@ -2053,7 +2053,18 @@ function useAppLogic() {
     const customerName = ownerProfile.name || form.name || "Siz";
     const issueText = quoteIssue.trim();
     const photos = quotePhotos;
-    const selectedMechIds = [...quoteSelectedMechIds];
+    /**
+     * SON SAVUNMA HATTI: gönderilecek id listesi sayıya süzülüyor.
+     * Yukarıdaki iki katman (çağrı yerleri + openQuoteModal) bu listeye çöp girmesini zaten
+     * engelliyor; burası "yine de girerse" katmanı. Sebebi, hatanın nerede PATLADIĞI: listeye
+     * yanlış şey yazılması sessiz, `JSON.stringify`in çökmesi ise kullanıcının formu doldurup
+     * GÖNDER'e bastığı an. Emeğin boşa gittiği yer burası olduğu için savunma da burada.
+     */
+    const selectedMechIds = quoteSelectedMechIds.map(Number).filter(Number.isFinite);
+    if (selectedMechIds.length === 0) {
+      setToast({ type: "info", text: `⚠️ ${t("quoteNoMechanicSelected")}` });
+      return;
+    }
     const draft = { ownerId: MY_OWNER_ID, vehicleId: quoteVehicleId, customer: customerName, vehicle: vehicle ? `${vehicle.brand} ${vehicle.model} (${vehicle.plate})` : "Araç seçilmedi", issue: issueText, photos, mechanicIds: selectedMechIds, status: "open" };
     setShowQuoteModal(false);
     setQuoteVehicleId(null); setQuoteIssue(""); setQuotePhotos([]); setQuoteSelectedMechIds([]); setQuoteMechSearch("");
@@ -2443,8 +2454,31 @@ function useAppLogic() {
    * olduğu için ihlal mümkün değil. Limit yalnızca kullanıcı EKLEME yaptığında devreye giriyor
    * (bkz. toggleQuoteMechanic) — aynı kuralı iki yere yazmıyoruz.
    */
+  /**
+   * TEKLİF MODALINI AÇ — isteğe bağlı ön seçimle.
+   *
+   * ====== KULLANICI BİLDİRDİ: "Converting circular structure to JSON" ======
+   * Bu hata benim 25.17'deki kendi değişikliğimin yan etkisiydi. Fonksiyona `preselectMechanicId`
+   * parametresini eklemiştim; ama dört yerde düğmeye `onClick={openQuoteModal}` diye DOĞRUDAN
+   * bağlıydı. React o durumda handler'a tıklama olayını geçiriyor — yani parametre bir tamirci
+   * id'si değil, bir SyntheticEvent oluyordu. `!= null` olduğu için ön seçim listesine yazılıyor,
+   * sonra istek gönderilirken `JSON.stringify` o nesnenin içindeki DOM/Fiber döngüsüne takılıyordu.
+   *
+   * Hatanın kötü yanı ZAMANLAMASI: modal sorunsuz açılıyor, kullanıcı formu baştan sona dolduruyor
+   * ve hata ancak GÖNDER'e bastığında çıkıyordu. Bir parametre eklemek, o fonksiyonun her çağrı
+   * yerini de değiştirir — bunu atlamıştım.
+   *
+   * ÜÇ KATMANDA birden kapatıldı, çünkü yalnızca çağrı yerlerini düzeltmek aynı hatanın yarın
+   * yeni bir düğmede tekrar etmesini engellemez:
+   *   1. Çağrı yerleri `() => openQuoteModal()` oldu (bkz. AppShell / LandingHome).
+   *   2. Burada: parametre SAYIYA çevrilebilir değilse yok sayılıyor. Artık `onClick` ile doğrudan
+   *      bağlanmak zararsız — ön seçim olmaz, hata da olmaz.
+   *   3. Gönderim öncesi seçili id listesi süzülüyor (bkz. submitQuoteRequest).
+   */
   const openQuoteModal = (preselectMechanicId = null) => requireAuth(() => {
-    setQuoteSelectedMechIds(preselectMechanicId != null ? [preselectMechanicId] : []);
+    // Number(event) → NaN; Number("3") → 3. Olay nesnesi de, çöp de aynı kapıya çıkıyor: yok sayılır.
+    const id = Number(preselectMechanicId);
+    setQuoteSelectedMechIds(Number.isFinite(id) ? [id] : []);
     // Arama kutusu önceki oturumdan kalmış olabilir; ön seçtiğimiz tamirciyi gizleyebilirdi.
     setQuoteMechSearch("");
     setShowQuoteModal(true);

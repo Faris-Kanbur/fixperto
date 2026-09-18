@@ -73,6 +73,46 @@ function friendlyMessageForStatus(status: number, backendMessage?: string): stri
 const BASE_URL = (import.meta as any).env?.VITE_API_URL || "http://localhost:4000";
 const DEV = !!(import.meta as any).env?.DEV;
 
+/**
+ * İSTEK GÖVDESİNİ METNE ÇEVİR — ve çevrilemiyorsa NEYİN çevrilemediğini söyle.
+ * ================================================================================================
+ * KULLANICI BİLDİRDİ: "⚠️ Teklif isteği kaydedilemedi: Converting circular structure to JSON
+ * --> starting at object with constructor 'HTMLButtonElement' ..."
+ *
+ * Asıl hata ayrıca düzeltildi (bir React tıklama olayı, tamirci id'si sanılıp seçim listesine
+ * yazılıyordu — bkz. AppLogicProvider.openQuoteModal). Ama bu fonksiyonun sebebi hatanın kendisi
+ * değil, MESAJI: "circular structure ... HTMLButtonElement" cümlesi kullanıcıya hiçbir şey
+ * anlatmıyor, geliştiriciye de hangi ALANIN bozuk olduğunu söylemiyor. Yığın izi \`JSON.stringify\`
+ * içini gösteriyor, yani sorunun kaynağını değil sonucunu.
+ *
+ * Burası her istek gövdesinin geçtiği tek kapı: çeviri başarısız olursa sorumlu alanları ADIYLA
+ * buluyoruz. Maliyeti sıfır — arama yalnızca \`JSON.stringify\` zaten patladığında çalışıyor.
+ */
+export function jsonBody(data: unknown): string {
+  try {
+    return JSON.stringify(data);
+  } catch (err: any) {
+    const bad: string[] = [];
+    if (data && typeof data === "object") {
+      for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
+        try {
+          JSON.stringify(v);
+        } catch {
+          // DOM düğümü mü, React olayı mı, yoksa başka bir döngüsel nesne mi — kullanıcıya değil
+          // günlüğe yazılacak, o yüzden teknik ad yeterince bilgilendirici.
+          bad.push(`${k} (${(v as any)?.constructor?.name || typeof v})`);
+        }
+      }
+    }
+    const detail = bad.length ? bad.join(", ") : (err?.message || "bilinmeyen alan");
+    if (DEV) console.error(`[api] istek gövdesi JSON'a çevrilemedi — sorunlu alan(lar): ${detail}`, data);
+    throw new ApiError("İstek hazırlanamadı, lütfen sayfayı yenileyip tekrar deneyin.", {
+      status: 0,
+      devMessage: `JSON'a çevrilemeyen alan(lar): ${detail}`,
+    });
+  }
+}
+
 // GERÇEK OTURUM SİSTEMİ: owner/mechanic girişi artık gerçek (bkz. backend/routes/auth.js) — bu
 // yüzden admin token'ın aksine (bilerek sayfa yenilenince kaybolan, bkz. aşağıdaki adminToken notu)
 // bu oturum token'ı localStorage'a yazılıyor. Sebep: admin paneli tek bir kişi tarafından, kısa
@@ -213,8 +253,8 @@ function crud<T extends { id: number | string }>(resource: string) {
   return {
     list: (opts?: RequestOptions): Promise<T[]> => request(`/api/${resource}`, opts),
     get: (id: number | string, opts?: RequestOptions): Promise<T> => request(`/api/${resource}/${id}`, opts),
-    create: (data: Partial<T>, opts?: RequestOptions): Promise<T> => request(`/api/${resource}`, { method: "POST", body: JSON.stringify(data), ...opts }),
-    update: (id: number | string, data: Partial<T>, opts?: RequestOptions): Promise<T> => request(`/api/${resource}/${id}`, { method: "PATCH", body: JSON.stringify(data), ...opts }),
+    create: (data: Partial<T>, opts?: RequestOptions): Promise<T> => request(`/api/${resource}`, { method: "POST", body: jsonBody(data), ...opts }),
+    update: (id: number | string, data: Partial<T>, opts?: RequestOptions): Promise<T> => request(`/api/${resource}/${id}`, { method: "PATCH", body: jsonBody(data), ...opts }),
     remove: (id: number | string, opts?: RequestOptions): Promise<null> => request(`/api/${resource}/${id}`, { method: "DELETE", ...opts }),
     // Sadece shareCount sütunu olan kaynaklarda (mechanics/listings/jobs) gerçek bir uç nokta var —
     // diğerlerinde çağrılmaz, bu yüzden generic factory'de koşulsuz tanımlamak zararsız.
@@ -234,18 +274,18 @@ function withPasswordEndpoints<T extends { id: number | string }>(resource: stri
     // hesaplıyor (bkz. backend/routes/reviews.js). Yorum yazmak için o tamircide tamamlanmış
     // randevu şart; yorumu yalnızca yazarı silebilir, tamirci yalnızca yanıtlayabilir.
     addReview: (id: number | string, data: { rating: number; comment?: string; lang?: string }): Promise<any> =>
-      request(`/api/${resource}/${id}/reviews`, { method: "POST", body: JSON.stringify(data) }),
+      request(`/api/${resource}/${id}/reviews`, { method: "POST", body: jsonBody(data) }),
     deleteReview: (id: number | string, reviewId: number | string): Promise<any> =>
       request(`/api/${resource}/${id}/reviews/${reviewId}`, { method: "DELETE" }),
     replyReview: (id: number | string, reviewId: number | string, reply: string): Promise<any> =>
-      request(`/api/${resource}/${id}/reviews/${reviewId}/reply`, { method: "POST", body: JSON.stringify({ reply }) }),
+      request(`/api/${resource}/${id}/reviews/${reviewId}/reply`, { method: "POST", body: jsonBody({ reply }) }),
     toggleReviewHelpful: (id: number | string, reviewId: number | string): Promise<any> =>
       request(`/api/${resource}/${id}/reviews/${reviewId}/helpful`, { method: "POST" }),
     // YALNIZCA ADMIN: kullanıcının kendi şifresini değiştirme yolu api.account.changePassword.
     // (verifyPassword metodu kaldırıldı — sunucudaki karşılığı bir şifre kâhiniydi, bkz.
     // backend/routes/makeCrudRouter.js)
     setPassword: (id: number | string, password: string, opts?: RequestOptions): Promise<{ ok: true; sessionsClosed?: number }> =>
-      request(`/api/${resource}/${id}/set-password`, { method: "POST", body: JSON.stringify({ password }), ...opts }),
+      request(`/api/${resource}/${id}/set-password`, { method: "POST", body: jsonBody({ password }), ...opts }),
   };
 }
 
@@ -288,14 +328,14 @@ export const api = {
   // sadece bu kod da doğrulanınca verilir (bkz. verifyOtp).
   auth: {
     register: (role: "owner" | "mechanic", email: string, name: string, extra?: Record<string, unknown>): Promise<{ ok: true; id: number; email: string; mailSent: boolean; devPassword?: string; devNote?: string }> =>
-      request("/api/auth/register", { method: "POST", body: JSON.stringify({ role, email, name, ...extra }) }),
+      request("/api/auth/register", { method: "POST", body: jsonBody({ role, email, name, ...extra }) }),
     // `role` opsiyonel: verilmezse backend hesabı e-posta+şifreden otomatik buluyor (araç sahibi mi
     // tamirci mi) — misafir gezinmeyle birlikte giriş artık rol seçimi olmadan, tek bir popup'tan
     // yapılıyor (bkz. backend/routes/auth.js login).
     login: (role: "owner" | "mechanic" | null, email: string, password: string): Promise<{ ok: true; requiresOtp: true; loginTicket: string; mailSent: boolean; devOtp?: string; devNote?: string }> =>
-      request("/api/auth/login", { method: "POST", body: JSON.stringify({ role: role || undefined, email, password }) }),
+      request("/api/auth/login", { method: "POST", body: jsonBody({ role: role || undefined, email, password }) }),
     verifyOtp: async (loginTicket: string, code: string): Promise<{ ok: true; token: string; user: any }> => {
-      const result = await request("/api/auth/verify-otp", { method: "POST", body: JSON.stringify({ loginTicket, code }) });
+      const result = await request("/api/auth/verify-otp", { method: "POST", body: jsonBody({ loginTicket, code }) });
       setSession(result.token, result.user.role);
       return result;
     },
@@ -322,9 +362,9 @@ export const api = {
     // Teklif ve soru, ilanın kendi PATCH'i ile DEĞİL bu uçlarla yazılır: ilan satırının yazma
     // yetkisi satıcıya ait, teklifi veren satıcı değil. Kimlik sunucuda oturumdan damgalanıyor.
     addOffer: (id: number | string, amount: string | number, currency?: string): Promise<{ listing: Listing; replacedRejected: boolean; updatedInPlace: boolean }> =>
-      request(`/api/listings/${id}/offers`, { method: "POST", body: JSON.stringify({ amount, currency }) }),
+      request(`/api/listings/${id}/offers`, { method: "POST", body: jsonBody({ amount, currency }) }),
     addMessage: (id: number | string, text: string): Promise<{ listing: Listing }> =>
-      request(`/api/listings/${id}/messages`, { method: "POST", body: JSON.stringify({ text }) }),
+      request(`/api/listings/${id}/messages`, { method: "POST", body: jsonBody({ text }) }),
     /**
      * "Bu ilanı N kişi favorilere ekledi" — { listingId: sayı }.
      * Sayım sunucuda: eskiden bu sayı, her kullanıcının favori ilan listesi istemciye gönderilerek
@@ -340,7 +380,7 @@ export const api = {
     appendMessages: (id: number | string, messages: any[], opts?: { clearContextNote?: boolean }): Promise<Conversation> =>
       request(`/api/conversations/${id}/messages`, {
         method: "POST",
-        body: JSON.stringify({ messages, clearContextNote: !!opts?.clearContextNote }),
+        body: jsonBody({ messages, clearContextNote: !!opts?.clearContextNote }),
       }),
   },
   jobs: {
@@ -348,9 +388,9 @@ export const api = {
     // Başvuru, ilanın PATCH'i ile DEĞİL bu uçla yazılır: ilanın yazma yetkisi ilanı açan
     // tamirciye ait, başvuran o değil (eskiden 403 alıyor ve başvuru kayboluyordu).
     apply: (id: number | string, data: Record<string, unknown>): Promise<{ job: JobListing; applicantId: number }> =>
-      request(`/api/jobs/${id}/applications`, { method: "POST", body: JSON.stringify(data) }),
+      request(`/api/jobs/${id}/applications`, { method: "POST", body: jsonBody(data) }),
     setApplicationStatus: (id: number | string, applicantId: number | string, status: string): Promise<{ job: JobListing }> =>
-      request(`/api/jobs/${id}/applications/${applicantId}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+      request(`/api/jobs/${id}/applications/${applicantId}`, { method: "PATCH", body: jsonBody({ status }) }),
   },
   tickets: crud<SupportTicket>("tickets"),
   // BLOG — herkese açık okuma (yalnızca yayınlanmış yazılar), yazma yönetici token'ı ister.
@@ -361,9 +401,9 @@ export const api = {
     bySlug: (slug: string, opts?: RequestOptions): Promise<BlogPost> => request(`/api/blog/${encodeURIComponent(slug)}`, opts),
     adminList: (opts?: RequestOptions): Promise<BlogPost[]> => request("/api/blog/admin/all", opts),
     create: (body: Partial<BlogPost>, opts?: RequestOptions): Promise<BlogPost> =>
-      request("/api/blog", { method: "POST", body: JSON.stringify(body), ...opts }),
+      request("/api/blog", { method: "POST", body: jsonBody(body), ...opts }),
     update: (id: number | string, body: Partial<BlogPost>, opts?: RequestOptions): Promise<BlogPost> =>
-      request(`/api/blog/${id}`, { method: "PATCH", body: JSON.stringify(body), ...opts }),
+      request(`/api/blog/${id}`, { method: "PATCH", body: jsonBody(body), ...opts }),
     remove: (id: number | string, opts?: RequestOptions): Promise<{ ok: true }> =>
       request(`/api/blog/${id}`, { method: "DELETE", ...opts }),
   },
@@ -375,9 +415,9 @@ export const api = {
     // yazmayı unutmak, sessizce 401 alan bir ekran demekti.
     adminList: (opts?: RequestOptions): Promise<any[]> => request("/api/careers/admin/all", { ...adminAuthOpts(), ...opts }),
     create: (body: any, opts?: RequestOptions): Promise<any> =>
-      request("/api/careers", { method: "POST", body: JSON.stringify(body), ...adminAuthOpts(), ...opts }),
+      request("/api/careers", { method: "POST", body: jsonBody(body), ...adminAuthOpts(), ...opts }),
     update: (id: number | string, body: any, opts?: RequestOptions): Promise<any> =>
-      request(`/api/careers/${id}`, { method: "PATCH", body: JSON.stringify(body), ...adminAuthOpts(), ...opts }),
+      request(`/api/careers/${id}`, { method: "PATCH", body: jsonBody(body), ...adminAuthOpts(), ...opts }),
     remove: (id: number | string, opts?: RequestOptions): Promise<null> =>
       request(`/api/careers/${id}`, { method: "DELETE", ...adminAuthOpts(), ...opts }),
   },
@@ -416,9 +456,9 @@ export const api = {
       return request(`/api/recommendations${qs ? `?${qs}` : ""}`);
     },
     signal: (payload: { action?: string; listingId?: number | string; mechanicId?: number | string; search?: Record<string, string> }): Promise<{ stored: boolean }> =>
-      request("/api/recommendations/signal", { method: "POST", body: JSON.stringify(payload) }),
+      request("/api/recommendations/signal", { method: "POST", body: jsonBody(payload) }),
     consent: (enabled: boolean): Promise<{ enabled: boolean; deletedSignals: number }> =>
-      request("/api/recommendations/consent", { method: "POST", body: JSON.stringify({ enabled }) }),
+      request("/api/recommendations/consent", { method: "POST", body: jsonBody({ enabled }) }),
     profile: (): Promise<{ consent: boolean; signals: any[] }> => request("/api/recommendations/profile"),
     deleteProfile: (): Promise<{ deleted: number }> => request("/api/recommendations/profile", { method: "DELETE" }),
   },
@@ -443,7 +483,7 @@ export const api = {
     markSeen: (listingId: number | string): Promise<{ listing: any }> =>
       request(`/api/listings/${listingId}/offers/seen`, { method: "POST" }),
     respond: (listingId: number | string, offerId: number | string, status: "accepted" | "rejected"): Promise<{ listing: any }> =>
-      request(`/api/listings/${listingId}/offers/${offerId}/respond`, { method: "POST", body: JSON.stringify({ status }) }),
+      request(`/api/listings/${listingId}/offers/${offerId}/respond`, { method: "POST", body: jsonBody({ status }) }),
   },
   listingFeature: {
     // `featured` artık jenerik PATCH'ten yazılamıyor: süre de sunucuda yazılıyor (7 gün).
@@ -454,7 +494,7 @@ export const api = {
   },
   media: {
     upload: (dataUrl: string, kind: "image" | "avatar" = "image"): Promise<{ url: string; name: string; bytes: number; contentType: string; deduped: boolean }> =>
-      request("/api/media", { method: "POST", body: JSON.stringify({ data: dataUrl, kind }) }),
+      request("/api/media", { method: "POST", body: jsonBody({ data: dataUrl, kind }) }),
   },
   admin: {
     // GÜVENLİK DÜZELTMESİ: backend artık başarılı girişte bir token dönüyor (bkz.
@@ -462,7 +502,7 @@ export const api = {
     // otomatik olarak eklenir (bkz. adminAuthOpts). Token'ı burada, request() çağrısından ÖNCE
     // değil SONRA (yanıttan okuyarak) saklıyoruz.
     login: async (email: string, password: string): Promise<{ ok: true }> => {
-      const result = await request("/api/admin/login", { method: "POST", body: JSON.stringify({ email, password }) });
+      const result = await request("/api/admin/login", { method: "POST", body: jsonBody({ email, password }) });
       setAdminToken(result?.token || null);
       return result;
     },
@@ -484,7 +524,7 @@ export const api = {
     analyticsTimeseries: (days?: number): Promise<any[]> => request(`/api/analytics/timeseries?days=${days || 30}`, { ...adminAuthOpts() }),
     analyticsTopTargets: (targetType: string, days?: number): Promise<any[]> => request(`/api/analytics/top-targets?targetType=${encodeURIComponent(targetType)}${days ? `&days=${days}` : ""}`, { ...adminAuthOpts() }),
     changeLog: (): Promise<AdminChangeLogEntry[]> => request("/api/admin/change-log", { ...adminAuthOpts() }),
-    logChange: (entry: Partial<AdminChangeLogEntry>): Promise<{ id: number }> => request("/api/admin/change-log", { method: "POST", body: JSON.stringify(entry), ...adminAuthOpts() }),
+    logChange: (entry: Partial<AdminChangeLogEntry>): Promise<{ id: number }> => request("/api/admin/change-log", { method: "POST", body: jsonBody(entry), ...adminAuthOpts() }),
     revertChange: (id: number | string): Promise<AdminChangeLogEntry> => request(`/api/admin/change-log/${id}`, { method: "PATCH", ...adminAuthOpts() }),
     // GERÇEK HATA DÜZELTMESİ: admin paneli, owners/mechanics/listings/jobs/tickets/appointments
     // gibi genel (owner/mechanic authScope'lu) kaynaklara YAZARKEN (ör. saveAdminUserEdit,
@@ -502,7 +542,7 @@ export const api = {
   // sonraki dönüşüm (sohbet/randevu/teklif/başvuru) aynı refCode üzerinden atfedilir.
   shareEvents: {
     create: (data: { targetType: string; targetId: number | string; channel: string; refCode: string; sharedBy?: string | null }): Promise<ShareEvent> =>
-      request("/api/share-events", { method: "POST", body: JSON.stringify(data) }),
+      request("/api/share-events", { method: "POST", body: jsonBody(data) }),
     click: (refCode: string): Promise<ShareEvent> => request(`/api/share-events/${refCode}/click`, { method: "POST" }),
     convert: (refCode: string): Promise<ShareEvent> => request(`/api/share-events/${refCode}/convert`, { method: "POST" }),
     // Platform geneli paylaşım istatistikleri artık admin token'ı gerektiriyor (bkz. güvenlik
@@ -521,9 +561,9 @@ export const api = {
      * backend/routes/profileViews.js, ikinci denetim bulgusu).
      */
     create: (targetType: string, targetId: number | string): Promise<{ id: number; convertToken?: string }> =>
-      request("/api/profile-views", { method: "POST", body: JSON.stringify({ targetType, targetId }) }),
+      request("/api/profile-views", { method: "POST", body: jsonBody({ targetType, targetId }) }),
     convert: (id: number | string, convertToken?: string): Promise<unknown> =>
-      request(`/api/profile-views/${id}/convert`, { method: "POST", body: JSON.stringify({ convertToken }) }),
+      request(`/api/profile-views/${id}/convert`, { method: "POST", body: jsonBody({ convertToken }) }),
     // `days` verilirse (bkz. tamirci Analiz sekmesi zaman aralığı filtresi), yanıt ayrıca o
     // pencereye göre `viewsInRange`/`conversionsInRange` alanlarını da içerir.
     // Parametresiz (platform geneli) varyant artık admin token'ı gerektiriyor — bkz. güvenlik
@@ -548,22 +588,22 @@ export const api = {
    * yalnızca önbellekten yararlanmamak olur.
    */
   translate: (text: string, from: string, to: string, scope?: "public" | "private"): Promise<TranslateResult> =>
-    request("/api/translate", { method: "POST", body: JSON.stringify({ text, from, to, scope }) }),
+    request("/api/translate", { method: "POST", body: jsonBody({ text, from, to, scope }) }),
   // TOPLU ÇEVİRİ: bir ekrandaki tüm mesajlar TEK istekte gider. Tek tek istek atmak, tarayıcının
   // aynı sunucuya ~6 eşzamanlı bağlantı sınırı yüzünden çeviriyi görünür şekilde yavaşlatıyordu.
   translateBatch: (items: { id: string; text: string; from: string; scope?: "public" | "private" }[], to: string): Promise<{ results: Record<string, string>; failed?: string[] }> =>
-    request("/api/translate/batch", { method: "POST", body: JSON.stringify({ items, to }) }),
+    request("/api/translate/batch", { method: "POST", body: jsonBody({ items, to }) }),
   // ARACIN GEÇMİŞİ (şasi/VIN numarasına bağlı, sahipten bağımsız) — bkz. backend/routes/vehicleHistory.js.
   // Sorgulama POST: şasi numarası bir URL'de (adres çubuğunda, sunucu kayıtlarında, tarayıcı
   // geçmişinde) görünmemeli — aracı tanımlayan bir veri ve GET sorgu dizesi her yerde loglanır.
   vehicleHistory: {
     lookup: (vin: string): Promise<{ vin: string; records: any[]; hiddenCount: number }> =>
-      request("/api/vehicle-history/lookup", { method: "POST", body: JSON.stringify({ vin }) }),
+      request("/api/vehicle-history/lookup", { method: "POST", body: jsonBody({ vin }) }),
     mine: (): Promise<any[]> => request("/api/vehicle-history/mine"),
     record: (data: { vin: string; appointmentId: number; serviceText?: string; km?: number }): Promise<any> =>
-      request("/api/vehicle-history", { method: "POST", body: JSON.stringify(data) }),
+      request("/api/vehicle-history", { method: "POST", body: jsonBody(data) }),
     setShared: (vin: string, shared: boolean): Promise<{ ok: boolean; updated: number }> =>
-      request("/api/vehicle-history/share", { method: "POST", body: JSON.stringify({ vin, shared }) }),
+      request("/api/vehicle-history/share", { method: "POST", body: jsonBody({ vin, shared }) }),
     forListing: (listingId: number | string): Promise<{ records: any[]; shown: boolean; unverified?: boolean }> =>
       request(`/api/vehicle-history/listing/${listingId}`),
   },
@@ -578,13 +618,13 @@ export const api = {
     devices: (): Promise<{ devices: { label: string; firstSeenAt: number; lastSeenAt: number; loginCount: number }[] }> =>
       request("/api/auth/devices"),
     logoutAll: (keepCurrent = true): Promise<{ ok: boolean; closed: number }> =>
-      request("/api/auth/logout-all", { method: "POST", body: JSON.stringify({ keepCurrent }) }),
+      request("/api/auth/logout-all", { method: "POST", body: jsonBody({ keepCurrent }) }),
     changePassword: (currentPassword: string, newPassword: string): Promise<{ ok: boolean; otherSessionsClosed: number }> =>
-      request("/api/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) }),
+      request("/api/auth/change-password", { method: "POST", body: jsonBody({ currentPassword, newPassword }) }),
     changeEmail: (currentPassword: string, newEmail: string): Promise<{ ok: boolean; email: string }> =>
-      request("/api/auth/change-email", { method: "POST", body: JSON.stringify({ currentPassword, newEmail }) }),
+      request("/api/auth/change-email", { method: "POST", body: jsonBody({ currentPassword, newEmail }) }),
     deleteAccount: (currentPassword: string): Promise<{ ok: boolean }> =>
-      request("/api/auth/delete-account", { method: "POST", body: JSON.stringify({ currentPassword }) }),
+      request("/api/auth/delete-account", { method: "POST", body: jsonBody({ currentPassword }) }),
   },
   health: (): Promise<{ ok: boolean; service: string }> => request("/api/health"),
 };

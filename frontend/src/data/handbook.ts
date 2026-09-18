@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 36 STATİK takım + 10 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 37 STATİK takım + 10 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -3253,6 +3253,94 @@ tutarlılığını ve \`aria-current\`i sabitliyor.
 **Kırmızı yandığı doğrulandı:** emoji geri konduğunda test 6 yeri birden gösteriyor — ekran
 görüntüsündeki 1845. satır dâhil. Hiç kırmızı yanmadığı görülmemiş bir test, koruduğunu
 kanıtlamış sayılmaz.`,
+      },
+      {
+        id: "olay-nesnesi-parametre",
+        title: "25.20 \"Circular structure to JSON\" — kendi eklediğim parametrenin faturası",
+        body: `## Bulunan hata
+
+Kullanıcı bildirdi:
+
+\`\`\`
+⚠️ Teklif isteği kaydedilemedi: Converting circular structure to JSON
+--> starting at object with constructor 'HTMLButtonElement'
+|   property '__reactFiber$…' -> object with constructor 'FiberNode'
+--- property 'stateNode' closes the circle
+\`\`\`
+
+**Bu benim kendi regresyonumdu** ve kaynağı 25.17'deki değişiklik. Oraya \`openQuoteModal\`e
+\`preselectMechanicId\` parametresi eklemiştim — ama fonksiyon **dört yerde** düğmeye doğrudan
+bağlıydı:
+
+\`\`\`
+onClick={openQuoteModal}
+\`\`\`
+
+React bu yazımda handler'a **tıklama olayını** geçirir. Yani parametre bir tamirci id'si değil,
+DOM düğümüne bağlı bir SyntheticEvent oluyordu. Kod \`preselectMechanicId != null\` diye bakıyordu
+ve **bir olay nesnesi de null değildir** — ön seçim listesine yazılıyor, istek gönderilirken
+\`JSON.stringify\` o nesnenin içindeki DOM ↔ Fiber döngüsüne takılıyordu.
+
+## Neden bu kadar sinsi
+
+Modal **sorunsuz açılıyor.** Kullanıcı aracını seçiyor, sorununu yazıyor, fotoğraf ekliyor,
+tamircileri işaretliyor — ve hata ancak **GÖNDER'e bastığında** çıkıyor. Yani emek harcandıktan
+sonra. Hatanın bulunduğu yer (bağlama satırı) ile patladığı yer (gönderim) arasında farklı
+dosyalar ve dakikalar var; hata mesajı da ikincisini gösteriyor.
+
+Alınacak ders küçük ve kesin: **bir fonksiyona parametre eklemek, onun her çağrı yerini de
+değiştirmektir.** Ben tanımı değiştirip çağrı yerlerini saymamıştım.
+
+## Dört katmanda kapatıldı
+
+Yalnızca dört çağrı yerini düzeltmek yeterli olurdu — *bugün*. Yarın biri yeni bir düğmeye aynı
+şeyi yazar ve hata geri gelir. Bu yüzden:
+
+1. **Çağrı yerleri**: dördü de \`onClick={() => openQuoteModal()}\` oldu.
+2. **Fonksiyonun kendisi**: parametre artık \`Number()\` ile sayıya çevriliyor, \`Number.isFinite\`
+   değilse yok sayılıyor. Bir olay nesnesi → \`NaN\` → ön seçim yok. Artık \`onClick\` ile doğrudan
+   bağlanmak **zararsız**. Eski \`!= null\` kontrolü kaldırıldı; hatanın tam olarak bulunduğu satır
+   oydu.
+3. **Gönderim öncesi**: seçili id listesi \`.map(Number).filter(Number.isFinite)\` ile süzülüyor.
+   Süzmeden sonra liste boşalırsa istek gönderilmiyor, kullanıcı anlamlı bir uyarı görüyor.
+4. **Hata mesajı**: bu ayrı bir düzeltme. "Converting circular structure to JSON → HTMLButtonElement"
+   cümlesi kullanıcıya hiçbir şey anlatmıyor, geliştiriciye de **hangi alanın** bozuk olduğunu
+   söylemiyordu; yığın izi \`JSON.stringify\` içini gösteriyor, yani sonucu — sebebi değil. Artık
+   tüm istek gövdeleri \`client.ts\` içindeki tek bir kapıdan (\`jsonBody\`) geçiyor; çeviri
+   başarısız olursa sorumlu alanlar **adıyla** bulunup günlüğe yazılıyor, kullanıcı ise sakin bir
+   mesaj görüyor. Maliyeti sıfır: arama yalnızca \`JSON.stringify\` zaten patladığında çalışıyor.
+   35 çağrı yerinin tamamı bu kapıya taşındı.
+
+## Çevresini de taradım — aynı sınıftan başka var mı?
+
+Kullanıcının isteği "bunun etrafında oluşan ya da oluşabilecek hataları da kontrol et"ti. Sınıfı
+şöyle tanımladım: *olay-olmayan bir parametre alan fonksiyonun doğrudan olay işleyicisine
+bağlanması.* Tüm tsx/ts dosyaları tarandı.
+
+**İlk tarama 12 bulgu verdi ve 11'i yanlış alarmdı.** Çünkü \`onChange={addQuotePhoto}\` gibi
+kullanımlar **doğru**: o fonksiyon zaten \`(e)\` alıyor, olay tam da beklediği şey. Kuralı
+keskinleştirdim — parametre adı \`e\`/\`ev\`/\`event\` ise bu kasıtlı bir olay işleyicisidir, bulgu
+değildir. Eşiği "yeşil yansın" diye indirmedim; ayrımı doğru yaptım. Yanlış alarmla dolu bir test,
+kimsenin bakmadığı bir testtir.
+
+Keskinleştirilmiş kuralla kalan bulgu sayısı: **0** (düzeltmeden önce 1 — asıl hata).
+
+## Test (\`tests/event-handler-args.test.mjs\`, 21 kontrol)
+
+Üç şeyi ayrı ayrı ölçüyor:
+
+- **Kural**: hiçbir olay-olmayan fonksiyon doğrudan bağlı değil. Desenin gerçekten baktığını
+  kanıtlayan bir sayaç da var (15'ten fazla doğrudan bağlama görüyor) — yoksa "0 bulgu", kuralın
+  tutmasından değil regexin hiçbir şeyi görmemesinden gelebilirdi.
+- **Dört katmanın da yerinde olduğu**: \`Number.isFinite\` koruması, süzme, boş liste kontrolü,
+  ham \`JSON.stringify\` ile kurulan gövde kalmaması.
+- **Davranış**: kaynak okumakla yetinmiyor, mantığı **çalıştırıyor**. Kullanıcının yaşadığı
+  senaryonun aynısı kuruluyor (DOM ↔ Fiber döngüsü olan bir nesne id listesine konuyor), gerçekten
+  patladığı doğrulanıyor, sonra sorumlu alanın **adıyla** bulunduğu ve süzmenin çöpü eleyip gerçek
+  id'leri koruduğu ölçülüyor.
+
+**Kırmızı yandığı doğrulandı:** tek bir çağrı yeri eski hâline döndürüldüğünde test dosya ve satır
+numarasıyla gösteriyor.`,
       },
 
     ],

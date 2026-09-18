@@ -1846,7 +1846,7 @@ export function AppShell() {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
                     return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} aria-current={active ? "page" : undefined} className={`relative flex items-center gap-2 pb-3 pt-1 transition-colors ${active ? "text-gray-900" : "text-gray-500 hover:text-gray-900"}`}><Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="flex-shrink-0" /><span className="text-sm font-semibold">{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-gray-900 rounded-full" />}</button>);
                   })}
-                  <button onClick={openQuoteModal} className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition whitespace-nowrap shadow-sm"><Users size={15} strokeWidth={2} /> {t("multiQuoteBtn")}</button>
+                  <button onClick={() => openQuoteModal()} className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition whitespace-nowrap shadow-sm"><Users size={15} strokeWidth={2} /> {t("multiQuoteBtn")}</button>
                 </div>
                 )}
                 {/* MİSAFİR GEZİNME: giriş yapmamış ziyaretçiye bildirim zili/profil yerine
@@ -1874,7 +1874,7 @@ export function AppShell() {
                         <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
                         <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                       </div>
-                      <button onClick={openQuoteModal} className="px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
+                      <button onClick={() => openQuoteModal()} className="px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
                     </div>
                     <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("searchHeroTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
                   </div>
