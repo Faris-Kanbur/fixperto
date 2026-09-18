@@ -3745,6 +3745,34 @@ function useAppLogic() {
       setToast({ type: "info", text: `⚠️ ${err?.message || "İşlem tamamlanamadı."}` });
     }
   };
+  /**
+   * TANINAN TARAYICILAR — yeni cihaz bildiriminin arayüzdeki karşılığı.
+   * "Hesabınıza yeni bir tarayıcıdan giriş yapıldı" e-postası alan kullanıcının sorabileceği ilk
+   * soru "başka neler var?" oluyor; cevabı uygulamanın içinde olmalı. E-postaya bağlantı KOYMAMA
+   * kararının (bkz. backend/routes/auth.js) diğer yarısı da bu: kullanıcıyı uygulamaya
+   * yönlendiriyoruz, o yüzden gidecek bir yer olması gerekiyor.
+   *
+   * Talep üzerine yükleniyor (bölüm açıldığında), her ekran açılışında değil: bilgi nadiren
+   * bakılan bir şey ve her açılışta bir istek daha atmanın karşılığı yok.
+   */
+  const [knownDevices, setKnownDevices] = useState<{ label: string; firstSeenAt: number; lastSeenAt: number; loginCount: number }[] | null>(null);
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const loadKnownDevices = async () => {
+    if (devicesLoading) return;
+    if (MY_OWNER_ID == null && MY_MECHANIC_ID == null) return;
+    setDevicesLoading(true);
+    try {
+      const res = await api.account.devices();
+      setKnownDevices(Array.isArray(res?.devices) ? res.devices : []);
+    } catch (err) {
+      // Boş dizi DEĞİL null bırakıyoruz: "hiç cihaz yok" ile "okuyamadık" aynı şey değil ve
+      // arayüzde farklı görünmeli — sessizce boş liste göstermek yanlış bilgi vermek olurdu.
+      setKnownDevices(null);
+      setToast({ type: "info", text: `⚠️ ${err?.message || "Cihaz listesi alınamadı."}` });
+    } finally {
+      setDevicesLoading(false);
+    }
+  };
   /** E-posta değişimi: hesabın kalıcı kontrolünü etkilediği için mevcut şifre isteniyor. */
   const [emailChangeForm, setEmailChangeForm] = useState({ open: false, email: "", password: "", loading: false });
   const submitEmailChange = async () => {
@@ -5976,6 +6004,7 @@ function useAppLogic() {
     detailReturnTab, setDetailReturnTab,
     deleteAccountPassword, setDeleteAccountPassword, deleteAccountLoading,
     openSessionCount, refreshSessionCount, logoutEverywhere,
+    knownDevices, devicesLoading, loadKnownDevices,
     emailChangeForm, setEmailChangeForm, submitEmailChange,
     listingReply, setListingReply, submitListingReply,
     vinLookup, lookupVin, clearVinLookup, myHistoryRecords, refreshMyHistory, setVehicleHistoryShared,

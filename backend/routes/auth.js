@@ -9,6 +9,7 @@ import {
   hashPassword, verifyPassword, generateRandomPassword, generateOtp,
   createSession, destroySession, requireSession, makeRateLimiter,
   destroyUserSessions, userSessionCount, extractBearerToken, hashIp,
+  deviceIdFor, recordLoginDevice, listUserDevices, deleteUserDevices,
 } from "../utils/auth.js";
 
 // GÜVENLİK/ÖZELLİK: gerçek e-posta + şifre ile kayıt/giriş, e-posta ile gönderilen tek kullanımlık
@@ -330,6 +331,59 @@ authRouter.post("/verify-otp", (req, res) => {
   const token = createSession(pending.id, pending.role);
   const table = ROLE_TABLES[pending.role];
   const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(pending.id);
+
+  /**
+   * ====== YENİ TARAYICI/CİHAZ BİLDİRİMİ ======
+   * ==============================================================================================
+   * Kullanıcının sorduğu şey buydu: bazı servisler "hesabınıza yeni bir cihazdan giriş yapıldı"
+   * e-postası atıyor; biz de atabilir miyiz? Atabiliyoruz ve gerekli olan iki şey zaten istekte:
+   * `User-Agent` başlığı (tarayıcı/işletim sistemi) ve IP (ağ değişikliği).
+   *
+   * BURAYA KONDU, ŞİFRE ADIMINA DEĞİL. Giriş bu satırda tamamlanıyor (OTP doğrulandı, oturum
+   * üretildi). Şifre adımına konsaydı: (a) tamamlanmamış bir giriş için "giriş yapıldı" demiş
+   * olurduk, (b) şifreyi bilen biri User-Agent'ı her istekte değiştirerek kurbana sınırsız uyarı
+   * e-postası yağdırabilirdi. OTP şartı bu ikinci yolu baştan kapatıyor.
+   *
+   * HATA BİLDİRİMİ GİRİŞİ ENGELLEMİYOR: bu bir bilgilendirme. Cihaz kaydı ya da posta kuyruğu bir
+   * nedenle patlarsa kullanıcının girişi başarısız OLMAMALI — güvenlik özelliği, kullanıcının
+   * hesabına erişimini kesen bir arızaya dönüşmemeli. Bu yüzden try/catch içinde ve sessizce
+   * günlüğe yazılıyor.
+   */
+  try {
+    const device = deviceIdFor(req.headers["user-agent"]);
+    const result = recordLoginDevice(pending.id, pending.role, {
+      label: device.label,
+      hash: device.hash,
+      ipHash: hashIp(clientIp(req)),
+    });
+    if (result.isNew && row?.email) {
+      const when = new Date().toLocaleString("tr-TR", { dateStyle: "medium", timeStyle: "short" });
+      /**
+       * E-POSTADA BAĞLANTI/JETON YOK — bilinçli.
+       * "Şifremi değiştir" diye tıklanabilir bir bağlantı koymak iki şeye yol açardı: (1) bu
+       * e-postanın kendisi bir kimlik avı şablonuna dönüşürdü (kullanıcı benzer bir sahte maildeki
+       * bağlantıya da tıklamaya alışır), (2) bağlantıda jeton taşınırsa e-posta kutusuna erişen
+       * biri için hazır bir hesap ele geçirme aracı olurdu. Kullanıcıyı uygulamanın kendi içindeki
+       * akışa yönlendiriyoruz; orada şifre değişimi MEVCUT ŞİFREYİ soruyor ve diğer tüm oturumları
+       * kapatıyor (bkz. /change-password).
+       */
+      queueMail({
+        to: row.email,
+        subject: "Fixperto — hesabınıza yeni bir tarayıcıdan giriş yapıldı",
+        text: `Merhaba,\n\nHesabınıza daha önce görmediğimiz bir tarayıcıdan giriş yapıldı.\n\n`
+          + `Tarayıcı / sistem: ${result.label}\nZaman: ${when}\n\n`
+          + `BU SİZDİYSENİZ bu e-postayı yok sayabilirsiniz.\n\n`
+          + `SİZ DEĞİLSENİZ uygulamaya girip Ayarlar → Hesap bölümünden şifrenizi değiştirin. `
+          + `Şifre değişimi, sizin kullandığınız oturum dışındaki TÜM oturumları kapatır. `
+          + `Aynı bölümden "tüm cihazlardan çıkış" da yapabilirsiniz.\n\n`
+          + `Güvenliğiniz için bu e-postada hiçbir bağlantı yoktur; işlemi her zaman uygulamaya `
+          + `kendiniz girerek yapın.`,
+      });
+    }
+  } catch (err) {
+    console.error("[auth] cihaz kaydı/bildirimi başarısız (giriş etkilenmedi):", err?.message);
+  }
+
   res.json({ ok: true, token, user: sanitizeUser(pending.role, row) });
 });
 
@@ -371,6 +425,19 @@ async function requireCurrentPassword(req, res) {
 /** Açık oturum sayısı — "başka cihazlarda oturumunuz açık" bilgisini göstermek için. */
 authRouter.get("/sessions", requireSession(["owner", "mechanic"]), (req, res) => {
   res.json({ count: userSessionCount(req.session.id, req.session.role) });
+});
+
+/**
+ * KULLANICININ KENDİ TANINAN TARAYICI LİSTESİ.
+ * Yalnızca kendi oturumuyla okunuyor — `requireSession` kimliği oturumdan alıyor, istemciden bir
+ * id KABUL EDİLMİYOR. Bu, bu oturumdaki denetimlerin en sık bulduğu hata sınıfının (IDOR) baştan
+ * kapatılmış hâli: okunacak kaydın kime ait olduğu sorusunun cevabı istemcide değil.
+ *
+ * IP ya da konum DÖNMÜYOR: tabloda yalnızca IP'nin tuzlu karması var ve o da kullanıcıya
+ * gösterilmiyor. Kullanıcıya faydalı olan bilgi "hangi tarayıcı, ne zaman" — ham ağ bilgisi değil.
+ */
+authRouter.get("/devices", requireSession(["owner", "mechanic"]), (req, res) => {
+  res.json({ devices: listUserDevices(req.session.id, req.session.role) });
 });
 
 /**
@@ -464,6 +531,11 @@ authRouter.post("/delete-account", requireSession(["owner", "mechanic"]), asyncR
      * bu satırlar hiçbir işe de yaramaz: sahibi olmayan bir profilden öneri üretilmiyor.
      */
     db.prepare(`DELETE FROM taste_signals WHERE userId = ? AND role = ?`).run(id, role);
+    // Tanınan tarayıcı listesi de kişisel veridir ve hesapla birlikte gider. Bu tablo bu oturumda
+    // eklendi; silme yolunun ona da dokunması ZORUNLU — aksi halde "hesabımı sil" dedikten sonra
+    // kullanıcının hangi tarayıcılardan girdiği kaydı geride kalırdı (aynı hata sınıfı: ikinci
+    // denetimde support_tickets ve listings'te bulunmuştu).
+    deleteUserDevices(id, role);
 
     if (role === "owner") {
       /**

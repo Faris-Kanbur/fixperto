@@ -571,6 +571,12 @@ export const api = {
   // kalıcı kontrolünü ele geçirememeli (bkz. backend/routes/auth.js).
   account: {
     sessions: (): Promise<{ count: number }> => request("/api/auth/sessions"),
+    /**
+     * Tanınan tarayıcılar. Kimlik OTURUMDAN geliyor — parametre yok, olamaz: bir kullanıcı
+     * id'si alsaydı başkasının cihaz listesi istenebilirdi. Yanıt IP/konum TAŞIMIYOR.
+     */
+    devices: (): Promise<{ devices: { label: string; firstSeenAt: number; lastSeenAt: number; loginCount: number }[] }> =>
+      request("/api/auth/devices"),
     logoutAll: (keepCurrent = true): Promise<{ ok: boolean; closed: number }> =>
       request("/api/auth/logout-all", { method: "POST", body: JSON.stringify({ keepCurrent }) }),
     changePassword: (currentPassword: string, newPassword: string): Promise<{ ok: boolean; otherSessionsClosed: number }> =>

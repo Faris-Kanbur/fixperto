@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 34 STATİK takım + 9 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 35 STATİK takım + 10 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -3039,6 +3039,142 @@ gösterip kullanıcıyı kafası karışmış bırakabilirdi:
 2. **Davranış:** filtre/arama mantığı test içinde veriyle **gerçekten çalıştırılıyor** — filtreye
    uymayan seçili tamirci görünüyor mu, en üstte mi, kaldırılınca filtre yine geçerli mi,
    sıralama korunuyor mu.`,
+      },
+      {
+        id: "yeni-cihaz-bildirimi",
+        title: "25.18 \"Yeni cihazdan giriş\" bildirimi — ve açmadığımız kapı",
+        body: `## İstek
+
+Kullanıcı başka bir servisten (Accountable) gelen bir e-posta paylaştı: *"Hesabınıza yeni bir
+cihazdan giriş yapıldı — Konum: Stuttgart, Cihaz: Safari, Mac OS."* Soru üç parçalıydı: **bunu
+nasıl tespit ediyorlar, biz de edebilir miyiz, ve güvenlik açığı açmadan yapabilir miyiz?**
+
+Üçüncü parça bu sayfanın asıl konusu. Çünkü bu özelliğin yanlış yapılmış hâli, güvenliği
+**artırmak** için eklenmiş olmasına rağmen onu **azaltır**.
+
+## Nasıl tespit ediliyor: sihir yok, iki tane sıradan veri
+
+Her HTTP isteği zaten iki şey taşıyor:
+
+1. **\`User-Agent\` başlığı** — tarayıcının kendini tanıttığı metin. "Safari, Mac OS, Macintosh"
+   satırının tamamı buradan geliyor.
+2. **IP adresi** — "Stuttgart, Germany" satırı bundan, bir coğrafi konum veritabanına sorularak.
+
+Yani özel bir cihaz kimliği ya da gizli bir takip yöntemi yok; hiçbir şey **saptanmıyor**,
+istekte zaten var olan iki alan okunuyor. Bizde de ikisi de mevcut.
+
+## Kopyalamadığımız şey: konum
+
+Accountable'ın e-postasındaki "Stuttgart, Germany" satırını **bilerek eklemedik.** Konum çözmek,
+kullanıcının IP adresini bir üçüncü tarafa (GeoIP servisine) göndermek demek. Karşılığında
+aldığımız şey ise genelde şehir düzeyinde ve sık sık yanlış: mobil operatörde başka ilin çıkması,
+VPN'de başka ülkenin görünmesi olağan. **Yanlış bir konum, bildirimi faydalı olmaktan çıkarıp
+gereksiz paniğe çeviriyor** — "Ben Stuttgart'ta değilim!" diyen kullanıcının kendi girişidir.
+Veriyi dışarı vermenin bedeli var, kesinliği yok; almadık. Şemada konum alanı olmaması da
+kasıtlı (test bunu ayrıca ölçüyor).
+
+## Açmadığımız kapı — bu sayfanın en önemli kısmı
+
+Cihaz parmak izi **tamamen istemcinin yazdığı bir metinden** türüyor. Tek satırla taklit edilir:
+
+\`\`\`
+curl -H "User-Agent: <kurbanın tarayıcısı ne yazıyorsa>" ...
+\`\`\`
+
+Bu yüzden şu kural kodun içinde de, testte de yazılı: **bu bir kimlik doğrulama faktörü
+değildir.** Özellikle şu kısayol **yok**:
+
+> "Bu cihaz tanıdık, OTP'yi atlayalım."
+
+O kısayol konsaydı, saldırganın yapması gereken tek şey doğru \`User-Agent\` metnini göndermek
+olurdu ve giriş kodu adımı buharlaşırdı. Yani kullanıcıyı korumak için eklenen özellik, bir
+**bypass**'a dönüşürdü. Uygulamada giriş hâlâ iki adımlı ve ikinci adım hiçbir koşulda atlanmıyor.
+Testin 6. bölümü tam olarak bunu ölçüyor: en tanıdık cihazdan gelen giriş isteği bile
+\`/login\`'den **oturum jetonu almıyor**, ve tanıdık cihaz + yanlış kod yine reddediliyor.
+
+## Nereye konduğu da bir güvenlik kararı
+
+Cihaz kaydı **şifre adımına değil, OTP doğrulandıktan sonraya** kondu. İki sebep:
+
+- Tamamlanmamış bir girişe "giriş yapıldı" demek yanlış bilgi olurdu.
+- Şifreyi bilen (ama koda erişemeyen) biri, her istekte \`User-Agent\`'ı değiştirerek kurbana
+  **sınırsız uyarı e-postası yağdırabilirdi.** OTP şartı bu yolu baştan kapatıyor. Üstüne bir de
+  günlük tavan var (en fazla 5 bildirim/gün), ki hesabı gerçekten ele geçiren biri gelen kutusunu
+  doldurup **gerçek** uyarıyı gözden kaçırtamasın.
+
+Kod \`try/catch\` içinde: cihaz kaydı ya da posta kuyruğu patlarsa **giriş yine tamamlanıyor.** Bir
+güvenlik özelliğinin, kullanıcının kendi hesabına erişimini kesen bir arızaya dönüşmesi kabul
+edilemez.
+
+## E-postada bağlantı yok — ve bunun bir bedeli var
+
+Bildirim e-postasında **hiçbir bağlantı ve hiçbir jeton** yok; kullanıcı "Ayarlar → Hesap"a
+kendisi gidiyor. Sebep: (1) tıklanabilir bağlantılı bir güvenlik e-postası, kullanıcıyı sahtesine
+de tıklamaya alıştıran bir kimlik avı şablonudur, (2) bağlantıda jeton taşınsa, e-posta kutusuna
+erişen biri için hazır bir hesap ele geçirme aracı olurdu.
+
+Bunun bedeli şu: kullanıcının gideceği bir yerin **olması** gerekiyor. Bu yüzden arayüz tarafı da
+yapıldı — hesap güvenliği bölümüne **"Tanınan tarayıcılar"** listesi eklendi (\`KnownDevices\`).
+Tek bileşen, iki yerde kullanılıyor (araç sahibi + tamirci ayarları); bu projede en sık tekrarlayan
+hata sınıfı bir şeyin kardeşine eklenmemesiydi.
+
+## Dürüst sınır: bu "cihaz" değil, "tarayıcı"
+
+Tespit edilen şey **yeni bir fiziksel cihaz değil**, daha önce görülmemiş bir **tarayıcı +
+işletim sistemi** birleşimi:
+
+- Aynı bilgisayarda Chrome'dan Safari'ye geçmek → **yeni** sayılır (aslında aynı cihaz).
+- Aynı tarayıcıya sahip başka bir bilgisayar → **yeni sayılmaz** (aslında farklı cihaz).
+
+Kesin yapmanın yolu kalıcı bir cihaz çerezi yazmaktır; o ayrı bir iş (çerez yönetimi, CSRF,
+"çerezi silince her giriş yeni cihaz" sorunu) ve şu an yapılmıyor. Bu yüzden hem e-posta hem
+arayüz metinleri **"cihaz" değil "tarayıcı"** diyor. Kullanıcıya olduğundan fazla kesinlik iddia
+etmek, ilk yanlış alarmda güveni kaybetmek demek.
+
+## Sürüm numarası bilerek dışarıda
+
+Parmak izine "Chrome" giriyor, "Chrome 120" girmiyor. Tarayıcılar birkaç haftada bir kendini
+günceller; sürüm dâhil olsaydı **hiçbir şey değişmediği hâlde her güncellemede** uyarı giderdi.
+Her hafta gelen bir uyarıyı kimse okumaz — ve gerçek olanı da kaçırır. Alarm yorgunluğu, bu tür
+bildirimleri işe yaramaz hâle getiren şeydir.
+
+## Saklanmayan veriler
+
+Veritabanında **ham \`User-Agent\` metni yok** (sürüm, derleme numarası, bazen cihaz modeli taşır —
+amaç dışı veri), **ham IP yok** (yalnızca tuzlanmış karma), **konum alanı yok**. Saklanan şey:
+insan okunur etiket, tuzlanmış karma, ilk/son görülme zamanı, giriş sayısı. Kullanıcı listesi de
+sınırlı (en fazla 20; en eski düşer).
+
+## Testler
+
+**\`tests/device-fingerprint.test.mjs\` (32 kontrol)** — UA ayrıştırma sessizce yanlış olabilecek
+bir iş: modern tarayıcıların hepsi geriye dönük uyumluluk için **birbirinin adını taşıyor** (Edge
+"Chrome" da der, Chrome "Safari" de der, Android "Linux" da der). Sıra bir kez bozulsa her Edge
+kullanıcısı "Chrome" görünürdü ve **hiçbir belirtisi olmazdı.** Dokuz gerçek UA metni, bozuk/boş/
+çöp girdiler ve sürüm güncellemesinin yeni cihaz sayılmaması ölçülüyor.
+
+**\`tests/e2e/api10.e2e.mjs\` (47 kontrol)** — gerçek sunucuya karşı. Bildirimin gidip gitmediğini
+arayüzden değil, yönetici ölçümlerindeki \`mail.queued\` sayacından okuyoruz: her giriş zaten 1
+e-posta (OTP) kuyruğa alıyor, yani delta **1 → bildirim yok**, **2 → bildirim var.** Ölçülenler:
+ilk girişte bildirim **gitmemesi** (yeni hesabın ilk girişi tanımı gereği yeni cihazdır, ona uyarı
+göndermek anlamsız bir korku mesajı olurdu), aynı tarayıcının tekrar bildirmemesi, sürüm
+güncellemesinin bildirmemesi, gerçekten yeni tarayıcının **bildirmesi**, günlük tavan, ham veri
+saklanmaması, OTP'nin atlanamaması, sahte UA'nın yalnızca etiketi etkilemesi, listenin
+başkasının cihazlarını vermemesi (IDOR denemesi dâhil) ve **hesap silinince cihaz kayıtlarının da
+silinmesi** — bu sonuncusu, daha önce KRİTİK bir bulguya yol açan sınıfın (silinen kullanıcının
+kayıtları kalıyor, SQLite id'yi yeniden kullanıyor, yeni kullanıcı devralıyor) yeni tabloda
+tekrar etmediğini doğruluyor.
+
+## Test yazarken iki kez kendi hatamı ölçtüm
+
+- Statik kontrolde \`indexOf("recordLoginDevice")\` yazdım; o metin dosyada **iki kez** geçiyor —
+  \`import\` satırında ve gerçek çağrıda. \`indexOf\` import'u buldu, kesitler yanlış yerden başladı
+  ve **üç yanlış alarm** çıktı. \`lastIndexOf\` ile düzeltildi. Aynı tuzağa geri tuşu testinde de
+  düşmüştüm: bir metni aramak, onun tek kopyası olduğunu varsaymaktır.
+- E2E'de sahte UA olarak NUL byte içeren bir metin gönderdim; \`fetch\` isteği **hiç göndermedi**
+  ("invalid header value"). Yani kontrol karakterli bir UA sunucuya HTTP üzerinden zaten
+  ulaşamıyor — protokolün kendisi engelliyor. Testi ağdan geçebilen bir payload'a çevirdim, NUL
+  durumu birim testinde kaldı.`,
       },
 
     ],

@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { deviceFingerprint } from "./deviceFingerprint.js";
 import bcrypt from "bcryptjs";
 import { db } from "../db/db.js";
 import { looksHashed } from "./passwordFormat.js";
@@ -60,6 +61,28 @@ db.exec(`
     role      TEXT NOT NULL,
     createdAt INTEGER NOT NULL
   );
+
+  /**
+   * TANINAN TARAYICILAR — "yeni cihazdan giriş" bildirimi için.
+   * ----------------------------------------------------------------------------------------------
+   * Ham User-Agent metni SAKLANMIYOR; yalnızca insan okuyabilir etiket ("Chrome · macOS") ve onun
+   * karması. Gerekçe bkz. utils/deviceFingerprint.js.
+   * lastIpHash: ham IP DEĞİL, tuzlu karması (aynı desen: owners.signupIpHash). Kullanıcıya hiç
+   * gösterilmiyor; yalnızca "giriş farklı bir ağdan mı geldi" sorusunu cevaplamak için. Coğrafi
+   * konum YOK: bir geo-IP servisine sormak, kullanıcıların IP'lerini üçüncü bir tarafa göndermek
+   * demektir ve bu, bildirimin sağladığı faydadan büyük bir gizlilik bedeli olurdu.
+   */
+  CREATE TABLE IF NOT EXISTS user_devices (
+    userId      INTEGER NOT NULL,
+    role        TEXT NOT NULL,
+    deviceHash  TEXT NOT NULL,
+    label       TEXT NOT NULL,
+    firstSeenAt INTEGER NOT NULL,
+    lastSeenAt  INTEGER NOT NULL,
+    lastIpHash  TEXT,
+    loginCount  INTEGER NOT NULL DEFAULT 1,
+    PRIMARY KEY (userId, role, deviceHash)
+  );
 `);
 
 const hashToken = (token) => crypto.createHash("sha256").update(String(token)).digest("hex");
@@ -87,6 +110,88 @@ export function hashIp(ip) {
   const clean = String(ip || "").trim();
   if (!clean) return null;
   return crypto.createHash("sha256").update(`${IP_SALT}:${clean}`).digest("hex");
+}
+
+/**
+ * ====== YENİ CİHAZ/TARAYICI GİRİŞİ: KAYIT + BİLDİRİM KARARI ======
+ * ================================================================================================
+ * Bu fonksiyon SADECE karar veriyor ve kaydı güncelliyor; e-postayı çağıran taraf gönderiyor
+ * (routes/auth.js). Böylece posta bağımlılığı bu dosyaya girmiyor ve karar testte tek başına
+ * ölçülebiliyor.
+ *
+ * NEREDE ÇAĞRILIYOR ve NEDEN ORADA: giriş AKIŞININ SONUNDA, yani OTP doğrulandıktan sonra
+ * (createSession ile aynı yerde). Şifre adımında DEĞİL. İki sebep:
+ *   1) O noktaya kadar giriş tamamlanmamıştır. Şifreyi bilip OTP'yi geçemeyen biri için "hesabınıza
+ *      giriş yapıldı" demek YANLIŞ olurdu.
+ *   2) KÖTÜYE KULLANIM: bildirim şifre adımına bağlanırsa, şifreyi bilen biri User-Agent'ı her
+ *      istekte değiştirerek kurbana sınırsız "yeni cihaz" e-postası yağdırabilirdi. OTP şartı bunu
+ *      baştan kapatıyor: saldırganın e-postaya da erişmesi gerekir ki o durumda zaten kaybedilmiş
+ *      bir hesaptan bahsediyoruz. Aşağıdaki günlük tavan buna EK bir kat.
+ *
+ * DÖNÜŞ: { isNew, label } — `isNew` true ise çağıran taraf bildirim gönderiyor.
+ */
+const MAX_DEVICES_PER_USER = 20;          // tablo sınırsız büyümesin; en eski kayıt düşer
+const MAX_NEW_DEVICE_MAILS_PER_DAY = 5;   // alarm yorgunluğuna ve posta kuyruğu şişmesine karşı
+
+const selectDevice = db.prepare("SELECT deviceHash, loginCount FROM user_devices WHERE userId = ? AND role = ? AND deviceHash = ?");
+const touchDevice = db.prepare("UPDATE user_devices SET lastSeenAt = ?, lastIpHash = ?, loginCount = loginCount + 1 WHERE userId = ? AND role = ? AND deviceHash = ?");
+const addDevice = db.prepare("INSERT INTO user_devices (userId, role, deviceHash, label, firstSeenAt, lastSeenAt, lastIpHash) VALUES (?, ?, ?, ?, ?, ?, ?)");
+const countDevices = db.prepare("SELECT COUNT(*) n FROM user_devices WHERE userId = ? AND role = ?");
+const newDevicesToday = db.prepare("SELECT COUNT(*) n FROM user_devices WHERE userId = ? AND role = ? AND firstSeenAt > ?");
+const dropOldestDevice = db.prepare(`
+  DELETE FROM user_devices WHERE userId = ? AND role = ? AND deviceHash = (
+    SELECT deviceHash FROM user_devices WHERE userId = ? AND role = ? ORDER BY lastSeenAt ASC LIMIT 1
+  )`);
+
+/**
+ * Parmak izini BURADA üretiyoruz, çünkü tuz (IP_SALT) bu dosyada ve dışa açılmamalı: bir tuzun
+ * tek işi gizli kalmak. deviceFingerprint saf bir fonksiyon, tuzu argüman olarak alıyor.
+ */
+export function deviceIdFor(userAgent) {
+  return deviceFingerprint(userAgent, IP_SALT);
+}
+
+export function recordLoginDevice(id, role, { label, hash, ipHash }) {
+  const now = Date.now();
+  const known = selectDevice.get(id, role, hash);
+  if (known) {
+    touchDevice.run(now, ipHash ?? null, id, role, hash);
+    return { isNew: false, label };
+  }
+
+  /**
+   * İLK GİRİŞ BİLDİRİM ÜRETMİYOR.
+   * Hesabı yeni açan kullanıcının ilk girişi tanımı gereği "yeni cihaz"dır; ona "hesabınıza yeni
+   * bir cihazdan giriş yapıldı" demek hem anlamsız hem de ilk izlenimi bozan bir uyarı olurdu.
+   * Kayıt yine tutuluyor (ikinci cihaz artık tespit edilebilsin diye), sadece e-posta yok.
+   */
+  const existing = countDevices.get(id, role).n;
+  const isFirstEver = existing === 0;
+
+  if (existing >= MAX_DEVICES_PER_USER) dropOldestDevice.run(id, role, id, role);
+  addDevice.run(id, role, hash, label, now, now, ipHash ?? null);
+
+  if (isFirstEver) return { isNew: false, label, firstEver: true };
+
+  // Günlük tavan: bir kullanıcıya gönderilen yeni-cihaz bildirimi sayısı sınırlı.
+  const since = now - 24 * 60 * 60 * 1000;
+  const todays = newDevicesToday.get(id, role, since).n;
+  if (todays > MAX_NEW_DEVICE_MAILS_PER_DAY) return { isNew: false, label, throttled: true };
+
+  return { isNew: true, label };
+}
+
+/** Kullanıcının kendi cihaz listesi — yalnızca kendi oturumuyla okunuyor (bkz. routes/auth.js). */
+export function listUserDevices(id, role) {
+  return db.prepare(`
+    SELECT label, firstSeenAt, lastSeenAt, loginCount
+    FROM user_devices WHERE userId = ? AND role = ? ORDER BY lastSeenAt DESC
+  `).all(id, role);
+}
+
+/** Hesap silindiğinde cihaz kaydı da gitmeli (bkz. routes/auth.js delete-account). */
+export function deleteUserDevices(id, role) {
+  return db.prepare("DELETE FROM user_devices WHERE userId = ? AND role = ?").run(id, role).changes;
 }
 
 export function createSession(id, role) {

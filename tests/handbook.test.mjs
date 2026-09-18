@@ -46,6 +46,7 @@ const COVERAGE = {
   PhotoLightbox: "fotoğraf", ShareButton: "paylaş", SiteFooter: "alt bilgi",
   SkeletonCard: "boş durum", StatusTracker: "randevu", WelcomeTour: "karşılama",
   TranslatedText: "TranslatedText",
+  KnownDevices: "tarayıcı",
   SavedSearchList: "kayıtlı arama",
   TestimonialCarousel: "değerlendirme şeridi",
   CareersPage: "kariyer",

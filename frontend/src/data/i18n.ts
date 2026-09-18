@@ -1428,6 +1428,18 @@ export const T = {
   logoutEverywhereBtn: { tr: "Tüm cihazlardan çıkış yap", en: "Sign out everywhere", de: "Überall abmelden" },
   logoutEverywhereDesc: { tr: "Telefonunuzu kaybettiyseniz ya da ortak bir bilgisayarda oturum açık kaldıysa, bu cihaz dışındaki tüm oturumlar kapanır.", en: "If you lost your phone or left a session open on a shared computer, every session except this device is closed.", de: "Wenn Sie Ihr Telefon verloren oder eine Sitzung an einem gemeinsam genutzten Rechner offen gelassen haben, werden alle Sitzungen außer dieser beendet." },
   loggedOutEverywhereToast: { tr: "🔒 {n} oturum kapatıldı. Bu cihazdaki oturumunuz açık kaldı.", en: "🔒 {n} session(s) closed. You are still signed in on this device.", de: "🔒 {n} Sitzung(en) beendet. Auf diesem Gerät bleiben Sie angemeldet." },
+  /**
+   * TANINAN TARAYICILAR. Metinler bilinçli olarak "cihaz" değil "tarayıcı" diyor: tespit
+   * ettiğimiz şey tarayıcı + işletim sistemi birleşimi, fiziksel cihaz değil (aynı bilgisayarda
+   * Chrome'dan Safari'ye geçmek yeni satır açar). Kullanıcıya olduğundan fazla kesinlik
+   * iddia etmiyoruz — bkz. backend/utils/deviceFingerprint.js.
+   */
+  knownDevicesBtn: { tr: "Tanınan tarayıcıları göster", en: "Show recognized browsers", de: "Erkannte Browser anzeigen" },
+  knownDevicesDesc: { tr: "Hesabınıza daha önce görmediğimiz bir tarayıcıdan giriş yapıldığında e-posta gönderiyoruz. Aşağıdaki liste tanınan tarayıcı/sistem birleşimlerini gösterir; aynı bilgisayarda farklı bir tarayıcı kullanmak da yeni satır açar.", en: "We email you when your account is accessed from a browser we haven't seen before. The list below shows recognized browser/system combinations; using a different browser on the same computer also adds a row.", de: "Wir senden eine E-Mail, wenn auf Ihr Konto über einen bisher unbekannten Browser zugegriffen wird. Die Liste zeigt erkannte Browser-/System-Kombinationen; ein anderer Browser auf demselben Rechner erzeugt ebenfalls einen Eintrag." },
+  knownDevicesEmpty: { tr: "Henüz kayıtlı tarayıcı yok.", en: "No recognized browsers yet.", de: "Noch keine erkannten Browser." },
+  knownDevicesLoading: { tr: "Yükleniyor…", en: "Loading…", de: "Wird geladen…" },
+  knownDeviceLastSeen: { tr: "son giriş {d} · {n} giriş", en: "last sign-in {d} · {n} sign-in(s)", de: "letzte Anmeldung {d} · {n} Anmeldung(en)" },
+  knownDevicesNotMine: { tr: "Tanımadığınız bir satır varsa şifrenizi değiştirin ve tüm cihazlardan çıkış yapın.", en: "If you don't recognize a row, change your password and sign out everywhere.", de: "Wenn Sie einen Eintrag nicht erkennen, ändern Sie Ihr Passwort und melden Sie sich überall ab." },
   changeEmailBtn: { tr: "E-posta adresini değiştir", en: "Change email address", de: "E-Mail-Adresse ändern" },
   changeEmailDesc: { tr: "E-posta, şifre sıfırlamanın gittiği adrestir. Bu yüzden değiştirmek için mevcut şifreniz gerekir.", en: "Your email is where password resets are sent, so changing it requires your current password.", de: "An Ihre E-Mail werden Passwort-Zurücksetzungen gesendet; die Änderung erfordert daher Ihr aktuelles Passwort." },
   newEmailLabel: { tr: "Yeni e-posta adresi", en: "New email address", de: "Neue E-Mail-Adresse" },

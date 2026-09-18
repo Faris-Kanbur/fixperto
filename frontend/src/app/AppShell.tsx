@@ -44,6 +44,7 @@ import { VinLookupPanel, VerifiedHistoryList, VehicleOwnHistory } from "../compo
 import { LangSwitch } from "../components/features/LangSwitch";
 import { NotifBell } from "../components/features/NotifBell";
 import { SiteFooter } from "../components/features/SiteFooter";
+import { KnownDevices } from "../components/features/KnownDevices";
 import { BrandMark, PageTopBar } from "../components/features/BrandMark";
 import { BrandSelect, ModelSelect } from "../components/features/BrandSelect";
 import { BookingCalendar } from "../components/features/BookingCalendar";
@@ -224,6 +225,7 @@ export function AppShell() {
     confirmBooking, goHome, chooseRole, completeVinInput, setCompleteVinInput, canReoffer, startReoffer, scrollToSection,
     listingReply, setListingReply, submitListingReply,
     deleteAccountPassword, setDeleteAccountPassword, deleteAccountLoading, openSessionCount, logoutEverywhere,
+    knownDevices, devicesLoading, loadKnownDevices,
     emailChangeForm, setEmailChangeForm, submitEmailChange, myHistoryRecords, setVehicleHistoryShared, showForeignVinLookup, setShowForeignVinLookup,
     recommendations, setRecsConsent, recsProfile, refreshRecsProfile, clearRecsProfile, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,
     adminChangeTargetLabel, logAdminChange, applyAdminFieldChange, revertAdminChange, ADMIN_TARGET_TYPE_META, adminChangeLogGrouped, expandedHistoryGroups, setExpandedHistoryGroups, recordShare, shareStats, viewStats, myProfileViewStats, listingViewStats, listingFavoriteCount,
@@ -2059,6 +2061,7 @@ export function AppShell() {
                         <button onClick={logoutEverywhere} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("logoutEverywhereBtn")}</button>
                         <button onClick={() => setEmailChangeForm({ open: true, email: "", password: "", loading: false })} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("changeEmailBtn")}</button>
                       </div>
+                      <KnownDevices devices={knownDevices} loading={devicesLoading} onLoad={loadKnownDevices} t={t} lang={lang} />
                     </div>
                     <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordTitle")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                     <button onClick={() => setOwnerSettingsTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
@@ -4444,6 +4447,7 @@ export function AppShell() {
                       <button onClick={logoutEverywhere} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("logoutEverywhereBtn")}</button>
                       <button onClick={() => setEmailChangeForm({ open: true, email: "", password: "", loading: false })} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("changeEmailBtn")}</button>
                     </div>
+                    <KnownDevices devices={knownDevices} loading={devicesLoading} onLoad={loadKnownDevices} t={t} lang={lang} />
                   </div>
                   <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                   <button onClick={() => setMechProfileTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
