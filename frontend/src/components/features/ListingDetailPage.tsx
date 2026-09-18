@@ -273,7 +273,7 @@ export function ListingDetailPage() {
                   <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded-full">{activeIdx + 1} / {photos.length}</span>
                 </>
               )}
-              {l.featured && <span className="absolute top-3 left-3 bg-rose-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1"><Star size={10} className="fill-white" /> {t("featuredBadge")}</span>}
+              {l.featured && <span className="absolute top-3 left-3 bg-rose-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">{t("featuredBadge")}</span>}
             </div>
             {photos.length > 1 && (
               <div className="flex gap-2 mt-3 overflow-x-auto pb-1">

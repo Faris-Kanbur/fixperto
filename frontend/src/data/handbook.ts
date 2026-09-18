@@ -847,7 +847,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 35 STATİK takım + 10 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 36 STATİK takım + 10 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -3175,6 +3175,84 @@ tekrar etmediğini doğruluyor.
   ("invalid header value"). Yani kontrol karakterli bir UA sunucuya HTTP üzerinden zaten
   ulaşamıyor — protokolün kendisi engelliyor. Testi ağdan geçebilen bir payload'a çevirdim, NUL
   durumu birim testinde kaldı.`,
+      },
+      {
+        id: "cift-ikon",
+        title: "25.19 Başlık başına iki simge — iki dosyada görünmeyen hata",
+        body: `## Bulunan hata
+
+Kullanıcı ekran görüntüsüyle bildirdi: gezinme sekmelerinde her başlığın yanında **iki simge**
+vardı — bir lucide ikonu ve ayrıca bir emoji. "Tamirci Ara"nın solunda hem \`<Wrench/>\` hem 🔧,
+"İkinci El Araçlar"ın solunda hem \`<Car/>\` hem 🚗. "İş İlanları"nda ise tek ikon vardı; yani
+görünüm sekmeden sekmeye tutarsızdı.
+
+## Neden kimse fark etmedi
+
+Emoji, bileşen kodunda **yok**. Çeviri dosyasındaki metnin içinde:
+
+\`\`\`
+findMechanic: { tr: "🔧 Tamirci Ara", ... }
+\`\`\`
+
+Bileşende yazan şey ise sadece \`<Icon/> {tab.label}\`. İki dosyaya ayrı ayrı bakan biri hiçbir
+tuhaflık görmez — **hata yalnızca ikisi birleşince ekranda var oluyor.** Bu, statik testlerin
+tek dosyaya bakarak kaçırdığı sınıfın ta kendisi, ve testin işi tam olarak o birleşimi yapmak.
+
+## Kural: emoji yasak değil, İKİSİ BİRDEN yasak
+
+Emojiyi baştan silmek yanlış olurdu. Bir rozette ("⭐ Öne Çıkan") ya da bir bildirimde
+("✅ Kaydedildi") emoji **tek başına** simge görevi görüyor ve yerinde duruyor. Yasaklanan şey,
+yanında zaten lucide ikonu olan bir etiketin içinde ayrıca emoji bulunması.
+
+Ölçüldü: çeviri dosyasında 76 emojili anahtar var, bunlardan **yalnızca 6 tanesi** bir ikonun
+yanında duruyordu. Altısı düzeltildi (\`findMechanic\`, \`findCar\`, \`multiQuoteBtn\`,
+\`landingQuoteCta\`, \`saveThisSearchBtn\` etiketlerinden emoji çıktı; \`featuredBadge\` rozetinde ise
+tersi yapıldı — emoji kaldı, fazlalık olan \`<Star/>\` ikonu kaldırıldı). Kalan 70 emojiye
+dokunulmadı.
+
+## Ölçüm aracım ilk seferinde eksik ölçtü
+
+İlk taramam 12 bulgu verdi ama **ekran görüntüsündeki asıl sekmeleri kaçırdı.** Sebep: o sekmeler
+etiketi bir değişkenden alıyor —
+
+\`\`\`
+{[{ label: t("findMechanic"), icon: Wrench }, …].map(tab => <Icon …/>{tab.label})}
+\`\`\`
+
+— ve benim desenim yalnızca ikonun hemen yanına çeviri çağrısının **doğrudan** yazıldığı hâli
+arıyordu. Yani kullanıcının ekranında GÖRDÜĞÜ
+hata, benim listemde yoktu. Aracı düzelttim (ikinci bir desen: \`label:\` ve \`icon:\` aynı nesnede
+mi). Testte ayrıca **desenlerin gerçekten bir şey gördüğünü** doğrulayan bir kontrol var: yoksa
+"0 bulgu" sonucu, kuralın tutmasından değil regexin hiçbir şeyi görmemesinden gelebilirdi — bu
+projede daha önce tam olarak böyle sahte bir yeşil görmüştük.
+
+## "Daha profesyonel" kısmının ölçülebilir hâli
+
+İstek "daha profesyonel olsun"du. Bunun ölçülebilir kısmı **tutarlılık**:
+
+- Sekmeler \`text-sm font-extrabold tracking-tight\`, hemen yanındaki teklif düğmesi ise
+  \`text-xs font-extrabold\` idi. Yan yana duran iki öğe **iki farklı boyda** — bakınca "hizasız"
+  hissi veren şey buydu. İkisi de \`text-sm font-semibold\` oldu.
+- \`font-extrabold\` her yerde \`font-semibold\`e indi. Her şeyin kalın olduğu bir arayüzde hiçbir
+  şey öne çıkmaz; vurgu, ancak etrafı sakinken vurgudur.
+- Aktif sekme artık renkle **ve** ikon çizgi kalınlığıyla ayrılıyor (\`strokeWidth\` 1.75 → 2.25),
+  alt çizgi korundu.
+- Teklif düğmesi soluk pembe zemin yerine dolu \`rose-600\` oldu: bölümdeki tek "eylem" o,
+  sekmelerden ayrıştığı belli olmalı.
+- \`aria-current="page"\` eklendi — aktif sekme artık yalnızca gözle değil, ekran okuyucuyla da
+  ayırt ediliyor. Görsel bir düzenleme yaparken erişilebilirliği de düzeltmek ucuz; sonradan
+  dönmek değil.
+
+## Test (\`tests/nav-icons.test.mjs\`, 29 kontrol)
+
+Çeviri dosyası ile bileşenleri **birleştirip** denetliyor: emojili anahtarları çıkarıyor, sonra
+her tsx dosyasında bu anahtarların bir lucide ikonunun yanında kullanılıp kullanılmadığına bakıyor
+(iki ayrı desenle: düz ve nesne-tanımlı). Ayrıca sekme grubunun iki kopyasında da ölçü/kalınlık
+tutarlılığını ve \`aria-current\`i sabitliyor.
+
+**Kırmızı yandığı doğrulandı:** emoji geri konduğunda test 6 yeri birden gösteriyor — ekran
+görüntüsündeki 1845. satır dâhil. Hiç kırmızı yanmadığı görülmemiş bir test, koruduğunu
+kanıtlamış sayılmaz.`,
       },
 
     ],

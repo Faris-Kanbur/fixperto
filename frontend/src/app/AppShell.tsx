@@ -1844,9 +1844,9 @@ export function AppShell() {
                 <div className="flex items-center gap-8">
                   {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: t("jobListingsNavLabel"), icon: Briefcase }].map(tab => {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
-                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
+                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} aria-current={active ? "page" : undefined} className={`relative flex items-center gap-2 pb-3 pt-1 transition-colors ${active ? "text-gray-900" : "text-gray-500 hover:text-gray-900"}`}><Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="flex-shrink-0" /><span className="text-sm font-semibold">{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-gray-900 rounded-full" />}</button>);
                   })}
-                  <button onClick={openQuoteModal} className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-extrabold tracking-tight px-3.5 py-1.5 rounded-full transition whitespace-nowrap"><Users size={13} /> {t("multiQuoteBtn")}</button>
+                  <button onClick={openQuoteModal} className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition whitespace-nowrap shadow-sm"><Users size={15} strokeWidth={2} /> {t("multiQuoteBtn")}</button>
                 </div>
                 )}
                 {/* MİSAFİR GEZİNME: giriş yapmamış ziyaretçiye bildirim zili/profil yerine
@@ -1870,11 +1870,11 @@ export function AppShell() {
                   <div className={`transition-all duration-300 ease-out overflow-hidden ${heroCollapsed ? "max-h-0 opacity-0 -translate-y-3 mb-0 pointer-events-none" : "max-h-56 opacity-100 translate-y-0 mb-4"}`}>
                     <div className="flex flex-col items-center gap-2 mb-4 md:hidden">
                       <div className="inline-flex items-center gap-0.5 bg-gray-100 rounded-full p-1">
-                        <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
-                        <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
-                        <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
+                        <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
+                        <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
+                        <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                       </div>
-                      <button onClick={openQuoteModal} className="px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
+                      <button onClick={openQuoteModal} className="px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
                     </div>
                     <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("searchHeroTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
                   </div>
@@ -3222,7 +3222,7 @@ export function AppShell() {
                 <div className="flex items-center gap-8">
                   {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: t("jobListingsNavLabel"), icon: Briefcase }].map(tab => {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
-                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setQuery(""); }} className="relative flex items-center gap-1.5 pb-3 pt-1"><Icon size={16} className={active ? "text-gray-900" : "text-gray-400"} /><span className={`text-sm font-extrabold tracking-tight ${active ? "text-gray-900" : "text-gray-500"}`}>{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-0.5 bg-gray-900 rounded-full" />}</button>);
+                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setQuery(""); }} aria-current={active ? "page" : undefined} className={`relative flex items-center gap-2 pb-3 pt-1 transition-colors ${active ? "text-gray-900" : "text-gray-500 hover:text-gray-900"}`}><Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="flex-shrink-0" /><span className="text-sm font-semibold">{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-gray-900 rounded-full" />}</button>);
                   })}
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
@@ -3234,9 +3234,9 @@ export function AppShell() {
                 <div className={`transition-all duration-300 ease-out overflow-hidden ${heroCollapsed ? "max-h-0 opacity-0 -translate-y-3 mb-0 pointer-events-none" : "max-h-56 opacity-100 translate-y-0 mb-4"}`}>
                   <div className="flex items-center justify-center md:hidden mb-4">
                     <div className="inline-flex items-center gap-0.5 bg-gray-100 rounded-full p-1">
-                      <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
-                      <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
-                      <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-extrabold tracking-tight transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
+                      <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
+                      <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
+                      <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                     </div>
                   </div>
                   <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("discoverOtherMechanicsTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
