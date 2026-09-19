@@ -311,16 +311,16 @@ export function AppShell() {
     <div className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-gray-50"}`}>
       {darkMode && (<style>{`
         .dark-scope { color-scheme: dark; }
-        .dark-scope .bg-white { background-color: #17171f !important; }
-        .dark-scope .bg-gray-50 { background-color: #121218 !important; }
-        .dark-scope .bg-gray-100 { background-color: #20202b !important; }
+        .dark-scope .bg-white { background-color: var(--color-surface) !important; }
+        .dark-scope .bg-gray-50 { background-color: var(--color-background) !important; }
+        .dark-scope .bg-gray-100 { background-color: var(--color-surface-elevated) !important; }
         .dark-scope .bg-gray-200 { background-color: #2a2a38 !important; }
-        .dark-scope .text-gray-900, .dark-scope .text-gray-800, .dark-scope .text-gray-700 { color: #e9e9f0 !important; }
-        .dark-scope .text-gray-600, .dark-scope .text-gray-500 { color: #a3a3b8 !important; }
-        .dark-scope .text-gray-400, .dark-scope .text-gray-300 { color: #71718c !important; }
-        .dark-scope .border-gray-100, .dark-scope .border-gray-200, .dark-scope .border-gray-300 { border-color: #2c2c3a !important; }
-        .dark-scope .divide-gray-100 > * + * { border-color: #2c2c3a !important; }
-        .dark-scope input, .dark-scope select, .dark-scope textarea { background-color: #14141b !important; color: #e9e9f0 !important; border-color: #2c2c3a !important; }
+        .dark-scope .text-gray-900, .dark-scope .text-gray-800, .dark-scope .text-gray-700 { color: var(--color-text-primary) !important; }
+        .dark-scope .text-gray-600, .dark-scope .text-gray-500 { color: var(--color-text-secondary) !important; }
+        .dark-scope .text-gray-400, .dark-scope .text-gray-300 { color: var(--color-text-muted) !important; }
+        .dark-scope .border-gray-100, .dark-scope .border-gray-200, .dark-scope .border-gray-300 { border-color: var(--color-border) !important; }
+        .dark-scope .divide-gray-100 > * + * { border-color: var(--color-border) !important; }
+        .dark-scope input, .dark-scope select, .dark-scope textarea { background-color: #14141b !important; color: var(--color-text-primary) !important; border-color: var(--color-border) !important; }
         .dark-scope input::placeholder, .dark-scope textarea::placeholder { color: #63637a !important; }
         .dark-scope .shadow-sm, .dark-scope .shadow-lg, .dark-scope .shadow-xl, .dark-scope .shadow-2xl { box-shadow: 0 1px 2px rgba(0,0,0,0.4) !important; }
         .dark-scope ::-webkit-scrollbar-thumb { background-color: #34344a; }
@@ -367,7 +367,7 @@ export function AppShell() {
         .dark-scope .border-blue-100, .dark-scope .border-blue-200 { border-color: #1d3348 !important; }
         /* Ayırıcı çizgiler ve gölgeler. */
         .dark-scope .divide-gray-50 > * + * { border-color: #24242f !important; }
-        .dark-scope .bg-gray-950, .dark-scope .bg-gray-900 { background-color: #0d0d13 !important; }
+        .dark-scope .bg-gray-950, .dark-scope .bg-gray-900 { background-color: var(--color-secondary) !important; }
       `}</style>)}
       <style>{`
         @keyframes micro-pop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
