@@ -121,7 +121,7 @@ export function StatusTracker({ status, autoAccepted }) {
     const labels = (isAuto ? TRACK_LABELS_AUTO_BY_LANG : TRACK_LABELS_MANUAL_BY_LANG)[lang] || (isAuto ? TRACK_LABELS_AUTO : TRACK_LABELS_MANUAL);
     const currentIdx = steps.indexOf(status);
     return (<>
-      <div className="flex items-center gap-1">{steps.map((s, i) => { const done = i <= currentIdx; const active = i === currentIdx; return (<div key={s} className="flex items-center flex-1"><div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition ${done ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-300"} ${active && currentIdx < steps.length - 1 ? "ring-4 ring-rose-100" : ""}`}>{done ? <Check size={12} /> : <CircleDot size={10} />}</div>{i < steps.length - 1 && <div className={`h-0.5 flex-1 ${i < currentIdx ? "bg-rose-600" : "bg-gray-100"}`} />}</div>); })}</div>
-      <div className="flex justify-between text-[9px] mt-1">{labels.map((l, i) => <span key={i} className={i === currentIdx ? "text-rose-600 font-semibold" : "text-gray-400"}>{l}</span>)}</div>
+      <div className="flex items-center gap-1">{steps.map((s, i) => { const done = i <= currentIdx; const active = i === currentIdx; return (<div key={s} className="flex items-center flex-1"><div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition ${done ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-300"} ${active && currentIdx < steps.length - 1 ? "ring-4 ring-blue-100" : ""}`}>{done ? <Check size={12} /> : <CircleDot size={10} />}</div>{i < steps.length - 1 && <div className={`h-0.5 flex-1 ${i < currentIdx ? "bg-blue-600" : "bg-gray-100"}`} />}</div>); })}</div>
+      <div className="flex justify-between text-[9px] mt-1">{labels.map((l, i) => <span key={i} className={i === currentIdx ? "text-blue-600 font-semibold" : "text-gray-400"}>{l}</span>)}</div>
     </>);
   }

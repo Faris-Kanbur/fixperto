@@ -114,7 +114,7 @@ export function InfoTip({ text, label, inline = false }: {
   ) : null;
 
   // "?" dairesi — iki biçimde de aynı görünüyor ki kullanıcı aynı işareti aynı şey sansın.
-  // Rengi BULUNDUĞU YERDEN alıyor (border-current): seçili satırın koyu pembe zemininde de,
+  // Rengi BULUNDUĞU YERDEN alıyor (border-current): seçili satırın koyu mavi zemininde de,
   // beyaz kart üzerinde de okunur kalıyor. Sabit bir gri, seçili satırda kayboluyordu.
   const mark = "w-[15px] h-[15px] rounded-full border border-current flex items-center justify-center text-[9px] font-bold leading-none opacity-60 hover:opacity-100 transition";
 

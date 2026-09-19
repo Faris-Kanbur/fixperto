@@ -42,7 +42,7 @@ import { PageTopBar } from "./BrandMark";
 const Section = ({ id, icon: Icon, title, children }) => (
   <section id={id} className="scroll-mt-24">
     <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-      <span className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-rose-600" /></span>
+      <span className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-blue-600" /></span>
       {title}
     </h2>
     {children}
@@ -181,7 +181,7 @@ export function ListingDetailPage() {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-gray-900 truncate flex items-center gap-1">
             {l.sellerName}
-            {sellerMech?.verified && <BadgeCheck size={14} className="text-rose-500 flex-shrink-0" />}
+            {sellerMech?.verified && <BadgeCheck size={14} className="text-blue-500 flex-shrink-0" />}
           </p>
           <p className="text-[11px] text-gray-400 flex items-center gap-2">
             <span>{l.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span>
@@ -202,18 +202,18 @@ export function ListingDetailPage() {
           {/* Düğmenin etiketi ve tıklanabilirliği tek yerden geliyor (bkz. offerButtonState):
               satıcı teklifi gördüyse yeni teklif gönderilemez, reddettiyse gönderilebilir. */}
           {(() => { const ob = offerButtonState(l); return (<>
-            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition whitespace-nowrap flex items-center justify-center gap-2 ${ob.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-rose-600 text-white hover:bg-rose-700 active:scale-[0.99] shadow-md shadow-rose-200"}`}><Banknote size={16} /> {t(ob.labelKey)}</button>
+            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition whitespace-nowrap flex items-center justify-center gap-2 ${ob.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99] shadow-md shadow-blue-200"}`}><Banknote size={16} /> {t(ob.labelKey)}</button>
             {ob.hintKey && <p className="text-[11px] text-gray-400 mt-1.5 text-center leading-relaxed">{t(ob.hintKey)}</p>}
           </>); })()}
           <button onClick={() => setShowListingMsgForm(true)} className="w-full mt-2 border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={16} /> {t("sendMessage")}</button>
           {sellerMech?.phone && (
-            <a href={`tel:${sellerMech.phone}`} className="w-full mt-2 text-gray-500 py-2 font-medium text-xs hover:text-rose-600 transition flex items-center justify-center gap-1.5"><Phone size={13} /> {sellerMech.phone}</a>
+            <a href={`tel:${sellerMech.phone}`} className="w-full mt-2 text-gray-500 py-2 font-medium text-xs hover:text-blue-600 transition flex items-center justify-center gap-1.5"><Phone size={13} /> {sellerMech.phone}</a>
           )}
         </>
       )}
       <div className="grid grid-cols-2 gap-2 mt-3">
-        <button onClick={() => toggleFavorite(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${fav ? "border-rose-200 bg-rose-50 text-rose-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}><Heart size={14} className={fav ? "fill-rose-600" : ""} /> {t("favoriteLabel")}</button>
-        <button onClick={() => toggleCompareListing(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${inCompare ? "border-rose-200 bg-rose-50 text-rose-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}><Scale size={14} /> {t("compareBtnLabel")}</button>
+        <button onClick={() => toggleFavorite(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${fav ? "border-blue-200 bg-blue-50 text-blue-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}><Heart size={14} className={fav ? "fill-blue-600" : ""} /> {t("favoriteLabel")}</button>
+        <button onClick={() => toggleCompareListing(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${inCompare ? "border-blue-200 bg-blue-50 text-blue-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}><Scale size={14} /> {t("compareBtnLabel")}</button>
       </div>
       {safeHref(l.inspectionReportUrl) && (
         <a href={safeHref(l.inspectionReportUrl)} target="_blank" rel="noreferrer" className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 py-2.5 rounded-xl hover:bg-emerald-100 transition"><FileText size={13} /> {t("inspectionReportAvailableLabel")}</a>
@@ -249,7 +249,7 @@ export function ListingDetailPage() {
         onBack={closeListingPage}
         right={(
           <>
-            <button onClick={() => toggleFavorite(l.id)} aria-label={t("addToFavoritesAria")} className="w-9 h-9 rounded-full border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
+            <button onClick={() => toggleFavorite(l.id)} aria-label={t("addToFavoritesAria")} className="w-9 h-9 rounded-full border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-blue-600 text-blue-600" : "text-gray-500"} /></button>
             <ShareButton title={`${l.brand} ${l.model}`} text={`${l.brand} ${l.model} — ${l.price}`} path={`?listing=${l.id}`} onShare={(channel, refCode) => recordShare("listing", l.id, channel, refCode)} />
           </>
         )}
@@ -273,12 +273,12 @@ export function ListingDetailPage() {
                   <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded-full">{activeIdx + 1} / {photos.length}</span>
                 </>
               )}
-              {l.featured && <span className="absolute top-3 left-3 bg-rose-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">{t("featuredBadge")}</span>}
+              {l.featured && <span className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">{t("featuredBadge")}</span>}
             </div>
             {photos.length > 1 && (
               <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
                 {photos.map((p, i) => (
-                  <button key={i} onClick={() => setPhotoIdx(i)} className={`w-20 h-16 rounded-xl overflow-hidden border-2 flex-shrink-0 transition flex items-center justify-center text-2xl bg-gray-100 ${i === activeIdx ? "border-rose-500" : "border-transparent opacity-70 hover:opacity-100"}`}>
+                  <button key={i} onClick={() => setPhotoIdx(i)} className={`w-20 h-16 rounded-xl overflow-hidden border-2 flex-shrink-0 transition flex items-center justify-center text-2xl bg-gray-100 ${i === activeIdx ? "border-blue-500" : "border-transparent opacity-70 hover:opacity-100"}`}>
                     {isImgUrl(p) ? <img src={imgThumb(p, 200)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt="" className="w-full h-full object-cover" /> : <span>{p}</span>}
                   </button>
                 ))}
@@ -303,7 +303,7 @@ export function ListingDetailPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 -mt-4">
             {keyFacts.map((k, i) => (
               <div key={i} className="bg-white border border-gray-200 rounded-2xl p-3.5">
-                <p className="text-[11px] text-gray-400 flex items-center gap-1.5 mb-1"><k.icon size={13} className="text-rose-500" /> {k.label}</p>
+                <p className="text-[11px] text-gray-400 flex items-center gap-1.5 mb-1"><k.icon size={13} className="text-blue-500" /> {k.label}</p>
                 <p className="text-sm font-bold text-gray-900 truncate">{k.value}</p>
               </div>
             ))}
@@ -341,7 +341,7 @@ export function ListingDetailPage() {
                 ))}
               </div>
               {groupedFeatures.length > 2 && (
-                <button onClick={() => setShowAllFeatures((v) => !v)} className="mt-3 text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1">
+                <button onClick={() => setShowAllFeatures((v) => !v)} className="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
                   {showAllFeatures ? t("mechShowLess") : t("showAllFeaturesBtn")}
                   <ChevronRight size={14} className={showAllFeatures ? "-rotate-90" : "rotate-90"} />
                 </button>
@@ -414,7 +414,7 @@ export function ListingDetailPage() {
           </div>
           <button onClick={() => setShowListingMsgForm(true)} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
           {(() => { const ob = offerButtonState(l); return (
-            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`flex-1 py-3 rounded-xl font-semibold text-sm transition whitespace-nowrap ${ob.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-rose-600 text-white hover:bg-rose-700"}`}>{t(ob.labelKey)}</button>
+            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`flex-1 py-3 rounded-xl font-semibold text-sm transition whitespace-nowrap ${ob.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"}`}>{t(ob.labelKey)}</button>
           ); })()}
         </div>
       )}

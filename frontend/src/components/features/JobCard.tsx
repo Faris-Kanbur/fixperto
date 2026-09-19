@@ -111,9 +111,9 @@ export function JobCard({ j }) {
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
   return (
-    <button onClick={() => setSelectedJobId(j.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-rose-200 transition p-4">
+    <button onClick={() => setSelectedJobId(j.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition p-4">
       <div className="flex items-start gap-3">
-        <div className="w-11 h-11 bg-rose-50 rounded-xl flex items-center justify-center text-xl flex-shrink-0">{j.mechanicImg}</div>
+        <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center text-xl flex-shrink-0">{j.mechanicImg}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5"><h3 className="font-semibold text-gray-800 text-sm truncate">{j.title}</h3>{j.status === "closed" && <span className="flex-shrink-0 text-[9px] font-bold text-white bg-gray-400 px-1.5 py-0.5 rounded-full">{t("jobStatusClosedLabel")}</span>}</div>
           <p className="text-xs text-gray-400 truncate">{j.mechanicName} · {j.location}</p>

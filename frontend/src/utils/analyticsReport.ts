@@ -27,9 +27,9 @@ import type { jsPDF } from "jspdf";
 // yüzden backend'in demo/tek-kullanıcı mimarisinden (bkz. REFACTOR_REPORT.md) bağımsız çalışır.
 
 const BRAND = {
-  rose: [225, 29, 72] as [number, number, number], // tailwind rose-600
-  roseDark: [190, 18, 60] as [number, number, number], // rose-700
-  roseTint: [255, 241, 242] as [number, number, number], // rose-50
+  blue: [37, 99, 235] as [number, number, number], // tailwind blue-600
+  blueDark: [29, 78, 216] as [number, number, number], // blue-700
+  blueTint: [239, 246, 255] as [number, number, number], // blue-50
   ink: [17, 24, 39] as [number, number, number], // gray-900
   slate: [71, 85, 105] as [number, number, number], // slate-600
   gray: [107, 114, 128] as [number, number, number], // gray-500
@@ -77,7 +77,7 @@ function drawBrandMark(doc: jsPDF, x: number, y: number, scale = 1) {
   const badgeSize = 8 * scale;
   doc.setFillColor(...BRAND.white);
   doc.roundedRect(x, y, badgeSize, badgeSize, 1.6 * scale, 1.6 * scale, "F");
-  doc.setTextColor(...BRAND.rose);
+  doc.setTextColor(...BRAND.blue);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12 * scale);
   doc.text("F", x + badgeSize / 2, y + badgeSize / 2 + 3 * scale * 0.72, { align: "center" });
@@ -131,7 +131,7 @@ export async function generateAnalyticsPdf(data: AnalyticsReportData) {
 
   // ---- Üst marka bandı --------------------------------------------------------------------
   const headerH = 34;
-  doc.setFillColor(...BRAND.rose);
+  doc.setFillColor(...BRAND.blue);
   doc.rect(0, 0, pageW, headerH, "F");
   drawBrandMark(doc, marginX, 9, 1);
   doc.setTextColor(...BRAND.white);
@@ -140,7 +140,7 @@ export async function generateAnalyticsPdf(data: AnalyticsReportData) {
   doc.text("FIXPERTO", marginX + 11, 15.5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(255, 228, 230);
+  doc.setTextColor(219, 234, 254);
   doc.text(L.reportSubtitle, marginX + 11, 20.2);
 
   // Sağ üstte rapor meta bilgisi (tamirci adı, dönem, oluşturulma tarihi)
@@ -150,7 +150,7 @@ export async function generateAnalyticsPdf(data: AnalyticsReportData) {
   doc.text(data.mechanicName, pageW - marginX, 13, { align: "right" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(255, 228, 230);
+  doc.setTextColor(219, 234, 254);
   if (data.mechanicSpecialty) doc.text(data.mechanicSpecialty, pageW - marginX, 17.5, { align: "right" });
   doc.text(`${L.periodLabel}: ${data.rangeLabel}`, pageW - marginX, 22, { align: "right" });
   doc.text(`${L.generatedLabel}: ${data.generatedAtLabel}`, pageW - marginX, 26, { align: "right" });
@@ -169,9 +169,9 @@ export async function generateAnalyticsPdf(data: AnalyticsReportData) {
 
   // ---- KPI kartları (2x2) ---------------------------------------------------------------------
   const kpis: { label: string; value: string; accent: [number, number, number] }[] = [
-    { label: L.totalBookingsLabel, value: String(data.totalBooked), accent: BRAND.rose },
+    { label: L.totalBookingsLabel, value: String(data.totalBooked), accent: BRAND.blue },
     { label: L.completionRateLabel, value: `%${data.completionRate}`, accent: BRAND.green },
-    { label: L.totalEarningsLabel, value: formatMoney(data.totalEarnings, suffix), accent: BRAND.roseDark },
+    { label: L.totalEarningsLabel, value: formatMoney(data.totalEarnings, suffix), accent: BRAND.blueDark },
     { label: L.avgRatingLabel, value: `${data.avgRating.toFixed(1)} / 5`, accent: BRAND.amber },
   ];
   const cardGap = 4;
@@ -238,8 +238,8 @@ export async function generateAnalyticsPdf(data: AnalyticsReportData) {
       body: data.topServices.map(s => [s.name, String(s.count), formatMoney(s.total, suffix)]),
       theme: "striped",
       styles: { fontSize: 9.5, cellPadding: 3, textColor: BRAND.ink, lineColor: BRAND.border },
-      headStyles: { fillColor: BRAND.rose, textColor: BRAND.white, fontStyle: "bold", fontSize: 8.5 },
-      alternateRowStyles: { fillColor: BRAND.roseTint },
+      headStyles: { fillColor: BRAND.blue, textColor: BRAND.white, fontStyle: "bold", fontSize: 8.5 },
+      alternateRowStyles: { fillColor: BRAND.blueTint },
       columnStyles: { 1: { halign: "center" }, 2: { halign: "right", fontStyle: "bold" } },
     });
     // `lastAutoTable` gibi jspdf-autotable'ın çalışma zamanında doc'a eklediği alanlar, yüklü
@@ -308,7 +308,7 @@ export async function generateAnalyticsPdf(data: AnalyticsReportData) {
     doc.line(marginX, fy - 4, pageW - marginX, fy - 4);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.setTextColor(...BRAND.rose);
+    doc.setTextColor(...BRAND.blue);
     doc.text("Fixperto", marginX, fy);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...BRAND.gray);

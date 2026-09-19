@@ -53,10 +53,10 @@ export function BlogListPage() {
   return (
     <div className="w-full bg-gray-50 min-h-screen flex flex-col">
       <PageTopBar />
-      <div className="h-20 md:h-28 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100" />
+      <div className="h-20 md:h-28 bg-gradient-to-br from-blue-100 via-blue-50 to-gray-100" />
       <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10 w-full">
         <div className="relative bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center flex-shrink-0 text-rose-600"><BookOpen size={22} /></div>
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-blue-600"><BookOpen size={22} /></div>
           <div className="min-w-0">
             <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t("blogTitle")}</h1>
             <p className="text-sm text-gray-500 mt-0.5">{t("blogSubtitle")}</p>
@@ -87,18 +87,18 @@ export function BlogListPage() {
                 <div className="p-6 md:p-8 flex flex-col justify-center">
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     {(lead.tags || []).slice(0, 3).map((tag) => (
-                      <span key={tag} className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-rose-50 text-rose-600">{tag}</span>
+                      <span key={tag} className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{tag}</span>
                     ))}
                   </div>
                   <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{lead.title}</h2>
                   <p className="text-sm text-gray-500 leading-relaxed mb-4">{lead.excerpt}</p>
-                  <span className="text-sm font-semibold text-rose-600 flex items-center gap-1">{t("blogReadMore")} <ChevronRight size={15} /></span>
+                  <span className="text-sm font-semibold text-blue-600 flex items-center gap-1">{t("blogReadMore")} <ChevronRight size={15} /></span>
                 </div>
               </button>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {rest.map((p) => (
-                <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-rose-200 transition overflow-hidden flex flex-col">
+                <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-gray-100 rounded-3xl shadow-sm hover:shadow-md hover:border-blue-200 transition overflow-hidden flex flex-col">
                   <div className={`h-36 flex items-center justify-center flex-shrink-0 ${isImgUrl(p.coverPhoto) ? "bg-gray-100" : "bg-gray-50"}`}>
                     {isImgUrl(p.coverPhoto)
                       ? <img loading="lazy" decoding="async" src={imgThumb(p.coverPhoto, 500)} onError={imgFallbackHandler} alt={p.title} className="w-full h-full object-cover" />
@@ -111,7 +111,7 @@ export function BlogListPage() {
                     {/* Hizmet rozeti: yazının hangi işe bağlı olduğunu listede de gösterir —
                         okuyucu daha yazıya girmeden aradığı konuyu tanıyabilsin. */}
                     {SERVICE_BY_KEY[p.relatedServiceKey] && (
-                      <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600"><Wrench size={11} /> {SERVICE_BY_KEY[p.relatedServiceKey][lang] || SERVICE_BY_KEY[p.relatedServiceKey].tr}</span>
+                      <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600"><Wrench size={11} /> {SERVICE_BY_KEY[p.relatedServiceKey][lang] || SERVICE_BY_KEY[p.relatedServiceKey].tr}</span>
                     )}
                   </div>
                 </button>
@@ -126,7 +126,7 @@ export function BlogListPage() {
             <h3 className="text-lg font-bold text-gray-900">{t("blogCtaTitle")}</h3>
             <p className="text-sm text-gray-500 mt-1">{t("blogCtaBody")}</p>
           </div>
-          <button onClick={() => goToBrowse("mechanics")} className="bg-rose-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Search size={16} /> {t("findMechanic")}</button>
+          <button onClick={() => goToBrowse("mechanics")} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Search size={16} /> {t("findMechanic")}</button>
         </div>
       </div>
       <SiteFooter />
@@ -150,12 +150,12 @@ export function BlogPostPage() {
   const serviceCta = (compact = false) => {
     if (!svc) return null;
     return (
-      <div className={`bg-rose-50 border border-rose-100 rounded-2xl ${compact ? "p-4" : "p-5 md:p-6"} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
+      <div className={`bg-blue-50 border border-blue-100 rounded-2xl ${compact ? "p-4" : "p-5 md:p-6"} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
         <div className="min-w-0">
-          <p className="font-bold text-gray-900 flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("blogServiceCtaTitle", { service: svcLabel })}</p>
+          <p className="font-bold text-gray-900 flex items-center gap-2"><Wrench size={16} className="text-blue-500" /> {t("blogServiceCtaTitle", { service: svcLabel })}</p>
           <p className="text-sm text-gray-500 mt-0.5">{t("blogServiceCtaBody")}</p>
         </div>
-        <button onClick={() => openMechanicsForService(blogPost.relatedServiceKey)} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
+        <button onClick={() => openMechanicsForService(blogPost.relatedServiceKey)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0 whitespace-nowrap">
           {t("blogServiceCtaBtn")} <ChevronRight size={15} />
         </button>
       </div>
@@ -186,8 +186,8 @@ export function BlogPostPage() {
 
   return (
     <div className="w-full bg-gray-50 min-h-screen flex flex-col">
-      <PageTopBar onBack={openBlog} right={<button onClick={openBlog} className="text-sm font-semibold text-gray-500 hover:text-rose-600 transition hidden sm:block">{t("blogBackToList")}</button>} />
-      <div className="h-16 md:h-20 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100" />
+      <PageTopBar onBack={openBlog} right={<button onClick={openBlog} className="text-sm font-semibold text-gray-500 hover:text-blue-600 transition hidden sm:block">{t("blogBackToList")}</button>} />
+      <div className="h-16 md:h-20 bg-gradient-to-br from-blue-100 via-blue-50 to-gray-100" />
 
       <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10 w-full flex-1">
         {blogLoading && !blogPost ? (
@@ -200,14 +200,14 @@ export function BlogPostPage() {
           <div className="relative bg-white border border-gray-100 rounded-3xl shadow-sm -mt-8 text-center py-20">
             <BookOpen size={40} className="mx-auto text-gray-200 mb-3" />
             <p className="text-gray-400 text-sm mb-4">{t("blogNotFound")}</p>
-            <button onClick={openBlog} className="text-rose-600 font-semibold text-sm hover:underline">{t("blogBackToList")}</button>
+            <button onClick={openBlog} className="text-blue-600 font-semibold text-sm hover:underline">{t("blogBackToList")}</button>
           </div>
         ) : (
           <>
             <article className="relative bg-white border border-gray-100 rounded-3xl shadow-sm -mt-8 p-6 md:p-10">
               <div className="flex flex-wrap gap-1.5 mb-4">
                 {(blogPost.tags || []).map((tag) => (
-                  <span key={tag} className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-rose-50 text-rose-600">{tag}</span>
+                  <span key={tag} className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{tag}</span>
                 ))}
               </div>
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-3">{blogPost.title}</h1>
@@ -233,7 +233,7 @@ export function BlogPostPage() {
                 <h3 className="font-bold text-gray-900">{t("blogCtaTitle")}</h3>
                 <p className="text-sm text-gray-500 mt-0.5">{t("blogCtaBody")}</p>
               </div>
-              <button onClick={() => goToBrowse("mechanics")} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Search size={15} /> {t("findMechanic")}</button>
+              <button onClick={() => goToBrowse("mechanics")} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Search size={15} /> {t("findMechanic")}</button>
             </div>}
 
             {related.length > 0 && (
@@ -241,7 +241,7 @@ export function BlogPostPage() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">{t("blogRelatedTitle")}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {related.map((p) => (
-                    <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-rose-200 transition p-4">
+                    <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition p-4">
                       <h4 className="font-semibold text-gray-900 text-sm leading-snug mb-1.5">{p.title}</h4>
                       <p className="text-xs text-gray-400 line-clamp-2">{p.excerpt}</p>
                     </button>
@@ -275,7 +275,7 @@ export function AboutPage() {
   return (
     <div className="w-full bg-gray-50 min-h-screen flex flex-col">
       <PageTopBar />
-      <div className="h-20 md:h-24 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100" />
+      <div className="h-20 md:h-24 bg-gradient-to-br from-blue-100 via-blue-50 to-gray-100" />
       <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10 w-full flex-1">
         <div className="relative bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 p-6 md:p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-3">{t("aboutTitle")}</h1>
@@ -283,7 +283,7 @@ export function AboutPage() {
           <div className="mt-6 pt-6 border-t border-gray-100">
             <h2 className="font-bold text-gray-900 mb-2">{t("aboutContactTitle")}</h2>
             <p className="text-sm text-gray-500 mb-4">{t("aboutPageComingSoon")}</p>
-            <button onClick={() => setShowNewTicketForm(true)} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("footerContact")}</button>
+            <button onClick={() => setShowNewTicketForm(true)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("footerContact")}</button>
           </div>
         </div>
 

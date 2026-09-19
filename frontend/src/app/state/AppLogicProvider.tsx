@@ -62,6 +62,10 @@ let nestedItemId = 2000000;
 // domain'e özel hook'lara (useAuth, useAppointments, useQuotes, vb.) bölünmesi
 // önerilir — bkz. proje kökündeki REFACTOR_REPORT.md.
 // ---------------------------------------------------------------------------
+// Sayı biçimlendirme locale'i: site dili ("tr"/"en"/"de") BCP-47 locale koduna eşleniyor.
+// Ortalama puan gibi ondalıklı değerler Intl.NumberFormat ile bu locale'e göre gösteriliyor.
+const NUMBER_LOCALE_BY_LANG = { tr: "tr-TR", en: "en-US", de: "de-DE" };
+
 function useAppLogic() {
   // OTOMATİK DİL: site artık sabit Türkçe açılmıyor. Kullanıcıya hiçbir şey sormadan, konum izni
   // istemeden, cihazın saat dilimi + tarayıcı dilinden ülke tahmin edilip o ülkenin dili seçiliyor
@@ -1990,7 +1994,7 @@ function useAppLogic() {
     const remaining = total !== null ? Math.max(total - deposit, 0) : null;
     const html = `<!DOCTYPE html><html lang="${lang}"><head><meta charset="utf-8"><title>${esc(t("receiptDocTitle", { id: String(appt.id) }))}</title><style>
       body{font-family:-apple-system,Arial,sans-serif;color:#1f2937;padding:32px;max-width:560px;margin:0 auto;}
-      .brand{font-size:18px;font-weight:800;} .brand span{color:#e11d48;} h1{font-size:15px;color:#6b7280;font-weight:600;margin:18px 0 4px;}
+      .brand{font-size:18px;font-weight:800;} .brand span{color:#2563eb;} h1{font-size:15px;color:#6b7280;font-weight:600;margin:18px 0 4px;}
       .sub{color:#9ca3af;font-size:11px;margin-bottom:20px;} table{width:100%;border-collapse:collapse;margin-top:10px;}
       td{padding:8px 0;font-size:13px;border-bottom:1px solid #f3f4f6;} td.label{color:#6b7280;width:40%;}
       .total-row td{font-weight:800;font-size:15px;border-top:2px solid #1f2937;border-bottom:none;padding-top:12px;}
@@ -2754,14 +2758,19 @@ function useAppLogic() {
     const pendingVerification = mechanicsList.filter(m => !m.verified).length;
     // Number(...) || 0 sarmalayıcısı: yeni kaydolan tamircilerde rating NULL olabiliyordu; null
     // sessizce 0 gibi toplanıp ortalamayı bozuyordu. Artık niyet açık ve tip güvenli.
-    const avgRating = mechanicsList.length ? (mechanicsList.reduce((s, m) => s + (Number(m.rating) || 0), 0) / mechanicsList.length).toFixed(1) : "-";
+    // Ondalık ayırıcı locale'e göre biçimleniyor (Intl.NumberFormat) — Almanca/Türkçe'de virgül,
+    // İngilizce'de nokta bekleniyor; toFixed(1) her zaman nokta üretip yanlış görünüyordu.
+    const avgRating = mechanicsList.length
+      ? new Intl.NumberFormat(NUMBER_LOCALE_BY_LANG[lang] || "en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+          .format(mechanicsList.reduce((s, m) => s + (Number(m.rating) || 0), 0) / mechanicsList.length)
+      : "-";
     const suspendedOwners = ownersDirectory.filter(o => o.status === "suspended").length;
     const suspendedMechanics = mechanicsList.filter(m => (mechanicAdminOverrides[m.id]?.status || "active") === "suspended").length;
     const slaBreached = supportTickets.filter(ticketSlaBreached).length;
     const totalReviews = mechanicsList.reduce((s, m) => s + (m.reviews || 0), 0);
     const totalCities = new Set(mechanicsList.map(m => (m.address || "").split("/").pop().trim()).filter(Boolean)).size;
     return { totalOwners, totalMechanics, activeCarListings, activeJobListings, totalAppointments, completedThisMonth, openTickets, pendingVerification, avgRating, suspendedOwners, suspendedMechanics, slaBreached, totalUsers: totalOwners + totalMechanics, totalReviews, totalCities };
-  }, [ownersDirectory, mechanicsList, listings, jobListings, appointments, supportTickets, mechanicAdminOverrides]);
+  }, [ownersDirectory, mechanicsList, listings, jobListings, appointments, supportTickets, mechanicAdminOverrides, lang]);
   // GÜVENLİK DÜZELTMESİ: `password` alanı burada eskiden API'den gelen (ya da "demo1234"
   // varsayılanına düşen) gerçek şifre değerini taşıyordu. Backend artık şifreyi hiçbir yanıtta
   // döndürmediği için (bkz. hydrate.js) bu alan zaten hiçbir zaman gerçek değeri yansıtmıyordu —
@@ -3882,10 +3891,10 @@ function useAppLogic() {
     const myTickets = mySupportTickets();
     return (
       <>
-        <button onClick={() => setTabFn(backTab)} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToMyInfoBtn")}</button>
-        <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><LifeBuoy size={16} className="text-rose-500" /> {t("helpAndSupportTitle")}</h2>
+        <button onClick={() => setTabFn(backTab)} className="flex items-center gap-1 text-blue-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToMyInfoBtn")}</button>
+        <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><LifeBuoy size={16} className="text-blue-500" /> {t("helpAndSupportTitle")}</h2>
         <p className="text-xs text-gray-400 mb-4">{t("helpAndSupportSub")}</p>
-        <button onClick={() => setShowNewTicketForm(true)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-5 flex items-center justify-center gap-2"><Plus size={15} /> {t("createSupportTicketBtn")}</button>
+        <button onClick={() => setShowNewTicketForm(true)} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition mb-5 flex items-center justify-center gap-2"><Plus size={15} /> {t("createSupportTicketBtn")}</button>
         <h3 className="text-sm font-semibold text-gray-800 mb-3">{t("myTicketsTitle")}{myTickets.length > 0 ? ` (${myTickets.length})` : ""}</h3>
         {myTickets.length === 0 ? (
           <div className="text-center py-10 bg-white border border-gray-200 rounded-2xl"><LifeBuoy size={32} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-sm">{t("noTicketsYetNotice")}</p></div>
@@ -5459,8 +5468,8 @@ function useAppLogic() {
     setToast({ type: "info", text: "❌ Başvuru reddedildi, adaya bilgilendirme mesajı gönderildi." });
     fireNotification("Başvuru sonucu", `"${job.title}" pozisyonuna yaptığınız başvuru için bir güncelleme var.`, ownerSettings.notifyMessages, "owner", { type: "myApplications" });
   };
-  const roleColor = role === "mechanic" ? "from-rose-600 to-rose-600" : "from-rose-600 to-rose-600";
-  const roleBtn = role === "mechanic" ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-600 hover:bg-rose-700";
+  const roleColor = role === "mechanic" ? "from-blue-600 to-blue-600" : "from-blue-600 to-blue-600";
+  const roleBtn = role === "mechanic" ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-600 hover:bg-blue-700";
   // Bildirime tıklanınca ilgili randevu/ilan/iş ilanı/sohbet vb. sayfaya yönlendirir.
   // notifRole, bildirimin hangi hesap için ateşlendiğini (owner/mechanic) belirtir; aynı "detail"
   // ekranı iki role de farklı geri-dönüş bağlamıyla kullanılıyor.
@@ -5521,7 +5530,7 @@ function useAppLogic() {
   // Uygulama-içi bildirim zili: tarayıcı bildirim izni verilmemiş olsa da kullanıcının
   // (araç sahibi/tamirci) kendine gelen bildirimleri her zaman burada görebilmesi için.
   // mobile.de tarzı ilan kartı — özellik ikonları satırı + favori kalp
-  const jobEmploymentColor = (type) => type === "Tam Zamanlı" ? "bg-rose-50 text-rose-600" : type === "Yarı Zamanlı" ? "bg-gray-100 text-gray-700" : type === "Stajyer/Çırak" ? "bg-green-50 text-green-600" : "bg-gray-50 text-gray-600";
+  const jobEmploymentColor = (type) => type === "Tam Zamanlı" ? "bg-blue-50 text-blue-600" : type === "Yarı Zamanlı" ? "bg-gray-100 text-gray-700" : type === "Stajyer/Çırak" ? "bg-green-50 text-green-600" : "bg-gray-50 text-gray-600";
   // LinkedIn tarzı iş ilanı kartı — pozisyon, işletme, konum, çalışma şekli/deneyim/maaş etiketleri
   // Tamirci profil detayı — normal "detail" ekranında tam sayfa, harita üzerinden açılınca ortalanmış modal içinde kullanılıyor. İçerik tek yerden geliyor, iki görünüm de senkron kalıyor.
   // ---- ARAMA REHBERİ (boş/eksik kriter kombinasyonları) ----------------------------------------

@@ -8,7 +8,7 @@ export function MiniBarChart({ labels, values, colorClass, valueFormat = undefin
         return (
           <div key={i} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
             <span className="text-[9px] font-semibold text-gray-500">{valueFormat ? valueFormat(v) : v}</span>
-            <div className={`w-full rounded-t-md ${colorClass || "bg-rose-500"}`} style={{ height: `${h}px` }} />
+            <div className={`w-full rounded-t-md ${colorClass || "bg-blue-500"}`} style={{ height: `${h}px` }} />
             <span className="text-[9px] text-gray-400 mt-0.5">{labels[i]}</span>
           </div>
         );

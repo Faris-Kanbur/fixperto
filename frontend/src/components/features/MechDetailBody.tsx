@@ -22,7 +22,7 @@ const Section = ({ id, icon: Icon, title, count = null, action = null, children 
   <section id={id} className="scroll-mt-24">
     <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
       <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2">
-        <span className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-rose-600" /></span>
+        <span className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-blue-600" /></span>
         {title}{count != null && <span className="text-gray-300 font-normal text-sm">({count})</span>}
       </h2>
       {action}
@@ -210,11 +210,11 @@ export function MechDetailBody() {
     selectedMechanic.avgResponseMinutes && selectedMechanic.avgResponseMinutes <= 30 && { icon: Zap, label: t("mechBadgeFastReply"), tone: "bg-blue-50 text-blue-700 border-blue-200" },
     selectedMechanic.reviews >= 50 && { icon: Users, label: t("mechBadgeManyReviews"), tone: "bg-violet-50 text-violet-700 border-violet-200" },
     services.some((s) => s.fixed && String(s.price || "").trim()) && { icon: Tag, label: t("mechBadgeFixedPrice"), tone: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-    (selectedMechanic.brandsServiced || []).length >= 3 && { icon: Car, label: t("mechBadgeMultiBrand", { n: String(selectedMechanic.brandsServiced.length) }), tone: "bg-rose-50 text-rose-700 border-rose-200" },
+    (selectedMechanic.brandsServiced || []).length >= 3 && { icon: Car, label: t("mechBadgeMultiBrand", { n: String(selectedMechanic.brandsServiced.length) }), tone: "bg-blue-50 text-blue-700 border-blue-200" },
   ].filter(Boolean);
   const statTiles = [
     { icon: Star, label: t("rating"), value: `${selectedMechanic.rating}/5`, tint: "text-amber-500" },
-    { icon: MapPin, label: t("distance"), value: formatDistanceKm(dist), tint: "text-rose-500" },
+    { icon: MapPin, label: t("distance"), value: formatDistanceKm(dist), tint: "text-blue-500" },
     selectedMechanic.avgResponseMinutes ? { icon: Zap, label: t("mechResponseStatLabel"), value: `${selectedMechanic.avgResponseMinutes} ${t("mechMinuteShort")}`, tint: "text-blue-500" } : null,
     { icon: Banknote, label: t("price"), value: null, tint: "text-emerald-500" },
   ].filter(Boolean);
@@ -235,7 +235,7 @@ export function MechDetailBody() {
       <div className="mb-4"><PriceLevelDots price={selectedMechanic.price} /></div>
       {isVisitor ? (
         <>
-          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="w-full bg-rose-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-rose-700 active:scale-[0.99] transition shadow-md shadow-rose-200 flex items-center justify-center gap-2 whitespace-nowrap"><Calendar size={16} /> {t("bookNow")}</button>
+          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="w-full bg-blue-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-blue-700 active:scale-[0.99] transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 whitespace-nowrap"><Calendar size={16} /> {t("bookNow")}</button>
           <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} className="w-full mt-2 border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2 whitespace-nowrap"><MessageCircle size={16} /> {t("sendMessage")}</button>
           {/* BU TAMİRCİ ÖN SEÇİLİ AÇILIYOR (kullanıcı isteği: "eğer tamircinin profilinden seçiyorsa
               o tamirci seçili olarak görünsün").
@@ -245,16 +245,16 @@ export function MechDetailBody() {
               farklı ve dürüst olanı şu: çağrı sırası ileride değişirse (araya gerçekten seçimi
               temizleyen bir şey girerse) ön seçim SESSİZCE çalışmaz hâle gelir. Bir satır maliyetle
               o riski baştan kapatıyoruz. */}
-          <button onClick={() => { const preselectId = selectedMechanic.id; closeOverlays(); openQuoteModal(preselectId); }} className="w-full mt-2 border border-dashed border-rose-300 text-rose-600 py-3 rounded-2xl font-semibold text-sm hover:bg-rose-50 transition flex items-center justify-center gap-2 whitespace-nowrap"><Banknote size={16} /> {t("mechFreeQuoteBtn")}</button>
+          <button onClick={() => { const preselectId = selectedMechanic.id; closeOverlays(); openQuoteModal(preselectId); }} className="w-full mt-2 border border-dashed border-blue-300 text-blue-600 py-3 rounded-2xl font-semibold text-sm hover:bg-blue-50 transition flex items-center justify-center gap-2 whitespace-nowrap"><Banknote size={16} /> {t("mechFreeQuoteBtn")}</button>
           {selectedMechanic.phone && (
-            <a href={`tel:${selectedMechanic.phone}`} className="w-full mt-2 text-gray-500 py-2 rounded-2xl font-medium text-xs hover:text-rose-600 transition flex items-center justify-center gap-1.5"><Phone size={13} /> {t("mechCallBtn")} · {selectedMechanic.phone}</a>
+            <a href={`tel:${selectedMechanic.phone}`} className="w-full mt-2 text-gray-500 py-2 rounded-2xl font-medium text-xs hover:text-blue-600 transition flex items-center justify-center gap-1.5"><Phone size={13} /> {t("mechCallBtn")} · {selectedMechanic.phone}</a>
           )}
           <p className="text-[11px] text-gray-400 text-center mt-3">{t("mechBookingCardHint")}</p>
         </>
       ) : null}
       <div className="border-t border-gray-100 mt-4 pt-4 space-y-2.5">
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">{t("mechTrustTitle")}</p>
-        {selectedMechanic.verified && <p className="text-xs text-gray-600 flex items-start gap-2"><BadgeCheck size={14} className="text-rose-500 flex-shrink-0 mt-px" /> {t("identityVerifiedNote")}</p>}
+        {selectedMechanic.verified && <p className="text-xs text-gray-600 flex items-start gap-2"><BadgeCheck size={14} className="text-blue-500 flex-shrink-0 mt-px" /> {t("identityVerifiedNote")}</p>}
         <p className="text-xs text-gray-600 flex items-start gap-2"><Globe size={14} className="text-gray-400 flex-shrink-0 mt-px" /> {LANG_LABELS[selectedMechanic.lang] || t("turkishFallbackLabel")}</p>
         <div className="text-xs text-gray-600 flex items-start gap-2">
           <CreditCard size={14} className="text-gray-400 flex-shrink-0 mt-px" />
@@ -286,7 +286,7 @@ export function MechDetailBody() {
              Favori ve paylaş burada KALIYOR: onlar görsele ait eylemler (Airbnb deseni) ve tek
              örnekleri bu. Geri ise bir GEZİNME eylemi ve onun yeri üst çubuk. */}
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-          <button onClick={() => toggleFavoriteMechanic(selectedMechanic.id)} aria-label={t("addToFavoritesAria")} className="w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-105 transition flex items-center justify-center"><Heart size={16} className={(favoriteMechanicIds || []).includes(selectedMechanic.id) ? "fill-rose-600 text-rose-600" : "text-gray-600"} /></button>
+          <button onClick={() => toggleFavoriteMechanic(selectedMechanic.id)} aria-label={t("addToFavoritesAria")} className="w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-105 transition flex items-center justify-center"><Heart size={16} className={(favoriteMechanicIds || []).includes(selectedMechanic.id) ? "fill-blue-600 text-blue-600" : "text-gray-600"} /></button>
           <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — ${t("discoverOnFixperto")}`} path={`?mechanic=${selectedMechanic.id}`} onShare={(channel, refCode) => recordShare("mechanic", selectedMechanic.id, channel, refCode)} />
         </div>
       </div>
@@ -299,7 +299,7 @@ export function MechDetailBody() {
             <div className="flex-1 min-w-0">
               <h1 className={`${compact ? "text-lg" : "text-xl md:text-2xl"} font-bold text-gray-900 flex items-center gap-1.5 flex-wrap`}>
                 {selectedMechanic.name}
-                {selectedMechanic.verified && <BadgeCheck size={compact ? 16 : 20} className="text-rose-500 flex-shrink-0" />}
+                {selectedMechanic.verified && <BadgeCheck size={compact ? 16 : 20} className="text-blue-500 flex-shrink-0" />}
               </h1>
               <p className="text-sm text-gray-500 mt-0.5">{selectedMechanic.specialty}</p>
               <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500 flex-wrap">
@@ -313,7 +313,7 @@ export function MechDetailBody() {
                 de randevu alabilsin (sayfanın en üstünde tek tık). */}
             {!compact && isVisitor && (
               <div className="hidden lg:flex flex-col gap-2 flex-shrink-0 w-52">
-                <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Calendar size={15} /> {t("bookNow")}</button>
+                <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center justify-center gap-2"><Calendar size={15} /> {t("bookNow")}</button>
                 <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} className="border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("sendMessage")}</button>
               </div>
             )}
@@ -345,7 +345,7 @@ export function MechDetailBody() {
               ...(isVisitor && mechListings.length > 0 ? [{ id: "mech-inventory", label: t("mechNavInventory") }] : []),
               { id: "mech-reviews", label: t("mechNavReviews") },
             ].map((s) => (
-              <button key={s.id} onClick={() => scrollToSection(s.id)} className="px-4 py-3.5 text-sm font-medium text-gray-500 hover:text-rose-600 border-b-2 border-transparent hover:border-rose-500 transition whitespace-nowrap">{s.label}</button>
+              <button key={s.id} onClick={() => scrollToSection(s.id)} className="px-4 py-3.5 text-sm font-medium text-gray-500 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 transition whitespace-nowrap">{s.label}</button>
             ))}
           </div>
         </div>
@@ -371,7 +371,7 @@ export function MechDetailBody() {
               <p className="text-xs text-gray-400 -mt-2 mb-3">{t("mechBrandsHint")}</p>
               <div className="flex flex-wrap gap-2">
                 {selectedMechanic.brandsServiced.map((brand, i) => {
-                  const palette = ["bg-rose-50 text-rose-700 border-rose-200", "bg-blue-50 text-blue-700 border-blue-200", "bg-amber-50 text-amber-700 border-amber-200", "bg-emerald-50 text-emerald-700 border-emerald-200", "bg-violet-50 text-violet-700 border-violet-200", "bg-cyan-50 text-cyan-700 border-cyan-200"];
+                  const palette = ["bg-blue-50 text-blue-700 border-blue-200", "bg-blue-50 text-blue-700 border-blue-200", "bg-amber-50 text-amber-700 border-amber-200", "bg-emerald-50 text-emerald-700 border-emerald-200", "bg-violet-50 text-violet-700 border-violet-200", "bg-cyan-50 text-cyan-700 border-cyan-200"];
                   return (<span key={brand} className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-xl border ${palette[i % palette.length]}`}><Car size={13} /> {brand}</span>);
                 })}
               </div>
@@ -382,14 +382,14 @@ export function MechDetailBody() {
           <Section id="mech-services" icon={ToolIcon} title={t("mechServicesPriceTitle")} count={services.length}>
             {priceBrands.length > 0 && (
               <div className="mb-3">
-                <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1.5"><Car size={13} className="text-rose-500" /> {t("brandPricesOnDetailTitle")}
+                <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1.5"><Car size={13} className="text-blue-500" /> {t("brandPricesOnDetailTitle")}
                   {/* "Diğer markalar" tek başına hiçbir şey anlatmıyordu: kullanıcı bunun bir marka
                       listesi mi yoksa varsayılan fiyat mı olduğunu bilemiyordu. */}
                   <InfoTip text={t("otherBrandsTip")} label={t("infoTipAria")} /></p>
                 <div className="flex flex-wrap gap-1.5">
                   <button onClick={() => setPriceBrand(null)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === null ? "bg-gray-900 text-white border-gray-900" : "bg-white border-gray-200 text-gray-500 hover:border-gray-400"}`}>{t("otherBrandsLabel")}</button>
                   {priceBrands.map((b) => (
-                    <button key={b} onClick={() => setPriceBrand(b)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === b ? "bg-rose-600 text-white border-rose-600" : "bg-white border-gray-200 text-gray-500 hover:border-rose-300"}`}>{b}</button>
+                    <button key={b} onClick={() => setPriceBrand(b)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === b ? "bg-blue-600 text-white border-blue-600" : "bg-white border-gray-200 text-gray-500 hover:border-blue-300"}`}>{b}</button>
                   ))}
                 </div>
               </div>
@@ -407,12 +407,12 @@ export function MechDetailBody() {
                 return (
                   <div key={s.key || `c-${i}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50/70 transition">
                     <span className="text-sm text-gray-700 flex items-center gap-2 min-w-0">
-                      <ToolIcon size={13} className="text-rose-400 flex-shrink-0" />
+                      <ToolIcon size={13} className="text-blue-400 flex-shrink-0" />
                       <span className="truncate">{serviceLabel(s)}</span>
                       {s.fixed && String(s.price || "").trim() && <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 flex-shrink-0">FIX</span>}
                     </span>
                     <span className="flex items-center gap-2 flex-shrink-0">
-                      {isBrandPrice && <span className="text-[10px] font-bold text-rose-600 bg-rose-50 rounded px-1.5 py-0.5">{priceBrand}</span>}
+                      {isBrandPrice && <span className="text-[10px] font-bold text-blue-600 bg-blue-50 rounded px-1.5 py-0.5">{priceBrand}</span>}
                       <span className="text-sm font-bold text-gray-900 whitespace-nowrap">{shown || <span className="text-xs font-medium text-gray-400">{t("priceUponInspectionLabel")}</span>}</span>
                     </span>
                   </div>
@@ -425,7 +425,7 @@ export function MechDetailBody() {
               <p className="text-[11px] text-gray-400 mt-2">{t("mechServicesScrollNote", { shown: String(SERVICE_SCROLL_ROWS), total: String(services.length) })}</p>
             )}
             {services.length > SERVICE_PREVIEW && (
-              <button onClick={() => setShowAllServices((v) => !v)} className="mt-3 text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1">
+              <button onClick={() => setShowAllServices((v) => !v)} className="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
                 {showAllServices ? t("mechShowLess") : t("mechShowAllServices", { n: String(services.length) })}
                 <ChevronRight size={14} className={showAllServices ? "-rotate-90 transition" : "rotate-90 transition"} />
               </button>
@@ -440,10 +440,10 @@ export function MechDetailBody() {
                 const isClosed = /kapalı|closed|geschlossen/i.test(line);
                 const isToday = i === todayIdx;
                 return (
-                  <div key={i} className={`flex justify-between items-center px-4 py-2.5 text-sm ${isToday ? "bg-rose-50/60" : ""}`}>
+                  <div key={i} className={`flex justify-between items-center px-4 py-2.5 text-sm ${isToday ? "bg-blue-50/60" : ""}`}>
                     <span className={isToday ? "font-bold text-gray-900 flex items-center gap-2" : "text-gray-500"}>
                       {line.split(":")[0]}
-                      {isToday && <span className="text-[9px] font-bold uppercase tracking-wide text-rose-600 bg-white border border-rose-200 rounded px-1.5 py-0.5">{t("mechTodayLabel")}</span>}
+                      {isToday && <span className="text-[9px] font-bold uppercase tracking-wide text-blue-600 bg-white border border-blue-200 rounded px-1.5 py-0.5">{t("mechTodayLabel")}</span>}
                     </span>
                     <span className={isClosed ? "text-red-400 font-medium" : isToday ? "font-bold text-gray-900" : "text-gray-700 font-medium"}>{line.split(/:(.+)/)[1]}</span>
                   </div>
@@ -457,7 +457,7 @@ export function MechDetailBody() {
             <Section id="mech-team" icon={Users} title={t("team")} count={selectedMechanic.staff.length}>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {selectedMechanic.staff.map((s, i) => {
-                  const grads = ["from-rose-400 to-rose-500", "from-gray-700 to-gray-900", "from-rose-500 to-rose-600", "from-gray-500 to-gray-700"];
+                  const grads = ["from-blue-400 to-blue-500", "from-gray-700 to-gray-900", "from-blue-500 to-blue-600", "from-gray-500 to-gray-700"];
                   return (
                     <div key={i} className="text-center bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition">
                       <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-2xl mb-2.5 overflow-hidden shadow-md relative`}>
@@ -488,8 +488,8 @@ export function MechDetailBody() {
                 target="_blank" rel="noreferrer"
                 className="p-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition group"
               >
-                <p className="text-sm text-gray-600 group-hover:text-rose-600 transition">{selectedMechanic.address}</p>
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 flex-shrink-0"><Navigation size={13} /> {t("directionsLabel")}</span>
+                <p className="text-sm text-gray-600 group-hover:text-blue-600 transition">{selectedMechanic.address}</p>
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 flex-shrink-0"><Navigation size={13} /> {t("directionsLabel")}</span>
               </a>
             </div>
           </Section>
@@ -497,7 +497,7 @@ export function MechDetailBody() {
           {/* Satılık araçlar & iş ilanları */}
           {isVisitor && mechListings.length > 0 && (
             <Section id="mech-inventory" icon={Car} title={t("carListingsTitle")} count={mechListings.length}
-              action={selectedMechanic.verified ? <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 flex items-center gap-1"><BadgeCheck size={12} /> {t("authorizedDealerBadge")}</span> : null}>
+              action={selectedMechanic.verified ? <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 flex items-center gap-1"><BadgeCheck size={12} /> {t("authorizedDealerBadge")}</span> : null}>
               <div className={`grid gap-4 ${compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>{mechListings.map((l) => (<ListingCard key={l.id} l={l} />))}</div>
             </Section>
           )}
@@ -509,7 +509,7 @@ export function MechDetailBody() {
 
           {/* Yorumlar — puan dağılımı + kart ızgarası (marka bandı yerine okunabilir düzen) */}
           <Section id="mech-reviews" icon={Star} title={t("reviews")}
-            action={reviewList.length > 0 ? <button onClick={() => setShowAllReviews(true)} className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-0.5">{t("viewAllBtn")} <ChevronRight size={14} /></button> : null}>
+            action={reviewList.length > 0 ? <button onClick={() => setShowAllReviews(true)} className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5">{t("viewAllBtn")} <ChevronRight size={14} /></button> : null}>
             {reviewList.length === 0 ? (
               <p className="text-sm text-gray-400 bg-white border border-gray-200 rounded-2xl p-6 text-center">{t("mechNoReviewsYet")}</p>
             ) : (
@@ -535,7 +535,7 @@ export function MechDetailBody() {
                 </div>
                 <div className={`grid gap-3 ${compact ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"}`}>
                   {reviewList.slice(0, 4).map((r, i) => {
-                    const grads = ["from-rose-400 to-rose-500", "from-gray-700 to-gray-900", "from-rose-500 to-rose-600", "from-gray-500 to-gray-700"];
+                    const grads = ["from-blue-400 to-blue-500", "from-gray-700 to-gray-900", "from-blue-500 to-blue-600", "from-gray-500 to-gray-700"];
                     const times = REVIEW_TIME_LABELS_BY_LANG[lang] || REVIEW_TIME_LABELS_BY_LANG.tr;
                     const liked = likedReviewIds.includes(`${selectedMechanic.id}:${r.id}`);
                     return (
@@ -543,7 +543,7 @@ export function MechDetailBody() {
                         <div className="flex items-center gap-2.5 mb-2.5">
                           <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-lg flex-shrink-0 shadow-sm`}>{r.avatar}</div>
                           <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate">{r.name}</p><p className="text-[11px] text-gray-400">{times[i % times.length]}</p></div>
-                          <BadgeCheck size={14} className="text-rose-400 flex-shrink-0" />
+                          <BadgeCheck size={14} className="text-blue-400 flex-shrink-0" />
                         </div>
                         <div className="flex items-center gap-0.5 mb-2">{[...Array(5)].map((_, j) => (<Star key={j} size={12} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div>
                         {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 400)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-full h-32 rounded-xl object-cover mb-2" />}
@@ -557,13 +557,13 @@ export function MechDetailBody() {
                           replyingReviewId === r.id ? (
                             <div className="mt-2.5 pt-2.5 border-t border-gray-50">
                               <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder={t("writeYourReplyPlaceholder")} className="w-full text-xs border border-gray-200 rounded-lg p-2 mb-1.5 resize-none" />
-                              <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-gray-200 text-gray-500">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-rose-600 text-white font-medium">{t("sendBtn")}</button></div>
+                              <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-gray-200 text-gray-500">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-blue-600 text-white font-medium">{t("sendBtn")}</button></div>
                             </div>
-                          ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-rose-600 font-semibold">{t("replyBtn")}</button>)
+                          ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-blue-600 font-semibold">{t("replyBtn")}</button>)
                         )}
                         <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={canVoteHelpful === false} className={`flex items-center gap-1.5 mt-3 pt-2.5 border-t border-gray-50 w-full ${canVoteHelpful ? "cursor-pointer" : "cursor-default"}`}>
-                          <ThumbsUp size={12} className={liked ? "text-rose-600 fill-rose-600" : "text-gray-300"} />
-                          <span className={`text-[11px] ${liked ? "text-rose-600 font-semibold" : "text-gray-300"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
+                          <ThumbsUp size={12} className={liked ? "text-blue-600 fill-blue-600" : "text-gray-300"} />
+                          <span className={`text-[11px] ${liked ? "text-blue-600 font-semibold" : "text-gray-300"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
                         </button>
                       </div>
                     );
@@ -596,7 +596,7 @@ export function MechDetailBody() {
             <p className="text-base font-bold text-gray-900 leading-none">{mechanicStartingPrice(selectedMechanic) > 0 ? `${mechanicStartingPrice(selectedMechanic).toLocaleString("tr-TR")}₺` : "—"}</p>
           </div>
           <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
-          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="flex-1 bg-rose-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Calendar size={16} /> {t("bookNow")}</button>
+          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center justify-center gap-2"><Calendar size={16} /> {t("bookNow")}</button>
         </div>
       )}
 
@@ -616,8 +616,8 @@ export function MechDetailBody() {
                 return (
                   <div key={r.id} className="p-5">
                     <div className="flex items-center gap-2.5 mb-2.5">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{r.avatar}</div>
-                      <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate flex items-center gap-1">{r.name}<BadgeCheck size={12} className="text-rose-400 flex-shrink-0" /></p><div className="flex items-center gap-1">{[...Array(5)].map((_, j) => (<Star key={j} size={11} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div></div>
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{r.avatar}</div>
+                      <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate flex items-center gap-1">{r.name}<BadgeCheck size={12} className="text-blue-400 flex-shrink-0" /></p><div className="flex items-center gap-1">{[...Array(5)].map((_, j) => (<Star key={j} size={11} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div></div>
                     </div>
                     {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 300)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-1/3 max-w-[110px] aspect-square rounded-xl object-cover mb-2.5 float-left mr-3" />}
                     <p className="text-sm text-gray-600 leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} scope="public" text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
@@ -628,13 +628,13 @@ export function MechDetailBody() {
                       replyingReviewId === r.id ? (
                         <div className="mt-2.5 pt-2.5 border-t border-gray-50">
                           <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder={t("writeYourReplyPlaceholder")} className="w-full text-xs border border-gray-200 rounded-lg p-2 mb-1.5 resize-none" />
-                          <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-gray-200 text-gray-500">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-rose-600 text-white font-medium">{t("sendBtn")}</button></div>
+                          <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-gray-200 text-gray-500">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-blue-600 text-white font-medium">{t("sendBtn")}</button></div>
                         </div>
-                      ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-rose-600 font-semibold">{t("replyBtn")}</button>)
+                      ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-blue-600 font-semibold">{t("replyBtn")}</button>)
                     )}
                     <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={canVoteHelpful === false} className={`flex items-center gap-1.5 mt-3 ${canVoteHelpful ? "cursor-pointer" : "cursor-default"}`}>
-                      <ThumbsUp size={14} className={liked ? "text-rose-600 fill-rose-600" : "text-gray-300"} />
-                      <span className={`text-xs ${liked ? "text-rose-600 font-semibold" : "text-gray-400"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
+                      <ThumbsUp size={14} className={liked ? "text-blue-600 fill-blue-600" : "text-gray-300"} />
+                      <span className={`text-xs ${liked ? "text-blue-600 font-semibold" : "text-gray-400"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
                     </button>
                   </div>
                 );

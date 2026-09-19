@@ -44,7 +44,7 @@ function SearchEmptyState({ mode, emptyText }) {
       {!g.hasAnyCriteria && <p className="text-gray-400 text-xs">{t("searchNoDataYet")}</p>}
       {g.citySuggestion && (
         <p className="text-sm text-gray-500 mt-2">
-          {t("searchDidYouMean")} <button onClick={g.citySuggestion.apply} className="font-bold text-rose-600 hover:underline">{g.citySuggestion.city}</button>
+          {t("searchDidYouMean")} <button onClick={g.citySuggestion.apply} className="font-bold text-blue-600 hover:underline">{g.citySuggestion.city}</button>
         </p>
       )}
       {g.relax.length > 0 && (
@@ -54,7 +54,7 @@ function SearchEmptyState({ mode, emptyText }) {
             {g.relax.map(r => (
               <button key={r.key} onClick={r.apply} className="flex items-center justify-between gap-3 bg-white border border-gray-200 hover:border-gray-900 rounded-xl px-3.5 py-2.5 text-left transition">
                 <span className="text-sm text-gray-700 truncate">{t("searchRelaxRemove", { label: r.label, value: r.value })}</span>
-                <span className="text-xs font-bold text-rose-600 whitespace-nowrap">{t("searchRelaxCount", { n: String(r.count) })}</span>
+                <span className="text-xs font-bold text-blue-600 whitespace-nowrap">{t("searchRelaxCount", { n: String(r.count) })}</span>
               </button>
             ))}
           </div>
@@ -205,13 +205,13 @@ export function BrowseHome({ theme = undefined }) {
     <div ref={browseScrollRef} onScroll={() => setHeroCollapsed(c => { const collapsed = browseScrollRef.current.scrollTop > 36; return c === collapsed ? c : collapsed; })} className="flex-1 overflow-y-auto">
       {topReminder && role === "owner" && (
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 pt-4">
-          <div className={`rounded-2xl p-4 mb-1 flex items-center gap-3 shadow-sm border ${topReminder.urgent ? "bg-red-50 border-red-100" : "bg-rose-50 border-rose-100"}`}>
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${topReminder.urgent ? "bg-red-100" : "bg-rose-100"}`}>{topReminder.icon}</div>
+          <div className={`rounded-2xl p-4 mb-1 flex items-center gap-3 shadow-sm border ${topReminder.urgent ? "bg-red-50 border-red-100" : "bg-blue-50 border-blue-100"}`}>
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${topReminder.urgent ? "bg-red-100" : "bg-blue-100"}`}>{topReminder.icon}</div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-semibold truncate ${topReminder.urgent ? "text-red-700" : "text-rose-700"}`}>{topReminder.vehicleName} — {topReminder.title}</p>
+              <p className={`text-sm font-semibold truncate ${topReminder.urgent ? "text-red-700" : "text-blue-700"}`}>{topReminder.vehicleName} — {topReminder.title}</p>
               <p className="text-xs text-gray-500 truncate">{topReminder.detail}</p>
             </div>
-            <button onClick={() => goBookFromReminder(topReminder.key)} className={`flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-xl text-white transition ${topReminder.urgent ? "bg-red-600 hover:bg-red-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("bookNow")}</button>
+            <button onClick={() => goBookFromReminder(topReminder.key)} className={`flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-xl text-white transition ${topReminder.urgent ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}>{t("bookNow")}</button>
             <button onClick={() => setDismissedReminderKey(topReminder.key)} aria-label={t("closeAria")} className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition p-2 -m-2"><X size={16} /></button>
           </div>
         </div>
@@ -220,7 +220,7 @@ export function BrowseHome({ theme = undefined }) {
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-4">
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {[{ key: "distance", label: t("sortDistance") }, { key: "price", label: t("sortPrice") }, { key: "rating", label: t("sortRating") }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
+              {[{ key: "distance", label: t("sortDistance") }, { key: "price", label: t("sortPrice") }, { key: "rating", label: t("sortRating") }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
               <button onClick={() => setShowMapMobile(true)} className="md:hidden px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200"><MapIcon size={12} /> {t("showMap")}</button>
             </div>
             <p className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {t("mechanicsFoundSuffix")}</p>
@@ -234,11 +234,11 @@ export function BrowseHome({ theme = undefined }) {
       )}
       {ownerMode === "cars" && (
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-4">
-          <button onClick={startSellFlow} className="w-full md:max-w-xs mb-4 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
+          <button onClick={startSellFlow} className="w-full md:max-w-xs mb-4 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              <button onClick={() => setListingSort("default")} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === "default" ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{t("sortRecommended")}</button>
-              {[{ key: "price", label: t("sortPrice") }, { key: "km", label: t("sortKm") }, { key: "year", label: t("sortYear") }].map(opt => (<button key={opt.key} onClick={() => handleListingSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{listingSort === opt.key ? (listingSortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
+              <button onClick={() => setListingSort("default")} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === "default" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{t("sortRecommended")}</button>
+              {[{ key: "price", label: t("sortPrice") }, { key: "km", label: t("sortKm") }, { key: "year", label: t("sortYear") }].map(opt => (<button key={opt.key} onClick={() => handleListingSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{listingSort === opt.key ? (listingSortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
               </div>
             <p className="text-xs text-gray-400 whitespace-nowrap">{filteredListings.length} {t("listingsFoundSuffix")}</p>
           </div>

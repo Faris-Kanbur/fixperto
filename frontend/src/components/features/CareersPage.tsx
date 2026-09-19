@@ -51,7 +51,7 @@ export function CareersPage() {
       <PageTopBar />
 
       {/* ---- Başlık bandı ---- */}
-      <div className="bg-gradient-to-br from-gray-950 via-gray-900 to-rose-800 text-white">
+      <div className="bg-gradient-to-br from-gray-950 via-gray-900 to-blue-800 text-white">
         <div className="max-w-5xl mx-auto px-5 md:px-8 py-12 md:py-16">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide bg-white/10 px-3 py-1.5 rounded-full mb-4">
             <Briefcase size={12} /> {t("careersBadge")}
@@ -66,7 +66,7 @@ export function CareersPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
           {values.map((v) => (
             <div key={v.title} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-              <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600 mb-3"><v.icon size={18} /></div>
+              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-3"><v.icon size={18} /></div>
               <h3 className="font-bold text-gray-900 text-sm mb-1">{v.title}</h3>
               <p className="text-[13px] text-gray-500 leading-relaxed">{v.body}</p>
             </div>
@@ -84,7 +84,7 @@ export function CareersPage() {
             <Briefcase size={36} className="mx-auto text-gray-200 mb-3" />
             <p className="font-semibold text-gray-700 mb-1">{t("careersNoRolesTitle")}</p>
             <p className="text-sm text-gray-400 max-w-md mx-auto leading-relaxed">{t("careersNoRolesBody")}</p>
-            <a href="mailto:kariyer@fixperto.com" className="mt-5 inline-flex items-center gap-2 bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">
+            <a href="mailto:kariyer@fixperto.com" className="mt-5 inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">
               <Mail size={15} /> kariyer@fixperto.com
             </a>
           </div>
@@ -111,7 +111,7 @@ export function CareersPage() {
                       {job.summary && <p className="text-sm text-gray-600 leading-relaxed mb-3">{job.summary}</p>}
                       {job.description && <p className="text-[13px] text-gray-500 leading-relaxed whitespace-pre-line">{job.description}</p>}
                       <a href={`mailto:${job.applyEmail || "kariyer@fixperto.com"}?subject=${encodeURIComponent(job.title)}`}
-                        className="mt-4 inline-flex items-center gap-2 bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">
+                        className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">
                         <Mail size={15} /> {t("careersApplyBtn")}
                       </a>
                     </div>

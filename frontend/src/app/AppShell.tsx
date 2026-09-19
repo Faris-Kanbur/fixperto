@@ -124,11 +124,11 @@ import {
 const SectionCard = ({ step, icon: Icon, title, hint = null, children }) => (
   <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
     <div className="flex items-start gap-3 mb-4">
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold ${step.done ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold ${step.done ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"}`}>
         {step.done ? <Check size={16} /> : step.n}
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="font-bold text-gray-900 text-base flex items-center gap-2 whitespace-nowrap"><Icon size={16} className="text-rose-500 flex-shrink-0" /> {title}</h3>
+        <h3 className="font-bold text-gray-900 text-base flex items-center gap-2 whitespace-nowrap"><Icon size={16} className="text-blue-500 flex-shrink-0" /> {title}</h3>
         {hint && <p className="text-xs text-gray-400 mt-1 leading-relaxed">{hint}</p>}
       </div>
     </div>
@@ -145,7 +145,7 @@ const StatCard = ({ label, value, hint = null }) => (
 );
 const BreakdownList = ({ title, rows, icon: Icon }) => (
   <div className="bg-white border border-gray-200 rounded-2xl p-4">
-    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Icon size={14} className="text-rose-500" /> {title}</h3>
+    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Icon size={14} className="text-blue-500" /> {title}</h3>
     {(!rows || rows.length === 0) ? <p className="text-xs text-gray-400">Veri yok</p> : (
       <div className="space-y-1.5">
         {rows.slice(0, 6).map(r => {
@@ -154,7 +154,7 @@ const BreakdownList = ({ title, rows, icon: Icon }) => (
           return (
             <div key={r.label} className="flex items-center gap-2">
               <span className="text-xs text-gray-600 w-28 truncate" title={r.label}>{r.label}</span>
-              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.round((val / max) * 100)}%` }} /></div>
+              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.round((val / max) * 100)}%` }} /></div>
               <span className="text-xs font-semibold text-gray-700 w-10 text-right">{val}</span>
             </div>
           );
@@ -329,7 +329,7 @@ export function AppShell() {
            scrollbar-color; Firefox 64+ ve Chrome 121+ destekliyor, desteklemeyen tarayıcı
            yukarıdaki webkit kuralını kullanmaya devam ediyor. */
         .dark-scope { scrollbar-color: #34344a #17171f; }
-        .dark-scope [class*="from-rose-50"][class*="to-white"] { background-image: none !important; background-color: #17171f !important; }
+        .dark-scope [class*="from-blue-50"][class*="to-white"] { background-image: none !important; background-color: #17171f !important; }
         .dark-scope .bg-red-50 { background-color: #2a1418 !important; }
         .dark-scope .bg-red-100 { background-color: #3a1a20 !important; }
         .dark-scope .border-red-100, .dark-scope .border-red-200, .dark-scope .border-red-300 { border-color: #4a2530 !important; }
@@ -339,9 +339,9 @@ export function AppShell() {
         .dark-scope .bg-amber-50 { background-color: #2a2212 !important; }
         .dark-scope .bg-amber-100 { background-color: #3a2f16 !important; }
         .dark-scope .border-amber-100, .dark-scope .border-amber-200 { border-color: #4a3d1e !important; }
-        .dark-scope .bg-rose-50 { background-color: #2a141c !important; }
-        .dark-scope .bg-rose-100 { background-color: #3a1a28 !important; }
-        .dark-scope .border-rose-100, .dark-scope .border-rose-200 { border-color: #4a2538 !important; }
+        .dark-scope .bg-blue-50 { background-color: #2a141c !important; }
+        .dark-scope .bg-blue-100 { background-color: #3a1a28 !important; }
+        .dark-scope .border-blue-100, .dark-scope .border-blue-200 { border-color: #4a2538 !important; }
 
         /* ===== KARANLIK MOD DENETİMİNDE BULUNAN EKSİKLER =====
            Kural ".bg-white" sınıfına bakıyordu; YARI SAYDAM varyantlar (bg-white/95, bg-white/90)
@@ -350,9 +350,9 @@ export function AppShell() {
            okunmuyordu. En görünür kusur buydu. */
         .dark-scope .bg-white\/95, .dark-scope .bg-white\/90 { background-color: rgba(23,23,31,0.95) !important; }
         .dark-scope .bg-gray-50\/70, .dark-scope .bg-gray-50\/50 { background-color: rgba(18,18,24,0.7) !important; }
-        /* Degrade bantlar: açık pembe/gri geçişler karanlıkta parlak bir şerit gibi duruyordu. */
-        .dark-scope [class*="from-rose-50"], .dark-scope [class*="via-rose-50"],
-        .dark-scope [class*="from-gray-100"][class*="to-rose-50"] {
+        /* Degrade bantlar: açık mavi/gri geçişler karanlıkta parlak bir şerit gibi duruyordu. */
+        .dark-scope [class*="from-blue-50"], .dark-scope [class*="via-blue-50"],
+        .dark-scope [class*="from-gray-100"][class*="to-blue-50"] {
           background-image: none !important; background-color: #1b1b24 !important;
         }
         /* Boş durum/yer tutucu ikonlarının açık grisi karanlıkta görünmüyordu. */
@@ -412,7 +412,7 @@ export function AppShell() {
             </div>
             <span className="flex-1 text-xs font-medium truncate">{t("compareBarLabel", { n: String(compareListingIds.length), max: String(MAX_COMPARE_LISTINGS) })}</span>
             <button onClick={clearCompareListings} aria-label={t("closeAria")} className="text-gray-400 hover:text-white p-1.5 -m-1.5 flex-shrink-0"><X size={16} /></button>
-            <button onClick={openCompareModal} disabled={compareListingIds.length < 2} className={`flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${compareListingIds.length < 2 ? "bg-gray-700 text-gray-500" : "bg-rose-600 text-white hover:bg-rose-700"}`}><Scale size={13} /> {t("compareBtn")}</button>
+            <button onClick={openCompareModal} disabled={compareListingIds.length < 2} className={`flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${compareListingIds.length < 2 ? "bg-gray-700 text-gray-500" : "bg-blue-600 text-white hover:bg-blue-700"}`}><Scale size={13} /> {t("compareBtn")}</button>
           </div>
         </div>
       )}
@@ -467,7 +467,7 @@ export function AppShell() {
                             {!!cl.tradeIn && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200"><Repeat size={10} /> {t("tradeInAvailableLabel")}</span>}
                             {cl.inspectionReportUrl && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><FileText size={10} /> {t("inspectionReportAvailableLabel")}</span>}
                           </div>
-                          <button onClick={() => { setSelectedListingId(cl.id); setShowCompareModal(false); }} className="mt-auto w-full bg-rose-600 text-white text-xs font-semibold py-2.5 rounded-xl hover:bg-rose-700 transition">{t("viewListingBtn")}</button>
+                          <button onClick={() => { setSelectedListingId(cl.id); setShowCompareModal(false); }} className="mt-auto w-full bg-blue-600 text-white text-xs font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition">{t("viewListingBtn")}</button>
                         </div>
                       </div>
                     );
@@ -492,7 +492,7 @@ export function AppShell() {
             <div className="px-5 pt-5 pb-4">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-11 h-11 bg-rose-50 rounded-2xl flex items-center justify-center flex-shrink-0"><Lock size={20} className="text-rose-600" /></div>
+                  <div className="w-11 h-11 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0"><Lock size={20} className="text-blue-600" /></div>
                   <div className="min-w-0">
                     <h3 className="font-bold text-gray-900 text-base leading-snug">{authGateStep === "otp" ? t("authGateOtpTitle") : authGateStep === "signup" ? t("authGateSignupTitle") : t("authGateTitle")}</h3>
                     {authGateReason && <p className="text-xs text-gray-500 mt-0.5">{authGateReason}</p>}
@@ -511,8 +511,8 @@ export function AppShell() {
                     <>
                       <p className="text-xs font-semibold text-gray-700 mb-2">{t("authGateRoleQuestion")}</p>
                       <div className="grid grid-cols-2 gap-2 mb-4">
-                        <button onClick={() => setRole("owner")} className={`rounded-2xl border p-3 text-left transition ${role === "owner" ? "border-rose-600 bg-rose-50" : "border-gray-200 hover:border-gray-300"}`}><Car size={18} className={role === "owner" ? "text-rose-600 mb-1" : "text-gray-400 mb-1"} /><p className="text-xs font-bold text-gray-900">{t("ownerRole")}</p></button>
-                        <button onClick={() => setRole("mechanic")} className={`rounded-2xl border p-3 text-left transition ${role === "mechanic" ? "border-rose-600 bg-rose-50" : "border-gray-200 hover:border-gray-300"}`}><Wrench size={18} className={role === "mechanic" ? "text-rose-600 mb-1" : "text-gray-400 mb-1"} /><p className="text-xs font-bold text-gray-900">{t("mechanicRole")}</p></button>
+                        <button onClick={() => setRole("owner")} className={`rounded-2xl border p-3 text-left transition ${role === "owner" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}><Car size={18} className={role === "owner" ? "text-blue-600 mb-1" : "text-gray-400 mb-1"} /><p className="text-xs font-bold text-gray-900">{t("ownerRole")}</p></button>
+                        <button onClick={() => setRole("mechanic")} className={`rounded-2xl border p-3 text-left transition ${role === "mechanic" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}><Wrench size={18} className={role === "mechanic" ? "text-blue-600 mb-1" : "text-gray-400 mb-1"} /><p className="text-xs font-bold text-gray-900">{t("mechanicRole")}</p></button>
                       </div>
                     </>
                   )}
@@ -525,7 +525,7 @@ export function AppShell() {
                     {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
                     {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
                   </div>
-                  <button disabled={authLoading} onClick={authGateStep === "login" ? submitLogin : submitRegister} className={`w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : (authGateStep === "login" ? t("login") : t("signup"))}</button>
+                  <button disabled={authLoading} onClick={authGateStep === "login" ? submitLogin : submitRegister} className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : (authGateStep === "login" ? t("login") : t("signup"))}</button>
                 </>
               )}
               {authGateStep === "otp" && (
@@ -536,8 +536,8 @@ export function AppShell() {
                     {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
                     {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
                   </div>
-                  <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
-                  <p className="text-center text-xs text-gray-400 mt-3"><button onClick={cancelOtpVerify} className="text-rose-500 font-medium hover:underline">{t("otpBackToLogin")}</button></p>
+                  <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
+                  <p className="text-center text-xs text-gray-400 mt-3"><button onClick={cancelOtpVerify} className="text-blue-500 font-medium hover:underline">{t("otpBackToLogin")}</button></p>
                 </>
               )}
             </div>
@@ -582,7 +582,7 @@ export function AppShell() {
                 {bookingResult.vehicle && <div className="flex items-center gap-2 text-sm text-gray-700"><Car size={14} className="text-gray-400 flex-shrink-0" /><span className="truncate">{bookingResult.vehicle}</span></div>}
                 <div className="flex items-center gap-2 text-sm text-gray-700"><Calendar size={14} className="text-gray-400 flex-shrink-0" /><span>{bookingResult.date}{bookingResult.time ? ` · ${bookingResult.time}` : ""}</span></div>
               </div>
-              <button onClick={goAppointments} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2">{t("viewMyAppointmentBtn")}</button>
+              <button onClick={goAppointments} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition mb-2">{t("viewMyAppointmentBtn")}</button>
               <button onClick={() => { setBookingResult(null); goHome(); }} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button>
             </div>
           </div>
@@ -596,7 +596,7 @@ export function AppShell() {
             <p className="text-sm text-gray-500 mb-4">{t("dayFullPromptBody")}</p>
             <div className="flex gap-2">
               <button onClick={() => setShowDayFullPrompt(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("dayFullPromptNoBtn")}</button>
-              <button onClick={goToAddSlotForToday} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("dayFullPromptYesBtn")}</button>
+              <button onClick={goToAddSlotForToday} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("dayFullPromptYesBtn")}</button>
             </div>
           </div>
         </div>
@@ -616,7 +616,7 @@ export function AppShell() {
             <input value={completeVinInput} onChange={(e) => setCompleteVinInput(e.target.value.toUpperCase())} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide mb-4" />
             <div className="flex gap-2">
               <button onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); setCompleteVinInput(""); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
-              <button onClick={() => completeApptWithWarranty(warrantyDaysForm, completeVinInput)} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("completeApptBtn")}</button>
+              <button onClick={() => completeApptWithWarranty(warrantyDaysForm, completeVinInput)} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("completeApptBtn")}</button>
             </div>
           </div>
         </div>
@@ -624,12 +624,12 @@ export function AppShell() {
       {confirmDialog && (
         <div data-modal-backdrop className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9800 }} onClick={() => setConfirmDialog(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${confirmDialog.danger ? "bg-red-50" : "bg-rose-50"}`}><AlertTriangle size={22} className={confirmDialog.danger ? "text-red-500" : "text-rose-600"} /></div>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${confirmDialog.danger ? "bg-red-50" : "bg-blue-50"}`}><AlertTriangle size={22} className={confirmDialog.danger ? "text-red-500" : "text-blue-600"} /></div>
             <h3 className="font-bold text-gray-900 text-base mb-1">{confirmDialog.title}</h3>
             <p className="text-sm text-gray-500 mb-4">{confirmDialog.body}</p>
             <div className="flex gap-2">
               <button onClick={() => setConfirmDialog(null)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
-              <button onClick={() => { const fn = confirmDialog.onConfirm; setConfirmDialog(null); fn(); }} className={`flex-1 text-white py-2.5 rounded-xl font-semibold text-sm transition ${confirmDialog.danger ? "bg-red-500 hover:bg-red-600" : "bg-rose-600 hover:bg-rose-700"}`}>{confirmDialog.confirmLabel || t("confirmBtnDefault")}</button>
+              <button onClick={() => { const fn = confirmDialog.onConfirm; setConfirmDialog(null); fn(); }} className={`flex-1 text-white py-2.5 rounded-xl font-semibold text-sm transition ${confirmDialog.danger ? "bg-red-500 hover:bg-red-600" : "bg-blue-600 hover:bg-blue-700"}`}>{confirmDialog.confirmLabel || t("confirmBtnDefault")}</button>
             </div>
           </div>
         </div>
@@ -637,12 +637,12 @@ export function AppShell() {
       {showLocationPrompt && (
         <div data-modal-backdrop className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9600 }} onClick={dismissLocationPrompt}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
-            <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center mb-3"><MapPin size={22} className="text-rose-600" /></div>
+            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-3"><MapPin size={22} className="text-blue-600" /></div>
             <h3 className="font-bold text-gray-900 text-base mb-1">{t("locationPromptTitle")}</h3>
             <p className="text-sm text-gray-500 mb-4">{t("locationPromptBody")}</p>
             <div className="flex gap-2">
               <button onClick={dismissLocationPrompt} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("notNowBtn")}</button>
-              <button onClick={confirmUseLocation} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("shareLocationBtn")}</button>
+              <button onClick={confirmUseLocation} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("shareLocationBtn")}</button>
             </div>
           </div>
         </div>
@@ -679,7 +679,7 @@ export function AppShell() {
                 </div>
               </div>
               <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
-                <button onClick={() => setLegalModalTopic(null)} className="w-full bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("understoodBtn")}</button>
+                <button onClick={() => setLegalModalTopic(null)} className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("understoodBtn")}</button>
               </div>
             </div>
           </>
@@ -698,7 +698,7 @@ export function AppShell() {
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg my-auto max-h-[90vh] flex flex-col overflow-hidden">
             <div className="px-5 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
               <div>
-                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={18} className="text-rose-600" /> {t("multiQuoteModalTitle")}</h3>
+                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={18} className="text-blue-600" /> {t("multiQuoteModalTitle")}</h3>
                 <p className="text-xs text-gray-400 mt-0.5">{t("multiQuoteModalSubtitle")}</p>
               </div>
               <button onClick={closeQuoteModal} aria-label={t("closeAria")} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0 ml-3"><X size={15} /></button>
@@ -707,15 +707,15 @@ export function AppShell() {
               <div>
                 <label className="text-xs font-semibold text-gray-700 mb-1.5 block">{t("vehicleFieldLabel")}</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {vehicles.map(v => (<button key={v.id} onClick={() => setQuoteVehicleId(v.id)} className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition ${quoteVehicleId === v.id ? "bg-rose-600 text-white border-rose-600" : "border-gray-200 text-gray-600 hover:border-rose-300"}`}>{v.brand} {v.model} ({v.plate})</button>))}
-                  <button onClick={toggleAddVehicle} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border border-dashed transition ${showAddVehicle ? "bg-rose-50 border-rose-300 text-rose-600" : "border-gray-300 text-gray-500 hover:border-rose-300 hover:text-rose-600"}`}><Plus size={12} /> {t("addAnotherVehicleBtn")}</button>
+                  {vehicles.map(v => (<button key={v.id} onClick={() => setQuoteVehicleId(v.id)} className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition ${quoteVehicleId === v.id ? "bg-blue-600 text-white border-blue-600" : "border-gray-200 text-gray-600 hover:border-blue-300"}`}>{v.brand} {v.model} ({v.plate})</button>))}
+                  <button onClick={toggleAddVehicle} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border border-dashed transition ${showAddVehicle ? "bg-blue-50 border-blue-300 text-blue-600" : "border-gray-300 text-gray-500 hover:border-blue-300 hover:text-blue-600"}`}><Plus size={12} /> {t("addAnotherVehicleBtn")}</button>
                 </div>
                 {(vehicles.length === 0 || showAddVehicle) && (
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mt-2 space-y-2">
                     <BrandSelect compact value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b, model: "" })} />
                     <ModelSelect compact brand={newVehicle.brand} value={newVehicle.model} onChange={(m) => setNewVehicle({ ...newVehicle, model: m })} />
                     <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
-                    <button onClick={addVehicle} disabled={!newVehicle.brand || !newVehicle.model} className={`w-full py-2 rounded-lg text-xs font-semibold transition ${newVehicle.brand && newVehicle.model ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("bookingAddAndSelect")}</button>
+                    <button onClick={addVehicle} disabled={!newVehicle.brand || !newVehicle.model} className={`w-full py-2 rounded-lg text-xs font-semibold transition ${newVehicle.brand && newVehicle.model ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("bookingAddAndSelect")}</button>
                   </div>
                 )}
               </div>
@@ -724,7 +724,7 @@ export function AppShell() {
                 <textarea value={quoteIssue} onChange={(e) => setQuoteIssue(e.target.value)} rows={3} placeholder={t("issueDescPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   {quotePhotos.map((src, i) => (<div key={i} className="relative"><img loading="lazy" decoding="async" src={src} alt={t("quotePhotoAlt", { n: String(i + 1) })} className="w-14 h-14 rounded-lg object-cover border border-gray-100" /><button aria-label={t("a11yRemovePhoto")} onClick={() => removeQuotePhoto(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center text-white"><X size={10} /></button></div>))}
-                  <button aria-label={t("a11yAddPhoto")} onClick={() => quotePhotoRef.current?.click()} className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:border-rose-300 hover:text-rose-500 transition"><Camera size={16} /></button>
+                  <button aria-label={t("a11yAddPhoto")} onClick={() => quotePhotoRef.current?.click()} className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:border-blue-300 hover:text-blue-500 transition"><Camera size={16} /></button>
                   <input ref={quotePhotoRef} type="file" accept="image/*" className="hidden" onChange={addQuotePhoto} />
                 </div>
               </div>
@@ -739,18 +739,18 @@ export function AppShell() {
                   <input value={quoteMechSearch} onChange={(e) => setQuoteMechSearch(e.target.value)} placeholder={t("searchMechOrSpecialtyPlaceholder")} className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-xs" />
                 </div>
                 <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                  {[{ key: "distance", labelKey: "sortDistance" }, { key: "price", labelKey: "sortPrice" }, { key: "rating", labelKey: "sortRating" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{t(opt.labelKey)}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
-                  <button onClick={() => { setOwnerMode("mechanics"); setShowFilterModal(true); }} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={11} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-3.5 h-3.5 bg-rose-600 text-white rounded-full text-[8px] flex items-center justify-center">{activeFilterCount}</span>}</button>
+                  {[{ key: "distance", labelKey: "sortDistance" }, { key: "price", labelKey: "sortPrice" }, { key: "rating", labelKey: "sortRating" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{t(opt.labelKey)}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
+                  <button onClick={() => { setOwnerMode("mechanics"); setShowFilterModal(true); }} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={11} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-3.5 h-3.5 bg-blue-600 text-white rounded-full text-[8px] flex items-center justify-center">{activeFilterCount}</span>}</button>
                 </div>
                 <div className="max-h-72 overflow-y-auto rounded-xl ring-1 ring-gray-100 divide-y divide-gray-50">
                   {quoteFilteredMechanics.map(m => {
                     const selected = quoteSelectedMechIds.includes(m.id);
                     const open = mechanicOpenStatus(m);
                     return (
-                      <button key={m.id} onClick={() => toggleQuoteMechanic(m.id)} className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition ${selected ? "bg-rose-50" : "hover:bg-gray-50"}`}>
+                      <button key={m.id} onClick={() => toggleQuoteMechanic(m.id)} className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition ${selected ? "bg-blue-50" : "hover:bg-gray-50"}`}>
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-base flex-shrink-0 bg-gradient-to-br ${BANNER_PRESETS[m.bannerPreset] || BANNER_PRESETS.blue}`}><span className="w-8 h-8 bg-white rounded-full flex items-center justify-center">{m.img || "🔧"}</span></div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-gray-800 truncate flex items-center gap-1">{m.name}{m.verified && <BadgeCheck size={11} className="text-rose-600 flex-shrink-0" />}</p>
+                          <p className="text-xs font-semibold text-gray-800 truncate flex items-center gap-1">{m.name}{m.verified && <BadgeCheck size={11} className="text-blue-600 flex-shrink-0" />}</p>
                           <p className="text-[10px] text-gray-400 truncate">{m.specialty}</p>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><MapPin size={9} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}</span>
@@ -759,7 +759,7 @@ export function AppShell() {
                             {open !== null && (<span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? t("mechOpenShort") : t("mechClosedShort")}</span>)}
                           </div>
                         </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected ? "bg-rose-600 border-rose-600" : "border-gray-300"}`}>{selected && <Check size={12} className="text-white" strokeWidth={3} />}</div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected ? "bg-blue-600 border-blue-600" : "border-gray-300"}`}>{selected && <Check size={12} className="text-white" strokeWidth={3} />}</div>
                       </button>
                     );
                   })}
@@ -768,7 +768,7 @@ export function AppShell() {
               </div>
             </div>
             <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
-              <button disabled={!quoteVehicleId || !quoteIssue.trim() || quoteSelectedMechIds.length === 0} onClick={submitQuoteRequest} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${quoteVehicleId && quoteIssue.trim() && quoteSelectedMechIds.length > 0 ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("requestQuoteBtn")} {quoteSelectedMechIds.length > 0 ? `(${t("mechanicCountSuffix", { n: String(quoteSelectedMechIds.length) })})` : ""}</button>
+              <button disabled={!quoteVehicleId || !quoteIssue.trim() || quoteSelectedMechIds.length === 0} onClick={submitQuoteRequest} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${quoteVehicleId && quoteIssue.trim() && quoteSelectedMechIds.length > 0 ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("requestQuoteBtn")} {quoteSelectedMechIds.length > 0 ? `(${t("mechanicCountSuffix", { n: String(quoteSelectedMechIds.length) })})` : ""}</button>
             </div>
           </div>
         </div>
@@ -794,9 +794,9 @@ export function AppShell() {
             {/* Giriş/kayıt ekranlarında logo standarttır: kullanıcı vazgeçip siteye dönebilmeli. */}
             <div className="max-w-md mx-auto w-full px-5 pt-5"><BrandMark /></div>
             <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
-            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
+            <div className="bg-gradient-to-b from-blue-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
               <div className="mb-4"><button onClick={goHome} className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button></div>
-              <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Wrench size={28} className="text-rose-600" /></div><h1 className="text-2xl font-bold tracking-tight text-gray-900">{t("appName")}</h1><p className="text-xs text-gray-500 -mt-1">{role === "mechanic" ? t("mechanicRole") : t("ownerRole")}</p></div>
+              <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Wrench size={28} className="text-blue-600" /></div><h1 className="text-2xl font-bold tracking-tight text-gray-900">{t("appName")}</h1><p className="text-xs text-gray-500 -mt-1">{role === "mechanic" ? t("mechanicRole") : t("ownerRole")}</p></div>
             </div>
             <div className="flex-1 px-6 py-6">
               <div className="flex bg-gray-100 rounded-xl p-1 mb-6"><button onClick={() => { setScreen("login"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "login" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("login")}</button><button onClick={() => { setScreen("signup"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "signup" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("signup")}</button></div>
@@ -809,7 +809,7 @@ export function AppShell() {
                     submitRegister / backend/routes/auth.js). Şifre alanı sadece GİRİŞ ekranında var. */}
                 {screen === "signup" && (<p className="text-xs text-gray-400 leading-relaxed">{t("signupPasswordNote")}</p>)}
                 {screen === "login" && (<div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>)}
-                {screen === "login" && (<button onClick={() => setScreen("forgotPassword")} className="text-xs text-rose-500 hover:underline block ml-auto">{t("forgotPasswordLink")}</button>)}
+                {screen === "login" && (<button onClick={() => setScreen("forgotPassword")} className="text-xs text-blue-500 hover:underline block ml-auto">{t("forgotPasswordLink")}</button>)}
                 {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
                 {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
               </div>
@@ -822,9 +822,9 @@ export function AppShell() {
           <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
             {/* Logo: kullanıcı doğrulama akışının ortasında sıkışmasın, siteye dönebilsin. */}
             <div className="w-full px-5 pt-5"><BrandMark /></div>
-            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
+            <div className="bg-gradient-to-b from-blue-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
               <div className="mb-4"><button onClick={cancelOtpVerify} className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button></div>
-              <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Lock size={28} className="text-rose-600" /></div><h1 className="text-xl font-bold tracking-tight text-gray-900">{t("otpTitle")}</h1><p className="text-xs text-gray-500">{t("otpSubtitle")}</p></div>
+              <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Lock size={28} className="text-blue-600" /></div><h1 className="text-xl font-bold tracking-tight text-gray-900">{t("otpTitle")}</h1><p className="text-xs text-gray-500">{t("otpSubtitle")}</p></div>
             </div>
             <div className="flex-1 px-6 py-6">
               <div className="space-y-3">
@@ -833,7 +833,7 @@ export function AppShell() {
                 {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
               </div>
               <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm mt-6 transition ${roleBtn} ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
-              <p className="text-center text-xs text-gray-400 mt-4"><button onClick={cancelOtpVerify} className="text-rose-500 font-medium hover:underline">{t("otpBackToLogin")}</button></p>
+              <p className="text-center text-xs text-gray-400 mt-4"><button onClick={cancelOtpVerify} className="text-blue-500 font-medium hover:underline">{t("otpBackToLogin")}</button></p>
             </div>
           </div>
         )}
@@ -843,13 +843,13 @@ export function AppShell() {
             <div className="w-full px-5 pt-5"><BrandMark /></div>
             <div className="bg-white text-gray-900 px-5 pt-6 pb-6 border-b border-gray-200 shadow-sm">
               <button onClick={() => setScreen("login")} className="flex items-center gap-1 text-gray-500 mb-4 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
-              <div className="flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center"><Lock size={22} className="text-rose-600" /></div><div><h1 className="text-lg font-bold text-gray-900">{t("forgotPasswordTitle")}</h1><p className="text-xs text-gray-500">{t("forgotPasswordSubtitle")}</p></div></div>
+              <div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center"><Lock size={22} className="text-blue-600" /></div><div><h1 className="text-lg font-bold text-gray-900">{t("forgotPasswordTitle")}</h1><p className="text-xs text-gray-500">{t("forgotPasswordSubtitle")}</p></div></div>
             </div>
             <div className="flex-1 px-6 py-6">
               <p className="text-sm text-gray-500 mb-4">{t("forgotPasswordBody")}</p>
-              <div className="relative mb-4"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder={t("emailAddressPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" /></div>
-              <button disabled={!forgotEmail} onClick={() => setScreen("resetSent")} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm transition ${forgotEmail ? "bg-rose-600 hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("sendResetLinkBtn")}</button>
-              <p className="text-center text-xs text-gray-400 mt-4">{t("rememberedPasswordNote")} <button onClick={() => setScreen("login")} className="text-rose-500 font-medium hover:underline">{t("logInLink")}</button></p>
+              <div className="relative mb-4"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder={t("emailAddressPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" /></div>
+              <button disabled={!forgotEmail} onClick={() => setScreen("resetSent")} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm transition ${forgotEmail ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("sendResetLinkBtn")}</button>
+              <p className="text-center text-xs text-gray-400 mt-4">{t("rememberedPasswordNote")} <button onClick={() => setScreen("login")} className="text-blue-500 font-medium hover:underline">{t("logInLink")}</button></p>
             </div>
           </div>
         )}
@@ -858,12 +858,12 @@ export function AppShell() {
             {/* Logo: kullanıcı doğrulama akışının ortasında sıkışmasın, siteye dönebilsin. */}
             <div className="max-w-md mx-auto w-full px-5 pt-5"><BrandMark /></div>
             <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full px-6 py-10 text-center">
-            <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mb-4"><Mail size={36} className="text-rose-500" /></div>
+            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4"><Mail size={36} className="text-blue-500" /></div>
             <h2 className="text-lg font-bold text-gray-800 mb-2">{t("checkYourEmailTitle")}</h2>
             <p className="text-sm text-gray-500 mb-1">{t("ifRegisteredNote", { email: forgotEmail })}</p>
             <p className="text-sm text-gray-500 mb-6">{t("resetLinkComingNote")}</p>
             <div className="bg-gray-100 rounded-xl p-3 text-xs text-gray-700 mb-6 flex items-start gap-2 text-left"><Bell size={14} className="flex-shrink-0 mt-0.5" /> {t("resetDemoNote")}</div>
-            <button onClick={() => setScreen("login")} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition mb-2">{t("backToLoginBtn")}</button>
+            <button onClick={() => setScreen("login")} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition mb-2">{t("backToLoginBtn")}</button>
             <button onClick={() => setScreen("forgotPassword")} className="text-xs text-gray-400 hover:text-gray-600">{t("didntGetEmailBtn")}</button>
           </div>
           </div>
@@ -887,13 +887,13 @@ export function AppShell() {
           return (
           <div className="flex-1 flex flex-col md:flex-row min-h-0">
             <div className="hidden md:flex md:w-60 md:flex-shrink-0 bg-gray-900 text-white flex-col p-4">
-              <div className="flex items-center gap-2 mb-8 px-2"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center flex-shrink-0"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold">Fix<span className="text-rose-500">perto</span></span></div>
+              <div className="flex items-center gap-2 mb-8 px-2"><div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold">Fix<span className="text-blue-500">perto</span></span></div>
               <p className="text-[10px] uppercase tracking-wider text-gray-500 px-2 mb-2">Yönetici Paneli</p>
               <nav className="flex flex-col gap-1">
                 {adminNavItems.map(item => { const Icon = item.icon; const active = adminTab === item.key; return (
                   <button key={item.key} onClick={() => setAdminTab(item.key)} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition ${active ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}>
                     <Icon size={16} />{item.label}
-                    {item.key === "tickets" && adminStats.openTickets > 0 && <span className="ml-auto bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{adminStats.openTickets}</span>}
+                    {item.key === "tickets" && adminStats.openTickets > 0 && <span className="ml-auto bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{adminStats.openTickets}</span>}
                   </button>
                 ); })}
               </nav>
@@ -901,9 +901,9 @@ export function AppShell() {
               <button onClick={adminLogout} className="mt-auto flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/5 hover:text-gray-200 transition"><LogOut size={16} /> Çıkış Yap</button>
             </div>
             <div className="md:hidden bg-gray-900 text-white px-4 pt-5 pb-3 flex-shrink-0">
-              <div className="flex items-center justify-between mb-4"><div className="flex items-center gap-2"><div className="w-7 h-7 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={14} className="text-white" /></div><span className="text-sm font-extrabold">Fix<span className="text-rose-500">perto</span> <span className="text-gray-400 font-medium">Admin</span></span></div><div className="flex items-center gap-1"><button onClick={() => setShowBroadcastModal(true)} aria-label="Duyuru gönder" className="text-gray-400 hover:text-white p-1"><Megaphone size={16} /></button><button onClick={adminLogout} aria-label="Çıkış" className="text-gray-400 hover:text-white p-1"><LogOut size={16} /></button></div></div>
+              <div className="flex items-center justify-between mb-4"><div className="flex items-center gap-2"><div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><Wrench size={14} className="text-white" /></div><span className="text-sm font-extrabold">Fix<span className="text-blue-500">perto</span> <span className="text-gray-400 font-medium">Admin</span></span></div><div className="flex items-center gap-1"><button onClick={() => setShowBroadcastModal(true)} aria-label="Duyuru gönder" className="text-gray-400 hover:text-white p-1"><Megaphone size={16} /></button><button onClick={adminLogout} aria-label="Çıkış" className="text-gray-400 hover:text-white p-1"><LogOut size={16} /></button></div></div>
               <div className="flex gap-1 bg-white/5 rounded-xl p-1">
-                {adminNavItems.map(item => (<button key={item.key} onClick={() => setAdminTab(item.key)} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition relative ${adminTab === item.key ? "bg-white text-gray-900" : "text-gray-400"}`}>{item.label.split(" ")[0]}{item.key === "tickets" && adminStats.openTickets > 0 && <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{adminStats.openTickets}</span>}</button>))}
+                {adminNavItems.map(item => (<button key={item.key} onClick={() => setAdminTab(item.key)} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition relative ${adminTab === item.key ? "bg-white text-gray-900" : "text-gray-400"}`}>{item.label.split(" ")[0]}{item.key === "tickets" && adminStats.openTickets > 0 && <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{adminStats.openTickets}</span>}</button>))}
               </div>
             </div>
             <div className="flex-1 overflow-y-auto bg-gray-50">
@@ -926,14 +926,14 @@ export function AppShell() {
                         { label: "Ortalama Puan", value: adminStats.avgRating, icon: Star, note: null },
                       ].map((c, i) => { const Icon = c.icon; return (
                         <div key={i} className="bg-white border border-gray-200 rounded-2xl p-4">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.alert ? "bg-red-50" : "bg-rose-50"}`}><Icon size={16} className={c.alert ? "text-red-500" : "text-rose-600"} /></div>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.alert ? "bg-red-50" : "bg-blue-50"}`}><Icon size={16} className={c.alert ? "text-red-500" : "text-blue-600"} /></div>
                           <p className="text-2xl font-bold text-gray-900">{c.value}</p>
                           <p className="text-xs text-gray-500 mt-0.5">{c.label}</p>
                           {c.note && <p className="text-[10px] text-gray-400 mt-1">{c.note}</p>}
                         </div>
                       ); })}
                     </div>
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2"><LifeBuoy size={15} className="text-rose-500" /> Son Destek Talepleri</h2>
+                    <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2"><LifeBuoy size={15} className="text-blue-500" /> Son Destek Talepleri</h2>
                     <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 mb-8">
                       {supportTickets.slice(0, 5).map(tk => (
                         <button key={tk.id} onClick={() => { setAdminTab("tickets"); setSelectedTicketId(tk.id); setAdminTicketNote(tk.adminNote || ""); }} className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition">
@@ -944,7 +944,7 @@ export function AppShell() {
                         </button>
                       ))}
                     </div>
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2"><Megaphone size={15} className="text-rose-500" /> Son Duyurular</h2>
+                    <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2"><Megaphone size={15} className="text-blue-500" /> Son Duyurular</h2>
                     <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
                       {broadcastLog.length === 0 && <p className="text-center text-gray-400 text-sm py-8">Henüz duyuru gönderilmedi</p>}
                       {broadcastLog.slice(0, 5).map(b => (
@@ -962,17 +962,17 @@ export function AppShell() {
                       <div>
                         <div className="flex items-center justify-between mb-4">
                           <button onClick={() => { setAdminProfileViewUser(null); setEditingProfileField(null); }} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 text-sm transition"><ChevronLeft size={16} /> Kullanıcılara Dön</button>
-                          <button onClick={() => openAdminAnalyze(viewingUser)} className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 transition"><TrendingUp size={14} /> Analizi Görüntüle</button>
+                          <button onClick={() => openAdminAnalyze(viewingUser)} className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition"><TrendingUp size={14} /> Analizi Görüntüle</button>
                         </div>
                         <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-5">
                           <div className="flex items-center gap-3 mb-1">
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl font-bold ${viewingUser.type === "mechanic" ? "bg-rose-50 text-rose-600" : "bg-gray-100 text-gray-600"}`}>{viewingUser.type === "mechanic" ? <Wrench size={22} /> : <Car size={22} />}</div>
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl font-bold ${viewingUser.type === "mechanic" ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-600"}`}>{viewingUser.type === "mechanic" ? <Wrench size={22} /> : <Car size={22} />}</div>
                             <div className="flex-1 min-w-0">
                               <h2 className="text-lg font-bold text-gray-900 truncate">{viewingUser.name}</h2>
                               <div className="flex items-center gap-1.5 flex-wrap mt-1">
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{viewingUser.type === "mechanic" ? "Tamirci" : "Araç Sahibi"}</span>
                                 {viewingUser.status === "suspended" && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">Askıda</span>}
-                                {viewingUser.type === "mechanic" && viewingUser.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 flex items-center gap-0.5"><BadgeCheck size={10} /> Doğrulanmış</span>}
+                                {viewingUser.type === "mechanic" && viewingUser.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 flex items-center gap-0.5"><BadgeCheck size={10} /> Doğrulanmış</span>}
                               </div>
                             </div>
                           </div>
@@ -1021,7 +1021,7 @@ export function AppShell() {
                             </div>
                             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1 flex items-center justify-between">
                               <span>Sunduğu Hizmetler</span>
-                              <button onClick={() => addMechService(viewingUser.id)} className="normal-case text-rose-600 font-semibold flex items-center gap-1"><Plus size={11} /> Ekle</button>
+                              <button onClick={() => addMechService(viewingUser.id)} className="normal-case text-blue-600 font-semibold flex items-center gap-1"><Plus size={11} /> Ekle</button>
                             </p>
                             <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
                               {(mechanicsList.find(m => m.id === viewingUser.id)?.services || []).length === 0 ? (
@@ -1062,9 +1062,9 @@ export function AppShell() {
                                 <div className="space-y-2">
                                   {viewingUser.verificationDocs.map((d, i) => (
                                     <div key={i} className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-3 py-2.5">
-                                      <FileText size={14} className="text-rose-500 flex-shrink-0" />
+                                      <FileText size={14} className="text-blue-500 flex-shrink-0" />
                                       <div className="flex-1 min-w-0"><p className="text-xs font-medium text-gray-700 truncate">{d.name}</p><p className="text-[10px] text-gray-400">{d.type} · {d.uploadedDate}</p></div>
-                                      <button onClick={() => setToast({ type: "info", text: "📄 Bu bir demo belgesidir, gerçek dosya içeriği bulunmuyor." })} className="text-[11px] font-medium text-rose-600 hover:text-rose-700 flex-shrink-0">Görüntüle</button>
+                                      <button onClick={() => setToast({ type: "info", text: "📄 Bu bir demo belgesidir, gerçek dosya içeriği bulunmuyor." })} className="text-[11px] font-medium text-blue-600 hover:text-blue-700 flex-shrink-0">Görüntüle</button>
                                     </div>
                                   ))}
                                 </div>
@@ -1093,7 +1093,7 @@ export function AppShell() {
                         <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
                           {adminFilteredUsers.map(u => (
                             <div key={`${u.type}-${u.id}`} className="px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${u.type === "mechanic" ? "bg-rose-50 text-rose-600" : "bg-gray-100 text-gray-600"}`}>{u.type === "mechanic" ? <Wrench size={15} /> : <Car size={15} />}</div>
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${u.type === "mechanic" ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-600"}`}>{u.type === "mechanic" ? <Wrench size={15} /> : <Car size={15} />}</div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5"><p className="text-sm font-semibold text-gray-800 truncate">{u.name}</p>{u.status === "suspended" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500 flex-shrink-0">Askıda</span>}</div>
                                 <p className="text-xs text-gray-400 truncate">{u.email} · {u.phone}</p>
@@ -1140,7 +1140,7 @@ export function AppShell() {
                               {adminTicketAnalytics.typeBreakdown.map(([type, count]) => { const max = adminTicketAnalytics.typeBreakdown[0][1]; return (
                                 <div key={type} className="flex items-center gap-3">
                                   <span className="text-xs text-gray-600 w-32 flex-shrink-0 truncate">{ADMIN_TICKET_TYPE_LABELS[type] || type}</span>
-                                  <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
+                                  <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
                                   <span className="text-xs font-semibold text-gray-700 w-6 text-right flex-shrink-0">{count}</span>
                                 </div>
                               ); })}
@@ -1229,7 +1229,7 @@ export function AppShell() {
                           </div>
                           {/* HUNİ: her adımda TEKİL ziyaretçi. Yüzdeler ilk adıma göre. */}
                           <div className="bg-white border border-gray-200 rounded-2xl p-5">
-                            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><TrendingUp size={15} className="text-rose-500" /> Dönüşüm Hunisi</h3>
+                            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><TrendingUp size={15} className="text-blue-500" /> Dönüşüm Hunisi</h3>
                             <div className="space-y-2">
                               {(o.funnel || []).map((step, i) => {
                                 const pct = top > 0 ? Math.round((step.count / top) * 100) : 0;
@@ -1241,7 +1241,7 @@ export function AppShell() {
                                       <span className="text-gray-600">{funnelLabels[step.key]}</span>
                                       <span className="font-semibold text-gray-900">{step.count} <span className="text-gray-400 font-normal">({pct}%)</span>{stepPct != null && <span className="text-gray-400 font-normal"> · önceki adımdan {stepPct}%</span>}</span>
                                     </div>
-                                    <div className="h-6 bg-gray-100 rounded-lg overflow-hidden"><div className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-lg" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
+                                    <div className="h-6 bg-gray-100 rounded-lg overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
                                   </div>
                                 );
                               })}
@@ -1253,7 +1253,7 @@ export function AppShell() {
                               <h3 className="text-sm font-bold text-gray-800 mb-3">Günlük Ziyaretçi</h3>
                               <div className="flex items-end gap-1 h-24">
                                 {a.series.map(d => (
-                                  <div key={d.day} className="flex-1 bg-rose-100 hover:bg-rose-300 rounded-t transition relative group" style={{ height: `${Math.max(4, (d.visitors / maxSeries) * 100)}%` }} title={`${d.day}: ${d.visitors} ziyaretçi, ${d.searches} arama, ${d.appointments} randevu`} />
+                                  <div key={d.day} className="flex-1 bg-blue-100 hover:bg-blue-300 rounded-t transition relative group" style={{ height: `${Math.max(4, (d.visitors / maxSeries) * 100)}%` }} title={`${d.day}: ${d.visitors} ziyaretçi, ${d.searches} arama, ${d.appointments} randevu`} />
                                 ))}
                               </div>
                               <div className="flex justify-between text-[10px] text-gray-400 mt-1.5"><span>{a.series[0]?.day}</span><span>{a.series[a.series.length - 1]?.day}</span></div>
@@ -1275,7 +1275,7 @@ export function AppShell() {
                               Kişisel veri yok — yalnızca marka/model metinleri ve sayılar. */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div className="bg-white border border-gray-200 rounded-2xl p-5">
-                              <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Scale size={15} className="text-rose-500" /> En Çok Karşılaştırılan Çiftler</h3>
+                              <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Scale size={15} className="text-blue-500" /> En Çok Karşılaştırılan Çiftler</h3>
                               {(a.comparisons?.pairs || []).length === 0 ? (
                                 <p className="text-xs text-gray-400 py-4 text-center">Henüz karşılaştırma verisi yok.</p>
                               ) : (
@@ -1359,26 +1359,26 @@ export function AppShell() {
                     <h2 className="text-lg font-bold text-gray-900 mb-1 pt-2 border-t border-gray-200">Büyüme ve Gelir</h2>
                     <p className="text-sm text-gray-500 mb-6">Son 6 ay, tahmini</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center mb-3"><Banknote size={16} className="text-rose-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.estCommission.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Tahmini Platform Geliri (%{Math.round(PLATFORM_COMMISSION_RATE * 100)} komisyon)</p></div>
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center mb-3"><TrendingUp size={16} className="text-rose-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.estGMV.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Tahmini İşlem Hacmi (GMV) · {adminRevenueStats.completedCount} tamamlanan randevu</p></div>
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center mb-3"><Calendar size={16} className="text-rose-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.avgTicket.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Ortalama İşlem Bedeli</p></div>
+                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center mb-3"><Banknote size={16} className="text-blue-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.estCommission.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Tahmini Platform Geliri (%{Math.round(PLATFORM_COMMISSION_RATE * 100)} komisyon)</p></div>
+                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center mb-3"><TrendingUp size={16} className="text-blue-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.estGMV.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Tahmini İşlem Hacmi (GMV) · {adminRevenueStats.completedCount} tamamlanan randevu</p></div>
+                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center mb-3"><Calendar size={16} className="text-blue-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.avgTicket.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Ortalama İşlem Bedeli</p></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="bg-white border border-gray-200 rounded-2xl p-4"><h3 className="text-xs font-semibold text-gray-700 mb-3">Toplam Kullanıcı (kümülatif)</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.signups} colorClass="bg-gray-800" /></div>
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><h3 className="text-xs font-semibold text-gray-700 mb-3">Aylık Randevu</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.appointments} colorClass="bg-rose-500" /></div>
+                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><h3 className="text-xs font-semibold text-gray-700 mb-3">Aylık Randevu</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.appointments} colorClass="bg-blue-500" /></div>
                       <div className="bg-white border border-gray-200 rounded-2xl p-4"><h3 className="text-xs font-semibold text-gray-700 mb-3">Aylık Tahmini Gelir</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.revenue} colorClass="bg-green-500" valueFormat={(v) => `${(v / 1000).toFixed(1)}k₺`} /></div>
                     </div>
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2"><MapPin size={15} className="text-rose-500" /> Şehir / Bölge Dağılımı</h2>
+                    <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2"><MapPin size={15} className="text-blue-500" /> Şehir / Bölge Dağılımı</h2>
                     <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2.5">
                       {adminRegionBreakdown.map(([city, count]) => { const max = adminRegionBreakdown[0][1]; return (
                         <div key={city} className="flex items-center gap-3">
                           <span className="text-xs text-gray-600 w-24 flex-shrink-0 truncate">{city}</span>
-                          <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
+                          <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
                           <span className="text-xs font-semibold text-gray-700 w-6 text-right flex-shrink-0">{count}</span>
                         </div>
                       ); })}
                     </div>
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Share2 size={15} className="text-rose-500" /> Paylaşım Performansı</h2>
+                    <h2 className="text-sm font-semibold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Share2 size={15} className="text-blue-500" /> Paylaşım Performansı</h2>
                     {!shareStats ? (
                       <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Yükleniyor…</div>
                     ) : shareStats.totals.shares === 0 ? (
@@ -1420,7 +1420,7 @@ export function AppShell() {
                         </div>
                       </>
                     )}
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Eye size={15} className="text-rose-500" /> Sayfa Ziyaretleri</h2>
+                    <h2 className="text-sm font-semibold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Eye size={15} className="text-blue-500" /> Sayfa Ziyaretleri</h2>
                     {!viewStats ? (
                       <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Yükleniyor…</div>
                     ) : viewStats.totals.views === 0 ? (
@@ -1478,7 +1478,7 @@ export function AppShell() {
                       ) : (
                         <div className="space-y-2">
                           {adminBlogPosts.map(post => (
-                            <div key={post.id} className={`border rounded-xl p-3 transition ${adminBlogForm.id === post.id ? "border-rose-300 bg-rose-50/40" : "border-gray-100"}`}>
+                            <div key={post.id} className={`border rounded-xl p-3 transition ${adminBlogForm.id === post.id ? "border-blue-300 bg-blue-50/40" : "border-gray-100"}`}>
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
                                   <p className="text-sm font-semibold text-gray-800 truncate">{post.title}</p>
@@ -1487,7 +1487,7 @@ export function AppShell() {
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${post.status === "published" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>{post.status === "published" ? "Yayında" : "Taslak"}</span>
                               </div>
                               <div className="flex items-center gap-3 mt-2 text-[11px]">
-                                <button onClick={() => editBlogPost(post)} className="text-rose-600 font-semibold hover:underline">Düzenle</button>
+                                <button onClick={() => editBlogPost(post)} className="text-blue-600 font-semibold hover:underline">Düzenle</button>
                                 <button onClick={() => deleteBlogPost(post)} className="text-gray-400 hover:text-red-500">Sil</button>
                                 <span className="text-gray-300 ml-auto flex items-center gap-1"><Eye size={11} /> {post.views || 0}</span>
                               </div>
@@ -1519,7 +1519,7 @@ export function AppShell() {
                       </div>
                       <div className="flex gap-2 mt-4">
                         <button onClick={() => saveBlogPost("draft")} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">Taslak kaydet</button>
-                        <button onClick={() => saveBlogPost("published")} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">Yayınla</button>
+                        <button onClick={() => saveBlogPost("published")} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">Yayınla</button>
                       </div>
                       {adminBlogForm.id && <button onClick={cancelBlogEdit} className="w-full mt-2 text-xs text-gray-400 hover:text-gray-700">Vazgeç</button>}
                     </div>
@@ -1604,7 +1604,7 @@ export function AppShell() {
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[88vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-start justify-between mb-1">
                     <h3 className="text-base font-bold text-gray-900">Kullanıcıyı Düzenle</h3>
-                    <button onClick={() => openAdminProfileView(selectedAdminUser)} className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1 flex-shrink-0"><Eye size={12} /> Tam Profili Görüntüle</button>
+                    <button onClick={() => openAdminProfileView(selectedAdminUser)} className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 flex-shrink-0"><Eye size={12} /> Tam Profili Görüntüle</button>
                   </div>
                   <p className="text-xs text-gray-400 mb-4">{selectedAdminUser.type === "mechanic" ? "Tamirci" : "Araç Sahibi"} hesabı</p>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Hesap Bilgileri</p>
@@ -1623,7 +1623,7 @@ export function AppShell() {
                         <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">Başlangıç Fiyatı (₺)</label><input value={adminEditForm.price} onChange={(e) => setAdminEditForm({ ...adminEditForm, price: e.target.value.replace(/[^0-9]/g, "") })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                         <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">Doğrulama Rozeti</label>
                           <div className="flex gap-2">
-                            <button onClick={() => setAdminEditForm({ ...adminEditForm, verified: true })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 ${adminEditForm.verified ? "bg-rose-50 border-rose-200 text-rose-600" : "border-gray-200 text-gray-400"}`}><BadgeCheck size={13} /> Doğrulanmış</button>
+                            <button onClick={() => setAdminEditForm({ ...adminEditForm, verified: true })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 ${adminEditForm.verified ? "bg-blue-50 border-blue-200 text-blue-600" : "border-gray-200 text-gray-400"}`}><BadgeCheck size={13} /> Doğrulanmış</button>
                             <button onClick={() => setAdminEditForm({ ...adminEditForm, verified: false })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition ${!adminEditForm.verified ? "bg-gray-100 border-gray-300 text-gray-700" : "border-gray-200 text-gray-400"}`}>Doğrulanmamış</button>
                           </div>
                         </div>
@@ -1635,9 +1635,9 @@ export function AppShell() {
                         <div className="space-y-2">
                           {selectedAdminUser.verificationDocs.map((d, i) => (
                             <div key={i} className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-3 py-2.5">
-                              <FileText size={14} className="text-rose-500 flex-shrink-0" />
+                              <FileText size={14} className="text-blue-500 flex-shrink-0" />
                               <div className="flex-1 min-w-0"><p className="text-xs font-medium text-gray-700 truncate">{d.name}</p><p className="text-[10px] text-gray-400">{d.type} · {d.uploadedDate}</p></div>
-                              <button onClick={() => setToast({ type: "info", text: "📄 Bu bir demo belgesidir, gerçek dosya içeriği bulunmuyor." })} className="text-[11px] font-medium text-rose-600 hover:text-rose-700 flex-shrink-0">Görüntüle</button>
+                              <button onClick={() => setToast({ type: "info", text: "📄 Bu bir demo belgesidir, gerçek dosya içeriği bulunmuyor." })} className="text-[11px] font-medium text-blue-600 hover:text-blue-700 flex-shrink-0">Görüntüle</button>
                             </div>
                           ))}
                         </div>
@@ -1734,7 +1734,7 @@ export function AppShell() {
             {showBroadcastModal && (
               <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[85] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setShowBroadcastModal(false)}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2"><Megaphone size={16} className="text-rose-600" /> Duyuru Gönder</h3>
+                  <h3 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2"><Megaphone size={16} className="text-blue-600" /> Duyuru Gönder</h3>
                   <p className="text-xs text-gray-400 mb-4">Tüm platforma ya da seçtiğin gruba anlık duyuru gönder (demo).</p>
                   <label className="text-[11px] font-medium text-gray-500 mb-1 block">Kime</label>
                   <div className="flex gap-2 mb-3">
@@ -1772,7 +1772,7 @@ export function AppShell() {
                           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Randevu Durum Dağılımı</p>
                           <div className="bg-gray-50 rounded-2xl p-4 mb-5 space-y-2">
                             {Object.entries(adminUserAnalytics.byStatus).map(([status, count]) => (
-                              <div key={status} className="flex items-center gap-3"><span className="text-xs text-gray-600 w-32 flex-shrink-0 truncate">{status}</span><div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.max(6, (count / adminUserAnalytics.apptCount) * 100)}%` }} /></div><span className="text-xs font-semibold text-gray-700 w-5 text-right flex-shrink-0">{count}</span></div>
+                              <div key={status} className="flex items-center gap-3"><span className="text-xs text-gray-600 w-32 flex-shrink-0 truncate">{status}</span><div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.max(6, (count / adminUserAnalytics.apptCount) * 100)}%` }} /></div><span className="text-xs font-semibold text-gray-700 w-5 text-right flex-shrink-0">{count}</span></div>
                             ))}
                           </div>
                         </>
@@ -1801,7 +1801,7 @@ export function AppShell() {
                           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Randevu Durum Dağılımı</p>
                           <div className="bg-gray-50 rounded-2xl p-4 mb-5 space-y-2">
                             {Object.entries(adminUserAnalytics.byStatus).map(([status, count]) => (
-                              <div key={status} className="flex items-center gap-3"><span className="text-xs text-gray-600 w-32 flex-shrink-0 truncate">{status}</span><div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.max(6, (count / adminUserAnalytics.apptCount) * 100)}%` }} /></div><span className="text-xs font-semibold text-gray-700 w-5 text-right flex-shrink-0">{count}</span></div>
+                              <div key={status} className="flex items-center gap-3"><span className="text-xs text-gray-600 w-32 flex-shrink-0 truncate">{status}</span><div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.max(6, (count / adminUserAnalytics.apptCount) * 100)}%` }} /></div><span className="text-xs font-semibold text-gray-700 w-5 text-right flex-shrink-0">{count}</span></div>
                             ))}
                           </div>
                         </>
@@ -1826,7 +1826,7 @@ export function AppShell() {
             duruyor; tur onun üstünde bulanık bir katmanla açılıyor. */}
         {screen === "owner" && (
           <>
-            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
+            <div className="bg-gradient-to-b from-blue-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-3 max-w-7xl mx-auto w-full relative md:hidden">
                 <span className="text-xs text-gray-500">{t("greetingHello")}{ownerProfile.name ? `, ${ownerProfile.name}` : ""} 👋</span>
                 <div className="flex items-center gap-2.5">
@@ -1835,7 +1835,7 @@ export function AppShell() {
                 </div>
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
-                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></button>
+                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-blue-600">perto</span></span></button>
                 {/* GÜVENLİK/UX DÜZELTMESİ (kullanıcı geri bildirimi): bu "Tamirci Ara / Araç Ara / İş
                     İlanları" hızlı-arama sekmeleri sadece keşif (search) ekranında anlamlı — önceden
                     ownerTab ne olursa olsun (ör. Randevularım) hep görünüyordu, sadece "aktif" vurgusu
@@ -1846,7 +1846,7 @@ export function AppShell() {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
                     return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} aria-current={active ? "page" : undefined} className={`relative flex items-center gap-2 pb-3 pt-1 transition-colors ${active ? "text-gray-900" : "text-gray-500 hover:text-gray-900"}`}><Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="flex-shrink-0" /><span className="text-sm font-semibold">{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-gray-900 rounded-full" />}</button>);
                   })}
-                  <button onClick={() => openQuoteModal()} className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition whitespace-nowrap shadow-sm"><Users size={15} strokeWidth={2} /> {t("multiQuoteBtn")}</button>
+                  <button onClick={() => openQuoteModal()} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition whitespace-nowrap shadow-sm"><Users size={15} strokeWidth={2} /> {t("multiQuoteBtn")}</button>
                 </div>
                 )}
                 {/* MİSAFİR GEZİNME: giriş yapmamış ziyaretçiye bildirim zili/profil yerine
@@ -1860,7 +1860,7 @@ export function AppShell() {
                   ) : (
                     <>
                       <button onClick={() => openAuthGate("", "login")} className="text-sm font-semibold text-gray-700 hover:text-gray-900 px-3 py-2 rounded-full hover:bg-gray-100 transition whitespace-nowrap">{t("authGateLoginTab")}</button>
-                      <button onClick={() => openAuthGate("", "signup")} className="text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-full transition whitespace-nowrap">{t("authGateSignupTab")}</button>
+                      <button onClick={() => openAuthGate("", "signup")} className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full transition whitespace-nowrap">{t("authGateSignupTab")}</button>
                     </>
                   )}
                 </div>
@@ -1870,18 +1870,18 @@ export function AppShell() {
                   <div className={`transition-all duration-300 ease-out overflow-hidden ${heroCollapsed ? "max-h-0 opacity-0 -translate-y-3 mb-0 pointer-events-none" : "max-h-56 opacity-100 translate-y-0 mb-4"}`}>
                     <div className="flex flex-col items-center gap-2 mb-4 md:hidden">
                       <div className="inline-flex items-center gap-0.5 bg-gray-100 rounded-full p-1">
-                        <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
-                        <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
-                        <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
+                        <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
+                        <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
+                        <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                       </div>
-                      <button onClick={() => openQuoteModal()} className="px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
+                      <button onClick={() => openQuoteModal()} className="px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
                     </div>
                     <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("searchHeroTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
                   </div>
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center gap-2 p-2 pl-2.5 md:hidden">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${ownerMode === "cars" ? "bg-rose-100" : "bg-rose-50"}`}>{ownerMode === "cars" ? <Car size={18} className="text-rose-700" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-rose-600" /> : <Wrench size={18} className="text-rose-600" />}</div>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${ownerMode === "cars" ? "bg-blue-100" : "bg-blue-50"}`}>{ownerMode === "cars" ? <Car size={18} className="text-blue-700" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-blue-600" /> : <Wrench size={18} className="text-blue-600" />}</div>
                     <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="flex-1 px-1 py-2 text-gray-800 text-sm focus:outline-none bg-transparent min-w-0" />
-                    <button onClick={() => setShowFilterModal(true)} aria-label={t("filterBtn")} className="relative flex-shrink-0 w-10 h-10 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-50 transition"><SlidersHorizontal size={16} />{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}</button><button onClick={(e) => e.currentTarget.blur()} className={`flex-shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition ${ownerMode === "cars" ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("searchBtn")}</button>
+                    <button onClick={() => setShowFilterModal(true)} aria-label={t("filterBtn")} className="relative flex-shrink-0 w-10 h-10 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-50 transition"><SlidersHorizontal size={16} />{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}</button><button onClick={(e) => e.currentTarget.blur()} className={`flex-shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition ${ownerMode === "cars" ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-600 hover:bg-blue-700"}`}>{t("searchBtn")}</button>
                   </div>
                   <div className={`hidden md:flex items-stretch bg-white rounded-full border border-gray-300 shadow-lg divide-x divide-gray-200 mx-auto overflow-hidden ${ownerMode === "mechanics" ? "max-w-3xl" : "max-w-2xl"}`}>
                     <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("brandFieldLabel") : ownerMode === "cars" ? t("brandModelFieldLabel") : t("positionFieldLabel")}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
@@ -1894,9 +1894,9 @@ export function AppShell() {
                   <button onClick={() => setShowFilterModal(true)} className="flex items-center gap-2 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
                     <SlidersHorizontal size={15} className="text-gray-500" />
                     {t("filterBtn")}
-                    {(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="w-5 h-5 bg-rose-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}
+                    {(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="w-5 h-5 bg-blue-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}
                   </button>
-                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
+                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
                   </div>
                 </>)}
                 {ownerTab !== "search" && (<button onClick={() => setOwnerTab("search")} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 text-sm mb-3 transition"><ChevronLeft size={16} /> {t("back")}</button>)}
@@ -1911,8 +1911,8 @@ export function AppShell() {
                 {ownerTab === "market" && (
                   <div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Tag size={17} className="text-rose-500" /> {t("myListingsHeading")} <span className="text-gray-300 font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
-                      <button onClick={startSellFlow} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
+                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Tag size={17} className="text-blue-500" /> {t("myListingsHeading")} <span className="text-gray-300 font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
+                      <button onClick={startSellFlow} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
                     </div>
                     {listings.filter(isMyListing).length === 0 ? (
                       <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>
@@ -1930,13 +1930,13 @@ export function AppShell() {
                     <div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8 space-y-8">
                       {favMechs.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Wrench size={17} className="text-rose-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Wrench size={17} className="text-blue-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}</div>
                         </div>
                       )}
                       {favListings.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Car size={17} className="text-rose-500" /> {t("favoriteListingsLabel")} <span className="text-gray-300 font-normal text-sm">({favListings.length})</span></h2>
+                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Car size={17} className="text-blue-500" /> {t("favoriteListingsLabel")} <span className="text-gray-300 font-normal text-sm">({favListings.length})</span></h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{favListings.map(l => (<ListingCard key={l.id} l={l} />))}</div>
                         </div>
                       )}
@@ -1967,7 +1967,7 @@ export function AppShell() {
                 görünümü demekti — kullanıcı her sayfada geri okunu başka yerde arıyordu.
                 Artık araç sahibi profili ve tamirci profiliyle birebir aynı: solda geri, ortada logo. */}
             <PageTopBar onBack={() => { if (ownerSettingsTab === "support") setOwnerSettingsTab("settings"); else setScreen("ownerProfilePage"); }} />
-            <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50 relative">
+            <div className="h-24 md:h-28 bg-gradient-to-br from-gray-100 via-gray-50 to-blue-50 relative">
               
               
             </div>
@@ -1990,17 +1990,17 @@ export function AppShell() {
                   <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="pr-2 min-w-0">
-                        <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Sparkles size={14} className="text-rose-500" /> {t("recConsentTitle")}</h4>
+                        <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Sparkles size={14} className="text-blue-500" /> {t("recConsentTitle")}</h4>
                         <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t("recConsentDesc")}</p>
                       </div>
                       <button onClick={() => setRecsConsent(!recommendations.consent)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0">
-                        <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-rose-600" : "bg-gray-200"}`}>
+                        <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-blue-600" : "bg-gray-200"}`}>
                           <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${recommendations.consent ? "left-6" : "left-1"}`} />
                         </div>
                       </button>
                     </div>
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-gray-600 hover:text-rose-600 transition">{t("recProfileShowBtn")}</button>
+                      <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-gray-600 hover:text-blue-600 transition">{t("recProfileShowBtn")}</button>
                       {recsProfile && (
                         <div className="mt-2">
                           {recsProfile.signals.length === 0 ? (
@@ -2021,8 +2021,8 @@ export function AppShell() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-500" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-blue-500" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-blue-500" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                   {(() => {
                     // notifyListingUpdates: "izlediğim ilan değişti" — "benim ilanıma teklif geldi"den (notifyOffers)
                     // farklı bir şey, bu yüzden ayrı bir anahtar (bkz. notifyFavoriteWatchers).
@@ -2034,12 +2034,12 @@ export function AppShell() {
                     };
                     return (
                       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
-                        <div className="flex items-center justify-between"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-500" /> {t("notifBellTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? t("notifPermDeniedHint") : allNotifsOn ? t("allNotifTypesOnHint") : t("dontMissApptUpdatesHint")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
+                        <div className="flex items-center justify-between"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-blue-500" /> {t("notifBellTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? t("notifPermDeniedHint") : allNotifsOn ? t("allNotifTypesOnHint") : t("dontMissApptUpdatesHint")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
                         <button onClick={() => setOwnerNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 hover:text-gray-700 transition"><span>{t("showNotifTypesBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
                         {ownerNotifDetailsOpen && (
                           <div className="mt-3 space-y-2.5">
                             {notifOpts.map(opt => (
-                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setOwnerSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
+                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setOwnerSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
                             ))}
                           </div>
                         )}
@@ -2047,8 +2047,8 @@ export function AppShell() {
                     );
                   })()}
                   <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm">{t("siteLanguage")}</h4><LangSwitch /></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-rose-500" /> {t("messagingLanguageTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{t("ownerMessagingLangHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setOwnerLang(l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${ownerLang === l ? "bg-white text-rose-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className="text-rose-500" /> {t("appearanceDarkModeTitle")}</h4><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-blue-500" /> {t("messagingLanguageTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{t("ownerMessagingLangHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setOwnerLang(l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${ownerLang === l ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
+                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className="text-blue-500" /> {t("appearanceDarkModeTitle")}</h4><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
                   <button onClick={() => setOwnerAccountOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Lock size={15} className="text-gray-400" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${ownerAccountOpen ? "rotate-90" : ""}`} /></button>
                   {ownerAccountOpen && (<>
                     {/* HESAP GÜVENLİĞİ — açık oturumlar ve e-posta değişimi.
@@ -2064,7 +2064,7 @@ export function AppShell() {
                       <KnownDevices devices={knownDevices} loading={devicesLoading} onLoad={loadKnownDevices} t={t} lang={lang} />
                     </div>
                     <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordTitle")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setOwnerSettingsTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
+                    <button onClick={() => setOwnerSettingsTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-blue-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
                     <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                     <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                   </>)}
@@ -2099,7 +2099,7 @@ export function AppShell() {
                 ÖNCE: 4 kırılımlı dar mobil kolon (max-w-md), 5 adet 9 piksellik sekme ve alt
                 sayfalara "satır bağlantısı" ile inen bir menü vardı — telefonda mantıklı, geniş
                 ekranda hem okunmaz hem gereksiz derindi. Artık alt sayfalar gerçek sekme. */}
-            <div className="h-24 md:h-32 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
+            <div className="h-24 md:h-32 bg-gradient-to-br from-blue-100 via-blue-50 to-gray-100 relative">
               {/* İKİNCİ LOGO KALDIRILDI (kullanıcı ekran görüntüsüyle bildirdi: "Fixperto logosu
                   geri tuşunun arkasında kalıyor, üst üste biniyor").
                   Bu sayfaya standart üst çubuk (PageTopBar) eklendiğinde o çubuk kendi logosunu
@@ -2125,7 +2125,7 @@ export function AppShell() {
             <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10">
               <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-rose-50 flex items-center justify-center text-2xl font-bold text-rose-600 overflow-hidden flex-shrink-0">
+                  <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-blue-50 flex items-center justify-center text-2xl font-bold text-blue-600 overflow-hidden flex-shrink-0">
                     {ownerProfile.photo ? <img decoding="async" src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}
                     <input ref={ownerPhotoRef} type="file" accept="image/*" onChange={ownerPhotoUpload} className="hidden" />
                     <button onClick={() => ownerPhotoRef.current?.click()} aria-label={t("changePhotoBtn")} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={18} /></button>
@@ -2139,7 +2139,7 @@ export function AppShell() {
                   <div className="hidden sm:flex items-center gap-5 flex-shrink-0">
                     {[
                       { n: vehicles.length, l: t("myVehicles"), c: "text-gray-900" },
-                      { n: allReminders.filter(r => r.urgent).length, l: t("upcomingMaintenanceLabel"), c: allReminders.filter(r => r.urgent).length > 0 ? "text-rose-600" : "text-gray-900" },
+                      { n: allReminders.filter(r => r.urgent).length, l: t("upcomingMaintenanceLabel"), c: allReminders.filter(r => r.urgent).length > 0 ? "text-blue-600" : "text-gray-900" },
                       { n: appointments.filter(isMyOwnerAppt).length, l: t("appointments"), c: "text-gray-900" },
                     ].map((x, i) => (
                       <div key={i} className="text-center">
@@ -2177,9 +2177,9 @@ export function AppShell() {
                   const active = ownerProfileTab === tb.key
                     || (tb.key === "info" && ["applications", "myReviews"].includes(ownerProfileTab));
                   return (
-                    <button key={tb.key} onClick={() => { setOwnerProfileTab(tb.key); if (tb.key === "vehicles") setSelectedVehicleId(null); }} className={`relative px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-rose-600 border-rose-500" : "text-gray-500 border-transparent hover:text-rose-600 hover:border-rose-200"}`}>
+                    <button key={tb.key} onClick={() => { setOwnerProfileTab(tb.key); if (tb.key === "vehicles") setSelectedVehicleId(null); }} className={`relative px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-blue-600 border-blue-500" : "text-gray-500 border-transparent hover:text-blue-600 hover:border-blue-200"}`}>
                       <Icon size={14} /> {tb.label}
-                      {tb.badge > 0 && <span className="ml-0.5 min-w-[16px] h-4 px-1 bg-rose-600 rounded-full text-white flex items-center justify-center text-[9px] font-bold">{tb.badge}</span>}
+                      {tb.badge > 0 && <span className="ml-0.5 min-w-[16px] h-4 px-1 bg-blue-600 rounded-full text-white flex items-center justify-center text-[9px] font-bold">{tb.badge}</span>}
                     </button>
                   );
                 })}
@@ -2196,14 +2196,14 @@ export function AppShell() {
                     <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
                       <h3 className="font-bold text-gray-900 text-base mb-4">{t("myInfo")}</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("fullNameShortPlaceholder")}</span><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder={t("fullNameShortPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
-                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("emailPlaceholder")}</span><input value={ownerProfile.email} readOnly onClick={() => setEmailChangeForm({ open: true, email: ownerProfile.email || "", password: "", loading: false })} title={t("changeEmailDesc")} placeholder={t("emailPlaceholder")} type="email" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
-                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample2")}</span><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} onBlur={(e) => normalizePhoneField(e.target.value, (v) => updateMyOwnerField("phone", v))} placeholder={t("phonePlaceholderExample2")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
-                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholderShort")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder={t("addressPlaceholderShort")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></div></label>
+                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("fullNameShortPlaceholder")}</span><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder={t("fullNameShortPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("emailPlaceholder")}</span><input value={ownerProfile.email} readOnly onClick={() => setEmailChangeForm({ open: true, email: ownerProfile.email || "", password: "", loading: false })} title={t("changeEmailDesc")} placeholder={t("emailPlaceholder")} type="email" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample2")}</span><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} onBlur={(e) => normalizePhoneField(e.target.value, (v) => updateMyOwnerField("phone", v))} placeholder={t("phonePlaceholderExample2")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholderShort")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder={t("addressPlaceholderShort")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></div></label>
                       </div>
                       <p className="text-[11px] text-gray-400 mt-3">{t("autofillJobAppsNote")}</p>
                       <div className="flex flex-wrap items-center gap-3 mt-5">
-                        <button onClick={() => { if (ownerProfile.email && !isValidEmail(ownerProfile.email)) { setToast({ type: "info", text: t("invalidEmailAddrToast") }); return; } if (ownerProfile.phone) { const pc = checkPhone(ownerProfile.phone); if (!pc.valid) { setToast({ type: "info", text: `⚠️ ${pc.message}` }); return; } updateMyOwnerField("phone", pc.normalized); } setToast({ type: "info", text: t("profileUpdatedToast") }); }} className="bg-rose-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
+                        <button onClick={() => { if (ownerProfile.email && !isValidEmail(ownerProfile.email)) { setToast({ type: "info", text: t("invalidEmailAddrToast") }); return; } if (ownerProfile.phone) { const pc = checkPhone(ownerProfile.phone); if (!pc.valid) { setToast({ type: "info", text: `⚠️ ${pc.message}` }); return; } updateMyOwnerField("phone", pc.normalized); } setToast({ type: "info", text: t("profileUpdatedToast") }); }} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
                         <span className="text-[11px] text-gray-400">{t("userNumberLabel", { id: String(MY_OWNER_ID) })}</span>
                       </div>
                     </div>
@@ -2233,11 +2233,11 @@ export function AppShell() {
               )}
               {ownerProfileTab === "applications" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
-                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Briefcase size={16} className="text-rose-500" /> {t("jobApplicationsHeading")}</h2>
+                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-blue-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
+                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Briefcase size={16} className="text-blue-500" /> {t("jobApplicationsHeading")}</h2>
                   <div className="space-y-3">
                     {myApplicationRefs.filter(r => r.role === "owner").map(r => (
-                      <button key={r.id} onClick={() => setSelectedJobId(r.job.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition">
+                      <button key={r.id} onClick={() => setSelectedJobId(r.job.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h4 className="font-semibold text-gray-800 text-sm">{r.job.title}</h4>
                           <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 ${r.applicant?.status === "rejected" ? "bg-red-50 text-red-500" : r.job.status === "closed" ? "bg-gray-100 text-gray-400" : "bg-gray-100 text-gray-700"}`}>{r.applicant?.status === "rejected" ? t("jobAppRejectedStatus") : r.job.status === "closed" ? t("jobListingClosedStatus") : t("jobAppUnderReviewStatus")}</span>
@@ -2252,7 +2252,7 @@ export function AppShell() {
               )}
               {ownerProfileTab === "myReviews" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
+                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-blue-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
                   <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><Star size={16} className="text-gray-900" /> {t("reviewsIMadeLabel")}</h2>
                   <p className="text-xs text-gray-400 mb-4">{t("reviewsCannotEditNote")}</p>
                   <div className="space-y-3">
@@ -2276,8 +2276,8 @@ export function AppShell() {
                    sekmeye geçerken geri bağlantısı göstermek kafa karıştırıcı olurdu. */
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Tag size={17} className="text-rose-500" /> {t("myListingsHeading")} <span className="text-gray-300 font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
-                    <button onClick={startSellFlow} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
+                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Tag size={17} className="text-blue-500" /> {t("myListingsHeading")} <span className="text-gray-300 font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
+                    <button onClick={startSellFlow} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
                   </div>
                   {listings.filter(isMyListing).length === 0 ? (
                     <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>
@@ -2296,20 +2296,20 @@ export function AppShell() {
                   if (favMechs.length === 0) return null;
                   return (
                     <div className="mb-8">
-                      <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                      <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Wrench size={16} className="text-blue-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}
                       </div>
                     </div>
                   );
                 })()}
-                <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Heart size={16} className="text-rose-500" /> {t("favoriteListingsLabel")}</h2>
+                <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Heart size={16} className="text-blue-500" /> {t("favoriteListingsLabel")}</h2>
                   {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
                     <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesOwnerNote")}</p><p className="text-gray-300 text-xs mt-1">{t("favoritesHintNote")}</p></div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   )}
-                  <h2 className="font-bold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Bell size={16} className="text-rose-500" /> {t("savedSearchesLabel")}</h2>
+                  <h2 className="font-bold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Bell size={16} className="text-blue-500" /> {t("savedSearchesLabel")}</h2>
                   <SavedSearchList />
                 </>
               )}
@@ -2323,7 +2323,7 @@ export function AppShell() {
                       garajın en tepesinde duruyordu ve kullanıcı ne işe yaradığını anlamıyordu. */}
                   {!showForeignVinLookup ? (
                     <button onClick={() => setShowForeignVinLookup(true)}
-                      className="mb-5 inline-flex items-center gap-2 text-[12px] font-medium text-gray-500 hover:text-rose-600 transition">
+                      className="mb-5 inline-flex items-center gap-2 text-[12px] font-medium text-gray-500 hover:text-blue-600 transition">
                       <Search size={13} /> {t("lookupForeignVinCta")}
                     </button>
                   ) : (
@@ -2333,9 +2333,9 @@ export function AppShell() {
                     </div>
                   )}
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Car size={17} className="text-rose-500" /> {t("myGarageTitle")} <span className="text-gray-300 font-normal text-sm">({vehicles.length})</span></h2>
+                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Car size={17} className="text-blue-500" /> {t("myGarageTitle")} <span className="text-gray-300 font-normal text-sm">({vehicles.length})</span></h2>
                   </div>
-                  <button onClick={toggleAddVehicle} className="w-full sm:w-auto sm:px-6 mb-5 border-2 border-dashed border-rose-200 rounded-2xl py-3 flex items-center justify-center gap-2 text-rose-600 text-sm font-medium hover:bg-rose-50 transition"><Plus size={16} /> {t("addVehicle")}</button>
+                  <button onClick={toggleAddVehicle} className="w-full sm:w-auto sm:px-6 mb-5 border-2 border-dashed border-blue-200 rounded-2xl py-3 flex items-center justify-center gap-2 text-blue-600 text-sm font-medium hover:bg-blue-50 transition"><Plus size={16} /> {t("addVehicle")}</button>
                   {showAddVehicle && (<div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4 space-y-2">
                     <BrandSelect value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b, model: "" })} />
                     <ModelSelect brand={newVehicle.brand} value={newVehicle.model} onChange={(m) => setNewVehicle({ ...newVehicle, model: m })} />
@@ -2360,14 +2360,14 @@ export function AppShell() {
                       <input value={newVehicle.vin} onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide" />
                       {String(newVehicle.vin || "").trim() && (
                         <label className="flex items-start gap-2 mt-2 cursor-pointer">
-                          <input type="checkbox" checked={newVehicle.vinShared} onChange={(e) => setNewVehicle({ ...newVehicle, vinShared: e.target.checked })} className="mt-0.5 w-4 h-4 accent-rose-600" />
+                          <input type="checkbox" checked={newVehicle.vinShared} onChange={(e) => setNewVehicle({ ...newVehicle, vinShared: e.target.checked })} className="mt-0.5 w-4 h-4 accent-blue-600" />
                           <span className="text-[11px] text-gray-500 leading-relaxed">{t("vinShareLabel")}{!newVehicle.vinShared && <span className="block text-gray-400 mt-0.5">{t("vinShareOffNote")}</span>}</span>
                         </label>
                       )}
                     </div>
-                    <button onClick={addVehicle} className="w-full bg-rose-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-rose-700 transition">{t("add")}</button>
+                    <button onClick={addVehicle} className="w-full bg-blue-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-blue-700 transition">{t("add")}</button>
                   </div>)}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-rose-600" /></div><div className="flex-1"><h3 className="font-semibold text-gray-800 text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-gray-400">{v.plate}{vListing && <span className="ml-2 text-rose-500">· {t("forSaleTag")}{vOfferCount > 0 ? ` · ${t("offerCountSuffixShort", { n: String(vOfferCount) })}` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-gray-300" /></button>); })}{vehicles.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Car size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noVehiclesAddedNote")}</p></div>}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-blue-600" /></div><div className="flex-1"><h3 className="font-semibold text-gray-800 text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-gray-400">{v.plate}{vListing && <span className="ml-2 text-blue-500">· {t("forSaleTag")}{vOfferCount > 0 ? ` · ${t("offerCountSuffixShort", { n: String(vOfferCount) })}` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-gray-300" /></button>); })}{vehicles.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Car size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noVehiclesAddedNote")}</p></div>}
                   {listings.filter(l => isMyListing(l) && !vehicles.some(v => v.listingId === l.id)).length > 0 && (
                     <>
                       <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-1 flex items-center gap-2"><Tag size={15} className="text-gray-400" /> {t("soldOutsideRegisteredVehicleHeading")}</h3>
@@ -2384,7 +2384,7 @@ export function AppShell() {
                               <span className="text-[11px] text-gray-400">{offerCount > 0 ? t("offerCountSuffixShort", { n: String(offerCount) }) : t("noOffersYetShort")}</span>
                               <div className="flex items-center gap-3">
                                 <button onClick={() => openSellForm({ brand: l.brand, model: l.model, year: l.year, km: l.km, price: l.price, description: l.description, photo: l.photo, fuelType: l.fuelType, transmission: l.transmission, power: l.power, firstReg: l.firstReg, color: l.color, city: l.city || "", _vehicleId: null, _editingId: l.id })} className="text-xs font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1"><Pencil size={12} /> {t("editBtn")}</button>
-                                <button onClick={() => setSelectedListingId(l.id)} className="text-xs font-medium text-rose-600 hover:text-rose-700 flex items-center gap-1">{t("viewOffersBtn")} <ChevronRight size={12} /></button>
+                                <button onClick={() => setSelectedListingId(l.id)} className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">{t("viewOffersBtn")} <ChevronRight size={12} /></button>
                               </div>
                             </div>
                           </div>
@@ -2397,8 +2397,8 @@ export function AppShell() {
               )}
               {ownerProfileTab === "vehicles" && selectedVehicle && (() => { const linkedListing = listings.find(l => l.id === selectedVehicle.listingId); return (
                 <>
-                  <button onClick={() => setSelectedVehicleId(null)} className="flex items-center gap-1 text-rose-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToVehiclesBtn")}</button>
-                  <div className="bg-rose-50 rounded-2xl p-4 mb-5 flex items-center gap-3"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center"><Car size={26} className="text-rose-600" /></div><div className="flex-1"><h2 className="font-bold text-gray-800">{selectedVehicle.brand} {selectedVehicle.model}</h2><p className="text-xs text-gray-500">{selectedVehicle.year} · {selectedVehicle.plate}</p></div><button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} aria-label={t("editVehicleAria")} className="text-rose-600 p-2 -m-2"><Pencil size={16} /></button><button onClick={() => setConfirmDialog({ title: t("deleteVehicleConfirmTitle"), body: t("deleteVehicleConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => removeVehicle(selectedVehicle.id) })} aria-label={t("deleteVehicleAria")} className="text-red-400 hover:text-red-600 p-2 -m-2"><Trash2 size={16} /></button></div>
+                  <button onClick={() => setSelectedVehicleId(null)} className="flex items-center gap-1 text-blue-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToVehiclesBtn")}</button>
+                  <div className="bg-blue-50 rounded-2xl p-4 mb-5 flex items-center gap-3"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center"><Car size={26} className="text-blue-600" /></div><div className="flex-1"><h2 className="font-bold text-gray-800">{selectedVehicle.brand} {selectedVehicle.model}</h2><p className="text-xs text-gray-500">{selectedVehicle.year} · {selectedVehicle.plate}</p></div><button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} aria-label={t("editVehicleAria")} className="text-blue-600 p-2 -m-2"><Pencil size={16} /></button><button onClick={() => setConfirmDialog({ title: t("deleteVehicleConfirmTitle"), body: t("deleteVehicleConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => removeVehicle(selectedVehicle.id) })} aria-label={t("deleteVehicleAria")} className="text-red-400 hover:text-red-600 p-2 -m-2"><Trash2 size={16} /></button></div>
                   {/* ARACIN DOĞRULANMIŞ GEÇMİŞİ + PAYLAŞIM ANAHTARI.
                       Kayıtlar şasi numarasına bağlı: araç satıldığında yeni sahip aynı numarayla
                       görebilir. Paylaşımı kapatmak yalnızca BU sahibin dönemindeki kayıtları
@@ -2415,7 +2415,7 @@ export function AppShell() {
                         <p className="text-[11px] text-gray-400 mb-3 font-mono tracking-wide">{selectedVehicle.vin}</p>
                         <VehicleOwnHistory vin={selectedVehicle.vin} />
                         <label className="flex items-start gap-2 mt-3 cursor-pointer">
-                          <input type="checkbox" checked={selectedVehicle.vinShared !== false} onChange={(e) => setVehicleHistoryShared(selectedVehicle, e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600" />
+                          <input type="checkbox" checked={selectedVehicle.vinShared !== false} onChange={(e) => setVehicleHistoryShared(selectedVehicle, e.target.checked)} className="mt-0.5 w-4 h-4 accent-blue-600" />
                           <span className="text-[11px] text-gray-500 leading-relaxed">{t("vinShareLabel")}{selectedVehicle.vinShared === false && <span className="block text-gray-400 mt-0.5">{t("vinShareOffNote")}</span>}</span>
                         </label>
                       </div>
@@ -2427,7 +2427,7 @@ export function AppShell() {
                     <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-4 mb-5">
                       <h3 className="font-semibold text-gray-800 text-sm mb-1 flex items-center gap-2">{t("vehicleHistoryVerifiedTitle")}<InfoTip text={t("vinTip")} label={t("infoTipAria")} /></h3>
                       <p className="text-[12px] text-gray-500 leading-relaxed">{t("vehicleNoVinHistoryHint")}</p>
-                      <button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} className="mt-3 text-[12px] font-semibold text-rose-600 hover:text-rose-700">{t("vehicleAddVinCta")}</button>
+                      <button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} className="mt-3 text-[12px] font-semibold text-blue-600 hover:text-blue-700">{t("vehicleAddVinCta")}</button>
                     </div>
                   )}
                   {showEditVehicle && editVehicleForm && (
@@ -2451,17 +2451,17 @@ export function AppShell() {
                         <label className="text-[11px] text-gray-400 flex items-center gap-1.5">{t("vinLabel")} <span className="text-gray-300">({t("vinOptional")})</span><InfoTip text={t("vinTip")} label={t("infoTipAria")} /></label>
                         <input value={editVehicleForm.vin || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide" />
                       </div>
-                      <div className="flex gap-2 pt-1"><button onClick={() => setShowEditVehicle(false)} className="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm">{t("cancel")}</button><button onClick={() => { if (editVehicleForm.lastInspection && !isValidDateStr(editVehicleForm.lastInspection)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastInspectionLabel") }) }); return; } if (editVehicleForm.lastMaintenance && !isValidDateStr(editVehicleForm.lastMaintenance)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastMaintenanceLabel") }) }); return; } if (editVehicleForm.insuranceEnd && !isValidDateStr(editVehicleForm.insuranceEnd)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("insuranceEndLabel") }) }); return; } updateVehicleFields(selectedVehicle.id, editVehicleForm); setShowEditVehicle(false); setToast({ type: "info", text: t("vehicleInfoUpdatedToast") }); }} className="flex-1 bg-rose-600 text-white py-2 rounded-xl text-sm font-medium">{t("save")}</button></div>
+                      <div className="flex gap-2 pt-1"><button onClick={() => setShowEditVehicle(false)} className="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm">{t("cancel")}</button><button onClick={() => { if (editVehicleForm.lastInspection && !isValidDateStr(editVehicleForm.lastInspection)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastInspectionLabel") }) }); return; } if (editVehicleForm.lastMaintenance && !isValidDateStr(editVehicleForm.lastMaintenance)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastMaintenanceLabel") }) }); return; } if (editVehicleForm.insuranceEnd && !isValidDateStr(editVehicleForm.insuranceEnd)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("insuranceEndLabel") }) }); return; } updateVehicleFields(selectedVehicle.id, editVehicleForm); setShowEditVehicle(false); setToast({ type: "info", text: t("vehicleInfoUpdatedToast") }); }} className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm font-medium">{t("save")}</button></div>
                     </div>
                   )}
-                  {linkedListing ? (<div className="mb-5 bg-white border border-gray-100 rounded-2xl p-4"><div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Tag size={15} className="text-rose-500" /> {t("listingStatus")}</h3><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(linkedListing.status, t).color}`}>{listingStatusMeta(linkedListing.status, t).label}</span></div><div className="flex gap-2 mb-3">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(linkedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${linkedListing.status === st ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div><p className="text-[11px] text-gray-400 mb-3">{(() => { const oc = linkedListing.offers.filter(o => o.status !== "replaced").length; return oc > 0 ? t("offersCameInSuffix", { n: String(oc) }) : t("noOffersYetOnListing"); })()}</p><div className="flex gap-2"><button onClick={() => openSellForm({ ...linkedListing, _vehicleId: selectedVehicle.id, _editingId: linkedListing.id })} className="flex-1 bg-gray-50 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-100 transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListing")}</button><button onClick={() => setSelectedListingId(linkedListing.id)} className="flex-1 bg-rose-50 text-rose-600 py-2 rounded-xl text-sm font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><MessageCircle size={14} /> {t("viewOffersBtn")}</button></div></div>) : (<button onClick={() => openSellForm({ brand: selectedVehicle.brand, model: selectedVehicle.model, year: selectedVehicle.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: selectedVehicle.id, _editingId: null })} className="w-full mb-5 bg-white border border-rose-200 text-rose-600 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-50 transition flex items-center justify-center gap-2"><Tag size={15} /> {t("sellThisCar")}</button>)}
+                  {linkedListing ? (<div className="mb-5 bg-white border border-gray-100 rounded-2xl p-4"><div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Tag size={15} className="text-blue-500" /> {t("listingStatus")}</h3><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(linkedListing.status, t).color}`}>{listingStatusMeta(linkedListing.status, t).label}</span></div><div className="flex gap-2 mb-3">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(linkedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${linkedListing.status === st ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div><p className="text-[11px] text-gray-400 mb-3">{(() => { const oc = linkedListing.offers.filter(o => o.status !== "replaced").length; return oc > 0 ? t("offersCameInSuffix", { n: String(oc) }) : t("noOffersYetOnListing"); })()}</p><div className="flex gap-2"><button onClick={() => openSellForm({ ...linkedListing, _vehicleId: selectedVehicle.id, _editingId: linkedListing.id })} className="flex-1 bg-gray-50 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-100 transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListing")}</button><button onClick={() => setSelectedListingId(linkedListing.id)} className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl text-sm font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2"><MessageCircle size={14} /> {t("viewOffersBtn")}</button></div></div>) : (<button onClick={() => openSellForm({ brand: selectedVehicle.brand, model: selectedVehicle.model, year: selectedVehicle.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: selectedVehicle.id, _editingId: null })} className="w-full mb-5 bg-white border border-blue-200 text-blue-600 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-50 transition flex items-center justify-center gap-2"><Tag size={15} /> {t("sellThisCar")}</button>)}
                   {ownerSettings.smartReminders && (() => {
                     const vReminders = computeReminders(selectedVehicle);
                     const disabledKinds = Object.entries(selectedVehicle.reminderOverrides || {}).filter(([, ov]: [string, any]) => ov && ov.enabled === false).map(([k]) => k);
                     return (
                     <>
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={16} className="text-rose-500" /> {t("smartReminders")}</h3>
+                        <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={16} className="text-blue-500" /> {t("smartReminders")}</h3>
                         {selectedVehicle.city && <span className="text-[10px] text-gray-400">📍 {selectedVehicle.city}</span>}
                       </div>
                       <p className="text-[11px] text-gray-400 -mt-2 mb-3">{t("smartRemindersAutoNote")}</p>
@@ -2473,7 +2473,7 @@ export function AppShell() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <p className={`text-xs font-semibold ${r.urgent ? "text-red-600" : "text-gray-700"}`}>{r.title}</p>
-                                  {r.customized && <span className="text-[9px] bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{t("customSettingBadge")}</span>}
+                                  {r.customized && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{t("customSettingBadge")}</span>}
                                 </div>
                                 <p className="text-[11px] text-gray-500 mt-0.5">{r.detail}</p>
                               </div>
@@ -2485,16 +2485,16 @@ export function AppShell() {
                                 <div><label className="text-[10px] text-gray-400">{t("leadDaysQuestionLabel")}</label><input type="number" min="0" value={reminderEditForm.leadDays} onChange={(e) => setReminderEditForm(f => ({ ...f, leadDays: e.target.value }))} placeholder={String(r.leadDays)} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs mt-0.5" /></div>
                                 {r.isUserCreated ? (
                                   <div className="flex gap-2 pt-1">
-                                    <button onClick={() => updateCustomReminder(selectedVehicle.id, r.customId, { date: reminderEditForm.customDate || r.dueDate.toISOString().slice(0, 10), leadDays: reminderEditForm.leadDays || "7" })} className="flex-1 bg-rose-600 text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
+                                    <button onClick={() => updateCustomReminder(selectedVehicle.id, r.customId, { date: reminderEditForm.customDate || r.dueDate.toISOString().slice(0, 10), leadDays: reminderEditForm.leadDays || "7" })} className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
                                     <button onClick={() => removeCustomReminder(selectedVehicle.id, r.customId)} className="flex-1 border border-red-200 text-red-500 py-1.5 rounded-lg text-[11px] font-medium">{t("deleteBtnShort")}</button>
                                   </div>
                                 ) : (
                                   <>
                                     <div className="flex gap-2 pt-1">
-                                      <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: true, customDate: reminderEditForm.customDate || null, leadDays: reminderEditForm.leadDays === "" ? null : Number(reminderEditForm.leadDays) })} className="flex-1 bg-rose-600 text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
+                                      <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: true, customDate: reminderEditForm.customDate || null, leadDays: reminderEditForm.leadDays === "" ? null : Number(reminderEditForm.leadDays) })} className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
                                       <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: false })} className="flex-1 border border-gray-200 text-gray-500 py-1.5 rounded-lg text-[11px] font-medium">{t("turnOffThisBtn")}</button>
                                     </div>
-                                    {r.customized && <button onClick={() => resetReminderOverride(selectedVehicle.id, r.kind)} className="w-full text-rose-600 text-[11px] font-medium py-1">{t("resetToDefaultDateBtn")}</button>}
+                                    {r.customized && <button onClick={() => resetReminderOverride(selectedVehicle.id, r.kind)} className="w-full text-blue-600 text-[11px] font-medium py-1">{t("resetToDefaultDateBtn")}</button>}
                                   </>
                                 )}
                               </div>
@@ -2507,14 +2507,14 @@ export function AppShell() {
                         <div className="mb-5 bg-white border border-gray-200 rounded-xl p-3">
                           <p className="text-[10px] text-gray-400 mb-2">{t("disabledRemindersLabel")}</p>
                           <div className="flex flex-wrap gap-1.5">
-                            {disabledKinds.map(k => (<button key={k} onClick={() => resetReminderOverride(selectedVehicle.id, k)} className="text-[10px] bg-white border border-gray-200 text-gray-500 px-2 py-1 rounded-full hover:border-rose-300 hover:text-rose-600 transition">{REMINDER_KIND_LABELS[k] || k} · {t("reopenSuffixBtn")}</button>))}
+                            {disabledKinds.map(k => (<button key={k} onClick={() => resetReminderOverride(selectedVehicle.id, k)} className="text-[10px] bg-white border border-gray-200 text-gray-500 px-2 py-1 rounded-full hover:border-blue-300 hover:text-blue-600 transition">{REMINDER_KIND_LABELS[k] || k} · {t("reopenSuffixBtn")}</button>))}
                           </div>
                         </div>
                       )}
                       {!showAddReminderForm ? (
-                        <button onClick={() => { setShowAddReminderForm(true); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="w-full border-2 border-dashed border-rose-200 rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-rose-600 text-xs font-medium hover:bg-rose-50 transition mb-5"><Plus size={14} /> {t("addNewReminderBtn")}</button>
+                        <button onClick={() => { setShowAddReminderForm(true); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="w-full border-2 border-dashed border-blue-200 rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-blue-600 text-xs font-medium hover:bg-blue-50 transition mb-5"><Plus size={14} /> {t("addNewReminderBtn")}</button>
                       ) : (
-                        <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 mb-5 space-y-2">
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-5 space-y-2">
                           <input autoFocus value={newReminderForm.title} onChange={(e) => setNewReminderForm(f => ({ ...f, title: e.target.value }))} placeholder={t("reminderTitlePlaceholderExample")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" />
                           <div className="flex gap-2">
                             <div className="flex-1"><label className="text-[9px] text-gray-400 block mb-0.5">{t("dateLabel")}</label><input type="date" min={TODAY_STR} value={newReminderForm.date} onChange={(e) => setNewReminderForm(f => ({ ...f, date: e.target.value }))} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
@@ -2522,7 +2522,7 @@ export function AppShell() {
                           </div>
                           <div className="flex gap-2">
                             <button onClick={() => { setShowAddReminderForm(false); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("cancel")}</button>
-                            <button disabled={!newReminderForm.title.trim() || !newReminderForm.date} onClick={() => submitNewReminder(selectedVehicle.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium transition ${newReminderForm.title.trim() && newReminderForm.date ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("add")}</button>
+                            <button disabled={!newReminderForm.title.trim() || !newReminderForm.date} onClick={() => submitNewReminder(selectedVehicle.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium transition ${newReminderForm.title.trim() && newReminderForm.date ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("add")}</button>
                           </div>
                         </div>
                       )}
@@ -2543,7 +2543,7 @@ export function AppShell() {
                       <div className={selectedVehicle.history.length > 4 ? "max-h-64 overflow-y-auto pr-1 rounded-xl ring-1 ring-gray-100 p-1" : ""}>
                         <div className="space-y-2">{selectedVehicle.history.map((h, i) => (
                           <div key={i} className="border border-gray-100 rounded-xl p-3">
-                            <div className="flex justify-between items-start gap-2 mb-1"><h4 className="font-semibold text-gray-800 text-sm">{h.type}</h4><span className="text-xs font-bold text-rose-600 whitespace-nowrap">{h.price}</span></div>
+                            <div className="flex justify-between items-start gap-2 mb-1"><h4 className="font-semibold text-gray-800 text-sm">{h.type}</h4><span className="text-xs font-bold text-blue-600 whitespace-nowrap">{h.price}</span></div>
                             <div className="flex items-center justify-between gap-2 text-[11px] text-gray-400"><span className="truncate">{h.mechanic}</span><span className="flex items-center gap-1 flex-shrink-0"><Calendar size={10} />{h.date}</span></div>
                           </div>
                         ))}</div>
@@ -2554,7 +2554,7 @@ export function AppShell() {
                 </>
               ); })()}
               {ownerProfileTab === "appts" && <OwnerAppointmentsView />}
-              {ownerProfileTab === "chats" && (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-300 transition flex items-center gap-3"><div className="text-2xl bg-rose-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><MessageCircle size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noChatsShort")}</p></div>}</div>)}
+              {ownerProfileTab === "chats" && (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition flex items-center gap-3"><div className="text-2xl bg-blue-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><MessageCircle size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noChatsShort")}</p></div>}</div>)}
               {ownerProfileTab === "offers" && (<>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersMade")}</h3>
                 <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
@@ -2564,7 +2564,7 @@ export function AppShell() {
                         <p className="text-xs font-medium text-gray-700 truncate">{o.listing.brand} {o.listing.model}</p>
                         <p className="text-[10px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("pendingSeenStatus") : t("pendingStatus")}</p>
                       </button>
-                      <span className="font-bold text-rose-600 text-sm flex-shrink-0">{o.amount}{o.currency || "₺"}</span>
+                      <span className="font-bold text-blue-600 text-sm flex-shrink-0">{o.amount}{o.currency || "₺"}</span>
                     </div>
                     {/* TEKRAR TEKLİF: satıcı teklifi henüz görmediyse tutar değiştirilebilir,
                         reddettiyse yeni teklif verilebilir. Kural sunucuda da var (bkz.
@@ -2572,7 +2572,7 @@ export function AppShell() {
                     {canReoffer(o) && (
                       <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-gray-100">
                         <span className="text-[10px] text-gray-400">{o.status === "rejected" ? t("reofferRejectedHint") : t("reofferUnseenHint")}</span>
-                        <button onClick={() => startReoffer(o.listing, o)} className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
+                        <button onClick={() => startReoffer(o.listing, o)} className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
                       </div>
                     )}
                   </div>
@@ -2581,7 +2581,7 @@ export function AppShell() {
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersReceived")}</h3>
                 <div className="space-y-2">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
                   <div key={o.id} className="bg-white border border-gray-100 rounded-xl p-3">
-                    <div className="flex justify-between items-center mb-2"><div><p className="text-xs font-medium text-gray-700">{o.from}</p><p className="text-[10px] text-gray-400">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-rose-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>
+                    <div className="flex justify-between items-center mb-2"><div><p className="text-xs font-medium text-gray-700">{o.from}</p><p className="text-[10px] text-gray-400">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-blue-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>
                     {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>) : (<p className="text-[11px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>)}
                   </div>
                 ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">{t("noOffersReceivedNote")}</p>}</div>
@@ -2613,7 +2613,7 @@ export function AppShell() {
               <button aria-label={t("a11yBack")} onClick={() => setSelectedListingId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white"><ChevronLeft size={18} /></button>
               <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
                 <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} onShare={(channel, refCode) => recordShare("listing", selectedListing.id, channel, refCode)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition" />
-                <button aria-label={t("a11yToggleFavorite")} onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
+                <button aria-label={t("a11yToggleFavorite")} onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-blue-600 text-blue-600" : "text-gray-500"} /></button>
               </div>
               {(() => {
                 const galleryPhotos = (selectedListing.photos && selectedListing.photos.length > 0) ? [selectedListing.photo, ...selectedListing.photos] : [selectedListing.photo];
@@ -2641,7 +2641,7 @@ export function AppShell() {
                     {galleryPhotos.length > 1 && (
                       <div className="flex gap-1.5 px-4 py-2 bg-gray-50 overflow-x-auto">
                         {galleryPhotos.map((p, i) => (
-                          <button key={i} onClick={() => { setSelectedListingPhotoIndex(i); setListingLightboxOpen(true); }} className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 flex items-center justify-center text-xl bg-white ${i === activeIdx ? "border-rose-600" : "border-transparent opacity-70"}`}>
+                          <button key={i} onClick={() => { setSelectedListingPhotoIndex(i); setListingLightboxOpen(true); }} className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 flex items-center justify-center text-xl bg-white ${i === activeIdx ? "border-blue-600" : "border-transparent opacity-70"}`}>
                             {isImgUrl(p) ? <img src={imgThumb(p, 160)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("photoNumberAlt", { n: String(i + 1) })} className="w-full h-full object-cover" /> : p}
                           </button>
                         ))}
@@ -2670,7 +2670,7 @@ export function AppShell() {
               <h1 className="text-xl font-bold text-gray-800">{selectedListing.brand} {selectedListing.model}</h1>
               {selectedListing.city && <p className="text-gray-400 text-xs mt-1 flex items-center gap-1"><MapPin size={12} />{selectedListing.city}</p>}
               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <p className="text-3xl font-bold text-rose-700">{selectedListing.price}</p>
+                <p className="text-3xl font-bold text-blue-700">{selectedListing.price}</p>
                 {selectedListing.negotiable && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">{t("negotiableBadge")}</span>}
                 {selectedListing.featured && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{t("featuredBadge")}</span>}
               </div>
@@ -2695,7 +2695,7 @@ export function AppShell() {
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("drivetrainPlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.drivetrain ? vocabLabel(selectedListing.drivetrain, lang, DRIVETRAIN_LABELS_BY_LANG) : "—"}</p></div>
                 <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><DoorOpen size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("doorCountPlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.doorCount || "—"}</p></div>
               </div>
-              <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 flex-wrap"><span className={`px-2 py-1 rounded-full font-medium ${selectedListing.sellerType === "mechanic" ? "bg-rose-100 text-rose-700" : "bg-rose-50 text-rose-600"}`}>{selectedListing.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span><span>{selectedListing.sellerName}</span><span className="text-gray-300">·</span><span className="text-gray-400">{t("listingNumberLabel", { id: String(selectedListing.id) })}</span></div>
+              <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 flex-wrap"><span className={`px-2 py-1 rounded-full font-medium ${selectedListing.sellerType === "mechanic" ? "bg-blue-100 text-blue-700" : "bg-blue-50 text-blue-600"}`}>{selectedListing.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span><span>{selectedListing.sellerName}</span><span className="text-gray-300">·</span><span className="text-gray-400">{t("listingNumberLabel", { id: String(selectedListing.id) })}</span></div>
               {safeHref(selectedListing.inspectionReportUrl) && (
                 <a href={safeHref(selectedListing.inspectionReportUrl)} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"><FileText size={12} /> {t("inspectionReportAvailableLabel")}</a>
               )}
@@ -2723,7 +2723,7 @@ export function AppShell() {
               <p className="text-sm text-gray-600 mt-4 leading-relaxed whitespace-pre-line"><TranslatedText id={`listing-desc-${selectedListing.id}`} scope="public" text={selectedListing.description} fromLang={selectedListing.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
               {(selectedListing.ownerCount || selectedListing.paintedParts !== undefined || selectedListing.changedParts !== undefined || selectedListing.tradeIn) && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Shield size={15} className="text-rose-500" /> {t("vehicleHistoryTitle")}</h3>
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Shield size={15} className="text-blue-500" /> {t("vehicleHistoryTitle")}</h3>
                   <div className="flex flex-wrap gap-2">
                     {!!selectedListing.ownerCount && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-700"><User size={12} /> {t("ownerNumberLabel", { n: String(selectedListing.ownerCount) })}</span>)}
                     {(!Number(selectedListing.paintedParts) && !Number(selectedListing.changedParts)) ? (
@@ -2737,7 +2737,7 @@ export function AppShell() {
               )}
               {(selectedListing.seatCount || selectedListing.fuelConsumption || selectedListing.co2Emission || selectedListing.emissionClass) && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Leaf size={15} className="text-rose-500" /> {t("fuelConsumptionSection")}</h3>
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Leaf size={15} className="text-blue-500" /> {t("fuelConsumptionSection")}</h3>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><User size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("seatCountPlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.seatCount || "—"}</p></div>
                     <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Droplet size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("consumptionLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.fuelConsumption ? `${selectedListing.fuelConsumption} L/100km` : "—"}</p></div>
@@ -2748,7 +2748,7 @@ export function AppShell() {
               )}
               {(selectedListing.batteryCapacity || selectedListing.rangeKm) && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><BatteryCharging size={15} className="text-rose-500" /> {t("evDataTitle")}</h3>
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><BatteryCharging size={15} className="text-blue-500" /> {t("evDataTitle")}</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><BatteryCharging size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("batteryLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.batteryCapacity ? `${selectedListing.batteryCapacity} kWh` : "—"}</p></div>
                     <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("rangeLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.rangeKm ? `${selectedListing.rangeKm} km` : "—"}</p></div>
@@ -2757,13 +2757,13 @@ export function AppShell() {
               )}
               {selectedListing.features && selectedListing.features.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Tag size={15} className="text-rose-500" /> {t("featuresSection")}</h3>
+                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Tag size={15} className="text-blue-500" /> {t("featuresSection")}</h3>
                   {/* Donanım sayısı artık sabit olmayabiliyor (kullanıcı kendi donanımını da
                       ekleyebiliyor, bkz. addCustomFeature) — çok sayıda donanımda karmaşık
                       görünmemesi için renk döngüsü kaldırıldı, tek/sade bir rozet stili kullanılıyor. */}
                   <div className="flex flex-wrap gap-2">
                     {selectedListing.features.map((f) => (
-                      <span key={f} className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border bg-gray-50 text-gray-600 border-gray-200"><Tag size={10} className="text-rose-500" /> {f}</span>
+                      <span key={f} className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border bg-gray-50 text-gray-600 border-gray-200"><Tag size={10} className="text-blue-500" /> {f}</span>
                     ))}
                   </div>
                 </div>
@@ -2773,7 +2773,7 @@ export function AppShell() {
                 if (sims.length === 0) return null;
                 return (
                   <div className="mt-6">
-                    <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Car size={15} className="text-rose-500" /> {t("similarListingsTitle")}</h3>
+                    <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Car size={15} className="text-blue-500" /> {t("similarListingsTitle")}</h3>
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
                       {sims.map(sl => (
                         <button key={sl.id} onClick={() => { setSelectedListingId(sl.id); setSelectedListingPhotoIndex(0); }} className="flex-shrink-0 w-36 text-left bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition">
@@ -2783,7 +2783,7 @@ export function AppShell() {
                           <div className="p-2">
                             <p className="text-[11px] font-semibold text-gray-800 truncate">{sl.brand} {sl.model}</p>
                             <p className="text-[10px] text-gray-400">{sl.year} · {Number(sl.km).toLocaleString("tr-TR")} km</p>
-                            <p className="text-xs font-bold text-rose-700 mt-0.5">{sl.price}</p>
+                            <p className="text-xs font-bold text-blue-700 mt-0.5">{sl.price}</p>
                           </div>
                         </button>
                       ))}
@@ -2796,7 +2796,7 @@ export function AppShell() {
                 const activeOffers = selectedListing.offers.filter(o => o.status !== "replaced");
                 if (isOwnListing) return (
                   <>
-                    <div className="mt-5 bg-rose-50 rounded-2xl p-3 text-xs text-rose-700 flex items-center gap-2"><Tag size={14} className="flex-shrink-0" /> {t("ownListingNotice")}</div>
+                    <div className="mt-5 bg-blue-50 rounded-2xl p-3 text-xs text-blue-700 flex items-center gap-2"><Tag size={14} className="flex-shrink-0" /> {t("ownListingNotice")}</div>
                     <div className="mt-3 grid grid-cols-3 gap-2">
                       <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Eye size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingViewStats?.totalViews ?? "—"}</p><p className="text-[9px] text-gray-400">{t("viewsLabel")}</p></div>
                       <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Share2 size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{selectedListing.shareCount || 0}</p><p className="text-[9px] text-gray-400">{t("sharesLabel")}</p></div>
@@ -2811,7 +2811,7 @@ export function AppShell() {
                             const h = Math.max(4, Math.round((m.views / max) * 56));
                             return (
                               <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1" title={t("viewsTooltip", { month: m.month, views: String(m.views) })}>
-                                <div className="w-full bg-rose-200 rounded-t" style={{ height: `${h}px` }} />
+                                <div className="w-full bg-blue-200 rounded-t" style={{ height: `${h}px` }} />
                                 <span className="text-[8px] text-gray-400 whitespace-nowrap">{m.month.slice(5)}</span>
                               </div>
                             );
@@ -2819,19 +2819,19 @@ export function AppShell() {
                         </div>
                       </div>
                     )}
-                    <div className="mt-3 bg-white border border-gray-200 rounded-2xl p-3"><div className="flex items-center justify-between mb-2"><h4 className="text-xs font-semibold text-gray-500">{t("listingStatus")}</h4><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span></div><div className="flex gap-2">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(selectedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${selectedListing.status === st ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div></div>
+                    <div className="mt-3 bg-white border border-gray-200 rounded-2xl p-3"><div className="flex items-center justify-between mb-2"><h4 className="text-xs font-semibold text-gray-500">{t("listingStatus")}</h4><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span></div><div className="flex gap-2">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(selectedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${selectedListing.status === st ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div></div>
                     <button onClick={() => requestFeaturedListing(selectedListing.id)} className={`w-full mt-2 py-2.5 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 border ${selectedListing.featured ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}>⭐ {selectedListing.featured ? t("removeFromFeaturedBtn") : t("featureListingBtn", { price: String(FEATURED_LISTING_PRICE) })}</button>
                     <div className="flex gap-2 mt-2">
                       <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, bodyType: selectedListing.bodyType || "", engineSize: selectedListing.engineSize || "", drivetrain: selectedListing.drivetrain || "", ownerCount: selectedListing.ownerCount || "", paintedParts: selectedListing.paintedParts ?? "", changedParts: selectedListing.changedParts ?? "", tradeIn: !!selectedListing.tradeIn, doorCount: selectedListing.doorCount || "", features: selectedListing.features || [], photos: selectedListing.photos || [], seatCount: selectedListing.seatCount || "", fuelConsumption: selectedListing.fuelConsumption || "", co2Emission: selectedListing.co2Emission || "", emissionClass: selectedListing.emissionClass || "", batteryCapacity: selectedListing.batteryCapacity || "", rangeKm: selectedListing.rangeKm || "", city: selectedListing.city || "", negotiable: !!selectedListing.negotiable, inspectionReportUrl: selectedListing.inspectionReportUrl || "", featured: !!selectedListing.featured, _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListingBtn")}</button>
                       <button onClick={() => setConfirmDialog({ title: t("deleteListingConfirmTitle"), body: t("deleteListingConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => { removeListing(selectedListing.id); setSelectedListingId(null); } })} aria-label={t("deleteListingAria")} className="flex-shrink-0 border border-gray-200 text-red-400 hover:text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-xl transition"><Trash2 size={16} /></button>
                     </div>
-                    <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-2 flex items-center gap-2"><Banknote size={15} className="text-rose-600" /> {t("tabLabelOffers")} {activeOffers.length > 0 && <span className="text-gray-300 font-normal">({activeOffers.length})</span>}</h3>
+                    <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-2 flex items-center gap-2"><Banknote size={15} className="text-blue-600" /> {t("tabLabelOffers")} {activeOffers.length > 0 && <span className="text-gray-300 font-normal">({activeOffers.length})</span>}</h3>
                     {activeOffers.length === 0 ? (
                       <p className="text-center text-gray-400 text-xs py-4">{t("noOffersYetOnListing")}</p>
                     ) : (
                       <div className="space-y-2 mb-2">{activeOffers.map(o => (
                         <div key={o.id} className="bg-white border border-gray-100 rounded-xl p-3">
-                          <div className="flex justify-between items-center mb-1"><span className="text-xs font-medium text-gray-700">{o.from}</span><span className="font-bold text-rose-700 text-sm">{o.amount}{o.currency || "₺"}</span></div>
+                          <div className="flex justify-between items-center mb-1"><span className="text-xs font-medium text-gray-700">{o.from}</span><span className="font-bold text-blue-700 text-sm">{o.amount}{o.currency || "₺"}</span></div>
                           {o.status === "pending" ? (
                             <div className="flex gap-2 mt-2"><button onClick={() => respondOffer(selectedListing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(selectedListing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>
                           ) : (
@@ -2841,7 +2841,7 @@ export function AppShell() {
                       ))}</div>
                     )}
                     {selectedListing.messages.length > 0 && (<>
-                      <h3 className="font-semibold text-gray-800 text-sm mt-5 mb-2 flex items-center gap-2"><MessageCircle size={15} className="text-rose-500" /> {t("questionsTitle")}</h3>
+                      <h3 className="font-semibold text-gray-800 text-sm mt-5 mb-2 flex items-center gap-2"><MessageCircle size={15} className="text-blue-500" /> {t("questionsTitle")}</h3>
                       <div className="space-y-2">{selectedListing.messages.map(m => (<div key={m.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs"><span className="font-medium text-gray-700">{m.from}{m.isSellerReply && <span className="ml-1 text-[9px] font-bold uppercase text-emerald-600 bg-emerald-50 rounded px-1 py-0.5">{t("sellerReplyBadge")}</span>}:</span> <span className="text-gray-600"><TranslatedText id={`listingmsg-${m.id}`} scope="public" text={m.text} fromLang={m.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></span></div>))}</div>
                       {/* SATICININ CEVABI — eksik olan yarı. Alıcı soru sorabiliyordu ama satıcının
                           cevap verecek bir yeri yoktu; soru ilan yönetiminde okunup orada kalıyordu. */}
@@ -2860,7 +2860,7 @@ export function AppShell() {
                   : ownersDirectory.find(o => selectedListing.sellerId != null ? o.id === selectedListing.sellerId : o.name === selectedListing.sellerName)?.phone;
                 return (
                   <div className="grid grid-cols-2 gap-2 mt-5 sticky bottom-0 bg-white/95 backdrop-blur-sm pt-3 pb-2 -mx-5 px-5 md:-mx-8 md:px-8 border-t border-gray-100">
-                    <button onClick={openOfferForm} disabled={offerBtn.disabled} title={offerBtn.hintKey ? t(offerBtn.hintKey) : undefined} className={`py-3 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 ${offerBtn.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-rose-600 text-white hover:bg-rose-700"}`}><Banknote size={15} /> {t(offerBtn.labelKey)}</button>
+                    <button onClick={openOfferForm} disabled={offerBtn.disabled} title={offerBtn.hintKey ? t(offerBtn.hintKey) : undefined} className={`py-3 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 ${offerBtn.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"}`}><Banknote size={15} /> {t(offerBtn.labelKey)}</button>
                     {selectedListing.sellerType === "mechanic" ? (
                       <button onClick={() => { const mech = mechanicsList.find(m => m.name === selectedListing.sellerName); if (mech) openChatWithMechanic(mech, `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`); setSelectedListingId(null); }} className="border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
                     ) : (
@@ -2886,7 +2886,7 @@ export function AppShell() {
                 <ShareButton title={selectedJob.title} text={`${selectedJob.title} — ${selectedJob.mechanicName}`} path={`?job=${selectedJob.id}`} onShare={(channel, refCode) => recordShare("job", selectedJob.id, channel, refCode)} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" />
               </div>
               <div className="flex items-center gap-3 mt-8">
-                <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">{selectedJob.mechanicImg}</div>
+                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">{selectedJob.mechanicImg}</div>
                 <div className="min-w-0">
                   <h1 className="text-lg font-bold leading-tight text-gray-900">{selectedJob.title}</h1>
                   <p className="text-gray-500 text-sm truncate">{selectedJob.mechanicName} · {selectedJob.location}</p>
@@ -2904,17 +2904,17 @@ export function AppShell() {
               <p className="text-sm text-gray-600 leading-relaxed mb-5">{selectedJob.description ? <TranslatedText id={`job-desc-${selectedJob.id}`} scope="public" text={selectedJob.description} fromLang={selectedJob.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /> : "—"}</p>
               {selectedJob.requirements.length > 0 && (<>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("requiredQualificationsTitle")}</h3>
-                <div className="space-y-1.5 mb-5">{selectedJob.requirements.map((r, i) => (<div key={i} className="flex items-start gap-2 text-sm text-gray-600"><CheckCircle2 size={14} className="text-rose-500 flex-shrink-0 mt-0.5" /><span>{r}</span></div>))}</div>
+                <div className="space-y-1.5 mb-5">{selectedJob.requirements.map((r, i) => (<div key={i} className="flex items-start gap-2 text-sm text-gray-600"><CheckCircle2 size={14} className="text-blue-500 flex-shrink-0 mt-0.5" /><span>{r}</span></div>))}</div>
               </>)}
               {selectedJob.skills.length > 0 && (<>
                 <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("skillsTitle")}</h3>
-                <div className="flex flex-wrap gap-1.5 mb-5">{selectedJob.skills.map((s, i) => (<span key={i} className="text-xs font-medium px-2.5 py-1 rounded-full bg-rose-50 text-rose-600">{s}</span>))}</div>
+                <div className="flex flex-wrap gap-1.5 mb-5">{selectedJob.skills.map((s, i) => (<span key={i} className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{s}</span>))}</div>
               </>)}
               <p className="text-[11px] text-gray-400 flex items-center gap-1 mb-5"><Clock size={11} /> {t("postedOnLabel", { date: selectedJob.postedDate })}</p>
               {isOwnJob ? (
                 <div className="bg-white border border-gray-200 rounded-2xl p-4">
                   <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Users size={15} /> {t("applicationsTitle", { n: String(selectedJob.applicants.length) })}</h3>
-                  <div className="space-y-2">{selectedJob.applicants.map(a => (<div key={a.id} className="bg-white border border-gray-100 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><span className="text-xs font-semibold text-gray-700">{a.name}</span><div className="flex items-center gap-1.5 flex-shrink-0">{a.status === "rejected" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500">{t("rejectedLabel")}</span>}<span className="text-[10px] text-gray-400">{a.date}</span></div></div>{(a.phone || a.email || a.address) && (<div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-400 mb-1.5">{a.phone && <span className="flex items-center gap-1"><Phone size={10} /> {a.phone}</span>}{a.email && <span className="flex items-center gap-1"><Mail size={10} /> {a.email}</span>}{a.address && <span className="flex items-center gap-1"><MapPin size={10} /> {a.address}</span>}</div>)}{a.message && <p className="text-xs text-gray-500 mb-1.5"><TranslatedText id={`job-applicant-msg-${a.id}`} text={a.message} fromLang={a.lang || "tr"} viewerLang={myProfile?.lang || "tr"} compact /></p>}<div className="flex items-center gap-2 flex-wrap">{safeHref(a.cvUrl) ? (<a href={safeHref(a.cvUrl)} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[11px] font-medium text-rose-600 hover:text-rose-700 bg-rose-50 rounded-lg px-2 py-1 max-w-full min-w-0"><FileText size={12} className="flex-shrink-0" /><span className="truncate min-w-0">{a.cvName || "CV"}</span></a>) : (<span className="inline-flex items-center gap-1.5 text-[11px] text-gray-300"><FileText size={12} /> {t("noCvAttached")}</span>)}{a.status !== "rejected" && (<button onClick={() => rejectApplication(selectedJob.id, a.id)} className="text-[11px] font-medium text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg px-2 py-1 transition flex-shrink-0">{t("rejectCvBtn")}</button>)}</div></div>))}{selectedJob.applicants.length === 0 && <p className="text-center text-gray-400 text-xs py-4">{t("noApplicationsYet")}</p>}</div>
+                  <div className="space-y-2">{selectedJob.applicants.map(a => (<div key={a.id} className="bg-white border border-gray-100 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><span className="text-xs font-semibold text-gray-700">{a.name}</span><div className="flex items-center gap-1.5 flex-shrink-0">{a.status === "rejected" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500">{t("rejectedLabel")}</span>}<span className="text-[10px] text-gray-400">{a.date}</span></div></div>{(a.phone || a.email || a.address) && (<div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-400 mb-1.5">{a.phone && <span className="flex items-center gap-1"><Phone size={10} /> {a.phone}</span>}{a.email && <span className="flex items-center gap-1"><Mail size={10} /> {a.email}</span>}{a.address && <span className="flex items-center gap-1"><MapPin size={10} /> {a.address}</span>}</div>)}{a.message && <p className="text-xs text-gray-500 mb-1.5"><TranslatedText id={`job-applicant-msg-${a.id}`} text={a.message} fromLang={a.lang || "tr"} viewerLang={myProfile?.lang || "tr"} compact /></p>}<div className="flex items-center gap-2 flex-wrap">{safeHref(a.cvUrl) ? (<a href={safeHref(a.cvUrl)} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:text-blue-700 bg-blue-50 rounded-lg px-2 py-1 max-w-full min-w-0"><FileText size={12} className="flex-shrink-0" /><span className="truncate min-w-0">{a.cvName || "CV"}</span></a>) : (<span className="inline-flex items-center gap-1.5 text-[11px] text-gray-300"><FileText size={12} /> {t("noCvAttached")}</span>)}{a.status !== "rejected" && (<button onClick={() => rejectApplication(selectedJob.id, a.id)} className="text-[11px] font-medium text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg px-2 py-1 transition flex-shrink-0">{t("rejectCvBtn")}</button>)}</div></div>))}{selectedJob.applicants.length === 0 && <p className="text-center text-gray-400 text-xs py-4">{t("noApplicationsYet")}</p>}</div>
                   <div className="flex gap-2 mt-4">
                     <button onClick={() => { openJobForm({ title: selectedJob.title, employmentType: selectedJob.employmentType, experienceLevel: selectedJob.experienceLevel, location: selectedJob.location, salaryMin: selectedJob.salaryMin, salaryMax: selectedJob.salaryMax, description: selectedJob.description, requirements: selectedJob.requirements.join("\n"), skills: selectedJob.skills.join(", "), _editingId: selectedJob.id }); setSelectedJobId(null); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-xs font-medium hover:bg-gray-100 transition flex items-center justify-center gap-1"><Pencil size={13} /> {t("editBtn")}</button>
                     <button onClick={() => { setJobListingStatus(selectedJob.id, selectedJob.status === "active" ? "closed" : "active"); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-xs font-medium hover:bg-gray-100 transition">{selectedJob.status === "active" ? t("closeListingBtn") : t("reopenListingBtn")}</button>
@@ -2927,7 +2927,7 @@ export function AppShell() {
                   <button onClick={goHome} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-800 transition">{t("createOwnerAccountBtn")}</button>
                 </div>
               ) : (
-                <button onClick={openJobApplyForm} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center justify-center gap-2"><Briefcase size={15} /> {t("applyBtn")}</button>
+                <button onClick={openJobApplyForm} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition flex items-center justify-center gap-2"><Briefcase size={15} /> {t("applyBtn")}</button>
               )}
             </div>
           </div>
@@ -2939,7 +2939,7 @@ export function AppShell() {
             <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
             <div className="bg-white text-gray-900 px-5 pt-6 pb-4 border-b border-gray-200 shadow-sm">{/* GERİ TUŞU KALDIRILDI: bu sayfa yukarıda PageTopBar kullanıyor ve orada zaten bir geri
                     oku var (kullanıcı bildirdi: "iki tane geri tuşu saçma"). Bant artık yalnızca
-                    karşı tarafın adını ve durumunu gösteriyor. */}<div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="text-2xl bg-rose-50 rounded-xl w-11 h-11 flex items-center justify-center">{activeConvo.mechanicImg}</div><h1 className="text-base font-bold text-gray-900">{activeConvo.mechanicName}</h1></div><select value={ownerLang} onChange={(e) => setOwnerLang(e.target.value)} className="bg-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1 border-none outline-none"><option className="text-black" value="tr">🇹🇷 TR</option><option className="text-black" value="en">🇬🇧 EN</option><option className="text-black" value="de">🇩🇪 DE</option></select></div></div>
+                    karşı tarafın adını ve durumunu gösteriyor. */}<div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="text-2xl bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center">{activeConvo.mechanicImg}</div><h1 className="text-base font-bold text-gray-900">{activeConvo.mechanicName}</h1></div><select value={ownerLang} onChange={(e) => setOwnerLang(e.target.value)} className="bg-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1 border-none outline-none"><option className="text-black" value="tr">🇹🇷 TR</option><option className="text-black" value="en">🇬🇧 EN</option><option className="text-black" value="de">🇩🇪 DE</option></select></div></div>
             <div className="flex-1 px-5 py-4 overflow-y-auto">{activeConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={ownerLang} mine={m.sender === "owner"} />))}</div>
             {activeConvo.messages.length > 0 && activeConvo.messages[activeConvo.messages.length - 1].isRejectionNotice ? (
               <div className="px-5 pb-6 pt-2 border-t border-gray-100"><div className="bg-gray-100 text-gray-500 text-xs text-center py-3 rounded-xl">{t("applicationRejectedNotice")}</div></div>
@@ -2955,8 +2955,8 @@ export function AppShell() {
                 setSelectedMechanicId(mech.id);
                 setSelectedDate(null); setSelectedTime(null); setBookingService(null); setProblemDesc(""); setProblemPhotos([]);
                 setScreen("booking");
-              }} className="w-full mb-3 bg-rose-50 text-rose-600 text-xs font-medium py-2 rounded-xl hover:bg-rose-100 transition flex items-center justify-center gap-1"><Calendar size={14} /> {t("bookWithThisMechanic")}</button></div>
-              <div className="px-5 pb-6 pt-2 border-t border-gray-100 flex items-center gap-2"><input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition flex-shrink-0"><ImageIcon size={18} /></button><input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendOwnerMessageWithReply(chatInput); }} placeholder={t("chatInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200" /><button onClick={() => sendOwnerMessageWithReply(chatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button></div>
+              }} className="w-full mb-3 bg-blue-50 text-blue-600 text-xs font-medium py-2 rounded-xl hover:bg-blue-100 transition flex items-center justify-center gap-1"><Calendar size={14} /> {t("bookWithThisMechanic")}</button></div>
+              <div className="px-5 pb-6 pt-2 border-t border-gray-100 flex items-center gap-2"><input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition flex-shrink-0"><ImageIcon size={18} /></button><input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendOwnerMessageWithReply(chatInput); }} placeholder={t("chatInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" /><button onClick={() => sendOwnerMessageWithReply(chatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition flex-shrink-0"><Send size={16} /></button></div>
             </>)}
           </div>
           </div>
@@ -3008,25 +3008,25 @@ export function AppShell() {
                   {/* 1) ARAÇ */}
                   <SectionCard step={steps[0]} icon={Car} title={t("bookingSelectVehicle")} hint={t("bookingVehicleHint")}>
                     {vehicles.length === 0 && !showAddVehicle ? (
-                      <div className="bg-rose-50 border border-rose-100 rounded-2xl px-4 py-3 mb-3 flex items-start gap-2.5">
-                        <Car size={16} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                      <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 mb-3 flex items-start gap-2.5">
+                        <Car size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
                         <p className="text-sm text-gray-600">{t("bookingNoVehicles")}</p>
                       </div>
                     ) : vehicles.length > 0 ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                         {vehicles.map(v => { const isSel = selectedBookingVehicleId === v.id; return (
-                          <button key={v.id} onClick={() => setSelectedBookingVehicleId(v.id)} className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 text-gray-700 hover:border-rose-300"}`}>
+                          <button key={v.id} onClick={() => setSelectedBookingVehicleId(v.id)} className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 text-gray-700 hover:border-blue-300"}`}>
                             <Car size={18} className="flex-shrink-0" />
                             <div className="min-w-0">
                               <p className="text-sm font-semibold leading-tight truncate">{v.brand} {v.model}</p>
-                              <p className={`text-xs leading-tight ${isSel ? "text-rose-100" : "text-gray-400"}`}>{v.plate}</p>
+                              <p className={`text-xs leading-tight ${isSel ? "text-blue-100" : "text-gray-400"}`}>{v.plate}</p>
                             </div>
                             {isSel && <Check size={16} className="ml-auto flex-shrink-0" />}
                           </button>
                         ); })}
                       </div>
                     ) : null}
-                    <button onClick={toggleAddVehicle} className="text-sm font-semibold text-rose-600 hover:text-rose-700 flex items-center gap-1.5"><Plus size={15} /> {t("addVehicle")}</button>
+                    <button onClick={toggleAddVehicle} className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1.5"><Plus size={15} /> {t("addVehicle")}</button>
                     {(vehicles.length === 0 || showAddVehicle) && (
                       <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 mt-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -3039,10 +3039,10 @@ export function AppShell() {
                             Varsayılan işaretli — aynı aracı her randevuda yeniden yazmak anlamsız.
                             Kapatma seçeneği duruyor: tek seferlik bir araç garajı kirletmesin. */}
                         <label className="mt-3 flex items-start gap-2.5 bg-white border border-gray-200 rounded-xl p-3 cursor-pointer">
-                          <input type="checkbox" checked={saveVehicleToGarage} onChange={(e) => setSaveVehicleToGarage(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
+                          <input type="checkbox" checked={saveVehicleToGarage} onChange={(e) => setSaveVehicleToGarage(e.target.checked)} className="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0" />
                           <span className="text-xs text-gray-600"><span className="font-semibold text-gray-800">{t("saveVehicleToGarageLabel")}</span><br />{t("saveVehicleToGarageHint")}</span>
                         </label>
-                        <button onClick={addVehicle} className="mt-2 bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-700 transition">{t("addVehicle")}</button>
+                        <button onClick={addVehicle} className="mt-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition">{t("addVehicle")}</button>
                       </div>
                     )}
                     {brandUnsupported && (
@@ -3055,17 +3055,17 @@ export function AppShell() {
                     hint={vehicleBrand ? t("bookingServiceBrandHint", { brand: vehicleBrand }) : t("bookingServiceNoBrandHint")}>
                     <div className="relative mb-3">
                       <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input value={bookingServiceSearch} onChange={(e) => setBookingServiceSearch(e.target.value)} placeholder={t("bookingServiceSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" />
+                      <input value={bookingServiceSearch} onChange={(e) => setBookingServiceSearch(e.target.value)} placeholder={t("bookingServiceSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" />
                     </div>
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 max-h-[26rem] overflow-y-auto pr-0.5">
                       {bookingServiceOptions.length === 0 && (<p className="text-sm text-gray-400 text-center py-6 xl:col-span-2">{t("noServiceMatch", { q: bookingServiceSearch })}</p>)}
                       {bookingServiceOptions.map((s, i) => {
                         const isSel = bookingService && !bookingService.other && bookingService.name === s.name;
                         return (
-                          <button key={i} onClick={() => setBookingService({ name: s.name, price: s.price, other: false, fixed: s.fixed })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-rose-600 border-rose-600 text-white" : "border-gray-200 hover:border-rose-300"}`}>
+                          <button key={i} onClick={() => setBookingService({ name: s.name, price: s.price, other: false, fixed: s.fixed })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 hover:border-blue-300"}`}>
                             <span className="text-sm font-medium flex flex-col gap-0.5 min-w-0">
                               <span className="flex items-center gap-2 min-w-0">
-                                <ToolIcon size={13} className={`flex-shrink-0 ${isSel ? "text-white" : "text-rose-400"}`} />
+                                <ToolIcon size={13} className={`flex-shrink-0 ${isSel ? "text-white" : "text-blue-400"}`} />
                                 <span className="truncate">{s.name}</span>
                               </span>
                               {/* FİYATIN PİYASADAKİ YERİ (kullanıcı isteği).
@@ -3088,7 +3088,7 @@ export function AppShell() {
                             </span>
                             <span className="flex items-center gap-2 flex-shrink-0">
                               {/* Marka rozeti: bu fiyatın SENİN aracın için olduğunu açıkça söyler. */}
-                              {s.brandPriced && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isSel ? "bg-white/20 text-white" : "bg-rose-50 text-rose-600"}`}>{vehicleBrand}</span>}
+                              {s.brandPriced && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isSel ? "bg-white/20 text-white" : "bg-blue-50 text-blue-600"}`}>{vehicleBrand}</span>}
                               <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 ${isSel ? "bg-white/20 text-white" : s.fixed ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>
                                 {s.fixed ? t("fixedPriceBadge") : t("variableLabel")}
                                 {/* Değişken fiyat araç sahibine hiçbir şey anlatmıyordu: "peki ne kadar
@@ -3101,7 +3101,7 @@ export function AppShell() {
                           </button>
                         );
                       })}
-                      <button onClick={() => setBookingService({ name: t("otherServiceLabel"), price: null, other: true, fixed: false })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${bookingService?.other ? "bg-rose-600 border-rose-600 text-white" : "border-dashed border-gray-300 hover:border-rose-300"}`}>
+                      <button onClick={() => setBookingService({ name: t("otherServiceLabel"), price: null, other: true, fixed: false })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${bookingService?.other ? "bg-blue-600 border-blue-600 text-white" : "border-dashed border-gray-300 hover:border-blue-300"}`}>
                         <span className="text-sm font-medium">{t("otherServiceLabel")}</span>
                         <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${bookingService?.other ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>{t("variableLabel")}</span>
                       </button>
@@ -3123,9 +3123,9 @@ export function AppShell() {
 
                   {/* 4) SORUN AÇIKLAMASI */}
                   <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
-                    <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><FileText size={16} className="text-rose-500" /> {t("problemDescLabel")}</h3>
+                    <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><FileText size={16} className="text-blue-500" /> {t("problemDescLabel")}</h3>
                     <p className="text-xs text-gray-400 mb-4">{t("problemPhotoHint")}</p>
-                    <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} placeholder={t("problemDescPlaceholder")} rows={4} className="w-full px-3.5 py-3 rounded-2xl border border-gray-200 text-sm resize-none mb-3 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" />
+                    <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} placeholder={t("problemDescPlaceholder")} rows={4} className="w-full px-3.5 py-3 rounded-2xl border border-gray-200 text-sm resize-none mb-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" />
                     <div className="flex items-center gap-2 flex-wrap">
                       <input ref={problemPhotoRef} type="file" accept="image/*" onChange={addProblemPhoto} className="hidden" />
                       {problemPhotos.map((src, i) => (
@@ -3134,10 +3134,10 @@ export function AppShell() {
                           <button onClick={() => removeProblemPhoto(i)} aria-label={t("removePhotoAria")} className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full text-white flex items-center justify-center"><X size={11} /></button>
                         </div>
                       ))}
-                      <button onClick={() => problemPhotoRef.current?.click()} aria-label={t("addPhotoAria")} className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-rose-300 hover:text-rose-500 transition"><Camera size={18} /></button>
+                      <button onClick={() => problemPhotoRef.current?.click()} aria-label={t("addPhotoAria")} className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-blue-300 hover:text-blue-500 transition"><Camera size={18} /></button>
                     </div>
                     <label className="flex items-start gap-2.5 mt-4 bg-gray-50 rounded-2xl p-3.5 cursor-pointer">
-                      <input type="checkbox" checked={shareHistoryConsent} onChange={(e) => setShareHistoryConsent(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
+                      <input type="checkbox" checked={shareHistoryConsent} onChange={(e) => setShareHistoryConsent(e.target.checked)} className="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0" />
                       <span className="text-xs text-gray-600"><span className="font-semibold text-gray-800">{t("historyShareConsentTitle")}</span> {t("historyShareConsentDesc")}</span>
                     </label>
                   </div>
@@ -3174,7 +3174,7 @@ export function AppShell() {
                         <>
                           <div className="flex justify-between items-baseline">
                             <span className="text-sm text-gray-500">{t("bookingSummaryPrice")}</span>
-                            <span className="text-2xl font-bold text-rose-600">{bookingService.price}</span>
+                            <span className="text-2xl font-bold text-blue-600">{bookingService.price}</span>
                           </div>
                           {vehicleBrand && <p className="text-[11px] text-gray-400 mt-1">{t("bookingPriceForBrand", { brand: vehicleBrand })}</p>}
                         </>
@@ -3196,12 +3196,12 @@ export function AppShell() {
 
                     {bookingService?.fixed && !bookingService.other && parsePriceNumber(bookingService.price) > EXPENSIVE_SERVICE_THRESHOLD && (
                       <label className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl p-3 mt-4 cursor-pointer">
-                        <input type="checkbox" checked={approveExpensiveService} onChange={(e) => setApproveExpensiveService(e.target.checked)} className="mt-0.5 w-4 h-4 accent-rose-600 flex-shrink-0" />
+                        <input type="checkbox" checked={approveExpensiveService} onChange={(e) => setApproveExpensiveService(e.target.checked)} className="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0" />
                         <span className="text-xs text-gray-700">{t("expensiveServiceConfirmPrefix")} <strong>{bookingService.price}</strong> {t("expensiveServiceConfirmSuffix")}</span>
                       </label>
                     )}
 
-                    <button disabled={!ready} onClick={confirmBooking} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition mt-5 ${ready ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("confirmBookingBtn")}</button>
+                    <button disabled={!ready} onClick={confirmBooking} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition mt-5 ${ready ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("confirmBookingBtn")}</button>
                     {!ready && <p className="text-[11px] text-gray-400 text-center mt-2">{t("bookingCompleteStepsNote")}</p>}
                   </div>
                 </aside>
@@ -3212,13 +3212,13 @@ export function AppShell() {
         })()}
         {screen === "mechBrowse" && (
           <>
-            <div className="bg-gradient-to-b from-rose-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
+            <div className="bg-gradient-to-b from-blue-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-3 max-w-7xl mx-auto w-full relative md:hidden">
                 <span className="text-xs text-gray-500">{t("greetingHello")}{form.name ? `, ${form.name}` : ""} 🔧</span>
                 <button onClick={() => setScreen("mechanicDashboard")} className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1"><ChevronLeft size={14}/> {t("backToDashboardBtn")}</button>
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
-                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-rose-600">perto</span></span></button>
+                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-blue-600">perto</span></span></button>
                 <div className="flex items-center gap-8">
                   {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: t("jobListingsNavLabel"), icon: Briefcase }].map(tab => {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
@@ -3234,17 +3234,17 @@ export function AppShell() {
                 <div className={`transition-all duration-300 ease-out overflow-hidden ${heroCollapsed ? "max-h-0 opacity-0 -translate-y-3 mb-0 pointer-events-none" : "max-h-56 opacity-100 translate-y-0 mb-4"}`}>
                   <div className="flex items-center justify-center md:hidden mb-4">
                     <div className="inline-flex items-center gap-0.5 bg-gray-100 rounded-full p-1">
-                      <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
-                      <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
-                      <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-rose-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
+                      <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
+                      <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
+                      <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                     </div>
                   </div>
                   <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("discoverOtherMechanicsTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
                 </div>
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center gap-2 p-2 pl-2.5 md:hidden">
-                  <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">{ownerMode === "cars" ? <Car size={18} className="text-rose-700" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-rose-700" /> : <Wrench size={18} className="text-rose-700" />}</div>
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">{ownerMode === "cars" ? <Car size={18} className="text-blue-700" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-blue-700" /> : <Wrench size={18} className="text-blue-700" />}</div>
                   <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="flex-1 px-1 py-2 text-gray-800 text-sm focus:outline-none bg-transparent min-w-0" />
-                  <button onClick={() => setShowFilterModal(true)} aria-label={t("filterBtn")} className="relative flex-shrink-0 w-10 h-10 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-50 transition"><SlidersHorizontal size={16} />{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}</button><button onClick={(e) => e.currentTarget.blur()} className="flex-shrink-0 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">{t("searchBtn")}</button>
+                  <button onClick={() => setShowFilterModal(true)} aria-label={t("filterBtn")} className="relative flex-shrink-0 w-10 h-10 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-50 transition"><SlidersHorizontal size={16} />{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}</button><button onClick={(e) => e.currentTarget.blur()} className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">{t("searchBtn")}</button>
                 </div>
                 <div className={`hidden md:flex items-stretch bg-white rounded-full border border-gray-300 shadow-lg divide-x divide-gray-200 mx-auto overflow-hidden ${ownerMode === "mechanics" ? "max-w-3xl" : "max-w-2xl"}`}>
                   <div className="flex-1 px-6 py-2.5"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("brandFieldLabel") : ownerMode === "cars" ? t("brandModelFieldLabel") : t("positionFieldLabel")}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
@@ -3259,9 +3259,9 @@ export function AppShell() {
                   <button onClick={() => setShowFilterModal(true)} className="flex items-center gap-2 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
                     <SlidersHorizontal size={15} className="text-gray-500" />
                     {t("filterBtn")}
-                    {(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="w-5 h-5 bg-rose-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}
+                    {(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="w-5 h-5 bg-blue-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}
                   </button>
-                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-rose-600 hover:bg-rose-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
+                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
                 </div>
               </div>
             </div>
@@ -3279,7 +3279,7 @@ export function AppShell() {
                 üzerine binen beyaz özet kartı, altında yapışkan alt-çizgili sekmeler.
                 Eskiden burada 5 adet 9 piksellik minik sekme vardı — telefon için tasarlanmıştı ve
                 geniş ekrana yayılınca okunamaz hâle geliyordu. */}
-            <div className="h-24 md:h-32 bg-gradient-to-br from-rose-100 via-rose-50 to-gray-100 relative">
+            <div className="h-24 md:h-32 bg-gradient-to-br from-blue-100 via-blue-50 to-gray-100 relative">
               <div className="absolute top-4 left-4 md:left-8 z-40"><BrandMark /></div>
               {/* GERÇEK HATA DÜZELTMESİ — bildirim paneli başlık kartının ARKASINDA açılıyordu.
                   Bu kapsayıcı konumlandırılmış + z-index'li olduğu için KENDİ yığın bağlamını
@@ -3312,7 +3312,7 @@ export function AppShell() {
                   {/* Özet sayaçlar: tamircinin panoyu açar açmaz görmesi gereken üç sayı. */}
                   <div className="hidden sm:flex items-center gap-5 flex-shrink-0">
                     {[
-                      { n: appointments.filter(a => isSameMechanicAppt(a) && a.status === "Onay Bekliyor").length, l: t("mechTabAppointments"), c: "text-rose-600" },
+                      { n: appointments.filter(a => isSameMechanicAppt(a) && a.status === "Onay Bekliyor").length, l: t("mechTabAppointments"), c: "text-blue-600" },
                       { n: conversations.filter(c => c.mechanicId === MY_MECHANIC_ID).length, l: t("mechTabMessages"), c: "text-gray-900" },
                       { n: myQuoteOffers.length, l: t("tabLabelOffers"), c: "text-gray-900" },
                     ].map((s, i) => (
@@ -3348,7 +3348,7 @@ export function AppShell() {
                   { key: "analytics", label: t("mechTabAnalytics"), icon: TrendingUp },
                 ].map((tb) => {
                   const Icon = tb.icon; const active = mechTab === tb.key;
-                  return (<button key={tb.key} onClick={() => setMechTab(tb.key)} className={`px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-rose-600 border-rose-500" : "text-gray-500 border-transparent hover:text-rose-600 hover:border-rose-200"}`}><Icon size={14} /> {tb.label}</button>);
+                  return (<button key={tb.key} onClick={() => setMechTab(tb.key)} className={`px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-blue-600 border-blue-500" : "text-gray-500 border-transparent hover:text-blue-600 hover:border-blue-200"}`}><Icon size={14} /> {tb.label}</button>);
                 })}
               </div>
             </div>
@@ -3367,7 +3367,7 @@ export function AppShell() {
                     { key: "quotes", label: t("quotesReqTab"), icon: ClipboardList, dot: myQuoteOffers.filter(o => o.status === "pending").length > 0 },
                     { key: "history", label: t("historyReqTab"), icon: Calendar, dot: false },
                   ].map(sv => { const Icon = sv.icon; const on = mechReqView === sv.key; return (
-                    <button key={sv.key} onClick={() => setMechReqView(sv.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-rose-700" : "text-gray-500 hover:text-gray-800"}`}><Icon size={14} /> {sv.label}{sv.dot && <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />}</button>
+                    <button key={sv.key} onClick={() => setMechReqView(sv.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-blue-700" : "text-gray-500 hover:text-gray-800"}`}><Icon size={14} /> {sv.label}{sv.dot && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />}</button>
                   ); })}
                 </div>
                 {mechReqView === "active" && (<>
@@ -3375,7 +3375,7 @@ export function AppShell() {
                     {[
                       { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Onay Bekliyor").length, l: t("statPending"), icon: Clock, ring: "bg-amber-50 text-amber-600", num: "text-amber-600" },
                       { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Sırada").length, l: t("statQueued"), icon: ClipboardList, ring: "bg-gray-100 text-gray-600", num: "text-gray-900" },
-                      { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Tamire Alındı").length, l: t("statInProgress"), icon: Wrench, ring: "bg-rose-50 text-rose-600", num: "text-rose-600" },
+                      { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Tamire Alındı").length, l: t("statInProgress"), icon: Wrench, ring: "bg-blue-50 text-blue-600", num: "text-blue-600" },
                       { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Tamir Tamamlandı").length, l: t("statCompleted"), icon: CheckCircle2, ring: "bg-green-50 text-green-600", num: "text-green-600" },
                     ].map((c, i) => { const Icon = c.icon; return (
                       <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm flex items-center gap-3.5">
@@ -3395,12 +3395,12 @@ export function AppShell() {
                         <div className="flex items-center justify-between gap-3 text-xs text-gray-400 mb-3"><div className="flex items-center gap-3"><span className="flex items-center gap-1"><Calendar size={12} />{r.date}</span><span className="flex items-center gap-1"><Clock size={12} />{r.time}</span></div><button onClick={() => openReportForm("customer", `Randevu #${r.id} · ${r.customer}`, `"${r.customer}" müşterisini bildiriyorum`)} className="flex items-center gap-1 text-gray-300 hover:text-red-500 transition"><Flag size={11} /> {t("reportBtn")}</button></div>
                         {r.historyShareConsent === false ? (<p className="flex items-center gap-1 text-[11px] text-gray-300 mb-3"><Lock size={11} /> {t("historyShareDeclinedNotice")}</p>) : (() => { const past = appointments.filter(a => a.ownerId === r.ownerId && a.id !== r.id && ["Tamir Tamamlandı", "İptal Edildi", "Reddedildi", "Gelmedi"].includes(a.status) && a.historyShareConsent !== false && isSameMechanicAppt(a)); if (past.length === 0) return null; const isOpen = expandedCustomerHistory === r.id; return (
                           <div className="mb-3">
-                            <button onClick={() => setExpandedCustomerHistory(isOpen ? null : r.id)} className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-rose-600 transition"><History size={11} /> {t("pastAppointmentsCount", { n: String(past.length) })} {isOpen ? t("hideLabel") : t("showLabel")} <ChevronRight size={11} className={`transition-transform ${isOpen ? "rotate-90" : ""}`} /></button>
+                            <button onClick={() => setExpandedCustomerHistory(isOpen ? null : r.id)} className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-blue-600 transition"><History size={11} /> {t("pastAppointmentsCount", { n: String(past.length) })} {isOpen ? t("hideLabel") : t("showLabel")} <ChevronRight size={11} className={`transition-transform ${isOpen ? "rotate-90" : ""}`} /></button>
                             {isOpen && (<div className="mt-2 space-y-1.5 bg-gray-50 rounded-xl p-2.5">{past.map(p => (<div key={p.id} className="flex items-center justify-between text-[11px] md:text-xs"><span className="text-gray-500 truncate">{p.date} · <TranslatedText id={`appt-issue-${p.id}`} text={p.issue} fromLang={ownerLangFor(p.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></span><span className={`text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ml-2 ${statusColor(p.status)}`}>{apptStatusLabel(p.status, lang)}</span></div>))}</div>)}
                           </div>
                         ); })()}
-                        {r.status === "Onay Bekliyor" && (<div className="flex gap-2"><button onClick={() => acceptAppt(r.id)} className="flex-1 bg-rose-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-rose-700 transition flex items-center justify-center gap-1"><ThumbsUp size={12} /> {t("acceptBtn")}</button><button onClick={() => rejectAppt(r.id)} className="flex-1 border border-gray-200 text-gray-500 text-xs py-2 rounded-xl font-medium hover:bg-gray-50 transition flex items-center justify-center gap-1"><ThumbsDown size={12} /> {t("rejectBtn")}</button></div>)}
-                        {(r.status === "Sırada" || r.status === "Tamire Alındı") && (<div className="flex gap-2"><button onClick={() => r.status === "Tamire Alındı" ? setCompletingApptId(r.id) : advanceStatus(r.id)} className="flex-1 bg-rose-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-rose-700 transition">{r.status === "Sırada" ? t("takeInForRepairBtn") : t("completedSmsBtn")}</button>{r.status === "Sırada" && (<button onClick={() => markNoShow(r.id)} className="border border-gray-200 text-gray-500 text-xs py-2 px-3 rounded-xl font-medium hover:bg-gray-50 transition whitespace-nowrap">{t("noShowBtn")}</button>)}</div>)}
+                        {r.status === "Onay Bekliyor" && (<div className="flex gap-2"><button onClick={() => acceptAppt(r.id)} className="flex-1 bg-blue-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-blue-700 transition flex items-center justify-center gap-1"><ThumbsUp size={12} /> {t("acceptBtn")}</button><button onClick={() => rejectAppt(r.id)} className="flex-1 border border-gray-200 text-gray-500 text-xs py-2 rounded-xl font-medium hover:bg-gray-50 transition flex items-center justify-center gap-1"><ThumbsDown size={12} /> {t("rejectBtn")}</button></div>)}
+                        {(r.status === "Sırada" || r.status === "Tamire Alındı") && (<div className="flex gap-2"><button onClick={() => r.status === "Tamire Alındı" ? setCompletingApptId(r.id) : advanceStatus(r.id)} className="flex-1 bg-blue-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-blue-700 transition">{r.status === "Sırada" ? t("takeInForRepairBtn") : t("completedSmsBtn")}</button>{r.status === "Sırada" && (<button onClick={() => markNoShow(r.id)} className="border border-gray-200 text-gray-500 text-xs py-2 px-3 rounded-xl font-medium hover:bg-gray-50 transition whitespace-nowrap">{t("noShowBtn")}</button>)}</div>)}
                       </div>
                     ))}
                   </div>
@@ -3415,10 +3415,10 @@ export function AppShell() {
                       const responding = respondingQuoteOfferId === o.id;
                       return (
                         <div key={o.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
-                          <div className="flex justify-between items-start mb-2"><div><h4 className="font-semibold text-gray-800 text-sm">{req.customer}</h4><p className="text-xs text-gray-400">{req.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${o.status === "pending" ? "bg-amber-50 text-amber-600" : o.status === "submitted" ? "bg-rose-50 text-rose-600" : o.status === "accepted" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>{o.status === "pending" ? t("quoteStatusPending") : o.status === "submitted" ? t("quoteStatusSubmitted") : o.status === "accepted" ? t("quoteStatusAccepted") : o.status === "declined" ? t("quoteStatusDeclined") : t("quoteStatusLost")}</span></div>
+                          <div className="flex justify-between items-start mb-2"><div><h4 className="font-semibold text-gray-800 text-sm">{req.customer}</h4><p className="text-xs text-gray-400">{req.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${o.status === "pending" ? "bg-amber-50 text-amber-600" : o.status === "submitted" ? "bg-blue-50 text-blue-600" : o.status === "accepted" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>{o.status === "pending" ? t("quoteStatusPending") : o.status === "submitted" ? t("quoteStatusSubmitted") : o.status === "accepted" ? t("quoteStatusAccepted") : o.status === "declined" ? t("quoteStatusDeclined") : t("quoteStatusLost")}</span></div>
                           <p className="text-xs text-gray-500 mb-3"><TranslatedText id={`quotereq-issue-${req.id}`} text={req.issue} fromLang={ownerLangFor(req.ownerId)} viewerLang={myProfile.lang || "tr"} /></p>
                           {req.photos && req.photos.length > 0 && (<div className="flex gap-1.5 mb-3">{req.photos.map((src, i) => (<img loading="lazy" decoding="async" key={i} src={src} alt={t("issuePhotoAlt", { n: String(i + 1) })} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
-                          {o.status === "pending" && !responding && (<div className="flex gap-2"><button onClick={() => { setRespondingQuoteOfferId(o.id); setQuoteOfferForm({ price: "", etaDays: "", note: "" }); }} className="flex-1 bg-rose-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-rose-700 transition">{t("giveQuoteBtn")}</button><button onClick={() => declineQuoteOffer(o.id)} className="border border-gray-200 text-gray-500 text-xs px-3 py-2 rounded-xl font-medium hover:bg-gray-50 transition">{t("declineQuoteBtn")}</button></div>)}
+                          {o.status === "pending" && !responding && (<div className="flex gap-2"><button onClick={() => { setRespondingQuoteOfferId(o.id); setQuoteOfferForm({ price: "", etaDays: "", note: "" }); }} className="flex-1 bg-blue-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-blue-700 transition">{t("giveQuoteBtn")}</button><button onClick={() => declineQuoteOffer(o.id)} className="border border-gray-200 text-gray-500 text-xs px-3 py-2 rounded-xl font-medium hover:bg-gray-50 transition">{t("declineQuoteBtn")}</button></div>)}
                           {o.status === "pending" && responding && (
                             <div className="bg-gray-50 rounded-xl p-3 space-y-2">
                               <div className="flex gap-2">
@@ -3431,10 +3431,10 @@ export function AppShell() {
                               (ör. otomatik doldurma React state'ini senkronize etmeden inputu doldurmuşsa) kullanıcının
                               "butona basıyorum hiçbir şey olmuyor" şeklinde algılamasına yol açıyordu. Artık buton her
                               zaman tıklanabilir; geçersiz fiyatta submitQuoteOffer kendi içinde net bir uyarı gösteriyor. */}
-                              <div className="flex gap-2"><button onClick={() => setRespondingQuoteOfferId(null)} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("giveUpBtn")}</button><button onClick={() => submitQuoteOffer(o.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium ${parsePriceNumber(quoteOfferForm.price) ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-300 text-gray-600"}`}>{t("sendQuoteBtn")}</button></div>
+                              <div className="flex gap-2"><button onClick={() => setRespondingQuoteOfferId(null)} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("giveUpBtn")}</button><button onClick={() => submitQuoteOffer(o.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium ${parsePriceNumber(quoteOfferForm.price) ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-300 text-gray-600"}`}>{t("sendQuoteBtn")}</button></div>
                             </div>
                           )}
-                          {o.status === "submitted" && (<div className="bg-rose-50 rounded-xl p-3 flex items-center justify-between"><span className="text-xs text-gray-600">{t("yourQuoteLabel")} <strong className="text-rose-600">{o.price}₺</strong>{o.etaDays ? ` · ${o.etaDays} ${t("daysSuffix")}` : ""}</span><span className="text-[10px] text-gray-400">{t("awaitingResponseEllipsis")}</span></div>)}
+                          {o.status === "submitted" && (<div className="bg-blue-50 rounded-xl p-3 flex items-center justify-between"><span className="text-xs text-gray-600">{t("yourQuoteLabel")} <strong className="text-blue-600">{o.price}₺</strong>{o.etaDays ? ` · ${o.etaDays} ${t("daysSuffix")}` : ""}</span><span className="text-[10px] text-gray-400">{t("awaitingResponseEllipsis")}</span></div>)}
                           {o.status === "accepted" && (<p className="text-[11px] text-green-600 flex items-center gap-1"><CheckCircle2 size={12} /> {t("quoteAcceptedNotice")}</p>)}
                           {o.status === "lost" && (<p className="text-[11px] text-gray-400">{t("quoteLostNotice")}</p>)}
                           {o.status === "declined" && (<p className="text-[11px] text-gray-400">{t("quoteDeclinedNotice")}</p>)}
@@ -3455,7 +3455,7 @@ export function AppShell() {
                             <div className="flex items-center gap-2"><div className="w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center"><Calendar size={15} className="text-gray-400" /></div><div className="text-left"><p className="text-sm font-semibold text-gray-700">{date}</p><p className="text-[10px] text-gray-400">{t("completedAndRecordsCount", { done: String(completedCount), total: String(items.length) })}</p></div></div>
                             <ChevronRight size={14} className={`text-gray-300 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                           </button>
-                          {isOpen && (<div className="px-3 pb-3 border-t border-gray-50 pt-2 space-y-2">{items.map(r => (<div key={r.id} className="bg-white border border-gray-200 rounded-xl p-3"><div className="flex justify-between items-start mb-1"><h4 className="text-xs font-semibold text-gray-700">{r.customer}</h4><span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div><p className="text-[11px] text-gray-400">{r.vehicle}</p><p className="text-[11px] text-gray-500 mt-1"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></p><div className="flex items-center justify-between mt-1"><p className="text-[10px] text-gray-300 flex items-center gap-1"><Clock size={10} />{r.time}</p>{r.status === "Tamir Tamamlandı" && (<button onClick={() => downloadAppointmentReceipt(r)} className="text-[10px] text-rose-600 font-medium flex items-center gap-0.5 hover:underline"><FileText size={10} /> {t("downloadReceiptBtn")}</button>)}</div></div>))}</div>)}
+                          {isOpen && (<div className="px-3 pb-3 border-t border-gray-50 pt-2 space-y-2">{items.map(r => (<div key={r.id} className="bg-white border border-gray-200 rounded-xl p-3"><div className="flex justify-between items-start mb-1"><h4 className="text-xs font-semibold text-gray-700">{r.customer}</h4><span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div><p className="text-[11px] text-gray-400">{r.vehicle}</p><p className="text-[11px] text-gray-500 mt-1"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></p><div className="flex items-center justify-between mt-1"><p className="text-[10px] text-gray-300 flex items-center gap-1"><Clock size={10} />{r.time}</p>{r.status === "Tamir Tamamlandı" && (<button onClick={() => downloadAppointmentReceipt(r)} className="text-[10px] text-blue-600 font-medium flex items-center gap-0.5 hover:underline"><FileText size={10} /> {t("downloadReceiptBtn")}</button>)}</div></div>))}</div>)}
                         </div>
                       );
                     })}
@@ -3491,13 +3491,13 @@ export function AppShell() {
                           const last = c.messages[c.messages.length - 1];
                           const on = mechActiveConvoId === c.id;
                           return (
-                            <button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className={`w-full text-left px-5 py-4 transition flex items-center gap-3 ${on ? "bg-rose-50/70" : "hover:bg-gray-50"}`}>
-                              <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={18} className="text-rose-600" /></div>
+                            <button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className={`w-full text-left px-5 py-4 transition flex items-center gap-3 ${on ? "bg-blue-50/70" : "hover:bg-gray-50"}`}>
+                              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={18} className="text-blue-600" /></div>
                               <div className="flex-1 min-w-0">
                                 <h4 className="font-semibold text-gray-900 text-sm truncate">{t("vehicleOwnerLabel")}</h4>
                                 <p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesYet")}</p>
                               </div>
-                              <ChevronRight size={15} className={`flex-shrink-0 ${on ? "text-rose-400" : "text-gray-300"}`} />
+                              <ChevronRight size={15} className={`flex-shrink-0 ${on ? "text-blue-400" : "text-gray-300"}`} />
                             </button>
                           );
                         })}
@@ -3509,7 +3509,7 @@ export function AppShell() {
                       {mechConvo ? (<>
                         <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
                           <button onClick={() => setMechActiveConvoId(null)} aria-label={t("back")} className="text-gray-400 hover:text-gray-700 lg:hidden"><ChevronLeft size={18} /></button>
-                          <div className="w-9 h-9 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={16} className="text-rose-600" /></div>
+                          <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={16} className="text-blue-600" /></div>
                           <span className="text-sm font-semibold text-gray-900">{t("vehicleOwnerChatTitle")}</span>
                         </div>
                         <div className="flex-1 px-5 py-5 overflow-y-auto max-h-[52vh] bg-gray-50/50">
@@ -3517,8 +3517,8 @@ export function AppShell() {
                         </div>
                         <div className="px-5 py-4 border-t border-gray-100 flex items-center gap-2">
                           <EmojiPicker onPick={(em) => setMechChatInput((v) => `${v || ""}${em}`)} />
-                          <input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder={t("replyInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300" />
-                          <button onClick={() => sendMechMessage(mechChatInput)} aria-label={t("sendBtn")} className="w-10 h-10 flex items-center justify-center rounded-full bg-rose-600 text-white hover:bg-rose-700 transition flex-shrink-0"><Send size={16} /></button>
+                          <input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder={t("replyInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+                          <button onClick={() => sendMechMessage(mechChatInput)} aria-label={t("sendBtn")} className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition flex-shrink-0"><Send size={16} /></button>
                         </div>
                       </>) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-center px-8 py-20">
@@ -3534,8 +3534,8 @@ export function AppShell() {
             {mechTab === "market" && (
               <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
                 <div className="inline-flex bg-gray-100 rounded-2xl p-1 mb-6">
-                  <button onClick={() => setMechListingsSubTab("cars")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "cars" ? "bg-white shadow-sm text-rose-700" : "text-gray-500 hover:text-gray-800"}`}><Car size={14} /> {t("myCarListingsTab")}</button>
-                  <button onClick={() => setMechListingsSubTab("jobs")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "jobs" ? "bg-white shadow-sm text-rose-700" : "text-gray-500 hover:text-gray-800"}`}><Briefcase size={14} /> {t("myJobListingsTab")}</button>
+                  <button onClick={() => setMechListingsSubTab("cars")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "cars" ? "bg-white shadow-sm text-blue-700" : "text-gray-500 hover:text-gray-800"}`}><Car size={14} /> {t("myCarListingsTab")}</button>
+                  <button onClick={() => setMechListingsSubTab("jobs")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "jobs" ? "bg-white shadow-sm text-blue-700" : "text-gray-500 hover:text-gray-800"}`}><Briefcase size={14} /> {t("myJobListingsTab")}</button>
                 </div>
                 {mechListingsSubTab === "cars" && (() => {
                   const myCarListings = listings.filter(isMyListing);
@@ -3548,9 +3548,9 @@ export function AppShell() {
                         <div className="flex items-center gap-2.5 min-w-0">
                           <h2 className="text-lg font-bold text-gray-900">{t("myCarListingsTab")}</h2>
                           <span className="text-sm text-gray-300">({myCarListings.length})</span>
-                          {myProfile?.verified && <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 flex items-center gap-1 flex-shrink-0"><BadgeCheck size={12} /> {t("authorizedDealerBadge")}</span>}
+                          {myProfile?.verified && <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 flex items-center gap-1 flex-shrink-0"><BadgeCheck size={12} /> {t("authorizedDealerBadge")}</span>}
                         </div>
-                        <button onClick={() => openSellForm(null)} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
+                        <button onClick={() => openSellForm(null)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
                       </div>
                       <p className="text-xs text-gray-400 -mt-3 mb-5">{t("myListingsSub")}</p>
                       {myCarListings.length === 0 ? (
@@ -3559,14 +3559,14 @@ export function AppShell() {
                         <>
                           <div className="flex items-center justify-between mb-2">
                             <button onClick={() => setGallerySelectedIds(allSelected ? [] : myCarListings.map(l => l.id))} className="text-xs font-medium text-gray-500 hover:text-gray-800">{allSelected || gallerySelectedIds.length > 0 ? t("galleryClearSelectionBtn") : t("gallerySelectAllBtn")}</button>
-                            {gallerySelectedIds.length > 0 && <span className="text-xs font-semibold text-rose-600">{t("gallerySelectedCountLabel", { n: String(gallerySelectedIds.length) })}</span>}
+                            {gallerySelectedIds.length > 0 && <span className="text-xs font-semibold text-blue-600">{t("gallerySelectedCountLabel", { n: String(gallerySelectedIds.length) })}</span>}
                           </div>
                           {gallerySelectedIds.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-3 bg-rose-50 border border-rose-100 rounded-xl p-2.5">
-                              <button onClick={() => bulkFeatureSelectedListings(true)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-rose-300 transition">{t("galleryBulkFeatureBtn")}</button>
-                              <button onClick={() => bulkFeatureSelectedListings(false)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-rose-300 transition">{t("galleryBulkUnfeatureBtn")}</button>
-                              <button onClick={() => bulkSetStatusSelectedListings("sold")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-rose-300 transition">{t("galleryBulkMarkSoldBtn")}</button>
-                              <button onClick={() => bulkSetStatusSelectedListings("active")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-rose-300 transition">{t("galleryBulkMarkActiveBtn")}</button>
+                            <div className="flex flex-wrap gap-2 mb-3 bg-blue-50 border border-blue-100 rounded-xl p-2.5">
+                              <button onClick={() => bulkFeatureSelectedListings(true)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-blue-300 transition">{t("galleryBulkFeatureBtn")}</button>
+                              <button onClick={() => bulkFeatureSelectedListings(false)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-blue-300 transition">{t("galleryBulkUnfeatureBtn")}</button>
+                              <button onClick={() => bulkSetStatusSelectedListings("sold")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-blue-300 transition">{t("galleryBulkMarkSoldBtn")}</button>
+                              <button onClick={() => bulkSetStatusSelectedListings("active")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-blue-300 transition">{t("galleryBulkMarkActiveBtn")}</button>
                               <button onClick={bulkDeleteSelectedListings} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-red-200 text-red-600 hover:bg-red-50 transition flex items-center gap-1"><Trash2 size={12} /> {t("galleryBulkDeleteBtn")}</button>
                             </div>
                           )}
@@ -3578,9 +3578,9 @@ export function AppShell() {
                               const offerCount = (l.offers || []).filter(o => o.status !== "replaced").length;
                               const checked = gallerySelectedIds.includes(l.id);
                               return (
-                                <div key={l.id} className={`bg-white border rounded-2xl p-4 shadow-sm transition ${checked ? "border-rose-300 ring-1 ring-rose-100" : "border-gray-100 hover:shadow-md"}`}>
+                                <div key={l.id} className={`bg-white border rounded-2xl p-4 shadow-sm transition ${checked ? "border-blue-300 ring-1 ring-blue-100" : "border-gray-100 hover:shadow-md"}`}>
                                   <div className="flex items-center gap-3">
-                                    <input type="checkbox" checked={checked} onChange={() => toggleGallerySelect(l.id)} aria-label={t("gallerySelectAllBtn")} className="w-4 h-4 flex-shrink-0 accent-rose-600" />
+                                    <input type="checkbox" checked={checked} onChange={() => toggleGallerySelect(l.id)} aria-label={t("gallerySelectAllBtn")} className="w-4 h-4 flex-shrink-0 accent-blue-600" />
                                     <button onClick={() => setSelectedListingId(l.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
                                       <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 100)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover" /> : l.photo}</div>
                                       <div className="min-w-0 flex-1">
@@ -3611,7 +3611,7 @@ export function AppShell() {
                 {mechListingsSubTab === "jobs" && (<>
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
                     <h2 className="text-lg font-bold text-gray-900">{t("myJobListingsTab")}</h2>
-                    <button onClick={() => openJobForm(null)} className="bg-rose-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("postNewJobBtn")}</button>
+                    <button onClick={() => openJobForm(null)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("postNewJobBtn")}</button>
                   </div>
                   <p className="text-xs text-gray-400 mb-5">{t("jobListingsHint")}</p>
                   {/* ÖNEMLİ: mechanicId ile eşleştir — mechanicName (isim) ile eşleştirme, tamirci
@@ -3634,7 +3634,7 @@ export function AppShell() {
                     <div className="min-w-0 space-y-8">
                       {favMechs.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Wrench size={17} className="text-rose-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Wrench size={17} className="text-blue-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
                             {favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}
                           </div>
@@ -3642,7 +3642,7 @@ export function AppShell() {
                       )}
                       {favListings.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Car size={17} className="text-rose-500" /> {t("favoriteListingsLabel")} <span className="text-gray-300 font-normal text-sm">({favListings.length})</span></h2>
+                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Car size={17} className="text-blue-500" /> {t("favoriteListingsLabel")} <span className="text-gray-300 font-normal text-sm">({favListings.length})</span></h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">{favListings.map(l => (<ListingCard key={l.id} l={l} />))}</div>
                         </div>
                       )}
@@ -3656,7 +3656,7 @@ export function AppShell() {
                     </div>
                     <aside className="lg:sticky lg:top-20">
                       <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5">
-                        <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm"><Bell size={15} className="text-rose-500" /> {t("savedSearchesLabel")} <span className="text-gray-300 font-normal">({savedSearches.length})</span></h2>
+                        <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm"><Bell size={15} className="text-blue-500" /> {t("savedSearchesLabel")} <span className="text-gray-300 font-normal">({savedSearches.length})</span></h2>
                         <SavedSearchList showUpdate compact />
                       </div>
                     </aside>
@@ -3756,20 +3756,20 @@ export function AppShell() {
                         { key: "earnings", label: t("analyticsEarningsTab"), icon: Banknote },
                         { key: "traffic", label: t("analyticsTrafficTab"), icon: Compass },
                       ].map(av => { const Icon = av.icon; const on = mechAnalyticsView === av.key; return (
-                        <button key={av.key} onClick={() => setMechAnalyticsView(av.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-rose-700" : "text-gray-500 hover:text-gray-800"}`}><Icon size={14} /> {av.label}</button>
+                        <button key={av.key} onClick={() => setMechAnalyticsView(av.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-blue-700" : "text-gray-500 hover:text-gray-800"}`}><Icon size={14} /> {av.label}</button>
                       ); })}
                     </div>
-                    <button onClick={handleDownloadPdf} className="border border-rose-200 text-rose-600 px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-50 transition flex items-center gap-2 flex-shrink-0"><Download size={15} /> {t("downloadPdfReportBtn")}</button>
+                    <button onClick={handleDownloadPdf} className="border border-blue-200 text-blue-600 px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-50 transition flex items-center gap-2 flex-shrink-0"><Download size={15} /> {t("downloadPdfReportBtn")}</button>
                   </div>
                   <div className="flex gap-1.5 overflow-x-auto pb-1 mb-6">
                     {ANALYTICS_RANGES.map(r => { const key = RANGE_LABEL_KEYS[r.key]; return (
-                      <button key={r.key} onClick={() => setAnalyticsRange(r.key)} className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${analyticsRange === r.key ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t(key)}</button>
+                      <button key={r.key} onClick={() => setAnalyticsRange(r.key)} className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${analyticsRange === r.key ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t(key)}</button>
                     ); })}
                   </div>
                   {mechAnalyticsView === "overview" && (<>
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
                       {[
-                        { v: totalBooked, l: t("totalBookingsLabel"), icon: Calendar, ring: "bg-rose-50 text-rose-600", num: "text-rose-600" },
+                        { v: totalBooked, l: t("totalBookingsLabel"), icon: Calendar, ring: "bg-blue-50 text-blue-600", num: "text-blue-600" },
                         { v: `${total.toLocaleString("tr-TR")}₺`, l: t("totalEarningsRow"), icon: Banknote, ring: "bg-gray-100 text-gray-600", num: "text-gray-900" },
                         { v: completedAll.length, l: t("cameLabel"), icon: CheckCircle2, ring: "bg-green-50 text-green-600", num: "text-green-600" },
                         { v: cancelledAll.length, l: t("cancelledRejectedLabel"), icon: X, ring: "bg-red-50 text-red-500", num: "text-red-500" },
@@ -3784,8 +3784,8 @@ export function AppShell() {
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                     <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-                      <div className="flex items-center justify-between mb-1"><h3 className="text-sm font-bold text-gray-800">{t("completionRateTitle")}</h3><span className="text-sm font-bold text-rose-600">%{completionRate}</span></div>
-                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-rose-600 rounded-full" style={{ width: `${completionRate}%` }} /></div>
+                      <div className="flex items-center justify-between mb-1"><h3 className="text-sm font-bold text-gray-800">{t("completionRateTitle")}</h3><span className="text-sm font-bold text-blue-600">%{completionRate}</span></div>
+                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-600 rounded-full" style={{ width: `${completionRate}%` }} /></div>
                       <p className="text-[11px] text-gray-400 mt-2">{t("completedOfTotalNote", { completed: String(completedAll.length), total: String(totalBooked) })}</p>
                     </div>
                     <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
@@ -3809,14 +3809,14 @@ export function AppShell() {
                   </>)}
                   {mechAnalyticsView === "earnings" && (<>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
-                      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3"><Banknote size={17} /></div><p className="text-2xl font-bold text-rose-600 leading-none">{total.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-400 mt-2">{t("totalEarningsRow")}</p></div>
+                      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3"><Banknote size={17} /></div><p className="text-2xl font-bold text-blue-600 leading-none">{total.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-400 mt-2">{t("totalEarningsRow")}</p></div>
                       <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center mb-3"><CheckCircle2 size={17} /></div><p className="text-2xl font-bold text-gray-900 leading-none">{completed.length}</p><p className="text-xs text-gray-400 mt-2">{t("completedBookingsRow")}</p></div>
                     </div>
                     <h3 className="text-base font-bold text-gray-900 mb-3">{t("topEarningServicesTitle")}</h3>
                     {topServices.length === 0 ? (
                       <div className="text-center py-14"><Banknote size={36} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noPaidWorkYet")}</p></div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{topServices.map(([name, s]) => (<div key={name} className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div className="min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{name}</p><p className="text-[11px] text-gray-400 mt-0.5">{s.count} {t("transactionsCountSuffix")}</p></div><p className="text-base font-bold text-rose-600 flex-shrink-0 ml-2">{s.total}₺</p></div>))}</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{topServices.map(([name, s]) => (<div key={name} className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div className="min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{name}</p><p className="text-[11px] text-gray-400 mt-0.5">{s.count} {t("transactionsCountSuffix")}</p></div><p className="text-base font-bold text-blue-600 flex-shrink-0 ml-2">{s.total}₺</p></div>))}</div>
                     )}
                     <p className="text-[10px] text-gray-300 mt-4 text-center">{t("basedOnCompletedJobsNote", { n: String(completed.length) })}</p>
                   </>)}
@@ -3831,11 +3831,11 @@ export function AppShell() {
                       <>
                         {ma && (ma.views > 0 || (ma.cityDemand || []).length > 0) && (
                           <div className="mb-6">
-                            <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><TrendingUp size={14} className="text-rose-500" /> {t("mechFunnelTitle")}</h3>
+                            <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><TrendingUp size={14} className="text-blue-500" /> {t("mechFunnelTitle")}</h3>
                             <div className="grid grid-cols-3 gap-2 mb-3">
                               <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-gray-900 leading-none">{ma.uniqueViewers}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelView")}</p></div>
                               <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-gray-900 leading-none">{ma.contacts}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelContact")}</p></div>
-                              <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-rose-600 leading-none">{ma.appointments}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelAppointment")}</p></div>
+                              <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-blue-600 leading-none">{ma.appointments}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelAppointment")}</p></div>
                             </div>
                             <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2">
                               {(ma.funnel || []).map((step, i) => {
@@ -3848,7 +3848,7 @@ export function AppShell() {
                                       <span className="text-gray-600">{maFunnelLabels[step.key]}</span>
                                       <span className="font-semibold text-gray-900">{step.count}{stepPct != null && <span className="text-gray-400 font-normal"> · {stepPct}%</span>}</span>
                                     </div>
-                                    <div className="h-4 bg-gray-100 rounded-md overflow-hidden"><div className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-md" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
+                                    <div className="h-4 bg-gray-100 rounded-md overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-md" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
                                   </div>
                                 );
                               })}
@@ -3859,7 +3859,7 @@ export function AppShell() {
                                 {ma.sources.map(r => { const max = Math.max(1, ...ma.sources.map(x => x.visitors)); return (
                                   <div key={r.label} className="flex items-center gap-2 mb-1.5">
                                     <span className="text-[11px] text-gray-600 w-24 truncate">{r.label}</span>
-                                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.round((r.visitors / max) * 100)}%` }} /></div>
+                                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.round((r.visitors / max) * 100)}%` }} /></div>
                                     <span className="text-[11px] font-semibold text-gray-700 w-8 text-right">{r.visitors}</span>
                                   </div>
                                 ); })}
@@ -3884,26 +3884,26 @@ export function AppShell() {
                             )}
                           </div>
                         )}
-                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><Compass size={14} className="text-rose-500" /> {t("profileVisitsTitle")}</h3>
+                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><Compass size={14} className="text-blue-500" /> {t("profileVisitsTitle")}</h3>
                         {!stats ? (
                           <div className="text-center py-10 text-xs text-gray-400">{t("loadingEllipsis")}</div>
                         ) : (
                           <>
                             <div className="grid grid-cols-3 gap-2 mb-4">
-                              <div className="bg-rose-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-rose-600">{rangeViews}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("analyticsVisitsLabel")}</p></div>
+                              <div className="bg-blue-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-blue-600">{rangeViews}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("analyticsVisitsLabel")}</p></div>
                               <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{rangeConversions}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("analyticsConversionsLabel")}</p></div>
                               <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">%{viewConvRate}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("conversionRateLabel")}</p></div>
                             </div>
                             {stats.monthly.length > 0 && (
                               <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-5">
                                 <h4 className="text-xs font-semibold text-gray-700 mb-3">{t("monthlyVisitTrendTitle")}</h4>
-                                <MiniBarChart labels={stats.monthly.map(m => formatMonth(m.month))} values={stats.monthly.map(m => m.views)} colorClass="bg-rose-500" />
+                                <MiniBarChart labels={stats.monthly.map(m => formatMonth(m.month))} values={stats.monthly.map(m => m.views)} colorClass="bg-blue-500" />
                               </div>
                             )}
                             <p className="text-[10px] text-gray-300 mb-5">{t("totalAllTimeNote", { views: String(stats.totalViews), conversions: String(stats.conversions) })}</p>
                           </>
                         )}
-                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><History size={14} className="text-rose-500" /> {t("periodSummaryReportTitle")}</h3>
+                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><History size={14} className="text-blue-500" /> {t("periodSummaryReportTitle")}</h3>
                         <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-2">
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalBookingsRow")}</span><span className="font-semibold text-gray-800">{totalBooked}</span></div>
                           <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("completedBookingsRow")}</span><span className="font-semibold text-gray-800">{completedAll.length} (%{completionRate})</span></div>
@@ -3947,10 +3947,10 @@ export function AppShell() {
                   <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-lg shadow-gray-100">
                     <div className="flex items-end justify-between mb-2">
                       <p className="text-sm font-bold text-gray-800">{t("profileCompletenessTitle")}</p>
-                      <span className={`text-2xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-rose-600"}`}>%{pct}</span>
+                      <span className={`text-2xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-blue-600"}`}>%{pct}</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
-                      <div className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : "bg-rose-500"}`} style={{ width: `${pct}%` }} />
+                      <div className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : "bg-blue-500"}`} style={{ width: `${pct}%` }} />
                     </div>
                     <p className="text-[11px] text-gray-400 mb-4 leading-snug">{t("profileCompletenessHint")}</p>
                     <div className="space-y-1.5">
@@ -3965,10 +3965,10 @@ export function AppShell() {
                           </div>
                         ) : (
                           <button key={c.label} onClick={() => scrollToSection(c.target)}
-                            className="w-full flex items-center gap-2 text-xs text-gray-700 font-medium hover:text-rose-600 transition text-left group">
-                            <CircleDot size={14} className="text-gray-300 group-hover:text-rose-400 flex-shrink-0" />
+                            className="w-full flex items-center gap-2 text-xs text-gray-700 font-medium hover:text-blue-600 transition text-left group">
+                            <CircleDot size={14} className="text-gray-300 group-hover:text-blue-400 flex-shrink-0" />
                             <span className="flex-1">{c.label}</span>
-                            <ChevronRight size={13} className="text-gray-300 group-hover:text-rose-400 flex-shrink-0" />
+                            <ChevronRight size={13} className="text-gray-300 group-hover:text-blue-400 flex-shrink-0" />
                           </button>
                         )
                       ))}
@@ -3976,17 +3976,17 @@ export function AppShell() {
                   </div>
                 </aside>
                 <div className="lg:col-span-2 lg:order-1">
-                <div className="bg-rose-50 border border-rose-100 rounded-2xl p-3.5 mb-5 text-xs text-rose-800 flex items-center gap-2"><Pencil size={14} /> {t("changesApplyInstantly")}</div>
+                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3.5 mb-5 text-xs text-blue-800 flex items-center gap-2"><Pencil size={14} /> {t("changesApplyInstantly")}</div>
                 {/* TASARIM: alanlar eskiden etiketsiz ve alt alta tek sütundu; sayfa genişleyince
                     tek satırlık "İşletme adı" kutusu ekranın sonuna kadar uzuyordu. Artık bölüm
                     kartı içinde, etiketli ve iki sütunlu — uzun alanlar (adres) tam satır. */}
                 <div id="mech-sec-basic" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
                   <h3 className="font-bold text-gray-900 text-base mb-4">{t("basicInfoTitle")}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("businessNamePlaceholder")}</span><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
-                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("specialtyPlaceholder")}</span><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></label>
-                    <label className="block sm:col-span-2"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholder")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></div></label>
-                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample")}</span><div className="relative"><Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} onBlur={(e) => normalizePhoneField(e.target.value, (v) => updateMyField("phone", v))} placeholder={t("phonePlaceholderExample")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" /></div></label>
+                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("businessNamePlaceholder")}</span><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("specialtyPlaceholder")}</span><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                    <label className="block sm:col-span-2"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholder")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></div></label>
+                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample")}</span><div className="relative"><Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} onBlur={(e) => normalizePhoneField(e.target.value, (v) => updateMyField("phone", v))} placeholder={t("phonePlaceholderExample")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></div></label>
                     {/* KALDIRILDI — "saatlik ücret": tamircinin elle yazdığı, hiçbir yerde
                         doğrulanmayan uydurma bir sayıydı ve müşteriye yanlış beklenti veriyordu.
                         Yerine aşağıdaki hizmet listesinden otomatik türetilen "başlangıç fiyatı"
@@ -4000,12 +4000,12 @@ export function AppShell() {
                           <p className="text-[11px] text-amber-600 mt-1.5 leading-relaxed">⚠️ {t("startingPriceEmptyWarn")}</p>
                         )}
                       </div>
-                      <span className="text-lg font-bold text-rose-600 flex-shrink-0">{mechanicStartingPrice(myProfile) > 0 ? t("landingServiceFromPrice", { price: `${mechanicStartingPrice(myProfile).toLocaleString("tr-TR")}₺` }) : "—"}</span>
+                      <span className="text-lg font-bold text-blue-600 flex-shrink-0">{mechanicStartingPrice(myProfile) > 0 ? t("landingServiceFromPrice", { price: `${mechanicStartingPrice(myProfile).toLocaleString("tr-TR")}₺` }) : "—"}</span>
                     </div>
                   </div>
                 </div>
                 <div id="mech-sec-brands" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
-                <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Tag size={16} className="text-rose-500" /> {t("brandsServicedTitle")}</h3>
+                <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Tag size={16} className="text-blue-500" /> {t("brandsServicedTitle")}</h3>
                 <p className="text-xs text-gray-400 mb-4">{t("brandsServicedHint")}</p>
                 {/* Donanımdaki gibi: sabit CAR_BRANDS listesinde olmayan bir marka da serbest metin
                     olarak eklenebiliyor; 25 sabit marka + eklenenler tek ızgarada karmaşık
@@ -4022,31 +4022,31 @@ export function AppShell() {
                       {selectedBrands.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {selectedBrands.map(b => (
-                            <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-rose-600 border-rose-600 text-white flex items-center gap-1 transition hover:bg-rose-700">{b} <X size={11} /></button>
+                            <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-blue-600 border-blue-600 text-white flex items-center gap-1 transition hover:bg-blue-700">{b} <X size={11} /></button>
                           ))}
                         </div>
                       )}
                       <div className="flex flex-wrap gap-1.5">
                         {visibleUnselected.map(b => (
-                          <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border bg-white border-gray-200 text-gray-500 hover:border-rose-300 transition">{b}</button>
+                          <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border bg-white border-gray-200 text-gray-500 hover:border-blue-300 transition">{b}</button>
                         ))}
                         {hiddenCount > 0 && (
-                          <button type="button" onClick={() => setShowAllBrandOptions(true)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-rose-500 hover:border-rose-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
+                          <button type="button" onClick={() => setShowAllBrandOptions(true)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 hover:border-blue-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
                         )}
                         {showAllBrandOptions && unselectedBrands.length > VISIBLE_COUNT && (
-                          <button type="button" onClick={() => setShowAllBrandOptions(false)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-rose-500 hover:border-rose-300 transition">{t("showLessFeaturesLabel")}</button>
+                          <button type="button" onClick={() => setShowAllBrandOptions(false)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 hover:border-blue-300 transition">{t("showLessFeaturesLabel")}</button>
                         )}
                       </div>
                       <div className="flex gap-2 pt-1">
                         <input value={customBrandInput} onChange={(e) => setCustomBrandInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomBrand(); } }} placeholder={t("customBrandPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
-                        <button type="button" onClick={addCustomBrand} aria-label={t("addCustomBrandAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-rose-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
+                        <button type="button" onClick={addCustomBrand} aria-label={t("addCustomBrandAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
                       </div>
                     </div>
                   );
                 })()}
                 </div>
                 <div id="mech-sec-payment" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
-                <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><CreditCard size={16} className="text-rose-500" /> {t("paymentMethodsTitle")}</h3>
+                <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><CreditCard size={16} className="text-blue-500" /> {t("paymentMethodsTitle")}</h3>
                 {(() => {
                   const selectedPayments = myProfile.paymentMethods || [];
                   const unselectedPayments = PAYMENT_METHOD_OPTIONS.filter(p => !selectedPayments.includes(p));
@@ -4068,7 +4068,7 @@ export function AppShell() {
                       )}
                       <div className="flex gap-2 pt-1">
                         <input value={customPaymentInput} onChange={(e) => setCustomPaymentInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomPaymentMethod(); } }} placeholder={t("customPaymentPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
-                        <button type="button" onClick={addCustomPaymentMethod} aria-label={t("addCustomPaymentAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-rose-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
+                        <button type="button" onClick={addCustomPaymentMethod} aria-label={t("addCustomPaymentAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
                       </div>
                     </div>
                   );
@@ -4083,15 +4083,15 @@ export function AppShell() {
                     (aynı iş BMW'de başka, Toyota'da başka tutabiliyor — ATU da önce marka soruyor). */}
                 <div id="mech-sec-services" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
-                    <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Wrench size={16} className="text-rose-500" /> {t("servicesTitle")} <span className="text-gray-300 font-normal text-sm">({myProfile.services.length})</span></h3>
+                    <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Wrench size={16} className="text-blue-500" /> {t("servicesTitle")} <span className="text-gray-300 font-normal text-sm">({myProfile.services.length})</span></h3>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => { setServicePickerOpen(true); setServicePickerQuery(""); setServicePickerCat("all"); }} className="bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-rose-700 transition flex items-center gap-1.5"><ClipboardList size={15} /> {t("pickFromCatalogBtn")}</button>
-                      {!showAddServiceForm && <button onClick={() => setShowAddServiceForm(true)} className="text-sm text-gray-500 font-semibold flex items-center gap-1 hover:text-rose-700 transition"><Plus size={15} /> {t("addCustomServiceBtn")}</button>}
+                      <button onClick={() => { setServicePickerOpen(true); setServicePickerQuery(""); setServicePickerCat("all"); }} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-1.5"><ClipboardList size={15} /> {t("pickFromCatalogBtn")}</button>
+                      {!showAddServiceForm && <button onClick={() => setShowAddServiceForm(true)} className="text-sm text-gray-500 font-semibold flex items-center gap-1 hover:text-blue-700 transition"><Plus size={15} /> {t("addCustomServiceBtn")}</button>}
                     </div>
                   </div>
                   <p className="text-xs text-gray-400 mb-4">{t("servicesFixedPriceHint")}</p>
                   {myProfile.services.length === 0 && !showAddServiceForm && (
-                    <button onClick={() => setServicePickerOpen(true)} className="w-full border-2 border-dashed border-gray-200 rounded-2xl py-10 text-center hover:border-rose-300 hover:bg-rose-50/40 transition">
+                    <button onClick={() => setServicePickerOpen(true)} className="w-full border-2 border-dashed border-gray-200 rounded-2xl py-10 text-center hover:border-blue-300 hover:bg-blue-50/40 transition">
                       <ClipboardList size={32} className="mx-auto text-gray-200 mb-2" />
                       <p className="text-sm text-gray-500 font-medium">{t("noServicesYetTitle")}</p>
                       <p className="text-xs text-gray-400 mt-1">{t("noServicesYetHint")}</p>
@@ -4145,7 +4145,7 @@ export function AppShell() {
                       const bpCount = Object.keys(bp).length;
                       const open = brandPriceEditKey === (s.key || `custom-${i}`);
                       return (
-                        <div key={s.key || `custom-${i}`} className={`border rounded-2xl transition ${open ? "border-rose-300 bg-rose-50/30" : "border-gray-100 hover:border-gray-200"}`}>
+                        <div key={s.key || `custom-${i}`} className={`border rounded-2xl transition ${open ? "border-blue-300 bg-blue-50/30" : "border-gray-100 hover:border-gray-200"}`}>
                           <div className="flex flex-wrap items-center gap-2 p-3">
                             <div className="flex-1 min-w-[160px]">
                               {s.key ? (
@@ -4169,17 +4169,17 @@ export function AppShell() {
                               <button onClick={() => setServiceFixed(i, false)} aria-pressed={!s.fixed} title={t("fixedPriceHelpTitle")} className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap transition flex items-center gap-1 ${!s.fixed ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("variableLabel")}</button>
                               <span className="px-1 text-gray-400"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} /></span>
                             </div>
-                            <button onClick={() => setBrandPriceEditKey(open ? null : (s.key || `custom-${i}`))} className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1 ${bpCount > 0 ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}><Tag size={12} /> {bpCount > 0 ? t("brandPriceCountLabel", { n: String(bpCount) }) : t("brandPriceAddLabel")}</button>
+                            <button onClick={() => setBrandPriceEditKey(open ? null : (s.key || `custom-${i}`))} className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1 ${bpCount > 0 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}><Tag size={12} /> {bpCount > 0 ? t("brandPriceCountLabel", { n: String(bpCount) }) : t("brandPriceAddLabel")}</button>
                             <button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-1"><Trash2 size={15} /></button>
                           </div>
                           {open && (
-                            <div className="px-3 pb-3 pt-1 border-t border-rose-100">
+                            <div className="px-3 pb-3 pt-1 border-t border-blue-100">
                               <p className="text-[11px] text-gray-500 mb-2.5">{t("brandPriceHint", { price: String(s.price || "—") })}</p>
                               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                                 {brandPriceOptions.map(b => (
                                   <div key={b} className="relative">
                                     <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-gray-500 pointer-events-none max-w-[70px] truncate">{b}</span>
-                                    <input value={bp[b] ?? ""} onChange={(e) => setServiceBrandPrice(i, b, e.target.value)} placeholder={s.price ? String(s.price) : "—"} className={`w-full pl-[76px] pr-5 py-2 rounded-lg border text-sm text-right ${bp[b] ? "border-rose-300 bg-white" : "border-gray-200 bg-white"}`} />
+                                    <input value={bp[b] ?? ""} onChange={(e) => setServiceBrandPrice(i, b, e.target.value)} placeholder={s.price ? String(s.price) : "—"} className={`w-full pl-[76px] pr-5 py-2 rounded-lg border text-sm text-right ${bp[b] ? "border-blue-300 bg-white" : "border-gray-200 bg-white"}`} />
                                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] pointer-events-none">₺</span>
                                   </div>
                                 ))}
@@ -4204,7 +4204,7 @@ export function AppShell() {
                     );
                   })()}
                   {showAddServiceForm && (
-                    <div className="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
                       <p className="text-xs font-semibold text-gray-700 mb-2.5">{t("addCustomServiceBtn")}</p>
                       <div className="flex items-center gap-2 mb-2">
                         <input autoFocus value={newServiceForm.name} onChange={(e) => { const val = e.target.value; setNewServiceForm(f => ({ ...f, name: val, fixed: f.fixedTouched ? f.fixed : isFixedPriceService(val) })); setDuplicateServiceWarning(null); }} placeholder={t("newServiceNamePlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white" />
@@ -4223,13 +4223,13 @@ export function AppShell() {
                           <p className="text-[11px] text-gray-700 mb-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {t("duplicateServiceWarningText", { name: duplicateServiceWarning.name })}</p>
                           <div className="flex gap-2">
                             <button onClick={() => setDuplicateServiceWarning(null)} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-2 rounded-lg font-semibold">{t("giveUpBtn")}</button>
-                            <button onClick={() => finalizeAddService(duplicateServiceWarning.name, duplicateServiceWarning.price, duplicateServiceWarning.fixed)} className="flex-1 bg-rose-600 text-white text-[11px] py-2 rounded-lg font-semibold hover:bg-rose-700 transition">{t("addAnywayBtn")}</button>
+                            <button onClick={() => finalizeAddService(duplicateServiceWarning.name, duplicateServiceWarning.price, duplicateServiceWarning.fixed)} className="flex-1 bg-blue-600 text-white text-[11px] py-2 rounded-lg font-semibold hover:bg-blue-700 transition">{t("addAnywayBtn")}</button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex gap-2">
                           <button onClick={cancelAddService} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-2 rounded-lg font-semibold bg-white">{t("cancel")}</button>
-                          <button onClick={tryAddService} className={`flex-1 text-[11px] py-2 rounded-lg font-semibold transition ${newServiceForm.name.trim() && (!newServiceForm.fixed || newServiceForm.price.trim()) ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-500"}`}>{t("genericAddBtn")}</button>
+                          <button onClick={tryAddService} className={`flex-1 text-[11px] py-2 rounded-lg font-semibold transition ${newServiceForm.name.trim() && (!newServiceForm.fixed || newServiceForm.price.trim()) ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-500"}`}>{t("genericAddBtn")}</button>
                         </div>
                       )}
                     </div>
@@ -4241,7 +4241,7 @@ export function AppShell() {
                     yerde, profilin altında düzenleniyor; Ayarlar sekmesi yalnızca hesabı/uygulamayı
                     ilgilendiren şeylere (bildirim, dil, ödeme bilgisi, şifre) ayrıldı. */}
                 <div id="mech-sec-hours" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
-                  <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Clock size={16} className="text-rose-500" /> {t("workingHours")}</h3>
+                  <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Clock size={16} className="text-blue-500" /> {t("workingHours")}</h3>
                   <p className="text-xs text-gray-400 mb-4">{t("workingHoursHint")}</p>
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
                   {DAY_KEYS.map(key => { const day = mechanicHours[key]; const isOpen = expandedDay === key; const slots = getDaySlots(day); const summary = day.open ? `${day.start} - ${dayClosingTime(day)}` : t("closed"); return (
@@ -4252,10 +4252,10 @@ export function AppShell() {
                       </button>
                       {isOpen && (
                         <div className="px-3 pb-3 border-t border-gray-50 pt-3">
-                          <div className="flex items-center justify-between mb-2"><span className="text-xs text-gray-500">{t("dayOpenLabel")}</span><button onClick={() => toggleDayOpen(key)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-11 h-6 rounded-full transition relative ${day.open ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition ${day.open ? "left-6" : "left-1"}`} /></div></button></div>
+                          <div className="flex items-center justify-between mb-2"><span className="text-xs text-gray-500">{t("dayOpenLabel")}</span><button onClick={() => toggleDayOpen(key)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-11 h-6 rounded-full transition relative ${day.open ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition ${day.open ? "left-6" : "left-1"}`} /></div></button></div>
                           {day.open && (<>
                             <div className="flex flex-wrap gap-1.5 mb-3">{slots.map(slot => { const closed = day.closedSlots.includes(slot); return (<button key={slot} onClick={() => toggleSlotClosed(key, slot)} className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition ${closed ? "bg-red-50 text-red-400 border-red-100 line-through" : "bg-green-50 text-green-600 border-green-100"}`}>{slot}</button>); })}</div>
-                            <div className="flex items-center gap-2"><input type="time" value={expandedDay === key ? newSlotTime : ""} onChange={(e) => setNewSlotTime(e.target.value)} step="1800" className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><button aria-label={t("a11yAddSlot")} onClick={() => { addExtraSlot(key, newSlotTime); setNewSlotTime(""); }} className="w-8 h-8 bg-rose-600 text-white rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-rose-700 transition"><Plus size={16} /></button></div>
+                            <div className="flex items-center gap-2"><input type="time" value={expandedDay === key ? newSlotTime : ""} onChange={(e) => setNewSlotTime(e.target.value)} step="1800" className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><button aria-label={t("a11yAddSlot")} onClick={() => { addExtraSlot(key, newSlotTime); setNewSlotTime(""); }} className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-blue-700 transition"><Plus size={16} /></button></div>
                           </>)}
                         </div>
                       )}
@@ -4264,32 +4264,32 @@ export function AppShell() {
                 </div>
                 </div>
                 <div id="mech-sec-cover" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
-                <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><Camera size={16} className="text-rose-500" /> {t("coverPhotoTitle")}</h3>
+                <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><Camera size={16} className="text-blue-500" /> {t("coverPhotoTitle")}</h3>
                 <input ref={coverFileRef} type="file" accept="image/*" onChange={uploadCoverPhoto} className="hidden" />
-                {myProfile.coverPhoto ? (<div className="relative w-full h-40 md:h-48 rounded-2xl overflow-hidden"><img decoding="async" src={imgThumb(myProfile.coverPhoto, 700)} onError={imgFallbackHandler} alt={t("coverPhotoAlt")} className="w-full h-full object-cover" /><button onClick={() => coverFileRef.current?.click()} aria-label={t("changeCoverPhotoAria")} className="absolute top-2 right-12 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><Pencil size={14} /></button><button onClick={removeCoverPhoto} aria-label={t("removeCoverPhotoAria")} className="absolute top-2 right-2 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><X size={14} /></button></div>) : (<div><div className="flex gap-2 mb-3">{Object.entries(BANNER_PRESETS).map(([key, grad]) => (<button key={key} onClick={() => updateMyField("bannerPreset", key)} className={`flex-1 h-20 rounded-xl bg-gradient-to-br ${grad} ${myProfile.bannerPreset === key ? "ring-2 ring-offset-2 ring-rose-600" : ""}`} />))}</div><button onClick={() => coverFileRef.current?.click()} className="w-full border-2 border-dashed border-rose-300 rounded-xl py-2.5 text-rose-600 text-xs font-medium hover:bg-rose-100 transition flex items-center justify-center gap-2"><Camera size={14} /> {t("uploadOwnPhotoBtn")}</button></div>)}
+                {myProfile.coverPhoto ? (<div className="relative w-full h-40 md:h-48 rounded-2xl overflow-hidden"><img decoding="async" src={imgThumb(myProfile.coverPhoto, 700)} onError={imgFallbackHandler} alt={t("coverPhotoAlt")} className="w-full h-full object-cover" /><button onClick={() => coverFileRef.current?.click()} aria-label={t("changeCoverPhotoAria")} className="absolute top-2 right-12 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><Pencil size={14} /></button><button onClick={removeCoverPhoto} aria-label={t("removeCoverPhotoAria")} className="absolute top-2 right-2 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><X size={14} /></button></div>) : (<div><div className="flex gap-2 mb-3">{Object.entries(BANNER_PRESETS).map(([key, grad]) => (<button key={key} onClick={() => updateMyField("bannerPreset", key)} className={`flex-1 h-20 rounded-xl bg-gradient-to-br ${grad} ${myProfile.bannerPreset === key ? "ring-2 ring-offset-2 ring-blue-600" : ""}`} />))}</div><button onClick={() => coverFileRef.current?.click()} className="w-full border-2 border-dashed border-blue-300 rounded-xl py-2.5 text-blue-600 text-xs font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2"><Camera size={14} /> {t("uploadOwnPhotoBtn")}</button></div>)}
                 </div>
                 <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
-                <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={16} className="text-rose-500" /> {t("team")}</h3><button onClick={addStaff} className="text-sm text-rose-700 font-semibold flex items-center gap-1 hover:text-rose-800"><Plus size={15} /> {t("genericAddBtn")}</button></div>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-rose-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img loading="lazy" decoding="async" src={s.emoji} alt={s.name || t("staffPhotoFallbackAlt")} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button aria-label={t("a11yEditStaff")} onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder={t("fullNamePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder={t("rolePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /></div><button onClick={() => removeStaff(i)} aria-label={t("removeStaffAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
+                <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={16} className="text-blue-500" /> {t("team")}</h3><button onClick={addStaff} className="text-sm text-blue-700 font-semibold flex items-center gap-1 hover:text-blue-800"><Plus size={15} /> {t("genericAddBtn")}</button></div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img loading="lazy" decoding="async" src={s.emoji} alt={s.name || t("staffPhotoFallbackAlt")} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button aria-label={t("a11yEditStaff")} onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder={t("fullNamePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder={t("rolePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /></div><button onClick={() => removeStaff(i)} aria-label={t("removeStaffAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
                 </div>
                 <div className="flex flex-wrap gap-3 mb-6">
-                  <button onClick={saveMyProfile} className="bg-rose-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
+                  <button onClick={saveMyProfile} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
                   <button onClick={previewMyProfile} className="border border-gray-200 text-gray-600 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("previewMyPageBtn")}</button>
                 </div>
                   {/* Mobilde tamamlanma kartı en altta — yapışkan sağ kolon yok. */}
                   <div className="lg:hidden bg-white border border-gray-200 rounded-2xl p-4 mb-4">
                     <div className="flex items-end justify-between mb-2">
                       <p className="text-sm font-bold text-gray-800">{t("profileCompletenessTitle")}</p>
-                      <span className={`text-xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-rose-600"}`}>%{pct}</span>
+                      <span className={`text-xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-blue-600"}`}>%{pct}</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${pct === 100 ? "bg-emerald-500" : "bg-rose-500"}`} style={{ width: `${pct}%` }} /></div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${pct === 100 ? "bg-emerald-500" : "bg-blue-500"}`} style={{ width: `${pct}%` }} /></div>
                     {/* Mobilde de eksik maddeler tıklanabilir: kullanıcı uzun formda o alanı
                         kendisi aramak zorunda kalmasın (masaüstü paneliyle aynı davranış). */}
                     {checks.some((c) => !c.ok) && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {checks.filter((c) => !c.ok).map((c) => (
                           <button key={c.label} onClick={() => scrollToSection(c.target)}
-                            className="text-[11px] font-semibold text-rose-600 bg-rose-50 rounded-lg px-2 py-1 hover:bg-rose-100 transition">
+                            className="text-[11px] font-semibold text-blue-600 bg-blue-50 rounded-lg px-2 py-1 hover:bg-blue-100 transition">
                             {c.label}
                           </button>
                         ))}
@@ -4306,16 +4306,16 @@ export function AppShell() {
                 <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6">
                 <h3 className="font-bold text-gray-900 text-base mb-4">{t("offersMade")}</h3>
                 <div className="space-y-2.5">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
-                  <div key={o.id} className="border border-gray-100 rounded-2xl p-3.5 hover:border-rose-300 hover:shadow-sm transition">
+                  <div key={o.id} className="border border-gray-100 rounded-2xl p-3.5 hover:border-blue-300 hover:shadow-sm transition">
                     <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center">
                       <div className="min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{o.listing.brand} {o.listing.model}</p><p className="text-xs text-gray-400 mt-0.5">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("offerPendingSeenStatus") : t("offerPendingStatus")}</p></div>
-                      <span className="font-bold text-rose-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span>
+                      <span className="font-bold text-blue-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span>
                     </button>
                     {/* Araç sahibi tarafındaki ile AYNI kural ve aynı düğme (bkz. o taraf). */}
                     {canReoffer(o) && (
                       <div className="flex items-center justify-between gap-2 mt-2.5 pt-2.5 border-t border-gray-100">
                         <span className="text-[11px] text-gray-400">{o.status === "rejected" ? t("reofferRejectedHint") : t("reofferUnseenHint")}</span>
-                        <button onClick={() => startReoffer(o.listing, o)} className="text-xs font-semibold text-rose-600 hover:text-rose-700 flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
+                        <button onClick={() => startReoffer(o.listing, o)} className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
                       </div>
                     )}
                   </div>))}
@@ -4328,7 +4328,7 @@ export function AppShell() {
                 <h3 className="font-bold text-gray-900 text-base mb-4">{t("offersReceived")}</h3>
                 <div className="space-y-2.5">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
                   <div key={o.id} className="border border-gray-100 rounded-2xl p-3.5">
-                    <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center mb-2.5"><div><p className="text-sm font-semibold text-gray-800">{o.from}</p><p className="text-xs text-gray-400 mt-0.5">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-rose-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span></button>
+                    <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center mb-2.5"><div><p className="text-sm font-semibold text-gray-800">{o.from}</p><p className="text-xs text-gray-400 mt-0.5">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-blue-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span></button>
                     {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-xs py-2 rounded-xl font-semibold hover:bg-green-600 transition">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-xs py-2 rounded-xl font-semibold hover:bg-gray-50 transition">{t("reject")}</button></div>) : (<p className="text-xs text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>)}
                   </div>
                 ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noOffersReceivedYet")}</p>}</div>
@@ -4351,7 +4351,7 @@ export function AppShell() {
                 görününce hangisinin nereye götürdüğü belirsizleşiyordu. Artık her sayfada olduğu
                 gibi TEK üst çubuk: solda geri, ortada logo. */}
             <PageTopBar onBack={() => { if (mechProfileTab === "support") setMechProfileTab("settings"); else setScreen("mechanicDashboard"); }} />
-            <div className="h-16 md:h-20 bg-gradient-to-br from-gray-100 via-gray-50 to-rose-50" />
+            <div className="h-16 md:h-20 bg-gradient-to-br from-gray-100 via-gray-50 to-blue-50" />
             {/* Aynı katman hatası burada da vardı — bkz. panodaki uzun not. */}
             <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10">
               <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
@@ -4374,17 +4374,17 @@ export function AppShell() {
                 <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="pr-2 min-w-0">
-                      <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Sparkles size={14} className="text-rose-500" /> {t("recConsentTitle")}</h3>
+                      <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Sparkles size={14} className="text-blue-500" /> {t("recConsentTitle")}</h3>
                       <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t("recConsentDesc")}</p>
                     </div>
                     <button onClick={() => setRecsConsent(!recommendations.consent)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0">
-                      <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-rose-600" : "bg-gray-200"}`}>
+                      <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-blue-600" : "bg-gray-200"}`}>
                         <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${recommendations.consent ? "left-6" : "left-1"}`} />
                       </div>
                     </button>
                   </div>
                   <div className="mt-3 pt-3 border-t border-gray-100">
-                    <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-gray-600 hover:text-rose-600 transition">{t("recProfileShowBtn")}</button>
+                    <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-gray-600 hover:text-blue-600 transition">{t("recProfileShowBtn")}</button>
                     {recsProfile && (
                       recsProfile.signals.length === 0
                         ? <p className="text-[11px] text-gray-400 mt-2">{t("recProfileEmpty")}</p>
@@ -4397,8 +4397,8 @@ export function AppShell() {
                     )}
                   </div>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={toggleAutoAccept} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
-                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-rose-600" /> {t("useMyLocationTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
+                <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={toggleAutoAccept} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
+                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-blue-600" /> {t("useMyLocationTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                 {(() => {
                   const notifOpts = [{ key: "notifyAppointments", label: t("notifyAppointmentsLabel") }, { key: "notifyOffers", label: t("notifyOffersLabel") }, { key: "notifyMessages", label: t("notifyMessagesLabel") }, { key: "notifyJobApplications", label: t("notifyJobApplicationsLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }, { key: "notifySavedSearches", label: t("notifySavedSearchesLabel") }];
                   const allNotifsOn = notifOpts.every(opt => mechSettings[opt.key]);
@@ -4408,12 +4408,12 @@ export function AppShell() {
                   };
                   return (
                     <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
-                      <div className="flex items-center justify-between"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-rose-600" /> {t("notificationsTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? t("notifPermissionDeniedNote") : allNotifsOn ? t("allNotifsOnNote") : t("enableBrowserNotifsNote")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
+                      <div className="flex items-center justify-between"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-blue-600" /> {t("notificationsTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? t("notifPermissionDeniedNote") : allNotifsOn ? t("allNotifsOnNote") : t("enableBrowserNotifsNote")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
                       <button onClick={() => setMechNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 hover:text-gray-700 transition"><span>{t("showNotifTypesBtn")}</span><ChevronRight size={13} className={`transition-transform ${mechNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
                       {mechNotifDetailsOpen && (
                         <div className="mt-3 space-y-2.5">
                           {notifOpts.map(opt => (
-                            <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setMechSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${mechSettings[opt.key] ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${mechSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
+                            <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setMechSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${mechSettings[opt.key] ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${mechSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
                           ))}
                         </div>
                       )}
@@ -4421,8 +4421,8 @@ export function AppShell() {
                   );
                 })()}
                 <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><h3 className="font-semibold text-gray-800 text-sm">{t("siteLanguage")}</h3><LangSwitch /></div>
-                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-rose-600" /> {t("messagingLanguageTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{t("messagingLanguageHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => updateMyField("lang", l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${(myProfile.lang || "tr") === l ? "bg-white text-rose-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
-                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className={darkMode ? "text-rose-500" : "text-rose-600"} /> {t("darkModeAppearanceTitle")}</h3><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-rose-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
+                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-blue-600" /> {t("messagingLanguageTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{t("messagingLanguageHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => updateMyField("lang", l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${(myProfile.lang || "tr") === l ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
+                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className={darkMode ? "text-blue-500" : "text-blue-600"} /> {t("darkModeAppearanceTitle")}</h3><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
                 <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Bell size={16} /> {t("smsNotifHistoryTitle")}</h3>
                 <div className="space-y-2 mb-6">{smsLog.map(s => (<div key={s.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs text-gray-600">{s.text}</div>))}{smsLog.length === 0 && <p className="text-center text-gray-400 text-sm py-8">{t("noSmsSentYet")}</p>}</div>
                 <button onClick={() => setMechPaymentInfoOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Banknote size={16} /> {t("paymentInfoTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${mechPaymentInfoOpen ? "rotate-90" : ""}`} /></button>
@@ -4450,7 +4450,7 @@ export function AppShell() {
                     <KnownDevices devices={knownDevices} loading={devicesLoading} onLoad={loadKnownDevices} t={t} lang={lang} />
                   </div>
                   <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                  <button onClick={() => setMechProfileTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-rose-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
+                  <button onClick={() => setMechProfileTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-blue-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
                   <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                   <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
                 </>)}
@@ -4479,11 +4479,11 @@ export function AppShell() {
             {ownerMode === "mechanics" ? (
               <>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("priceRangeLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "cheap", label: t("affordablePriceTier") }, { key: "mid", label: t("midPriceTier") }, { key: "expensive", label: t("expensivePriceTier") }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, priceTier: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.priceTier === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "cheap", label: t("affordablePriceTier") }, { key: "mid", label: t("midPriceTier") }, { key: "expensive", label: t("expensivePriceTier") }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, priceTier: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.priceTier === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("minRatingLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: 0, label: t("allFilterLabel") }, { key: 4.0, label: "⭐ 4.0+" }, { key: 4.5, label: "⭐ 4.5+" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, minRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.minRating === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: 0, label: t("allFilterLabel") }, { key: 4.0, label: "⭐ 4.0+" }, { key: 4.5, label: "⭐ 4.5+" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, minRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.minRating === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MapPin size={13} /> {t("maxDistanceLabel")}</h4>
-                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 1, label: "< 1 km" }, { key: 2, label: "< 2 km" }, { key: 5, label: "< 5 km" }].map(o => (<button key={o.key} onClick={() => handleDistanceFilterClick(o.key)} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.maxDistance === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 1, label: "< 1 km" }, { key: 2, label: "< 2 km" }, { key: 5, label: "< 5 km" }].map(o => (<button key={o.key} onClick={() => handleDistanceFilterClick(o.key)} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.maxDistance === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 {!userLocation && (<p className="text-[11px] text-gray-400 mb-5 flex items-center gap-1"><MapPin size={11} /> {t("estimatedDistanceFilterHint")}</p>)}
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Car size={13} /> {t("vehicleBrandLabel")}</h4>
                 <select value={filters.brand} onChange={(e) => setFilters(f => ({ ...f, brand: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allBrandsOption")}</option>{CAR_BRANDS.map(b => (<option key={b} value={b}>{b}</option>))}</select>
@@ -4503,14 +4503,14 @@ export function AppShell() {
                 {/* ---- Genişletilmiş tamirci filtreleri: kalite/güven ve hizmet/ödeme grupları ---- */}
                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("mechFilterSectionQuality")}</p>
                 <div className="space-y-2 mb-5">
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.openNow} onChange={(e) => setFilters(f => ({ ...f, openNow: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <Clock size={13} className="text-gray-400" /> {t("filterOpenNow")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.verifiedOnly} onChange={(e) => setFilters(f => ({ ...f, verifiedOnly: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <BadgeCheck size={13} className="text-gray-400" /> {t("filterVerifiedOnly")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.fixedPriceOnly} onChange={(e) => setFilters(f => ({ ...f, fixedPriceOnly: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <Tag size={13} className="text-gray-400" /> {t("filterFixedPriceOnly")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.openNow} onChange={(e) => setFilters(f => ({ ...f, openNow: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <Clock size={13} className="text-gray-400" /> {t("filterOpenNow")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.verifiedOnly} onChange={(e) => setFilters(f => ({ ...f, verifiedOnly: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <BadgeCheck size={13} className="text-gray-400" /> {t("filterVerifiedOnly")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.fixedPriceOnly} onChange={(e) => setFilters(f => ({ ...f, fixedPriceOnly: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <Tag size={13} className="text-gray-400" /> {t("filterFixedPriceOnly")}</label>
                 </div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Clock size={13} /> {t("maxResponseLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...RESPONSE_TIME_OPTIONS.map(n => ({ key: String(n), label: t("maxResponseOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, maxResponse: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.maxResponse) === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...RESPONSE_TIME_OPTIONS.map(n => ({ key: String(n), label: t("maxResponseOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, maxResponse: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.maxResponse) === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MessageCircle size={13} /> {t("minReviewsLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...MIN_REVIEW_COUNT_OPTIONS.map(n => ({ key: String(n), label: t("minReviewsOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, minReviews: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.minReviews) === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...MIN_REVIEW_COUNT_OPTIONS.map(n => ({ key: String(n), label: t("minReviewsOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, minReviews: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.minReviews) === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("mechFilterSectionService")}</p>
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div>
@@ -4528,9 +4528,9 @@ export function AppShell() {
             ) : ownerMode === "cars" ? (
               <>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Cog size={13} /> {t("transmissionLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...TRANSMISSIONS.map(tv => ({ key: tv, label: vocabLabel(tv, lang, TRANSMISSION_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, transmission: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.transmission === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...TRANSMISSIONS.map(tv => ({ key: tv, label: vocabLabel(tv, lang, TRANSMISSION_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, transmission: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.transmission === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Fuel size={13} /> {t("fuelTypeLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...FUEL_TYPES.map(fv => ({ key: fv, label: vocabLabel(fv, lang, FUEL_TYPE_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, fuelType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.fuelType === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...FUEL_TYPES.map(fv => ({ key: fv, label: vocabLabel(fv, lang, FUEL_TYPE_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, fuelType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.fuelType === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("priceRangeTlLabel")}</h4>
                 <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minPlaceholder")} value={listingFilters.minPrice} onChange={(e) => setListingFilters(f => ({ ...f, minPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxPlaceholder")} value={listingFilters.maxPrice} onChange={(e) => setListingFilters(f => ({ ...f, maxPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Gauge size={13} /> {t("kmRangeLabel")}</h4>
@@ -4606,41 +4606,41 @@ export function AppShell() {
                   </div>
                 </div>
                 <div className="space-y-2 mb-5">
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.damageFree} onChange={(e) => setListingFilters(f => ({ ...f, damageFree: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("filterDamageFree")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.hasInspectionReport} onChange={(e) => setListingFilters(f => ({ ...f, hasInspectionReport: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <FileText size={13} className="text-gray-400" /> {t("filterHasInspectionReport")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.tradeIn} onChange={(e) => setListingFilters(f => ({ ...f, tradeIn: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("tradeInAvailableLabel")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.negotiable} onChange={(e) => setListingFilters(f => ({ ...f, negotiable: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("negotiableBadge")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.damageFree} onChange={(e) => setListingFilters(f => ({ ...f, damageFree: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("filterDamageFree")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.hasInspectionReport} onChange={(e) => setListingFilters(f => ({ ...f, hasInspectionReport: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <FileText size={13} className="text-gray-400" /> {t("filterHasInspectionReport")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.tradeIn} onChange={(e) => setListingFilters(f => ({ ...f, tradeIn: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("tradeInAvailableLabel")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.negotiable} onChange={(e) => setListingFilters(f => ({ ...f, negotiable: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("negotiableBadge")}</label>
                 </div>
                 {/* ---- Güven & ilan (AutoScout24: Preisbewertung / Verkäufer / Standort) ---- */}
                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("filterSectionTrust")}</p>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("priceRatingLabel")}</h4>
-                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "below", label: `💚 ${t("priceRatingBelow")}` }, { key: "average", label: t("priceRatingAverage") }].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, priceRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.priceRating === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "below", label: `💚 ${t("priceRatingBelow")}` }, { key: "average", label: t("priceRatingAverage") }].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, priceRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.priceRating === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <p className="text-[11px] text-gray-400 mb-5 px-1">{t("priceRatingHint")}</p>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MapPin size={13} /> {t("listingRadiusLabel")}</h4>
-                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 25, label: "< 25 km" }, { key: 50, label: "< 50 km" }, { key: 100, label: "< 100 km" }, { key: 250, label: "< 250 km" }].map(o => (<button key={o.key} onClick={() => { if (o.key !== 999 && !userLocation) requestLocation(); setListingFilters(f => ({ ...f, maxDistance: o.key })); }} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.maxDistance === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 25, label: "< 25 km" }, { key: 50, label: "< 50 km" }, { key: 100, label: "< 100 km" }, { key: 250, label: "< 250 km" }].map(o => (<button key={o.key} onClick={() => { if (o.key !== 999 && !userLocation) requestLocation(); setListingFilters(f => ({ ...f, maxDistance: o.key })); }} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.maxDistance === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 {!userLocation && (<p className="text-[11px] text-gray-400 mb-5 flex items-center gap-1"><MapPin size={11} /> {t("listingRadiusNeedsLocation")}</p>)}
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><CalendarDays size={13} /> {t("listedWithinLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...LISTED_WITHIN_OPTIONS.map(n => ({ key: n, label: n === "1" ? t("listedWithinToday") : t("listedWithinOption", { n }) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, listedWithin: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.listedWithin === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...LISTED_WITHIN_OPTIONS.map(n => ({ key: n, label: n === "1" ? t("listedWithinToday") : t("listedWithinOption", { n }) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, listedWithin: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.listedWithin === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <div className="space-y-2 mb-5">
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.verifiedSeller} onChange={(e) => setListingFilters(f => ({ ...f, verifiedSeller: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <BadgeCheck size={13} className="text-gray-400" /> {t("filterVerifiedSeller")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.withPhotos} onChange={(e) => setListingFilters(f => ({ ...f, withPhotos: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <ImageIcon size={13} className="text-gray-400" /> {t("filterWithPhotos")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.featuredOnly} onChange={(e) => setListingFilters(f => ({ ...f, featuredOnly: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> <Star size={13} className="text-gray-400" /> {t("filterFeaturedOnly")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.hideSold} onChange={(e) => setListingFilters(f => ({ ...f, hideSold: e.target.checked }))} className="w-4 h-4 accent-rose-600" /> {t("filterHideSold")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.verifiedSeller} onChange={(e) => setListingFilters(f => ({ ...f, verifiedSeller: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <BadgeCheck size={13} className="text-gray-400" /> {t("filterVerifiedSeller")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.withPhotos} onChange={(e) => setListingFilters(f => ({ ...f, withPhotos: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <ImageIcon size={13} className="text-gray-400" /> {t("filterWithPhotos")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.featuredOnly} onChange={(e) => setListingFilters(f => ({ ...f, featuredOnly: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <Star size={13} className="text-gray-400" /> {t("filterFeaturedOnly")}</label>
+                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.hideSold} onChange={(e) => setListingFilters(f => ({ ...f, hideSold: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("filterHideSold")}</label>
                 </div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Settings size={13} /> {t("filterFeaturesLabel")}</h4>
                 <div className="flex flex-wrap gap-1.5 mb-6">
                   {LISTING_FEATURE_OPTIONS.slice(0, 12).map(feat => {
                     const on = (listingFilters.features || []).includes(feat);
-                    return (<button key={feat} onClick={() => setListingFilters(f => ({ ...f, features: on ? (f.features || []).filter(x => x !== feat) : [...(f.features || []), feat] }))} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${on ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{feat}</button>);
+                    return (<button key={feat} onClick={() => setListingFilters(f => ({ ...f, features: on ? (f.features || []).filter(x => x !== feat) : [...(f.features || []), feat] }))} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${on ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{feat}</button>);
                   })}
                 </div>
               </>
             ) : (
               <>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Briefcase size={13} /> {t("employmentTypeFilterLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EMPLOYMENT_TYPES.map(et => ({ key: et, label: vocabLabel(et, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, employmentType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.employmentType === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EMPLOYMENT_TYPES.map(et => ({ key: et, label: vocabLabel(et, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, employmentType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.employmentType === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><GraduationCap size={13} /> {t("experienceLevelFilterLabel")}</h4>
-                <div className="flex gap-2 mb-6 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EXPERIENCE_LEVELS.map(ex => ({ key: ex, label: vocabLabel(ex, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, experienceLevel: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.experienceLevel === o.key ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <div className="flex gap-2 mb-6 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EXPERIENCE_LEVELS.map(ex => ({ key: ex, label: vocabLabel(ex, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, experienceLevel: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.experienceLevel === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
               </>
             )}
             {/* "Bu aramayı kaydet" (AutoScout24'teki "Suche speichern"): artık ÜÇ arama türü için de
@@ -4649,37 +4649,37 @@ export function AppShell() {
             {showSaveSearchInput ? (
               <div className="mb-4 flex gap-2">
                 <input autoFocus value={saveSearchNameInput} onChange={(e) => setSaveSearchNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveCurrentSearch(saveSearchNameInput, ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics"); }} placeholder={t("savedSearchNamePlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                <button onClick={() => saveCurrentSearch(saveSearchNameInput, ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics")} className="px-4 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 transition">{t("saveBtn")}</button>
+                <button onClick={() => saveCurrentSearch(saveSearchNameInput, ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics")} className="px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition">{t("saveBtn")}</button>
                 <button onClick={() => { setShowSaveSearchInput(false); setSaveSearchNameInput(""); }} aria-label={t("closeAria")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0"><X size={16} /></button>
               </div>
             ) : (
-              <button onClick={() => setShowSaveSearchInput(true)} className="mb-4 w-full flex items-center justify-center gap-1.5 border border-dashed border-rose-300 text-rose-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-50 transition"><Bell size={14} /> {t("saveThisSearchBtn")}</button>
+              <button onClick={() => setShowSaveSearchInput(true)} className="mb-4 w-full flex items-center justify-center gap-1.5 border border-dashed border-blue-300 text-blue-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-50 transition"><Bell size={14} /> {t("saveThisSearchBtn")}</button>
             )}
             <div className="flex gap-2">
               <button onClick={() => ownerMode === "mechanics" ? (() => { clearMechFilters(); setQuery(""); setLocationQuery(""); setServiceQuery(""); })() : ownerMode === "cars" ? clearListingFilters() : clearJobFilters()} className="flex-1 border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("clear")}</button>
-              <button onClick={() => setShowFilterModal(false)} className={`flex-1 text-white py-3 rounded-2xl font-semibold text-sm transition ${ownerMode === "mechanics" ? "bg-rose-600 hover:bg-rose-700" : ownerMode === "cars" ? "bg-rose-600 hover:bg-rose-700" : "bg-rose-600 hover:bg-rose-700"}`}>{t("apply")}</button>
+              <button onClick={() => setShowFilterModal(false)} className={`flex-1 text-white py-3 rounded-2xl font-semibold text-sm transition ${ownerMode === "mechanics" ? "bg-blue-600 hover:bg-blue-700" : ownerMode === "cars" ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-600 hover:bg-blue-700"}`}>{t("apply")}</button>
             </div>
           </div>
         </div>
       )}
-      {showMapMobile && (<div className="fixed inset-0 bg-white z-50 flex flex-col md:hidden"><div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"><h3 className="font-bold text-gray-800">{t("mapMechanicsTitle")}</h3><button onClick={() => setShowMapMobile(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><MapPanel className="flex-1 m-4" items={filtered} onPick={openMapDetail} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /><div className="p-4"><button onClick={() => setShowMapMobile(false)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm">{t("backToListBtn")}</button></div></div>)}
+      {showMapMobile && (<div className="fixed inset-0 bg-white z-50 flex flex-col md:hidden"><div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"><h3 className="font-bold text-gray-800">{t("mapMechanicsTitle")}</h3><button onClick={() => setShowMapMobile(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><MapPanel className="flex-1 m-4" items={filtered} onPick={openMapDetail} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /><div className="p-4"><button onClick={() => setShowMapMobile(false)} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm">{t("backToListBtn")}</button></div></div>)}
       {showSellVehiclePicker && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4" data-modal-backdrop onClick={() => setShowSellVehiclePicker(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-t-3xl md:rounded-3xl p-5 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Car size={18} className="text-rose-600" /> {t("whichVehicleSellTitle")}</h3><button onClick={() => setShowSellVehiclePicker(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Car size={18} className="text-blue-600" /> {t("whichVehicleSellTitle")}</h3><button onClick={() => setShowSellVehiclePicker(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{t("selectRegisteredVehicleHint")}</p>
             <div className="space-y-2">
               {vehicles.map(v => {
                 const linked = listings.find(l => l.id === v.listingId);
                 return (
-                  <button key={v.id} onClick={() => pickVehicleToSell(v)} className="w-full flex items-center gap-3 bg-white border border-gray-200 rounded-2xl p-3 hover:border-rose-300 transition text-left">
-                    <div className="w-11 h-11 bg-rose-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={20} className="text-rose-600" /></div>
+                  <button key={v.id} onClick={() => pickVehicleToSell(v)} className="w-full flex items-center gap-3 bg-white border border-gray-200 rounded-2xl p-3 hover:border-blue-300 transition text-left">
+                    <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={20} className="text-blue-600" /></div>
                     <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{v.brand} {v.model}</p><p className="text-xs text-gray-400">{v.year} · {v.plate}{linked ? ` · ${t("alreadyListedSuffix")}` : ""}</p></div>
                     <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
                   </button>
                 );
               })}
-              <button onClick={pickOtherCarToSell} className="w-full flex items-center gap-3 bg-white border border-dashed border-gray-300 rounded-2xl p-3 hover:border-rose-300 transition text-left">
+              <button onClick={pickOtherCarToSell} className="w-full flex items-center gap-3 bg-white border border-dashed border-gray-300 rounded-2xl p-3 hover:border-blue-300 transition text-left">
                 <div className="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0"><Plus size={20} className="text-gray-500" /></div>
                 <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800">{t("otherVehicleLabel")}</p><p className="text-xs text-gray-400">{t("otherVehicleHint")}</p></div>
                 <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
@@ -4691,7 +4691,7 @@ export function AppShell() {
       {showSellForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowSellForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Tag size={18} className="text-rose-600" /> {sellForm._editingId ? t("editListing") : t("sellFormTitle")}</h3><button onClick={() => setShowSellForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Tag size={18} className="text-blue-600" /> {sellForm._editingId ? t("editListing") : t("sellFormTitle")}</h3><button onClick={() => setShowSellForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <div className="flex justify-center mb-4"><div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-4xl overflow-hidden">{isImgUrl(sellForm.photo) ? <img decoding="async" src={imgThumb(sellForm.photo, 200)} onError={imgFallbackHandler} alt={t("vehiclePhotoAlt")} className="w-full h-full object-cover" /> : sellForm.photo}<input ref={sellPhotoRef} type="file" accept="image/*" onChange={sellPhotoUpload} className="hidden" /><button onClick={() => sellPhotoRef.current?.click()} aria-label={t("a11yChangeProfilePhoto")} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={20} /></button></div></div>
             <div className="space-y-2">
               <div className="flex gap-2 items-start"><BrandSelect className="w-1/2" value={sellForm.brand} onChange={(b) => setSellForm({ ...sellForm, brand: b, model: "" })} /><ModelSelect className="w-1/2" brand={sellForm.brand} value={sellForm.model} onChange={(m) => setSellForm({ ...sellForm, model: m })} /></div>
@@ -4731,7 +4731,7 @@ export function AppShell() {
                     {selectedFeatures.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {selectedFeatures.map(f => (
-                          <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="pl-2.5 pr-2 py-1.5 rounded-full text-[11px] font-medium border bg-rose-600 text-white border-rose-600 flex items-center gap-1 transition hover:bg-rose-700">
+                          <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="pl-2.5 pr-2 py-1.5 rounded-full text-[11px] font-medium border bg-blue-600 text-white border-blue-600 flex items-center gap-1 transition hover:bg-blue-700">
                             {f} <X size={11} />
                           </button>
                         ))}
@@ -4739,18 +4739,18 @@ export function AppShell() {
                     )}
                     <div className="flex flex-wrap gap-1.5">
                       {visibleUnselected.map(f => (
-                        <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium border bg-white text-gray-500 border-gray-200 hover:border-rose-300 hover:text-rose-600 transition">{f}</button>
+                        <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium border bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-600 transition">{f}</button>
                       ))}
                       {hiddenCount > 0 && (
-                        <button type="button" onClick={() => setShowAllFeatureOptions(true)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-gray-300 text-gray-400 hover:text-rose-500 hover:border-rose-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
+                        <button type="button" onClick={() => setShowAllFeatureOptions(true)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 hover:border-blue-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
                       )}
                       {showAllFeatureOptions && unselectedOptions.length > VISIBLE_UNSELECTED_COUNT && (
-                        <button type="button" onClick={() => setShowAllFeatureOptions(false)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-gray-300 text-gray-400 hover:text-rose-500 hover:border-rose-300 transition">{t("showLessFeaturesLabel")}</button>
+                        <button type="button" onClick={() => setShowAllFeatureOptions(false)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 hover:border-blue-300 transition">{t("showLessFeaturesLabel")}</button>
                       )}
                     </div>
                     <div className="flex gap-2 pt-1">
                       <input value={customFeatureInput} onChange={(e) => setCustomFeatureInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomFeature(); } }} placeholder={t("customFeaturePlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
-                      <button type="button" onClick={addCustomFeature} aria-label={t("addCustomFeatureAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-rose-50 hover:text-rose-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
+                      <button type="button" onClick={addCustomFeature} aria-label={t("addCustomFeatureAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
                     </div>
                   </div>
                 );
@@ -4761,7 +4761,7 @@ export function AppShell() {
                   <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200"><img src={imgThumb(p, 120)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("extraPhotoAlt", { n: String(i + 1) })} className="w-full h-full object-cover" /><button type="button" onClick={() => removeSellPhoto(i)} aria-label={t("removePhotoAria")} className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center text-white"><X size={9} /></button></div>
                 ))}
                 {(sellForm.photos || []).length < MAX_LISTING_GALLERY_PHOTOS && (
-                  <label className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:text-rose-500 hover:border-rose-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
+                  <label className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:border-blue-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
                 )}
               </div>
               {/* BAKIM GEÇMİŞİNİ İLANDA GÖSTER — aracın şasi numarasına bağlı, Fixperto üzerinden
@@ -4770,7 +4770,7 @@ export function AppShell() {
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("vehicleHistoryVerifiedTitle")}</p>
               <input value={sellForm.vin || ""} onChange={(e) => setSellForm({ ...sellForm, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} aria-label={t("vinLabel")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide" />
               <label className="flex items-start gap-2 cursor-pointer px-1">
-                <input type="checkbox" checked={!!sellForm.showHistory} onChange={(e) => setSellForm({ ...sellForm, showHistory: e.target.checked })} className="mt-0.5 w-4 h-4 accent-rose-600" />
+                <input type="checkbox" checked={!!sellForm.showHistory} onChange={(e) => setSellForm({ ...sellForm, showHistory: e.target.checked })} className="mt-0.5 w-4 h-4 accent-blue-600" />
                 <span className="text-[11px] text-gray-500 leading-relaxed"><span className="font-semibold text-gray-700">{t("listingShowHistoryLabel")}</span> {t("listingShowHistoryDesc")}</span>
               </label>
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("marketingSection")}</p>
@@ -4778,14 +4778,14 @@ export function AppShell() {
               <button type="button" onClick={() => setSellForm({ ...sellForm, negotiable: !sellForm.negotiable })} className={`w-full px-3 py-2.5 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition ${sellForm.negotiable ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500"}`}>{t("negotiableToggle")} {sellForm.negotiable ? t("yesLabel") : t("noLabel")}</button>
               <p className="text-[10px] text-gray-400 px-1">{t("featuredHintNote")}</p>
             </div>
-            <button onClick={() => submitListing(role)} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-rose-700 transition">{sellForm._editingId ? t("updateListing") : t("publishListing")}</button>
+            <button onClick={() => submitListing(role)} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-blue-700 transition">{sellForm._editingId ? t("updateListing") : t("publishListing")}</button>
           </div>
         </div>
       )}
       {showJobForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowJobForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-rose-500" /> {jobForm._editingId ? t("editJobListingTitle") : t("newJobListingTitle")}</h3><button onClick={() => setShowJobForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-blue-500" /> {jobForm._editingId ? t("editJobListingTitle") : t("newJobListingTitle")}</h3><button onClick={() => setShowJobForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <div className="space-y-2">
               <input value={jobForm.title} onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })} placeholder={t("jobTitlePlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
               <div className="flex gap-2"><select value={jobForm.employmentType} onChange={(e) => setJobForm({ ...jobForm, employmentType: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm">{EMPLOYMENT_TYPES.map(t2 => <option key={t2} value={t2}>{vocabLabel(t2, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG)}</option>)}</select><select value={jobForm.experienceLevel} onChange={(e) => setJobForm({ ...jobForm, experienceLevel: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm">{EXPERIENCE_LEVELS.map(ex => <option key={ex} value={ex}>{vocabLabel(ex, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG)}</option>)}</select></div>
@@ -4795,7 +4795,7 @@ export function AppShell() {
               <textarea value={jobForm.requirements} onChange={(e) => setJobForm({ ...jobForm, requirements: e.target.value })} placeholder={t("requirementsPlaceholderMulti")} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
               <input value={jobForm.skills} onChange={(e) => setJobForm({ ...jobForm, skills: e.target.value })} placeholder={t("skillsPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
             </div>
-            <button disabled={!jobForm.title.trim()} onClick={submitJobListing} className={`w-full py-3 rounded-2xl font-semibold text-sm mt-4 transition ${jobForm.title.trim() ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{jobForm._editingId ? t("updateListingBtn") : t("publishListingBtn")}</button>
+            <button disabled={!jobForm.title.trim()} onClick={submitJobListing} className={`w-full py-3 rounded-2xl font-semibold text-sm mt-4 transition ${jobForm.title.trim() ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{jobForm._editingId ? t("updateListingBtn") : t("publishListingBtn")}</button>
           </div>
         </div>
       )}
@@ -4805,7 +4805,7 @@ export function AppShell() {
             <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800">{isUpdate ? t("updateOfferBtn") : t("makeOffer")}</h3><button onClick={() => setShowOfferForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
             <p className="text-xs text-gray-400 mb-4">{selectedListing.brand} {selectedListing.model} · {selectedListing.price}</p>
             <input value={offerAmount} onChange={(e) => setOfferAmount(e.target.value)} type="number" placeholder={t("offerAmountPlaceholder", { currency })} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4" />
-            <button disabled={!offerAmount} onClick={submitOffer} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${offerAmount ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{isUpdate ? t("updateOfferSubmitBtn") : t("sendOfferBtn")}</button>
+            <button disabled={!offerAmount} onClick={submitOffer} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${offerAmount ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{isUpdate ? t("updateOfferSubmitBtn") : t("sendOfferBtn")}</button>
           </div>
         </div>
       ); })()}
@@ -4823,12 +4823,12 @@ export function AppShell() {
           </div>
         </div>
       )}
-      {showListingMsgForm && (<div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowListingMsgForm(false)}><div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5"><div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800">{t("messageSeller")}</h3><button onClick={() => setShowListingMsgForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><textarea value={listingMsg} onChange={(e) => setListingMsg(e.target.value)} rows={3} placeholder={t("listingMsgPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" /><button onClick={submitListingMsg} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{t("sendReviewBtn")}</button></div></div>)}
+      {showListingMsgForm && (<div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowListingMsgForm(false)}><div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5"><div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800">{t("messageSeller")}</h3><button onClick={() => setShowListingMsgForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><textarea value={listingMsg} onChange={(e) => setListingMsg(e.target.value)} rows={3} placeholder={t("listingMsgPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" /><button onClick={submitListingMsg} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition">{t("sendReviewBtn")}</button></div></div>)}
       {showJobApplyForm && selectedJob && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" data-modal-backdrop onClick={closeJobApplyForm}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl ring-1 ring-black/5 max-h-[88vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-rose-500" /> {t("applicationTitle")}</h3>
+              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-blue-500" /> {t("applicationTitle")}</h3>
               <button onClick={closeJobApplyForm} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -4847,9 +4847,9 @@ export function AppShell() {
               <h4 className="text-xs font-semibold text-gray-700 mb-2">{t("cvRequiredTitle")}</h4>
               <input ref={cvFileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleCvSelect} className="hidden" />
               {jobApplyCv ? (
-                <div className="flex items-center justify-between gap-2 bg-rose-50 rounded-xl px-3 py-2.5">
-                  <span className="flex items-center gap-2 text-xs text-rose-700 min-w-0"><FileText size={15} className="flex-shrink-0" /><span className="truncate">{jobApplyCv.name}</span></span>
-                  <button onClick={removeCv} aria-label={t("removeCvAria")} className="text-rose-400 hover:text-red-500 flex-shrink-0 p-2 -m-2"><X size={15} /></button>
+                <div className="flex items-center justify-between gap-2 bg-blue-50 rounded-xl px-3 py-2.5">
+                  <span className="flex items-center gap-2 text-xs text-blue-700 min-w-0"><FileText size={15} className="flex-shrink-0" /><span className="truncate">{jobApplyCv.name}</span></span>
+                  <button onClick={removeCv} aria-label={t("removeCvAria")} className="text-blue-400 hover:text-red-500 flex-shrink-0 p-2 -m-2"><X size={15} /></button>
                 </div>
               ) : (
                 <button onClick={() => cvFileRef.current?.click()} className="w-full flex items-center justify-center gap-2 border border-dashed border-gray-300 text-gray-500 rounded-xl py-2.5 text-xs font-medium hover:bg-gray-50 transition"><Paperclip size={14} /> {t("uploadCvBtn")}</button>
@@ -4857,7 +4857,7 @@ export function AppShell() {
               <p className="text-[10px] text-gray-300 mt-2">{t("requiredFieldsHint")}</p>
             </div>
             <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
-              <button disabled={!jobApplyReady} onClick={submitJobApplication} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${jobApplyReady ? "bg-rose-600 text-white hover:bg-rose-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("submitApplicationBtn")}</button>
+              <button disabled={!jobApplyReady} onClick={submitJobApplication} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${jobApplyReady ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("submitApplicationBtn")}</button>
             </div>
           </div>
         </div>
@@ -4869,7 +4869,7 @@ export function AppShell() {
             <p className="text-xs text-gray-400 mb-4">{revAppt?.mechanicName}</p>
             <div className="flex items-center gap-1.5 mb-4 justify-center">{[1, 2, 3, 4, 5].map(n => (<button key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))} aria-label={t("a11yRateStars", { n: String(n) })}><Star size={30} className={n <= reviewForm.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} /></button>))}</div>
             <textarea value={reviewForm.comment} onChange={(e) => setReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder={t("shareExperiencePlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" />
-            <button onClick={submitReview} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-rose-700 transition">{t("sendReviewBtn")}</button>
+            <button onClick={submitReview} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition">{t("sendReviewBtn")}</button>
           </div>
         </div>
       ); })()}
@@ -4882,7 +4882,7 @@ export function AppShell() {
               <input type="password" value={passwordForm.next} onChange={(e) => setPasswordForm(f => ({ ...f, next: e.target.value }))} placeholder={t("newPasswordPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
               <input type="password" value={passwordForm.confirm} onChange={(e) => setPasswordForm(f => ({ ...f, confirm: e.target.value }))} placeholder={t("newPasswordRepeatPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
             </div>
-            <button onClick={submitPasswordChange} className="w-full bg-rose-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-rose-700 transition">{t("updatePasswordBtn")}</button>
+            <button onClick={submitPasswordChange} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-blue-700 transition">{t("updatePasswordBtn")}</button>
           </div>
         </div>
       )}
@@ -4903,12 +4903,12 @@ export function AppShell() {
               </div>
               <div className="relative mt-3">
                 <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input autoFocus value={servicePickerQuery} onChange={(e) => setServicePickerQuery(e.target.value)} placeholder={t("serviceCatalogSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300" />
+                <input autoFocus value={servicePickerQuery} onChange={(e) => setServicePickerQuery(e.target.value)} placeholder={t("serviceCatalogSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" />
               </div>
               <div className="flex gap-1.5 overflow-x-auto mt-3 pb-1">
-                <button onClick={() => setServicePickerCat("all")} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === "all" ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t("serviceCatalogAllCats")}</button>
+                <button onClick={() => setServicePickerCat("all")} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === "all" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t("serviceCatalogAllCats")}</button>
                 {SERVICE_CATALOG.map(cat => (
-                  <button key={cat.key} onClick={() => setServicePickerCat(cat.key)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === cat.key ? "bg-rose-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{cat[lang] || cat.tr}</button>
+                  <button key={cat.key} onClick={() => setServicePickerCat(cat.key)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === cat.key ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{cat[lang] || cat.tr}</button>
                 ))}
               </div>
             </div>
@@ -4933,8 +4933,8 @@ export function AppShell() {
                         {cat.items.map(it => {
                           const on = selectedKeys.has(it.key);
                           return (
-                            <button key={it.key} onClick={() => toggleCatalogService(it)} className={`text-left px-3.5 py-2.5 rounded-xl border text-sm font-medium transition flex items-center gap-2.5 ${on ? "bg-rose-50 border-rose-300 text-rose-800" : "bg-white border-gray-200 text-gray-600 hover:border-rose-200 hover:bg-rose-50/40"}`}>
-                              <span className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center flex-shrink-0 ${on ? "bg-rose-600 border-rose-600" : "border-gray-300"}`} style={{ width: 18, height: 18 }}>{on && <Check size={12} className="text-white" />}</span>
+                            <button key={it.key} onClick={() => toggleCatalogService(it)} className={`text-left px-3.5 py-2.5 rounded-xl border text-sm font-medium transition flex items-center gap-2.5 ${on ? "bg-blue-50 border-blue-300 text-blue-800" : "bg-white border-gray-200 text-gray-600 hover:border-blue-200 hover:bg-blue-50/40"}`}>
+                              <span className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center flex-shrink-0 ${on ? "bg-blue-600 border-blue-600" : "border-gray-300"}`} style={{ width: 18, height: 18 }}>{on && <Check size={12} className="text-white" />}</span>
                               <span className="min-w-0 truncate">{it[lang] || it.tr}</span>
                             </button>
                           );
@@ -4947,7 +4947,7 @@ export function AppShell() {
             })()}
             <div className="px-5 md:px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
               <span className="text-xs text-gray-400">{t("serviceCatalogSelectedCount", { n: String((myProfile?.services || []).filter(s => s.key).length) })}</span>
-              <button onClick={() => setServicePickerOpen(false)} className="bg-rose-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("serviceCatalogDoneBtn")}</button>
+              <button onClick={() => setServicePickerOpen(false)} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("serviceCatalogDoneBtn")}</button>
             </div>
           </div>
         </div>
@@ -4980,7 +4980,7 @@ export function AppShell() {
             </div>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setShowNewTicketForm(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
-              <button onClick={submitSupportTicket} className="flex-1 bg-rose-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-rose-700 transition">{t("sendReviewBtn")}</button>
+              <button onClick={submitSupportTicket} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("sendReviewBtn")}</button>
             </div>
           </div>
         </div>

@@ -25,8 +25,8 @@ export function BrandMark({ size = "md", className = "" }: { size?: "sm" | "md";
       aria-label={t("backToHomeBtn")}
       className={`flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition ${className}`}
     >
-      <div className={`${box} bg-rose-600 rounded-lg flex items-center justify-center`}><Wrench size={icon} className="text-white" /></div>
-      <span className={`${text} font-extrabold tracking-tight text-gray-900`}>Fix<span className="text-rose-600">perto</span></span>
+      <div className={`${box} bg-blue-600 rounded-lg flex items-center justify-center`}><Wrench size={icon} className="text-white" /></div>
+      <span className={`${text} font-extrabold tracking-tight text-gray-900`}>Fix<span className="text-blue-600">perto</span></span>
     </button>
   );
 }

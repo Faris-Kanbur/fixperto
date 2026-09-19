@@ -29,13 +29,13 @@ import { LangSwitch } from "./LangSwitch";
  */
 const Col = ({ title, icon: Icon, children }) => (
   <div>
-    <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><Icon size={15} className="text-rose-500" /> {title}</h3>
+    <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><Icon size={15} className="text-blue-500" /> {title}</h3>
     <ul className="space-y-2">{children}</ul>
   </div>
 );
 
 const Item = ({ onClick, children }) => (
-  <li><button onClick={onClick} className="text-sm text-gray-500 hover:text-rose-600 transition text-left">{children}</button></li>
+  <li><button onClick={onClick} className="text-sm text-gray-500 hover:text-blue-600 transition text-left">{children}</button></li>
 );
 
 export function SiteFooter() {
@@ -67,8 +67,8 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mb-10">
           <div className="col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div>
-              <span className="text-lg font-extrabold tracking-tight text-gray-900">Fix<span className="text-rose-600">perto</span></span>
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div>
+              <span className="text-lg font-extrabold tracking-tight text-gray-900">Fix<span className="text-blue-600">perto</span></span>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed max-w-xs">{t("footerTagline")}</p>
           </div>
@@ -113,7 +113,7 @@ export function SiteFooter() {
             <h4 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">{t("footerPopularCities")}</h4>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               {cities.map((c) => (
-                <button key={c} onClick={() => searchCity(c)} className="text-sm text-gray-500 hover:text-rose-600 transition">
+                <button key={c} onClick={() => searchCity(c)} className="text-sm text-gray-500 hover:text-blue-600 transition">
                   {t("footerCityMechanics", { city: cityLabel(c) })}
                 </button>
               ))}
@@ -123,7 +123,7 @@ export function SiteFooter() {
             <h4 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">{t("footerPopularServices")}</h4>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               {services.map((s) => (
-                <button key={s.key} onClick={() => searchService(s)} className="text-sm text-gray-500 hover:text-rose-600 transition">
+                <button key={s.key} onClick={() => searchService(s)} className="text-sm text-gray-500 hover:text-blue-600 transition">
                   {s[lang] || s.tr}
                 </button>
               ))}
@@ -139,7 +139,7 @@ export function SiteFooter() {
             © {new Date().getFullYear()} <span className="font-semibold text-gray-500">Fixperto</span> · {t("allRightsReserved")}
           </p>
           <div className="flex items-center gap-4">
-            <a href="mailto:destek@fixperto.com" className="text-xs text-gray-400 hover:text-rose-600 transition flex items-center gap-1.5"><Mail size={13} /> destek@fixperto.com</a>
+            <a href="mailto:destek@fixperto.com" className="text-xs text-gray-400 hover:text-blue-600 transition flex items-center gap-1.5"><Mail size={13} /> destek@fixperto.com</a>
             <LangSwitch />
           </div>
         </div>

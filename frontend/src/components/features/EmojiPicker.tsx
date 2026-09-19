@@ -77,7 +77,7 @@ export function EmojiPicker({ onPick, ariaLabel = undefined }: { onPick: (emoji:
         aria-label={ariaLabel || t("emojiPickerAria")}
         aria-expanded={open}
         title={ariaLabel || t("emojiPickerAria")}
-        className={`w-10 h-10 flex items-center justify-center rounded-full transition flex-shrink-0 ${open ? "bg-rose-100 text-rose-600" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+        className={`w-10 h-10 flex items-center justify-center rounded-full transition flex-shrink-0 ${open ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
       >
         <Smile size={18} />
       </button>

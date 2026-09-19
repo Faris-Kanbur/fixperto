@@ -26,7 +26,7 @@ import {
  * kurmaya yol açıyor (kaydırma konumu, odak ve alt bileşen durumu kayboluyor).
  */
 const SectionLabel = ({ icon: Icon, children }) => (
-  <p className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide uppercase text-rose-600 bg-rose-50 px-3 py-1.5 rounded-full mb-3"><Icon size={12} /> {children}</p>
+  <p className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide uppercase text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full mb-3"><Icon size={12} /> {children}</p>
 );
 
 export function LandingHome() {
@@ -83,8 +83,8 @@ export function LandingHome() {
           {/* Zaten ana sayfadayız — logo başka bir sayfaya değil, sayfanın en üstüne götürüyor
               (web'de logonun beklenen davranışı: "beni başa döndür"). */}
           <button onClick={scrollToTop} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition">
-            <div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div>
-            <span className="text-lg font-extrabold tracking-tight text-gray-900">Fix<span className="text-rose-600">perto</span></span>
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div>
+            <span className="text-lg font-extrabold tracking-tight text-gray-900">Fix<span className="text-blue-600">perto</span></span>
           </button>
           <nav className="hidden md:flex items-center gap-6">
             <button onClick={() => goToBrowse("mechanics")} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition">{t("findMechanic")}</button>
@@ -92,7 +92,7 @@ export function LandingHome() {
             <button onClick={() => goToBrowse("jobs")} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition">{t("jobListingsNavLabel")}</button>
             {/* Çoklu fiyat teklifi, diğer ana gezinme bağlantılarıyla AYNI seviyede duruyor
                 (kullanıcı isteği) — vurgulu görünsün diye hafif arka planlı bir hap biçiminde. */}
-            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="text-sm font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 whitespace-nowrap"><Users size={14} /> {t("landingQuoteCta")}</button>
+            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="text-sm font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 whitespace-nowrap"><Users size={14} /> {t("landingQuoteCta")}</button>
           </nav>
           {/* NOT: Buradaki TR/EN/DE seçicisi KALDIRILDI — dil artık kullanıcının bulunduğu ülkeye
               göre otomatik seçiliyor (bkz. helpers.ts initialSiteLang). Yine de kimse yanlış dilde
@@ -105,7 +105,7 @@ export function LandingHome() {
                  sayfadaki arama kutusunun üstünde duran birine "Ara" demek hiçbir şey kazandırmıyor.
                  Yerine kullanıcının gerçekten ihtiyaç duyduğu iki yol kondu: kendi paneli ve ayarlar. */
               <>
-                <button onClick={goToMyPanel} className="text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-full transition whitespace-nowrap flex items-center gap-1.5">
+                <button onClick={goToMyPanel} className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full transition whitespace-nowrap flex items-center gap-1.5">
                   <LayoutGrid size={14} /> {t("backToPanelBtn")}
                 </button>
                 <button onClick={goToMySettings} title={t("settingsLabel")} aria-label={t("settingsLabel")} className="w-9 h-9 rounded-full border border-gray-200 text-gray-500 hover:text-gray-800 hover:bg-gray-50 flex items-center justify-center transition flex-shrink-0">
@@ -115,7 +115,7 @@ export function LandingHome() {
             ) : (
               <>
                 <button onClick={() => openAuthGate("", "login")} className="text-sm font-semibold text-gray-700 hover:text-gray-900 px-3 py-2 rounded-full hover:bg-gray-100 transition whitespace-nowrap">{t("authGateLoginTab")}</button>
-                <button onClick={() => openAuthGate("", "signup")} className="text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-full transition whitespace-nowrap">{t("authGateSignupTab")}</button>
+                <button onClick={() => openAuthGate("", "signup")} className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full transition whitespace-nowrap">{t("authGateSignupTab")}</button>
               </>
             )}
           </div>
@@ -123,37 +123,37 @@ export function LandingHome() {
       </header>
 
       {/* ---- Hero + arama kartı ---- */}
-      <section className="bg-gradient-to-b from-rose-50 via-rose-50/40 to-white">
+      <section className="bg-gradient-to-b from-blue-50 via-blue-50/40 to-white">
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 pt-10 pb-12 md:pt-16 md:pb-16">
           <div className="max-w-3xl">
-            <p className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-rose-700 bg-white border border-rose-100 px-3 py-1.5 rounded-full mb-4 shadow-sm"><BadgeCheck size={13} /> {t("landingHeroBadge")}</p>
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-[1.1] mb-4">{t("landingHeroTitle")}</h1>
+            <p className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-blue-700 bg-white border border-blue-100 px-3 py-1.5 rounded-full mb-4 shadow-sm"><BadgeCheck size={13} /> {t("landingHeroBadge")}</p>
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-[1.1] mb-4 text-balance">{t("landingHeroTitle")}</h1>
             <p className="text-gray-500 text-base md:text-lg leading-relaxed mb-7 max-w-2xl">{t("landingHeroSubtitle")}</p>
           </div>
           {/* Arama kartı — gerçek arama state'ini besler */}
           <div className="bg-white rounded-3xl border border-gray-200 shadow-xl p-3 md:p-4 max-w-4xl">
             <div className="flex flex-col md:flex-row md:items-stretch gap-2 md:gap-0 md:divide-x md:divide-gray-100">
-              <div className="flex-1 px-3 py-2">
-                <label className="block text-[11px] font-bold text-gray-900 mb-0.5">{t("serviceFieldLabel")}</label>
-                <input value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchServicePlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" />
+              <div className="flex-1 px-3 py-2 rounded-2xl focus-within:ring-2 focus-within:ring-blue-200">
+                <label htmlFor="landing-service-search" className="block text-[11px] font-bold text-gray-900 mb-0.5">{t("serviceFieldLabel")}</label>
+                <input id="landing-service-search" name="service" autoComplete="off" value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchServicePlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" />
               </div>
-              <div className="flex-1 px-3 py-2">
-                <label className="block text-[11px] font-bold text-gray-900 mb-0.5">{t("brandFieldLabel")}</label>
-                <input value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" />
+              <div className="flex-1 px-3 py-2 rounded-2xl focus-within:ring-2 focus-within:ring-blue-200">
+                <label htmlFor="landing-brand-search" className="block text-[11px] font-bold text-gray-900 mb-0.5">{t("brandFieldLabel")}</label>
+                <input id="landing-brand-search" name="brand" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" />
               </div>
-              <div className="flex-1 px-3 py-2">
-                <label className="block text-[11px] font-bold text-gray-900 mb-0.5">{t("cityLabelShort")}</label>
-                <input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchCityPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" />
+              <div className="flex-1 px-3 py-2 rounded-2xl focus-within:ring-2 focus-within:ring-blue-200">
+                <label htmlFor="landing-city-search" className="block text-[11px] font-bold text-gray-900 mb-0.5">{t("cityLabelShort")}</label>
+                <input id="landing-city-search" name="city" autoComplete="address-level2" value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchCityPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" />
               </div>
               {/* Filtrele, arama alanlarıyla AYNI seviyede — kullanıcı arama yapmadan önce de tüm
                   filtreleri açıp öyle aratabiliyor (sonuç ekranındaki arama çubuğuyla aynı desen). */}
               <button onClick={() => setShowFilterModal(true)} className="flex items-center justify-center md:justify-start gap-2 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-2xl md:rounded-none transition whitespace-nowrap">
                 <SlidersHorizontal size={15} className="text-gray-500" />
                 {t("landingFilterBtn")}
-                {activeFilterCount > 0 && <span className="w-5 h-5 bg-rose-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
+                {activeFilterCount > 0 && <span className="w-5 h-5 bg-blue-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
               </button>
               <div className="flex items-center px-1">
-                <button onClick={runSearch} className="w-full md:w-auto bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold px-6 py-3 rounded-2xl transition flex items-center justify-center gap-2 whitespace-nowrap"><Search size={16} /> {t("landingSearchCta")}</button>
+                <button onClick={runSearch} className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-6 py-3 rounded-2xl transition flex items-center justify-center gap-2 whitespace-nowrap"><Search size={16} /> {t("landingSearchCta")}</button>
               </div>
             </div>
           </div>
@@ -161,10 +161,10 @@ export function LandingHome() {
             {/* "Yakınımda Ara": tarayıcının konum iznini ISTER (navigator.geolocation), izin gelince
                 sonuçlar mesafeye göre sıralanır. İzin reddedilirse requestLocation kullanıcıyı
                 bilgilendirip tahmini mesafelerle devam eder. */}
-            <button onClick={() => { requestLocation(); setSortBy("distance"); setSortDir("asc"); goToBrowse("mechanics"); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 px-3.5 py-2 rounded-full hover:border-gray-900 transition"><Navigation size={13} className="text-rose-600" /> {t("landingNearMe")}</button>
+            <button onClick={() => { requestLocation(); setSortBy("distance"); setSortDir("asc"); goToBrowse("mechanics"); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-200 px-3.5 py-2 rounded-full hover:border-gray-900 transition"><Navigation size={13} className="text-blue-600" /> {t("landingNearMe")}</button>
             {/* Çoklu fiyat teklifi masaüstünde üst gezinme çubuğunda (diğer bağlantılarla aynı
                 seviyede) duruyor; üst çubuk mobilde gizlendiği için burada SADECE mobilde gösteriliyor. */}
-            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="md:hidden inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-100 px-3.5 py-2 rounded-full hover:bg-rose-100 transition"><Users size={13} /> {t("landingQuoteCta")}</button>
+            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="md:hidden inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-3.5 py-2 rounded-full hover:bg-blue-100 transition"><Users size={13} /> {t("landingQuoteCta")}</button>
             <span className="text-xs text-gray-400 ml-1">{t("landingPopularPrefix")}</span>
             {popularServices.slice(0, 4).map(s => (
               <button key={s.name} onClick={() => searchService(s.name)} className="text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-100 px-3 py-1.5 rounded-full transition">{s.name}</button>
@@ -179,7 +179,7 @@ export function LandingHome() {
                 ))}
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5"><BadgeCheck size={14} className="text-rose-600" /> {t("landingVerifiedStripTitle")}</p>
+                <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5"><BadgeCheck size={14} className="text-blue-600" /> {t("landingVerifiedStripTitle")}</p>
                 <p className="text-xs text-gray-500">{t("landingVerifiedStripNote")}</p>
               </div>
             </div>
@@ -202,8 +202,8 @@ export function LandingHome() {
           <div className="flex flex-wrap gap-2">
             {cityCounts.map(([city, count]: any) => (
               <button key={city} onClick={() => searchCity(city)} className="group bg-white border border-gray-200 hover:border-gray-900 rounded-2xl px-4 py-3 text-left transition shadow-sm hover:shadow-md">
-                <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5"><MapPin size={13} className="text-rose-600" /> {city}</p>
-                <p className="text-[11px] text-gray-400 font-medium">{t("landingCityCount", { n: String(count) })}</p>
+                <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5"><MapPin size={13} className="text-blue-600" /> {city}</p>
+                <p className="text-[11px] text-gray-400 font-medium">{t(count === 1 ? "landingCityCountOne" : "landingCityCount", { n: String(count) })}</p>
               </button>
             ))}
           </div>
@@ -219,7 +219,7 @@ export function LandingHome() {
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 mb-2">{t("landingTopMechanicsTitle")}</h2>
               <p className="text-gray-500 text-sm max-w-2xl">{t("landingTopMechanicsSubtitle")}</p>
             </div>
-            <button onClick={() => goToBrowse("mechanics")} className="text-sm font-bold text-rose-600 hover:underline flex items-center gap-1 whitespace-nowrap">{t("landingSeeAllMechanics")} <ChevronRight size={15} /></button>
+            <button onClick={() => goToBrowse("mechanics")} className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1 whitespace-nowrap">{t("landingSeeAllMechanics")} <ChevronRight size={15} /></button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {/* onHover harita eşleştirmesi için — karşılama sayfasında harita yok, boş geçiliyor. */}
@@ -236,7 +236,7 @@ export function LandingHome() {
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 mb-2">{t("landingServicesTitle")}</h2>
             <p className="text-gray-500 text-sm max-w-2xl">{t("landingServicesSubtitle")}</p>
           </div>
-          <button onClick={() => goToBrowse("mechanics")} className="text-sm font-bold text-rose-600 hover:underline flex items-center gap-1 whitespace-nowrap">{t("landingSeeAllServices")} <ChevronRight size={15} /></button>
+          <button onClick={() => goToBrowse("mechanics")} className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1 whitespace-nowrap">{t("landingSeeAllServices")} <ChevronRight size={15} /></button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {popularServices.map((s, i) => (
@@ -259,7 +259,7 @@ export function LandingHome() {
                 <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 mb-2">{t("landingMarketTitle")}</h2>
                 <p className="text-gray-500 text-sm max-w-2xl">{t("landingMarketSubtitle")}</p>
               </div>
-              <button onClick={() => goToBrowse("cars")} className="text-sm font-bold text-rose-600 hover:underline flex items-center gap-1 whitespace-nowrap">{t("landingSeeAllListings")} <ChevronRight size={15} /></button>
+              <button onClick={() => goToBrowse("cars")} className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1 whitespace-nowrap">{t("landingSeeAllListings")} <ChevronRight size={15} /></button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {featuredListings.map(l => (<ListingCard key={l.id} l={l} />))}
@@ -278,8 +278,8 @@ export function LandingHome() {
             { n: 3, icon: Calendar, title: t("landingHowStep3Title"), desc: t("landingHowStep3Desc") },
           ].map(s => (
             <div key={s.n} className="text-center px-4">
-              <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-3"><s.icon size={24} className="text-rose-600" /></div>
-              <p className="text-[11px] font-extrabold text-rose-600 mb-1">{String(s.n).padStart(2, "0")}</p>
+              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3"><s.icon size={24} className="text-blue-600" /></div>
+              <p className="text-[11px] font-extrabold text-blue-600 mb-1">{String(s.n).padStart(2, "0")}</p>
               <h3 className="text-base font-bold text-gray-900 mb-1.5">{s.title}</h3>
               <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
             </div>
@@ -302,7 +302,7 @@ export function LandingHome() {
               { icon: LifeBuoy, title: t("landingWhy6Title"), desc: t("landingWhy6Desc") },
             ].map(f => (
               <div key={f.title} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-                <div className="w-11 h-11 bg-rose-50 rounded-xl flex items-center justify-center mb-3"><f.icon size={20} className="text-rose-600" /></div>
+                <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center mb-3"><f.icon size={20} className="text-blue-600" /></div>
                 <h3 className="text-base font-bold text-gray-900 mb-1.5">{f.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
               </div>

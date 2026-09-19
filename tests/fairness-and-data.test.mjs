@@ -136,7 +136,10 @@ const darkBlock = shell.slice(shell.indexOf(".dark-scope { color-scheme: dark; }
 for (const rule of ["bg-white\\/95", "bg-white\\/90", "bg-gray-50\\/70", "text-gray-200", "bg-emerald-50", "bg-blue-50"]) {
   ok(darkBlock.includes(rule), `karanlık mod kuralı var: ${rule}`);
 }
-ok(/from-rose-50/.test(darkBlock) && /background-image: none/.test(darkBlock), "açık degrade bantlar karanlıkta kapatılıyor");
+// NOT: bu kural eskiden "from-rose-50" arıyordu — marka rengi rose'dan blue'ya taşınınca
+// (bkz. AppShell.tsx üst bant sınıfları) test güncellenmeden kaldı ve gerçek bir regresyon
+// olmadan kırmızı yanıyordu. Aranan sınıf adı, mevcut bant rengiyle eşleşecek şekilde düzeltildi.
+ok(/from-blue-50/.test(darkBlock) && /background-image: none/.test(darkBlock), "açık degrade bantlar karanlıkta kapatılıyor");
 // Uygulamada kullanılan her yarı saydam beyaz zemin için bir kural olmalı.
 const alphaWhites = [...new Set([...shell.matchAll(/bg-white\/(\d+)/g)].map((m) => m[1]))];
 const uncovered = alphaWhites.filter((a) => Number(a) >= 80 && !darkBlock.includes(`bg-white\\/${a}`));

@@ -119,7 +119,7 @@ export function VinLookupPanel() {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5">
       <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2 mb-1">
-        <History size={15} className="text-rose-500" /> {t("vinLookupTitle")}
+        <History size={15} className="text-blue-500" /> {t("vinLookupTitle")}
         <InfoTip text={t("vinTip")} label={t("infoTipAria")} />
       </h3>
       <p className="text-[12px] text-gray-500 leading-relaxed mb-3">{t("vinLookupDesc")}</p>
@@ -130,7 +130,7 @@ export function VinLookupPanel() {
           onKeyDown={(e) => { if (e.key === "Enter") lookupVin(input); }}
           placeholder={t("vinPlaceholder")}
           aria-label={t("vinLabel")}
-          className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide focus:outline-none focus:ring-2 focus:ring-rose-200"
+          className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide focus:outline-none focus:ring-2 focus:ring-blue-200"
         />
         <button onClick={() => lookupVin(input)} disabled={vinLookup.loading}
           className="bg-gray-900 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-60 flex items-center gap-1.5">

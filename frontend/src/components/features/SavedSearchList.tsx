@@ -41,7 +41,7 @@ export function SavedSearchList({ showUpdate = false, compact = false }: { showU
       {savedSearches.map((s) => {
         const freq = savedSearchFrequency(s);
         return (
-          <div key={s.id} className={`rounded-2xl p-3 transition ${compact ? "border border-gray-100 hover:border-rose-200" : "bg-white border border-gray-100 shadow-sm"}`}>
+          <div key={s.id} className={`rounded-2xl p-3 transition ${compact ? "border border-gray-100 hover:border-blue-200" : "bg-white border border-gray-100 shadow-sm"}`}>
             <div className="flex items-center justify-between gap-2">
             <>
                 <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
@@ -55,7 +55,7 @@ export function SavedSearchList({ showUpdate = false, compact = false }: { showU
                 </button>
                 {showUpdate && (
                   <button onClick={() => updateSavedSearchToCurrent(s.id)} title={t("savedSearchUpdateCriteriaAria")} aria-label={t("savedSearchUpdateCriteriaAria")}
-                    className="text-gray-400 hover:text-rose-600 flex-shrink-0 p-2 -m-1"><RefreshCw size={14} /></button>
+                    className="text-gray-400 hover:text-blue-600 flex-shrink-0 p-2 -m-1"><RefreshCw size={14} /></button>
                 )}
                 <button onClick={() => openSavedSearchEditor(s.id)} title={t("savedSearchEditAria")} aria-label={t("savedSearchEditAria")}
                   className="text-gray-400 hover:text-gray-700 flex-shrink-0 p-2 -m-1"><Pencil size={14} /></button>

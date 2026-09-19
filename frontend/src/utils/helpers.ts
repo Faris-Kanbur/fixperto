@@ -498,7 +498,7 @@ export function mockTranslate(text, fromLang, toLang) {
 export function statusColor(status) {
   if (status === "Onay Bekliyor") return "bg-gray-100 text-gray-700";
   if (status === "Sırada") return "bg-gray-100 text-gray-700";
-  if (status === "Tamire Alındı") return "bg-rose-50 text-rose-600";
+  if (status === "Tamire Alındı") return "bg-blue-50 text-blue-600";
   if (status === "Reddedildi" || status === "İptal Edildi" || status === "Gelmedi") return "bg-red-50 text-red-500";
   return "bg-green-50 text-green-600";
 }

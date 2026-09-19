@@ -85,7 +85,7 @@ export function ComboBox({
         aria-expanded={open}
         aria-autocomplete="list"
         autoComplete="off"
-        className={`${box} focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300 disabled:bg-gray-50 disabled:text-gray-400`}
+        className={`${box} focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 disabled:bg-gray-50 disabled:text-gray-400`}
       />
       <button
         type="button"
@@ -113,10 +113,10 @@ export function ComboBox({
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => commit(o)}
                 className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-2 transition
-                  ${i === highlight ? "bg-rose-50 text-rose-700" : "text-gray-700 hover:bg-gray-50"}`}
+                  ${i === highlight ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"}`}
               >
                 <span className="truncate">{o}</span>
-                {selected && <Check size={14} className="text-rose-500 flex-shrink-0" />}
+                {selected && <Check size={14} className="text-blue-500 flex-shrink-0" />}
               </button>
             );
           })}

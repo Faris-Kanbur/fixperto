@@ -68,7 +68,7 @@ export function TestimonialCarousel({ items }) {
             key={`${r.mechanicName}-${r.id ?? i}`}
             className="snap-start flex-shrink-0 w-[85%] sm:w-[48%] lg:w-[31.5%] bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col"
           >
-            <Quote size={18} className="text-rose-200 mb-2" />
+            <Quote size={18} className="text-blue-200 mb-2" />
             <p className="text-sm text-gray-600 leading-relaxed flex-1">{r.comment}</p>
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
               <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-base flex-shrink-0">{r.avatar || "👤"}</div>
@@ -89,11 +89,11 @@ export function TestimonialCarousel({ items }) {
       {items.length > 1 && (
         <div className="flex items-center justify-center gap-2 mt-4">
           <button onClick={() => scrollByCard(-1)} aria-label={t("prevBtn")}
-            className="w-9 h-9 rounded-full border border-gray-200 bg-white text-gray-500 hover:text-rose-600 hover:border-rose-300 transition flex items-center justify-center">
+            className="w-9 h-9 rounded-full border border-gray-200 bg-white text-gray-500 hover:text-blue-600 hover:border-blue-300 transition flex items-center justify-center">
             <ChevronLeft size={16} />
           </button>
           <button onClick={() => scrollByCard(1)} aria-label={t("nextBtn")}
-            className="w-9 h-9 rounded-full border border-gray-200 bg-white text-gray-500 hover:text-rose-600 hover:border-rose-300 transition flex items-center justify-center">
+            className="w-9 h-9 rounded-full border border-gray-200 bg-white text-gray-500 hover:text-blue-600 hover:border-blue-300 transition flex items-center justify-center">
             <ChevronRight size={16} />
           </button>
         </div>

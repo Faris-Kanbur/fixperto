@@ -524,7 +524,7 @@ Tamircinin "önizleme" düğmesi kendi profilini ziyaretçi gözüyle açıyor. 
       {
         id: "dil",
         title: "8.1 Görsel dil",
-        body: `Ana renk rose-600. Vurgu ve seçili durumlar bu renkte; gri tonlar metin ve kenarlıklarda.
+        body: `Ana renk blue-600. Vurgu ve seçili durumlar bu renkte; gri tonlar metin ve kenarlıklarda.
 
 ## Biçim
 Kartlar rounded-3xl, düğmeler rounded-xl/2xl, küçük rozetler rounded-full. Gölge hafif (shadow-sm), yükselme hover'da.
@@ -542,7 +542,7 @@ Her liste için ikon + tek cümlelik açıklama. Boş ekran bırakılmaz.
 Blog kapak görsellerinin arkasında pembe bir degrade vardı; görselin kapatmadığı her yerde (şeffaf PNG, farklı en-boy oranı, görsel yüklenemediğinde) kırmızımsı bir zemin görünüyor ve hiçbir fotoğrafla uyuşmuyordu. Kural: bir görselin ARKASINDA marka rengi olmaz — nötr gri kullanılır. Marka rengi, görselin kendisi olmayan yerlerde (rozetler, başlık bantları, düğmeler) kalır.
 
 ## Karanlık mod: yarı saydam zeminler de kapsanmalı
-Karanlık mod, açık renk Tailwind sınıflarını kapsam içinde ezen bir CSS katmanıyla çalışıyor. Kural ".bg-white" sınıfına bakıyordu; ama "bg-white/95" ve "bg-white/90" AYRI birer sınıftır ve hiç yakalanmıyordu. Sonuç: yapışkan üst çubuklar, ana sayfa başlığı ve modal başlıkları karanlık modda BEYAZ kalıyor, üzerlerindeki açık gri yazı okunmuyordu. Aynı sınıf hata degrade bantlarda (from-rose-50 …) ve yer tutucu ikonların açık grisinde vardı.
+Karanlık mod, açık renk Tailwind sınıflarını kapsam içinde ezen bir CSS katmanıyla çalışıyor. Kural ".bg-white" sınıfına bakıyordu; ama "bg-white/95" ve "bg-white/90" AYRI birer sınıftır ve hiç yakalanmıyordu. Sonuç: yapışkan üst çubuklar, ana sayfa başlığı ve modal başlıkları karanlık modda BEYAZ kalıyor, üzerlerindeki açık gri yazı okunmuyordu. Aynı sınıf hata degrade bantlarda (from-blue-50 …) ve yer tutucu ikonların açık grisinde vardı.
 
 KURAL: yarı saydam bir zemin sınıfı (bg-white/90 gibi) eklenirse karanlık karşılığı da eklenir. Test bunu denetliyor: opak sayılabilecek her "bg-white/NN" için bir karanlık kural aranıyor.`,
       },

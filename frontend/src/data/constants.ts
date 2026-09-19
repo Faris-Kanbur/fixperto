@@ -1,11 +1,11 @@
-export const BANNER_PRESETS = { blue: "from-gray-50 to-gray-100", orange: "from-rose-50 to-rose-100", green: "from-gray-100 to-gray-200" };
+export const BANNER_PRESETS = { blue: "from-gray-50 to-gray-100", orange: "from-blue-50 to-blue-100", green: "from-gray-100 to-gray-200" };
 // Karşılama turu adımları. Metinler artık BURADA DEĞİL i18n'de (titleKey/descKey): eskiden sabit
 // Türkçe yazılıydı, yani site İngilizce/Almanca'ya alınsa bile karşılama ekranı Türkçe kalıyordu —
 // üstelik kullanıcının gördüğü İLK ekran orasıydı.
 export const ONBOARDING_SLIDES = [
-  { icon: "🔧", grad: "from-gray-950 via-gray-900 to-rose-800", titleKey: "onboardWelcomeTitle", descKey: "onboardWelcomeDesc" },
-  { icon: "🚗", grad: "from-rose-600 to-rose-900", titleKey: "onboardOwnerTitle", descKey: "onboardOwnerDesc" },
-  { icon: "🛠️", grad: "from-rose-500 to-rose-700", titleKey: "onboardMechTitle", descKey: "onboardMechDesc" },
+  { icon: "🔧", grad: "from-gray-950 via-gray-900 to-blue-800", titleKey: "onboardWelcomeTitle", descKey: "onboardWelcomeDesc" },
+  { icon: "🚗", grad: "from-blue-600 to-blue-900", titleKey: "onboardOwnerTitle", descKey: "onboardOwnerDesc" },
+  { icon: "🛠️", grad: "from-blue-500 to-blue-700", titleKey: "onboardMechTitle", descKey: "onboardMechDesc" },
 ];
 export const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 export const DAY_LABELS = { mon: "Pzt", tue: "Sal", wed: "Çar", thu: "Per", fri: "Cum", sat: "Cmt", sun: "Paz" };

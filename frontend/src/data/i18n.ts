@@ -11,7 +11,7 @@ export const T = {
   logout: { tr: "Çıkış", en: "Log Out", de: "Abmelden" },
   searchHeroTitle: { tr: "Nereye tamir lazım? 🔧", en: "Where do you need repair? 🔧", de: "Wo brauchst du eine Reparatur? 🔧" },
   searchHeroSub: { tr: "Yakınındaki güvenilir tamircileri keşfet ve dakikalar içinde randevu al", en: "Discover trusted mechanics nearby and book in minutes", de: "Finde vertrauenswürdige Werkstätten in deiner Nähe und buche in Minuten" },
-  searchPlaceholder: { tr: "Marka ara... (örn: Volkswagen, BMW)", en: "Search by brand... (e.g. Volkswagen, BMW)", de: "Nach Marke suchen... (z. B. Volkswagen, BMW)" },
+  searchPlaceholder: { tr: "Marka ara… (örn: Volkswagen, BMW)", en: "Search by brand… (e.g. Volkswagen, BMW)", de: "Nach Marke suchen… (z. B. Volkswagen, BMW)" },
   navSearch: { tr: "Ara", en: "Search", de: "Suchen" },
   navMarket: { tr: "İlanlarım", en: "My Listings", de: "Meine Anzeigen" },
   navFavorites: { tr: "Favoriler", en: "Saved", de: "Favoriten" },
@@ -717,7 +717,7 @@ export const T = {
   // --- Owner nav/profil sayfası ---
   cityLabelShort: { tr: "Şehir", en: "City", de: "Stadt" },
   locationFieldLabel: { tr: "Konum", en: "Location", de: "Standort" },
-  searchCityPlaceholder: { tr: "Şehir ara... (örn: İstanbul)", en: "Search city... (e.g. Istanbul)", de: "Stadt suchen... (z. B. Istanbul)" },
+  searchCityPlaceholder: { tr: "Şehir ara… (örn: İstanbul)", en: "Search city… (e.g. Istanbul)", de: "Stadt suchen… (z. B. Istanbul)" },
   cityOrDistrictPlaceholder: { tr: "Şehir veya semt", en: "City or district", de: "Stadt oder Bezirk" },
   noMessagesInChatYet: { tr: "Henüz mesaj yok", en: "No messages yet", de: "Noch keine Nachrichten" },
   noConvosYetNote: { tr: "Henüz bir sohbetiniz yok.", en: "You don't have any conversations yet.", de: "Sie haben noch keine Unterhaltungen." },
@@ -901,7 +901,7 @@ export const T = {
   brandModelFieldLabel: { tr: "Marka / Model", en: "Brand / Model", de: "Marke / Modell" },
   positionFieldLabel: { tr: "Pozisyon", en: "Position", de: "Position" },
   serviceFieldLabel: { tr: "Hizmet / Servis", en: "Service", de: "Dienstleistung" },
-  searchServicePlaceholder: { tr: "Hizmet ara... (örn: Yağ Değişimi)", en: "Search service... (e.g. Oil Change)", de: "Dienstleistung suchen... (z. B. Ölwechsel)" },
+  searchServicePlaceholder: { tr: "Hizmet ara… (örn: Yağ Değişimi)", en: "Search service… (e.g. Oil Change)", de: "Dienstleistung suchen… (z. B. Ölwechsel)" },
   favoritesSubtitle: { tr: "Beğendiğiniz ilanları burada bulabilirsiniz", en: "You can find the listings you've liked here", de: "Hier finden Sie Ihre favorisierten Anzeigen" },
   noFavoritesOwnerNote: { tr: "Henüz favori eklemediniz.", en: "You haven't added any favorites yet.", de: "Sie haben noch keine Favoriten hinzugefügt." },
   favoritesHintNote: { tr: "İlan kartlarındaki kalp ikonuna dokunarak favorilere ekleyebilirsiniz.", en: "Tap the heart icon on listing cards to add them to favorites.", de: "Tippen Sie auf das Herzsymbol in den Anzeigenkarten, um sie zu Ihren Favoriten hinzuzufügen." },
@@ -1118,6 +1118,10 @@ export const T = {
   landingCityTitle: { tr: "Türkiye genelinde, sana yakın.", en: "Across Turkey, close to you.", de: "In der ganzen Türkei, in Ihrer Nähe." },
   landingCitySubtitle: { tr: "Şehrindeki tamircileri keşfet. Konum izni vermeden de şehir seçerek arama yapabilirsin.", en: "Discover mechanics in your city. You can also search by picking a city without sharing your location.", de: "Entdecken Sie Werkstätten in Ihrer Stadt — auch ohne Standortfreigabe." },
   landingCityCount: { tr: "{n} tamirci", en: "{n} mechanics", de: "{n} Werkstätten" },
+  // Tekil sayı (n=1) için ayrı anahtar: Almanca/İngilizce'de çoğul ek sayıya göre değişiyor
+  // ("1 Werkstätten" yanlış, "1 Werkstatt" doğru) — Türkçe'de sayıdan sonra isim çoğullanmadığı
+  // için tr metni landingCityCount ile aynı kalabilir.
+  landingCityCountOne: { tr: "{n} tamirci", en: "{n} mechanic", de: "{n} Werkstatt" },
   landingTopMechanicsLabel: { tr: "Profilleri karşılaştır", en: "Compare profiles", de: "Profile vergleichen" },
   landingTopMechanicsTitle: { tr: "Öne çıkan tamirciler", en: "Featured mechanics", de: "Top-Werkstätten" },
   landingTopMechanicsSubtitle: { tr: "Puanı, yorum sayısı, hizmetleri ve konumuyla değerlendir; sana en uygun ustayı seç.", en: "Compare by rating, reviews, services and location, and pick the one that fits you best.", de: "Vergleichen Sie Bewertung, Rezensionen, Leistungen und Standort und wählen Sie die passende Werkstatt." },

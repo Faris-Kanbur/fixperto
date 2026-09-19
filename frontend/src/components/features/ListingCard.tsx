@@ -120,7 +120,7 @@ export function ListingCard({ l, onHover = undefined }) {
     const unseenOfferCount = isMine ? l.offers.filter(o => o.status === "pending" && !o.seen).length : 0;
     const questionCount = isMine ? l.messages.length : 0;
     return (
-      <div onMouseEnter={() => onHover && onHover(l.id)} onMouseLeave={() => onHover && onHover(null)} className={`group bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === l.id ? "ring-2 ring-rose-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
+      <div onMouseEnter={() => onHover && onHover(l.id)} onMouseLeave={() => onHover && onHover(null)} className={`group bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === l.id ? "ring-2 ring-blue-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
         <div className="relative m-2 mb-0 rounded-2xl overflow-hidden isolate transform-gpu">
           <div className="h-44 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
             <button onClick={() => openListingPage(l.id)} className="w-full h-full flex items-center justify-center text-6xl">
@@ -131,8 +131,8 @@ export function ListingCard({ l, onHover = undefined }) {
             <span className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${meta.color}`}>{meta.label}</span>
             {l.featured && <span className="text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-amber-300">{t("featuredBadge")}</span>}
           </div>
-          <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label={t("addToFavoritesAria")} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-rose-600 text-rose-600" : "text-gray-500"} /></button>
-          <button onClick={(e) => { e.stopPropagation(); toggleCompareListing(l.id); }} aria-label={t("compareToggleAria")} title={t("compareToggleAria")} className={`absolute top-3 right-14 z-10 w-8 h-8 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center ${inCompare ? "bg-rose-600" : "bg-white/95"}`}><Scale size={14} className={inCompare ? "text-white" : "text-gray-500"} /></button>
+          <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label={t("addToFavoritesAria")} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-blue-600 text-blue-600" : "text-gray-500"} /></button>
+          <button onClick={(e) => { e.stopPropagation(); toggleCompareListing(l.id); }} aria-label={t("compareToggleAria")} title={t("compareToggleAria")} className={`absolute top-3 right-14 z-10 w-8 h-8 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center ${inCompare ? "bg-blue-600" : "bg-white/95"}`}><Scale size={14} className={inCompare ? "text-white" : "text-gray-500"} /></button>
           {/* HIZLI GÖRÜNTÜLE: karta tıklamak artık tam sayfa ilana gidiyor; sayfadan ayrılmadan
               hızlıca bakmak isteyen kullanıcı için modal bu göz butonuyla açılıyor. */}
           <button onClick={(e) => { e.stopPropagation(); setSelectedListingId(l.id); }} aria-label={t("quickViewBtn")} title={t("quickViewBtn")} className="absolute top-3 right-[6.25rem] z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Eye size={14} className="text-gray-500" /></button>
@@ -140,7 +140,7 @@ export function ListingCard({ l, onHover = undefined }) {
         <button onClick={() => openListingPage(l.id)} className="w-full text-left p-4">
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">{l.brand} {l.model}</h3>
-            <span className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.sellerType === "mechanic" ? "bg-rose-50 text-rose-700" : "bg-gray-100 text-gray-600"}`}>{l.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span>
+            <span className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.sellerType === "mechanic" ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>{l.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span>
           </div>
           {l.city && <p className="text-gray-400 text-xs mt-0.5 flex items-center gap-1"><MapPin size={11} />{l.city}</p>}
           <p className="text-gray-400 text-xs mt-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
@@ -155,8 +155,8 @@ export function ListingCard({ l, onHover = undefined }) {
           </div>
           {isMine && (pendingOfferCount > 0 || questionCount > 0) && (
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-              {pendingOfferCount > 0 && <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${unseenOfferCount > 0 ? "bg-rose-200 text-rose-800" : "bg-gray-100 text-gray-500"}`}><Banknote size={10} /> {pendingOfferCount} teklif{unseenOfferCount > 0 ? " (yeni)" : ""}</span>}
-              {questionCount > 0 && <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600"><MessageCircle size={10} /> {questionCount} soru</span>}
+              {pendingOfferCount > 0 && <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${unseenOfferCount > 0 ? "bg-blue-200 text-blue-800" : "bg-gray-100 text-gray-500"}`}><Banknote size={10} /> {pendingOfferCount} teklif{unseenOfferCount > 0 ? " (yeni)" : ""}</span>}
+              {questionCount > 0 && <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600"><MessageCircle size={10} /> {questionCount} soru</span>}
             </div>
           )}
         </button>

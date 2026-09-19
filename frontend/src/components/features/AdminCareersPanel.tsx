@@ -73,7 +73,7 @@ export function AdminCareersPanel() {
       {/* ---- Liste ---- */}
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2"><Briefcase size={15} className="text-rose-500" /> Kariyer ilanları</h3>
+          <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2"><Briefcase size={15} className="text-blue-500" /> Kariyer ilanları</h3>
           <span className="text-xs text-gray-400">{rows.length}</span>
         </div>
         {rows.length === 0 ? (
@@ -92,7 +92,7 @@ export function AdminCareersPanel() {
                   <p className="text-[11px] text-gray-400 truncate">{[r.department, r.location].filter(Boolean).join(" · ") || "—"}</p>
                 </div>
                 <button onClick={() => togglePublish(r)} aria-label={r.status === "published" ? "Yayından kaldır" : "Yayına al"}
-                  className="text-gray-400 hover:text-rose-600 p-2 -m-1">{r.status === "published" ? <EyeOff size={15} /> : <Eye size={15} />}</button>
+                  className="text-gray-400 hover:text-blue-600 p-2 -m-1">{r.status === "published" ? <EyeOff size={15} /> : <Eye size={15} />}</button>
                 <button onClick={() => { setDraft({ ...EMPTY, ...r }); setEditingId(r.id); }} aria-label="Düzenle"
                   className="text-gray-400 hover:text-gray-700 p-2 -m-1"><Save size={15} /></button>
                 <button onClick={() => remove(r)} aria-label="Sil" className="text-red-400 hover:text-red-600 p-2 -m-1"><Trash2 size={15} /></button>
@@ -120,7 +120,7 @@ export function AdminCareersPanel() {
         <textarea value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="İlan metni" rows={6} className={`${field} resize-none`} />
         <input value={draft.applyEmail} onChange={(e) => setDraft({ ...draft, applyEmail: e.target.value })} placeholder="Başvuru e-postası" className={field} />
         <label className="flex items-center gap-2 text-xs text-gray-600">
-          <input type="checkbox" checked={draft.status === "published"} onChange={(e) => setDraft({ ...draft, status: e.target.checked ? "published" : "draft" })} className="w-4 h-4 accent-rose-600" />
+          <input type="checkbox" checked={draft.status === "published"} onChange={(e) => setDraft({ ...draft, status: e.target.checked ? "published" : "draft" })} className="w-4 h-4 accent-blue-600" />
           Yayında
         </label>
         <div className="flex gap-2 pt-1">

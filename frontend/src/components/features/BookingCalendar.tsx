@@ -112,7 +112,7 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
         <div className="relative" ref={monthRef}>
           <button onClick={() => setShowMonth((v) => !v)}
             aria-expanded={showMonth}
-            className={`flex items-center gap-1.5 px-3 h-8 rounded-lg border text-xs font-semibold transition ${showMonth ? "border-rose-300 text-rose-600 bg-rose-50" : "border-gray-200 text-gray-600 hover:border-rose-300 hover:text-rose-600"}`}>
+            className={`flex items-center gap-1.5 px-3 h-8 rounded-lg border text-xs font-semibold transition ${showMonth ? "border-blue-300 text-blue-600 bg-blue-50" : "border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600"}`}>
             <CalendarDays size={14} /> {t("bookingOpenMonth")}
           </button>
           {showMonth && (
@@ -143,16 +143,16 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
             <button key={i} disabled={disabled} onClick={() => pickDay(d)} aria-pressed={isSel}
               aria-label={d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
               className={`py-2 rounded-xl border text-center transition
-                ${isSel ? "bg-rose-600 border-rose-600 text-white shadow-sm"
+                ${isSel ? "bg-blue-600 border-blue-600 text-white shadow-sm"
                   : disabled ? "border-gray-100 text-gray-300 cursor-not-allowed"
-                  : "border-gray-200 text-gray-700 hover:border-rose-400 hover:bg-rose-50/50"}
-                ${isToday && !isSel && !disabled ? "ring-1 ring-inset ring-rose-200" : ""}`}>
-              <span className={`block text-[10px] font-semibold uppercase tracking-wide ${isSel ? "text-rose-100" : "text-gray-400"}`}>
+                  : "border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-blue-50/50"}
+                ${isToday && !isSel && !disabled ? "ring-1 ring-inset ring-blue-200" : ""}`}>
+              <span className={`block text-[10px] font-semibold uppercase tracking-wide ${isSel ? "text-blue-100" : "text-gray-400"}`}>
                 {dayLabels[dayKeys[i]]}
               </span>
               <span className="block text-base font-bold leading-tight tabular-nums">{d.getDate()}</span>
               {/* Boş saat sayısı: bu şeridin asıl faydası. Kapalı/geçmiş günde çizgi. */}
-              <span className={`block text-[10px] leading-tight ${isSel ? "text-rose-100" : free > 0 ? "text-emerald-600 font-semibold" : "text-gray-300"}`}>
+              <span className={`block text-[10px] leading-tight ${isSel ? "text-blue-100" : free > 0 ? "text-emerald-600 font-semibold" : "text-gray-300"}`}>
                 {disabled ? "—" : free > 0 ? free : t("bookingSlotTaken")}
               </span>
             </button>
@@ -188,9 +188,9 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
                 <button key={s.time} disabled={disabled} onClick={() => onSelectTime(s.time)}
                   title={s.taken ? t("bookingSlotTaken") : s.past ? t("bookingSlotPast") : undefined}
                   className={`h-9 rounded-lg border text-[13px] font-semibold tabular-nums transition
-                    ${isSel ? "bg-rose-600 border-rose-600 text-white shadow-sm"
+                    ${isSel ? "bg-blue-600 border-blue-600 text-white shadow-sm"
                       : disabled ? "border-gray-100 text-gray-300 line-through cursor-not-allowed"
-                      : "border-gray-200 text-gray-700 hover:border-rose-400 hover:text-rose-600"}`}>
+                      : "border-gray-200 text-gray-700 hover:border-blue-400 hover:text-blue-600"}`}>
                   {s.time}
                 </button>
               );
@@ -238,7 +238,7 @@ function MonthPopover({ anchorDate, today, lastBookable, locale, dayLabels, dayK
           return (
             <button key={i} disabled={disabled} onClick={() => onPick(d)}
               className={`h-8 rounded-lg text-xs font-semibold transition
-                ${isSel ? "bg-rose-600 text-white" : disabled ? "text-gray-200 cursor-not-allowed" : "text-gray-700 hover:bg-rose-50 hover:text-rose-600"}`}>
+                ${isSel ? "bg-blue-600 text-white" : disabled ? "text-gray-200 cursor-not-allowed" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`}>
               {d.getDate()}
             </button>
           );
@@ -246,7 +246,7 @@ function MonthPopover({ anchorDate, today, lastBookable, locale, dayLabels, dayK
       </div>
       {selectedDate && (
         <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
-          <Check size={10} className="text-rose-500" /> {selectedDate.toLocaleDateString(locale, { day: "numeric", month: "long" })}
+          <Check size={10} className="text-blue-500" /> {selectedDate.toLocaleDateString(locale, { day: "numeric", month: "long" })}
         </p>
       )}
     </div>

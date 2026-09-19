@@ -25,7 +25,7 @@ function renderBody(body: string) {
     const line = block.trim();
     if (line.startsWith("## ")) {
       return <h3 key={i} className="text-sm font-bold text-gray-900 mt-6 mb-2 flex items-center gap-2">
-        <span className="w-1 h-4 bg-rose-500 rounded-full flex-shrink-0" />{line.slice(3)}
+        <span className="w-1 h-4 bg-blue-500 rounded-full flex-shrink-0" />{line.slice(3)}
       </h3>;
     }
     return <p key={i} className="text-[13px] leading-relaxed text-gray-600 mb-3 whitespace-pre-line">{line}</p>;
@@ -62,7 +62,7 @@ export function HandbookPanel() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="El kitabında ara…"
               aria-label="El kitabında ara"
-              className="w-full pl-9 pr-8 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-rose-200"
+              className="w-full pl-9 pr-8 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-200"
             />
             {query && (
               <button onClick={() => setQuery("")} aria-label="Aramayı temizle"
@@ -103,7 +103,7 @@ export function HandbookPanel() {
                         const on = activeId === p.id;
                         return (
                           <button key={p.id} onClick={() => setActiveId(p.id)}
-                            className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 ${on ? "bg-rose-50 text-rose-700 font-semibold" : "text-gray-600 hover:bg-gray-50"}`}>
+                            className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 ${on ? "bg-blue-50 text-blue-700 font-semibold" : "text-gray-600 hover:bg-gray-50"}`}>
                             <FileText size={11} className="flex-shrink-0 opacity-60" />
                             <span className="min-w-0 truncate">{p.title}</span>
                           </button>
