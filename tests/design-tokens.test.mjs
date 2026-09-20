@@ -112,4 +112,11 @@ for (const key of PALETTE_KEYS) {
   }
 }
 
+// --- KONTRAST DÜZELTMESİ (nihai inceleme bulgusu, kullanıcı onaylı): minimal paletinin
+// karanlık secondary'si AppShell.tsx'teki .bg-gray-950/.bg-gray-900 kuralı üzerinden GERÇEKTEN
+// görünür bir yüzey — eski değer (63 63 70 / #3f3f46) o yüzeydeki soluk metni 2.21:1'e
+// düşürüyordu (WCAG başarısız). 24 24 27'ye (#18181b) koyulaştırıldı, ~11:1'e çıkıyor.
+const minimalDarkBlock = blockBody(tokens, '[data-palette="minimal"].dark-scope {');
+ok(minimalDarkBlock.includes("--color-secondary: 24 24 27;"), "minimal paletinin karanlık secondary'si kontrast-düzeltilmiş değerde (24 24 27)");
+
 report("design tokens");
