@@ -85,8 +85,17 @@ for (const [name, rgb] of Object.entries(GOLDEN_DARK)) {
 ok(indexCss.includes('@import "./styles/tokens.css";'), "index.css tokens.css'i import ediyor");
 
 const shellDarkBlock = shell.slice(shell.indexOf(".dark-scope { color-scheme: dark; }"), shell.indexOf("@keyframes micro-pop"));
+// GERÇEK REGRESYON BULUNDU (canlı tarayıcıda doğrulandı, Wave 2 nihai incelemesi sırasında):
+// tokens.css Wave 1 sertleştirme geçişinde hex'ten "R G B" üçlüsüne geçince, bu bloktaki 10
+// el yazması kural `color: var(--color-fg) !important;` gibi ÇIPLAK var() kullanmaya devam etti.
+// "24 24 27" gibi çıplak bir üçlü tek başına GEÇERSİZ bir CSS renk değeri — tarayıcı tüm
+// bildirimi at:yor ve `color`/`background-color` başlangıç değerine (siyah/şeffaf) düşüyor.
+// Sonuç: karanlık modda BÜTÜN başlıklar/gövde metni SİYAH render ediyordu — tamamen okunaksız.
+// Alt satırdaki eski kontrol yalnızca "var(--color-x)" alt dizesini arıyordu, bu yüzden hem
+// çıplak hem sarmalanmış hâli görmezden gelip YEŞİL kalıyordu. Şimdi tam sarmalanmış
+// "rgb(var(--color-x))" dizisini arıyor — regresyon geri gelirse bu test KIRMIZI olur.
 for (const name of ["surface", "background", "surface-elevated", "fg", "fg-secondary", "fg-muted", "border", "secondary"]) {
-  ok(shellDarkBlock.includes(`var(--color-${name})`), `AppShell.tsx karanlık mod bloğu var(--color-${name}) kullanıyor`);
+  ok(shellDarkBlock.includes(`rgb(var(--color-${name}))`), `AppShell.tsx karanlık mod bloğu rgb(var(--color-${name})) kullanıyor (çıplak var() DEĞİL — geçersiz CSS'e karşı korunuyor)`);
 }
 
 // --- A11Y DÜZELTMESİ KAPSANIYOR MU (nihai inceleme bulgusu): bu dalgadaki TEK
