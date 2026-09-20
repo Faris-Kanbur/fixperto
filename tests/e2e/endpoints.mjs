@@ -45,6 +45,8 @@ const ROUTER_FILE_BASE = {
   // Randevular: özel router CRUD'dan ÖNCE bağlı (alan + durum kontrolü). Jenerik CRUD aynı
   // tabanda GET/DELETE'i sürdürüyor, bu yüzden tekilleştirme zaten çakışmayı hallediyor.
   "appointments.js": "/api/appointments",
+  // Site-geneli aktif renk paleti (Wave 2). GET herkese açık, PATCH admin-gated (bkz. theme.js).
+  "theme.js": "/api/theme",
 };
 
 /** [{ method, path, source }] — metotlar BÜYÜK harf, yollar ":id" biçiminde parametreli. */

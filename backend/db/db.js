@@ -409,6 +409,15 @@ CREATE TABLE IF NOT EXISTS translation_cache (
   createdAt TEXT DEFAULT (datetime('now')),
   UNIQUE(fromLang, toLang, sourceText)
 );
+
+-- Genel amaçlı anahtar-değer ayarlar tablosu. İlk kullanımı: aktif renk paleti (Wave 2), ama
+-- gelecekte başka site-geneli ayarlar için de aynı tablo kullanılabilir — palet için özel bir
+-- tablo açmak yerine.
+CREATE TABLE IF NOT EXISTS site_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updatedAt TEXT DEFAULT (datetime('now'))
+);
 `);
 
 // ---------------------------------------------------------------------------
