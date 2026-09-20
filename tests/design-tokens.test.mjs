@@ -94,4 +94,22 @@ for (const name of ["surface", "background", "surface-elevated", "fg", "fg-secon
 // test edilmiyordu.
 ok(shell.includes('className="bg-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1 border-none outline-none focus:ring-2 focus:ring-focus"'), "sohbet dil seçicisinde focus:ring-focus var");
 
+// --- PALET BLOKLARI (Wave 2): her yeni paletin hem açık hem karanlık bileşik-seçici bloğu
+// var mı, ve 7 değişken token'ı tanımlıyor mu — bkz. docs/superpowers/plans/
+// 2026-09-20-palette-system-and-admin-picker.md'deki Palet Değer Tablosu.
+const PALETTE_KEYS = ["trust", "industrial", "performance", "european", "minimal"];
+const VARYING_TOKENS = ["primary", "primary-hover", "primary-active", "secondary", "accent", "cta", "focus"];
+for (const key of PALETTE_KEYS) {
+  const lightSelector = `[data-palette="${key}"] {`;
+  const darkSelector = `[data-palette="${key}"].dark-scope {`;
+  ok(tokens.includes(lightSelector), `tokens.css [data-palette="${key}"] (açık) bloğu var`);
+  ok(tokens.includes(darkSelector), `tokens.css [data-palette="${key}"].dark-scope (karanlık, bileşik seçici) bloğu var`);
+  const lightBlock = blockBody(tokens, lightSelector);
+  const darkBlock2 = blockBody(tokens, darkSelector);
+  for (const name of VARYING_TOKENS) {
+    ok(lightBlock.includes(`--color-${name}:`), `[data-palette="${key}"] --color-${name} tanımlı`);
+    ok(darkBlock2.includes(`--color-${name}:`), `[data-palette="${key}"].dark-scope --color-${name} tanımlı`);
+  }
+}
+
 report("design tokens");
