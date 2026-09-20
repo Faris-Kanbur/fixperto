@@ -1026,6 +1026,20 @@ Bir değişiklik geri alınabilir. Ancak aynı alan sonradan tekrar değiştiyse
 ## Neden kayıt tutuyoruz
 Panelde yapılan bir düzenleme kullanıcının verisini değiştiriyor. "Bunu kim, ne zaman değiştirdi" sorusunun cevabı olmadan bu yetki güvenli değil.`,
       },
+      {
+        id: "adminGorunum",
+        title: "14.7 Renk paletleri",
+        body: `Yönetici panelindeki "Renk Paletleri" sekmesinden 6 hazır renk paletinden biri seçilip "Kullan" ile aktif edilebilir: Fixperto Klasik (varsayılan mavi), Güven Yeşili, Endüstriyel Modern, Performans Karanlık, Avrupa Otomotiv, Minimal Premium.
+
+## Kendi tarayıcın değil, SİTE GENELİ
+Bir renk paleti "Kullan" ile aktif edildiğinde bu, admin'in kendi tarayıcısına değil sunucudaki site_settings tablosuna yazılır. Site'ye gelen HERKES (giriş yapmamış ziyaretçi dahil) o andan itibaren aktif paleti görür — sayfa yüklenirken /api/theme'den okunup HTML köküne data-palette olarak uygulanıyor.
+
+## Aktif kart yeşil, diğerleri "Kullan"
+Şu an aktif olan palet kartı yeşil "Aktif" rozetiyle işaretlenir ve tekrar tıklanamaz; diğerleri "Kullan" butonuyla değiştirilebilir kalır. Palet değiştirme anında bu ekranın kendisine de uygulanır (yönetici sonucu kendi ekranında hemen görür), aynı zamanda bir başarı bildirimi (toast) gösterilir.
+
+## Bilinen sınır: her yerde henüz görünmüyor
+Paletin CSS değişkenleri (--color-primary, --color-cta, vb.) doğru şekilde site geneline uygulanıyor ve sunucuda kalıcı, ama uygulamanın geri kalanındaki ~4.600 sabit renk sınıfı (ör. bg-blue-600) henüz bu değişkenleri KULLANMIYOR — bu bilinçli bir kapsam sınırı, sonraki bir aşamada ele alınacak. Bugün paleti değiştirmek odak halkası (focus ring) rengi gibi az sayıda yer dışında BÜYÜK ÖLÇÜDE görünür bir fark yaratmaz; mekanizma (kalıcılık, uygulama, panel) tamamdır ama görsel yaygınlık henüz eksiktir.`,
+      },
     ],
   },
 

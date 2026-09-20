@@ -56,6 +56,7 @@ const COVERAGE = {
   RecommendedListings: "öneri",
   SavedSearchEditModal: "kayıtlı arama",
   EmojiPicker: "emoji",
+  AdminAppearancePanel: "renk paleti",
 };
 const lc = (v) => String(v ?? "").toLocaleLowerCase("tr-TR");
 const bookLower = lc(handbookSrc);
@@ -148,7 +149,8 @@ eq(/dangerouslySetInnerHTML/.test(panel), false, "el kitabı içeriği HTML olar
 
 // Yönetici panelindeki her sekme el kitabında anılmalı.
 const tabTopics = { dashboard: "genel bakış", users: "kullanıcı", tickets: "destek talep",
-  analytics: "analitik", blog: "blog", history: "değişiklik geçmişi", handbook: "el kitabı", careers: "kariyer ilanları" };
+  analytics: "analitik", blog: "blog", history: "değişiklik geçmişi", handbook: "el kitabı", careers: "kariyer ilanları",
+  appearance: "renk paleti" };
 const navLine = shell.split("\n").find((l) => l.includes("const adminNavItems"));
 const tabKeys = [...(navLine || "").matchAll(/key: "(\w+)"/g)].map((m) => m[1]);
 ok(tabKeys.length >= 6, "yönetici sekmeleri okunabildi");

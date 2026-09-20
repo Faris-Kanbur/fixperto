@@ -72,6 +72,7 @@ import { SavedSearchEditModal } from "../components/features/SavedSearchEditModa
 import { EmojiPicker } from "../components/features/EmojiPicker";
 import { CareersPage } from "../components/features/CareersPage";
 import { AdminCareersPanel } from "../components/features/AdminCareersPanel";
+import { AdminAppearancePanel } from "../components/features/AdminAppearancePanel";
 import { BlogListPage, BlogPostPage, AboutPage } from "../components/features/BlogPages";
 import { OwnerBottomNav } from "../components/features/OwnerBottomNav";
 import { OwnerAppointmentsView } from "../components/features/OwnerAppointmentsView";
@@ -883,7 +884,7 @@ export function AppShell() {
           </div>
         )}
         {screen === "adminDashboard" && adminAuthed && (() => {
-          const adminNavItems = [{ key: "dashboard", label: "Genel Bakış", icon: LayoutDashboard }, { key: "users", label: "Kullanıcılar", icon: Users }, { key: "tickets", label: "Destek Talepleri", icon: LifeBuoy }, { key: "analytics", label: "Analitik", icon: TrendingUp }, { key: "blog", label: "Blog", icon: BookOpen }, { key: "history", label: "Geçmiş", icon: History }, { key: "careers", label: "Kariyer", icon: Briefcase }, { key: "handbook", label: "El Kitabı", icon: BookOpen }];
+          const adminNavItems = [{ key: "dashboard", label: "Genel Bakış", icon: LayoutDashboard }, { key: "users", label: "Kullanıcılar", icon: Users }, { key: "tickets", label: "Destek Talepleri", icon: LifeBuoy }, { key: "analytics", label: "Analitik", icon: TrendingUp }, { key: "blog", label: "Blog", icon: BookOpen }, { key: "history", label: "Geçmiş", icon: History }, { key: "careers", label: "Kariyer", icon: Briefcase }, { key: "handbook", label: "El Kitabı", icon: BookOpen }, { key: "appearance", label: t("adminAppearanceTabLabel"), icon: Palette }];
           return (
           <div className="flex-1 flex flex-col md:flex-row min-h-0">
             <div className="hidden md:flex md:w-60 md:flex-shrink-0 bg-gray-900 text-white flex-col p-4">
@@ -1528,6 +1529,7 @@ export function AppShell() {
                 {/* EL KİTABI: sitenin nasıl çalıştığı ve hangi standartlara göre tasarlandığı.
                     Bölüm → sayfa hiyerarşisi + arama. Bkz. data/handbook.ts ve HandbookPanel.tsx. */}
                 {adminTab === "careers" && <AdminCareersPanel />}
+                {adminTab === "appearance" && <AdminAppearancePanel />}
                 {adminTab === "handbook" && (
                   /**
                    * Suspense sınırı ZORUNLU: `lazy` bir bileşen sınır olmadan çalışma zamanında
