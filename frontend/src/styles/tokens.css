@@ -68,3 +68,110 @@
   --color-cta: 37 99 235;
   --color-focus: 59 130 246;
 }
+
+/* ===== PALET KONSEPTLERİ (Wave 2) =====
+ * Her palet ÇİFT blok olarak tanımlanır: [data-palette="x"] (açık) ve
+ * [data-palette="x"].dark-scope (karanlık, BİLEŞİK seçici). Bu bilinçli bir mimari karar
+ * (bkz. docs/superpowers/plans/2026-09-19-design-token-infrastructure.md'nin ertelediği
+ * özgüllük sorusu): [data-palette="x"] tek başına (0,1,0) özgüllüğünde, aynı elemente hem
+ * .dark-scope hem [data-palette="x"] eşleştiğinde (karanlık moddayken) SADECE bileşik hâli
+ * ([data-palette="x"].dark-scope, özgüllük 0,2,0) düz [data-palette="x"] kuralını KESİN olarak
+ * ezer — kaynak sırasına bağımlı değildir. Nötr ve success/warning/error/info token'ları
+ * BİLİNÇLİ olarak burada yeniden tanımlanmıyor: tüm paletlerde aynı kalıyorlar, :root/.dark-scope
+ * üzerinden miras kalıyorlar.
+ */
+
+[data-palette="trust"] {
+  --color-primary: 4 120 87;
+  --color-primary-hover: 6 95 70;
+  --color-primary-active: 6 78 59;
+  --color-secondary: 17 24 39;
+  --color-accent: 245 158 11;
+  --color-cta: 4 120 87;
+  --color-focus: 5 150 105;
+}
+[data-palette="trust"].dark-scope {
+  --color-primary: 4 120 87;
+  --color-primary-hover: 6 95 70;
+  --color-primary-active: 6 78 59;
+  --color-secondary: 17 24 39;
+  --color-accent: 245 158 11;
+  --color-cta: 4 120 87;
+  --color-focus: 5 150 105;
+}
+
+[data-palette="industrial"] {
+  --color-primary: 194 65 12;
+  --color-primary-hover: 154 52 18;
+  --color-primary-active: 124 45 18;
+  --color-secondary: 30 41 59;
+  --color-accent: 100 116 139;
+  --color-cta: 194 65 12;
+  --color-focus: 234 88 12;
+}
+[data-palette="industrial"].dark-scope {
+  --color-primary: 194 65 12;
+  --color-primary-hover: 154 52 18;
+  --color-primary-active: 124 45 18;
+  --color-secondary: 30 41 59;
+  --color-accent: 100 116 139;
+  --color-cta: 194 65 12;
+  --color-focus: 234 88 12;
+}
+
+[data-palette="performance"] {
+  --color-primary: 14 116 144;
+  --color-primary-hover: 21 94 117;
+  --color-primary-active: 22 78 99;
+  --color-secondary: 9 9 11;
+  --color-accent: 220 38 38;
+  --color-cta: 14 116 144;
+  --color-focus: 8 145 178;
+}
+[data-palette="performance"].dark-scope {
+  --color-primary: 14 116 144;
+  --color-primary-hover: 21 94 117;
+  --color-primary-active: 22 78 99;
+  --color-secondary: 9 9 11;
+  --color-accent: 220 38 38;
+  --color-cta: 14 116 144;
+  --color-focus: 8 145 178;
+}
+
+[data-palette="european"] {
+  --color-primary: 30 64 175;
+  --color-primary-hover: 30 58 138;
+  --color-primary-active: 23 37 84;
+  --color-secondary: 15 23 42;
+  --color-accent: 71 85 105;
+  --color-cta: 30 64 175;
+  --color-focus: 59 130 246;
+}
+[data-palette="european"].dark-scope {
+  --color-primary: 37 99 235;
+  --color-primary-hover: 29 78 216;
+  --color-primary-active: 30 64 175;
+  --color-secondary: 15 23 42;
+  --color-accent: 71 85 105;
+  --color-cta: 37 99 235;
+  --color-focus: 59 130 246;
+}
+
+[data-palette="minimal"] {
+  --color-primary: 24 24 27;
+  --color-primary-hover: 39 39 42;
+  --color-primary-active: 9 9 11;
+  --color-secondary: 63 63 70;
+  --color-accent: 161 98 7;
+  --color-cta: 24 24 27;
+  --color-focus: 161 98 7;
+}
+[data-palette="minimal"].dark-scope {
+  --color-primary: 161 98 7;
+  --color-primary-hover: 133 77 14;
+  --color-primary-active: 113 63 18;
+  --color-secondary: 63 63 70;
+  --color-accent: 161 98 7;
+  --color-cta: 161 98 7;
+  --color-focus: 161 98 7;
+}
