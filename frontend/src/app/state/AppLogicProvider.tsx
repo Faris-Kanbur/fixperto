@@ -162,6 +162,18 @@ function useAppLogic() {
   // Karanlık mod: cihaz/görünüm tercihi olarak ele alınıyor, hem araç sahibi hem tamirci ayarlarından
   // aynı paylaşılan state'e erişip açıp kapatabiliyor.
   const [darkMode, setDarkMode] = useState(false);
+  // Site-geneli aktif renk paleti (Wave 2). darkMode'un aksine bu KALICI ve HERKES İÇİN
+  // ortak — admin panelinden değiştirilince backend'e yazılıyor (site_settings tablosu) ve
+  // her ziyaretçinin tarayıcısı sayfa yüklenirken bunu okuyor. "default" ile başlıyoruz ki
+  // backend'e ulaşılamadığı an bile mevcut (Wave 1) görünüm bozulmadan kalsın.
+  const [activePalette, setActivePaletteState] = useState("default");
+  useEffect(() => {
+    api.theme.get().then(({ palette }) => setActivePaletteState(palette)).catch(() => { /* sessizce varsayılanda kal */ });
+  }, []);
+  const setActivePalette = async (palette: string) => {
+    await api.theme.set(palette);
+    setActivePaletteState(palette);
+  };
   const ownerPhotoRef = useRef(null);
   const [ownerProfileTab, setOwnerProfileTab] = useState(() => nav0("ownerProfileTab", "info"));
   // Ayarlar artık araç sahibinde de AYRI bir ekran (screen === "ownerSettings"), tıpkı tamirci
@@ -5956,7 +5968,7 @@ function useAppLogic() {
     setShowPass, forgotEmail, setForgotEmail, form, setForm, authError, setAuthError, ownerTab,
     setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, ownerSettings, setOwnerSettings, mechSettings,
     setMechSettings, notifLog, setNotifLog, ownerNotifSeenAt, setOwnerNotifSeenAt, mechNotifSeenAt, setMechNotifSeenAt, showNotifPanel,
-    setShowNotifPanel, darkMode, setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
+    setShowNotifPanel, darkMode, setDarkMode, activePalette, setActivePalette, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters,
     listingFilters, setListingFilters, listingSort, setListingSort, listingSortDir, setListingSortDir, handleListingSortClick, userLocation, setUserLocation, locationStatus, setLocationStatus,
     notifPermission, setNotifPermission, favoriteIds, setFavoriteIds, toggleFavorite, favoriteMechanicIds, setFavoriteMechanicIds, toggleFavoriteMechanic, likedReviewIds, setLikedReviewIds, toggleReviewHelpful, mechanicsList, setMechanicsList, mechanicHours,

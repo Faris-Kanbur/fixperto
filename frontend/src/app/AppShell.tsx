@@ -170,7 +170,7 @@ export function AppShell() {
     setShowPass, forgotEmail, setForgotEmail, form, setForm, authError, setAuthError, ownerTab,
     setOwnerTab, ownerMode, setOwnerMode, ownerLang, setOwnerLang, ownerSettings, setOwnerSettings, mechSettings,
     setMechSettings, notifLog, setNotifLog, ownerNotifSeenAt, setOwnerNotifSeenAt, mechNotifSeenAt, setMechNotifSeenAt, showNotifPanel,
-    setShowNotifPanel, darkMode, setDarkMode, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
+    setShowNotifPanel, darkMode, setDarkMode, activePalette, ownerPhotoRef, ownerProfileTab, setOwnerProfileTab, showMapMobile, setShowMapMobile,
     hoveredPinId, setHoveredPinId, mapPreviewItem, setMapPreviewItem, showFilterModal, setShowFilterModal, filters, setFilters, clearMechFilters, openListingPage,
     adminAnalyticsRange, setAdminAnalyticsRange, adminAnalyticsData, adminAnalyticsLoading, myMechanicAnalytics,
     listingFilters, setListingFilters, listingSort, setListingSort, userLocation, setUserLocation, locationStatus, setLocationStatus,
@@ -308,7 +308,7 @@ export function AppShell() {
   }, []);
 
   return (
-    <div className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-gray-50"}`}>
+    <div data-palette={activePalette} className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-gray-50"}`}>
       {darkMode && (<style>{`
         .dark-scope { color-scheme: dark; }
         .dark-scope .bg-white { background-color: var(--color-surface) !important; }
