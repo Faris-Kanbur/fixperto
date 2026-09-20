@@ -348,8 +348,8 @@ export function AppShell() {
            AYRI birer sınıf olduğu için hiç yakalanmıyordu. Sonuç: yapışkan üst çubuklar, ana sayfa
            başlığı ve modal başlıkları karanlık modda BEYAZ kalıyor, üzerlerindeki açık gri yazı
            okunmuyordu. En görünür kusur buydu. */
-        .dark-scope .bg-white\/95, .dark-scope .bg-white\/90 { background-color: rgba(23,23,31,0.95) !important; }
-        .dark-scope .bg-gray-50\/70, .dark-scope .bg-gray-50\/50 { background-color: rgba(18,18,24,0.7) !important; }
+        .dark-scope .bg-white\\/95, .dark-scope .bg-white\\/90 { background-color: rgba(23,23,31,0.95) !important; }
+        .dark-scope .bg-gray-50\\/70, .dark-scope .bg-gray-50\\/50 { background-color: rgba(18,18,24,0.7) !important; }
         /* Degrade bantlar: açık mavi/gri geçişler karanlıkta parlak bir şerit gibi duruyordu. */
         .dark-scope [class*="from-blue-50"], .dark-scope [class*="via-blue-50"],
         .dark-scope [class*="from-gray-100"][class*="to-blue-50"] {

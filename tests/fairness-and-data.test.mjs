@@ -133,7 +133,17 @@ ok(/scroll-mt-24/.test(shell), "yapışkan başlık kaydırma hedefini kapatmıy
 // Kural ".bg-white" sınıfına bakıyordu; bg-white/95 ve bg-white/90 AYRI sınıflar olduğu için
 // yapışkan üst çubuklar ve modal başlıkları karanlık modda BEYAZ kalıyordu.
 const darkBlock = shell.slice(shell.indexOf(".dark-scope { color-scheme: dark; }"), shell.indexOf("@keyframes micro-pop"));
-for (const rule of ["bg-white\\/95", "bg-white\\/90", "bg-gray-50\\/70", "text-gray-200", "bg-emerald-50", "bg-blue-50"]) {
+// GERÇEK HATA BULUNDU (canlı tarayıcıda doğrulandı): AppShell.tsx'teki bu CSS-in-JS şablon
+// dizesinde ".bg-white\/95" TEK ters eğik çizgiyle yazılmıştı. JavaScript şablon dizelerinde
+// "\/" geçerli bir kaçış dizisi DEĞİL — motor ters eğik çizgiyi sessizce yutup çalışma anında
+// düz "/" üretiyor. Sonuç: tarayıcıya ulaşan CSS ".dark-scope .bg-white/95 {...}" gibi GEÇERSİZ
+// bir seçici oluyordu ve kural hiç uygulanmıyordu — yapışkan üst çubuklar (PageTopBar) karanlık
+// modda BEYAZ kalıyordu. Kaynakta çift ters eğik çizgiye ("\\/") çevrilince JS motoru TEK bir
+// ters eğik çizgi üretiyor ve CSS geçerli hale geliyor (bkz. AppShell.tsx'teki asıl düzeltme).
+// Bu test eskiden HATALI (tek ters eğik çizgili) kaynak metnini arıyordu — yani bug'ı
+// doğruluyordu, gerçek davranışı değil. Şimdi DÜZELTİLMİŞ (çift ters eğik çizgili) kaynak
+// metnini arıyor.
+for (const rule of ["bg-white\\\\/95", "bg-white\\\\/90", "bg-gray-50\\\\/70", "text-gray-200", "bg-emerald-50", "bg-blue-50"]) {
   ok(darkBlock.includes(rule), `karanlık mod kuralı var: ${rule}`);
 }
 // NOT: bu kural eskiden "from-rose-50" arıyordu — marka rengi rose'dan blue'ya taşınınca
@@ -142,7 +152,7 @@ for (const rule of ["bg-white\\/95", "bg-white\\/90", "bg-gray-50\\/70", "text-g
 ok(/from-blue-50/.test(darkBlock) && /background-image: none/.test(darkBlock), "açık degrade bantlar karanlıkta kapatılıyor");
 // Uygulamada kullanılan her yarı saydam beyaz zemin için bir kural olmalı.
 const alphaWhites = [...new Set([...shell.matchAll(/bg-white\/(\d+)/g)].map((m) => m[1]))];
-const uncovered = alphaWhites.filter((a) => Number(a) >= 80 && !darkBlock.includes(`bg-white\\/${a}`));
+const uncovered = alphaWhites.filter((a) => Number(a) >= 80 && !darkBlock.includes(`bg-white\\\\/${a}`));
 eq(uncovered, [], "opak sayılabilecek tüm beyaz zeminlerin karanlık karşılığı var");
 
 // --- 7) Metinler üç dilde -----------------------------------------------------------------------
