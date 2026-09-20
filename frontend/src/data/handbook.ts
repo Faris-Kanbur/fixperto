@@ -1029,10 +1029,10 @@ Panelde yapılan bir düzenleme kullanıcının verisini değiştiriyor. "Bunu k
       {
         id: "adminGorunum",
         title: "14.7 Renk paletleri",
-        body: `Yönetici panelindeki "Renk Paletleri" sekmesinden 6 hazır renk paletinden biri seçilip "Kullan" ile aktif edilebilir: Fixperto Klasik (varsayılan mavi), Güven Yeşili, Endüstriyel Modern, Performans Karanlık, Avrupa Otomotiv, Minimal Premium.
+        body: `Yönetici panelindeki "Renk Paletleri" sekmesinden 6 hazır renk paletinden biri seçilip "Kullan" ile aktif edilebilir: Fixperto Klasik (varsayılan mavi), Güven Yeşili, Endüstriyel Modern, Gece Performansı, Avrupa Otomotiv, Minimal Prestij.
 
 ## Kendi tarayıcın değil, SİTE GENELİ
-Bir renk paleti "Kullan" ile aktif edildiğinde bu, admin'in kendi tarayıcısına değil sunucudaki site_settings tablosuna yazılır. Site'ye gelen HERKES (giriş yapmamış ziyaretçi dahil) o andan itibaren aktif paleti görür — sayfa yüklenirken /api/theme'den okunup HTML köküne data-palette olarak uygulanıyor.
+Bir renk paleti "Kullan" ile aktif edildiğinde bu, admin'in kendi tarayıcısına değil sunucudaki site_settings tablosuna yazılır. Site'ye gelen HERKES (giriş yapmamış ziyaretçi dahil) o andan itibaren aktif paleti görür — sayfa yüklenirken /api/theme'den okunup sayfanın ana sarmalayıcı <div>'ine data-palette olarak uygulanıyor.
 
 ## Aktif kart yeşil, diğerleri "Kullan"
 Şu an aktif olan palet kartı yeşil "Aktif" rozetiyle işaretlenir ve tekrar tıklanamaz; diğerleri "Kullan" butonuyla değiştirilebilir kalır. Palet değiştirme anında bu ekranın kendisine de uygulanır (yönetici sonucu kendi ekranında hemen görür), aynı zamanda bir başarı bildirimi (toast) gösterilir.
