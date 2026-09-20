@@ -1570,6 +1570,19 @@ export const T = {
   // Fiyat yoksa sessizce "—" göstermek yetmez: tamirci fiyat filtresinden ELENDİĞİNİ bilmeli.
   startingPriceEmptyWarn: { tr: "Henüz fiyatlı bir hizmetin yok. Fiyat filtresi kullanan müşteriler seni göremez.", en: "You have no priced service yet. Customers who use the price filter will not see you.", de: "Sie haben noch keine Leistung mit Preis. Kunden, die den Preisfilter nutzen, sehen Sie nicht." },
   favoriteMechanicsLabel: { tr: "Favori Tamirciler", en: "Favourite Mechanics", de: "Favorisierte Werkstätten" },
+  adminAppearanceTabLabel: { tr: "Renk Paletleri", en: "Color Palettes", de: "Farbpaletten" },
+  paletteDefaultName: { tr: "Fixperto Klasik", en: "Fixperto Classic", de: "Fixperto Klassisch" },
+  paletteDefaultDesc: { tr: "Mevcut varsayılan renk. Güvenilir, nötr, tanıdık mavi.", en: "The current default. Trustworthy, neutral, familiar blue.", de: "Der aktuelle Standard. Vertrauenswürdiges, neutrales, vertrautes Blau." },
+  paletteTrustName: { tr: "Güven Yeşili", en: "Trust Green", de: "Vertrauensgrün" },
+  paletteTrustDesc: { tr: "Avrupa araç muayene yeşilinin çağrışımı — \"kontrol edildi, güvenilir\" hissi.", en: "Evokes European vehicle-inspection green — a \"verified, reliable\" feel.", de: "Erinnert an europäisches TÜV-Grün — ein Gefühl von \"geprüft, zuverlässig\"." },
+  paletteIndustrialName: { tr: "Endüstriyel Modern", en: "Industrial Modern", de: "Industriell Modern" },
+  paletteIndustrialDesc: { tr: "Atölye/tamirhane estetiği: çelik gri zemin, turuncu vurgu.", en: "Workshop aesthetic: steel-gray base, orange accent.", de: "Werkstatt-Ästhetik: Stahlgrauer Grundton, orangefarbener Akzent." },
+  palettePerformanceName: { tr: "Gece Performansı", en: "Dark Performance", de: "Dunkle Leistung" },
+  palettePerformanceDesc: { tr: "Neredeyse siyah zemin, elektrik camgöbeği vurgu — performans/telemetri havası.", en: "Near-black base, electric cyan accent — a performance/telemetry feel.", de: "Fast schwarzer Grundton, elektrisches Cyan als Akzent — Performance-Gefühl." },
+  paletteEuropeanName: { tr: "Avrupa Otomotiv", en: "European Automotive", de: "Europäisches Automotive" },
+  paletteEuropeanDesc: { tr: "Koyu lacivert + gümüş — Alman premium otomotiv markalarının diline yakın.", en: "Deep navy + silver — close to the language of premium German automotive brands.", de: "Tiefes Marineblau + Silber — nah an der Sprache deutscher Premium-Automobilmarken." },
+  paletteMinimalName: { tr: "Minimal Prestij", en: "Minimal Premium", de: "Minimal Premium" },
+  paletteMinimalDesc: { tr: "Neredeyse tek renkli: siyah/beyaz + tek bir altın vurgu.", en: "Nearly monochrome: black/white plus a single gold accent.", de: "Fast einfarbig: Schwarz/Weiß plus ein einziger Goldakzent." },
 };
 
 export const MONTH_ABBR_BY_LANG = {

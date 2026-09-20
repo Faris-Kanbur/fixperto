@@ -538,6 +538,11 @@ export const api = {
     // açıkça geçmek — admin token'ı varsa Authorization header'ını doğru şekilde ekliyor.
     authOpts: adminAuthOpts,
   },
+  theme: {
+    get: (): Promise<{ palette: string }> => request("/api/theme"),
+    set: (palette: string): Promise<{ ok: true; palette: string }> =>
+      request("/api/theme", { method: "PATCH", body: jsonBody({ palette }), ...adminAuthOpts() }),
+  },
   // Paylaşım analitiği: her ShareButton eylemi ayrı bir refCode ile kaydedilir; linke tıklama ve
   // sonraki dönüşüm (sohbet/randevu/teklif/başvuru) aynı refCode üzerinden atfedilir.
   shareEvents: {
