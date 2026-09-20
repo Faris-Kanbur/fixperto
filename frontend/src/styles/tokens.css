@@ -2,50 +2,69 @@
  *
  * Semantic design tokens. Values here are the DEFAULT ("Mevcut Mavi") palette —
  * they intentionally equal the app's current hardcoded colors, light and dark,
- * so introducing this file changes zero pixels. See the token table in
+ * so introducing this file changes zero pixels (see the token table in
  * docs/superpowers/plans/2026-09-19-design-token-infrastructure.md for the
- * source of every value. Future palettes (Wave 2) will override these same
+ * source of every value). Future palettes (Wave 2) will override these same
  * variable names under a data-attribute or class selector — nothing that
  * consumes var(--color-*) needs to change when that lands.
+ *
+ * FORMAT: each value is an "R G B" triplet (space-separated, no rgb() wrapper)
+ * rather than a hex string. Tailwind's color config wraps these as
+ * `rgb(var(--color-x) / <alpha-value>)`, which is what makes opacity
+ * modifiers work (e.g. `bg-surface/95`). A plain hex var can't support that —
+ * this was flagged in the Wave 1 final review before anything consumed these
+ * names, so it costs nothing to fix now versus after component migration.
+ *
+ * NAMING: the text tokens use an "fg" (foreground) namespace — `fg`,
+ * `fg-secondary`, `fg-muted` — instead of `text-primary`/`text-secondary`/
+ * `text-muted`. The original names collided with `primary` (which already
+ * generates a `.text-primary` utility for the brand color): reaching for
+ * `text-primary` to color body text would silently get brand blue instead
+ * of heading gray. Renamed before anything consumed the old names.
  */
 :root {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-active: #1e40af;
-  --color-secondary: #111827;
-  --color-accent: #f59e0b;
-  --color-background: #f9fafb;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #f3f4f6;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-muted: #9ca3af;
-  --color-border: #e5e7eb;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-error: #dc2626;
-  --color-info: #3b82f6;
-  --color-cta: #2563eb;
-  --color-focus: #bfdbfe;
+  --color-primary: 37 99 235;
+  --color-primary-hover: 29 78 216;
+  --color-primary-active: 30 64 175;
+  --color-secondary: 17 24 39;
+  --color-accent: 245 158 11;
+  --color-background: 249 250 251;
+  --color-surface: 255 255 255;
+  --color-surface-elevated: 243 244 246;
+  --color-fg: 17 24 39;
+  --color-fg-secondary: 107 114 128;
+  --color-fg-muted: 156 163 175;
+  --color-border: 229 231 235;
+  --color-success: 22 163 74;
+  --color-warning: 217 119 6;
+  --color-error: 220 38 38;
+  --color-info: 59 130 246;
+  --color-cta: 37 99 235;
+  /* focus: değer bilinçli olarak blue-500'e yükseltildi (eskiden blue-200,
+     #bfdbfe — beyaz zemine karşı ~2.7:1 kontrast, WCAG 1.4.11'in metin-dışı
+     odak göstergesi için istediği 3:1 eşiğinin altında). Merkezi token
+     olduğu için bu tek satırlık değişiklik siteneki HER focus ring'i
+     düzeltiyor. */
+  --color-focus: 59 130 246;
 }
 
 .dark-scope {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-active: #1e40af;
-  --color-secondary: #0d0d13;
-  --color-accent: #f59e0b;
-  --color-background: #121218;
-  --color-surface: #17171f;
-  --color-surface-elevated: #20202b;
-  --color-text-primary: #e9e9f0;
-  --color-text-secondary: #a3a3b8;
-  --color-text-muted: #71718c;
-  --color-border: #2c2c3a;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
-  --color-error: #dc2626;
-  --color-info: #3b82f6;
-  --color-cta: #2563eb;
-  --color-focus: #bfdbfe;
+  --color-primary: 37 99 235;
+  --color-primary-hover: 29 78 216;
+  --color-primary-active: 30 64 175;
+  --color-secondary: 13 13 19;
+  --color-accent: 245 158 11;
+  --color-background: 18 18 24;
+  --color-surface: 23 23 31;
+  --color-surface-elevated: 32 32 43;
+  --color-fg: 233 233 240;
+  --color-fg-secondary: 163 163 184;
+  --color-fg-muted: 113 113 140;
+  --color-border: 44 44 58;
+  --color-success: 22 163 74;
+  --color-warning: 217 119 6;
+  --color-error: 220 38 38;
+  --color-info: 59 130 246;
+  --color-cta: 37 99 235;
+  --color-focus: 59 130 246;
 }
