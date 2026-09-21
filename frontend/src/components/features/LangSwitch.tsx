@@ -107,5 +107,5 @@ export function LangSwitch({ dark = false }) {
     jobApplyPhoneCheck, jobApplyEmailValid, jobApplyInfoValid, jobApplyReady, submitJobApplication, 
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
-  return (<div className={`flex rounded-full p-0.5 gap-0.5 ${dark ? "bg-white/15" : "bg-gray-100"}`}>{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setLang(l)} className={`px-2 py-1 rounded-full text-[10px] font-bold transition ${lang === l ? (dark ? "bg-white text-blue-600" : "bg-white text-gray-800 shadow-sm") : (dark ? "text-white/70" : "text-gray-400")}`}>{l.toUpperCase()}</button>))}</div>);
+  return (<div className={`flex rounded-full p-0.5 gap-0.5 ${dark ? "bg-white/15" : "bg-surface-elevated"}`}>{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setLang(l)} className={`px-2 py-1 rounded-full text-[10px] font-bold transition ${lang === l ? (dark ? "bg-white text-primary" : "bg-white text-fg-strong shadow-sm") : (dark ? "text-white/70" : "text-fg-muted")}`}>{l.toUpperCase()}</button>))}</div>);
 }

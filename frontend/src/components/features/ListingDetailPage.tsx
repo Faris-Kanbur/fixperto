@@ -41,8 +41,8 @@ import { PageTopBar } from "./BrandMark";
  */
 const Section = ({ id, icon: Icon, title, children }) => (
   <section id={id} className="scroll-mt-24">
-    <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-      <span className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-blue-600" /></span>
+    <h2 className="text-base md:text-lg font-bold text-fg flex items-center gap-2 mb-4">
+      <span className="w-8 h-8 rounded-xl bg-primary-tint flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-primary" /></span>
       {title}
     </h2>
     {children}
@@ -50,11 +50,11 @@ const Section = ({ id, icon: Icon, title, children }) => (
 );
 
 const SpecTable = ({ items }) => (
-  <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden grid grid-cols-1 sm:grid-cols-2">
+  <div className="bg-white border border-border rounded-2xl overflow-hidden grid grid-cols-1 sm:grid-cols-2">
     {items.map((r, i) => (
-      <div key={r.label} className={`flex items-center justify-between gap-3 px-4 py-3 text-sm border-gray-100 ${i % 2 === 0 ? "sm:border-r" : ""} ${i < items.length - (items.length % 2 === 0 ? 2 : 1) ? "border-b" : "border-b sm:border-b-0"}`}>
-        <span className="text-gray-500">{r.label}</span>
-        <span className="font-semibold text-gray-900 text-right">{r.value}</span>
+      <div key={r.label} className={`flex items-center justify-between gap-3 px-4 py-3 text-sm border-surface-elevated ${i % 2 === 0 ? "sm:border-r" : ""} ${i < items.length - (items.length % 2 === 0 ? 2 : 1) ? "border-b" : "border-b sm:border-b-0"}`}>
+        <span className="text-fg-secondary">{r.label}</span>
+        <span className="font-semibold text-fg text-right">{r.value}</span>
       </div>
     ))}
   </div>
@@ -156,64 +156,64 @@ export function ListingDetailPage() {
   // Basisdaten/Technische Daten bloklarındaki okuma deseni.
 
   const sellerCard = (
-    <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-lg shadow-gray-100">
+    <div className="bg-white border border-border rounded-3xl p-5 shadow-lg shadow-gray-100">
       <div className="flex items-end justify-between gap-2">
         <div>
-          <p className="text-[11px] text-gray-400 font-medium">{statusMeta?.label}</p>
-          <p className="text-3xl font-bold text-gray-900 leading-tight">{l.price}</p>
+          <p className="text-[11px] text-fg-muted font-medium">{statusMeta?.label}</p>
+          <p className="text-3xl font-bold text-fg leading-tight">{l.price}</p>
         </div>
-        {l.negotiable && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 text-blue-700 whitespace-nowrap">{t("negotiableBadge")}</span>}
+        {l.negotiable && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-primary-tint text-primary-hover whitespace-nowrap">{t("negotiableBadge")}</span>}
       </div>
       {cmp && (
-        <p className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${cmp.tier === "below" ? "text-emerald-600" : cmp.tier === "above" ? "text-amber-600" : "text-gray-500"}`}>
+        <p className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${cmp.tier === "below" ? "text-emerald-600" : cmp.tier === "above" ? "text-warning" : "text-fg-secondary"}`}>
           <Scale size={13} />
           {cmp.tier === "below" ? t("priceBelowAverage", { pct: String(Math.abs(cmp.diffPercent)) })
             : cmp.tier === "above" ? t("priceAboveAverage", { pct: String(cmp.diffPercent) })
             : t("priceAtMarketLabel")}
         </p>
       )}
-      <div className="border-t border-gray-100 my-4" />
+      <div className="border-t border-surface-elevated my-4" />
       {/* Satıcı kimliği — AutoScout24'teki "Ein Fahrzeug von:" bloğu. Tamirci satıcıysa puanı ve
           doğrulama rozeti de gösteriliyor; alıcı için en güçlü güven sinyali bu. */}
-      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">{t("sellerLabel")}</p>
+      <p className="text-[11px] font-bold text-fg-muted uppercase tracking-wide mb-2">{t("sellerLabel")}</p>
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0">{sellerMech?.img || "👤"}</div>
+        <div className="w-11 h-11 rounded-xl bg-surface-elevated flex items-center justify-center text-xl flex-shrink-0">{sellerMech?.img || "👤"}</div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-gray-900 truncate flex items-center gap-1">
+          <p className="text-sm font-semibold text-fg truncate flex items-center gap-1">
             {l.sellerName}
-            {sellerMech?.verified && <BadgeCheck size={14} className="text-blue-500 flex-shrink-0" />}
+            {sellerMech?.verified && <BadgeCheck size={14} className="text-info flex-shrink-0" />}
           </p>
-          <p className="text-[11px] text-gray-400 flex items-center gap-2">
+          <p className="text-[11px] text-fg-muted flex items-center gap-2">
             <span>{l.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span>
-            {sellerMech && <span className="flex items-center gap-0.5"><Star size={10} className="fill-gray-900 text-gray-900" />{sellerMech.rating}</span>}
+            {sellerMech && <span className="flex items-center gap-0.5"><Star size={10} className="fill-fg text-fg" />{sellerMech.rating}</span>}
           </p>
         </div>
       </div>
-      {l.city && <p className="text-xs text-gray-500 flex items-center gap-1.5 mb-4"><MapPin size={13} className="text-gray-400" /> {l.city}</p>}
+      {l.city && <p className="text-xs text-fg-secondary flex items-center gap-1.5 mb-4"><MapPin size={13} className="text-fg-muted" /> {l.city}</p>}
       {mine ? (
         <>
-          <button onClick={() => openSellForm(sellPrefillFromListing(l))} className="w-full bg-gray-900 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-gray-800 transition whitespace-nowrap">{t("editListingBtn")}</button>
+          <button onClick={() => openSellForm(sellPrefillFromListing(l))} className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-fg-strong transition whitespace-nowrap">{t("editListingBtn")}</button>
           {/* Teklif/mesaj yönetimi hızlı görüntüleme modalinde duruyor — burada ikinci bir kopyasını
               tutmak yerine oraya yönlendiriyoruz (tek doğruluk kaynağı). */}
-          <button onClick={() => setSelectedListingId(l.id)} className="w-full mt-2 border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("manageOffersBtn")}</button>
+          <button onClick={() => setSelectedListingId(l.id)} className="w-full mt-2 border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("manageOffersBtn")}</button>
         </>
       ) : (
         <>
           {/* Düğmenin etiketi ve tıklanabilirliği tek yerden geliyor (bkz. offerButtonState):
               satıcı teklifi gördüyse yeni teklif gönderilemez, reddettiyse gönderilebilir. */}
           {(() => { const ob = offerButtonState(l); return (<>
-            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition whitespace-nowrap flex items-center justify-center gap-2 ${ob.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99] shadow-md shadow-blue-200"}`}><Banknote size={16} /> {t(ob.labelKey)}</button>
-            {ob.hintKey && <p className="text-[11px] text-gray-400 mt-1.5 text-center leading-relaxed">{t(ob.hintKey)}</p>}
+            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition whitespace-nowrap flex items-center justify-center gap-2 ${ob.disabled ? "bg-surface-elevated text-fg-muted cursor-not-allowed" : "bg-primary text-white hover:bg-primary-hover active:scale-[0.99] shadow-md shadow-blue-200"}`}><Banknote size={16} /> {t(ob.labelKey)}</button>
+            {ob.hintKey && <p className="text-[11px] text-fg-muted mt-1.5 text-center leading-relaxed">{t(ob.hintKey)}</p>}
           </>); })()}
-          <button onClick={() => setShowListingMsgForm(true)} className="w-full mt-2 border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={16} /> {t("sendMessage")}</button>
+          <button onClick={() => setShowListingMsgForm(true)} className="w-full mt-2 border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={16} /> {t("sendMessage")}</button>
           {sellerMech?.phone && (
-            <a href={`tel:${sellerMech.phone}`} className="w-full mt-2 text-gray-500 py-2 font-medium text-xs hover:text-blue-600 transition flex items-center justify-center gap-1.5"><Phone size={13} /> {sellerMech.phone}</a>
+            <a href={`tel:${sellerMech.phone}`} className="w-full mt-2 text-fg-secondary py-2 font-medium text-xs hover:text-primary transition flex items-center justify-center gap-1.5"><Phone size={13} /> {sellerMech.phone}</a>
           )}
         </>
       )}
       <div className="grid grid-cols-2 gap-2 mt-3">
-        <button onClick={() => toggleFavorite(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${fav ? "border-blue-200 bg-blue-50 text-blue-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}><Heart size={14} className={fav ? "fill-blue-600" : ""} /> {t("favoriteLabel")}</button>
-        <button onClick={() => toggleCompareListing(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${inCompare ? "border-blue-200 bg-blue-50 text-blue-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}><Scale size={14} /> {t("compareBtnLabel")}</button>
+        <button onClick={() => toggleFavorite(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${fav ? "border-blue-200 bg-primary-tint text-primary" : "border-border text-fg-secondary hover:bg-background"}`}><Heart size={14} className={fav ? "fill-primary" : ""} /> {t("favoriteLabel")}</button>
+        <button onClick={() => toggleCompareListing(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${inCompare ? "border-blue-200 bg-primary-tint text-primary" : "border-border text-fg-secondary hover:bg-background"}`}><Scale size={14} /> {t("compareBtnLabel")}</button>
       </div>
       {safeHref(l.inspectionReportUrl) && (
         <a href={safeHref(l.inspectionReportUrl)} target="_blank" rel="noreferrer" className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 py-2.5 rounded-xl hover:bg-emerald-100 transition"><FileText size={13} /> {t("inspectionReportAvailableLabel")}</a>
@@ -249,18 +249,18 @@ export function ListingDetailPage() {
         onBack={closeListingPage}
         right={(
           <>
-            <button onClick={() => toggleFavorite(l.id)} aria-label={t("addToFavoritesAria")} className="w-9 h-9 rounded-full border border-gray-200 hover:bg-gray-50 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-blue-600 text-blue-600" : "text-gray-500"} /></button>
+            <button onClick={() => toggleFavorite(l.id)} aria-label={t("addToFavoritesAria")} className="w-9 h-9 rounded-full border border-border hover:bg-background transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-primary text-primary" : "text-fg-secondary"} /></button>
             <ShareButton title={`${l.brand} ${l.model}`} text={`${l.brand} ${l.model} — ${l.price}`} path={`?listing=${l.id}`} onShare={(channel, refCode) => recordShare("listing", l.id, channel, refCode)} />
           </>
         )}
       />
-      <div className="w-full bg-gray-50 min-h-screen pb-24 lg:pb-8">
+      <div className="w-full bg-background min-h-screen pb-24 lg:pb-8">
 
       <div className="max-w-7xl mx-auto px-5 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 items-start">
         <div className="lg:col-span-2 space-y-10">
           {/* ---- GALERİ ---- büyük ana görsel + küçük resim şeridi (AutoScout24 deseni) ---- */}
           <div>
-            <div className="relative rounded-3xl overflow-hidden bg-gray-100 border border-gray-200">
+            <div className="relative rounded-3xl overflow-hidden bg-surface-elevated border border-border">
               <button onClick={() => setLightboxOpen(true)} className="w-full aspect-[4/3] sm:aspect-[16/10] flex items-center justify-center text-7xl" aria-label={t("enlargePhotoAria")}>
                 {isImgUrl(photos[activeIdx])
                   ? <img decoding="async" src={imgThumb(photos[activeIdx], 1400)} onError={imgFallbackHandler} alt={t("listingPhotoAlt")} className="w-full h-full object-cover" />
@@ -268,17 +268,17 @@ export function ListingDetailPage() {
               </button>
               {photos.length > 1 && (
                 <>
-                  <button onClick={() => setPhotoIdx((i) => (i - 1 + photos.length) % photos.length)} aria-label={t("prevPhotoAria")} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur rounded-full shadow flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronLeft size={18} /></button>
-                  <button onClick={() => setPhotoIdx((i) => (i + 1) % photos.length)} aria-label={t("nextPhotoAria")} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur rounded-full shadow flex items-center justify-center text-gray-700 hover:scale-105 transition"><ChevronRight size={18} /></button>
+                  <button onClick={() => setPhotoIdx((i) => (i - 1 + photos.length) % photos.length)} aria-label={t("prevPhotoAria")} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur rounded-full shadow flex items-center justify-center text-fg-strong hover:scale-105 transition"><ChevronLeft size={18} /></button>
+                  <button onClick={() => setPhotoIdx((i) => (i + 1) % photos.length)} aria-label={t("nextPhotoAria")} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur rounded-full shadow flex items-center justify-center text-fg-strong hover:scale-105 transition"><ChevronRight size={18} /></button>
                   <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded-full">{activeIdx + 1} / {photos.length}</span>
                 </>
               )}
-              {l.featured && <span className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">{t("featuredBadge")}</span>}
+              {l.featured && <span className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">{t("featuredBadge")}</span>}
             </div>
             {photos.length > 1 && (
               <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
                 {photos.map((p, i) => (
-                  <button key={i} onClick={() => setPhotoIdx(i)} className={`w-20 h-16 rounded-xl overflow-hidden border-2 flex-shrink-0 transition flex items-center justify-center text-2xl bg-gray-100 ${i === activeIdx ? "border-blue-500" : "border-transparent opacity-70 hover:opacity-100"}`}>
+                  <button key={i} onClick={() => setPhotoIdx(i)} className={`w-20 h-16 rounded-xl overflow-hidden border-2 flex-shrink-0 transition flex items-center justify-center text-2xl bg-surface-elevated ${i === activeIdx ? "border-info" : "border-transparent opacity-70 hover:opacity-100"}`}>
                     {isImgUrl(p) ? <img src={imgThumb(p, 200)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt="" className="w-full h-full object-cover" /> : <span>{p}</span>}
                   </button>
                 ))}
@@ -288,23 +288,23 @@ export function ListingDetailPage() {
 
           {/* ---- BAŞLIK ---- */}
           <div className="-mt-4">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{l.brand} {l.model}</h1>
-            <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-sm text-gray-500 flex-wrap">
+            <h1 className="text-2xl md:text-3xl font-bold text-fg">{l.brand} {l.model}</h1>
+            <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-sm text-fg-secondary flex-wrap">
               {l.city && <span className="flex items-center gap-1"><MapPin size={13} /> {l.city}</span>}
-              <span className="text-gray-300">·</span>
+              <span className="text-fg-muted">·</span>
               <span>{t("listingNoLabel")} #{l.id}</span>
-              {listedOn && (<><span className="text-gray-300">·</span><span>{listedOn}</span></>)}
-              {l.shareCount > 0 && (<><span className="text-gray-300">·</span><span className="flex items-center gap-1"><Eye size={13} /> {l.shareCount} {t("sharesLabel")}</span></>)}
+              {listedOn && (<><span className="text-fg-muted">·</span><span>{listedOn}</span></>)}
+              {l.shareCount > 0 && (<><span className="text-fg-muted">·</span><span className="flex items-center gap-1"><Eye size={13} /> {l.shareCount} {t("sharesLabel")}</span></>)}
             </div>
-            {mine && <p className="mt-3 text-xs text-gray-600 bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5">{t("ownListingNotice")}</p>}
+            {mine && <p className="mt-3 text-xs text-fg-secondary bg-surface-elevated border border-border rounded-xl px-3 py-2.5">{t("ownListingNotice")}</p>}
           </div>
 
           {/* ---- ANAHTAR VERİLER ---- */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 -mt-4">
             {keyFacts.map((k, i) => (
-              <div key={i} className="bg-white border border-gray-200 rounded-2xl p-3.5">
-                <p className="text-[11px] text-gray-400 flex items-center gap-1.5 mb-1"><k.icon size={13} className="text-blue-500" /> {k.label}</p>
-                <p className="text-sm font-bold text-gray-900 truncate">{k.value}</p>
+              <div key={i} className="bg-white border border-border rounded-2xl p-3.5">
+                <p className="text-[11px] text-fg-muted flex items-center gap-1.5 mb-1"><k.icon size={13} className="text-info" /> {k.label}</p>
+                <p className="text-sm font-bold text-fg truncate">{k.value}</p>
               </div>
             ))}
           </div>
@@ -313,7 +313,7 @@ export function ListingDetailPage() {
           {history.length > 0 && (
             <Section id="ld-history" icon={History} title={t("vehicleHistoryTitle")}>
               <SpecTable items={history} />
-              <p className="text-[11px] text-gray-400 mt-2.5">{t("damageRecordNote")}</p>
+              <p className="text-[11px] text-fg-muted mt-2.5">{t("damageRecordNote")}</p>
             </Section>
           )}
           {technical.length > 0 && <Section id="ld-technical" icon={Settings} title={t("technicalDataTitle")}><SpecTable items={technical} /></Section>}
@@ -326,13 +326,13 @@ export function ListingDetailPage() {
           {/* ---- DONANIM ---- gruplanmış ---- */}
           {allFeatures.length > 0 && (
             <Section id="ld-features" icon={Tag} title={`${t("featuresSection")} (${allFeatures.length})`}>
-              <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
+              <div className="bg-white border border-border rounded-2xl divide-y divide-surface-elevated">
                 {(showAllFeatures ? groupedFeatures : groupedFeatures.slice(0, 2)).map((g) => (
                   <div key={g.key} className="p-4">
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2.5">{t(`featureGroup_${g.key}`)}</p>
+                    <p className="text-[11px] font-bold text-fg-muted uppercase tracking-wide mb-2.5">{t(`featureGroup_${g.key}`)}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {g.items.map((f) => (
-                        <span key={f} className="inline-flex items-center gap-1 text-xs font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5">
+                        <span key={f} className="inline-flex items-center gap-1 text-xs font-medium text-fg-strong bg-background border border-border rounded-full px-3 py-1.5">
                           <BadgeCheck size={11} className="text-emerald-500" /> {f}
                         </span>
                       ))}
@@ -341,7 +341,7 @@ export function ListingDetailPage() {
                 ))}
               </div>
               {groupedFeatures.length > 2 && (
-                <button onClick={() => setShowAllFeatures((v) => !v)} className="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                <button onClick={() => setShowAllFeatures((v) => !v)} className="mt-3 text-sm font-semibold text-primary hover:text-primary-hover flex items-center gap-1">
                   {showAllFeatures ? t("mechShowLess") : t("showAllFeaturesBtn")}
                   <ChevronRight size={14} className={showAllFeatures ? "-rotate-90" : "rotate-90"} />
                 </button>
@@ -352,7 +352,7 @@ export function ListingDetailPage() {
           {/* ---- AÇIKLAMA ---- */}
           {String(l.description || "").trim() && (
             <Section id="ld-description" icon={FileText} title={t("descriptionSectionTitle")}>
-              <div className="bg-white border border-gray-200 rounded-2xl p-5 text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+              <div className="bg-white border border-border rounded-2xl p-5 text-sm text-fg-secondary leading-relaxed whitespace-pre-line">
                 <TranslatedText id={`listing-desc-${l.id}`} text={l.description} fromLang={l.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} />
               </div>
             </Section>
@@ -361,20 +361,20 @@ export function ListingDetailPage() {
           {/* ---- FİYAT DEĞERLENDİRMESİ ---- AutoScout24 "Preisbewertung" ---- */}
           {cmp && (
             <Section id="ld-price" icon={Scale} title={t("priceRatingLabel")}>
-              <div className="bg-white border border-gray-200 rounded-2xl p-5">
+              <div className="bg-white border border-border rounded-2xl p-5">
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${cmp.tier === "below" ? "bg-emerald-50 text-emerald-700" : cmp.tier === "above" ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-gray-600"}`}>
+                  <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${cmp.tier === "below" ? "bg-emerald-50 text-emerald-700" : cmp.tier === "above" ? "bg-warning-tint text-amber-700" : "bg-surface-elevated text-fg-secondary"}`}>
                     {cmp.tier === "below" ? t("priceRatingBelow") : cmp.tier === "above" ? t("priceRatingAboveLabel") : t("priceAtMarketLabel")}
                   </span>
-                  <span className="text-sm font-bold text-gray-900">{l.price}</span>
+                  <span className="text-sm font-bold text-fg">{l.price}</span>
                 </div>
                 {/* Konum çubuğu: bu ilanın medyana göre nerede durduğunu göstermek, yüzde sayısından
                     çok daha hızlı anlaşılıyor. %-30 ile %+30 aralığı ölçek olarak alınıyor. */}
                 <div className="relative h-2 bg-gradient-to-r from-emerald-200 via-gray-200 to-amber-200 rounded-full mb-2">
-                  <span className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-gray-900 rounded-full" style={{ left: `${Math.min(100, Math.max(0, 50 + cmp.diffPercent * (50 / 30)))}%` }} />
+                  <span className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 bg-white border-2 border-secondary rounded-full" style={{ left: `${Math.min(100, Math.max(0, 50 + cmp.diffPercent * (50 / 30)))}%` }} />
                 </div>
-                <div className="flex justify-between text-[10px] text-gray-400 mb-3"><span>{t("priceScaleCheap")}</span><span>{t("priceScaleMarket")}</span><span>{t("priceScaleExpensive")}</span></div>
-                <p className="text-xs text-gray-500">{t("priceRatingSample", { n: String(cmp.sampleSize), brand: l.brand, model: l.model })}</p>
+                <div className="flex justify-between text-[10px] text-fg-muted mb-3"><span>{t("priceScaleCheap")}</span><span>{t("priceScaleMarket")}</span><span>{t("priceScaleExpensive")}</span></div>
+                <p className="text-xs text-fg-secondary">{t("priceRatingSample", { n: String(cmp.sampleSize), brand: l.brand, model: l.model })}</p>
               </div>
             </Section>
           )}
@@ -392,7 +392,7 @@ export function ListingDetailPage() {
           <ListingHistorySection listingId={l.id} />
 
           {!mine && (
-            <button onClick={() => openReportForm("listing", `İlan #${l.id} · ${l.brand} ${l.model}`, `"${l.brand} ${l.model}" ilanı hakkında şikayetim var`)} className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition py-2"><Flag size={12} /> {t("reportListingBtn")}</button>
+            <button onClick={() => openReportForm("listing", `İlan #${l.id} · ${l.brand} ${l.model}`, `"${l.brand} ${l.model}" ilanı hakkında şikayetim var`)} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-red-500 transition py-2"><Flag size={12} /> {t("reportListingBtn")}</button>
           )}
         </div>
 
@@ -407,14 +407,14 @@ export function ListingDetailPage() {
 
       {/* ---- MOBİL YAPIŞKAN AKSİYON ÇUBUĞU ---- */}
       {!mine && (
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 flex items-center gap-3">
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-border px-4 py-3 flex items-center gap-3">
           <div className="flex-shrink-0 min-w-0">
-            <p className="text-[10px] text-gray-400 leading-none mb-0.5 truncate">{l.brand} {l.model}</p>
-            <p className="text-base font-bold text-gray-900 leading-none">{l.price}</p>
+            <p className="text-[10px] text-fg-muted leading-none mb-0.5 truncate">{l.brand} {l.model}</p>
+            <p className="text-base font-bold text-fg leading-none">{l.price}</p>
           </div>
-          <button onClick={() => setShowListingMsgForm(true)} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
+          <button onClick={() => setShowListingMsgForm(true)} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-border text-fg-secondary flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
           {(() => { const ob = offerButtonState(l); return (
-            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`flex-1 py-3 rounded-xl font-semibold text-sm transition whitespace-nowrap ${ob.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"}`}>{t(ob.labelKey)}</button>
+            <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`flex-1 py-3 rounded-xl font-semibold text-sm transition whitespace-nowrap ${ob.disabled ? "bg-surface-elevated text-fg-muted cursor-not-allowed" : "bg-primary text-white hover:bg-primary-hover"}`}>{t(ob.labelKey)}</button>
           ); })()}
         </div>
       )}

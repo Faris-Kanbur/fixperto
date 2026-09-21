@@ -77,7 +77,7 @@ export function EmojiPicker({ onPick, ariaLabel = undefined }: { onPick: (emoji:
         aria-label={ariaLabel || t("emojiPickerAria")}
         aria-expanded={open}
         title={ariaLabel || t("emojiPickerAria")}
-        className={`w-10 h-10 flex items-center justify-center rounded-full transition flex-shrink-0 ${open ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+        className={`w-10 h-10 flex items-center justify-center rounded-full transition flex-shrink-0 ${open ? "bg-blue-100 text-primary" : "bg-surface-elevated text-fg-secondary hover:bg-border"}`}
       >
         <Smile size={18} />
       </button>
@@ -87,11 +87,11 @@ export function EmojiPicker({ onPick, ariaLabel = undefined }: { onPick: (emoji:
           role="dialog"
           aria-label={t("emojiPickerAria")}
           style={{ position: "fixed", top: pos.top, left: pos.left, width: 296, transform: "translateY(-100%)" }}
-          className="z-[80] bg-white border border-gray-200 rounded-2xl shadow-xl p-3 max-h-[50vh] overflow-y-auto"
+          className="z-[80] bg-white border border-border rounded-2xl shadow-xl p-3 max-h-[50vh] overflow-y-auto"
         >
           {EMOJI_GROUPS.map((group) => (
             <div key={group.key} className="mb-2 last:mb-0">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 mb-1.5">{t(group.key)}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-fg-muted mb-1.5">{t(group.key)}</p>
               <div className="grid grid-cols-8 gap-0.5">
                 {group.items.map((e) => (
                   <button
@@ -99,7 +99,7 @@ export function EmojiPicker({ onPick, ariaLabel = undefined }: { onPick: (emoji:
                     type="button"
                     onClick={() => { onPick(e); setOpen(false); }}
                     aria-label={e}
-                    className="w-8 h-8 flex items-center justify-center text-lg rounded-lg hover:bg-gray-100 active:scale-95 transition"
+                    className="w-8 h-8 flex items-center justify-center text-lg rounded-lg hover:bg-surface-elevated active:scale-95 transition"
                   >
                     {e}
                   </button>

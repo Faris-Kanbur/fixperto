@@ -131,32 +131,32 @@ export function ListingCard({ l, onHover = undefined }) {
             <span className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${meta.color}`}>{meta.label}</span>
             {l.featured && <span className="text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-amber-300">{t("featuredBadge")}</span>}
           </div>
-          <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label={t("addToFavoritesAria")} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-blue-600 text-blue-600" : "text-gray-500"} /></button>
-          <button onClick={(e) => { e.stopPropagation(); toggleCompareListing(l.id); }} aria-label={t("compareToggleAria")} title={t("compareToggleAria")} className={`absolute top-3 right-14 z-10 w-8 h-8 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center ${inCompare ? "bg-blue-600" : "bg-white/95"}`}><Scale size={14} className={inCompare ? "text-white" : "text-gray-500"} /></button>
+          <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label={t("addToFavoritesAria")} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-primary text-primary" : "text-fg-secondary"} /></button>
+          <button onClick={(e) => { e.stopPropagation(); toggleCompareListing(l.id); }} aria-label={t("compareToggleAria")} title={t("compareToggleAria")} className={`absolute top-3 right-14 z-10 w-8 h-8 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center ${inCompare ? "bg-primary" : "bg-white/95"}`}><Scale size={14} className={inCompare ? "text-white" : "text-fg-secondary"} /></button>
           {/* HIZLI GÖRÜNTÜLE: karta tıklamak artık tam sayfa ilana gidiyor; sayfadan ayrılmadan
               hızlıca bakmak isteyen kullanıcı için modal bu göz butonuyla açılıyor. */}
-          <button onClick={(e) => { e.stopPropagation(); setSelectedListingId(l.id); }} aria-label={t("quickViewBtn")} title={t("quickViewBtn")} className="absolute top-3 right-[6.25rem] z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Eye size={14} className="text-gray-500" /></button>
+          <button onClick={(e) => { e.stopPropagation(); setSelectedListingId(l.id); }} aria-label={t("quickViewBtn")} title={t("quickViewBtn")} className="absolute top-3 right-[6.25rem] z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Eye size={14} className="text-fg-secondary" /></button>
         </div>
         <button onClick={() => openListingPage(l.id)} className="w-full text-left p-4">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">{l.brand} {l.model}</h3>
-            <span className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.sellerType === "mechanic" ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-600"}`}>{l.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span>
+            <h3 className="font-semibold text-fg text-[15px] leading-snug truncate">{l.brand} {l.model}</h3>
+            <span className={`flex-shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${l.sellerType === "mechanic" ? "bg-primary-tint text-primary-hover" : "bg-surface-elevated text-fg-secondary"}`}>{l.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span>
           </div>
-          {l.city && <p className="text-gray-400 text-xs mt-0.5 flex items-center gap-1"><MapPin size={11} />{l.city}</p>}
-          <p className="text-gray-400 text-xs mt-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
+          {l.city && <p className="text-fg-muted text-xs mt-0.5 flex items-center gap-1"><MapPin size={11} />{l.city}</p>}
+          <p className="text-fg-muted text-xs mt-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
             <span className="flex items-center gap-1"><Gauge size={11} />{Number(l.km).toLocaleString("tr-TR")} km</span>
             <span className="flex items-center gap-1"><CalendarDays size={11} />{l.firstReg || l.year}</span>
             <span className="flex items-center gap-1"><Fuel size={11} />{vocabLabel(l.fuelType, lang, FUEL_TYPE_LABELS_BY_LANG)}</span>
             <span className="flex items-center gap-1"><Cog size={11} />{vocabLabel(l.transmission, lang, TRANSMISSION_LABELS_BY_LANG)}</span>
           </p>
           <div className="flex items-center gap-2 mt-2.5 flex-wrap">
-            <p className="text-gray-900 font-bold text-lg">{l.price}</p>
-            {l.negotiable && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{t("negotiableBadge")}</span>}
+            <p className="text-fg font-bold text-lg">{l.price}</p>
+            {l.negotiable && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary-tint text-primary-hover">{t("negotiableBadge")}</span>}
           </div>
           {isMine && (pendingOfferCount > 0 || questionCount > 0) && (
-            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-              {pendingOfferCount > 0 && <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${unseenOfferCount > 0 ? "bg-blue-200 text-blue-800" : "bg-gray-100 text-gray-500"}`}><Banknote size={10} /> {pendingOfferCount} teklif{unseenOfferCount > 0 ? " (yeni)" : ""}</span>}
-              {questionCount > 0 && <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600"><MessageCircle size={10} /> {questionCount} soru</span>}
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-elevated">
+              {pendingOfferCount > 0 && <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${unseenOfferCount > 0 ? "bg-blue-200 text-primary-active" : "bg-surface-elevated text-fg-secondary"}`}><Banknote size={10} /> {pendingOfferCount} teklif{unseenOfferCount > 0 ? " (yeni)" : ""}</span>}
+              {questionCount > 0 && <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary-tint text-primary"><MessageCircle size={10} /> {questionCount} soru</span>}
             </div>
           )}
         </button>

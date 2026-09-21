@@ -21,9 +21,9 @@ import { REVIEW_TIME_LABELS_BY_LANG } from "../../data/i18n";
 const Section = ({ id, icon: Icon, title, count = null, action = null, children }) => (
   <section id={id} className="scroll-mt-24">
     <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
-      <h2 className="text-base md:text-lg font-bold text-gray-900 flex items-center gap-2">
-        <span className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-blue-600" /></span>
-        {title}{count != null && <span className="text-gray-300 font-normal text-sm">({count})</span>}
+      <h2 className="text-base md:text-lg font-bold text-fg flex items-center gap-2">
+        <span className="w-8 h-8 rounded-xl bg-primary-tint flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-primary" /></span>
+        {title}{count != null && <span className="text-fg-muted font-normal text-sm">({count})</span>}
       </h2>
       {action}
     </div>
@@ -222,21 +222,21 @@ export function MechDetailBody() {
   // Bölüm başlığı — tüm bölümlerde aynı tipografi/aralık kullanılsın diye tek yerde tanımlı.
 
   const bookingCard = (
-    <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-lg shadow-gray-100">
+    <div className="bg-white border border-border rounded-3xl p-5 shadow-lg shadow-gray-100">
       <div className="flex items-end justify-between gap-2 mb-1">
         <div>
-          <p className="text-[11px] text-gray-400 font-medium">{t("mechStartingFromLabel")}</p>
+          <p className="text-[11px] text-fg-muted font-medium">{t("mechStartingFromLabel")}</p>
           {/* Türetilmiş başlangıç fiyatı: tamircinin hizmet listesindeki EN DÜŞÜK fiyat
               (marka bazlı fiyatlar dahil). Hiç fiyatlı hizmet yoksa rakam yerine "—". */}
-          <p className="text-2xl font-bold text-gray-900 leading-tight">{mechanicStartingPrice(selectedMechanic) > 0 ? <>{mechanicStartingPrice(selectedMechanic).toLocaleString("tr-TR")}<span className="text-base font-semibold text-gray-400">₺</span></> : <span className="text-lg text-gray-400">—</span>}</p>
+          <p className="text-2xl font-bold text-fg leading-tight">{mechanicStartingPrice(selectedMechanic) > 0 ? <>{mechanicStartingPrice(selectedMechanic).toLocaleString("tr-TR")}<span className="text-base font-semibold text-fg-muted">₺</span></> : <span className="text-lg text-fg-muted">—</span>}</p>
         </div>
-        <span className="flex items-center gap-1 text-sm font-semibold text-gray-900"><Star size={14} className="fill-gray-900" />{selectedMechanic.rating}<span className="text-gray-400 font-normal text-xs">({selectedMechanic.reviews})</span></span>
+        <span className="flex items-center gap-1 text-sm font-semibold text-fg"><Star size={14} className="fill-fg" />{selectedMechanic.rating}<span className="text-fg-muted font-normal text-xs">({selectedMechanic.reviews})</span></span>
       </div>
       <div className="mb-4"><PriceLevelDots price={selectedMechanic.price} /></div>
       {isVisitor ? (
         <>
-          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="w-full bg-blue-600 text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-blue-700 active:scale-[0.99] transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 whitespace-nowrap"><Calendar size={16} /> {t("bookNow")}</button>
-          <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} className="w-full mt-2 border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2 whitespace-nowrap"><MessageCircle size={16} /> {t("sendMessage")}</button>
+          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="w-full bg-primary text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-primary-hover active:scale-[0.99] transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 whitespace-nowrap"><Calendar size={16} /> {t("bookNow")}</button>
+          <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} className="w-full mt-2 border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2 whitespace-nowrap"><MessageCircle size={16} /> {t("sendMessage")}</button>
           {/* BU TAMİRCİ ÖN SEÇİLİ AÇILIYOR (kullanıcı isteği: "eğer tamircinin profilinden seçiyorsa
               o tamirci seçili olarak görünsün").
               İlk yazdığım yorum `closeOverlays()`'in seçili tamirciyi temizlediğini söylüyordu —
@@ -245,29 +245,29 @@ export function MechDetailBody() {
               farklı ve dürüst olanı şu: çağrı sırası ileride değişirse (araya gerçekten seçimi
               temizleyen bir şey girerse) ön seçim SESSİZCE çalışmaz hâle gelir. Bir satır maliyetle
               o riski baştan kapatıyoruz. */}
-          <button onClick={() => { const preselectId = selectedMechanic.id; closeOverlays(); openQuoteModal(preselectId); }} className="w-full mt-2 border border-dashed border-blue-300 text-blue-600 py-3 rounded-2xl font-semibold text-sm hover:bg-blue-50 transition flex items-center justify-center gap-2 whitespace-nowrap"><Banknote size={16} /> {t("mechFreeQuoteBtn")}</button>
+          <button onClick={() => { const preselectId = selectedMechanic.id; closeOverlays(); openQuoteModal(preselectId); }} className="w-full mt-2 border border-dashed border-blue-300 text-primary py-3 rounded-2xl font-semibold text-sm hover:bg-primary-tint transition flex items-center justify-center gap-2 whitespace-nowrap"><Banknote size={16} /> {t("mechFreeQuoteBtn")}</button>
           {selectedMechanic.phone && (
-            <a href={`tel:${selectedMechanic.phone}`} className="w-full mt-2 text-gray-500 py-2 rounded-2xl font-medium text-xs hover:text-blue-600 transition flex items-center justify-center gap-1.5"><Phone size={13} /> {t("mechCallBtn")} · {selectedMechanic.phone}</a>
+            <a href={`tel:${selectedMechanic.phone}`} className="w-full mt-2 text-fg-secondary py-2 rounded-2xl font-medium text-xs hover:text-primary transition flex items-center justify-center gap-1.5"><Phone size={13} /> {t("mechCallBtn")} · {selectedMechanic.phone}</a>
           )}
-          <p className="text-[11px] text-gray-400 text-center mt-3">{t("mechBookingCardHint")}</p>
+          <p className="text-[11px] text-fg-muted text-center mt-3">{t("mechBookingCardHint")}</p>
         </>
       ) : null}
-      <div className="border-t border-gray-100 mt-4 pt-4 space-y-2.5">
-        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">{t("mechTrustTitle")}</p>
-        {selectedMechanic.verified && <p className="text-xs text-gray-600 flex items-start gap-2"><BadgeCheck size={14} className="text-blue-500 flex-shrink-0 mt-px" /> {t("identityVerifiedNote")}</p>}
-        <p className="text-xs text-gray-600 flex items-start gap-2"><Globe size={14} className="text-gray-400 flex-shrink-0 mt-px" /> {LANG_LABELS[selectedMechanic.lang] || t("turkishFallbackLabel")}</p>
-        <div className="text-xs text-gray-600 flex items-start gap-2">
-          <CreditCard size={14} className="text-gray-400 flex-shrink-0 mt-px" />
+      <div className="border-t border-surface-elevated mt-4 pt-4 space-y-2.5">
+        <p className="text-[11px] font-bold text-fg-muted uppercase tracking-wide">{t("mechTrustTitle")}</p>
+        {selectedMechanic.verified && <p className="text-xs text-fg-secondary flex items-start gap-2"><BadgeCheck size={14} className="text-info flex-shrink-0 mt-px" /> {t("identityVerifiedNote")}</p>}
+        <p className="text-xs text-fg-secondary flex items-start gap-2"><Globe size={14} className="text-fg-muted flex-shrink-0 mt-px" /> {LANG_LABELS[selectedMechanic.lang] || t("turkishFallbackLabel")}</p>
+        <div className="text-xs text-fg-secondary flex items-start gap-2">
+          <CreditCard size={14} className="text-fg-muted flex-shrink-0 mt-px" />
           {(selectedMechanic.paymentMethods || []).length > 0
-            ? <span className="flex flex-wrap gap-1">{selectedMechanic.paymentMethods.map((p) => (<span key={p} className="bg-gray-100 rounded-full px-2 py-0.5 text-[10px] font-medium">{p}</span>))}</span>
-            : <span className="text-gray-400">{t("notSpecifiedLabel")}</span>}
+            ? <span className="flex flex-wrap gap-1">{selectedMechanic.paymentMethods.map((p) => (<span key={p} className="bg-surface-elevated rounded-full px-2 py-0.5 text-[10px] font-medium">{p}</span>))}</span>
+            : <span className="text-fg-muted">{t("notSpecifiedLabel")}</span>}
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className={compact ? "flex flex-col min-h-0 overflow-y-auto" : "w-full bg-gray-50 min-h-screen pb-24 lg:pb-0"}>
+    <div className={compact ? "flex flex-col min-h-0 overflow-y-auto" : "w-full bg-background min-h-screen pb-24 lg:pb-0"}>
       {/* Üst çubuk yalnızca TAM SAYFA modda: haritadan açılan dar modalda (compact) yer kaplardı
           ve modalın kendi kapatma düğmesi zaten var. Logo burada da olsun ki kullanıcı detay
           sayfasının ortasındayken bile tek tıkla ana sayfaya dönebilsin. */}
@@ -286,40 +286,40 @@ export function MechDetailBody() {
              Favori ve paylaş burada KALIYOR: onlar görsele ait eylemler (Airbnb deseni) ve tek
              örnekleri bu. Geri ise bir GEZİNME eylemi ve onun yeri üst çubuk. */}
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-          <button onClick={() => toggleFavoriteMechanic(selectedMechanic.id)} aria-label={t("addToFavoritesAria")} className="w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-105 transition flex items-center justify-center"><Heart size={16} className={(favoriteMechanicIds || []).includes(selectedMechanic.id) ? "fill-blue-600 text-blue-600" : "text-gray-600"} /></button>
+          <button onClick={() => toggleFavoriteMechanic(selectedMechanic.id)} aria-label={t("addToFavoritesAria")} className="w-10 h-10 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-105 transition flex items-center justify-center"><Heart size={16} className={(favoriteMechanicIds || []).includes(selectedMechanic.id) ? "fill-primary text-primary" : "text-fg-secondary"} /></button>
           <ShareButton title={selectedMechanic.name} text={`${selectedMechanic.name} — ${t("discoverOnFixperto")}`} path={`?mechanic=${selectedMechanic.id}`} onShare={(channel, refCode) => recordShare("mechanic", selectedMechanic.id, channel, refCode)} />
         </div>
       </div>
 
       {/* ---- PROFİL BAŞLIĞI ---- */}
       <div className={`${compact ? "px-5" : "max-w-7xl mx-auto px-5 md:px-8"} relative`}>
-        <div className={`bg-white border border-gray-100 rounded-3xl shadow-sm ${compact ? "-mt-10 p-4" : "-mt-14 md:-mt-16 p-5 md:p-6"}`}>
+        <div className={`bg-white border border-surface-elevated rounded-3xl shadow-sm ${compact ? "-mt-10 p-4" : "-mt-14 md:-mt-16 p-5 md:p-6"}`}>
           <div className="flex items-start gap-4">
-            <div className={`${compact ? "w-16 h-16 text-3xl" : "w-20 h-20 md:w-24 md:h-24 text-4xl md:text-5xl"} rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden`}>{selectedMechanic.img}</div>
+            <div className={`${compact ? "w-16 h-16 text-3xl" : "w-20 h-20 md:w-24 md:h-24 text-4xl md:text-5xl"} rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-surface-elevated flex items-center justify-center flex-shrink-0 overflow-hidden`}>{selectedMechanic.img}</div>
             <div className="flex-1 min-w-0">
-              <h1 className={`${compact ? "text-lg" : "text-xl md:text-2xl"} font-bold text-gray-900 flex items-center gap-1.5 flex-wrap`}>
+              <h1 className={`${compact ? "text-lg" : "text-xl md:text-2xl"} font-bold text-fg flex items-center gap-1.5 flex-wrap`}>
                 {selectedMechanic.name}
-                {selectedMechanic.verified && <BadgeCheck size={compact ? 16 : 20} className="text-blue-500 flex-shrink-0" />}
+                {selectedMechanic.verified && <BadgeCheck size={compact ? 16 : 20} className="text-info flex-shrink-0" />}
               </h1>
-              <p className="text-sm text-gray-500 mt-0.5">{selectedMechanic.specialty}</p>
-              <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500 flex-wrap">
-                <span className="flex items-center gap-1 font-semibold text-gray-900"><Star size={13} className="fill-gray-900" />{selectedMechanic.rating}<span className="font-normal text-gray-400">({selectedMechanic.reviews})</span></span>
+              <p className="text-sm text-fg-secondary mt-0.5">{selectedMechanic.specialty}</p>
+              <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-xs text-fg-secondary flex-wrap">
+                <span className="flex items-center gap-1 font-semibold text-fg"><Star size={13} className="fill-fg" />{selectedMechanic.rating}<span className="font-normal text-fg-muted">({selectedMechanic.reviews})</span></span>
                 <span className="flex items-center gap-1"><MapPin size={12} />{formatDistanceKm(dist)}</span>
-                {openNow !== null && (<span className={`px-2 py-0.5 rounded-full font-semibold ${openNow ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{openNow ? t("mechOpenNow") : t("mechClosedNow")}</span>)}
-                {selectedMechanic.avgResponseMinutes && <span className="flex items-center gap-1"><Zap size={12} className="text-blue-500" />{t("avgResponsePrefix")} {selectedMechanic.avgResponseMinutes} {t("avgResponseSuffix")}</span>}
+                {openNow !== null && (<span className={`px-2 py-0.5 rounded-full font-semibold ${openNow ? "bg-success-tint text-success" : "bg-error-tint text-red-500"}`}>{openNow ? t("mechOpenNow") : t("mechClosedNow")}</span>)}
+                {selectedMechanic.avgResponseMinutes && <span className="flex items-center gap-1"><Zap size={12} className="text-info" />{t("avgResponsePrefix")} {selectedMechanic.avgResponseMinutes} {t("avgResponseSuffix")}</span>}
               </div>
             </div>
             {/* Geniş ekranda birincil aksiyon başlıkta da duruyor — kullanıcı sağdaki karta gitmeden
                 de randevu alabilsin (sayfanın en üstünde tek tık). */}
             {!compact && isVisitor && (
               <div className="hidden lg:flex flex-col gap-2 flex-shrink-0 w-52">
-                <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center justify-center gap-2"><Calendar size={15} /> {t("bookNow")}</button>
-                <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} className="border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("sendMessage")}</button>
+                <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-2"><Calendar size={15} /> {t("bookNow")}</button>
+                <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} className="border border-border text-fg-strong py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("sendMessage")}</button>
               </div>
             )}
           </div>
           {highlights.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-surface-elevated">
               {highlights.map((h, i) => (<span key={i} className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full border ${h.tone}`}><h.icon size={12} /> {h.label}</span>))}
             </div>
           )}
@@ -332,7 +332,7 @@ export function MechDetailBody() {
           katmanı düşük olduğu için (z-20 < z-45) onun altında kayboluyordu. Koşul PageTopBar ile
           AYNI (`!compact`), yani çubuk yokken bu da yok — boşluk oluşmuyor. */}
       {!compact && (
-        <div className="sticky top-14 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6 hidden md:block">
+        <div className="sticky top-14 z-20 bg-white/90 backdrop-blur border-b border-surface-elevated mt-6 hidden md:block">
           <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
             {[
               { id: "mech-about", label: t("mechNavAbout") },
@@ -345,7 +345,7 @@ export function MechDetailBody() {
               ...(isVisitor && mechListings.length > 0 ? [{ id: "mech-inventory", label: t("mechNavInventory") }] : []),
               { id: "mech-reviews", label: t("mechNavReviews") },
             ].map((s) => (
-              <button key={s.id} onClick={() => scrollToSection(s.id)} className="px-4 py-3.5 text-sm font-medium text-gray-500 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 transition whitespace-nowrap">{s.label}</button>
+              <button key={s.id} onClick={() => scrollToSection(s.id)} className="px-4 py-3.5 text-sm font-medium text-fg-secondary hover:text-primary border-b-2 border-transparent hover:border-info transition whitespace-nowrap">{s.label}</button>
             ))}
           </div>
         </div>
@@ -357,10 +357,10 @@ export function MechDetailBody() {
           {/* Özet istatistikler */}
           <div id="mech-about" className="grid grid-cols-2 md:grid-cols-4 gap-3 scroll-mt-24">
             {statTiles.map((s, i) => (
-              <div key={i} className="bg-white border border-gray-200 rounded-2xl p-3.5 text-center">
+              <div key={i} className="bg-white border border-border rounded-2xl p-3.5 text-center">
                 <s.icon size={17} className={`mx-auto mb-1.5 ${s.tint}`} />
-                <p className="text-[11px] text-gray-400 mb-0.5">{s.label}</p>
-                <div className="text-sm font-bold text-gray-900 flex items-center justify-center">{s.value ?? <PriceLevelDots price={selectedMechanic.price} />}</div>
+                <p className="text-[11px] text-fg-muted mb-0.5">{s.label}</p>
+                <div className="text-sm font-bold text-fg flex items-center justify-center">{s.value ?? <PriceLevelDots price={selectedMechanic.price} />}</div>
               </div>
             ))}
           </div>
@@ -368,7 +368,7 @@ export function MechDetailBody() {
           {/* Markalar */}
           {(selectedMechanic.brandsServiced || []).length > 0 && (
             <Section id="mech-brands" icon={Tag} title={t("brandsServicedByMechanicTitle")}>
-              <p className="text-xs text-gray-400 -mt-2 mb-3">{t("mechBrandsHint")}</p>
+              <p className="text-xs text-fg-muted -mt-2 mb-3">{t("mechBrandsHint")}</p>
               <div className="flex flex-wrap gap-2">
                 {selectedMechanic.brandsServiced.map((brand, i) => {
                   const palette = ["bg-blue-50 text-blue-700 border-blue-200", "bg-blue-50 text-blue-700 border-blue-200", "bg-amber-50 text-amber-700 border-amber-200", "bg-emerald-50 text-emerald-700 border-emerald-200", "bg-violet-50 text-violet-700 border-violet-200", "bg-cyan-50 text-cyan-700 border-cyan-200"];
@@ -382,20 +382,20 @@ export function MechDetailBody() {
           <Section id="mech-services" icon={ToolIcon} title={t("mechServicesPriceTitle")} count={services.length}>
             {priceBrands.length > 0 && (
               <div className="mb-3">
-                <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1.5"><Car size={13} className="text-blue-500" /> {t("brandPricesOnDetailTitle")}
+                <p className="text-xs font-semibold text-fg-secondary mb-2 flex items-center gap-1.5"><Car size={13} className="text-info" /> {t("brandPricesOnDetailTitle")}
                   {/* "Diğer markalar" tek başına hiçbir şey anlatmıyordu: kullanıcı bunun bir marka
                       listesi mi yoksa varsayılan fiyat mı olduğunu bilemiyordu. */}
                   <InfoTip text={t("otherBrandsTip")} label={t("infoTipAria")} /></p>
                 <div className="flex flex-wrap gap-1.5">
-                  <button onClick={() => setPriceBrand(null)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === null ? "bg-gray-900 text-white border-gray-900" : "bg-white border-gray-200 text-gray-500 hover:border-gray-400"}`}>{t("otherBrandsLabel")}</button>
+                  <button onClick={() => setPriceBrand(null)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === null ? "bg-secondary text-white border-secondary" : "bg-white border-border text-fg-secondary hover:border-fg-muted"}`}>{t("otherBrandsLabel")}</button>
                   {priceBrands.map((b) => (
-                    <button key={b} onClick={() => setPriceBrand(b)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === b ? "bg-blue-600 text-white border-blue-600" : "bg-white border-gray-200 text-gray-500 hover:border-blue-300"}`}>{b}</button>
+                    <button key={b} onClick={() => setPriceBrand(b)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === b ? "bg-primary text-white border-primary" : "bg-white border-border text-fg-secondary hover:border-blue-300"}`}>{b}</button>
                   ))}
                 </div>
               </div>
             )}
             <div
-              className={`bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 ${servicesScroll ? "overflow-y-auto" : "overflow-hidden"}`}
+              className={`bg-white border border-border rounded-2xl divide-y divide-surface-elevated ${servicesScroll ? "overflow-y-auto" : "overflow-hidden"}`}
               style={servicesScroll ? { maxHeight: SERVICE_SCROLL_ROWS * SERVICE_ROW_PX } : undefined}
             >
               {visibleServices.map((s, i) => {
@@ -406,14 +406,14 @@ export function MechDetailBody() {
                 const isBrandPrice = brandPriceFor(s, priceBrand) != null;
                 return (
                   <div key={s.key || `c-${i}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50/70 transition">
-                    <span className="text-sm text-gray-700 flex items-center gap-2 min-w-0">
+                    <span className="text-sm text-fg-strong flex items-center gap-2 min-w-0">
                       <ToolIcon size={13} className="text-blue-400 flex-shrink-0" />
                       <span className="truncate">{serviceLabel(s)}</span>
                       {s.fixed && String(s.price || "").trim() && <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 flex-shrink-0">FIX</span>}
                     </span>
                     <span className="flex items-center gap-2 flex-shrink-0">
-                      {isBrandPrice && <span className="text-[10px] font-bold text-blue-600 bg-blue-50 rounded px-1.5 py-0.5">{priceBrand}</span>}
-                      <span className="text-sm font-bold text-gray-900 whitespace-nowrap">{shown || <span className="text-xs font-medium text-gray-400">{t("priceUponInspectionLabel")}</span>}</span>
+                      {isBrandPrice && <span className="text-[10px] font-bold text-primary bg-primary-tint rounded px-1.5 py-0.5">{priceBrand}</span>}
+                      <span className="text-sm font-bold text-fg whitespace-nowrap">{shown || <span className="text-xs font-medium text-fg-muted">{t("priceUponInspectionLabel")}</span>}</span>
                     </span>
                   </div>
                 );
@@ -422,30 +422,30 @@ export function MechDetailBody() {
             {/* Kaydırma kutusunun varlığı görünür olmalı: kullanıcı listenin bittiğini sanıp
                 aşağı kaydırmayı denemeyebilir. */}
             {servicesScroll && (
-              <p className="text-[11px] text-gray-400 mt-2">{t("mechServicesScrollNote", { shown: String(SERVICE_SCROLL_ROWS), total: String(services.length) })}</p>
+              <p className="text-[11px] text-fg-muted mt-2">{t("mechServicesScrollNote", { shown: String(SERVICE_SCROLL_ROWS), total: String(services.length) })}</p>
             )}
             {services.length > SERVICE_PREVIEW && (
-              <button onClick={() => setShowAllServices((v) => !v)} className="mt-3 text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <button onClick={() => setShowAllServices((v) => !v)} className="mt-3 text-sm font-semibold text-primary hover:text-primary-hover flex items-center gap-1">
                 {showAllServices ? t("mechShowLess") : t("mechShowAllServices", { n: String(services.length) })}
                 <ChevronRight size={14} className={showAllServices ? "-rotate-90 transition" : "rotate-90 transition"} />
               </button>
             )}
-            <p className="text-[11px] text-gray-400 mt-3">{t("mechServicesPriceNote")}</p>
+            <p className="text-[11px] text-fg-muted mt-3">{t("mechServicesPriceNote")}</p>
           </Section>
 
           {/* Çalışma saatleri — bugünün satırı vurgulu */}
           <Section id="mech-hours" icon={Clock} title={t("workingHours")}>
-            <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-50 overflow-hidden">
+            <div className="bg-white border border-border rounded-2xl divide-y divide-background overflow-hidden">
               {hourLines.map((line, i) => {
                 const isClosed = /kapalı|closed|geschlossen/i.test(line);
                 const isToday = i === todayIdx;
                 return (
                   <div key={i} className={`flex justify-between items-center px-4 py-2.5 text-sm ${isToday ? "bg-blue-50/60" : ""}`}>
-                    <span className={isToday ? "font-bold text-gray-900 flex items-center gap-2" : "text-gray-500"}>
+                    <span className={isToday ? "font-bold text-fg flex items-center gap-2" : "text-fg-secondary"}>
                       {line.split(":")[0]}
-                      {isToday && <span className="text-[9px] font-bold uppercase tracking-wide text-blue-600 bg-white border border-blue-200 rounded px-1.5 py-0.5">{t("mechTodayLabel")}</span>}
+                      {isToday && <span className="text-[9px] font-bold uppercase tracking-wide text-primary bg-white border border-blue-200 rounded px-1.5 py-0.5">{t("mechTodayLabel")}</span>}
                     </span>
-                    <span className={isClosed ? "text-red-400 font-medium" : isToday ? "font-bold text-gray-900" : "text-gray-700 font-medium"}>{line.split(/:(.+)/)[1]}</span>
+                    <span className={isClosed ? "text-red-400 font-medium" : isToday ? "font-bold text-fg" : "text-fg-strong font-medium"}>{line.split(/:(.+)/)[1]}</span>
                   </div>
                 );
               })}
@@ -459,13 +459,13 @@ export function MechDetailBody() {
                 {selectedMechanic.staff.map((s, i) => {
                   const grads = ["from-blue-400 to-blue-500", "from-gray-700 to-gray-900", "from-blue-500 to-blue-600", "from-gray-500 to-gray-700"];
                   return (
-                    <div key={i} className="text-center bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition">
+                    <div key={i} className="text-center bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition">
                       <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-2xl mb-2.5 overflow-hidden shadow-md relative`}>
                         {isImgUrl(s.emoji) ? <img src={s.emoji} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={s.name} className="w-full h-full object-cover" /> : <span className="drop-shadow">{s.emoji}</span>}
                         <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 border-2 border-white rounded-full" />
                       </div>
-                      <p className="text-xs font-semibold text-gray-800 leading-tight truncate">{s.name}</p>
-                      <p className="text-[11px] text-gray-400 leading-tight truncate">{s.role}</p>
+                      <p className="text-xs font-semibold text-fg-strong leading-tight truncate">{s.name}</p>
+                      <p className="text-[11px] text-fg-muted leading-tight truncate">{s.role}</p>
                     </div>
                   );
                 })}
@@ -475,7 +475,7 @@ export function MechDetailBody() {
 
           {/* Konum */}
           <Section id="mech-location" icon={Navigation} title={t("location")}>
-            <div className="rounded-2xl overflow-hidden border border-gray-200 bg-white">
+            <div className="rounded-2xl overflow-hidden border border-border bg-white">
               <MapPanel className={compact ? "h-32" : "h-56 md:h-64"} items={[selectedMechanic]} onPick={() => {}} />
               <a
                 /* Koordinatlar da KODLANARAK ekleniyor. Sütun REAL ama SQLite gevşek tipli ve
@@ -486,10 +486,10 @@ export function MechDetailBody() {
                   ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${selectedMechanic.lat},${selectedMechanic.lng}`)}`
                   : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedMechanic.address || selectedMechanic.name)}`}
                 target="_blank" rel="noreferrer"
-                className="p-4 flex items-center justify-between gap-3 hover:bg-gray-50 transition group"
+                className="p-4 flex items-center justify-between gap-3 hover:bg-background transition group"
               >
-                <p className="text-sm text-gray-600 group-hover:text-blue-600 transition">{selectedMechanic.address}</p>
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 flex-shrink-0"><Navigation size={13} /> {t("directionsLabel")}</span>
+                <p className="text-sm text-fg-secondary group-hover:text-primary transition">{selectedMechanic.address}</p>
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-primary flex-shrink-0"><Navigation size={13} /> {t("directionsLabel")}</span>
               </a>
             </div>
           </Section>
@@ -497,7 +497,7 @@ export function MechDetailBody() {
           {/* Satılık araçlar & iş ilanları */}
           {isVisitor && mechListings.length > 0 && (
             <Section id="mech-inventory" icon={Car} title={t("carListingsTitle")} count={mechListings.length}
-              action={selectedMechanic.verified ? <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 flex items-center gap-1"><BadgeCheck size={12} /> {t("authorizedDealerBadge")}</span> : null}>
+              action={selectedMechanic.verified ? <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-primary-tint text-primary flex items-center gap-1"><BadgeCheck size={12} /> {t("authorizedDealerBadge")}</span> : null}>
               <div className={`grid gap-4 ${compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>{mechListings.map((l) => (<ListingCard key={l.id} l={l} />))}</div>
             </Section>
           )}
@@ -509,25 +509,25 @@ export function MechDetailBody() {
 
           {/* Yorumlar — puan dağılımı + kart ızgarası (marka bandı yerine okunabilir düzen) */}
           <Section id="mech-reviews" icon={Star} title={t("reviews")}
-            action={reviewList.length > 0 ? <button onClick={() => setShowAllReviews(true)} className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-0.5">{t("viewAllBtn")} <ChevronRight size={14} /></button> : null}>
+            action={reviewList.length > 0 ? <button onClick={() => setShowAllReviews(true)} className="text-sm font-semibold text-primary hover:text-primary-hover flex items-center gap-0.5">{t("viewAllBtn")} <ChevronRight size={14} /></button> : null}>
             {reviewList.length === 0 ? (
-              <p className="text-sm text-gray-400 bg-white border border-gray-200 rounded-2xl p-6 text-center">{t("mechNoReviewsYet")}</p>
+              <p className="text-sm text-fg-muted bg-white border border-border rounded-2xl p-6 text-center">{t("mechNoReviewsYet")}</p>
             ) : (
               <>
-                <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-4 flex flex-col sm:flex-row gap-5 sm:items-center">
+                <div className="bg-white border border-border rounded-2xl p-5 mb-4 flex flex-col sm:flex-row gap-5 sm:items-center">
                   <div className="text-center sm:w-36 flex-shrink-0">
-                    <p className="text-4xl font-bold text-gray-900 leading-none">{selectedMechanic.rating}</p>
-                    <div className="flex items-center justify-center gap-0.5 my-1.5">{[...Array(5)].map((_, j) => (<Star key={j} size={13} className={j < Math.round(selectedMechanic.rating) ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div>
-                    <p className="text-xs text-gray-400">{selectedMechanic.reviews} {t("reviewWordPlural")}</p>
+                    <p className="text-4xl font-bold text-fg leading-none">{selectedMechanic.rating}</p>
+                    <div className="flex items-center justify-center gap-0.5 my-1.5">{[...Array(5)].map((_, j) => (<Star key={j} size={13} className={j < Math.round(selectedMechanic.rating) ? "text-fg fill-fg" : "text-fg-muted fill-fg-muted"} />))}</div>
+                    <p className="text-xs text-fg-muted">{selectedMechanic.reviews} {t("reviewWordPlural")}</p>
                   </div>
                   <div className="flex-1 space-y-1.5">
                     {ratingBuckets.map((b) => {
                       const pct = reviewList.length ? Math.round((b.count / reviewList.length) * 100) : 0;
                       return (
                         <div key={b.star} className="flex items-center gap-2.5">
-                          <span className="text-[11px] text-gray-400 w-3 text-right">{b.star}</span>
-                          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-gray-900 rounded-full" style={{ width: `${pct}%` }} /></div>
-                          <span className="text-[11px] text-gray-400 w-7">{b.count}</span>
+                          <span className="text-[11px] text-fg-muted w-3 text-right">{b.star}</span>
+                          <div className="flex-1 h-1.5 bg-surface-elevated rounded-full overflow-hidden"><div className="h-full bg-secondary rounded-full" style={{ width: `${pct}%` }} /></div>
+                          <span className="text-[11px] text-fg-muted w-7">{b.count}</span>
                         </div>
                       );
                     })}
@@ -539,31 +539,31 @@ export function MechDetailBody() {
                     const times = REVIEW_TIME_LABELS_BY_LANG[lang] || REVIEW_TIME_LABELS_BY_LANG.tr;
                     const liked = likedReviewIds.includes(`${selectedMechanic.id}:${r.id}`);
                     return (
-                      <div key={r.id ?? i} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                      <div key={r.id ?? i} className="bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm">
                         <div className="flex items-center gap-2.5 mb-2.5">
                           <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-lg flex-shrink-0 shadow-sm`}>{r.avatar}</div>
-                          <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate">{r.name}</p><p className="text-[11px] text-gray-400">{times[i % times.length]}</p></div>
+                          <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-fg-strong truncate">{r.name}</p><p className="text-[11px] text-fg-muted">{times[i % times.length]}</p></div>
                           <BadgeCheck size={14} className="text-blue-400 flex-shrink-0" />
                         </div>
-                        <div className="flex items-center gap-0.5 mb-2">{[...Array(5)].map((_, j) => (<Star key={j} size={12} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div>
+                        <div className="flex items-center gap-0.5 mb-2">{[...Array(5)].map((_, j) => (<Star key={j} size={12} className={j < r.rating ? "text-fg fill-fg" : "text-fg-muted fill-fg-muted"} />))}</div>
                         {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 400)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-full h-32 rounded-xl object-cover mb-2" />}
-                        <p className="text-xs text-gray-500 leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} scope="public" text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p>
+                        <p className="text-xs text-fg-secondary leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} scope="public" text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p>
                         {/* İŞARETLİ YORUM: bir işletme hesabına bağlı olduğu için ortalamaya
                             katılmıyor. Silmiyoruz (tamirci de gerçek müşteri olabilir) ama sessizce
                             puanı etkilemesine de izin vermiyoruz — okuyucu bunu bilmeli. */}
-                        {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
-                        {r.reply && (<div className="mt-2.5 bg-gray-50 rounded-xl p-2.5"><p className="text-[10px] font-bold text-gray-500 mb-0.5">{t("businessReplyLabel")}</p><p className="text-[11px] text-gray-500 leading-snug"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} scope="public" text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p></div>)}
+                        {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
+                        {r.reply && (<div className="mt-2.5 bg-background rounded-xl p-2.5"><p className="text-[10px] font-bold text-fg-secondary mb-0.5">{t("businessReplyLabel")}</p><p className="text-[11px] text-fg-secondary leading-snug"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} scope="public" text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p></div>)}
                         {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                           replyingReviewId === r.id ? (
-                            <div className="mt-2.5 pt-2.5 border-t border-gray-50">
-                              <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder={t("writeYourReplyPlaceholder")} className="w-full text-xs border border-gray-200 rounded-lg p-2 mb-1.5 resize-none" />
-                              <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-gray-200 text-gray-500">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-blue-600 text-white font-medium">{t("sendBtn")}</button></div>
+                            <div className="mt-2.5 pt-2.5 border-t border-background">
+                              <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder={t("writeYourReplyPlaceholder")} className="w-full text-xs border border-border rounded-lg p-2 mb-1.5 resize-none" />
+                              <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-border text-fg-secondary">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-primary text-white font-medium">{t("sendBtn")}</button></div>
                             </div>
-                          ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-blue-600 font-semibold">{t("replyBtn")}</button>)
+                          ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-primary font-semibold">{t("replyBtn")}</button>)
                         )}
-                        <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={canVoteHelpful === false} className={`flex items-center gap-1.5 mt-3 pt-2.5 border-t border-gray-50 w-full ${canVoteHelpful ? "cursor-pointer" : "cursor-default"}`}>
-                          <ThumbsUp size={12} className={liked ? "text-blue-600 fill-blue-600" : "text-gray-300"} />
-                          <span className={`text-[11px] ${liked ? "text-blue-600 font-semibold" : "text-gray-300"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
+                        <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={canVoteHelpful === false} className={`flex items-center gap-1.5 mt-3 pt-2.5 border-t border-background w-full ${canVoteHelpful ? "cursor-pointer" : "cursor-default"}`}>
+                          <ThumbsUp size={12} className={liked ? "text-primary fill-primary" : "text-fg-muted"} />
+                          <span className={`text-[11px] ${liked ? "text-primary font-semibold" : "text-fg-muted"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
                         </button>
                       </div>
                     );
@@ -574,7 +574,7 @@ export function MechDetailBody() {
           </Section>
 
           {isVisitor && (
-            <button onClick={() => { closeOverlays(); openReportForm("quality", `Tamirci #${selectedMechanic.id} · ${selectedMechanic.name}`, `"${selectedMechanic.name}" hakkında şikayetim var`); }} className="w-full flex items-center justify-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition py-2"><Flag size={12} /> {t("reportThisMechanicBtn")}</button>
+            <button onClick={() => { closeOverlays(); openReportForm("quality", `Tamirci #${selectedMechanic.id} · ${selectedMechanic.name}`, `"${selectedMechanic.name}" hakkında şikayetim var`); }} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-red-500 transition py-2"><Flag size={12} /> {t("reportThisMechanicBtn")}</button>
           )}
         </div>
 
@@ -590,51 +590,51 @@ export function MechDetailBody() {
 
       {/* ---- MOBİL YAPIŞKAN AKSİYON ÇUBUĞU ---- tam sayfada sağdaki kart görünmediği için ---- */}
       {!compact && isVisitor && (
-        <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 flex items-center gap-3">
+        <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-border px-4 py-3 flex items-center gap-3">
           <div className="flex-shrink-0">
-            <p className="text-[10px] text-gray-400 leading-none mb-0.5">{t("mechStartingFromLabel")}</p>
-            <p className="text-base font-bold text-gray-900 leading-none">{mechanicStartingPrice(selectedMechanic) > 0 ? `${mechanicStartingPrice(selectedMechanic).toLocaleString("tr-TR")}₺` : "—"}</p>
+            <p className="text-[10px] text-fg-muted leading-none mb-0.5">{t("mechStartingFromLabel")}</p>
+            <p className="text-base font-bold text-fg leading-none">{mechanicStartingPrice(selectedMechanic) > 0 ? `${mechanicStartingPrice(selectedMechanic).toLocaleString("tr-TR")}₺` : "—"}</p>
           </div>
-          <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
-          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center justify-center gap-2"><Calendar size={16} /> {t("bookNow")}</button>
+          <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-border text-fg-secondary flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
+          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="flex-1 bg-primary text-white py-3 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-2"><Calendar size={16} /> {t("bookNow")}</button>
         </div>
       )}
 
       {showAllReviews && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" style={{ zIndex: 9000 }} onClick={() => setShowAllReviews(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg my-auto max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="px-5 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+            <div className="px-5 pt-5 pb-4 border-b border-surface-elevated flex items-center justify-between flex-shrink-0">
               <div>
-                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Star size={18} className="text-gray-900 fill-gray-900" /> {t("allReviewsTitle")}</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{selectedMechanic.rating} <Star size={10} className="inline text-gray-900 fill-gray-900" /> · {selectedMechanic.reviews} {t("reviewWordPlural")}</p>
+                <h3 className="font-bold text-fg text-base flex items-center gap-2"><Star size={18} className="text-fg fill-fg" /> {t("allReviewsTitle")}</h3>
+                <p className="text-xs text-fg-muted mt-0.5">{selectedMechanic.rating} <Star size={10} className="inline text-fg fill-fg" /> · {selectedMechanic.reviews} {t("reviewWordPlural")}</p>
               </div>
-              <button onClick={() => setShowAllReviews(false)} aria-label={t("closeAria")} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0 ml-3"><X size={15} /></button>
+              <button onClick={() => setShowAllReviews(false)} aria-label={t("closeAria")} className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-fg-secondary flex-shrink-0 ml-3"><X size={15} /></button>
             </div>
-            <div className="overflow-y-auto flex-1 divide-y divide-gray-100">
+            <div className="overflow-y-auto flex-1 divide-y divide-surface-elevated">
               {reviewList.map((r) => {
                 const liked = likedReviewIds.includes(`${selectedMechanic.id}:${r.id}`);
                 return (
                   <div key={r.id} className="p-5">
                     <div className="flex items-center gap-2.5 mb-2.5">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{r.avatar}</div>
-                      <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-gray-800 truncate flex items-center gap-1">{r.name}<BadgeCheck size={12} className="text-blue-400 flex-shrink-0" /></p><div className="flex items-center gap-1">{[...Array(5)].map((_, j) => (<Star key={j} size={11} className={j < r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div></div>
+                      <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-fg-strong truncate flex items-center gap-1">{r.name}<BadgeCheck size={12} className="text-blue-400 flex-shrink-0" /></p><div className="flex items-center gap-1">{[...Array(5)].map((_, j) => (<Star key={j} size={11} className={j < r.rating ? "text-fg fill-fg" : "text-fg-muted fill-fg-muted"} />))}</div></div>
                     </div>
                     {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 300)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-1/3 max-w-[110px] aspect-square rounded-xl object-cover mb-2.5 float-left mr-3" />}
-                    <p className="text-sm text-gray-600 leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} scope="public" text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
+                    <p className="text-sm text-fg-secondary leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} scope="public" text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
                     <div className="clear-left" />
-                    {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
-                    {r.reply && (<div className="mt-2.5 pt-2.5 border-t border-gray-50 bg-gray-50 rounded-xl p-3"><p className="text-[10px] font-bold text-gray-500 mb-1">{t("businessReplyLabel")}</p><p className="text-xs text-gray-500 leading-relaxed"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} scope="public" text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p></div>)}
+                    {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
+                    {r.reply && (<div className="mt-2.5 pt-2.5 border-t border-background bg-background rounded-xl p-3"><p className="text-[10px] font-bold text-fg-secondary mb-1">{t("businessReplyLabel")}</p><p className="text-xs text-fg-secondary leading-relaxed"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} scope="public" text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p></div>)}
                     {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                       replyingReviewId === r.id ? (
-                        <div className="mt-2.5 pt-2.5 border-t border-gray-50">
-                          <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder={t("writeYourReplyPlaceholder")} className="w-full text-xs border border-gray-200 rounded-lg p-2 mb-1.5 resize-none" />
-                          <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-gray-200 text-gray-500">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-blue-600 text-white font-medium">{t("sendBtn")}</button></div>
+                        <div className="mt-2.5 pt-2.5 border-t border-background">
+                          <textarea value={replyDraft} onChange={(e) => setReplyDraft(e.target.value)} rows={2} placeholder={t("writeYourReplyPlaceholder")} className="w-full text-xs border border-border rounded-lg p-2 mb-1.5 resize-none" />
+                          <div className="flex gap-1.5"><button onClick={() => { setReplyingReviewId(null); setReplyDraft(""); }} className="flex-1 text-[11px] py-1.5 rounded-lg border border-border text-fg-secondary">{t("giveUpBtn")}</button><button onClick={() => submitMechanicReply(selectedMechanic.id, r.id)} className="flex-1 text-[11px] py-1.5 rounded-lg bg-primary text-white font-medium">{t("sendBtn")}</button></div>
                         </div>
-                      ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-blue-600 font-semibold">{t("replyBtn")}</button>)
+                      ) : (<button onClick={() => { setReplyingReviewId(r.id); setReplyDraft(""); }} className="mt-2.5 text-[11px] text-primary font-semibold">{t("replyBtn")}</button>)
                     )}
                     <button onClick={() => toggleReviewHelpful(selectedMechanic.id, r.id)} disabled={canVoteHelpful === false} className={`flex items-center gap-1.5 mt-3 ${canVoteHelpful ? "cursor-pointer" : "cursor-default"}`}>
-                      <ThumbsUp size={14} className={liked ? "text-blue-600 fill-blue-600" : "text-gray-300"} />
-                      <span className={`text-xs ${liked ? "text-blue-600 font-semibold" : "text-gray-400"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
+                      <ThumbsUp size={14} className={liked ? "text-primary fill-primary" : "text-fg-muted"} />
+                      <span className={`text-xs ${liked ? "text-primary font-semibold" : "text-fg-muted"}`}>{t("helpfulLabel")}{r.helpfulCount ? ` · ${r.helpfulCount}` : ""}</span>
                     </button>
                   </div>
                 );

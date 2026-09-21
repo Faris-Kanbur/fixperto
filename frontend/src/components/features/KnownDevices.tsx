@@ -44,8 +44,8 @@ export function KnownDevices({ devices = null, loading = false, onLoad = () => {
   };
 
   return (
-    <div className="mt-3 pt-3 border-t border-gray-100">
-      <p className="text-[11px] text-gray-400 mb-2">{t("knownDevicesDesc")}</p>
+    <div className="mt-3 pt-3 border-t border-surface-elevated">
+      <p className="text-[11px] text-fg-muted mb-2">{t("knownDevicesDesc")}</p>
       {/* `devices === null` iki farklı durumu kapsıyor: henüz istenmedi ve istenip BAŞARISIZ oldu.
           İkisinde de listeyi göstermiyoruz — boş liste göstermek "hiç tarayıcı yok" demek olurdu
           ve bu yanlış bilgi olurdu. Hata durumunda kullanıcı uyarı mesajını zaten görüyor. */}
@@ -53,21 +53,21 @@ export function KnownDevices({ devices = null, loading = false, onLoad = () => {
         <button
           onClick={onLoad}
           disabled={loading}
-          className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition disabled:opacity-50"
+          className="text-xs font-semibold text-fg-strong border border-border rounded-xl px-3 py-2 hover:bg-background transition disabled:opacity-50"
         >
           {loading ? t("knownDevicesLoading") : t("knownDevicesBtn")}
         </button>
       ) : devices.length === 0 ? (
-        <p className="text-xs text-gray-500">{t("knownDevicesEmpty")}</p>
+        <p className="text-xs text-fg-secondary">{t("knownDevicesEmpty")}</p>
       ) : (
         <>
           <ul className="space-y-1.5 mb-2">
             {devices.map((d, i) => (
-              <li key={`${d.label}-${i}`} className="flex items-start gap-2 text-xs text-gray-600">
-                <Monitor size={13} className="text-gray-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+              <li key={`${d.label}-${i}`} className="flex items-start gap-2 text-xs text-fg-secondary">
+                <Monitor size={13} className="text-fg-muted mt-0.5 flex-shrink-0" aria-hidden="true" />
                 <span>
-                  <span className="font-medium text-gray-700">{d.label}</span>
-                  <span className="block text-[11px] text-gray-400">
+                  <span className="font-medium text-fg-strong">{d.label}</span>
+                  <span className="block text-[11px] text-fg-muted">
                     {t("knownDeviceLastSeen", { d: fmt(d.lastSeenAt), n: String(d.loginCount) })}
                   </span>
                 </span>
@@ -76,7 +76,7 @@ export function KnownDevices({ devices = null, loading = false, onLoad = () => {
           </ul>
           {/* Ne yapılacağını söylemeyen bir uyarı işe yaramaz: tanınmayan bir satır görünce
               atılacak iki adım burada yazılı ve ikisinin butonu da hemen yukarıda. */}
-          <p className="text-[11px] text-gray-400">{t("knownDevicesNotMine")}</p>
+          <p className="text-[11px] text-fg-muted">{t("knownDevicesNotMine")}</p>
         </>
       )}
     </div>

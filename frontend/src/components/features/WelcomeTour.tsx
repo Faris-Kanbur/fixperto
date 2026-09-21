@@ -66,7 +66,7 @@ export function WelcomeTour() {
             {/* Logo — tıklanabilir DEĞİL: pencere zaten modal, arkaya gitmek kafa karıştırırdı. */}
             <div className="flex items-center gap-2 mb-8">
               <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
-                <Wrench size={18} className="text-blue-600" />
+                <Wrench size={18} className="text-primary" />
               </div>
               <span className="text-xl font-extrabold tracking-tight">Fixperto</span>
             </div>
@@ -88,16 +88,16 @@ export function WelcomeTour() {
         {/* ---- SAĞ: adım içeriği ---- */}
         <div className="p-7 md:p-10 flex flex-col">
           <div className="flex items-center justify-between mb-5">
-            <span className="text-xs font-bold tracking-wide uppercase text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full tabular-nums">
+            <span className="text-xs font-bold tracking-wide uppercase text-primary bg-primary-tint px-2.5 py-1 rounded-full tabular-nums">
               {onboardStep + 1} / {ONBOARDING_SLIDES.length}
             </span>
-            <button onClick={close} aria-label={t("skipTourAria")} className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition">
+            <button onClick={close} aria-label={t("skipTourAria")} className="text-xs font-semibold text-fg-muted hover:text-fg-secondary transition">
               {t("skipBtn")}
             </button>
           </div>
 
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-3">{t(slide.titleKey)}</h2>
-          <p className="text-[15px] text-gray-500 leading-relaxed">{t(slide.descKey)}</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-fg leading-tight mb-3">{t(slide.titleKey)}</h2>
+          <p className="text-[15px] text-fg-secondary leading-relaxed">{t(slide.descKey)}</p>
 
           <div className="flex-1 min-h-[24px]" />
 
@@ -108,7 +108,7 @@ export function WelcomeTour() {
                 onClick={() => setOnboardStep(i)}
                 aria-label={`${i + 1} / ${ONBOARDING_SLIDES.length}`}
                 aria-current={i === onboardStep}
-                className={`h-1.5 rounded-full transition-all ${i === onboardStep ? "w-8 bg-blue-600" : "w-2 bg-gray-200 hover:bg-gray-300"}`}
+                className={`h-1.5 rounded-full transition-all ${i === onboardStep ? "w-8 bg-primary" : "w-2 bg-border hover:bg-fg-muted"}`}
               />
             ))}
           </div>
@@ -117,14 +117,14 @@ export function WelcomeTour() {
             {onboardStep > 0 && (
               <button
                 onClick={() => setOnboardStep((s) => s - 1)}
-                className="h-12 px-4 rounded-2xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition flex items-center gap-1.5"
+                className="h-12 px-4 rounded-2xl border border-border text-fg-secondary font-semibold text-sm hover:bg-background transition flex items-center gap-1.5"
               >
                 <ChevronLeft size={16} /> {t("back")}
               </button>
             )}
             <button
               onClick={() => { if (isLast) close(); else setOnboardStep((s) => s + 1); }}
-              className="flex-1 h-12 bg-blue-600 text-white rounded-2xl font-semibold text-sm hover:bg-blue-700 transition flex items-center justify-center gap-1.5"
+              className="flex-1 h-12 bg-primary text-white rounded-2xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-1.5"
             >
               {isLast ? t("letsStartBtn") : t("nextBtn")}
               {!isLast && <ChevronRight size={16} />}

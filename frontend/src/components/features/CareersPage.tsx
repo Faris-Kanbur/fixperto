@@ -47,7 +47,7 @@ export function CareersPage() {
   ];
 
   return (
-    <div className="w-full bg-gray-50 min-h-screen flex flex-col">
+    <div className="w-full bg-background min-h-screen flex flex-col">
       <PageTopBar />
 
       {/* ---- Başlık bandı ---- */}
@@ -65,26 +65,26 @@ export function CareersPage() {
         {/* ---- Neden burada çalışılır ---- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
           {values.map((v) => (
-            <div key={v.title} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-3"><v.icon size={18} /></div>
-              <h3 className="font-bold text-gray-900 text-sm mb-1">{v.title}</h3>
-              <p className="text-[13px] text-gray-500 leading-relaxed">{v.body}</p>
+            <div key={v.title} className="bg-white border border-surface-elevated rounded-2xl p-5 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-primary-tint flex items-center justify-center text-primary mb-3"><v.icon size={18} /></div>
+              <h3 className="font-bold text-fg text-sm mb-1">{v.title}</h3>
+              <p className="text-[13px] text-fg-secondary leading-relaxed">{v.body}</p>
             </div>
           ))}
         </div>
 
         {/* ---- Açık pozisyonlar ---- */}
         <div className="flex items-baseline justify-between gap-3 mb-4">
-          <h2 className="text-xl font-bold text-gray-900">{t("careersOpenRoles")}</h2>
-          <span className="text-sm text-gray-400">{careerPosts.length}</span>
+          <h2 className="text-xl font-bold text-fg">{t("careersOpenRoles")}</h2>
+          <span className="text-sm text-fg-muted">{careerPosts.length}</span>
         </div>
 
         {careerPosts.length === 0 ? (
-          <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-16 px-6">
-            <Briefcase size={36} className="mx-auto text-gray-200 mb-3" />
-            <p className="font-semibold text-gray-700 mb-1">{t("careersNoRolesTitle")}</p>
-            <p className="text-sm text-gray-400 max-w-md mx-auto leading-relaxed">{t("careersNoRolesBody")}</p>
-            <a href="mailto:kariyer@fixperto.com" className="mt-5 inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">
+          <div className="bg-white border border-dashed border-border rounded-3xl text-center py-16 px-6">
+            <Briefcase size={36} className="mx-auto text-fg-muted mb-3" />
+            <p className="font-semibold text-fg-strong mb-1">{t("careersNoRolesTitle")}</p>
+            <p className="text-sm text-fg-muted max-w-md mx-auto leading-relaxed">{t("careersNoRolesBody")}</p>
+            <a href="mailto:kariyer@fixperto.com" className="mt-5 inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition">
               <Mail size={15} /> kariyer@fixperto.com
             </a>
           </div>
@@ -93,25 +93,25 @@ export function CareersPage() {
             {careerPosts.map((job) => {
               const open = openId === job.id;
               return (
-                <div key={job.id} className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+                <div key={job.id} className="bg-white border border-surface-elevated rounded-2xl shadow-sm overflow-hidden">
                   <button onClick={() => setOpenId(open ? null : job.id)} aria-expanded={open}
                     className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-50/70 transition">
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-bold text-gray-900 text-[15px] truncate">{job.title}</h3>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[11px] text-gray-400">
+                      <h3 className="font-bold text-fg text-[15px] truncate">{job.title}</h3>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[11px] text-fg-muted">
                         {job.department && <span className="flex items-center gap-1"><Briefcase size={11} /> {job.department}</span>}
                         {job.location && <span className="flex items-center gap-1"><MapPin size={11} /> {job.location}</span>}
                         <span className="flex items-center gap-1"><Clock size={11} /> {t(TYPE_KEYS[job.employmentType] || "careerTypeFullTime")}</span>
                       </div>
                     </div>
-                    <ChevronRight size={16} className={`text-gray-300 flex-shrink-0 transition ${open ? "rotate-90" : ""}`} />
+                    <ChevronRight size={16} className={`text-fg-muted flex-shrink-0 transition ${open ? "rotate-90" : ""}`} />
                   </button>
                   {open && (
-                    <div className="px-5 pb-5 border-t border-gray-100 pt-4">
-                      {job.summary && <p className="text-sm text-gray-600 leading-relaxed mb-3">{job.summary}</p>}
-                      {job.description && <p className="text-[13px] text-gray-500 leading-relaxed whitespace-pre-line">{job.description}</p>}
+                    <div className="px-5 pb-5 border-t border-surface-elevated pt-4">
+                      {job.summary && <p className="text-sm text-fg-secondary leading-relaxed mb-3">{job.summary}</p>}
+                      {job.description && <p className="text-[13px] text-fg-secondary leading-relaxed whitespace-pre-line">{job.description}</p>}
                       <a href={`mailto:${job.applyEmail || "kariyer@fixperto.com"}?subject=${encodeURIComponent(job.title)}`}
-                        className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">
+                        className="mt-4 inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition">
                         <Mail size={15} /> {t("careersApplyBtn")}
                       </a>
                     </div>

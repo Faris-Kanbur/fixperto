@@ -2916,28 +2916,28 @@ function useAppLogic() {
   const renderAdminProfileRow = (user, key, label, value, opts: any = {}) => {
     const editing = editingProfileField === key;
     return (
-      <div key={key} className="flex items-center justify-between gap-3 py-3 border-b border-gray-100 last:border-0">
+      <div key={key} className="flex items-center justify-between gap-3 py-3 border-b border-surface-elevated last:border-0">
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] text-gray-400 mb-0.5">{label}</p>
+          <p className="text-[11px] text-fg-muted mb-0.5">{label}</p>
           {editing ? (
             opts.type === "toggle" ? (
               <div className="flex gap-2 mt-1">
-                {opts.options.map(o => (<button key={o.value} onClick={() => setProfileFieldDraft(o.value)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${String(profileFieldDraft) === o.value ? "bg-gray-900 border-gray-900 text-white" : "border-gray-200 text-gray-500"}`}>{o.label}</button>))}
+                {opts.options.map(o => (<button key={o.value} onClick={() => setProfileFieldDraft(o.value)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${String(profileFieldDraft) === o.value ? "bg-secondary border-secondary text-white" : "border-border text-fg-secondary"}`}>{o.label}</button>))}
               </div>
             ) : (
-              <input autoFocus type={opts.numeric ? "number" : "text"} value={profileFieldDraft} onChange={(e) => setProfileFieldDraft(e.target.value)} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 text-sm mt-0.5" onKeyDown={(e) => { if (e.key === "Enter") saveProfileField(user, key); if (e.key === "Escape") cancelEditProfileField(); }} />
+              <input autoFocus type={opts.numeric ? "number" : "text"} value={profileFieldDraft} onChange={(e) => setProfileFieldDraft(e.target.value)} className="w-full px-2.5 py-1.5 rounded-lg border border-fg-muted text-sm mt-0.5" onKeyDown={(e) => { if (e.key === "Enter") saveProfileField(user, key); if (e.key === "Escape") cancelEditProfileField(); }} />
             )
           ) : (
-            <p className="text-sm font-medium text-gray-800">{opts.display !== undefined ? opts.display : (value || value === 0 ? value : "—")}</p>
+            <p className="text-sm font-medium text-fg-strong">{opts.display !== undefined ? opts.display : (value || value === 0 ? value : "—")}</p>
           )}
         </div>
         {editing ? (
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button onClick={() => saveProfileField(user, key)} aria-label="Kaydet" className="w-7 h-7 rounded-lg bg-gray-900 text-white flex items-center justify-center hover:bg-gray-800 transition"><Check size={13} /></button>
-            <button onClick={cancelEditProfileField} aria-label="Vazgeç" className="w-7 h-7 rounded-lg border border-gray-200 text-gray-400 flex items-center justify-center hover:bg-gray-50 transition"><X size={13} /></button>
+            <button onClick={() => saveProfileField(user, key)} aria-label="Kaydet" className="w-7 h-7 rounded-lg bg-secondary text-white flex items-center justify-center hover:bg-fg-strong transition"><Check size={13} /></button>
+            <button onClick={cancelEditProfileField} aria-label="Vazgeç" className="w-7 h-7 rounded-lg border border-border text-fg-muted flex items-center justify-center hover:bg-background transition"><X size={13} /></button>
           </div>
         ) : (
-          <button onClick={() => startEditProfileField(key, value)} aria-label={`${label} düzenle`} className="w-7 h-7 rounded-lg border border-gray-200 text-gray-400 flex items-center justify-center hover:bg-gray-50 hover:text-gray-600 transition flex-shrink-0"><Pencil size={12} /></button>
+          <button onClick={() => startEditProfileField(key, value)} aria-label={`${label} düzenle`} className="w-7 h-7 rounded-lg border border-border text-fg-muted flex items-center justify-center hover:bg-background hover:text-fg-secondary transition flex-shrink-0"><Pencil size={12} /></button>
         )}
       </div>
     );
@@ -2983,40 +2983,40 @@ function useAppLogic() {
   const renderAdminListingCard = (l) => {
     const expanded = expandedAdminListingId === l.id;
     return (
-      <div key={l.id} className="bg-gray-50 rounded-xl p-3">
+      <div key={l.id} className="bg-background rounded-xl p-3">
         <div className="flex items-center justify-between gap-2 mb-1.5">
-          <p className="text-xs font-semibold text-gray-800 truncate">{l.brand} {l.model} <span className="text-gray-300 font-normal">#{l.id}</span></p>
+          <p className="text-xs font-semibold text-fg-strong truncate">{l.brand} {l.model} <span className="text-fg-muted font-normal">#{l.id}</span></p>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[10px] text-gray-400 flex items-center gap-0.5" title="Kaç kez paylaşıldı"><Share2 size={10} /> {l.shareCount || 0}</span>
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-gray-800 text-white" : l.status === "sold" ? "bg-red-50 text-red-500" : l.status === "reserved" ? "bg-gray-200 text-gray-700" : "bg-green-50 text-green-600"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
+            <span className="text-[10px] text-fg-muted flex items-center gap-0.5" title="Kaç kez paylaşıldı"><Share2 size={10} /> {l.shareCount || 0}</span>
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-fg-strong text-white" : l.status === "sold" ? "bg-error-tint text-red-500" : l.status === "reserved" ? "bg-border text-fg-strong" : "bg-success-tint text-success"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
             {l.featured && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">⭐ Öne Çıkan</span>}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <input value={l.price} onChange={(e) => updateListingField(l.id, "price", e.target.value)} {...trackInputProps("listing", l.id, "price", l.price)} className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" />
-          <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "featured", oldValue: l.featured, newValue: !l.featured }); updateListingField(l.id, "featured", !l.featured); }} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.featured ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "border border-gray-200 text-gray-500 hover:bg-gray-100"}`}>{l.featured ? "⭐ Kaldır" : "⭐ Öne Çıkar"}</button>
-          <button onClick={() => toggleListingRemoved(l.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.adminRemoved ? "bg-green-50 text-green-600 hover:bg-green-100" : "bg-red-50 text-red-500 hover:bg-red-100"}`}>{l.adminRemoved ? "Geri Yükle" : "Kaldır"}</button>
-          <button onClick={() => setExpandedAdminListingId(x => x === l.id ? null : l.id)} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 border border-gray-200 text-gray-600 hover:bg-gray-100 transition">{expanded ? "Kapat" : "Detaylar"}</button>
+          <input value={l.price} onChange={(e) => updateListingField(l.id, "price", e.target.value)} {...trackInputProps("listing", l.id, "price", l.price)} className="flex-1 px-2 py-1.5 rounded-lg border border-border text-xs" />
+          <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "featured", oldValue: l.featured, newValue: !l.featured }); updateListingField(l.id, "featured", !l.featured); }} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.featured ? "bg-warning-tint text-amber-700 hover:bg-amber-100" : "border border-border text-fg-secondary hover:bg-surface-elevated"}`}>{l.featured ? "⭐ Kaldır" : "⭐ Öne Çıkar"}</button>
+          <button onClick={() => toggleListingRemoved(l.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.adminRemoved ? "bg-success-tint text-success hover:bg-green-100" : "bg-error-tint text-red-500 hover:bg-red-100"}`}>{l.adminRemoved ? "Geri Yükle" : "Kaldır"}</button>
+          <button onClick={() => setExpandedAdminListingId(x => x === l.id ? null : l.id)} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 border border-border text-fg-secondary hover:bg-surface-elevated transition">{expanded ? "Kapat" : "Detaylar"}</button>
         </div>
         {expanded && (
-          <div className="mt-2.5 pt-2.5 border-t border-gray-200 grid grid-cols-2 gap-2">
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Marka</label><input value={l.brand} onChange={(e) => updateListingField(l.id, "brand", e.target.value)} {...trackInputProps("listing", l.id, "brand", l.brand)} data-brand-freetext="admin" className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Model</label><input value={l.model} onChange={(e) => updateListingField(l.id, "model", e.target.value)} {...trackInputProps("listing", l.id, "model", l.model)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Yıl</label><input value={l.year} onChange={(e) => updateListingField(l.id, "year", e.target.value)} {...trackInputProps("listing", l.id, "year", l.year)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Kilometre</label><input value={l.km} onChange={(e) => updateListingField(l.id, "km", e.target.value)} {...trackInputProps("listing", l.id, "km", l.km)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Yakıt Tipi</label><input value={l.fuelType} onChange={(e) => updateListingField(l.id, "fuelType", e.target.value)} {...trackInputProps("listing", l.id, "fuelType", l.fuelType)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Vites</label><input value={l.transmission} onChange={(e) => updateListingField(l.id, "transmission", e.target.value)} {...trackInputProps("listing", l.id, "transmission", l.transmission)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Güç (hp)</label><input value={l.power} onChange={(e) => updateListingField(l.id, "power", e.target.value)} {...trackInputProps("listing", l.id, "power", l.power)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Renk</label><input value={l.color} onChange={(e) => updateListingField(l.id, "color", e.target.value)} {...trackInputProps("listing", l.id, "color", l.color)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">İlk Tescil</label><input value={l.firstReg} onChange={(e) => updateListingField(l.id, "firstReg", e.target.value)} {...trackInputProps("listing", l.id, "firstReg", l.firstReg)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Açıklama</label><textarea value={l.description} onChange={(e) => updateListingField(l.id, "description", e.target.value)} {...trackInputProps("listing", l.id, "description", l.description)} rows={2} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs resize-none" /></div>
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Ekspertiz Raporu Bağlantısı</label><input value={l.inspectionReportUrl || ""} onChange={(e) => updateListingField(l.id, "inspectionReportUrl", e.target.value)} {...trackInputProps("listing", l.id, "inspectionReportUrl", l.inspectionReportUrl)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
+          <div className="mt-2.5 pt-2.5 border-t border-border grid grid-cols-2 gap-2">
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Marka</label><input value={l.brand} onChange={(e) => updateListingField(l.id, "brand", e.target.value)} {...trackInputProps("listing", l.id, "brand", l.brand)} data-brand-freetext="admin" className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Model</label><input value={l.model} onChange={(e) => updateListingField(l.id, "model", e.target.value)} {...trackInputProps("listing", l.id, "model", l.model)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Yıl</label><input value={l.year} onChange={(e) => updateListingField(l.id, "year", e.target.value)} {...trackInputProps("listing", l.id, "year", l.year)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Kilometre</label><input value={l.km} onChange={(e) => updateListingField(l.id, "km", e.target.value)} {...trackInputProps("listing", l.id, "km", l.km)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Yakıt Tipi</label><input value={l.fuelType} onChange={(e) => updateListingField(l.id, "fuelType", e.target.value)} {...trackInputProps("listing", l.id, "fuelType", l.fuelType)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Vites</label><input value={l.transmission} onChange={(e) => updateListingField(l.id, "transmission", e.target.value)} {...trackInputProps("listing", l.id, "transmission", l.transmission)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Güç (hp)</label><input value={l.power} onChange={(e) => updateListingField(l.id, "power", e.target.value)} {...trackInputProps("listing", l.id, "power", l.power)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Renk</label><input value={l.color} onChange={(e) => updateListingField(l.id, "color", e.target.value)} {...trackInputProps("listing", l.id, "color", l.color)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">İlk Tescil</label><input value={l.firstReg} onChange={(e) => updateListingField(l.id, "firstReg", e.target.value)} {...trackInputProps("listing", l.id, "firstReg", l.firstReg)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">Açıklama</label><textarea value={l.description} onChange={(e) => updateListingField(l.id, "description", e.target.value)} {...trackInputProps("listing", l.id, "description", l.description)} rows={2} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs resize-none" /></div>
+            <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">Ekspertiz Raporu Bağlantısı</label><input value={l.inspectionReportUrl || ""} onChange={(e) => updateListingField(l.id, "inspectionReportUrl", e.target.value)} {...trackInputProps("listing", l.id, "inspectionReportUrl", l.inspectionReportUrl)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
             <div className="col-span-2">
-              <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "negotiable", oldValue: l.negotiable, newValue: !l.negotiable }); updateListingField(l.id, "negotiable", !l.negotiable); }} className={`w-full py-1.5 rounded-lg text-[11px] font-semibold border transition ${l.negotiable ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500"}`}>🤝 Pazarlık Payı {l.negotiable ? "Var" : "Yok"}</button>
+              <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "negotiable", oldValue: l.negotiable, newValue: !l.negotiable }); updateListingField(l.id, "negotiable", !l.negotiable); }} className={`w-full py-1.5 rounded-lg text-[11px] font-semibold border transition ${l.negotiable ? "bg-primary-tint border-blue-200 text-primary-hover" : "border-border text-fg-secondary"}`}>🤝 Pazarlık Payı {l.negotiable ? "Var" : "Yok"}</button>
             </div>
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-1 block">Durum</label>
+            <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-1 block">Durum</label>
               <div className="flex gap-1.5">
-                {[{ value: "active", label: "Aktif" }, { value: "reserved", label: "Rezerve" }, { value: "sold", label: "Satıldı" }].map(o => (<button key={o.value} onClick={() => { if (l.status !== o.value) logAdminChange({ targetType: "listing", targetId: l.id, field: "status", oldValue: l.status, newValue: o.value }); updateListingField(l.id, "status", o.value); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold border transition ${l.status === o.value ? "bg-gray-900 border-gray-900 text-white" : "border-gray-200 text-gray-500"}`}>{o.label}</button>))}
+                {[{ value: "active", label: "Aktif" }, { value: "reserved", label: "Rezerve" }, { value: "sold", label: "Satıldı" }].map(o => (<button key={o.value} onClick={() => { if (l.status !== o.value) logAdminChange({ targetType: "listing", targetId: l.id, field: "status", oldValue: l.status, newValue: o.value }); updateListingField(l.id, "status", o.value); }} className={`flex-1 py-1.5 rounded-lg text-[11px] font-semibold border transition ${l.status === o.value ? "bg-secondary border-secondary text-white" : "border-border text-fg-secondary"}`}>{o.label}</button>))}
               </div>
             </div>
           </div>
@@ -3029,26 +3029,26 @@ function useAppLogic() {
   const renderAdminJobCard = (j) => {
     const expanded = expandedAdminJobId === j.id;
     return (
-      <div key={j.id} className="bg-gray-50 rounded-xl p-3">
+      <div key={j.id} className="bg-background rounded-xl p-3">
         <div className="flex items-center justify-between gap-2 mb-1.5">
-          <div className="min-w-0 flex-1"><p className="text-xs font-semibold text-gray-800 truncate">{j.title}</p><p className="text-[10px] text-gray-400 flex items-center gap-1">{j.location} · {j.applicants.length} başvuru · <Share2 size={10} className="inline" /> {j.shareCount || 0} paylaşım</p></div>
-          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${j.status === "active" ? "bg-green-50 text-green-600" : "bg-gray-200 text-gray-600"}`}>{j.status === "active" ? "Açık" : "Kapalı"}</span>
+          <div className="min-w-0 flex-1"><p className="text-xs font-semibold text-fg-strong truncate">{j.title}</p><p className="text-[10px] text-fg-muted flex items-center gap-1">{j.location} · {j.applicants.length} başvuru · <Share2 size={10} className="inline" /> {j.shareCount || 0} paylaşım</p></div>
+          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${j.status === "active" ? "bg-success-tint text-success" : "bg-border text-fg-secondary"}`}>{j.status === "active" ? "Açık" : "Kapalı"}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => toggleJobListingStatus(j.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${j.status === "active" ? "bg-red-50 text-red-500 hover:bg-red-100" : "bg-green-50 text-green-600 hover:bg-green-100"}`}>{j.status === "active" ? "Kapat" : "Aç"}</button>
-          <button onClick={() => setExpandedAdminJobId(x => x === j.id ? null : j.id)} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 border border-gray-200 text-gray-600 hover:bg-gray-100 transition">{expanded ? "Kapat" : "Detaylar"}</button>
+          <button onClick={() => toggleJobListingStatus(j.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${j.status === "active" ? "bg-error-tint text-red-500 hover:bg-red-100" : "bg-success-tint text-success hover:bg-green-100"}`}>{j.status === "active" ? "Kapat" : "Aç"}</button>
+          <button onClick={() => setExpandedAdminJobId(x => x === j.id ? null : j.id)} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 border border-border text-fg-secondary hover:bg-surface-elevated transition">{expanded ? "Kapat" : "Detaylar"}</button>
         </div>
         {expanded && (
-          <div className="mt-2.5 pt-2.5 border-t border-gray-200 grid grid-cols-2 gap-2">
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Pozisyon</label><input value={j.title} onChange={(e) => updateJobField(j.id, "title", e.target.value)} {...trackInputProps("job", j.id, "title", j.title)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Çalışma Şekli</label><input value={j.employmentType} onChange={(e) => updateJobField(j.id, "employmentType", e.target.value)} {...trackInputProps("job", j.id, "employmentType", j.employmentType)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Deneyim Seviyesi</label><input value={j.experienceLevel} onChange={(e) => updateJobField(j.id, "experienceLevel", e.target.value)} {...trackInputProps("job", j.id, "experienceLevel", j.experienceLevel)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Konum</label><input value={j.location} onChange={(e) => updateJobField(j.id, "location", e.target.value)} {...trackInputProps("job", j.id, "location", j.location)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Min. Maaş</label><input value={j.salaryMin} onChange={(e) => updateJobField(j.id, "salaryMin", e.target.value)} {...trackInputProps("job", j.id, "salaryMin", j.salaryMin)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div><label className="text-[10px] text-gray-400 mb-0.5 block">Maks. Maaş</label><input value={j.salaryMax} onChange={(e) => updateJobField(j.id, "salaryMax", e.target.value)} {...trackInputProps("job", j.id, "salaryMax", j.salaryMax)} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Açıklama</label><textarea value={j.description} onChange={(e) => updateJobField(j.id, "description", e.target.value)} {...trackInputProps("job", j.id, "description", j.description)} rows={2} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs resize-none" /></div>
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Aranan Nitelikler (virgülle ayırın)</label><input value={(j.requirements || []).join(", ")} onChange={(e) => updateJobField(j.id, "requirements", e.target.value.split(",").map(s => s.trim()).filter(Boolean))} {...trackInputProps("job", j.id, "requirements", j.requirements, (e) => e.target.value.split(",").map(s => s.trim()).filter(Boolean))} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
-            <div className="col-span-2"><label className="text-[10px] text-gray-400 mb-0.5 block">Beceriler (virgülle ayırın)</label><input value={(j.skills || []).join(", ")} onChange={(e) => updateJobField(j.id, "skills", e.target.value.split(",").map(s => s.trim()).filter(Boolean))} {...trackInputProps("job", j.id, "skills", j.skills, (e) => e.target.value.split(",").map(s => s.trim()).filter(Boolean))} className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /></div>
+          <div className="mt-2.5 pt-2.5 border-t border-border grid grid-cols-2 gap-2">
+            <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">Pozisyon</label><input value={j.title} onChange={(e) => updateJobField(j.id, "title", e.target.value)} {...trackInputProps("job", j.id, "title", j.title)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Çalışma Şekli</label><input value={j.employmentType} onChange={(e) => updateJobField(j.id, "employmentType", e.target.value)} {...trackInputProps("job", j.id, "employmentType", j.employmentType)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Deneyim Seviyesi</label><input value={j.experienceLevel} onChange={(e) => updateJobField(j.id, "experienceLevel", e.target.value)} {...trackInputProps("job", j.id, "experienceLevel", j.experienceLevel)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">Konum</label><input value={j.location} onChange={(e) => updateJobField(j.id, "location", e.target.value)} {...trackInputProps("job", j.id, "location", j.location)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Min. Maaş</label><input value={j.salaryMin} onChange={(e) => updateJobField(j.id, "salaryMin", e.target.value)} {...trackInputProps("job", j.id, "salaryMin", j.salaryMin)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div><label className="text-[10px] text-fg-muted mb-0.5 block">Maks. Maaş</label><input value={j.salaryMax} onChange={(e) => updateJobField(j.id, "salaryMax", e.target.value)} {...trackInputProps("job", j.id, "salaryMax", j.salaryMax)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">Açıklama</label><textarea value={j.description} onChange={(e) => updateJobField(j.id, "description", e.target.value)} {...trackInputProps("job", j.id, "description", j.description)} rows={2} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs resize-none" /></div>
+            <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">Aranan Nitelikler (virgülle ayırın)</label><input value={(j.requirements || []).join(", ")} onChange={(e) => updateJobField(j.id, "requirements", e.target.value.split(",").map(s => s.trim()).filter(Boolean))} {...trackInputProps("job", j.id, "requirements", j.requirements, (e) => e.target.value.split(",").map(s => s.trim()).filter(Boolean))} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
+            <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">Beceriler (virgülle ayırın)</label><input value={(j.skills || []).join(", ")} onChange={(e) => updateJobField(j.id, "skills", e.target.value.split(",").map(s => s.trim()).filter(Boolean))} {...trackInputProps("job", j.id, "skills", j.skills, (e) => e.target.value.split(",").map(s => s.trim()).filter(Boolean))} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
           </div>
         )}
       </div>
@@ -3903,29 +3903,29 @@ function useAppLogic() {
     const myTickets = mySupportTickets();
     return (
       <>
-        <button onClick={() => setTabFn(backTab)} className="flex items-center gap-1 text-blue-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToMyInfoBtn")}</button>
-        <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><LifeBuoy size={16} className="text-blue-500" /> {t("helpAndSupportTitle")}</h2>
-        <p className="text-xs text-gray-400 mb-4">{t("helpAndSupportSub")}</p>
-        <button onClick={() => setShowNewTicketForm(true)} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition mb-5 flex items-center justify-center gap-2"><Plus size={15} /> {t("createSupportTicketBtn")}</button>
-        <h3 className="text-sm font-semibold text-gray-800 mb-3">{t("myTicketsTitle")}{myTickets.length > 0 ? ` (${myTickets.length})` : ""}</h3>
+        <button onClick={() => setTabFn(backTab)} className="flex items-center gap-1 text-primary mb-4 text-sm"><ChevronLeft size={16} /> {t("backToMyInfoBtn")}</button>
+        <h2 className="font-bold text-fg-strong mb-1 flex items-center gap-2"><LifeBuoy size={16} className="text-info" /> {t("helpAndSupportTitle")}</h2>
+        <p className="text-xs text-fg-muted mb-4">{t("helpAndSupportSub")}</p>
+        <button onClick={() => setShowNewTicketForm(true)} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-primary-hover transition mb-5 flex items-center justify-center gap-2"><Plus size={15} /> {t("createSupportTicketBtn")}</button>
+        <h3 className="text-sm font-semibold text-fg-strong mb-3">{t("myTicketsTitle")}{myTickets.length > 0 ? ` (${myTickets.length})` : ""}</h3>
         {myTickets.length === 0 ? (
-          <div className="text-center py-10 bg-white border border-gray-200 rounded-2xl"><LifeBuoy size={32} className="mx-auto text-gray-200 mb-2" /><p className="text-gray-400 text-sm">{t("noTicketsYetNotice")}</p></div>
+          <div className="text-center py-10 bg-white border border-border rounded-2xl"><LifeBuoy size={32} className="mx-auto text-fg-muted mb-2" /><p className="text-fg-muted text-sm">{t("noTicketsYetNotice")}</p></div>
         ) : (
           <div className="space-y-2">
             {myTickets.map(tk => (
-              <div key={tk.id} className="bg-white border border-gray-200 rounded-2xl p-4">
+              <div key={tk.id} className="bg-white border border-border rounded-2xl p-4">
                 <div className="flex items-center justify-between gap-2 mb-1">
-                  <p className="text-sm font-semibold text-gray-800">{tk.subject}</p>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-red-50 text-red-500" : tk.status === "in_review" ? "bg-gray-100 text-gray-600" : "bg-green-50 text-green-600"}`}>{ADMIN_TICKET_STATUS_LABELS[tk.status]}</span>
+                  <p className="text-sm font-semibold text-fg-strong">{tk.subject}</p>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-error-tint text-red-500" : tk.status === "in_review" ? "bg-surface-elevated text-fg-secondary" : "bg-success-tint text-success"}`}>{ADMIN_TICKET_STATUS_LABELS[tk.status]}</span>
                 </div>
-                <p className="text-[11px] text-gray-400 mb-2">{ADMIN_TICKET_TYPE_LABELS[tk.type]} · {tk.createdDate}</p>
-                <p className="text-xs text-gray-600">{tk.description}</p>
+                <p className="text-[11px] text-fg-muted mb-2">{ADMIN_TICKET_TYPE_LABELS[tk.type]} · {tk.createdDate}</p>
+                <p className="text-xs text-fg-secondary">{tk.description}</p>
                 {(tk.adminReplies || []).length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                  <div className="mt-3 pt-3 border-t border-surface-elevated space-y-2">
                     {tk.adminReplies.map((r, i) => (
-                      <div key={i} className="bg-gray-50 rounded-xl p-2.5">
-                        <p className="text-[10px] font-semibold text-gray-500 mb-0.5">{t("fixpertoSupportTeamLabel")} · {r.date}</p>
-                        <p className="text-xs text-gray-700">{r.text}</p>
+                      <div key={i} className="bg-background rounded-xl p-2.5">
+                        <p className="text-[10px] font-semibold text-fg-secondary mb-0.5">{t("fixpertoSupportTeamLabel")} · {r.date}</p>
+                        <p className="text-xs text-fg-strong">{r.text}</p>
                       </div>
                     ))}
                   </div>

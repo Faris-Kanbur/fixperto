@@ -122,8 +122,8 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
         <Share2 size={iconSize} />
       </button>
       {open && (
-        <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-2 z-[60] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 w-64">
-          <p className="text-xs font-semibold text-gray-500 px-1 mb-2">{t("shareMenuTitle")}</p>
+        <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-2 z-[60] bg-white rounded-2xl shadow-xl border border-surface-elevated p-3 w-64">
+          <p className="text-xs font-semibold text-fg-secondary px-1 mb-2">{t("shareMenuTitle")}</p>
           <div className="grid grid-cols-4 gap-2 mb-2">
             {platforms.map(({ key, label, Icon, bg, href }) => (
               // mailto: linki bir web sayfası değil, işletim sisteminin posta uygulamasını açar —
@@ -133,12 +133,12 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
                 <span className={`w-10 h-10 rounded-full ${bg} flex items-center justify-center text-white hover:opacity-90 transition`}>
                   <Icon size={18} />
                 </span>
-                <span className="text-[10px] text-gray-500">{label}</span>
+                <span className="text-[10px] text-fg-secondary">{label}</span>
               </a>
             ))}
           </div>
-          <button type="button" onClick={copyLink} className="w-full flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-gray-50 transition text-sm text-gray-700">
-            {copied ? <Check size={16} className="text-green-600" /> : <Link2 size={16} className="text-gray-400" />}
+          <button type="button" onClick={copyLink} className="w-full flex items-center gap-2 px-2 py-2 rounded-xl hover:bg-background transition text-sm text-fg-strong">
+            {copied ? <Check size={16} className="text-success" /> : <Link2 size={16} className="text-fg-muted" />}
             {copied ? t("linkCopiedNotice") : t("copyLinkBtn")}
           </button>
           {/* Kopyalanamadıysa linki GÖSTERİYORUZ. Panoya erişim güvenli bağlam gerektiriyor
@@ -146,13 +146,13 @@ export function ShareButton({ title, text, path, className = "", iconSize = 16, 
               Sessizce başarısız olup "kopyalandı" demek, kullanıcının linki kaybetmesi demekti. */}
           {copyFailed && (
             <div className="mt-1 px-2 pb-1">
-              <p className="text-[11px] text-amber-600 mb-1">{t("copyLinkFailedNotice")}</p>
+              <p className="text-[11px] text-warning mb-1">{t("copyLinkFailedNotice")}</p>
               <input
                 readOnly
                 value={shareUrl}
                 onFocus={(e) => e.currentTarget.select()}
                 aria-label={t("copyLinkBtn")}
-                className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-[11px] font-mono text-gray-600 bg-gray-50"
+                className="w-full px-2 py-1.5 rounded-lg border border-border text-[11px] font-mono text-fg-secondary bg-background"
               />
             </div>
           )}

@@ -34,6 +34,10 @@
   --color-fg: 17 24 39;
   --color-fg-secondary: 107 114 128;
   --color-fg-muted: 156 163 175;
+  /* fg-strong: gray-700/800'ün doldurduğu, fg(900) ile fg-secondary(500) arasındaki
+     boşluk için. gray-800'ün tam değeri kullanılıyor; gray-700 bu tek token'a
+     bilinçli olarak yuvarlanıyor (Wave 2'nin palet basitleştirmesiyle aynı disiplin). */
+  --color-fg-strong: 31 41 55;
   --color-border: 229 231 235;
   --color-success: 22 163 74;
   --color-warning: 217 119 6;
@@ -46,6 +50,14 @@
      olduğu için bu tek satırlık değişiklik siteneki HER focus ring'i
      düzeltiyor. */
   --color-focus: 59 130 246;
+  /* tint token'ları: rozet/pill arka planları için. success/warning/error evrensel
+     (tüm paletlerde aynı — status renkleri paletten bağımsız). primary-tint HER
+     palette özgü (aşağıdaki [data-palette] bloklarında override edilir) çünkü
+     primary rengi paletten palete değişiyor. */
+  --color-primary-tint: 239 246 255;
+  --color-success-tint: 240 253 244;
+  --color-warning-tint: 255 251 235;
+  --color-error-tint: 254 242 242;
 }
 
 .dark-scope {
@@ -60,6 +72,9 @@
   --color-fg: 233 233 240;
   --color-fg-secondary: 163 163 184;
   --color-fg-muted: 113 113 140;
+  /* fg-strong: koyu modda tarihsel olarak gray-700/800/900 tek renge (fg'nin
+     koyu değeri) zaten toplanmıştı; burada da aynı değeri paylaşıyor. */
+  --color-fg-strong: 233 233 240;
   --color-border: 44 44 58;
   --color-success: 22 163 74;
   --color-warning: 217 119 6;
@@ -67,6 +82,10 @@
   --color-info: 59 130 246;
   --color-cta: 37 99 235;
   --color-focus: 59 130 246;
+  --color-primary-tint: 18 30 46;
+  --color-success-tint: 18 36 26;
+  --color-warning-tint: 42 34 18;
+  --color-error-tint: 42 20 24;
 }
 
 /* ===== PALET KONSEPTLERİ (Wave 2) =====
@@ -89,6 +108,7 @@
   --color-accent: 245 158 11;
   --color-cta: 4 120 87;
   --color-focus: 5 150 105;
+  --color-primary-tint: 236 253 245;
 }
 [data-palette="trust"].dark-scope {
   --color-primary: 4 120 87;
@@ -98,6 +118,7 @@
   --color-accent: 245 158 11;
   --color-cta: 4 120 87;
   --color-focus: 5 150 105;
+  --color-primary-tint: 16 36 28;
 }
 
 [data-palette="industrial"] {
@@ -108,6 +129,7 @@
   --color-accent: 100 116 139;
   --color-cta: 194 65 12;
   --color-focus: 234 88 12;
+  --color-primary-tint: 255 247 237;
 }
 [data-palette="industrial"].dark-scope {
   --color-primary: 194 65 12;
@@ -117,6 +139,7 @@
   --color-accent: 100 116 139;
   --color-cta: 194 65 12;
   --color-focus: 234 88 12;
+  --color-primary-tint: 42 28 18;
 }
 
 [data-palette="performance"] {
@@ -127,6 +150,7 @@
   --color-accent: 220 38 38;
   --color-cta: 14 116 144;
   --color-focus: 8 145 178;
+  --color-primary-tint: 236 254 255;
 }
 [data-palette="performance"].dark-scope {
   --color-primary: 14 116 144;
@@ -136,6 +160,7 @@
   --color-accent: 220 38 38;
   --color-cta: 14 116 144;
   --color-focus: 8 145 178;
+  --color-primary-tint: 16 36 42;
 }
 
 [data-palette="european"] {
@@ -146,6 +171,7 @@
   --color-accent: 71 85 105;
   --color-cta: 30 64 175;
   --color-focus: 59 130 246;
+  --color-primary-tint: 239 246 255;
 }
 [data-palette="european"].dark-scope {
   --color-primary: 37 99 235;
@@ -155,6 +181,7 @@
   --color-accent: 71 85 105;
   --color-cta: 37 99 235;
   --color-focus: 59 130 246;
+  --color-primary-tint: 18 30 46;
 }
 
 [data-palette="minimal"] {
@@ -165,6 +192,7 @@
   --color-accent: 161 98 7;
   --color-cta: 24 24 27;
   --color-focus: 161 98 7;
+  --color-primary-tint: 250 250 250;
 }
 [data-palette="minimal"].dark-scope {
   --color-primary: 161 98 7;
@@ -174,4 +202,5 @@
   --color-accent: 161 98 7;
   --color-cta: 161 98 7;
   --color-focus: 161 98 7;
+  --color-primary-tint: 42 34 18;
 }

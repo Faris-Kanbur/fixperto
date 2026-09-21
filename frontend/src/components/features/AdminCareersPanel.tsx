@@ -71,31 +71,31 @@ export function AdminCareersPanel() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5 items-start">
       {/* ---- Liste ---- */}
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2"><Briefcase size={15} className="text-blue-500" /> Kariyer ilanları</h3>
-          <span className="text-xs text-gray-400">{rows.length}</span>
+      <div className="bg-white border border-border rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-surface-elevated flex items-center justify-between">
+          <h3 className="font-bold text-fg text-sm flex items-center gap-2"><Briefcase size={15} className="text-info" /> Kariyer ilanları</h3>
+          <span className="text-xs text-fg-muted">{rows.length}</span>
         </div>
         {rows.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-14">Henüz ilan yok. Sağdaki formdan ekleyin.</p>
+          <p className="text-sm text-fg-muted text-center py-14">Henüz ilan yok. Sağdaki formdan ekleyin.</p>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-background">
             {rows.map((r) => (
               <div key={r.id} className="px-5 py-3 flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-gray-900 text-sm truncate flex items-center gap-2">
+                  <p className="font-semibold text-fg text-sm truncate flex items-center gap-2">
                     {r.title}
-                    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${r.status === "published" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"}`}>
+                    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${r.status === "published" ? "bg-emerald-50 text-emerald-600" : "bg-surface-elevated text-fg-secondary"}`}>
                       {r.status === "published" ? "Yayında" : "Taslak"}
                     </span>
                   </p>
-                  <p className="text-[11px] text-gray-400 truncate">{[r.department, r.location].filter(Boolean).join(" · ") || "—"}</p>
+                  <p className="text-[11px] text-fg-muted truncate">{[r.department, r.location].filter(Boolean).join(" · ") || "—"}</p>
                 </div>
                 <button onClick={() => togglePublish(r)} aria-label={r.status === "published" ? "Yayından kaldır" : "Yayına al"}
-                  className="text-gray-400 hover:text-blue-600 p-2 -m-1">{r.status === "published" ? <EyeOff size={15} /> : <Eye size={15} />}</button>
+                  className="text-fg-muted hover:text-primary p-2 -m-1">{r.status === "published" ? <EyeOff size={15} /> : <Eye size={15} />}</button>
                 <button onClick={() => { setDraft({ ...EMPTY, ...r }); setEditingId(r.id); }} aria-label="Düzenle"
-                  className="text-gray-400 hover:text-gray-700 p-2 -m-1"><Save size={15} /></button>
-                <button onClick={() => remove(r)} aria-label="Sil" className="text-red-400 hover:text-red-600 p-2 -m-1"><Trash2 size={15} /></button>
+                  className="text-fg-muted hover:text-fg-strong p-2 -m-1"><Save size={15} /></button>
+                <button onClick={() => remove(r)} aria-label="Sil" className="text-red-400 hover:text-error p-2 -m-1"><Trash2 size={15} /></button>
               </div>
             ))}
           </div>
@@ -103,8 +103,8 @@ export function AdminCareersPanel() {
       </div>
 
       {/* ---- Form ---- */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-3">
-        <h3 className="font-bold text-gray-900 text-sm">{editingId ? "İlanı düzenle" : "Yeni ilan"}</h3>
+      <div className="bg-white border border-border rounded-2xl p-5 space-y-3">
+        <h3 className="font-bold text-fg text-sm">{editingId ? "İlanı düzenle" : "Yeni ilan"}</h3>
         <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="Pozisyon başlığı" className={field} />
         <div className="grid grid-cols-2 gap-2">
           <input value={draft.department} onChange={(e) => setDraft({ ...draft, department: e.target.value })} placeholder="Birim" className={field} />
@@ -119,15 +119,15 @@ export function AdminCareersPanel() {
         <input value={draft.summary} onChange={(e) => setDraft({ ...draft, summary: e.target.value })} placeholder="Kısa özet" className={field} />
         <textarea value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} placeholder="İlan metni" rows={6} className={`${field} resize-none`} />
         <input value={draft.applyEmail} onChange={(e) => setDraft({ ...draft, applyEmail: e.target.value })} placeholder="Başvuru e-postası" className={field} />
-        <label className="flex items-center gap-2 text-xs text-gray-600">
+        <label className="flex items-center gap-2 text-xs text-fg-secondary">
           <input type="checkbox" checked={draft.status === "published"} onChange={(e) => setDraft({ ...draft, status: e.target.checked ? "published" : "draft" })} className="w-4 h-4 accent-blue-600" />
           Yayında
         </label>
         <div className="flex gap-2 pt-1">
           {editingId && (
-            <button onClick={() => { setDraft(EMPTY); setEditingId(null); }} className="flex-1 border border-gray-200 text-gray-500 py-2.5 rounded-xl text-sm">Vazgeç</button>
+            <button onClick={() => { setDraft(EMPTY); setEditingId(null); }} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-sm">Vazgeç</button>
           )}
-          <button onClick={save} disabled={loading} className="flex-1 bg-gray-900 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-60 flex items-center justify-center gap-1.5">
+          <button onClick={save} disabled={loading} className="flex-1 bg-secondary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-fg-strong transition disabled:opacity-60 flex items-center justify-center gap-1.5">
             <Plus size={15} /> {editingId ? "Kaydet" : "Ekle"}
           </button>
         </div>

@@ -122,23 +122,23 @@ export function MechCard({ m, onHover }) {
           {showCover && <img src={imgThumb(m.coverPhoto, 500)} loading="lazy" decoding="async" onError={() => setCoverBroken(true)} alt={m.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />}
           {!showCover && <span className="relative text-4xl w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm transition-transform duration-500 ease-out group-hover:scale-105">{m.img}</span>}
         </button>
-        {m.verified && <span className="absolute top-3 left-3 bg-white text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm pointer-events-none"><BadgeCheck size={11} /> {t("verifiedBadge")}</span>}
+        {m.verified && <span className="absolute top-3 left-3 bg-white text-primary text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm pointer-events-none"><BadgeCheck size={11} /> {t("verifiedBadge")}</span>}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
-          {m.rating >= 4.7 && <span className="bg-white text-gray-800 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><Star size={10} className="fill-gray-800" /> {t("featuredLabel")}</span>}
-          <button onClick={(e) => { e.stopPropagation(); toggleFavoriteMechanic(m.id); }} aria-label={t("addToFavoritesAria")} className="w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center flex-shrink-0"><Heart size={15} className={fav ? "fill-blue-600 text-blue-600" : "text-gray-500"} /></button>
+          {m.rating >= 4.7 && <span className="bg-white text-fg-strong text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm"><Star size={10} className="fill-fg-strong" /> {t("featuredLabel")}</span>}
+          <button onClick={(e) => { e.stopPropagation(); toggleFavoriteMechanic(m.id); }} aria-label={t("addToFavoritesAria")} className="w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center flex-shrink-0"><Heart size={15} className={fav ? "fill-primary text-primary" : "text-fg-secondary"} /></button>
         </div>
       </div>
       <button onClick={() => openDetail(m)} className="w-full text-left p-4">
         <div className="flex justify-between items-start gap-2">
-          <h3 className="font-semibold text-gray-900 text-[15px] leading-snug truncate">{m.name}</h3>
-          <span className="flex-shrink-0 flex items-center gap-1 text-sm font-semibold text-gray-900"><Star size={13} className="fill-gray-900" />{m.rating}<span className="text-gray-400 font-normal text-xs">({m.reviews})</span></span>
+          <h3 className="font-semibold text-fg text-[15px] leading-snug truncate">{m.name}</h3>
+          <span className="flex-shrink-0 flex items-center gap-1 text-sm font-semibold text-fg"><Star size={13} className="fill-fg" />{m.rating}<span className="text-fg-muted font-normal text-xs">({m.reviews})</span></span>
         </div>
-        <p className="text-gray-400 text-xs mt-1 truncate">{m.specialty}</p>
+        <p className="text-fg-muted text-xs mt-1 truncate">{m.specialty}</p>
         <div className="flex items-center justify-between gap-2 mt-2.5">
-          <span className="flex items-center gap-1 text-xs text-gray-500"><MapPin size={12} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}{userLocation && m.effectiveDistance != null && <span title={t("realLocationBadgeTitle")}><CheckCircle2 size={11} className="text-green-500" /></span>}</span>
+          <span className="flex items-center gap-1 text-xs text-fg-secondary"><MapPin size={12} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}{userLocation && m.effectiveDistance != null && <span title={t("realLocationBadgeTitle")}><CheckCircle2 size={11} className="text-green-500" /></span>}</span>
           <PriceLevelDots price={m.price} />
         </div>
-        <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-gray-400 flex items-center gap-1"><Zap size={10} className="text-gray-900" /> {m.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>
+        <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-success-tint text-success" : "bg-error-tint text-red-500"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-fg-muted flex items-center gap-1"><Zap size={10} className="text-fg" /> {m.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>
       </button>
     </div>
   );

@@ -106,7 +106,7 @@ export function InfoTip({ text, label, inline = false }: {
       }}
       // z-[95]: uygulamadaki en üst katmanların (modal z-[90]) üzerinde; balon her zaman
       // tetiklendiği içeriğin önünde durmalı.
-      className="z-[95] pointer-events-none rounded-xl bg-gray-900 text-white text-[11px] font-normal normal-case tracking-normal leading-relaxed text-left px-3 py-2 shadow-xl break-words"
+      className="z-[95] pointer-events-none rounded-xl bg-secondary text-white text-[11px] font-normal normal-case tracking-normal leading-relaxed text-left px-3 py-2 shadow-xl break-words"
     >
       {text}
     </div>,

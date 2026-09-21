@@ -30,7 +30,7 @@ export function TranslatedText({ id, text, fromLang, viewerLang, className = "",
     <span className={className}>
       {displayText}
       {needsTranslation && !compact && (
-        <button onClick={(e) => { e.stopPropagation(); toggleTranslate(id); }} className="ml-1.5 inline-flex items-center gap-0.5 text-[10px] text-gray-400 hover:underline align-middle">
+        <button onClick={(e) => { e.stopPropagation(); toggleTranslate(id); }} className="ml-1.5 inline-flex items-center gap-0.5 text-[10px] text-fg-muted hover:underline align-middle">
           {isTranslating ? <Loader2 size={9} className="animate-spin" /> : <Globe size={9} />} {isTranslating ? t("translatingLabel") : showTr ? t("showOriginalToggle") : t("showTranslationToggle")}
         </button>
       )}

@@ -123,14 +123,14 @@ import {
  * kısmı güncelliyor.
  */
 const SectionCard = ({ step, icon: Icon, title, hint = null, children }) => (
-  <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+  <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5">
     <div className="flex items-start gap-3 mb-4">
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold ${step.done ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"}`}>
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold ${step.done ? "bg-emerald-50 text-emerald-600" : "bg-primary-tint text-primary"}`}>
         {step.done ? <Check size={16} /> : step.n}
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="font-bold text-gray-900 text-base flex items-center gap-2 whitespace-nowrap"><Icon size={16} className="text-blue-500 flex-shrink-0" /> {title}</h3>
-        {hint && <p className="text-xs text-gray-400 mt-1 leading-relaxed">{hint}</p>}
+        <h3 className="font-bold text-fg text-base flex items-center gap-2 whitespace-nowrap"><Icon size={16} className="text-info flex-shrink-0" /> {title}</h3>
+        {hint && <p className="text-xs text-fg-muted mt-1 leading-relaxed">{hint}</p>}
       </div>
     </div>
     {children}
@@ -138,25 +138,25 @@ const SectionCard = ({ step, icon: Icon, title, hint = null, children }) => (
 );
 
 const StatCard = ({ label, value, hint = null }) => (
-  <div className="bg-white border border-gray-200 rounded-2xl p-4">
-    <p className="text-[11px] text-gray-400 mb-1">{label}</p>
-    <p className="text-2xl font-bold text-gray-900 leading-none">{Number(value || 0).toLocaleString("tr-TR")}</p>
-    {hint && <p className="text-[11px] text-gray-400 mt-1">{hint}</p>}
+  <div className="bg-white border border-border rounded-2xl p-4">
+    <p className="text-[11px] text-fg-muted mb-1">{label}</p>
+    <p className="text-2xl font-bold text-fg leading-none">{Number(value || 0).toLocaleString("tr-TR")}</p>
+    {hint && <p className="text-[11px] text-fg-muted mt-1">{hint}</p>}
   </div>
 );
 const BreakdownList = ({ title, rows, icon: Icon }) => (
-  <div className="bg-white border border-gray-200 rounded-2xl p-4">
-    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Icon size={14} className="text-blue-500" /> {title}</h3>
-    {(!rows || rows.length === 0) ? <p className="text-xs text-gray-400">Veri yok</p> : (
+  <div className="bg-white border border-border rounded-2xl p-4">
+    <h3 className="text-sm font-bold text-fg-strong mb-3 flex items-center gap-2"><Icon size={14} className="text-info" /> {title}</h3>
+    {(!rows || rows.length === 0) ? <p className="text-xs text-fg-muted">Veri yok</p> : (
       <div className="space-y-1.5">
         {rows.slice(0, 6).map(r => {
           const max = Math.max(1, ...rows.map(x => x.visitors ?? x.n));
           const val = r.visitors ?? r.n;
           return (
             <div key={r.label} className="flex items-center gap-2">
-              <span className="text-xs text-gray-600 w-28 truncate" title={r.label}>{r.label}</span>
-              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.round((val / max) * 100)}%` }} /></div>
-              <span className="text-xs font-semibold text-gray-700 w-10 text-right">{val}</span>
+              <span className="text-xs text-fg-secondary w-28 truncate" title={r.label}>{r.label}</span>
+              <div className="flex-1 h-2 bg-surface-elevated rounded-full overflow-hidden"><div className="h-full bg-info rounded-full" style={{ width: `${Math.round((val / max) * 100)}%` }} /></div>
+              <span className="text-xs font-semibold text-fg-strong w-10 text-right">{val}</span>
             </div>
           );
         })}
@@ -309,7 +309,7 @@ export function AppShell() {
   }, []);
 
   return (
-    <div data-palette={activePalette} className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-gray-50"}`}>
+    <div data-palette={activePalette} className={`min-h-screen flex justify-center relative ${darkMode ? "dark-scope bg-gray-950" : "bg-background"}`}>
       {darkMode && (<style>{`
         .dark-scope { color-scheme: dark; }
         .dark-scope .bg-white { background-color: rgb(var(--color-surface)) !important; }
@@ -399,21 +399,21 @@ export function AppShell() {
         * testle korunuyor (tests/layering.test.mjs): kod tabanındaki en yüksek katman artarsa bu
         * değer de artmak zorunda, yoksa test kırmızı yanıyor.
         */}
-      {toast && (<div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001] w-[92%] max-w-md"><div className={`rounded-2xl shadow-lg p-3 flex items-start gap-2 text-xs ${toast.type === "sms" ? "bg-green-600 text-white" : "bg-gray-800 text-white"}`}><Bell size={16} className="flex-shrink-0 mt-0.5" /><span className="flex-1">{toast.text}</span><button onClick={() => setToast(null)} aria-label={t("dismissToastAria")} className="p-2 -m-2"><X size={14} /></button></div></div>)}
+      {toast && (<div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001] w-[92%] max-w-md"><div className={`rounded-2xl shadow-lg p-3 flex items-start gap-2 text-xs ${toast.type === "sms" ? "bg-success text-white" : "bg-fg-strong text-white"}`}><Bell size={16} className="flex-shrink-0 mt-0.5" /><span className="flex-1">{toast.text}</span><button onClick={() => setToast(null)} aria-label={t("dismissToastAria")} className="p-2 -m-2"><X size={14} /></button></div></div>)}
       {/* Başarı animasyonu da modallerin ÜSTÜNDE (z-[10000]) ama uyarı mesajının ALTINDA:
           ikisi aynı anda çıkarsa okunması gereken şey mesajdır, animasyon süslemedir.
           Önce z-[70] idi — yani modal açıkken hiç görünmüyordu, tıpkı uyarı gibi.
           `pointer-events-none` korunuyor: üstte durur ama tıklamayı engellemez. */}
-      {successPulse && (<div className="fixed inset-0 z-[10000] flex items-center justify-center pointer-events-none"><div className="success-pulse-badge bg-white rounded-3xl shadow-2xl px-6 py-5 flex flex-col items-center gap-2"><div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center"><Check size={30} className="text-green-500" strokeWidth={3} /></div><p className="text-sm font-semibold text-gray-800 text-center max-w-[220px]">{successPulse}</p></div></div>)}
+      {successPulse && (<div className="fixed inset-0 z-[10000] flex items-center justify-center pointer-events-none"><div className="success-pulse-badge bg-white rounded-3xl shadow-2xl px-6 py-5 flex flex-col items-center gap-2"><div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center"><Check size={30} className="text-green-500" strokeWidth={3} /></div><p className="text-sm font-semibold text-fg-strong text-center max-w-[220px]">{successPulse}</p></div></div>)}
       {compareListingIds.length > 0 && !showCompareModal && (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md">
-          <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3">
+          <div className="bg-secondary text-white rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3">
             <div className="flex -space-x-2 flex-shrink-0">
-              {compareListingIds.map(id => { const cl = listings.find(x => x.id === id); return cl ? (<div key={id} className="w-8 h-8 rounded-full border-2 border-gray-900 bg-gray-700 overflow-hidden flex items-center justify-center text-[10px]">{isImgUrl(cl.photo) ? <img loading="lazy" decoding="async" src={imgThumb(cl.photo, 60)} alt="" className="w-full h-full object-cover" /> : cl.photo}</div>) : null; })}
+              {compareListingIds.map(id => { const cl = listings.find(x => x.id === id); return cl ? (<div key={id} className="w-8 h-8 rounded-full border-2 border-secondary bg-fg-strong overflow-hidden flex items-center justify-center text-[10px]">{isImgUrl(cl.photo) ? <img loading="lazy" decoding="async" src={imgThumb(cl.photo, 60)} alt="" className="w-full h-full object-cover" /> : cl.photo}</div>) : null; })}
             </div>
             <span className="flex-1 text-xs font-medium truncate">{t("compareBarLabel", { n: String(compareListingIds.length), max: String(MAX_COMPARE_LISTINGS) })}</span>
-            <button onClick={clearCompareListings} aria-label={t("closeAria")} className="text-gray-400 hover:text-white p-1.5 -m-1.5 flex-shrink-0"><X size={16} /></button>
-            <button onClick={openCompareModal} disabled={compareListingIds.length < 2} className={`flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${compareListingIds.length < 2 ? "bg-gray-700 text-gray-500" : "bg-blue-600 text-white hover:bg-blue-700"}`}><Scale size={13} /> {t("compareBtn")}</button>
+            <button onClick={clearCompareListings} aria-label={t("closeAria")} className="text-fg-muted hover:text-white p-1.5 -m-1.5 flex-shrink-0"><X size={16} /></button>
+            <button onClick={openCompareModal} disabled={compareListingIds.length < 2} className={`flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${compareListingIds.length < 2 ? "bg-fg-strong text-fg-secondary" : "bg-primary text-white hover:bg-primary-hover"}`}><Scale size={13} /> {t("compareBtn")}</button>
           </div>
         </div>
       )}
@@ -425,9 +425,9 @@ export function AppShell() {
         return (
           <div className="fixed inset-0 bg-black/50 z-[9500] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowCompareModal(false)}>
             <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-5xl md:rounded-3xl rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2"><Scale size={18} /> {t("compareModalTitle")}</h3>
-                <button onClick={() => setShowCompareModal(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
+              <div className="flex items-center justify-between px-5 py-4 border-b border-surface-elevated flex-shrink-0">
+                <h3 className="font-bold text-fg-strong flex items-center gap-2"><Scale size={18} /> {t("compareModalTitle")}</h3>
+                <button onClick={() => setShowCompareModal(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button>
               </div>
               <div className="overflow-auto p-5">
                 <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${compareListings.length}, minmax(210px, 1fr))` }}>
@@ -435,48 +435,48 @@ export function AppShell() {
                     const price = parsePriceNumber(cl.price);
                     const km = Number(cl.km) || Infinity;
                     return (
-                      <div key={cl.id} className="border border-gray-100 rounded-2xl overflow-hidden flex flex-col">
-                        <div className="relative h-32 bg-gray-100">
+                      <div key={cl.id} className="border border-surface-elevated rounded-2xl overflow-hidden flex flex-col">
+                        <div className="relative h-32 bg-surface-elevated">
                           {isImgUrl(cl.photo) ? <img loading="lazy" decoding="async" src={imgThumb(cl.photo, 400)} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-4xl">{cl.photo}</div>}
-                          <button onClick={() => toggleCompareListing(cl.id)} aria-label={t("closeAria")} className="absolute top-2 right-2 w-7 h-7 bg-white/95 rounded-full shadow-sm flex items-center justify-center text-gray-500"><X size={13} /></button>
+                          <button onClick={() => toggleCompareListing(cl.id)} aria-label={t("closeAria")} className="absolute top-2 right-2 w-7 h-7 bg-white/95 rounded-full shadow-sm flex items-center justify-center text-fg-secondary"><X size={13} /></button>
                         </div>
                         <div className="p-3 flex-1 flex flex-col gap-2">
-                          <h4 className="font-semibold text-gray-900 text-sm leading-snug">{cl.brand} {cl.model}</h4>
-                          <div className={`flex items-center gap-1.5 text-lg font-bold ${price === minPrice && compareListings.length > 1 ? "text-green-600" : "text-gray-900"}`}>{cl.price}{price === minPrice && compareListings.length > 1 && <TrendingDown size={15} />}</div>
-                          <div className="text-xs text-gray-500 space-y-1 mt-1">
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Gauge size={11} /> {t("kmRangeLabel")}</span><span className={km === minKm && compareListings.length > 1 ? "font-semibold text-green-600" : "font-medium text-gray-700"}>{Number(cl.km).toLocaleString("tr-TR")} km</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><CalendarDays size={11} /> {t("modelYearLabel")}</span><span className="font-medium text-gray-700">{cl.firstReg || cl.year}</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Fuel size={11} /> {t("fuelTypeLabel")}</span><span className="font-medium text-gray-700">{cl.fuelType ? vocabLabel(cl.fuelType, lang, FUEL_TYPE_LABELS_BY_LANG) : "—"}</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Cog size={11} /> {t("transmissionLabel")}</span><span className="font-medium text-gray-700">{cl.transmission ? vocabLabel(cl.transmission, lang, TRANSMISSION_LABELS_BY_LANG) : "—"}</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Car size={11} /> {t("bodyTypePlaceholder")}</span><span className="font-medium text-gray-700">{cl.bodyType ? vocabLabel(cl.bodyType, lang, BODY_TYPE_LABELS_BY_LANG) : "—"}</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Wrench size={11} /> {t("engineSizeLabel")}</span><span className="font-medium text-gray-700">{cl.engineSize || "—"}</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Compass size={11} /> {t("drivetrainPlaceholder")}</span><span className="font-medium text-gray-700">{cl.drivetrain ? vocabLabel(cl.drivetrain, lang, DRIVETRAIN_LABELS_BY_LANG) : "—"}</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><DoorOpen size={11} /> {t("doorCountPlaceholder")}</span><span className="font-medium text-gray-700">{cl.doorCount || "—"}</span></div>
-                            <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><Palette size={11} /> {t("color")}</span><span className="font-medium text-gray-700">{cl.color || "—"}</span></div>
-                            {cl.city && <div className="flex items-center justify-between"><span className="text-gray-400 flex items-center gap-1"><MapPin size={11} /> {t("cityLabelShort")}</span><span className="font-medium text-gray-700">{cl.city}</span></div>}
-                            <div className="flex items-center justify-between"><span className="text-gray-400">{t("sellerTypeLabel")}</span><span className="font-medium text-gray-700">{cl.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span></div>
+                          <h4 className="font-semibold text-fg text-sm leading-snug">{cl.brand} {cl.model}</h4>
+                          <div className={`flex items-center gap-1.5 text-lg font-bold ${price === minPrice && compareListings.length > 1 ? "text-success" : "text-fg"}`}>{cl.price}{price === minPrice && compareListings.length > 1 && <TrendingDown size={15} />}</div>
+                          <div className="text-xs text-fg-secondary space-y-1 mt-1">
+                            <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><Gauge size={11} /> {t("kmRangeLabel")}</span><span className={km === minKm && compareListings.length > 1 ? "font-semibold text-success" : "font-medium text-fg-strong"}>{Number(cl.km).toLocaleString("tr-TR")} km</span></div>
+                            <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><CalendarDays size={11} /> {t("modelYearLabel")}</span><span className="font-medium text-fg-strong">{cl.firstReg || cl.year}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><Fuel size={11} /> {t("fuelTypeLabel")}</span><span className="font-medium text-fg-strong">{cl.fuelType ? vocabLabel(cl.fuelType, lang, FUEL_TYPE_LABELS_BY_LANG) : "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><Cog size={11} /> {t("transmissionLabel")}</span><span className="font-medium text-fg-strong">{cl.transmission ? vocabLabel(cl.transmission, lang, TRANSMISSION_LABELS_BY_LANG) : "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><Car size={11} /> {t("bodyTypePlaceholder")}</span><span className="font-medium text-fg-strong">{cl.bodyType ? vocabLabel(cl.bodyType, lang, BODY_TYPE_LABELS_BY_LANG) : "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><Wrench size={11} /> {t("engineSizeLabel")}</span><span className="font-medium text-fg-strong">{cl.engineSize || "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><Compass size={11} /> {t("drivetrainPlaceholder")}</span><span className="font-medium text-fg-strong">{cl.drivetrain ? vocabLabel(cl.drivetrain, lang, DRIVETRAIN_LABELS_BY_LANG) : "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><DoorOpen size={11} /> {t("doorCountPlaceholder")}</span><span className="font-medium text-fg-strong">{cl.doorCount || "—"}</span></div>
+                            <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><Palette size={11} /> {t("color")}</span><span className="font-medium text-fg-strong">{cl.color || "—"}</span></div>
+                            {cl.city && <div className="flex items-center justify-between"><span className="text-fg-muted flex items-center gap-1"><MapPin size={11} /> {t("cityLabelShort")}</span><span className="font-medium text-fg-strong">{cl.city}</span></div>}
+                            <div className="flex items-center justify-between"><span className="text-fg-muted">{t("sellerTypeLabel")}</span><span className="font-medium text-fg-strong">{cl.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span></div>
                           </div>
                           <div className="flex flex-wrap gap-1.5 mt-1">
-                            {cl.negotiable && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{t("negotiableBadge")}</span>}
+                            {cl.negotiable && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary-tint text-primary-hover">{t("negotiableBadge")}</span>}
                             {cl.featured && <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">{t("featuredBadge")}</span>}
-                            {!!cl.ownerCount && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700"><User size={10} /> {t("ownerNumberLabel", { n: String(cl.ownerCount) })}</span>}
+                            {!!cl.ownerCount && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-surface-elevated text-fg-strong"><User size={10} /> {t("ownerNumberLabel", { n: String(cl.ownerCount) })}</span>}
                             {(!Number(cl.paintedParts) && !Number(cl.changedParts)) ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><BadgeCheck size={10} /> {t("noPaintChangeLabel")}</span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"><PaintBucket size={10} /> {t("paintedChangedPartsLabel", { painted: String(Number(cl.paintedParts) || 0), changed: String(Number(cl.changedParts) || 0) })}</span>
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-warning-tint text-amber-700 border border-amber-200"><PaintBucket size={10} /> {t("paintedChangedPartsLabel", { painted: String(Number(cl.paintedParts) || 0), changed: String(Number(cl.changedParts) || 0) })}</span>
                             )}
-                            {!!cl.tradeIn && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200"><Repeat size={10} /> {t("tradeInAvailableLabel")}</span>}
+                            {!!cl.tradeIn && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary-tint text-primary-hover border border-blue-200"><Repeat size={10} /> {t("tradeInAvailableLabel")}</span>}
                             {cl.inspectionReportUrl && <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><FileText size={10} /> {t("inspectionReportAvailableLabel")}</span>}
                           </div>
-                          <button onClick={() => { setSelectedListingId(cl.id); setShowCompareModal(false); }} className="mt-auto w-full bg-blue-600 text-white text-xs font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition">{t("viewListingBtn")}</button>
+                          <button onClick={() => { setSelectedListingId(cl.id); setShowCompareModal(false); }} className="mt-auto w-full bg-primary text-white text-xs font-semibold py-2.5 rounded-xl hover:bg-primary-hover transition">{t("viewListingBtn")}</button>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
-              <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
-                <button onClick={clearCompareListings} className="w-full border border-gray-200 text-gray-500 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("clearCompareBtn")}</button>
+              <div className="px-5 py-3 border-t border-surface-elevated flex-shrink-0">
+                <button onClick={clearCompareListings} className="w-full border border-border text-fg-secondary py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition">{t("clearCompareBtn")}</button>
               </div>
             </div>
           </div>
@@ -493,52 +493,52 @@ export function AppShell() {
             <div className="px-5 pt-5 pb-4">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-11 h-11 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0"><Lock size={20} className="text-blue-600" /></div>
+                  <div className="w-11 h-11 bg-primary-tint rounded-2xl flex items-center justify-center flex-shrink-0"><Lock size={20} className="text-primary" /></div>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-gray-900 text-base leading-snug">{authGateStep === "otp" ? t("authGateOtpTitle") : authGateStep === "signup" ? t("authGateSignupTitle") : t("authGateTitle")}</h3>
-                    {authGateReason && <p className="text-xs text-gray-500 mt-0.5">{authGateReason}</p>}
+                    <h3 className="font-bold text-fg text-base leading-snug">{authGateStep === "otp" ? t("authGateOtpTitle") : authGateStep === "signup" ? t("authGateSignupTitle") : t("authGateTitle")}</h3>
+                    {authGateReason && <p className="text-xs text-fg-secondary mt-0.5">{authGateReason}</p>}
                   </div>
                 </div>
-                <button onClick={closeAuthGate} aria-label={t("closeAria")} className="w-9 h-9 -m-1 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
+                <button onClick={closeAuthGate} aria-label={t("closeAria")} className="w-9 h-9 -m-1 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button>
               </div>
               <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 mb-4 flex items-start gap-1.5"><Check size={12} className="flex-shrink-0 mt-0.5" /> {t("authGateKeepsWorkNote")}</p>
               {authGateStep !== "otp" && (
                 <>
-                  <div className="flex bg-gray-100 rounded-xl p-1 mb-4">
-                    <button onClick={() => { setAuthGateStep("login"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${authGateStep === "login" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("authGateLoginTab")}</button>
-                    <button onClick={() => { setAuthGateStep("signup"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${authGateStep === "signup" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("authGateSignupTab")}</button>
+                  <div className="flex bg-surface-elevated rounded-xl p-1 mb-4">
+                    <button onClick={() => { setAuthGateStep("login"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${authGateStep === "login" ? "bg-white shadow-sm text-fg-strong" : "text-fg-muted"}`}>{t("authGateLoginTab")}</button>
+                    <button onClick={() => { setAuthGateStep("signup"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${authGateStep === "signup" ? "bg-white shadow-sm text-fg-strong" : "text-fg-muted"}`}>{t("authGateSignupTab")}</button>
                   </div>
                   {authGateStep === "signup" && (
                     <>
-                      <p className="text-xs font-semibold text-gray-700 mb-2">{t("authGateRoleQuestion")}</p>
+                      <p className="text-xs font-semibold text-fg-strong mb-2">{t("authGateRoleQuestion")}</p>
                       <div className="grid grid-cols-2 gap-2 mb-4">
-                        <button onClick={() => setRole("owner")} className={`rounded-2xl border p-3 text-left transition ${role === "owner" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}><Car size={18} className={role === "owner" ? "text-blue-600 mb-1" : "text-gray-400 mb-1"} /><p className="text-xs font-bold text-gray-900">{t("ownerRole")}</p></button>
-                        <button onClick={() => setRole("mechanic")} className={`rounded-2xl border p-3 text-left transition ${role === "mechanic" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}><Wrench size={18} className={role === "mechanic" ? "text-blue-600 mb-1" : "text-gray-400 mb-1"} /><p className="text-xs font-bold text-gray-900">{t("mechanicRole")}</p></button>
+                        <button onClick={() => setRole("owner")} className={`rounded-2xl border p-3 text-left transition ${role === "owner" ? "border-primary bg-primary-tint" : "border-border hover:border-fg-muted"}`}><Car size={18} className={role === "owner" ? "text-primary mb-1" : "text-fg-muted mb-1"} /><p className="text-xs font-bold text-fg">{t("ownerRole")}</p></button>
+                        <button onClick={() => setRole("mechanic")} className={`rounded-2xl border p-3 text-left transition ${role === "mechanic" ? "border-primary bg-primary-tint" : "border-border hover:border-fg-muted"}`}><Wrench size={18} className={role === "mechanic" ? "text-primary mb-1" : "text-fg-muted mb-1"} /><p className="text-xs font-bold text-fg">{t("mechanicRole")}</p></button>
                       </div>
                     </>
                   )}
                   <div className="space-y-3">
-                    {authGateStep === "signup" && (<div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("fullNameShortPlaceholder")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
-                    <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t("emailPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>
-                    {authGateStep === "signup" && (<div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} onBlur={(e) => normalizePhoneField(e.target.value, (v) => setForm({ ...form, phone: v }))} placeholder={t("phonePlaceholderExample2")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
-                    {authGateStep === "signup" && (<p className="text-xs text-gray-400 leading-relaxed">{t("signupPasswordNote")}</p>)}
-                    {authGateStep === "login" && (<div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter" && !authLoading) submitLogin(); }} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>)}
+                    {authGateStep === "signup" && (<div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("fullNameShortPlaceholder")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm" /></div>)}
+                    <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t("emailPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm" /></div>
+                    {authGateStep === "signup" && (<div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} onBlur={(e) => normalizePhoneField(e.target.value, (v) => setForm({ ...form, phone: v }))} placeholder={t("phonePlaceholderExample2")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm" /></div>)}
+                    {authGateStep === "signup" && (<p className="text-xs text-fg-muted leading-relaxed">{t("signupPasswordNote")}</p>)}
+                    {authGateStep === "login" && (<div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter" && !authLoading) submitLogin(); }} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-border text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>)}
                     {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
                     {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
                   </div>
-                  <button disabled={authLoading} onClick={authGateStep === "login" ? submitLogin : submitRegister} className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : (authGateStep === "login" ? t("login") : t("signup"))}</button>
+                  <button disabled={authLoading} onClick={authGateStep === "login" ? submitLogin : submitRegister} className={`w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : (authGateStep === "login" ? t("login") : t("signup"))}</button>
                 </>
               )}
               {authGateStep === "otp" && (
                 <>
-                  <p className="text-sm text-gray-500 mb-3">{t("otpSubtitle")}</p>
+                  <p className="text-sm text-fg-secondary mb-3">{t("otpSubtitle")}</p>
                   <div className="space-y-3">
-                    <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input autoFocus value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} onKeyDown={(e) => { if (e.key === "Enter" && !authLoading) submitOtpVerify(); }} placeholder={t("otpCodePlaceholder")} inputMode="numeric" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm tracking-[0.3em] text-center font-semibold" /></div>
+                    <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input autoFocus value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} onKeyDown={(e) => { if (e.key === "Enter" && !authLoading) submitOtpVerify(); }} placeholder={t("otpCodePlaceholder")} inputMode="numeric" className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm tracking-[0.3em] text-center font-semibold" /></div>
                     {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
                     {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
                   </div>
-                  <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
-                  <p className="text-center text-xs text-gray-400 mt-3"><button onClick={cancelOtpVerify} className="text-blue-500 font-medium hover:underline">{t("otpBackToLogin")}</button></p>
+                  <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full bg-primary hover:bg-primary-hover text-white py-3 rounded-2xl font-semibold text-sm mt-5 transition ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
+                  <p className="text-center text-xs text-fg-muted mt-3"><button onClick={cancelOtpVerify} className="text-info font-medium hover:underline">{t("otpBackToLogin")}</button></p>
                 </>
               )}
             </div>
@@ -564,27 +564,27 @@ export function AppShell() {
         return (
           <div data-modal-backdrop className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9400 }} onClick={goAppointments}>
             <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${auto ? "bg-green-100" : "bg-amber-50"}`}>
-                {auto ? <Check size={32} className="text-green-600" /> : <Clock size={30} className="text-amber-500" />}
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${auto ? "bg-green-100" : "bg-warning-tint"}`}>
+                {auto ? <Check size={32} className="text-success" /> : <Clock size={30} className="text-amber-500" />}
               </div>
-              <span className={`inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full mb-2 ${auto ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+              <span className={`inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full mb-2 ${auto ? "bg-success-tint text-green-700" : "bg-warning-tint text-amber-700"}`}>
                 {auto ? t("appointmentPopupConfirmedBadge") : t("appointmentPopupWaitingBadge")}
               </span>
-              <h3 className="text-lg font-bold text-gray-900 mb-1.5">
+              <h3 className="text-lg font-bold text-fg mb-1.5">
                 {auto ? t("appointmentConfirmedTitle") : t("appointmentRequestSentTitle")}
               </h3>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-fg-secondary mb-4">
                 {auto ? t("appointmentConfirmedBody") : t("appointmentRequestSentBody")}
               </p>
               {/* Randevunun kendi bilgileri: popup açıldığında form ZATEN temizlenmiş oluyor,
                   bu yüzden değerler sunucudan dönen kayıttan taşınıyor. */}
-              <div className="bg-gray-50 rounded-2xl p-3 text-left space-y-1.5 mb-5">
-                <div className="flex items-center gap-2 text-sm text-gray-700"><Wrench size={14} className="text-gray-400 flex-shrink-0" /><span className="truncate">{bookingResult.mechanicName}</span></div>
-                {bookingResult.vehicle && <div className="flex items-center gap-2 text-sm text-gray-700"><Car size={14} className="text-gray-400 flex-shrink-0" /><span className="truncate">{bookingResult.vehicle}</span></div>}
-                <div className="flex items-center gap-2 text-sm text-gray-700"><Calendar size={14} className="text-gray-400 flex-shrink-0" /><span>{bookingResult.date}{bookingResult.time ? ` · ${bookingResult.time}` : ""}</span></div>
+              <div className="bg-background rounded-2xl p-3 text-left space-y-1.5 mb-5">
+                <div className="flex items-center gap-2 text-sm text-fg-strong"><Wrench size={14} className="text-fg-muted flex-shrink-0" /><span className="truncate">{bookingResult.mechanicName}</span></div>
+                {bookingResult.vehicle && <div className="flex items-center gap-2 text-sm text-fg-strong"><Car size={14} className="text-fg-muted flex-shrink-0" /><span className="truncate">{bookingResult.vehicle}</span></div>}
+                <div className="flex items-center gap-2 text-sm text-fg-strong"><Calendar size={14} className="text-fg-muted flex-shrink-0" /><span>{bookingResult.date}{bookingResult.time ? ` · ${bookingResult.time}` : ""}</span></div>
               </div>
-              <button onClick={goAppointments} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition mb-2">{t("viewMyAppointmentBtn")}</button>
-              <button onClick={() => { setBookingResult(null); goHome(); }} className="w-full border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("backToHomeBtn")}</button>
+              <button onClick={goAppointments} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-primary-hover transition mb-2">{t("viewMyAppointmentBtn")}</button>
+              <button onClick={() => { setBookingResult(null); goHome(); }} className="w-full border border-border text-fg-secondary py-3 rounded-2xl font-semibold text-sm hover:bg-background transition">{t("backToHomeBtn")}</button>
             </div>
           </div>
         );
@@ -592,12 +592,12 @@ export function AppShell() {
       {showDayFullPrompt && role === "mechanic" && (
         <div data-modal-backdrop className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => setShowDayFullPrompt(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
-            <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mb-3"><Calendar size={22} className="text-red-500" /></div>
-            <h3 className="font-bold text-gray-900 text-base mb-1">{t("dayFullPromptTitle")}</h3>
-            <p className="text-sm text-gray-500 mb-4">{t("dayFullPromptBody")}</p>
+            <div className="w-12 h-12 bg-error-tint rounded-2xl flex items-center justify-center mb-3"><Calendar size={22} className="text-red-500" /></div>
+            <h3 className="font-bold text-fg text-base mb-1">{t("dayFullPromptTitle")}</h3>
+            <p className="text-sm text-fg-secondary mb-4">{t("dayFullPromptBody")}</p>
             <div className="flex gap-2">
-              <button onClick={() => setShowDayFullPrompt(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("dayFullPromptNoBtn")}</button>
-              <button onClick={goToAddSlotForToday} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("dayFullPromptYesBtn")}</button>
+              <button onClick={() => setShowDayFullPrompt(false)} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition">{t("dayFullPromptNoBtn")}</button>
+              <button onClick={goToAddSlotForToday} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition">{t("dayFullPromptYesBtn")}</button>
             </div>
           </div>
         </div>
@@ -605,19 +605,19 @@ export function AppShell() {
       {completingApptId && (
         <div data-modal-backdrop className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9000 }} onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); setCompleteVinInput(""); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
-            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center mb-3"><CheckCircle2 size={22} className="text-green-600" /></div>
-            <h3 className="font-bold text-gray-900 text-base mb-1">{t("completeApptModalTitle")}</h3>
-            <p className="text-sm text-gray-500 mb-3">{t("completeApptModalBody")}</p>
-            <label className="text-xs font-medium text-gray-600 mb-1 block">{t("warrantyDaysLabel")}</label>
-            <input type="number" min="0" value={warrantyDaysForm} onChange={(e) => setWarrantyDaysForm(e.target.value)} placeholder={t("warrantyDaysPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm mb-3" />
+            <div className="w-12 h-12 bg-success-tint rounded-2xl flex items-center justify-center mb-3"><CheckCircle2 size={22} className="text-success" /></div>
+            <h3 className="font-bold text-fg text-base mb-1">{t("completeApptModalTitle")}</h3>
+            <p className="text-sm text-fg-secondary mb-3">{t("completeApptModalBody")}</p>
+            <label className="text-xs font-medium text-fg-secondary mb-1 block">{t("warrantyDaysLabel")}</label>
+            <input type="number" min="0" value={warrantyDaysForm} onChange={(e) => setWarrantyDaysForm(e.target.value)} placeholder={t("warrantyDaysPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm mb-3" />
             {/* Şasi numarası: tamirci aracı fiziksel olarak görüyor. Yazarsa bu iş aracın kalıcı
                 geçmişine işlenir. Araç sahibi numarayı garajında zaten girdiyse boş bırakılabilir —
                 sunucu plakadan eşleştirip kendisi buluyor (bkz. routes/vehicleHistory.js). */}
-            <label className="text-xs font-medium text-gray-600 mb-1 flex items-center gap-1.5">{t("vinLabel")} <span className="text-gray-300">({t("vinOptional")})</span><InfoTip text={t("mechVinPrompt")} label={t("infoTipAria")} /></label>
-            <input value={completeVinInput} onChange={(e) => setCompleteVinInput(e.target.value.toUpperCase())} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide mb-4" />
+            <label className="text-xs font-medium text-fg-secondary mb-1 flex items-center gap-1.5">{t("vinLabel")} <span className="text-fg-muted">({t("vinOptional")})</span><InfoTip text={t("mechVinPrompt")} label={t("infoTipAria")} /></label>
+            <input value={completeVinInput} onChange={(e) => setCompleteVinInput(e.target.value.toUpperCase())} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm font-mono tracking-wide mb-4" />
             <div className="flex gap-2">
-              <button onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); setCompleteVinInput(""); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
-              <button onClick={() => completeApptWithWarranty(warrantyDaysForm, completeVinInput)} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("completeApptBtn")}</button>
+              <button onClick={() => { setCompletingApptId(null); setWarrantyDaysForm(""); setCompleteVinInput(""); }} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition">{t("giveUpBtn")}</button>
+              <button onClick={() => completeApptWithWarranty(warrantyDaysForm, completeVinInput)} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition">{t("completeApptBtn")}</button>
             </div>
           </div>
         </div>
@@ -625,12 +625,12 @@ export function AppShell() {
       {confirmDialog && (
         <div data-modal-backdrop className="fixed inset-0 bg-black/40 z-[90] flex items-center justify-center p-4" style={{ zIndex: 9800 }} onClick={() => setConfirmDialog(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${confirmDialog.danger ? "bg-red-50" : "bg-blue-50"}`}><AlertTriangle size={22} className={confirmDialog.danger ? "text-red-500" : "text-blue-600"} /></div>
-            <h3 className="font-bold text-gray-900 text-base mb-1">{confirmDialog.title}</h3>
-            <p className="text-sm text-gray-500 mb-4">{confirmDialog.body}</p>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${confirmDialog.danger ? "bg-error-tint" : "bg-primary-tint"}`}><AlertTriangle size={22} className={confirmDialog.danger ? "text-red-500" : "text-primary"} /></div>
+            <h3 className="font-bold text-fg text-base mb-1">{confirmDialog.title}</h3>
+            <p className="text-sm text-fg-secondary mb-4">{confirmDialog.body}</p>
             <div className="flex gap-2">
-              <button onClick={() => setConfirmDialog(null)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
-              <button onClick={() => { const fn = confirmDialog.onConfirm; setConfirmDialog(null); fn(); }} className={`flex-1 text-white py-2.5 rounded-xl font-semibold text-sm transition ${confirmDialog.danger ? "bg-red-500 hover:bg-red-600" : "bg-blue-600 hover:bg-blue-700"}`}>{confirmDialog.confirmLabel || t("confirmBtnDefault")}</button>
+              <button onClick={() => setConfirmDialog(null)} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition">{t("giveUpBtn")}</button>
+              <button onClick={() => { const fn = confirmDialog.onConfirm; setConfirmDialog(null); fn(); }} className={`flex-1 text-white py-2.5 rounded-xl font-semibold text-sm transition ${confirmDialog.danger ? "bg-red-500 hover:bg-error" : "bg-primary hover:bg-primary-hover"}`}>{confirmDialog.confirmLabel || t("confirmBtnDefault")}</button>
             </div>
           </div>
         </div>
@@ -638,12 +638,12 @@ export function AppShell() {
       {showLocationPrompt && (
         <div data-modal-backdrop className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9600 }} onClick={dismissLocationPrompt}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5">
-            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-3"><MapPin size={22} className="text-blue-600" /></div>
-            <h3 className="font-bold text-gray-900 text-base mb-1">{t("locationPromptTitle")}</h3>
-            <p className="text-sm text-gray-500 mb-4">{t("locationPromptBody")}</p>
+            <div className="w-12 h-12 bg-primary-tint rounded-2xl flex items-center justify-center mb-3"><MapPin size={22} className="text-primary" /></div>
+            <h3 className="font-bold text-fg text-base mb-1">{t("locationPromptTitle")}</h3>
+            <p className="text-sm text-fg-secondary mb-4">{t("locationPromptBody")}</p>
             <div className="flex gap-2">
-              <button onClick={dismissLocationPrompt} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("notNowBtn")}</button>
-              <button onClick={confirmUseLocation} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("shareLocationBtn")}</button>
+              <button onClick={dismissLocationPrompt} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition">{t("notNowBtn")}</button>
+              <button onClick={confirmUseLocation} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition">{t("shareLocationBtn")}</button>
             </div>
           </div>
         </div>
@@ -655,32 +655,32 @@ export function AppShell() {
           <>
             <div data-modal-backdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" style={{ zIndex: 9700 }} onClick={() => setLegalModalTopic(null)} />
             <div className="fixed inset-0 bg-white flex flex-col max-w-md md:max-w-2xl mx-auto md:my-6 md:rounded-3xl md:shadow-2xl overflow-hidden" style={{ zIndex: 9701 }}>
-              <div className="px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
-                <button onClick={() => setLegalModalTopic(null)} className="flex items-center gap-1 text-gray-500 mb-2 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
+              <div className="px-5 pt-5 pb-3 border-b border-surface-elevated flex-shrink-0">
+                <button onClick={() => setLegalModalTopic(null)} className="flex items-center gap-1 text-fg-secondary mb-2 text-sm hover:text-fg transition"><ChevronLeft size={18} /> {t("back")}</button>
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-bold text-gray-900 text-base">{doc.title}</h3>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{t("legalLastUpdatedLabel", { date: doc.updated })}</p>
+                    <h3 className="font-bold text-fg text-base">{doc.title}</h3>
+                    <p className="text-[11px] text-fg-muted mt-0.5">{t("legalLastUpdatedLabel", { date: doc.updated })}</p>
                   </div>
-                  <button onClick={() => setLegalModalTopic(null)} aria-label={t("closeAria")} className="p-1 -m-1 text-gray-400 hover:text-gray-700"><X size={18} /></button>
+                  <button onClick={() => setLegalModalTopic(null)} aria-label={t("closeAria")} className="p-1 -m-1 text-fg-muted hover:text-fg-strong"><X size={18} /></button>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto px-5 py-4">
-                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 flex items-start gap-2">
+                <div className="bg-warning-tint border border-amber-100 rounded-xl p-3 mb-4 flex items-start gap-2">
                   <AlertTriangle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
                   <p className="text-[11px] text-amber-700 leading-snug">{t("legalDisclaimerNote")}</p>
                 </div>
                 <div className="space-y-4">
                   {doc.sections.map((s, i) => (
                     <div key={i}>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-1">{s.h}</h4>
-                      <p className="text-[12.5px] text-gray-500 leading-relaxed">{s.b}</p>
+                      <h4 className="text-sm font-semibold text-fg-strong mb-1">{s.h}</h4>
+                      <p className="text-[12.5px] text-fg-secondary leading-relaxed">{s.b}</p>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="px-5 py-3 border-t border-gray-100 flex-shrink-0">
-                <button onClick={() => setLegalModalTopic(null)} className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("understoodBtn")}</button>
+              <div className="px-5 py-3 border-t border-surface-elevated flex-shrink-0">
+                <button onClick={() => setLegalModalTopic(null)} className="w-full bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition">{t("understoodBtn")}</button>
               </div>
             </div>
           </>
@@ -690,86 +690,86 @@ export function AppShell() {
         <div data-modal-backdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] flex items-center justify-center p-4 overflow-y-auto" style={{ zIndex: 9000 }} onClick={closeQuoteModal}>
           {showQuotePremiumUpsell && (
             <div style={{ zIndex: 9500 }} className="fixed top-5 left-1/2 -translate-x-1/2 w-[92%] max-w-sm pointer-events-none">
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl shadow-lg p-3 text-center">
+              <div className="bg-warning-tint border border-amber-200 rounded-2xl shadow-lg p-3 text-center">
                 <p className="text-xs font-semibold text-amber-700">{t("premiumUpsellTitle", { n: String(FREE_QUOTE_MECH_LIMIT) })}</p>
-                <p className="text-[11px] text-amber-600 mt-0.5">{t("premiumUpsellDesc", { max: String(PREMIUM_QUOTE_MECH_LIMIT) })}</p>
+                <p className="text-[11px] text-warning mt-0.5">{t("premiumUpsellDesc", { max: String(PREMIUM_QUOTE_MECH_LIMIT) })}</p>
               </div>
             </div>
           )}
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg my-auto max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="px-5 pt-5 pb-4 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+            <div className="px-5 pt-5 pb-4 border-b border-surface-elevated flex items-center justify-between flex-shrink-0">
               <div>
-                <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={18} className="text-blue-600" /> {t("multiQuoteModalTitle")}</h3>
-                <p className="text-xs text-gray-400 mt-0.5">{t("multiQuoteModalSubtitle")}</p>
+                <h3 className="font-bold text-fg text-base flex items-center gap-2"><Users size={18} className="text-primary" /> {t("multiQuoteModalTitle")}</h3>
+                <p className="text-xs text-fg-muted mt-0.5">{t("multiQuoteModalSubtitle")}</p>
               </div>
-              <button onClick={closeQuoteModal} aria-label={t("closeAria")} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 flex-shrink-0 ml-3"><X size={15} /></button>
+              <button onClick={closeQuoteModal} aria-label={t("closeAria")} className="w-8 h-8 rounded-full bg-surface-elevated flex items-center justify-center text-fg-secondary flex-shrink-0 ml-3"><X size={15} /></button>
             </div>
             <div className="px-5 py-4 overflow-y-auto flex-1 space-y-4">
               <div>
-                <label className="text-xs font-semibold text-gray-700 mb-1.5 block">{t("vehicleFieldLabel")}</label>
+                <label className="text-xs font-semibold text-fg-strong mb-1.5 block">{t("vehicleFieldLabel")}</label>
                 <div className="flex flex-wrap gap-1.5">
-                  {vehicles.map(v => (<button key={v.id} onClick={() => setQuoteVehicleId(v.id)} className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition ${quoteVehicleId === v.id ? "bg-blue-600 text-white border-blue-600" : "border-gray-200 text-gray-600 hover:border-blue-300"}`}>{v.brand} {v.model} ({v.plate})</button>))}
-                  <button onClick={toggleAddVehicle} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border border-dashed transition ${showAddVehicle ? "bg-blue-50 border-blue-300 text-blue-600" : "border-gray-300 text-gray-500 hover:border-blue-300 hover:text-blue-600"}`}><Plus size={12} /> {t("addAnotherVehicleBtn")}</button>
+                  {vehicles.map(v => (<button key={v.id} onClick={() => setQuoteVehicleId(v.id)} className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition ${quoteVehicleId === v.id ? "bg-primary text-white border-primary" : "border-border text-fg-secondary hover:border-blue-300"}`}>{v.brand} {v.model} ({v.plate})</button>))}
+                  <button onClick={toggleAddVehicle} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border border-dashed transition ${showAddVehicle ? "bg-primary-tint border-blue-300 text-primary" : "border-fg-muted text-fg-secondary hover:border-blue-300 hover:text-primary"}`}><Plus size={12} /> {t("addAnotherVehicleBtn")}</button>
                 </div>
                 {(vehicles.length === 0 || showAddVehicle) && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mt-2 space-y-2">
+                  <div className="bg-background border border-border rounded-xl p-3 mt-2 space-y-2">
                     <BrandSelect compact value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b, model: "" })} />
                     <ModelSelect compact brand={newVehicle.brand} value={newVehicle.model} onChange={(m) => setNewVehicle({ ...newVehicle, model: m })} />
-                    <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
-                    <button onClick={addVehicle} disabled={!newVehicle.brand || !newVehicle.model} className={`w-full py-2 rounded-lg text-xs font-semibold transition ${newVehicle.brand && newVehicle.model ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("bookingAddAndSelect")}</button>
+                    <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-border text-xs bg-white" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2 rounded-lg border border-border text-xs bg-white" /></div>
+                    <button onClick={addVehicle} disabled={!newVehicle.brand || !newVehicle.model} className={`w-full py-2 rounded-lg text-xs font-semibold transition ${newVehicle.brand && newVehicle.model ? "bg-primary text-white hover:bg-primary-hover" : "bg-border text-fg-muted cursor-not-allowed"}`}>{t("bookingAddAndSelect")}</button>
                   </div>
                 )}
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-700 mb-1.5 block">{t("describeIssueLabel")}</label>
-                <textarea value={quoteIssue} onChange={(e) => setQuoteIssue(e.target.value)} rows={3} placeholder={t("issueDescPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
+                <label className="text-xs font-semibold text-fg-strong mb-1.5 block">{t("describeIssueLabel")}</label>
+                <textarea value={quoteIssue} onChange={(e) => setQuoteIssue(e.target.value)} rows={3} placeholder={t("issueDescPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm resize-none" />
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  {quotePhotos.map((src, i) => (<div key={i} className="relative"><img loading="lazy" decoding="async" src={src} alt={t("quotePhotoAlt", { n: String(i + 1) })} className="w-14 h-14 rounded-lg object-cover border border-gray-100" /><button aria-label={t("a11yRemovePhoto")} onClick={() => removeQuotePhoto(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center text-white"><X size={10} /></button></div>))}
-                  <button aria-label={t("a11yAddPhoto")} onClick={() => quotePhotoRef.current?.click()} className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:border-blue-300 hover:text-blue-500 transition"><Camera size={16} /></button>
+                  {quotePhotos.map((src, i) => (<div key={i} className="relative"><img loading="lazy" decoding="async" src={src} alt={t("quotePhotoAlt", { n: String(i + 1) })} className="w-14 h-14 rounded-lg object-cover border border-surface-elevated" /><button aria-label={t("a11yRemovePhoto")} onClick={() => removeQuotePhoto(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-fg-strong rounded-full flex items-center justify-center text-white"><X size={10} /></button></div>))}
+                  <button aria-label={t("a11yAddPhoto")} onClick={() => quotePhotoRef.current?.click()} className="w-14 h-14 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-fg-muted hover:border-blue-300 hover:text-info transition"><Camera size={16} /></button>
                   <input ref={quotePhotoRef} type="file" accept="image/*" className="hidden" onChange={addQuotePhoto} />
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-gray-700">{t("selectMechanicLabel")}</label>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{t("selectedCountSuffix", { n: String(quoteSelectedMechIds.length) })}</span>
+                  <label className="text-xs font-semibold text-fg-strong">{t("selectMechanicLabel")}</label>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-elevated text-fg-secondary">{t("selectedCountSuffix", { n: String(quoteSelectedMechIds.length) })}</span>
                 </div>
-                <p className="text-[10px] text-gray-400 mb-2">{t("selectAnyCountNote", { n: String(FREE_QUOTE_MECH_LIMIT), max: String(PREMIUM_QUOTE_MECH_LIMIT) })}</p>
+                <p className="text-[10px] text-fg-muted mb-2">{t("selectAnyCountNote", { n: String(FREE_QUOTE_MECH_LIMIT), max: String(PREMIUM_QUOTE_MECH_LIMIT) })}</p>
                 <div className="relative mb-2">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
-                  <input value={quoteMechSearch} onChange={(e) => setQuoteMechSearch(e.target.value)} placeholder={t("searchMechOrSpecialtyPlaceholder")} className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" />
+                  <input value={quoteMechSearch} onChange={(e) => setQuoteMechSearch(e.target.value)} placeholder={t("searchMechOrSpecialtyPlaceholder")} className="w-full pl-8 pr-3 py-2 rounded-xl border border-border text-xs" />
                 </div>
                 <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                  {[{ key: "distance", labelKey: "sortDistance" }, { key: "price", labelKey: "sortPrice" }, { key: "rating", labelKey: "sortRating" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{t(opt.labelKey)}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
-                  <button onClick={() => { setOwnerMode("mechanics"); setShowFilterModal(true); }} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200 relative"><SlidersHorizontal size={11} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-3.5 h-3.5 bg-blue-600 text-white rounded-full text-[8px] flex items-center justify-center">{activeFilterCount}</span>}</button>
+                  {[{ key: "distance", labelKey: "sortDistance" }, { key: "price", labelKey: "sortPrice" }, { key: "rating", labelKey: "sortRating" }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{t(opt.labelKey)}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
+                  <button onClick={() => { setOwnerMode("mechanics"); setShowFilterModal(true); }} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-fg-secondary border-border relative"><SlidersHorizontal size={11} /> {t("filterBtn")} {activeFilterCount > 0 && <span className="ml-0.5 w-3.5 h-3.5 bg-primary text-white rounded-full text-[8px] flex items-center justify-center">{activeFilterCount}</span>}</button>
                 </div>
-                <div className="max-h-72 overflow-y-auto rounded-xl ring-1 ring-gray-100 divide-y divide-gray-50">
+                <div className="max-h-72 overflow-y-auto rounded-xl ring-1 ring-surface-elevated divide-y divide-background">
                   {quoteFilteredMechanics.map(m => {
                     const selected = quoteSelectedMechIds.includes(m.id);
                     const open = mechanicOpenStatus(m);
                     return (
-                      <button key={m.id} onClick={() => toggleQuoteMechanic(m.id)} className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition ${selected ? "bg-blue-50" : "hover:bg-gray-50"}`}>
+                      <button key={m.id} onClick={() => toggleQuoteMechanic(m.id)} className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition ${selected ? "bg-primary-tint" : "hover:bg-background"}`}>
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-base flex-shrink-0 bg-gradient-to-br ${BANNER_PRESETS[m.bannerPreset] || BANNER_PRESETS.blue}`}><span className="w-8 h-8 bg-white rounded-full flex items-center justify-center">{m.img || "🔧"}</span></div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-gray-800 truncate flex items-center gap-1">{m.name}{m.verified && <BadgeCheck size={11} className="text-blue-600 flex-shrink-0" />}</p>
-                          <p className="text-[10px] text-gray-400 truncate">{m.specialty}</p>
+                          <p className="text-xs font-semibold text-fg-strong truncate flex items-center gap-1">{m.name}{m.verified && <BadgeCheck size={11} className="text-primary flex-shrink-0" />}</p>
+                          <p className="text-[10px] text-fg-muted truncate">{m.specialty}</p>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><MapPin size={9} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}</span>
-                            <span className="text-[10px] text-gray-500 flex items-center gap-0.5"><Star size={9} className="text-gray-900 fill-gray-900" />{m.rating}</span>
+                            <span className="text-[10px] text-fg-secondary flex items-center gap-0.5"><MapPin size={9} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}</span>
+                            <span className="text-[10px] text-fg-secondary flex items-center gap-0.5"><Star size={9} className="text-fg fill-fg" />{m.rating}</span>
                             <PriceLevelDots price={m.price} />
-                            {open !== null && (<span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${open ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"}`}>{open ? t("mechOpenShort") : t("mechClosedShort")}</span>)}
+                            {open !== null && (<span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${open ? "bg-success-tint text-success" : "bg-error-tint text-red-500"}`}>{open ? t("mechOpenShort") : t("mechClosedShort")}</span>)}
                           </div>
                         </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected ? "bg-blue-600 border-blue-600" : "border-gray-300"}`}>{selected && <Check size={12} className="text-white" strokeWidth={3} />}</div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selected ? "bg-primary border-primary" : "border-fg-muted"}`}>{selected && <Check size={12} className="text-white" strokeWidth={3} />}</div>
                       </button>
                     );
                   })}
-                  {quoteFilteredMechanics.length === 0 && <p className="text-center text-gray-400 text-xs py-6">{t("noMechanicMatchNote")}</p>}
+                  {quoteFilteredMechanics.length === 0 && <p className="text-center text-fg-muted text-xs py-6">{t("noMechanicMatchNote")}</p>}
                 </div>
               </div>
             </div>
-            <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
-              <button disabled={!quoteVehicleId || !quoteIssue.trim() || quoteSelectedMechIds.length === 0} onClick={submitQuoteRequest} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${quoteVehicleId && quoteIssue.trim() && quoteSelectedMechIds.length > 0 ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("requestQuoteBtn")} {quoteSelectedMechIds.length > 0 ? `(${t("mechanicCountSuffix", { n: String(quoteSelectedMechIds.length) })})` : ""}</button>
+            <div className="px-5 py-4 border-t border-surface-elevated flex-shrink-0">
+              <button disabled={!quoteVehicleId || !quoteIssue.trim() || quoteSelectedMechIds.length === 0} onClick={submitQuoteRequest} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${quoteVehicleId && quoteIssue.trim() && quoteSelectedMechIds.length > 0 ? "bg-primary text-white hover:bg-primary-hover" : "bg-border text-fg-muted cursor-not-allowed"}`}>{t("requestQuoteBtn")} {quoteSelectedMechIds.length > 0 ? `(${t("mechanicCountSuffix", { n: String(quoteSelectedMechIds.length) })})` : ""}</button>
             </div>
           </div>
         </div>
@@ -779,7 +779,7 @@ export function AppShell() {
       {/* Kayıtlı arama düzenleme penceresi: liste hem profilde hem arama ekranında görünüyor,
           bu yüzden pencere en dışta duruyor — iki kopya olsaydı biri güncellenip diğeri unutulurdu. */}
       <SavedSearchEditModal />
-      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-gray-50 min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" || screen === "blog" || screen === "blogPost" || screen === "about" || screen === "careers" || screen === "booking" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }} className={`w-full bg-background min-h-screen shadow-xl flex flex-col ${screen === "landing" || screen === "detail" || screen === "listingDetail" || screen === "mechanicDashboard" || screen === "mechProfilePage" || screen === "ownerProfilePage" || screen === "owner" || screen === "ownerSettings" || screen === "blog" || screen === "blogPost" || screen === "about" || screen === "careers" || screen === "booking" ? "max-w-none" : screen === "mechBrowse" || screen === "adminDashboard" ? "max-w-7xl" : "max-w-md md:max-w-2xl"}`}>
         {/* NOT: "detail" (tamirci profili) artık landing gibi TAM GENİŞLİK — kapak fotoğrafı ekranın
             tamamına yayılsın diye burada max-w YOK; içerik hizalaması MechDetailBody içindeki
             max-w-7xl kapsayıcılarla yapılıyor. Haritadan açılan modal bu daldan geçmiyor. */}
@@ -795,22 +795,22 @@ export function AppShell() {
             {/* Giriş/kayıt ekranlarında logo standarttır: kullanıcı vazgeçip siteye dönebilmeli. */}
             <div className="max-w-md mx-auto w-full px-5 pt-5"><BrandMark /></div>
             <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
-            <div className="bg-gradient-to-b from-blue-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
-              <div className="mb-4"><button onClick={goHome} className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button></div>
-              <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Wrench size={28} className="text-blue-600" /></div><h1 className="text-2xl font-bold tracking-tight text-gray-900">{t("appName")}</h1><p className="text-xs text-gray-500 -mt-1">{role === "mechanic" ? t("mechanicRole") : t("ownerRole")}</p></div>
+            <div className="bg-gradient-to-b from-blue-50 to-white text-fg px-5 pt-6 pb-8 border-b border-surface-elevated shadow-sm rounded-b-[28px]">
+              <div className="mb-4"><button onClick={goHome} className="flex items-center gap-1 text-fg-secondary text-sm hover:text-fg transition"><ChevronLeft size={18} /> {t("back")}</button></div>
+              <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Wrench size={28} className="text-primary" /></div><h1 className="text-2xl font-bold tracking-tight text-fg">{t("appName")}</h1><p className="text-xs text-fg-secondary -mt-1">{role === "mechanic" ? t("mechanicRole") : t("ownerRole")}</p></div>
             </div>
             <div className="flex-1 px-6 py-6">
-              <div className="flex bg-gray-100 rounded-xl p-1 mb-6"><button onClick={() => { setScreen("login"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "login" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("login")}</button><button onClick={() => { setScreen("signup"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "signup" ? "bg-white shadow-sm text-gray-800" : "text-gray-400"}`}>{t("signup")}</button></div>
+              <div className="flex bg-surface-elevated rounded-xl p-1 mb-6"><button onClick={() => { setScreen("login"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "login" ? "bg-white shadow-sm text-fg-strong" : "text-fg-muted"}`}>{t("login")}</button><button onClick={() => { setScreen("signup"); setAuthError(""); setAuthNotice(""); }} className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${screen === "signup" ? "bg-white shadow-sm text-fg-strong" : "text-fg-muted"}`}>{t("signup")}</button></div>
               <div className="space-y-3">
-                {screen === "signup" && (<div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("fullNameShortPlaceholder")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
-                <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t("emailPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>
-                {screen === "signup" && (<div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} onBlur={(e) => normalizePhoneField(e.target.value, (v) => setForm({ ...form, phone: v }))} placeholder={t("phonePlaceholderExample2")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>)}
+                {screen === "signup" && (<div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("fullNameShortPlaceholder")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm" /></div>)}
+                <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder={t("emailPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm" /></div>
+                {screen === "signup" && (<div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} onBlur={(e) => normalizePhoneField(e.target.value, (v) => setForm({ ...form, phone: v }))} placeholder={t("phonePlaceholderExample2")} className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm" /></div>)}
                 {/* GERÇEK OTURUM SİSTEMİ: kayıt formunda artık şifre alanı YOK — kullanıcı şifre
                     seçmiyor, backend rastgele bir şifre üretip e-postasına gönderiyor (bkz.
                     submitRegister / backend/routes/auth.js). Şifre alanı sadece GİRİŞ ekranında var. */}
-                {screen === "signup" && (<p className="text-xs text-gray-400 leading-relaxed">{t("signupPasswordNote")}</p>)}
-                {screen === "login" && (<div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>)}
-                {screen === "login" && (<button onClick={() => setScreen("forgotPassword")} className="text-xs text-blue-500 hover:underline block ml-auto">{t("forgotPasswordLink")}</button>)}
+                {screen === "signup" && (<p className="text-xs text-fg-muted leading-relaxed">{t("signupPasswordNote")}</p>)}
+                {screen === "login" && (<div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input type={showPass ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={t("passwordPlaceholder")} className="w-full pl-9 pr-10 py-3 rounded-xl border border-border text-sm" /><button onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-muted">{showPass ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>)}
+                {screen === "login" && (<button onClick={() => setScreen("forgotPassword")} className="text-xs text-info hover:underline block ml-auto">{t("forgotPasswordLink")}</button>)}
                 {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
                 {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
               </div>
@@ -823,18 +823,18 @@ export function AppShell() {
           <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
             {/* Logo: kullanıcı doğrulama akışının ortasında sıkışmasın, siteye dönebilsin. */}
             <div className="w-full px-5 pt-5"><BrandMark /></div>
-            <div className="bg-gradient-to-b from-blue-50 to-white text-gray-900 px-5 pt-6 pb-8 border-b border-gray-100 shadow-sm rounded-b-[28px]">
-              <div className="mb-4"><button onClick={cancelOtpVerify} className="flex items-center gap-1 text-gray-500 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button></div>
-              <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Lock size={28} className="text-blue-600" /></div><h1 className="text-xl font-bold tracking-tight text-gray-900">{t("otpTitle")}</h1><p className="text-xs text-gray-500">{t("otpSubtitle")}</p></div>
+            <div className="bg-gradient-to-b from-blue-50 to-white text-fg px-5 pt-6 pb-8 border-b border-surface-elevated shadow-sm rounded-b-[28px]">
+              <div className="mb-4"><button onClick={cancelOtpVerify} className="flex items-center gap-1 text-fg-secondary text-sm hover:text-fg transition"><ChevronLeft size={18} /> {t("back")}</button></div>
+              <div className="flex flex-col items-center text-center gap-2"><div className="w-16 h-16 bg-white shadow-sm rounded-2xl flex items-center justify-center"><Lock size={28} className="text-primary" /></div><h1 className="text-xl font-bold tracking-tight text-fg">{t("otpTitle")}</h1><p className="text-xs text-fg-secondary">{t("otpSubtitle")}</p></div>
             </div>
             <div className="flex-1 px-6 py-6">
               <div className="space-y-3">
-                <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} placeholder={t("otpCodePlaceholder")} inputMode="numeric" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm tracking-[0.3em] text-center font-semibold" /></div>
+                <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} placeholder={t("otpCodePlaceholder")} inputMode="numeric" className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm tracking-[0.3em] text-center font-semibold" /></div>
                 {authNotice && <p className="text-xs text-emerald-600 bg-emerald-50 rounded-lg px-3 py-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {authNotice}</p>}
                 {authError && <p className="text-xs text-red-500 flex items-center gap-1.5"><Bell size={12} className="flex-shrink-0" /> {authError}</p>}
               </div>
               <button disabled={authLoading} onClick={submitOtpVerify} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm mt-6 transition ${roleBtn} ${authLoading ? "opacity-60 cursor-not-allowed" : ""}`}>{authLoading ? t("submitting") : t("otpVerifyBtn")}</button>
-              <p className="text-center text-xs text-gray-400 mt-4"><button onClick={cancelOtpVerify} className="text-blue-500 font-medium hover:underline">{t("otpBackToLogin")}</button></p>
+              <p className="text-center text-xs text-fg-muted mt-4"><button onClick={cancelOtpVerify} className="text-info font-medium hover:underline">{t("otpBackToLogin")}</button></p>
             </div>
           </div>
         )}
@@ -842,15 +842,15 @@ export function AppShell() {
           <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
             {/* Logo: kullanıcı doğrulama akışının ortasında sıkışmasın, siteye dönebilsin. */}
             <div className="w-full px-5 pt-5"><BrandMark /></div>
-            <div className="bg-white text-gray-900 px-5 pt-6 pb-6 border-b border-gray-200 shadow-sm">
-              <button onClick={() => setScreen("login")} className="flex items-center gap-1 text-gray-500 mb-4 text-sm hover:text-gray-900 transition"><ChevronLeft size={18} /> {t("back")}</button>
-              <div className="flex items-center gap-3"><div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center"><Lock size={22} className="text-blue-600" /></div><div><h1 className="text-lg font-bold text-gray-900">{t("forgotPasswordTitle")}</h1><p className="text-xs text-gray-500">{t("forgotPasswordSubtitle")}</p></div></div>
+            <div className="bg-white text-fg px-5 pt-6 pb-6 border-b border-border shadow-sm">
+              <button onClick={() => setScreen("login")} className="flex items-center gap-1 text-fg-secondary mb-4 text-sm hover:text-fg transition"><ChevronLeft size={18} /> {t("back")}</button>
+              <div className="flex items-center gap-3"><div className="w-12 h-12 bg-primary-tint rounded-2xl flex items-center justify-center"><Lock size={22} className="text-primary" /></div><div><h1 className="text-lg font-bold text-fg">{t("forgotPasswordTitle")}</h1><p className="text-xs text-fg-secondary">{t("forgotPasswordSubtitle")}</p></div></div>
             </div>
             <div className="flex-1 px-6 py-6">
-              <p className="text-sm text-gray-500 mb-4">{t("forgotPasswordBody")}</p>
-              <div className="relative mb-4"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder={t("emailAddressPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" /></div>
-              <button disabled={!forgotEmail} onClick={() => setScreen("resetSent")} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm transition ${forgotEmail ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("sendResetLinkBtn")}</button>
-              <p className="text-center text-xs text-gray-400 mt-4">{t("rememberedPasswordNote")} <button onClick={() => setScreen("login")} className="text-blue-500 font-medium hover:underline">{t("logInLink")}</button></p>
+              <p className="text-sm text-fg-secondary mb-4">{t("forgotPasswordBody")}</p>
+              <div className="relative mb-4"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} placeholder={t("emailAddressPlaceholder")} type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" /></div>
+              <button disabled={!forgotEmail} onClick={() => setScreen("resetSent")} className={`w-full text-white py-3 rounded-2xl font-semibold text-sm transition ${forgotEmail ? "bg-primary hover:bg-primary-hover" : "bg-border text-fg-muted cursor-not-allowed"}`}>{t("sendResetLinkBtn")}</button>
+              <p className="text-center text-xs text-fg-muted mt-4">{t("rememberedPasswordNote")} <button onClick={() => setScreen("login")} className="text-info font-medium hover:underline">{t("logInLink")}</button></p>
             </div>
           </div>
         )}
@@ -859,60 +859,60 @@ export function AppShell() {
             {/* Logo: kullanıcı doğrulama akışının ortasında sıkışmasın, siteye dönebilsin. */}
             <div className="max-w-md mx-auto w-full px-5 pt-5"><BrandMark /></div>
             <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full px-6 py-10 text-center">
-            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4"><Mail size={36} className="text-blue-500" /></div>
-            <h2 className="text-lg font-bold text-gray-800 mb-2">{t("checkYourEmailTitle")}</h2>
-            <p className="text-sm text-gray-500 mb-1">{t("ifRegisteredNote", { email: forgotEmail })}</p>
-            <p className="text-sm text-gray-500 mb-6">{t("resetLinkComingNote")}</p>
-            <div className="bg-gray-100 rounded-xl p-3 text-xs text-gray-700 mb-6 flex items-start gap-2 text-left"><Bell size={14} className="flex-shrink-0 mt-0.5" /> {t("resetDemoNote")}</div>
-            <button onClick={() => setScreen("login")} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition mb-2">{t("backToLoginBtn")}</button>
-            <button onClick={() => setScreen("forgotPassword")} className="text-xs text-gray-400 hover:text-gray-600">{t("didntGetEmailBtn")}</button>
+            <div className="w-20 h-20 bg-primary-tint rounded-full flex items-center justify-center mb-4"><Mail size={36} className="text-info" /></div>
+            <h2 className="text-lg font-bold text-fg-strong mb-2">{t("checkYourEmailTitle")}</h2>
+            <p className="text-sm text-fg-secondary mb-1">{t("ifRegisteredNote", { email: forgotEmail })}</p>
+            <p className="text-sm text-fg-secondary mb-6">{t("resetLinkComingNote")}</p>
+            <div className="bg-surface-elevated rounded-xl p-3 text-xs text-fg-strong mb-6 flex items-start gap-2 text-left"><Bell size={14} className="flex-shrink-0 mt-0.5" /> {t("resetDemoNote")}</div>
+            <button onClick={() => setScreen("login")} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-primary-hover transition mb-2">{t("backToLoginBtn")}</button>
+            <button onClick={() => setScreen("forgotPassword")} className="text-xs text-fg-muted hover:text-fg-secondary">{t("didntGetEmailBtn")}</button>
           </div>
           </div>
         )}
         {screen === "adminLogin" && (
           <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full px-6 py-10">
-            <div className="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center mb-4"><ShieldAlert size={26} className="text-white" /></div>
-            <h1 className="text-xl font-bold text-gray-900 mb-1">Yönetici Paneli</h1>
-            <p className="text-xs text-gray-500 mb-6 text-center max-w-[260px]">Bu alan yalnızca Fixperto ekibi içindir. Araç sahipleri ve tamirciler bu panele erişemez.</p>
+            <div className="w-14 h-14 bg-secondary rounded-2xl flex items-center justify-center mb-4"><ShieldAlert size={26} className="text-white" /></div>
+            <h1 className="text-xl font-bold text-fg mb-1">Yönetici Paneli</h1>
+            <p className="text-xs text-fg-secondary mb-6 text-center max-w-[260px]">Bu alan yalnızca Fixperto ekibi içindir. Araç sahipleri ve tamirciler bu panele erişemez.</p>
             <div className="w-full space-y-3">
-              <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input value={adminForm.email} onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })} placeholder="Yönetici e-postası" type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm" /></div>
-              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} /><input type="password" value={adminForm.password} onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })} placeholder="Şifre" disabled={adminLoginLoading} className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 text-sm disabled:opacity-60" onKeyDown={(e) => { if (e.key === "Enter") submitAdminLogin(); }} /></div>
+              <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input value={adminForm.email} onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })} placeholder="Yönetici e-postası" type="email" className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm" /></div>
+              <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input type="password" value={adminForm.password} onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })} placeholder="Şifre" disabled={adminLoginLoading} className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm disabled:opacity-60" onKeyDown={(e) => { if (e.key === "Enter") submitAdminLogin(); }} /></div>
               {adminError && <p className="text-xs text-red-500 flex items-center gap-1.5"><AlertTriangle size={12} className="flex-shrink-0" /> {adminError}</p>}
             </div>
-            <button onClick={submitAdminLogin} disabled={adminLoginLoading} className="w-full bg-gray-900 text-white py-3 rounded-2xl font-semibold text-sm mt-5 hover:bg-gray-800 transition disabled:opacity-60 disabled:cursor-not-allowed">{adminLoginLoading ? "Giriş yapılıyor..." : "Giriş Yap"}</button>
-            <button onClick={goHome} className="text-xs text-gray-400 mt-4 hover:text-gray-600">← Uygulamaya dön</button>
+            <button onClick={submitAdminLogin} disabled={adminLoginLoading} className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm mt-5 hover:bg-fg-strong transition disabled:opacity-60 disabled:cursor-not-allowed">{adminLoginLoading ? "Giriş yapılıyor..." : "Giriş Yap"}</button>
+            <button onClick={goHome} className="text-xs text-fg-muted mt-4 hover:text-fg-secondary">← Uygulamaya dön</button>
           </div>
         )}
         {screen === "adminDashboard" && adminAuthed && (() => {
           const adminNavItems = [{ key: "dashboard", label: "Genel Bakış", icon: LayoutDashboard }, { key: "users", label: "Kullanıcılar", icon: Users }, { key: "tickets", label: "Destek Talepleri", icon: LifeBuoy }, { key: "analytics", label: "Analitik", icon: TrendingUp }, { key: "blog", label: "Blog", icon: BookOpen }, { key: "history", label: "Geçmiş", icon: History }, { key: "careers", label: "Kariyer", icon: Briefcase }, { key: "handbook", label: "El Kitabı", icon: BookOpen }, { key: "appearance", label: t("adminAppearanceTabLabel"), icon: Palette }];
           return (
           <div className="flex-1 flex flex-col md:flex-row min-h-0">
-            <div className="hidden md:flex md:w-60 md:flex-shrink-0 bg-gray-900 text-white flex-col p-4">
-              <div className="flex items-center gap-2 mb-8 px-2"><div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold">Fix<span className="text-blue-500">perto</span></span></div>
-              <p className="text-[10px] uppercase tracking-wider text-gray-500 px-2 mb-2">Yönetici Paneli</p>
+            <div className="hidden md:flex md:w-60 md:flex-shrink-0 bg-secondary text-white flex-col p-4">
+              <div className="flex items-center gap-2 mb-8 px-2"><div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold">Fix<span className="text-info">perto</span></span></div>
+              <p className="text-[10px] uppercase tracking-wider text-fg-secondary px-2 mb-2">Yönetici Paneli</p>
               <nav className="flex flex-col gap-1">
                 {adminNavItems.map(item => { const Icon = item.icon; const active = adminTab === item.key; return (
-                  <button key={item.key} onClick={() => setAdminTab(item.key)} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition ${active ? "bg-white/10 text-white" : "text-gray-400 hover:bg-white/5 hover:text-gray-200"}`}>
+                  <button key={item.key} onClick={() => setAdminTab(item.key)} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition ${active ? "bg-white/10 text-white" : "text-fg-muted hover:bg-white/5 hover:text-fg-muted"}`}>
                     <Icon size={16} />{item.label}
-                    {item.key === "tickets" && adminStats.openTickets > 0 && <span className="ml-auto bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{adminStats.openTickets}</span>}
+                    {item.key === "tickets" && adminStats.openTickets > 0 && <span className="ml-auto bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{adminStats.openTickets}</span>}
                   </button>
                 ); })}
               </nav>
-              <button onClick={() => setShowBroadcastModal(true)} className="mt-2 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/5 hover:text-gray-200 transition"><Megaphone size={16} /> Duyuru Gönder</button>
-              <button onClick={adminLogout} className="mt-auto flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/5 hover:text-gray-200 transition"><LogOut size={16} /> Çıkış Yap</button>
+              <button onClick={() => setShowBroadcastModal(true)} className="mt-2 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-fg-muted hover:bg-white/5 hover:text-fg-muted transition"><Megaphone size={16} /> Duyuru Gönder</button>
+              <button onClick={adminLogout} className="mt-auto flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-fg-muted hover:bg-white/5 hover:text-fg-muted transition"><LogOut size={16} /> Çıkış Yap</button>
             </div>
-            <div className="md:hidden bg-gray-900 text-white px-4 pt-5 pb-3 flex-shrink-0">
-              <div className="flex items-center justify-between mb-4"><div className="flex items-center gap-2"><div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><Wrench size={14} className="text-white" /></div><span className="text-sm font-extrabold">Fix<span className="text-blue-500">perto</span> <span className="text-gray-400 font-medium">Admin</span></span></div><div className="flex items-center gap-1"><button onClick={() => setShowBroadcastModal(true)} aria-label="Duyuru gönder" className="text-gray-400 hover:text-white p-1"><Megaphone size={16} /></button><button onClick={adminLogout} aria-label="Çıkış" className="text-gray-400 hover:text-white p-1"><LogOut size={16} /></button></div></div>
+            <div className="md:hidden bg-secondary text-white px-4 pt-5 pb-3 flex-shrink-0">
+              <div className="flex items-center justify-between mb-4"><div className="flex items-center gap-2"><div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center"><Wrench size={14} className="text-white" /></div><span className="text-sm font-extrabold">Fix<span className="text-info">perto</span> <span className="text-fg-muted font-medium">Admin</span></span></div><div className="flex items-center gap-1"><button onClick={() => setShowBroadcastModal(true)} aria-label="Duyuru gönder" className="text-fg-muted hover:text-white p-1"><Megaphone size={16} /></button><button onClick={adminLogout} aria-label="Çıkış" className="text-fg-muted hover:text-white p-1"><LogOut size={16} /></button></div></div>
               <div className="flex gap-1 bg-white/5 rounded-xl p-1">
-                {adminNavItems.map(item => (<button key={item.key} onClick={() => setAdminTab(item.key)} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition relative ${adminTab === item.key ? "bg-white text-gray-900" : "text-gray-400"}`}>{item.label.split(" ")[0]}{item.key === "tickets" && adminStats.openTickets > 0 && <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{adminStats.openTickets}</span>}</button>))}
+                {adminNavItems.map(item => (<button key={item.key} onClick={() => setAdminTab(item.key)} className={`flex-1 py-2 rounded-lg text-xs font-semibold transition relative ${adminTab === item.key ? "bg-white text-fg" : "text-fg-muted"}`}>{item.label.split(" ")[0]}{item.key === "tickets" && adminStats.openTickets > 0 && <span className="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{adminStats.openTickets}</span>}</button>))}
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto bg-gray-50">
+            <div className="flex-1 overflow-y-auto bg-background">
               <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-6">
                 {adminTab === "dashboard" && (
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900 mb-1">Genel Bakış</h1>
-                    <p className="text-sm text-gray-500 mb-6">Platformun anlık durumu</p>
+                    <h1 className="text-xl font-bold text-fg mb-1">Genel Bakış</h1>
+                    <p className="text-sm text-fg-secondary mb-6">Platformun anlık durumu</p>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                       {[
                         { label: "Araç Sahibi", value: adminStats.totalOwners, icon: Car, note: `${adminStats.suspendedOwners} askıda` },
@@ -926,32 +926,32 @@ export function AppShell() {
                         { label: "Doğrulama Bekleyen", value: adminStats.pendingVerification, icon: BadgeCheck, note: null, alert: adminStats.pendingVerification > 0 },
                         { label: "Ortalama Puan", value: adminStats.avgRating, icon: Star, note: null },
                       ].map((c, i) => { const Icon = c.icon; return (
-                        <div key={i} className="bg-white border border-gray-200 rounded-2xl p-4">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.alert ? "bg-red-50" : "bg-blue-50"}`}><Icon size={16} className={c.alert ? "text-red-500" : "text-blue-600"} /></div>
-                          <p className="text-2xl font-bold text-gray-900">{c.value}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{c.label}</p>
-                          {c.note && <p className="text-[10px] text-gray-400 mt-1">{c.note}</p>}
+                        <div key={i} className="bg-white border border-border rounded-2xl p-4">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.alert ? "bg-error-tint" : "bg-primary-tint"}`}><Icon size={16} className={c.alert ? "text-red-500" : "text-primary"} /></div>
+                          <p className="text-2xl font-bold text-fg">{c.value}</p>
+                          <p className="text-xs text-fg-secondary mt-0.5">{c.label}</p>
+                          {c.note && <p className="text-[10px] text-fg-muted mt-1">{c.note}</p>}
                         </div>
                       ); })}
                     </div>
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2"><LifeBuoy size={15} className="text-blue-500" /> Son Destek Talepleri</h2>
-                    <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 mb-8">
+                    <h2 className="text-sm font-semibold text-fg-strong mb-3 flex items-center gap-2"><LifeBuoy size={15} className="text-info" /> Son Destek Talepleri</h2>
+                    <div className="bg-white border border-border rounded-2xl divide-y divide-surface-elevated mb-8">
                       {supportTickets.slice(0, 5).map(tk => (
-                        <button key={tk.id} onClick={() => { setAdminTab("tickets"); setSelectedTicketId(tk.id); setAdminTicketNote(tk.adminNote || ""); }} className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition">
-                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-red-500" : tk.status === "in_review" ? "bg-gray-400" : "bg-green-500"}`} />
-                          <div className="flex-1 min-w-0"><p className="text-sm font-medium text-gray-800 truncate">{tk.subject}</p><p className="text-xs text-gray-400 truncate">{tk.fromName} · {ADMIN_TICKET_TYPE_LABELS[tk.type]}</p></div>
-                          {ticketSlaBreached(tk) && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 flex-shrink-0 flex items-center gap-0.5"><AlertTriangle size={9} /> SLA</span>}
-                          <span className="text-[10px] text-gray-400 flex-shrink-0">{tk.createdDate}</span>
+                        <button key={tk.id} onClick={() => { setAdminTab("tickets"); setSelectedTicketId(tk.id); setAdminTicketNote(tk.adminNote || ""); }} className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-background transition">
+                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-red-500" : tk.status === "in_review" ? "bg-fg-muted" : "bg-green-500"}`} />
+                          <div className="flex-1 min-w-0"><p className="text-sm font-medium text-fg-strong truncate">{tk.subject}</p><p className="text-xs text-fg-muted truncate">{tk.fromName} · {ADMIN_TICKET_TYPE_LABELS[tk.type]}</p></div>
+                          {ticketSlaBreached(tk) && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-error flex-shrink-0 flex items-center gap-0.5"><AlertTriangle size={9} /> SLA</span>}
+                          <span className="text-[10px] text-fg-muted flex-shrink-0">{tk.createdDate}</span>
                         </button>
                       ))}
                     </div>
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2"><Megaphone size={15} className="text-blue-500" /> Son Duyurular</h2>
-                    <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
-                      {broadcastLog.length === 0 && <p className="text-center text-gray-400 text-sm py-8">Henüz duyuru gönderilmedi</p>}
+                    <h2 className="text-sm font-semibold text-fg-strong mb-3 flex items-center gap-2"><Megaphone size={15} className="text-info" /> Son Duyurular</h2>
+                    <div className="bg-white border border-border rounded-2xl divide-y divide-surface-elevated">
+                      {broadcastLog.length === 0 && <p className="text-center text-fg-muted text-sm py-8">Henüz duyuru gönderilmedi</p>}
                       {broadcastLog.slice(0, 5).map(b => (
                         <div key={b.id} className="px-4 py-3">
-                          <div className="flex items-center justify-between mb-1"><span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{b.audience === "all" ? "Tümü" : b.audience === "owner" ? "Araç Sahipleri" : "Tamirciler"} · {b.recipientCount} kişi</span><span className="text-[10px] text-gray-300">{b.date}</span></div>
-                          <p className="text-xs text-gray-600">{b.message}</p>
+                          <div className="flex items-center justify-between mb-1"><span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-surface-elevated text-fg-secondary">{b.audience === "all" ? "Tümü" : b.audience === "owner" ? "Araç Sahipleri" : "Tamirciler"} · {b.recipientCount} kişi</span><span className="text-[10px] text-fg-muted">{b.date}</span></div>
+                          <p className="text-xs text-fg-secondary">{b.message}</p>
                         </div>
                       ))}
                     </div>
@@ -962,24 +962,24 @@ export function AppShell() {
                     {adminProfileViewUser && viewingUser ? (
                       <div>
                         <div className="flex items-center justify-between mb-4">
-                          <button onClick={() => { setAdminProfileViewUser(null); setEditingProfileField(null); }} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 text-sm transition"><ChevronLeft size={16} /> Kullanıcılara Dön</button>
-                          <button onClick={() => openAdminAnalyze(viewingUser)} className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition"><TrendingUp size={14} /> Analizi Görüntüle</button>
+                          <button onClick={() => { setAdminProfileViewUser(null); setEditingProfileField(null); }} className="flex items-center gap-1 text-fg-secondary hover:text-fg text-sm transition"><ChevronLeft size={16} /> Kullanıcılara Dön</button>
+                          <button onClick={() => openAdminAnalyze(viewingUser)} className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover transition"><TrendingUp size={14} /> Analizi Görüntüle</button>
                         </div>
-                        <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-5">
+                        <div className="bg-white border border-border rounded-2xl p-5 mb-5">
                           <div className="flex items-center gap-3 mb-1">
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl font-bold ${viewingUser.type === "mechanic" ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-600"}`}>{viewingUser.type === "mechanic" ? <Wrench size={22} /> : <Car size={22} />}</div>
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl font-bold ${viewingUser.type === "mechanic" ? "bg-primary-tint text-primary" : "bg-surface-elevated text-fg-secondary"}`}>{viewingUser.type === "mechanic" ? <Wrench size={22} /> : <Car size={22} />}</div>
                             <div className="flex-1 min-w-0">
-                              <h2 className="text-lg font-bold text-gray-900 truncate">{viewingUser.name}</h2>
+                              <h2 className="text-lg font-bold text-fg truncate">{viewingUser.name}</h2>
                               <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{viewingUser.type === "mechanic" ? "Tamirci" : "Araç Sahibi"}</span>
-                                {viewingUser.status === "suspended" && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-500">Askıda</span>}
-                                {viewingUser.type === "mechanic" && viewingUser.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 flex items-center gap-0.5"><BadgeCheck size={10} /> Doğrulanmış</span>}
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-elevated text-fg-secondary">{viewingUser.type === "mechanic" ? "Tamirci" : "Araç Sahibi"}</span>
+                                {viewingUser.status === "suspended" && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-error-tint text-red-500">Askıda</span>}
+                                {viewingUser.type === "mechanic" && viewingUser.verified && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-tint text-primary flex items-center gap-0.5"><BadgeCheck size={10} /> Doğrulanmış</span>}
                               </div>
                             </div>
                           </div>
                         </div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">Hesap Bilgileri</p>
-                        <div className="bg-white border border-gray-200 rounded-2xl px-4 mb-5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1">Hesap Bilgileri</p>
+                        <div className="bg-white border border-border rounded-2xl px-4 mb-5">
                           {renderAdminProfileRow(viewingUser, "name", viewingUser.type === "mechanic" ? "İşletme Adı" : "Ad Soyad", viewingUser.name)}
                           {renderAdminProfileRow(viewingUser, "email", "E-posta", viewingUser.email)}
                           {renderAdminProfileRow(viewingUser, "phone", "Telefon", viewingUser.phone)}
@@ -988,15 +988,15 @@ export function AppShell() {
                         </div>
                         {viewingUser.type === "owner" && (
                           <>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">Platform İstatistikleri</p>
-                            <div className="bg-white border border-gray-200 rounded-2xl px-4 mb-5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1">Platform İstatistikleri</p>
+                            <div className="bg-white border border-border rounded-2xl px-4 mb-5">
                               {renderAdminProfileRow(viewingUser, "vehicleCount", "Kayıtlı Araç Sayısı", ownersDirectory.find(o => o.id === viewingUser.id)?.vehicleCount, { numeric: true })}
                               {renderAdminProfileRow(viewingUser, "apptCount", "Toplam Randevu", ownersDirectory.find(o => o.id === viewingUser.id)?.apptCount, { numeric: true })}
                             </div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">Araç İlanları</p>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1">Araç İlanları</p>
+                            <div className="bg-white border border-border rounded-2xl p-4 mb-5">
                               {listings.filter(l => l.sellerId != null ? l.sellerId === viewingUser.id : l.sellerName === viewingUser.name).length === 0 ? (
-                                <p className="text-xs text-gray-400">Bu kullanıcının araç ilanı yok.</p>
+                                <p className="text-xs text-fg-muted">Bu kullanıcının araç ilanı yok.</p>
                               ) : (
                                 <div className="space-y-2">{listings.filter(l => l.sellerId != null ? l.sellerId === viewingUser.id : l.sellerName === viewingUser.name).map(l => renderAdminListingCard(l))}</div>
                               )}
@@ -1005,67 +1005,67 @@ export function AppShell() {
                         )}
                         {viewingUser.type === "mechanic" && (
                           <>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">İşletme Profili</p>
-                            <div className="bg-white border border-gray-200 rounded-2xl px-4 mb-5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1">İşletme Profili</p>
+                            <div className="bg-white border border-border rounded-2xl px-4 mb-5">
                               {renderAdminProfileRow(viewingUser, "specialty", "Uzmanlık Alanı", viewingUser.specialty)}
                               {renderAdminProfileRow(viewingUser, "address", "Adres", viewingUser.address)}
                               {renderAdminProfileRow(viewingUser, "price", "Başlangıç Fiyatı (₺)", viewingUser.price, { numeric: true })}
                               {renderAdminProfileRow(viewingUser, "verified", "Doğrulama Rozeti", viewingUser.verified, { type: "toggle", options: [{ value: "true", label: "Doğrulanmış" }, { value: "false", label: "Doğrulanmamış" }], display: viewingUser.verified ? "Doğrulanmış" : "Doğrulanmamış" })}
-                              <div className="flex items-center justify-between gap-3 py-3 border-b border-gray-100 last:border-0"><div className="flex-1 min-w-0"><p className="text-[11px] text-gray-400 mb-0.5">Konuştuğu Dil</p><p className="text-sm font-medium text-gray-800">{(() => { const l = mechanicsList.find(m => m.id === viewingUser.id)?.lang; return LANG_LABELS[l] || l || "—"; })()}</p></div></div>
-                              <div className="flex items-center justify-between gap-3 py-3 border-b border-gray-100 last:border-0"><div className="flex-1 min-w-0"><p className="text-[11px] text-gray-400 mb-0.5">Hizmet Verdiği Markalar</p><p className="text-sm font-medium text-gray-800">{(mechanicsList.find(m => m.id === viewingUser.id)?.brandsServiced || []).join(", ") || "—"}</p></div></div>
-                              <div className="flex items-center justify-between gap-3 py-3 border-b border-gray-100 last:border-0"><div className="flex-1 min-w-0"><p className="text-[11px] text-gray-400 mb-0.5">Ödeme Yöntemleri</p><p className="text-sm font-medium text-gray-800">{(mechanicsList.find(m => m.id === viewingUser.id)?.paymentMethods || []).join(", ") || "—"}</p></div></div>
+                              <div className="flex items-center justify-between gap-3 py-3 border-b border-surface-elevated last:border-0"><div className="flex-1 min-w-0"><p className="text-[11px] text-fg-muted mb-0.5">Konuştuğu Dil</p><p className="text-sm font-medium text-fg-strong">{(() => { const l = mechanicsList.find(m => m.id === viewingUser.id)?.lang; return LANG_LABELS[l] || l || "—"; })()}</p></div></div>
+                              <div className="flex items-center justify-between gap-3 py-3 border-b border-surface-elevated last:border-0"><div className="flex-1 min-w-0"><p className="text-[11px] text-fg-muted mb-0.5">Hizmet Verdiği Markalar</p><p className="text-sm font-medium text-fg-strong">{(mechanicsList.find(m => m.id === viewingUser.id)?.brandsServiced || []).join(", ") || "—"}</p></div></div>
+                              <div className="flex items-center justify-between gap-3 py-3 border-b border-surface-elevated last:border-0"><div className="flex-1 min-w-0"><p className="text-[11px] text-fg-muted mb-0.5">Ödeme Yöntemleri</p><p className="text-sm font-medium text-fg-strong">{(mechanicsList.find(m => m.id === viewingUser.id)?.paymentMethods || []).join(", ") || "—"}</p></div></div>
                             </div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">Konum</p>
-                            <div className="rounded-2xl overflow-hidden border border-gray-200 mb-5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1">Konum</p>
+                            <div className="rounded-2xl overflow-hidden border border-border mb-5">
                               <MapPanel className="h-32" items={[mechanicsList.find(m => m.id === viewingUser.id)].filter(Boolean)} onPick={() => {}} />
-                              <div className="p-3 bg-white text-xs text-gray-600">{viewingUser.address}</div>
+                              <div className="p-3 bg-white text-xs text-fg-secondary">{viewingUser.address}</div>
                             </div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1 flex items-center justify-between">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1 flex items-center justify-between">
                               <span>Sunduğu Hizmetler</span>
-                              <button onClick={() => addMechService(viewingUser.id)} className="normal-case text-blue-600 font-semibold flex items-center gap-1"><Plus size={11} /> Ekle</button>
+                              <button onClick={() => addMechService(viewingUser.id)} className="normal-case text-primary font-semibold flex items-center gap-1"><Plus size={11} /> Ekle</button>
                             </p>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
+                            <div className="bg-white border border-border rounded-2xl p-4 mb-5">
                               {(mechanicsList.find(m => m.id === viewingUser.id)?.services || []).length === 0 ? (
-                                <p className="text-xs text-gray-400">Henüz hizmet eklenmemiş.</p>
+                                <p className="text-xs text-fg-muted">Henüz hizmet eklenmemiş.</p>
                               ) : (
                                 <div className="space-y-2">
                                   {mechanicsList.find(m => m.id === viewingUser.id).services.map((s, i) => (
                                     <div key={i} className="flex items-center gap-2">
-                                      <input value={s.name} onChange={(e) => updateMechService(viewingUser.id, i, "name", e.target.value)} onFocus={() => trackFieldFocus(`service:${viewingUser.id}:${i}:name`, s.name)} onBlur={(e) => trackFieldBlurAndLog(`service:${viewingUser.id}:${i}:name`, e.target.value, { targetType: "service", targetId: viewingUser.id, field: "name", extra: { serviceIdx: i } })} className="flex-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs" />
-                                      <input value={s.price} onChange={(e) => updateMechService(viewingUser.id, i, "price", e.target.value)} onFocus={() => trackFieldFocus(`service:${viewingUser.id}:${i}:price`, s.price)} onBlur={(e) => trackFieldBlurAndLog(`service:${viewingUser.id}:${i}:price`, e.target.value, { targetType: "service", targetId: viewingUser.id, field: "price", extra: { serviceIdx: i } })} className="w-20 px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs" />
-                                      <button onClick={() => removeMechService(viewingUser.id, i)} aria-label="Hizmeti kaldır" className="w-7 h-7 rounded-lg border border-red-200 text-red-500 flex items-center justify-center hover:bg-red-50 transition flex-shrink-0"><Trash2 size={12} /></button>
+                                      <input value={s.name} onChange={(e) => updateMechService(viewingUser.id, i, "name", e.target.value)} onFocus={() => trackFieldFocus(`service:${viewingUser.id}:${i}:name`, s.name)} onBlur={(e) => trackFieldBlurAndLog(`service:${viewingUser.id}:${i}:name`, e.target.value, { targetType: "service", targetId: viewingUser.id, field: "name", extra: { serviceIdx: i } })} className="flex-1 px-2.5 py-1.5 rounded-lg border border-border text-xs" />
+                                      <input value={s.price} onChange={(e) => updateMechService(viewingUser.id, i, "price", e.target.value)} onFocus={() => trackFieldFocus(`service:${viewingUser.id}:${i}:price`, s.price)} onBlur={(e) => trackFieldBlurAndLog(`service:${viewingUser.id}:${i}:price`, e.target.value, { targetType: "service", targetId: viewingUser.id, field: "price", extra: { serviceIdx: i } })} className="w-20 px-2.5 py-1.5 rounded-lg border border-border text-xs" />
+                                      <button onClick={() => removeMechService(viewingUser.id, i)} aria-label="Hizmeti kaldır" className="w-7 h-7 rounded-lg border border-red-200 text-red-500 flex items-center justify-center hover:bg-error-tint transition flex-shrink-0"><Trash2 size={12} /></button>
                                     </div>
                                   ))}
                                 </div>
                               )}
                             </div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">Araç İlanları</p>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1">Araç İlanları</p>
+                            <div className="bg-white border border-border rounded-2xl p-4 mb-5">
                               {listings.filter(l => l.sellerType === "mechanic" && (l.sellerId != null ? l.sellerId === viewingUser.id : l.sellerName === viewingUser.name)).length === 0 ? (
-                                <p className="text-xs text-gray-400">Bu tamircinin araç ilanı yok.</p>
+                                <p className="text-xs text-fg-muted">Bu tamircinin araç ilanı yok.</p>
                               ) : (
                                 <div className="space-y-2">{listings.filter(l => l.sellerType === "mechanic" && (l.sellerId != null ? l.sellerId === viewingUser.id : l.sellerName === viewingUser.name)).map(l => renderAdminListingCard(l))}</div>
                               )}
                             </div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">İş İlanları</p>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1">İş İlanları</p>
+                            <div className="bg-white border border-border rounded-2xl p-4 mb-5">
                               {jobListings.filter(j => j.mechanicId === viewingUser.id).length === 0 ? (
-                                <p className="text-xs text-gray-400">Bu tamircinin iş ilanı yok.</p>
+                                <p className="text-xs text-fg-muted">Bu tamircinin iş ilanı yok.</p>
                               ) : (
                                 <div className="space-y-2">{jobListings.filter(j => j.mechanicId === viewingUser.id).map(j => renderAdminJobCard(j))}</div>
                               )}
                             </div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">Doğrulama Belgeleri</p>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1">Doğrulama Belgeleri</p>
+                            <div className="bg-white border border-border rounded-2xl p-4 mb-5">
                               {(viewingUser.verificationDocs || []).length === 0 ? (
-                                <p className="text-xs text-gray-400">Henüz belge gönderilmedi.</p>
+                                <p className="text-xs text-fg-muted">Henüz belge gönderilmedi.</p>
                               ) : (
                                 <div className="space-y-2">
                                   {viewingUser.verificationDocs.map((d, i) => (
-                                    <div key={i} className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-3 py-2.5">
-                                      <FileText size={14} className="text-blue-500 flex-shrink-0" />
-                                      <div className="flex-1 min-w-0"><p className="text-xs font-medium text-gray-700 truncate">{d.name}</p><p className="text-[10px] text-gray-400">{d.type} · {d.uploadedDate}</p></div>
-                                      <button onClick={() => setToast({ type: "info", text: "📄 Bu bir demo belgesidir, gerçek dosya içeriği bulunmuyor." })} className="text-[11px] font-medium text-blue-600 hover:text-blue-700 flex-shrink-0">Görüntüle</button>
+                                    <div key={i} className="flex items-center gap-2.5 bg-background rounded-xl px-3 py-2.5">
+                                      <FileText size={14} className="text-info flex-shrink-0" />
+                                      <div className="flex-1 min-w-0"><p className="text-xs font-medium text-fg-strong truncate">{d.name}</p><p className="text-[10px] text-fg-muted">{d.type} · {d.uploadedDate}</p></div>
+                                      <button onClick={() => setToast({ type: "info", text: "📄 Bu bir demo belgesidir, gerçek dosya içeriği bulunmuyor." })} className="text-[11px] font-medium text-primary hover:text-primary-hover flex-shrink-0">Görüntüle</button>
                                     </div>
                                   ))}
                                 </div>
@@ -1073,42 +1073,42 @@ export function AppShell() {
                             </div>
                           </>
                         )}
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1 px-1">Şifre Yönetimi</p>
-                        <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-1 px-1">Şifre Yönetimi</p>
+                        <div className="bg-white border border-border rounded-2xl p-4 mb-5">
                           <div className="flex gap-2 mb-2">
-                            <input type="text" value={profilePasswordDraft} onChange={(e) => setProfilePasswordDraft(e.target.value)} placeholder="Yeni şifre belirle" className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                            <button onClick={() => { if (!profilePasswordDraft.trim()) return; if (viewingUser.type === "owner") setOwnersDirectory(list => list.map(o => o.id === viewingUser.id ? { ...o, password: profilePasswordDraft.trim() } : o)); else setMechanicAdminOverrides(ov => ({ ...ov, [viewingUser.id]: { ...ov[viewingUser.id], password: profilePasswordDraft.trim() } })); setProfilePasswordDraft(""); setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." }); }} disabled={!profilePasswordDraft.trim()} className={`px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${profilePasswordDraft.trim() ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-gray-100 text-gray-300 cursor-not-allowed"}`}>Güncelle</button>
+                            <input type="text" value={profilePasswordDraft} onChange={(e) => setProfilePasswordDraft(e.target.value)} placeholder="Yeni şifre belirle" className="flex-1 px-3 py-2.5 rounded-xl border border-border text-sm" />
+                            <button onClick={() => { if (!profilePasswordDraft.trim()) return; if (viewingUser.type === "owner") setOwnersDirectory(list => list.map(o => o.id === viewingUser.id ? { ...o, password: profilePasswordDraft.trim() } : o)); else setMechanicAdminOverrides(ov => ({ ...ov, [viewingUser.id]: { ...ov[viewingUser.id], password: profilePasswordDraft.trim() } })); setProfilePasswordDraft(""); setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." }); }} disabled={!profilePasswordDraft.trim()} className={`px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${profilePasswordDraft.trim() ? "bg-secondary text-white hover:bg-fg-strong" : "bg-surface-elevated text-fg-muted cursor-not-allowed"}`}>Güncelle</button>
                           </div>
-                          <button onClick={() => setToast({ type: "info", text: `✉️ Şifre sıfırlama bağlantısı ${viewingUser.email} adresine gönderildi (demo).` })} className="w-full border border-gray-200 text-gray-600 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-1.5"><Mail size={12} /> Şifre Sıfırlama Bağlantısı Gönder</button>
+                          <button onClick={() => setToast({ type: "info", text: `✉️ Şifre sıfırlama bağlantısı ${viewingUser.email} adresine gönderildi (demo).` })} className="w-full border border-border text-fg-secondary py-2 rounded-xl text-xs font-semibold hover:bg-background transition flex items-center justify-center gap-1.5"><Mail size={12} /> Şifre Sıfırlama Bağlantısı Gönder</button>
                         </div>
                       </div>
                     ) : (
                       <>
                         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-                          <div><h1 className="text-xl font-bold text-gray-900">Kullanıcılar</h1><p className="text-sm text-gray-500">{adminFilteredUsers.length} kullanıcı</p></div>
-                          <div className="relative w-full sm:w-64"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={adminUserSearch} onChange={(e) => setAdminUserSearch(e.target.value)} placeholder="İsim veya e-posta ara" className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-sm" /></div>
+                          <div><h1 className="text-xl font-bold text-fg">Kullanıcılar</h1><p className="text-sm text-fg-secondary">{adminFilteredUsers.length} kullanıcı</p></div>
+                          <div className="relative w-full sm:w-64"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={14} /><input value={adminUserSearch} onChange={(e) => setAdminUserSearch(e.target.value)} placeholder="İsim veya e-posta ara" className="w-full pl-8 pr-3 py-2 rounded-xl border border-border text-sm" /></div>
                         </div>
                         <div className="flex gap-2 mb-4">
-                          {[{ key: "all", label: "Tümü" }, { key: "owner", label: "Araç Sahipleri" }, { key: "mechanic", label: "Tamirciler" }].map(f => (<button key={f.key} onClick={() => setAdminUserTypeFilter(f.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${adminUserTypeFilter === f.key ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-600"}`}>{f.label}</button>))}
+                          {[{ key: "all", label: "Tümü" }, { key: "owner", label: "Araç Sahipleri" }, { key: "mechanic", label: "Tamirciler" }].map(f => (<button key={f.key} onClick={() => setAdminUserTypeFilter(f.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${adminUserTypeFilter === f.key ? "bg-secondary text-white" : "bg-white border border-border text-fg-secondary"}`}>{f.label}</button>))}
                         </div>
-                        <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
+                        <div className="bg-white border border-border rounded-2xl divide-y divide-surface-elevated">
                           {adminFilteredUsers.map(u => (
                             <div key={`${u.type}-${u.id}`} className="px-4 py-3 flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${u.type === "mechanic" ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-600"}`}>{u.type === "mechanic" ? <Wrench size={15} /> : <Car size={15} />}</div>
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${u.type === "mechanic" ? "bg-primary-tint text-primary" : "bg-surface-elevated text-fg-secondary"}`}>{u.type === "mechanic" ? <Wrench size={15} /> : <Car size={15} />}</div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5"><p className="text-sm font-semibold text-gray-800 truncate">{u.name}</p>{u.status === "suspended" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500 flex-shrink-0">Askıda</span>}</div>
-                                <p className="text-xs text-gray-400 truncate">{u.email} · {u.phone}</p>
-                                <p className="text-[10px] text-gray-300 truncate">{u.extra}</p>
+                                <div className="flex items-center gap-1.5"><p className="text-sm font-semibold text-fg-strong truncate">{u.name}</p>{u.status === "suspended" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-error-tint text-red-500 flex-shrink-0">Askıda</span>}</div>
+                                <p className="text-xs text-fg-muted truncate">{u.email} · {u.phone}</p>
+                                <p className="text-[10px] text-fg-muted truncate">{u.extra}</p>
                               </div>
                               <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto sm:ml-0">
-                                <button onClick={() => openAdminProfileView(u)} aria-label="Profili Görüntüle" className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition"><Eye size={13} /></button>
-                                <button onClick={() => openAdminAnalyze(u)} aria-label="Analiz" className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition"><TrendingUp size={13} /></button>
-                                <button onClick={() => openAdminUserEdit(u)} aria-label="Düzenle" className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition"><Pencil size={13} /></button>
-                                <button onClick={() => toggleAdminUserStatus(u)} aria-label="Durumu değiştir" className={`w-8 h-8 rounded-lg border flex items-center justify-center transition ${u.status === "suspended" ? "border-green-200 text-green-600 hover:bg-green-50" : "border-red-200 text-red-500 hover:bg-red-50"}`}>{u.status === "suspended" ? <CheckCircle2 size={13} /> : <Ban size={13} />}</button>
+                                <button onClick={() => openAdminProfileView(u)} aria-label="Profili Görüntüle" className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-fg-secondary hover:bg-background transition"><Eye size={13} /></button>
+                                <button onClick={() => openAdminAnalyze(u)} aria-label="Analiz" className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-fg-secondary hover:bg-background transition"><TrendingUp size={13} /></button>
+                                <button onClick={() => openAdminUserEdit(u)} aria-label="Düzenle" className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-fg-secondary hover:bg-background transition"><Pencil size={13} /></button>
+                                <button onClick={() => toggleAdminUserStatus(u)} aria-label="Durumu değiştir" className={`w-8 h-8 rounded-lg border flex items-center justify-center transition ${u.status === "suspended" ? "border-green-200 text-success hover:bg-success-tint" : "border-red-200 text-red-500 hover:bg-error-tint"}`}>{u.status === "suspended" ? <CheckCircle2 size={13} /> : <Ban size={13} />}</button>
                               </div>
                             </div>
                           ))}
-                          {adminFilteredUsers.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Sonuç bulunamadı</p>}
+                          {adminFilteredUsers.length === 0 && <p className="text-center text-fg-muted text-sm py-10">Sonuç bulunamadı</p>}
                         </div>
                       </>
                     )}
@@ -1116,45 +1116,45 @@ export function AppShell() {
                 )}
                 {adminTab === "tickets" && (
                   <div>
-                    <div className="mb-4"><h1 className="text-xl font-bold text-gray-900">Destek Talepleri</h1><p className="text-sm text-gray-500">{supportTickets.length.toLocaleString("tr-TR")} talep{adminFilteredTickets.length !== supportTickets.length ? ` · ${adminFilteredTickets.length.toLocaleString("tr-TR")} filtreyle eşleşiyor` : ""}</p></div>
+                    <div className="mb-4"><h1 className="text-xl font-bold text-fg">Destek Talepleri</h1><p className="text-sm text-fg-secondary">{supportTickets.length.toLocaleString("tr-TR")} talep{adminFilteredTickets.length !== supportTickets.length ? ` · ${adminFilteredTickets.length.toLocaleString("tr-TR")} filtreyle eşleşiyor` : ""}</p></div>
                     {!showTicketAnalytics && (<>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">Talep Listesi</p>
-                      <div className="relative mb-2"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} /><input value={adminTicketSearch} onChange={(e) => { setAdminTicketSearch(e.target.value); setAdminTicketVisibleCount(25); }} placeholder="Konu veya kullanıcı adına göre ara..." className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 px-1">Talep Listesi</p>
+                      <div className="relative mb-2"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={14} /><input value={adminTicketSearch} onChange={(e) => { setAdminTicketSearch(e.target.value); setAdminTicketVisibleCount(25); }} placeholder="Konu veya kullanıcı adına göre ara..." className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border text-sm" /></div>
                     </>)}
                     <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
-                      {[{ key: "all", label: "Tümü" }, { key: "open", label: "Açık" }, { key: "in_review", label: "İnceleniyor" }, { key: "resolved", label: "Çözüldü" }].map(f => (<button key={f.key} onClick={() => { setAdminTicketStatusFilter(f.key); setAdminTicketVisibleCount(25); setShowTicketAnalytics(false); }} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition ${adminTicketStatusFilter === f.key && !showTicketAnalytics ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-600"}`}>{f.label}</button>))}
-                      <button onClick={() => setShowTicketAnalytics(s => !s)} className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition ${showTicketAnalytics ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-600"}`}><TrendingUp size={12} /> Genel Analiz</button>
+                      {[{ key: "all", label: "Tümü" }, { key: "open", label: "Açık" }, { key: "in_review", label: "İnceleniyor" }, { key: "resolved", label: "Çözüldü" }].map(f => (<button key={f.key} onClick={() => { setAdminTicketStatusFilter(f.key); setAdminTicketVisibleCount(25); setShowTicketAnalytics(false); }} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition ${adminTicketStatusFilter === f.key && !showTicketAnalytics ? "bg-secondary text-white" : "bg-white border border-border text-fg-secondary"}`}>{f.label}</button>))}
+                      <button onClick={() => setShowTicketAnalytics(s => !s)} className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition ${showTicketAnalytics ? "bg-secondary text-white" : "bg-white border border-border text-fg-secondary"}`}><TrendingUp size={12} /> Genel Analiz</button>
                     </div>
                     {showTicketAnalytics && (
                       <div className="mb-4">
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 mb-3">
-                          <div className="bg-white border border-gray-200 rounded-2xl p-3"><p className="text-xl font-bold text-gray-900">{adminTicketAnalytics.total.toLocaleString("tr-TR")}</p><p className="text-[11px] text-gray-500 mt-0.5">Toplam Talep</p></div>
-                          <div className="bg-white border border-gray-200 rounded-2xl p-3"><p className="text-xl font-bold text-red-500">{adminTicketAnalytics.byStatus.open || 0}</p><p className="text-[11px] text-gray-500 mt-0.5">Açık</p></div>
-                          <div className="bg-white border border-gray-200 rounded-2xl p-3"><p className="text-xl font-bold text-gray-600">{adminTicketAnalytics.byStatus.in_review || 0}</p><p className="text-[11px] text-gray-500 mt-0.5">İnceleniyor</p></div>
-                          <div className="bg-white border border-gray-200 rounded-2xl p-3"><p className="text-xl font-bold text-green-600">{adminTicketAnalytics.byStatus.resolved || 0}</p><p className="text-[11px] text-gray-500 mt-0.5">Çözüldü</p></div>
-                          <div className="bg-white border border-gray-200 rounded-2xl p-3"><p className="text-xl font-bold text-red-600">{adminTicketAnalytics.slaBreachedCount}</p><p className="text-[11px] text-gray-500 mt-0.5">SLA Aşan</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-3"><p className="text-xl font-bold text-fg">{adminTicketAnalytics.total.toLocaleString("tr-TR")}</p><p className="text-[11px] text-fg-secondary mt-0.5">Toplam Talep</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-3"><p className="text-xl font-bold text-red-500">{adminTicketAnalytics.byStatus.open || 0}</p><p className="text-[11px] text-fg-secondary mt-0.5">Açık</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-3"><p className="text-xl font-bold text-fg-secondary">{adminTicketAnalytics.byStatus.in_review || 0}</p><p className="text-[11px] text-fg-secondary mt-0.5">İnceleniyor</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-3"><p className="text-xl font-bold text-success">{adminTicketAnalytics.byStatus.resolved || 0}</p><p className="text-[11px] text-fg-secondary mt-0.5">Çözüldü</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-3"><p className="text-xl font-bold text-error">{adminTicketAnalytics.slaBreachedCount}</p><p className="text-[11px] text-fg-secondary mt-0.5">SLA Aşan</p></div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                            <h3 className="text-xs font-semibold text-gray-700 mb-3">Talep Türüne Göre Dağılım</h3>
+                          <div className="bg-white border border-border rounded-2xl p-4">
+                            <h3 className="text-xs font-semibold text-fg-strong mb-3">Talep Türüne Göre Dağılım</h3>
                             <div className="space-y-2">
                               {adminTicketAnalytics.typeBreakdown.map(([type, count]) => { const max = adminTicketAnalytics.typeBreakdown[0][1]; return (
                                 <div key={type} className="flex items-center gap-3">
-                                  <span className="text-xs text-gray-600 w-32 flex-shrink-0 truncate">{ADMIN_TICKET_TYPE_LABELS[type] || type}</span>
-                                  <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
-                                  <span className="text-xs font-semibold text-gray-700 w-6 text-right flex-shrink-0">{count}</span>
+                                  <span className="text-xs text-fg-secondary w-32 flex-shrink-0 truncate">{ADMIN_TICKET_TYPE_LABELS[type] || type}</span>
+                                  <div className="flex-1 bg-surface-elevated rounded-full h-2 overflow-hidden"><div className="h-full bg-info rounded-full" style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
+                                  <span className="text-xs font-semibold text-fg-strong w-6 text-right flex-shrink-0">{count}</span>
                                 </div>
                               ); })}
                             </div>
                           </div>
-                          <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                            <h3 className="text-xs font-semibold text-gray-700 mb-3">Önceliğe Göre Dağılım{adminTicketAnalytics.avgResolutionDays !== null && <span className="text-gray-400 font-normal"> · Ort. çözüm süresi: {adminTicketAnalytics.avgResolutionDays} gün</span>}</h3>
+                          <div className="bg-white border border-border rounded-2xl p-4">
+                            <h3 className="text-xs font-semibold text-fg-strong mb-3">Önceliğe Göre Dağılım{adminTicketAnalytics.avgResolutionDays !== null && <span className="text-fg-muted font-normal"> · Ort. çözüm süresi: {adminTicketAnalytics.avgResolutionDays} gün</span>}</h3>
                             <div className="space-y-2">
                               {["high", "medium", "low"].map(p => { const count = adminTicketAnalytics.byPriority[p] || 0; const max = Math.max(1, ...Object.values(adminTicketAnalytics.byPriority)); return (
                                 <div key={p} className="flex items-center gap-3">
-                                  <span className="text-xs text-gray-600 w-14 flex-shrink-0">{ADMIN_TICKET_PRIORITY_LABELS[p]}</span>
-                                  <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden"><div className={`h-full rounded-full ${p === "high" ? "bg-red-500" : p === "medium" ? "bg-gray-500" : "bg-gray-300"}`} style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
-                                  <span className="text-xs font-semibold text-gray-700 w-6 text-right flex-shrink-0">{count}</span>
+                                  <span className="text-xs text-fg-secondary w-14 flex-shrink-0">{ADMIN_TICKET_PRIORITY_LABELS[p]}</span>
+                                  <div className="flex-1 bg-surface-elevated rounded-full h-2 overflow-hidden"><div className={`h-full rounded-full ${p === "high" ? "bg-red-500" : p === "medium" ? "bg-fg-secondary" : "bg-fg-muted"}`} style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
+                                  <span className="text-xs font-semibold text-fg-strong w-6 text-right flex-shrink-0">{count}</span>
                                 </div>
                               ); })}
                             </div>
@@ -1164,31 +1164,31 @@ export function AppShell() {
                     )}
                     {!showTicketAnalytics && (<>
                       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-                        <select value={adminTicketTypeFilter} onChange={(e) => { setAdminTicketTypeFilter(e.target.value); setAdminTicketVisibleCount(25); }} className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border border-gray-200 bg-white text-gray-600">
+                        <select value={adminTicketTypeFilter} onChange={(e) => { setAdminTicketTypeFilter(e.target.value); setAdminTicketVisibleCount(25); }} className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border border-border bg-white text-fg-secondary">
                           <option value="all">Tüm Türler</option>
                           {Object.entries(ADMIN_TICKET_TYPE_LABELS).map(([k, label]) => (<option key={k} value={k}>{label}</option>))}
                         </select>
-                        {[{ key: "all", label: "Tüm Öncelikler" }, { key: "high", label: "Yüksek" }, { key: "medium", label: "Orta" }, { key: "low", label: "Düşük" }].map(f => (<button key={f.key} onClick={() => { setAdminTicketPriorityFilter(f.key); setAdminTicketVisibleCount(25); }} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition ${adminTicketPriorityFilter === f.key ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-600"}`}>{f.label}</button>))}
+                        {[{ key: "all", label: "Tüm Öncelikler" }, { key: "high", label: "Yüksek" }, { key: "medium", label: "Orta" }, { key: "low", label: "Düşük" }].map(f => (<button key={f.key} onClick={() => { setAdminTicketPriorityFilter(f.key); setAdminTicketVisibleCount(25); }} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition ${adminTicketPriorityFilter === f.key ? "bg-secondary text-white" : "bg-white border border-border text-fg-secondary"}`}>{f.label}</button>))}
                       </div>
-                      <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
+                      <div className="bg-white border border-border rounded-2xl divide-y divide-surface-elevated">
                         {adminFilteredTickets.slice(0, adminTicketVisibleCount).map(tk => (
-                          <button key={tk.id} onClick={() => { setSelectedTicketId(tk.id); setAdminTicketNote(tk.adminNote || ""); }} className="w-full text-left px-4 py-3.5 flex items-start gap-3 hover:bg-gray-50 transition">
-                            <span className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-red-500" : tk.status === "in_review" ? "bg-gray-400" : "bg-green-500"}`} />
+                          <button key={tk.id} onClick={() => { setSelectedTicketId(tk.id); setAdminTicketNote(tk.adminNote || ""); }} className="w-full text-left px-4 py-3.5 flex items-start gap-3 hover:bg-background transition">
+                            <span className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-red-500" : tk.status === "in_review" ? "bg-fg-muted" : "bg-green-500"}`} />
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap"><p className="text-sm font-semibold text-gray-800">{tk.subject}</p><span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{ADMIN_TICKET_TYPE_LABELS[tk.type]}</span>{tk.priority === "high" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500 flex items-center gap-0.5"><AlertTriangle size={9} /> Yüksek</span>}{ticketSlaBreached(tk) && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 flex items-center gap-0.5"><AlertTriangle size={9} /> SLA Aşıldı ({ticketDaysOpen(tk)}g)</span>}</div>
-                              <p className="text-xs text-gray-400 mt-0.5 truncate">{tk.fromName} ({tk.fromType === "mechanic" ? "Tamirci" : "Araç Sahibi"}) · {tk.relatedNote}</p>
+                              <div className="flex items-center gap-2 flex-wrap"><p className="text-sm font-semibold text-fg-strong">{tk.subject}</p><span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-surface-elevated text-fg-secondary">{ADMIN_TICKET_TYPE_LABELS[tk.type]}</span>{tk.priority === "high" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-error-tint text-red-500 flex items-center gap-0.5"><AlertTriangle size={9} /> Yüksek</span>}{ticketSlaBreached(tk) && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-error flex items-center gap-0.5"><AlertTriangle size={9} /> SLA Aşıldı ({ticketDaysOpen(tk)}g)</span>}</div>
+                              <p className="text-xs text-fg-muted mt-0.5 truncate">{tk.fromName} ({tk.fromType === "mechanic" ? "Tamirci" : "Araç Sahibi"}) · {tk.relatedNote}</p>
                             </div>
-                            <span className="text-[10px] text-gray-300 flex-shrink-0">{tk.createdDate}</span>
+                            <span className="text-[10px] text-fg-muted flex-shrink-0">{tk.createdDate}</span>
                           </button>
                         ))}
-                        {adminFilteredTickets.length === 0 && <p className="text-center text-gray-400 text-sm py-10">Bu filtreye uyan talep yok</p>}
+                        {adminFilteredTickets.length === 0 && <p className="text-center text-fg-muted text-sm py-10">Bu filtreye uyan talep yok</p>}
                       </div>
                       {adminFilteredTickets.length > 0 && (
                         <div className="mt-3">
                           {adminFilteredTickets.length > adminTicketVisibleCount && (
-                            <button onClick={() => setAdminTicketVisibleCount(c => c + 25)} className="w-full py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:bg-gray-50 transition">Daha Fazla Yükle ({(adminFilteredTickets.length - adminTicketVisibleCount).toLocaleString("tr-TR")} kaldı)</button>
+                            <button onClick={() => setAdminTicketVisibleCount(c => c + 25)} className="w-full py-2.5 rounded-xl border border-border bg-white text-xs font-semibold text-fg-secondary hover:bg-background transition">Daha Fazla Yükle ({(adminFilteredTickets.length - adminTicketVisibleCount).toLocaleString("tr-TR")} kaldı)</button>
                           )}
-                          <p className="text-center text-[11px] text-gray-400 mt-2">{Math.min(adminTicketVisibleCount, adminFilteredTickets.length).toLocaleString("tr-TR")} / {adminFilteredTickets.length.toLocaleString("tr-TR")} talep gösteriliyor</p>
+                          <p className="text-center text-[11px] text-fg-muted mt-2">{Math.min(adminTicketVisibleCount, adminFilteredTickets.length).toLocaleString("tr-TR")} / {adminFilteredTickets.length.toLocaleString("tr-TR")} talep gösteriliyor</p>
                         </div>
                       )}
                     </>)}
@@ -1196,23 +1196,23 @@ export function AppShell() {
                 )}
                 {adminTab === "analytics" && (
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900 mb-1">Analitik</h1>
-                    <p className="text-sm text-gray-500 mb-4">Ziyaretçi davranışı, dönüşüm hunisi ve talep sinyalleri</p>
+                    <h1 className="text-xl font-bold text-fg mb-1">Analitik</h1>
+                    <p className="text-sm text-fg-secondary mb-4">Ziyaretçi davranışı, dönüşüm hunisi ve talep sinyalleri</p>
                     {/* ---- GERÇEK ZİYARETÇİ ANALİTİĞİ (analytics_events tablosundan) ----
                         Aşağıdaki "Büyüme/Gelir" blokları hâlâ tahmini demo verisi; bu bölüm ise
                         gerçekte toplanan anonim olaylardan geliyor. İkisi karışmasın diye ayrı
                         başlıklar altında duruyor. */}
                     <div className="flex items-center gap-2 mb-4 flex-wrap">
                       {[{ v: 7, l: "7 gün" }, { v: 30, l: "30 gün" }, { v: 90, l: "90 gün" }, { v: 0, l: "Tümü" }].map(o => (
-                        <button key={o.v} onClick={() => setAdminAnalyticsRange(o.v)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${adminAnalyticsRange === o.v ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>{o.l}</button>
+                        <button key={o.v} onClick={() => setAdminAnalyticsRange(o.v)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${adminAnalyticsRange === o.v ? "bg-secondary text-white border-secondary" : "bg-white text-fg-secondary border-border hover:bg-background"}`}>{o.l}</button>
                       ))}
-                      {adminAnalyticsLoading && <span className="text-xs text-gray-400">yükleniyor…</span>}
+                      {adminAnalyticsLoading && <span className="text-xs text-fg-muted">yükleniyor…</span>}
                     </div>
                     {!adminAnalyticsData ? (
-                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center mb-8">
-                        <TrendingUp size={28} className="mx-auto text-gray-300 mb-2" />
-                        <p className="text-sm font-semibold text-gray-700">Henüz ziyaretçi verisi yok</p>
-                        <p className="text-xs text-gray-400 mt-1">Siteyi kullanan ilk ziyaretçilerle birlikte bu bölüm dolmaya başlar.</p>
+                      <div className="bg-white border border-border rounded-2xl p-8 text-center mb-8">
+                        <TrendingUp size={28} className="mx-auto text-fg-muted mb-2" />
+                        <p className="text-sm font-semibold text-fg-strong">Henüz ziyaretçi verisi yok</p>
+                        <p className="text-xs text-fg-muted mt-1">Siteyi kullanan ilk ziyaretçilerle birlikte bu bölüm dolmaya başlar.</p>
                       </div>
                     ) : (() => {
                       const a = adminAnalyticsData;
@@ -1229,8 +1229,8 @@ export function AppShell() {
                             <StatCard label="Randevu" value={o.totals?.appointments} />
                           </div>
                           {/* HUNİ: her adımda TEKİL ziyaretçi. Yüzdeler ilk adıma göre. */}
-                          <div className="bg-white border border-gray-200 rounded-2xl p-5">
-                            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2"><TrendingUp size={15} className="text-blue-500" /> Dönüşüm Hunisi</h3>
+                          <div className="bg-white border border-border rounded-2xl p-5">
+                            <h3 className="text-sm font-bold text-fg-strong mb-4 flex items-center gap-2"><TrendingUp size={15} className="text-info" /> Dönüşüm Hunisi</h3>
                             <div className="space-y-2">
                               {(o.funnel || []).map((step, i) => {
                                 const pct = top > 0 ? Math.round((step.count / top) * 100) : 0;
@@ -1239,10 +1239,10 @@ export function AppShell() {
                                 return (
                                   <div key={step.key}>
                                     <div className="flex items-center justify-between text-xs mb-1">
-                                      <span className="text-gray-600">{funnelLabels[step.key]}</span>
-                                      <span className="font-semibold text-gray-900">{step.count} <span className="text-gray-400 font-normal">({pct}%)</span>{stepPct != null && <span className="text-gray-400 font-normal"> · önceki adımdan {stepPct}%</span>}</span>
+                                      <span className="text-fg-secondary">{funnelLabels[step.key]}</span>
+                                      <span className="font-semibold text-fg">{step.count} <span className="text-fg-muted font-normal">({pct}%)</span>{stepPct != null && <span className="text-fg-muted font-normal"> · önceki adımdan {stepPct}%</span>}</span>
                                     </div>
-                                    <div className="h-6 bg-gray-100 rounded-lg overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
+                                    <div className="h-6 bg-surface-elevated rounded-lg overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
                                   </div>
                                 );
                               })}
@@ -1250,14 +1250,14 @@ export function AppShell() {
                           </div>
                           {/* Günlük ziyaretçi eğrisi */}
                           {(a.series || []).length > 0 && (
-                            <div className="bg-white border border-gray-200 rounded-2xl p-5">
-                              <h3 className="text-sm font-bold text-gray-800 mb-3">Günlük Ziyaretçi</h3>
+                            <div className="bg-white border border-border rounded-2xl p-5">
+                              <h3 className="text-sm font-bold text-fg-strong mb-3">Günlük Ziyaretçi</h3>
                               <div className="flex items-end gap-1 h-24">
                                 {a.series.map(d => (
                                   <div key={d.day} className="flex-1 bg-blue-100 hover:bg-blue-300 rounded-t transition relative group" style={{ height: `${Math.max(4, (d.visitors / maxSeries) * 100)}%` }} title={`${d.day}: ${d.visitors} ziyaretçi, ${d.searches} arama, ${d.appointments} randevu`} />
                                 ))}
                               </div>
-                              <div className="flex justify-between text-[10px] text-gray-400 mt-1.5"><span>{a.series[0]?.day}</span><span>{a.series[a.series.length - 1]?.day}</span></div>
+                              <div className="flex justify-between text-[10px] text-fg-muted mt-1.5"><span>{a.series[0]?.day}</span><span>{a.series[a.series.length - 1]?.day}</span></div>
                             </div>
                           )}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1275,16 +1275,16 @@ export function AppShell() {
                               alıcıya gerçek "benzer ilanlar", bize arz açığı sinyali.
                               Kişisel veri yok — yalnızca marka/model metinleri ve sayılar. */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="bg-white border border-gray-200 rounded-2xl p-5">
-                              <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Scale size={15} className="text-blue-500" /> En Çok Karşılaştırılan Çiftler</h3>
+                            <div className="bg-white border border-border rounded-2xl p-5">
+                              <h3 className="text-sm font-bold text-fg-strong mb-3 flex items-center gap-2"><Scale size={15} className="text-info" /> En Çok Karşılaştırılan Çiftler</h3>
                               {(a.comparisons?.pairs || []).length === 0 ? (
-                                <p className="text-xs text-gray-400 py-4 text-center">Henüz karşılaştırma verisi yok.</p>
+                                <p className="text-xs text-fg-muted py-4 text-center">Henüz karşılaştırma verisi yok.</p>
                               ) : (
                                 <div className="space-y-1.5">
                                   {a.comparisons.pairs.map((r) => (
                                     <div key={`${r.a}|${r.b}`} className="flex items-center justify-between gap-3 text-xs">
-                                      <span className="text-gray-600 truncate">{r.a} <span className="text-gray-300">↔</span> {r.b}</span>
-                                      <span className="font-semibold text-gray-900 flex-shrink-0">{r.n}</span>
+                                      <span className="text-fg-secondary truncate">{r.a} <span className="text-fg-muted">↔</span> {r.b}</span>
+                                      <span className="font-semibold text-fg flex-shrink-0">{r.n}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -1295,8 +1295,8 @@ export function AppShell() {
                           {/* TÜM OLAY SAYAÇLARI: toplanan her olay burada görünüyor. Bir olayı
                               toplayıp panelde HİÇ göstermemek, veriyi sessizce çöpe atmakla aynı —
                               kimse bakmadığı için bozulduğunu da fark edemezsin. */}
-                          <div className="bg-white border border-gray-200 rounded-2xl p-5">
-                            <h3 className="text-sm font-bold text-gray-800 mb-3">Tüm Olaylar</h3>
+                          <div className="bg-white border border-border rounded-2xl p-5">
+                            <h3 className="text-sm font-bold text-fg-strong mb-3">Tüm Olaylar</h3>
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2">
                               {[
                                 ["Sayfa görüntüleme", o.totals?.pageViews], ["Arama", o.totals?.searches],
@@ -1310,9 +1310,9 @@ export function AppShell() {
                                 ["Giriş", o.totals?.logins], ["Favori", o.totals?.favorites],
                                 ["Karşılaştırma", o.totals?.compares], ["Arama kaydetme", o.totals?.savedSearches],
                               ].map(([label, val]) => (
-                                <div key={label as string} className="flex items-center justify-between gap-2 py-1 border-b border-gray-50">
-                                  <span className="text-xs text-gray-500 truncate">{label}</span>
-                                  <span className="text-sm font-bold text-gray-900">{Number(val || 0).toLocaleString("tr-TR")}</span>
+                                <div key={label as string} className="flex items-center justify-between gap-2 py-1 border-b border-background">
+                                  <span className="text-xs text-fg-secondary truncate">{label}</span>
+                                  <span className="text-sm font-bold text-fg">{Number(val || 0).toLocaleString("tr-TR")}</span>
                                 </div>
                               ))}
                             </div>
@@ -1322,14 +1322,14 @@ export function AppShell() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {[["En Çok Görüntülenen Tamirciler", a.topMechanics, mechanicsList, (x) => x?.name],
                                 ["En Çok Görüntülenen Araçlar", a.topListings, listings, (x) => x && `${x.brand} ${x.model}`]].map(([title, rows, source, labelFn]: any) => (
-                                <div key={title} className="bg-white border border-gray-200 rounded-2xl p-4">
-                                  <h3 className="text-sm font-bold text-gray-800 mb-2.5">{title}</h3>
-                                  {(rows || []).length === 0 ? <p className="text-xs text-gray-400">Veri yok</p> : rows.map((r) => {
+                                <div key={title} className="bg-white border border-border rounded-2xl p-4">
+                                  <h3 className="text-sm font-bold text-fg-strong mb-2.5">{title}</h3>
+                                  {(rows || []).length === 0 ? <p className="text-xs text-fg-muted">Veri yok</p> : rows.map((r) => {
                                     const item = source.find((x) => x.id === r.targetId);
                                     return (
-                                      <div key={r.targetId} className="flex items-center justify-between gap-2 text-xs py-1.5 border-b border-gray-50 last:border-0">
-                                        <span className="text-gray-700 truncate">{labelFn(item) || `#${r.targetId}`}</span>
-                                        <span className="text-gray-500 flex-shrink-0">{r.views} görüntüleme · <span className="font-semibold text-gray-800">{r.uniqueVisitors}</span> tekil</span>
+                                      <div key={r.targetId} className="flex items-center justify-between gap-2 text-xs py-1.5 border-b border-background last:border-0">
+                                        <span className="text-fg-strong truncate">{labelFn(item) || `#${r.targetId}`}</span>
+                                        <span className="text-fg-secondary flex-shrink-0">{r.views} görüntüleme · <span className="font-semibold text-fg-strong">{r.uniqueVisitors}</span> tekil</span>
                                       </div>
                                     );
                                   })}
@@ -1338,18 +1338,18 @@ export function AppShell() {
                             </div>
                           )}
                           {/* ARZ AÇIĞI: ürün kararları ve tamirci daveti için en değerli tablo. */}
-                          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                          <div className="bg-warning-tint border border-amber-200 rounded-2xl p-5">
                             <h3 className="text-sm font-bold text-amber-900 mb-1 flex items-center gap-2"><AlertTriangle size={15} /> Sonuçsuz Aramalar — Arz Açığı</h3>
                             <p className="text-xs text-amber-700 mb-3">Kullanıcı aradı ama sonuç çıkmadı. Bu şehir/hizmetlerde tamirci eksiğin var.</p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
                                 <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1.5">Terim</p>
-                                {(a.searches?.zeroResultQueries || []).length === 0 ? <p className="text-xs text-amber-600">Yok — her arama sonuç veriyor.</p> :
+                                {(a.searches?.zeroResultQueries || []).length === 0 ? <p className="text-xs text-warning">Yok — her arama sonuç veriyor.</p> :
                                   a.searches.zeroResultQueries.slice(0, 6).map(r => (<div key={r.label} className="flex justify-between text-xs py-0.5"><span className="text-amber-900 truncate">{r.label}</span><span className="font-bold text-amber-900">{r.n}</span></div>))}
                               </div>
                               <div>
                                 <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1.5">Şehir</p>
-                                {(a.searches?.zeroResultCities || []).length === 0 ? <p className="text-xs text-amber-600">Yok.</p> :
+                                {(a.searches?.zeroResultCities || []).length === 0 ? <p className="text-xs text-warning">Yok.</p> :
                                   a.searches.zeroResultCities.slice(0, 6).map(r => (<div key={r.label} className="flex justify-between text-xs py-0.5"><span className="text-amber-900 truncate">{r.label}</span><span className="font-bold text-amber-900">{r.n}</span></div>))}
                               </div>
                             </div>
@@ -1357,102 +1357,102 @@ export function AppShell() {
                         </div>
                       );
                     })()}
-                    <h2 className="text-lg font-bold text-gray-900 mb-1 pt-2 border-t border-gray-200">Büyüme ve Gelir</h2>
-                    <p className="text-sm text-gray-500 mb-6">Son 6 ay, tahmini</p>
+                    <h2 className="text-lg font-bold text-fg mb-1 pt-2 border-t border-border">Büyüme ve Gelir</h2>
+                    <p className="text-sm text-fg-secondary mb-6">Son 6 ay, tahmini</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center mb-3"><Banknote size={16} className="text-blue-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.estCommission.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Tahmini Platform Geliri (%{Math.round(PLATFORM_COMMISSION_RATE * 100)} komisyon)</p></div>
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center mb-3"><TrendingUp size={16} className="text-blue-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.estGMV.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Tahmini İşlem Hacmi (GMV) · {adminRevenueStats.completedCount} tamamlanan randevu</p></div>
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center mb-3"><Calendar size={16} className="text-blue-600" /></div><p className="text-2xl font-bold text-gray-900">{adminRevenueStats.avgTicket.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Ortalama İşlem Bedeli</p></div>
+                      <div className="bg-white border border-border rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-primary-tint flex items-center justify-center mb-3"><Banknote size={16} className="text-primary" /></div><p className="text-2xl font-bold text-fg">{adminRevenueStats.estCommission.toLocaleString("tr-TR")}₺</p><p className="text-xs text-fg-secondary mt-0.5">Tahmini Platform Geliri (%{Math.round(PLATFORM_COMMISSION_RATE * 100)} komisyon)</p></div>
+                      <div className="bg-white border border-border rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-primary-tint flex items-center justify-center mb-3"><TrendingUp size={16} className="text-primary" /></div><p className="text-2xl font-bold text-fg">{adminRevenueStats.estGMV.toLocaleString("tr-TR")}₺</p><p className="text-xs text-fg-secondary mt-0.5">Tahmini İşlem Hacmi (GMV) · {adminRevenueStats.completedCount} tamamlanan randevu</p></div>
+                      <div className="bg-white border border-border rounded-2xl p-4"><div className="w-9 h-9 rounded-xl bg-primary-tint flex items-center justify-center mb-3"><Calendar size={16} className="text-primary" /></div><p className="text-2xl font-bold text-fg">{adminRevenueStats.avgTicket.toLocaleString("tr-TR")}₺</p><p className="text-xs text-fg-secondary mt-0.5">Ortalama İşlem Bedeli</p></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><h3 className="text-xs font-semibold text-gray-700 mb-3">Toplam Kullanıcı (kümülatif)</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.signups} colorClass="bg-gray-800" /></div>
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><h3 className="text-xs font-semibold text-gray-700 mb-3">Aylık Randevu</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.appointments} colorClass="bg-blue-500" /></div>
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4"><h3 className="text-xs font-semibold text-gray-700 mb-3">Aylık Tahmini Gelir</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.revenue} colorClass="bg-green-500" valueFormat={(v) => `${(v / 1000).toFixed(1)}k₺`} /></div>
+                      <div className="bg-white border border-border rounded-2xl p-4"><h3 className="text-xs font-semibold text-fg-strong mb-3">Toplam Kullanıcı (kümülatif)</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.signups} colorClass="bg-gray-800" /></div>
+                      <div className="bg-white border border-border rounded-2xl p-4"><h3 className="text-xs font-semibold text-fg-strong mb-3">Aylık Randevu</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.appointments} colorClass="bg-blue-500" /></div>
+                      <div className="bg-white border border-border rounded-2xl p-4"><h3 className="text-xs font-semibold text-fg-strong mb-3">Aylık Tahmini Gelir</h3><MiniBarChart labels={ADMIN_TREND_DATA.months} values={ADMIN_TREND_DATA.revenue} colorClass="bg-green-500" valueFormat={(v) => `${(v / 1000).toFixed(1)}k₺`} /></div>
                     </div>
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2"><MapPin size={15} className="text-blue-500" /> Şehir / Bölge Dağılımı</h2>
-                    <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2.5">
+                    <h2 className="text-sm font-semibold text-fg-strong mb-3 flex items-center gap-2"><MapPin size={15} className="text-info" /> Şehir / Bölge Dağılımı</h2>
+                    <div className="bg-white border border-border rounded-2xl p-4 space-y-2.5">
                       {adminRegionBreakdown.map(([city, count]) => { const max = adminRegionBreakdown[0][1]; return (
                         <div key={city} className="flex items-center gap-3">
-                          <span className="text-xs text-gray-600 w-24 flex-shrink-0 truncate">{city}</span>
-                          <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
-                          <span className="text-xs font-semibold text-gray-700 w-6 text-right flex-shrink-0">{count}</span>
+                          <span className="text-xs text-fg-secondary w-24 flex-shrink-0 truncate">{city}</span>
+                          <div className="flex-1 bg-surface-elevated rounded-full h-2 overflow-hidden"><div className="h-full bg-info rounded-full" style={{ width: `${Math.max(6, (count / max) * 100)}%` }} /></div>
+                          <span className="text-xs font-semibold text-fg-strong w-6 text-right flex-shrink-0">{count}</span>
                         </div>
                       ); })}
                     </div>
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Share2 size={15} className="text-blue-500" /> Paylaşım Performansı</h2>
+                    <h2 className="text-sm font-semibold text-fg-strong mb-3 mt-6 flex items-center gap-2"><Share2 size={15} className="text-info" /> Paylaşım Performansı</h2>
                     {!shareStats ? (
-                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Yükleniyor…</div>
+                      <div className="bg-white border border-border rounded-2xl p-8 text-center text-sm text-fg-muted">Yükleniyor…</div>
                     ) : shareStats.totals.shares === 0 ? (
-                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Henüz kayıtlı bir paylaşım yok.</div>
+                      <div className="bg-white border border-border rounded-2xl p-8 text-center text-sm text-fg-muted">Henüz kayıtlı bir paylaşım yok.</div>
                     ) : (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{shareStats.totals.shares}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Paylaşım</p></div>
-                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{shareStats.totals.clicks}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Tıklama</p></div>
-                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{shareStats.totals.conversions}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Dönüşüm (sohbet/randevu/teklif/başvuru)</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{shareStats.totals.shares}</p><p className="text-xs text-fg-secondary mt-0.5">Toplam Paylaşım</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{shareStats.totals.clicks}</p><p className="text-xs text-fg-secondary mt-0.5">Toplam Tıklama</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{shareStats.totals.conversions}</p><p className="text-xs text-fg-secondary mt-0.5">Toplam Dönüşüm (sohbet/randevu/teklif/başvuru)</p></div>
                         </div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">Kanala Göre Kırılım</p>
-                        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-6">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 px-1">Kanala Göre Kırılım</p>
+                        <div className="bg-white border border-border rounded-2xl overflow-hidden mb-6">
                           <table className="w-full text-sm">
-                            <thead><tr className="border-b border-gray-100 text-left text-[10px] font-bold uppercase tracking-wider text-gray-400"><th className="px-4 py-2.5">Kanal</th><th className="px-4 py-2.5 text-right">Paylaşım</th><th className="px-4 py-2.5 text-right">Tıklama</th><th className="px-4 py-2.5 text-right">Dönüşüm</th><th className="px-4 py-2.5 text-right">Dönüşüm Oranı</th></tr></thead>
+                            <thead><tr className="border-b border-surface-elevated text-left text-[10px] font-bold uppercase tracking-wider text-fg-muted"><th className="px-4 py-2.5">Kanal</th><th className="px-4 py-2.5 text-right">Paylaşım</th><th className="px-4 py-2.5 text-right">Tıklama</th><th className="px-4 py-2.5 text-right">Dönüşüm</th><th className="px-4 py-2.5 text-right">Dönüşüm Oranı</th></tr></thead>
                             <tbody>
                               {shareStats.byChannel.map((row) => (
-                                <tr key={row.channel} className="border-b border-gray-50 last:border-0">
-                                  <td className="px-4 py-2.5 font-medium text-gray-800">{SHARE_CHANNEL_LABELS[row.channel] || row.channel}</td>
-                                  <td className="px-4 py-2.5 text-right text-gray-600">{row.shares}</td>
-                                  <td className="px-4 py-2.5 text-right text-gray-600">{row.clicks}</td>
-                                  <td className="px-4 py-2.5 text-right text-gray-600">{row.conversions}</td>
-                                  <td className="px-4 py-2.5 text-right font-semibold text-gray-800">{row.clicks > 0 ? `%${Math.round((row.conversions / row.clicks) * 100)}` : "—"}</td>
+                                <tr key={row.channel} className="border-b border-background last:border-0">
+                                  <td className="px-4 py-2.5 font-medium text-fg-strong">{SHARE_CHANNEL_LABELS[row.channel] || row.channel}</td>
+                                  <td className="px-4 py-2.5 text-right text-fg-secondary">{row.shares}</td>
+                                  <td className="px-4 py-2.5 text-right text-fg-secondary">{row.clicks}</td>
+                                  <td className="px-4 py-2.5 text-right text-fg-secondary">{row.conversions}</td>
+                                  <td className="px-4 py-2.5 text-right font-semibold text-fg-strong">{row.clicks > 0 ? `%${Math.round((row.conversions / row.clicks) * 100)}` : "—"}</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
                         </div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">En Çok Paylaşılan İçerikler</p>
-                        <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 px-1">En Çok Paylaşılan İçerikler</p>
+                        <div className="bg-white border border-border rounded-2xl p-4 space-y-2.5">
                           {shareStats.byTarget.map((row) => (
                             <div key={`${row.targetType}:${row.targetId}`} className="flex items-center gap-3">
-                              <span className="text-xs text-gray-600 flex-1 truncate">{adminChangeTargetLabel(row.targetType, row.targetId)}</span>
-                              <span className="text-[10px] text-gray-400">{row.shares} paylaşım</span>
-                              <span className="text-[10px] text-gray-400">{row.clicks} tıklama</span>
-                              <span className="text-[10px] font-semibold text-gray-700">{row.conversions} dönüşüm</span>
+                              <span className="text-xs text-fg-secondary flex-1 truncate">{adminChangeTargetLabel(row.targetType, row.targetId)}</span>
+                              <span className="text-[10px] text-fg-muted">{row.shares} paylaşım</span>
+                              <span className="text-[10px] text-fg-muted">{row.clicks} tıklama</span>
+                              <span className="text-[10px] font-semibold text-fg-strong">{row.conversions} dönüşüm</span>
                             </div>
                           ))}
                         </div>
                       </>
                     )}
-                    <h2 className="text-sm font-semibold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Eye size={15} className="text-blue-500" /> Sayfa Ziyaretleri</h2>
+                    <h2 className="text-sm font-semibold text-fg-strong mb-3 mt-6 flex items-center gap-2"><Eye size={15} className="text-info" /> Sayfa Ziyaretleri</h2>
                     {!viewStats ? (
-                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Yükleniyor…</div>
+                      <div className="bg-white border border-border rounded-2xl p-8 text-center text-sm text-fg-muted">Yükleniyor…</div>
                     ) : viewStats.totals.views === 0 ? (
-                      <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">Henüz kayıtlı bir ziyaret yok.</div>
+                      <div className="bg-white border border-border rounded-2xl p-8 text-center text-sm text-fg-muted">Henüz kayıtlı bir ziyaret yok.</div>
                     ) : (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{viewStats.totals.views}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Sayfa Görüntülemesi</p></div>
-                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{viewStats.totals.conversions}</p><p className="text-xs text-gray-500 mt-0.5">Randevuya Dönüşen Ziyaret</p></div>
-                          <div className="bg-white border border-gray-200 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">%{viewStats.totals.views > 0 ? Math.round((viewStats.totals.conversions / viewStats.totals.views) * 100) : 0}</p><p className="text-xs text-gray-500 mt-0.5">Genel Dönüşüm Oranı</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{viewStats.totals.views}</p><p className="text-xs text-fg-secondary mt-0.5">Toplam Sayfa Görüntülemesi</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{viewStats.totals.conversions}</p><p className="text-xs text-fg-secondary mt-0.5">Randevuya Dönüşen Ziyaret</p></div>
+                          <div className="bg-white border border-border rounded-2xl p-4"><p className="text-2xl font-bold text-fg">%{viewStats.totals.views > 0 ? Math.round((viewStats.totals.conversions / viewStats.totals.views) * 100) : 0}</p><p className="text-xs text-fg-secondary mt-0.5">Genel Dönüşüm Oranı</p></div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">En Çok Ziyaret Edilen Tamirciler</p>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2.5">
-                              {viewStats.topMechanics.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">Henüz veri yok.</p> : viewStats.topMechanics.map((row) => (
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 px-1">En Çok Ziyaret Edilen Tamirciler</p>
+                            <div className="bg-white border border-border rounded-2xl p-4 space-y-2.5">
+                              {viewStats.topMechanics.length === 0 ? <p className="text-xs text-fg-muted text-center py-2">Henüz veri yok.</p> : viewStats.topMechanics.map((row) => (
                                 <div key={row.targetId} className="flex items-center gap-3">
-                                  <span className="text-xs text-gray-600 flex-1 truncate">{adminChangeTargetLabel("mechanic", row.targetId)}</span>
-                                  <span className="text-[10px] text-gray-400">{row.views} ziyaret</span>
-                                  <span className="text-[10px] font-semibold text-gray-700">{row.conversions} randevu</span>
+                                  <span className="text-xs text-fg-secondary flex-1 truncate">{adminChangeTargetLabel("mechanic", row.targetId)}</span>
+                                  <span className="text-[10px] text-fg-muted">{row.views} ziyaret</span>
+                                  <span className="text-[10px] font-semibold text-fg-strong">{row.conversions} randevu</span>
                                 </div>
                               ))}
                             </div>
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">En Çok Görüntülenen İlanlar</p>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2.5">
-                              {viewStats.topListings.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">Henüz veri yok.</p> : viewStats.topListings.map((row) => (
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 px-1">En Çok Görüntülenen İlanlar</p>
+                            <div className="bg-white border border-border rounded-2xl p-4 space-y-2.5">
+                              {viewStats.topListings.length === 0 ? <p className="text-xs text-fg-muted text-center py-2">Henüz veri yok.</p> : viewStats.topListings.map((row) => (
                                 <div key={row.targetId} className="flex items-center gap-3">
-                                  <span className="text-xs text-gray-600 flex-1 truncate">{adminChangeTargetLabel("listing", row.targetId)}</span>
-                                  <span className="text-[10px] font-semibold text-gray-700">{row.views} görüntülenme</span>
+                                  <span className="text-xs text-fg-secondary flex-1 truncate">{adminChangeTargetLabel("listing", row.targetId)}</span>
+                                  <span className="text-[10px] font-semibold text-fg-strong">{row.views} görüntülenme</span>
                                 </div>
                               ))}
                             </div>
@@ -1469,28 +1469,28 @@ export function AppShell() {
                     tarayıcısında script çalıştırma yolu açılmasın diye (bkz. BlogPages.tsx). */}
                 {adminTab === "blog" && (
                   <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-5 items-start">
-                    <div className="bg-white border border-gray-200 rounded-2xl p-4">
+                    <div className="bg-white border border-border rounded-2xl p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-bold text-gray-800 text-sm">Yazılar <span className="text-gray-300 font-normal">({adminBlogPosts.length})</span></h3>
-                        {adminBlogForm.id && <button onClick={cancelBlogEdit} className="text-xs text-gray-400 hover:text-gray-700">Yeni yazı</button>}
+                        <h3 className="font-bold text-fg-strong text-sm">Yazılar <span className="text-fg-muted font-normal">({adminBlogPosts.length})</span></h3>
+                        {adminBlogForm.id && <button onClick={cancelBlogEdit} className="text-xs text-fg-muted hover:text-fg-strong">Yeni yazı</button>}
                       </div>
                       {adminBlogPosts.length === 0 ? (
-                        <p className="text-center text-gray-400 text-sm py-12">Henüz yazı yok. Sağdaki formdan ilk yazını ekle.</p>
+                        <p className="text-center text-fg-muted text-sm py-12">Henüz yazı yok. Sağdaki formdan ilk yazını ekle.</p>
                       ) : (
                         <div className="space-y-2">
                           {adminBlogPosts.map(post => (
-                            <div key={post.id} className={`border rounded-xl p-3 transition ${adminBlogForm.id === post.id ? "border-blue-300 bg-blue-50/40" : "border-gray-100"}`}>
+                            <div key={post.id} className={`border rounded-xl p-3 transition ${adminBlogForm.id === post.id ? "border-blue-300 bg-blue-50/40" : "border-surface-elevated"}`}>
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                  <p className="text-sm font-semibold text-gray-800 truncate">{post.title}</p>
-                                  <p className="text-[11px] text-gray-400 truncate">/blog/{post.slug}</p>
+                                  <p className="text-sm font-semibold text-fg-strong truncate">{post.title}</p>
+                                  <p className="text-[11px] text-fg-muted truncate">/blog/{post.slug}</p>
                                 </div>
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${post.status === "published" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>{post.status === "published" ? "Yayında" : "Taslak"}</span>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${post.status === "published" ? "bg-success-tint text-success" : "bg-surface-elevated text-fg-secondary"}`}>{post.status === "published" ? "Yayında" : "Taslak"}</span>
                               </div>
                               <div className="flex items-center gap-3 mt-2 text-[11px]">
-                                <button onClick={() => editBlogPost(post)} className="text-blue-600 font-semibold hover:underline">Düzenle</button>
-                                <button onClick={() => deleteBlogPost(post)} className="text-gray-400 hover:text-red-500">Sil</button>
-                                <span className="text-gray-300 ml-auto flex items-center gap-1"><Eye size={11} /> {post.views || 0}</span>
+                                <button onClick={() => editBlogPost(post)} className="text-primary font-semibold hover:underline">Düzenle</button>
+                                <button onClick={() => deleteBlogPost(post)} className="text-fg-muted hover:text-red-500">Sil</button>
+                                <span className="text-fg-muted ml-auto flex items-center gap-1"><Eye size={11} /> {post.views || 0}</span>
                               </div>
                             </div>
                           ))}
@@ -1498,16 +1498,16 @@ export function AppShell() {
                       )}
                     </div>
 
-                    <div className="bg-white border border-gray-200 rounded-2xl p-4 xl:sticky xl:top-4">
-                      <h3 className="font-bold text-gray-800 text-sm mb-3">{adminBlogForm.id ? "Yazıyı düzenle" : "Yeni yazı"}</h3>
+                    <div className="bg-white border border-border rounded-2xl p-4 xl:sticky xl:top-4">
+                      <h3 className="font-bold text-fg-strong text-sm mb-3">{adminBlogForm.id ? "Yazıyı düzenle" : "Yeni yazı"}</h3>
                       <div className="space-y-2.5">
-                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Başlık</label><input value={adminBlogForm.title} onChange={(e) => setAdminBlogForm(f => ({ ...f, title: e.target.value }))} placeholder="Fren Balatası Ne Zaman Değişir?" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm" /></div>
-                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Özet <span className="text-gray-300">(arama sonucunda görünen açıklama)</span></label><textarea value={adminBlogForm.excerpt} onChange={(e) => setAdminBlogForm(f => ({ ...f, excerpt: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm resize-none" /></div>
-                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Gövde <span className="text-gray-300">(boş satır = yeni paragraf, "## " = ara başlık)</span></label><textarea value={adminBlogForm.body} onChange={(e) => setAdminBlogForm(f => ({ ...f, body: e.target.value }))} rows={12} className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm font-mono leading-relaxed" /></div>
-                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Kapak görseli (URL)</label><input value={adminBlogForm.coverPhoto} onChange={(e) => setAdminBlogForm(f => ({ ...f, coverPhoto: e.target.value }))} placeholder="https://…" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm" /></div>
+                        <div><label className="text-[11px] font-medium text-fg-secondary block mb-1">Başlık</label><input value={adminBlogForm.title} onChange={(e) => setAdminBlogForm(f => ({ ...f, title: e.target.value }))} placeholder="Fren Balatası Ne Zaman Değişir?" className="w-full px-3 py-2 rounded-xl border border-border text-sm" /></div>
+                        <div><label className="text-[11px] font-medium text-fg-secondary block mb-1">Özet <span className="text-fg-muted">(arama sonucunda görünen açıklama)</span></label><textarea value={adminBlogForm.excerpt} onChange={(e) => setAdminBlogForm(f => ({ ...f, excerpt: e.target.value }))} rows={2} className="w-full px-3 py-2 rounded-xl border border-border text-sm resize-none" /></div>
+                        <div><label className="text-[11px] font-medium text-fg-secondary block mb-1">Gövde <span className="text-fg-muted">(boş satır = yeni paragraf, "## " = ara başlık)</span></label><textarea value={adminBlogForm.body} onChange={(e) => setAdminBlogForm(f => ({ ...f, body: e.target.value }))} rows={12} className="w-full px-3 py-2 rounded-xl border border-border text-sm font-mono leading-relaxed" /></div>
+                        <div><label className="text-[11px] font-medium text-fg-secondary block mb-1">Kapak görseli (URL)</label><input value={adminBlogForm.coverPhoto} onChange={(e) => setAdminBlogForm(f => ({ ...f, coverPhoto: e.target.value }))} placeholder="https://…" className="w-full px-3 py-2 rounded-xl border border-border text-sm" /></div>
                         <div>
-                          <label className="text-[11px] font-medium text-gray-500 block mb-1">Bağlı hizmet <span className="text-gray-300">(yazının sonundaki "ustaları gör" bağlantısı bu hizmeti filtreler)</span></label>
-                          <select value={adminBlogForm.relatedServiceKey} onChange={(e) => setAdminBlogForm(f => ({ ...f, relatedServiceKey: e.target.value }))} className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white">
+                          <label className="text-[11px] font-medium text-fg-secondary block mb-1">Bağlı hizmet <span className="text-fg-muted">(yazının sonundaki "ustaları gör" bağlantısı bu hizmeti filtreler)</span></label>
+                          <select value={adminBlogForm.relatedServiceKey} onChange={(e) => setAdminBlogForm(f => ({ ...f, relatedServiceKey: e.target.value }))} className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-white">
                             <option value="">— Yok (genel yazı) —</option>
                             {SERVICE_CATALOG.map(cat => (
                               <optgroup key={cat.key} label={cat.tr}>
@@ -1516,13 +1516,13 @@ export function AppShell() {
                             ))}
                           </select>
                         </div>
-                        <div><label className="text-[11px] font-medium text-gray-500 block mb-1">Etiketler <span className="text-gray-300">(virgülle)</span></label><input value={adminBlogForm.tags} onChange={(e) => setAdminBlogForm(f => ({ ...f, tags: e.target.value }))} placeholder="fren, bakım, güvenlik" className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm" /></div>
+                        <div><label className="text-[11px] font-medium text-fg-secondary block mb-1">Etiketler <span className="text-fg-muted">(virgülle)</span></label><input value={adminBlogForm.tags} onChange={(e) => setAdminBlogForm(f => ({ ...f, tags: e.target.value }))} placeholder="fren, bakım, güvenlik" className="w-full px-3 py-2 rounded-xl border border-border text-sm" /></div>
                       </div>
                       <div className="flex gap-2 mt-4">
-                        <button onClick={() => saveBlogPost("draft")} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">Taslak kaydet</button>
-                        <button onClick={() => saveBlogPost("published")} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">Yayınla</button>
+                        <button onClick={() => saveBlogPost("draft")} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition">Taslak kaydet</button>
+                        <button onClick={() => saveBlogPost("published")} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition">Yayınla</button>
                       </div>
-                      {adminBlogForm.id && <button onClick={cancelBlogEdit} className="w-full mt-2 text-xs text-gray-400 hover:text-gray-700">Vazgeç</button>}
+                      {adminBlogForm.id && <button onClick={cancelBlogEdit} className="w-full mt-2 text-xs text-fg-muted hover:text-fg-strong">Vazgeç</button>}
                     </div>
                   </div>
                 )}
@@ -1537,16 +1537,16 @@ export function AppShell() {
                    * genelde milisaniyeler içinde geliyor, yanıp kaybolan büyük bir iskelet
                    * yerleşimi kaydırmaktan başka bir şey yapmazdı.
                    */
-                  <Suspense fallback={<div className="py-10 text-center text-sm text-gray-400">El kitabı yükleniyor…</div>}>
+                  <Suspense fallback={<div className="py-10 text-center text-sm text-fg-muted">El kitabı yükleniyor…</div>}>
                     <HandbookPanel />
                   </Suspense>
                 )}
                 {adminTab === "history" && (
                   <div>
-                    <h1 className="text-xl font-bold text-gray-900 mb-1">Değişiklik Geçmişi</h1>
-                    <p className="text-sm text-gray-500 mb-6">Panelden yapılan her düzenleme burada — hangi hesapta olursa olsun, istediğin an tek tıkla geri alabilirsin.</p>
+                    <h1 className="text-xl font-bold text-fg mb-1">Değişiklik Geçmişi</h1>
+                    <p className="text-sm text-fg-secondary mb-6">Panelden yapılan her düzenleme burada — hangi hesapta olursa olsun, istediğin an tek tıkla geri alabilirsin.</p>
                     {adminChangeLog.length === 0 ? (
-                      <div className="text-center py-16 bg-white border border-gray-200 rounded-2xl"><History size={36} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">Henüz bir değişiklik yapılmadı.</p></div>
+                      <div className="text-center py-16 bg-white border border-border rounded-2xl"><History size={36} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">Henüz bir değişiklik yapılmadı.</p></div>
                     ) : (
                       <div className="space-y-2">
                         {adminChangeLogGrouped.map(group => {
@@ -1554,40 +1554,40 @@ export function AppShell() {
                           const pendingCount = group.entries.filter(e => !e.reverted).length;
                           const TypeIcon = group.typeMeta.icon;
                           return (
-                            <div key={group.key} className={`bg-white border rounded-2xl overflow-hidden ${pendingCount === 0 ? "border-gray-100 opacity-60" : "border-gray-200"}`}>
-                              <button onClick={() => toggleHistoryGroup(group.key)} className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-gray-50 transition">
+                            <div key={group.key} className={`bg-white border rounded-2xl overflow-hidden ${pendingCount === 0 ? "border-surface-elevated opacity-60" : "border-border"}`}>
+                              <button onClick={() => toggleHistoryGroup(group.key)} className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-background transition">
                                 <div className="flex items-center gap-3 min-w-0">
-                                  <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"><TypeIcon size={15} className="text-gray-500" /></div>
+                                  <div className="w-9 h-9 rounded-xl bg-surface-elevated flex items-center justify-center flex-shrink-0"><TypeIcon size={15} className="text-fg-secondary" /></div>
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-sm font-semibold text-gray-800 truncate">{group.targetLabel}</span>
-                                      <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{group.typeMeta.label}</span>
+                                      <span className="text-sm font-semibold text-fg-strong truncate">{group.targetLabel}</span>
+                                      <span className="text-[10px] font-medium text-fg-muted bg-surface-elevated px-1.5 py-0.5 rounded-full">{group.typeMeta.label}</span>
                                     </div>
-                                    <p className="text-[11px] text-gray-400 mt-0.5">{group.entries.length} değişiklik{pendingCount < group.entries.length ? ` · ${group.entries.length - pendingCount} geri alındı` : ""} · son: {group.entries[0].date}</p>
+                                    <p className="text-[11px] text-fg-muted mt-0.5">{group.entries.length} değişiklik{pendingCount < group.entries.length ? ` · ${group.entries.length - pendingCount} geri alındı` : ""} · son: {group.entries[0].date}</p>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                  <button onClick={(e) => { e.stopPropagation(); revertAdminChangeGroup(group); }} disabled={pendingCount === 0} className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 transition ${pendingCount === 0 ? "bg-gray-50 text-gray-300 cursor-not-allowed" : "bg-gray-900 text-white hover:bg-gray-800"}`}><History size={11} /> Tümünü Geri Al</button>
-                                  <ChevronRight size={16} className={`text-gray-300 transition-transform ${expanded ? "rotate-90" : ""}`} />
+                                  <button onClick={(e) => { e.stopPropagation(); revertAdminChangeGroup(group); }} disabled={pendingCount === 0} className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 transition ${pendingCount === 0 ? "bg-background text-fg-muted cursor-not-allowed" : "bg-secondary text-white hover:bg-fg-strong"}`}><History size={11} /> Tümünü Geri Al</button>
+                                  <ChevronRight size={16} className={`text-fg-muted transition-transform ${expanded ? "rotate-90" : ""}`} />
                                 </div>
                               </button>
                               {expanded && (
-                                <div className="border-t border-gray-100 divide-y divide-gray-100">
+                                <div className="border-t border-surface-elevated divide-y divide-surface-elevated">
                                   {group.entries.map(entry => (
                                     <div key={entry.id} className="flex items-start justify-between gap-3 px-4 py-3">
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                          <span className="text-[11px] font-semibold text-gray-600">{adminFieldLabel(entry.field)}</span>
-                                          {entry.reverted && <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Geri Alındı</span>}
+                                          <span className="text-[11px] font-semibold text-fg-secondary">{adminFieldLabel(entry.field)}</span>
+                                          {entry.reverted && <span className="text-[10px] font-bold text-fg-muted bg-surface-elevated px-1.5 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 size={10} /> Geri Alındı</span>}
                                         </div>
-                                        <p className="text-xs text-gray-500">
-                                          <span className="line-through text-gray-400">{formatAdminHistoryValue(entry.field, entry.oldValue)}</span>
-                                          <span className="mx-1.5 text-gray-300">→</span>
-                                          <span className="text-gray-700 font-medium">{formatAdminHistoryValue(entry.field, entry.newValue)}</span>
+                                        <p className="text-xs text-fg-secondary">
+                                          <span className="line-through text-fg-muted">{formatAdminHistoryValue(entry.field, entry.oldValue)}</span>
+                                          <span className="mx-1.5 text-fg-muted">→</span>
+                                          <span className="text-fg-strong font-medium">{formatAdminHistoryValue(entry.field, entry.newValue)}</span>
                                         </p>
-                                        <p className="text-[10px] text-gray-300 mt-0.5">{entry.date}</p>
+                                        <p className="text-[10px] text-fg-muted mt-0.5">{entry.date}</p>
                                       </div>
-                                      <button onClick={() => revertAdminChange(entry)} disabled={entry.reverted} className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${entry.reverted ? "bg-gray-50 text-gray-300 cursor-not-allowed" : "border border-gray-200 text-gray-600 hover:bg-gray-100"}`}>Geri Al</button>
+                                      <button onClick={() => revertAdminChange(entry)} disabled={entry.reverted} className={`text-[11px] font-semibold px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${entry.reverted ? "bg-background text-fg-muted cursor-not-allowed" : "border border-border text-fg-secondary hover:bg-surface-elevated"}`}>Geri Al</button>
                                     </div>
                                   ))}
                                 </div>
@@ -1605,61 +1605,61 @@ export function AppShell() {
               <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4" data-modal-backdrop onClick={() => { setSelectedAdminUser(null); setAdminEditForm(null); }}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[88vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="text-base font-bold text-gray-900">Kullanıcıyı Düzenle</h3>
-                    <button onClick={() => openAdminProfileView(selectedAdminUser)} className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 flex-shrink-0"><Eye size={12} /> Tam Profili Görüntüle</button>
+                    <h3 className="text-base font-bold text-fg">Kullanıcıyı Düzenle</h3>
+                    <button onClick={() => openAdminProfileView(selectedAdminUser)} className="text-[11px] font-semibold text-primary hover:text-primary-hover flex items-center gap-1 flex-shrink-0"><Eye size={12} /> Tam Profili Görüntüle</button>
                   </div>
-                  <p className="text-xs text-gray-400 mb-4">{selectedAdminUser.type === "mechanic" ? "Tamirci" : "Araç Sahibi"} hesabı</p>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Hesap Bilgileri</p>
+                  <p className="text-xs text-fg-muted mb-4">{selectedAdminUser.type === "mechanic" ? "Tamirci" : "Araç Sahibi"} hesabı</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2">Hesap Bilgileri</p>
                   <div className="space-y-3">
-                    <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">Ad Soyad / İşletme</label><input value={adminEditForm.name} onChange={(e) => setAdminEditForm({ ...adminEditForm, name: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                    <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">E-posta</label><input value={adminEditForm.email} onChange={(e) => setAdminEditForm({ ...adminEditForm, email: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                    <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">Telefon</label><input value={adminEditForm.phone} onChange={(e) => setAdminEditForm({ ...adminEditForm, phone: e.target.value })} onBlur={(e) => normalizePhoneField(e.target.value, (v) => setAdminEditForm({ ...adminEditForm, phone: v }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                    <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">Şehir</label><input value={adminEditForm.city} onChange={(e) => setAdminEditForm({ ...adminEditForm, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                    <div><label className="text-[11px] font-medium text-fg-secondary mb-1 block">Ad Soyad / İşletme</label><input value={adminEditForm.name} onChange={(e) => setAdminEditForm({ ...adminEditForm, name: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                    <div><label className="text-[11px] font-medium text-fg-secondary mb-1 block">E-posta</label><input value={adminEditForm.email} onChange={(e) => setAdminEditForm({ ...adminEditForm, email: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                    <div><label className="text-[11px] font-medium text-fg-secondary mb-1 block">Telefon</label><input value={adminEditForm.phone} onChange={(e) => setAdminEditForm({ ...adminEditForm, phone: e.target.value })} onBlur={(e) => normalizePhoneField(e.target.value, (v) => setAdminEditForm({ ...adminEditForm, phone: v }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                    <div><label className="text-[11px] font-medium text-fg-secondary mb-1 block">Şehir</label><input value={adminEditForm.city} onChange={(e) => setAdminEditForm({ ...adminEditForm, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
                   </div>
                   {selectedAdminUser.type === "mechanic" && (
                     <>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-5 mb-2">İşletme Profili</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mt-5 mb-2">İşletme Profili</p>
                       <div className="space-y-3">
-                        <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">Uzmanlık Alanı</label><input value={adminEditForm.specialty} onChange={(e) => setAdminEditForm({ ...adminEditForm, specialty: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                        <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">Adres</label><input value={adminEditForm.address} onChange={(e) => setAdminEditForm({ ...adminEditForm, address: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                        <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">Başlangıç Fiyatı (₺)</label><input value={adminEditForm.price} onChange={(e) => setAdminEditForm({ ...adminEditForm, price: e.target.value.replace(/[^0-9]/g, "") })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                        <div><label className="text-[11px] font-medium text-gray-500 mb-1 block">Doğrulama Rozeti</label>
+                        <div><label className="text-[11px] font-medium text-fg-secondary mb-1 block">Uzmanlık Alanı</label><input value={adminEditForm.specialty} onChange={(e) => setAdminEditForm({ ...adminEditForm, specialty: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                        <div><label className="text-[11px] font-medium text-fg-secondary mb-1 block">Adres</label><input value={adminEditForm.address} onChange={(e) => setAdminEditForm({ ...adminEditForm, address: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                        <div><label className="text-[11px] font-medium text-fg-secondary mb-1 block">Başlangıç Fiyatı (₺)</label><input value={adminEditForm.price} onChange={(e) => setAdminEditForm({ ...adminEditForm, price: e.target.value.replace(/[^0-9]/g, "") })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                        <div><label className="text-[11px] font-medium text-fg-secondary mb-1 block">Doğrulama Rozeti</label>
                           <div className="flex gap-2">
-                            <button onClick={() => setAdminEditForm({ ...adminEditForm, verified: true })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 ${adminEditForm.verified ? "bg-blue-50 border-blue-200 text-blue-600" : "border-gray-200 text-gray-400"}`}><BadgeCheck size={13} /> Doğrulanmış</button>
-                            <button onClick={() => setAdminEditForm({ ...adminEditForm, verified: false })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition ${!adminEditForm.verified ? "bg-gray-100 border-gray-300 text-gray-700" : "border-gray-200 text-gray-400"}`}>Doğrulanmamış</button>
+                            <button onClick={() => setAdminEditForm({ ...adminEditForm, verified: true })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1 ${adminEditForm.verified ? "bg-primary-tint border-blue-200 text-primary" : "border-border text-fg-muted"}`}><BadgeCheck size={13} /> Doğrulanmış</button>
+                            <button onClick={() => setAdminEditForm({ ...adminEditForm, verified: false })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition ${!adminEditForm.verified ? "bg-surface-elevated border-fg-muted text-fg-strong" : "border-border text-fg-muted"}`}>Doğrulanmamış</button>
                           </div>
                         </div>
                       </div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-5 mb-2">Doğrulama Belgeleri</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mt-5 mb-2">Doğrulama Belgeleri</p>
                       {(selectedAdminUser.verificationDocs || []).length === 0 ? (
-                        <p className="text-xs text-gray-400 bg-gray-50 rounded-xl p-3">Henüz belge gönderilmedi.</p>
+                        <p className="text-xs text-fg-muted bg-background rounded-xl p-3">Henüz belge gönderilmedi.</p>
                       ) : (
                         <div className="space-y-2">
                           {selectedAdminUser.verificationDocs.map((d, i) => (
-                            <div key={i} className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-3 py-2.5">
-                              <FileText size={14} className="text-blue-500 flex-shrink-0" />
-                              <div className="flex-1 min-w-0"><p className="text-xs font-medium text-gray-700 truncate">{d.name}</p><p className="text-[10px] text-gray-400">{d.type} · {d.uploadedDate}</p></div>
-                              <button onClick={() => setToast({ type: "info", text: "📄 Bu bir demo belgesidir, gerçek dosya içeriği bulunmuyor." })} className="text-[11px] font-medium text-blue-600 hover:text-blue-700 flex-shrink-0">Görüntüle</button>
+                            <div key={i} className="flex items-center gap-2.5 bg-background rounded-xl px-3 py-2.5">
+                              <FileText size={14} className="text-info flex-shrink-0" />
+                              <div className="flex-1 min-w-0"><p className="text-xs font-medium text-fg-strong truncate">{d.name}</p><p className="text-[10px] text-fg-muted">{d.type} · {d.uploadedDate}</p></div>
+                              <button onClick={() => setToast({ type: "info", text: "📄 Bu bir demo belgesidir, gerçek dosya içeriği bulunmuyor." })} className="text-[11px] font-medium text-primary hover:text-primary-hover flex-shrink-0">Görüntüle</button>
                             </div>
                           ))}
                         </div>
                       )}
                     </>
                   )}
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-5 mb-2">Hesap Durumu</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mt-5 mb-2">Hesap Durumu</p>
                   <div className="flex gap-2">
-                    <button onClick={() => setAdminEditForm({ ...adminEditForm, status: "active" })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition ${adminEditForm.status === "active" ? "bg-green-50 border-green-200 text-green-600" : "border-gray-200 text-gray-400"}`}>Aktif</button>
-                    <button onClick={() => setAdminEditForm({ ...adminEditForm, status: "suspended" })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition ${adminEditForm.status === "suspended" ? "bg-red-50 border-red-200 text-red-500" : "border-gray-200 text-gray-400"}`}>Askıya Al</button>
+                    <button onClick={() => setAdminEditForm({ ...adminEditForm, status: "active" })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition ${adminEditForm.status === "active" ? "bg-success-tint border-green-200 text-success" : "border-border text-fg-muted"}`}>Aktif</button>
+                    <button onClick={() => setAdminEditForm({ ...adminEditForm, status: "suspended" })} className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition ${adminEditForm.status === "suspended" ? "bg-error-tint border-red-200 text-red-500" : "border-border text-fg-muted"}`}>Askıya Al</button>
                   </div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-5 mb-2">Şifre Yönetimi</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mt-5 mb-2">Şifre Yönetimi</p>
                   <div className="flex gap-2 mb-2">
-                    <input type="text" value={adminEditForm.newPassword} onChange={(e) => setAdminEditForm({ ...adminEditForm, newPassword: e.target.value })} placeholder="Yeni şifre belirle" className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                    <button onClick={resetUserPassword} disabled={!adminEditForm.newPassword.trim()} className={`px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${adminEditForm.newPassword.trim() ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-gray-100 text-gray-300 cursor-not-allowed"}`}>Güncelle</button>
+                    <input type="text" value={adminEditForm.newPassword} onChange={(e) => setAdminEditForm({ ...adminEditForm, newPassword: e.target.value })} placeholder="Yeni şifre belirle" className="flex-1 px-3 py-2.5 rounded-xl border border-border text-sm" />
+                    <button onClick={resetUserPassword} disabled={!adminEditForm.newPassword.trim()} className={`px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${adminEditForm.newPassword.trim() ? "bg-secondary text-white hover:bg-fg-strong" : "bg-surface-elevated text-fg-muted cursor-not-allowed"}`}>Güncelle</button>
                   </div>
-                  <button onClick={sendPasswordResetLink} className="w-full border border-gray-200 text-gray-600 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 transition flex items-center justify-center gap-1.5"><Mail size={12} /> Şifre Sıfırlama Bağlantısı Gönder</button>
+                  <button onClick={sendPasswordResetLink} className="w-full border border-border text-fg-secondary py-2 rounded-xl text-xs font-semibold hover:bg-background transition flex items-center justify-center gap-1.5"><Mail size={12} /> Şifre Sıfırlama Bağlantısı Gönder</button>
                   <div className="flex gap-2 mt-5">
-                    <button onClick={() => { setSelectedAdminUser(null); setAdminEditForm(null); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium">Vazgeç</button>
-                    <button onClick={saveAdminUserEdit} className="flex-1 bg-gray-900 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition">Kaydet</button>
+                    <button onClick={() => { setSelectedAdminUser(null); setAdminEditForm(null); }} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-sm font-medium">Vazgeç</button>
+                    <button onClick={saveAdminUserEdit} className="flex-1 bg-secondary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-fg-strong transition">Kaydet</button>
                   </div>
                 </div>
               </div>
@@ -1668,24 +1668,24 @@ export function AppShell() {
               <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setSelectedTicketId(null)}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-start justify-between mb-3">
-                    <div><span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{ADMIN_TICKET_TYPE_LABELS[selectedTicket.type]}</span><h3 className="text-base font-bold text-gray-900 mt-2">{selectedTicket.subject}</h3></div>
-                    <button onClick={() => setSelectedTicketId(null)} aria-label="Kapat" className="text-gray-300 hover:text-gray-500 p-1 -m-1"><X size={18} /></button>
+                    <div><span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-elevated text-fg-secondary">{ADMIN_TICKET_TYPE_LABELS[selectedTicket.type]}</span><h3 className="text-base font-bold text-fg mt-2">{selectedTicket.subject}</h3></div>
+                    <button onClick={() => setSelectedTicketId(null)} aria-label="Kapat" className="text-fg-muted hover:text-fg-secondary p-1 -m-1"><X size={18} /></button>
                   </div>
-                  <p className="text-xs text-gray-400 mb-1">{selectedTicket.fromName} ({selectedTicket.fromType === "mechanic" ? "Tamirci" : "Araç Sahibi"}) · {selectedTicket.relatedNote} · {selectedTicket.createdDate}</p>
-                  <p className={`text-[11px] mb-3 flex items-center gap-1 ${ticketSlaBreached(selectedTicket) ? "text-red-500 font-semibold" : "text-gray-400"}`}>{ticketSlaBreached(selectedTicket) && <AlertTriangle size={11} />} {ticketDaysOpen(selectedTicket)} gündür açık{ticketSlaBreached(selectedTicket) ? ` · SLA hedefi (${ADMIN_SLA_DAYS[selectedTicket.priority] || 5}g) aşıldı` : ""}</p>
-                  <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3 mb-3 leading-relaxed">{selectedTicket.description}</p>
+                  <p className="text-xs text-fg-muted mb-1">{selectedTicket.fromName} ({selectedTicket.fromType === "mechanic" ? "Tamirci" : "Araç Sahibi"}) · {selectedTicket.relatedNote} · {selectedTicket.createdDate}</p>
+                  <p className={`text-[11px] mb-3 flex items-center gap-1 ${ticketSlaBreached(selectedTicket) ? "text-red-500 font-semibold" : "text-fg-muted"}`}>{ticketSlaBreached(selectedTicket) && <AlertTriangle size={11} />} {ticketDaysOpen(selectedTicket)} gündür açık{ticketSlaBreached(selectedTicket) ? ` · SLA hedefi (${ADMIN_SLA_DAYS[selectedTicket.priority] || 5}g) aşıldı` : ""}</p>
+                  <p className="text-sm text-fg-strong bg-background rounded-xl p-3 mb-3 leading-relaxed">{selectedTicket.description}</p>
                   {(selectedTicket.adminReplies || []).length > 0 && (
                     <div className="space-y-2 mb-3">
                       {selectedTicket.adminReplies.map((r, i) => (
-                        <div key={i} className="bg-gray-900 text-white rounded-xl p-3 ml-6"><p className="text-[9px] text-gray-400 mb-1">Yönetici · {r.date}</p><p className="text-xs leading-relaxed">{r.text}</p></div>
+                        <div key={i} className="bg-secondary text-white rounded-xl p-3 ml-6"><p className="text-[9px] text-fg-muted mb-1">Yönetici · {r.date}</p><p className="text-xs leading-relaxed">{r.text}</p></div>
                       ))}
                     </div>
                   )}
                   {selectedTicket.type === "payment" && (
                     selectedTicket.refunded ? (
-                      <p className="text-xs text-green-600 bg-green-50 rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><CheckCircle2 size={13} /> Kapora iade edildi, randevu iptal edildi.</p>
+                      <p className="text-xs text-success bg-success-tint rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><CheckCircle2 size={13} /> Kapora iade edildi, randevu iptal edildi.</p>
                     ) : (
-                      <button onClick={() => issueTicketRefund(selectedTicket.id)} className="w-full bg-gray-900 text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-800 transition mb-4 flex items-center justify-center gap-1.5"><Banknote size={13} /> Kaporayı İade Et / Randevuyu İptal Et</button>
+                      <button onClick={() => issueTicketRefund(selectedTicket.id)} className="w-full bg-secondary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-fg-strong transition mb-4 flex items-center justify-center gap-1.5"><Banknote size={13} /> Kaporayı İade Et / Randevuyu İptal Et</button>
                     )
                   )}
                   {selectedTicket.type === "listing" && (() => {
@@ -1693,9 +1693,9 @@ export function AppShell() {
                     const lst = lidMatch ? listings.find(l => l.id === Number(lidMatch[1])) : null;
                     if (!lst) return null;
                     return lst.adminRemoved ? (
-                      <p className="text-xs text-green-600 bg-green-50 rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><CheckCircle2 size={13} /> İlan platformdan kaldırıldı.</p>
+                      <p className="text-xs text-success bg-success-tint rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><CheckCircle2 size={13} /> İlan platformdan kaldırıldı.</p>
                     ) : (
-                      <button onClick={() => removeReportedListing(selectedTicket.id)} className="w-full bg-red-500 text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-red-600 transition mb-4 flex items-center justify-center gap-1.5"><Ban size={13} /> İlanı Kaldır</button>
+                      <button onClick={() => removeReportedListing(selectedTicket.id)} className="w-full bg-red-500 text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-error transition mb-4 flex items-center justify-center gap-1.5"><Ban size={13} /> İlanı Kaldır</button>
                     );
                   })()}
                   {selectedTicket.type === "review" && (() => {
@@ -1703,32 +1703,32 @@ export function AppShell() {
                     if (!mech) return null;
                     const hasFlagged = (mech.reviewList || []).some(r => r.flagged);
                     return hasFlagged ? (
-                      <button onClick={() => removeFlaggedReview(selectedTicket.id)} className="w-full bg-red-500 text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-red-600 transition mb-4 flex items-center justify-center gap-1.5"><Trash2 size={13} /> Yorumu Kaldır</button>
+                      <button onClick={() => removeFlaggedReview(selectedTicket.id)} className="w-full bg-red-500 text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-error transition mb-4 flex items-center justify-center gap-1.5"><Trash2 size={13} /> Yorumu Kaldır</button>
                     ) : (
-                      <p className="text-xs text-green-600 bg-green-50 rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><CheckCircle2 size={13} /> İşaretli yorum kaldırıldı.</p>
+                      <p className="text-xs text-success bg-success-tint rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><CheckCircle2 size={13} /> İşaretli yorum kaldırıldı.</p>
                     );
                   })()}
                   {selectedTicket.type === "verification" && (() => {
                     const mech = mechanicsList.find(m => m.name === selectedTicket.fromName);
                     if (!mech) return null;
                     return mech.verified ? (
-                      <p className="text-xs text-green-600 bg-green-50 rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><BadgeCheck size={13} /> Tamirci doğrulandı.</p>
+                      <p className="text-xs text-success bg-success-tint rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><BadgeCheck size={13} /> Tamirci doğrulandı.</p>
                     ) : (
-                      <button onClick={() => grantVerification(selectedTicket.id)} className="w-full bg-gray-900 text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-800 transition mb-4 flex items-center justify-center gap-1.5"><BadgeCheck size={13} /> Doğrula ve Rozeti Ver</button>
+                      <button onClick={() => grantVerification(selectedTicket.id)} className="w-full bg-secondary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-fg-strong transition mb-4 flex items-center justify-center gap-1.5"><BadgeCheck size={13} /> Doğrula ve Rozeti Ver</button>
                     );
                   })()}
-                  <label className="text-[11px] font-medium text-gray-500 mb-1 block">Kullanıcıya Mesaj Gönder</label>
+                  <label className="text-[11px] font-medium text-fg-secondary mb-1 block">Kullanıcıya Mesaj Gönder</label>
                   <div className="flex gap-2 mb-4">
-                    <input value={adminReplyDraft} onChange={(e) => setAdminReplyDraft(e.target.value)} placeholder="Kullanıcıya yanıt yazın..." className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" onKeyDown={(e) => { if (e.key === "Enter") sendAdminReply(selectedTicket.id); }} />
-                    <button onClick={() => sendAdminReply(selectedTicket.id)} disabled={!adminReplyDraft.trim()} aria-label="Gönder" className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition ${adminReplyDraft.trim() ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-gray-100 text-gray-300 cursor-not-allowed"}`}><Send size={15} /></button>
+                    <input value={adminReplyDraft} onChange={(e) => setAdminReplyDraft(e.target.value)} placeholder="Kullanıcıya yanıt yazın..." className="flex-1 px-3 py-2.5 rounded-xl border border-border text-sm" onKeyDown={(e) => { if (e.key === "Enter") sendAdminReply(selectedTicket.id); }} />
+                    <button onClick={() => sendAdminReply(selectedTicket.id)} disabled={!adminReplyDraft.trim()} aria-label="Gönder" className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition ${adminReplyDraft.trim() ? "bg-secondary text-white hover:bg-fg-strong" : "bg-surface-elevated text-fg-muted cursor-not-allowed"}`}><Send size={15} /></button>
                   </div>
-                  <label className="text-[11px] font-medium text-gray-500 mb-1 block">Dahili Yönetici Notu</label>
-                  <textarea value={adminTicketNote} onChange={(e) => setAdminTicketNote(e.target.value)} rows={3} placeholder="Bu talep hakkında not ekleyin (yalnızca ekip içi)..." className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm mb-3 resize-none" />
-                  <button onClick={saveTicketNote} className="w-full border border-gray-200 text-gray-600 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 transition mb-4">Notu Kaydet</button>
+                  <label className="text-[11px] font-medium text-fg-secondary mb-1 block">Dahili Yönetici Notu</label>
+                  <textarea value={adminTicketNote} onChange={(e) => setAdminTicketNote(e.target.value)} rows={3} placeholder="Bu talep hakkında not ekleyin (yalnızca ekip içi)..." className="w-full px-3 py-2.5 rounded-xl border border-border text-sm mb-3 resize-none" />
+                  <button onClick={saveTicketNote} className="w-full border border-border text-fg-secondary py-2 rounded-xl text-xs font-semibold hover:bg-background transition mb-4">Notu Kaydet</button>
                   <div className="grid grid-cols-3 gap-2">
-                    <button onClick={() => updateTicketStatus(selectedTicket.id, "open")} className={`py-2 rounded-xl text-xs font-semibold border transition ${selectedTicket.status === "open" ? "bg-red-50 border-red-200 text-red-500" : "border-gray-200 text-gray-400"}`}>Açık</button>
-                    <button onClick={() => updateTicketStatus(selectedTicket.id, "in_review")} className={`py-2 rounded-xl text-xs font-semibold border transition ${selectedTicket.status === "in_review" ? "bg-gray-100 border-gray-300 text-gray-700" : "border-gray-200 text-gray-400"}`}>İnceleniyor</button>
-                    <button onClick={() => updateTicketStatus(selectedTicket.id, "resolved")} className={`py-2 rounded-xl text-xs font-semibold border transition ${selectedTicket.status === "resolved" ? "bg-green-50 border-green-200 text-green-600" : "border-gray-200 text-gray-400"}`}>Çözüldü</button>
+                    <button onClick={() => updateTicketStatus(selectedTicket.id, "open")} className={`py-2 rounded-xl text-xs font-semibold border transition ${selectedTicket.status === "open" ? "bg-error-tint border-red-200 text-red-500" : "border-border text-fg-muted"}`}>Açık</button>
+                    <button onClick={() => updateTicketStatus(selectedTicket.id, "in_review")} className={`py-2 rounded-xl text-xs font-semibold border transition ${selectedTicket.status === "in_review" ? "bg-surface-elevated border-fg-muted text-fg-strong" : "border-border text-fg-muted"}`}>İnceleniyor</button>
+                    <button onClick={() => updateTicketStatus(selectedTicket.id, "resolved")} className={`py-2 rounded-xl text-xs font-semibold border transition ${selectedTicket.status === "resolved" ? "bg-success-tint border-green-200 text-success" : "border-border text-fg-muted"}`}>Çözüldü</button>
                   </div>
                 </div>
               </div>
@@ -1736,19 +1736,19 @@ export function AppShell() {
             {showBroadcastModal && (
               <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[85] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setShowBroadcastModal(false)}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2"><Megaphone size={16} className="text-blue-600" /> Duyuru Gönder</h3>
-                  <p className="text-xs text-gray-400 mb-4">Tüm platforma ya da seçtiğin gruba anlık duyuru gönder (demo).</p>
-                  <label className="text-[11px] font-medium text-gray-500 mb-1 block">Kime</label>
+                  <h3 className="text-base font-bold text-fg mb-1 flex items-center gap-2"><Megaphone size={16} className="text-primary" /> Duyuru Gönder</h3>
+                  <p className="text-xs text-fg-muted mb-4">Tüm platforma ya da seçtiğin gruba anlık duyuru gönder (demo).</p>
+                  <label className="text-[11px] font-medium text-fg-secondary mb-1 block">Kime</label>
                   <div className="flex gap-2 mb-3">
                     {[{ key: "all", label: `Tümü (${adminAllUsers.length})` }, { key: "owner", label: `Araç Sahipleri (${adminStats.totalOwners})` }, { key: "mechanic", label: `Tamirciler (${adminStats.totalMechanics})` }].map(o => (
-                      <button key={o.key} onClick={() => setBroadcastForm({ ...broadcastForm, audience: o.key })} className={`flex-1 py-2 rounded-xl text-[11px] font-semibold border transition ${broadcastForm.audience === o.key ? "bg-gray-900 border-gray-900 text-white" : "border-gray-200 text-gray-500"}`}>{o.label}</button>
+                      <button key={o.key} onClick={() => setBroadcastForm({ ...broadcastForm, audience: o.key })} className={`flex-1 py-2 rounded-xl text-[11px] font-semibold border transition ${broadcastForm.audience === o.key ? "bg-secondary border-secondary text-white" : "border-border text-fg-secondary"}`}>{o.label}</button>
                     ))}
                   </div>
-                  <label className="text-[11px] font-medium text-gray-500 mb-1 block">Mesaj</label>
-                  <textarea value={broadcastForm.message} onChange={(e) => setBroadcastForm({ ...broadcastForm, message: e.target.value })} rows={4} placeholder="Örn: Yarın 02:00-04:00 arası bakım nedeniyle kısa süreli erişim kesintisi yaşanabilir." className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none mb-4" />
+                  <label className="text-[11px] font-medium text-fg-secondary mb-1 block">Mesaj</label>
+                  <textarea value={broadcastForm.message} onChange={(e) => setBroadcastForm({ ...broadcastForm, message: e.target.value })} rows={4} placeholder="Örn: Yarın 02:00-04:00 arası bakım nedeniyle kısa süreli erişim kesintisi yaşanabilir." className="w-full px-3 py-2.5 rounded-xl border border-border text-sm resize-none mb-4" />
                   <div className="flex gap-2">
-                    <button onClick={() => setShowBroadcastModal(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium">Vazgeç</button>
-                    <button disabled={!broadcastForm.message.trim()} onClick={sendBroadcast} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${broadcastForm.message.trim() ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>Gönder</button>
+                    <button onClick={() => setShowBroadcastModal(false)} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-sm font-medium">Vazgeç</button>
+                    <button disabled={!broadcastForm.message.trim()} onClick={sendBroadcast} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${broadcastForm.message.trim() ? "bg-secondary text-white hover:bg-fg-strong" : "bg-border text-fg-muted cursor-not-allowed"}`}>Gönder</button>
                   </div>
                 </div>
               </div>
@@ -1757,59 +1757,59 @@ export function AppShell() {
               <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[85] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setAdminAnalyzeUserKey(null)}>
                 <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-start justify-between mb-4">
-                    <div><span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{analyzingUser.type === "mechanic" ? "Tamirci Analizi" : "Araç Sahibi Analizi"}</span><h3 className="text-base font-bold text-gray-900 mt-2">{analyzingUser.name}</h3></div>
-                    <button onClick={() => setAdminAnalyzeUserKey(null)} aria-label="Kapat" className="text-gray-300 hover:text-gray-500 p-1 -m-1"><X size={18} /></button>
+                    <div><span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-elevated text-fg-secondary">{analyzingUser.type === "mechanic" ? "Tamirci Analizi" : "Araç Sahibi Analizi"}</span><h3 className="text-base font-bold text-fg mt-2">{analyzingUser.name}</h3></div>
+                    <button onClick={() => setAdminAnalyzeUserKey(null)} aria-label="Kapat" className="text-fg-muted hover:text-fg-secondary p-1 -m-1"><X size={18} /></button>
                   </div>
                   {analyzingUser.type === "owner" ? (
                     <>
                       <div className="grid grid-cols-2 gap-3 mb-5">
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.apptCount}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Randevu</p></div>
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.listingCount}</p><p className="text-xs text-gray-500 mt-0.5">Toplam İlan</p></div>
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.activeListings}</p><p className="text-xs text-gray-500 mt-0.5">Aktif İlan</p></div>
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.soldListings}</p><p className="text-xs text-gray-500 mt-0.5">Satılan İlan</p></div>
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900 flex items-center gap-1.5"><Share2 size={16} className="text-gray-400" /> {adminUserAnalytics.totalShares}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Paylaşım</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{adminUserAnalytics.apptCount}</p><p className="text-xs text-fg-secondary mt-0.5">Toplam Randevu</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{adminUserAnalytics.listingCount}</p><p className="text-xs text-fg-secondary mt-0.5">Toplam İlan</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{adminUserAnalytics.activeListings}</p><p className="text-xs text-fg-secondary mt-0.5">Aktif İlan</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{adminUserAnalytics.soldListings}</p><p className="text-xs text-fg-secondary mt-0.5">Satılan İlan</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg flex items-center gap-1.5"><Share2 size={16} className="text-fg-muted" /> {adminUserAnalytics.totalShares}</p><p className="text-xs text-fg-secondary mt-0.5">Toplam Paylaşım</p></div>
                       </div>
                       {Object.keys(adminUserAnalytics.byStatus).length > 0 && (
                         <>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Randevu Durum Dağılımı</p>
-                          <div className="bg-gray-50 rounded-2xl p-4 mb-5 space-y-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2">Randevu Durum Dağılımı</p>
+                          <div className="bg-background rounded-2xl p-4 mb-5 space-y-2">
                             {Object.entries(adminUserAnalytics.byStatus).map(([status, count]) => (
-                              <div key={status} className="flex items-center gap-3"><span className="text-xs text-gray-600 w-32 flex-shrink-0 truncate">{status}</span><div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.max(6, (count / adminUserAnalytics.apptCount) * 100)}%` }} /></div><span className="text-xs font-semibold text-gray-700 w-5 text-right flex-shrink-0">{count}</span></div>
+                              <div key={status} className="flex items-center gap-3"><span className="text-xs text-fg-secondary w-32 flex-shrink-0 truncate">{status}</span><div className="flex-1 bg-border rounded-full h-2 overflow-hidden"><div className="h-full bg-info rounded-full" style={{ width: `${Math.max(6, (count / adminUserAnalytics.apptCount) * 100)}%` }} /></div><span className="text-xs font-semibold text-fg-strong w-5 text-right flex-shrink-0">{count}</span></div>
                             ))}
                           </div>
                         </>
                       )}
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Destek Talepleri</p>
-                      <div className="bg-gray-50 rounded-2xl p-4"><p className="text-sm text-gray-700">{adminUserAnalytics.ticketCount} talep açtı, {adminUserAnalytics.openTickets} tanesi hâlâ açık.</p></div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2">Destek Talepleri</p>
+                      <div className="bg-background rounded-2xl p-4"><p className="text-sm text-fg-strong">{adminUserAnalytics.ticketCount} talep açtı, {adminUserAnalytics.openTickets} tanesi hâlâ açık.</p></div>
                     </>
                   ) : (
                     <>
                       <div className="grid grid-cols-2 gap-3 mb-5">
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.estRevenue.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-500 mt-0.5">Tahmini Ciro</p></div>
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.completed}/{adminUserAnalytics.apptCount}</p><p className="text-xs text-gray-500 mt-0.5">Tamamlanan Randevu</p></div>
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.activeListings}/{adminUserAnalytics.listingCount}</p><p className="text-xs text-gray-500 mt-0.5">Aktif Araç İlanı</p></div>
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900">{adminUserAnalytics.activeJobs}/{adminUserAnalytics.jobCount}</p><p className="text-xs text-gray-500 mt-0.5">Aktif İş İlanı</p></div>
-                        <div className="bg-gray-50 rounded-2xl p-4"><p className="text-2xl font-bold text-gray-900 flex items-center gap-1.5"><Share2 size={16} className="text-gray-400" /> {adminUserAnalytics.totalShares}</p><p className="text-xs text-gray-500 mt-0.5">Toplam Paylaşım</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{adminUserAnalytics.estRevenue.toLocaleString("tr-TR")}₺</p><p className="text-xs text-fg-secondary mt-0.5">Tahmini Ciro</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{adminUserAnalytics.completed}/{adminUserAnalytics.apptCount}</p><p className="text-xs text-fg-secondary mt-0.5">Tamamlanan Randevu</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{adminUserAnalytics.activeListings}/{adminUserAnalytics.listingCount}</p><p className="text-xs text-fg-secondary mt-0.5">Aktif Araç İlanı</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg">{adminUserAnalytics.activeJobs}/{adminUserAnalytics.jobCount}</p><p className="text-xs text-fg-secondary mt-0.5">Aktif İş İlanı</p></div>
+                        <div className="bg-background rounded-2xl p-4"><p className="text-2xl font-bold text-fg flex items-center gap-1.5"><Share2 size={16} className="text-fg-muted" /> {adminUserAnalytics.totalShares}</p><p className="text-xs text-fg-secondary mt-0.5">Toplam Paylaşım</p></div>
                       </div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Genel</p>
-                      <div className="bg-gray-50 rounded-2xl p-4 mb-5 space-y-1.5">
-                        <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Puan</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="text-gray-900 fill-gray-900" /> {(analyzingUser as any).rating || mechanicsList.find(m => m.id === analyzingUser.id)?.rating} ({mechanicsList.find(m => m.id === analyzingUser.id)?.reviews} değerlendirme)</span></div>
-                        <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Ort. Yanıt Süresi</span><span className="font-semibold text-gray-800">{mechanicsList.find(m => m.id === analyzingUser.id)?.avgResponseMinutes} dk</span></div>
-                        <div className="flex items-center justify-between text-sm"><span className="text-gray-500">İş İlanlarına Toplam Başvuru</span><span className="font-semibold text-gray-800">{adminUserAnalytics.totalApplicants}</span></div>
-                        <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Profil Paylaşılma Sayısı</span><span className="font-semibold text-gray-800">{adminUserAnalytics.ownShareCount}</span></div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2">Genel</p>
+                      <div className="bg-background rounded-2xl p-4 mb-5 space-y-1.5">
+                        <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">Puan</span><span className="font-semibold text-fg-strong flex items-center gap-1"><Star size={12} className="text-fg fill-fg" /> {(analyzingUser as any).rating || mechanicsList.find(m => m.id === analyzingUser.id)?.rating} ({mechanicsList.find(m => m.id === analyzingUser.id)?.reviews} değerlendirme)</span></div>
+                        <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">Ort. Yanıt Süresi</span><span className="font-semibold text-fg-strong">{mechanicsList.find(m => m.id === analyzingUser.id)?.avgResponseMinutes} dk</span></div>
+                        <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">İş İlanlarına Toplam Başvuru</span><span className="font-semibold text-fg-strong">{adminUserAnalytics.totalApplicants}</span></div>
+                        <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">Profil Paylaşılma Sayısı</span><span className="font-semibold text-fg-strong">{adminUserAnalytics.ownShareCount}</span></div>
                       </div>
                       {Object.keys(adminUserAnalytics.byStatus).length > 0 && (
                         <>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Randevu Durum Dağılımı</p>
-                          <div className="bg-gray-50 rounded-2xl p-4 mb-5 space-y-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2">Randevu Durum Dağılımı</p>
+                          <div className="bg-background rounded-2xl p-4 mb-5 space-y-2">
                             {Object.entries(adminUserAnalytics.byStatus).map(([status, count]) => (
-                              <div key={status} className="flex items-center gap-3"><span className="text-xs text-gray-600 w-32 flex-shrink-0 truncate">{status}</span><div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.max(6, (count / adminUserAnalytics.apptCount) * 100)}%` }} /></div><span className="text-xs font-semibold text-gray-700 w-5 text-right flex-shrink-0">{count}</span></div>
+                              <div key={status} className="flex items-center gap-3"><span className="text-xs text-fg-secondary w-32 flex-shrink-0 truncate">{status}</span><div className="flex-1 bg-border rounded-full h-2 overflow-hidden"><div className="h-full bg-info rounded-full" style={{ width: `${Math.max(6, (count / adminUserAnalytics.apptCount) * 100)}%` }} /></div><span className="text-xs font-semibold text-fg-strong w-5 text-right flex-shrink-0">{count}</span></div>
                             ))}
                           </div>
                         </>
                       )}
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Destek Talepleri</p>
-                      <div className="bg-gray-50 rounded-2xl p-4"><p className="text-sm text-gray-700">{adminUserAnalytics.ticketCount} talep var, {adminUserAnalytics.openTickets} tanesi hâlâ açık.</p></div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2">Destek Talepleri</p>
+                      <div className="bg-background rounded-2xl p-4"><p className="text-sm text-fg-strong">{adminUserAnalytics.ticketCount} talep var, {adminUserAnalytics.openTickets} tanesi hâlâ açık.</p></div>
                     </>
                   )}
                 </div>
@@ -1828,16 +1828,16 @@ export function AppShell() {
             duruyor; tur onun üstünde bulanık bir katmanla açılıyor. */}
         {screen === "owner" && (
           <>
-            <div className="bg-gradient-to-b from-blue-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
+            <div className="bg-gradient-to-b from-blue-50 to-white text-fg px-5 md:px-8 pt-6 pb-5 border-b border-surface-elevated shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-3 max-w-7xl mx-auto w-full relative md:hidden">
-                <span className="text-xs text-gray-500">{t("greetingHello")}{ownerProfile.name ? `, ${ownerProfile.name}` : ""} 👋</span>
+                <span className="text-xs text-fg-secondary">{t("greetingHello")}{ownerProfile.name ? `, ${ownerProfile.name}` : ""} 👋</span>
                 <div className="flex items-center gap-2.5">
                   <NotifBell />
-                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img decoding="async" src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
+                  <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} className="w-8 h-8 rounded-full bg-surface-elevated border border-border flex items-center justify-center overflow-hidden text-xs font-bold text-fg-strong hover:bg-border transition">{ownerProfile.photo ? <img decoding="async" src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
                 </div>
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
-                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-blue-600">perto</span></span></button>
+                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-fg">Fix<span className="text-primary">perto</span></span></button>
                 {/* GÜVENLİK/UX DÜZELTMESİ (kullanıcı geri bildirimi): bu "Tamirci Ara / Araç Ara / İş
                     İlanları" hızlı-arama sekmeleri sadece keşif (search) ekranında anlamlı — önceden
                     ownerTab ne olursa olsun (ör. Randevularım) hep görünüyordu, sadece "aktif" vurgusu
@@ -1846,9 +1846,9 @@ export function AppShell() {
                 <div className="flex items-center gap-8">
                   {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: t("jobListingsNavLabel"), icon: Briefcase }].map(tab => {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
-                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} aria-current={active ? "page" : undefined} className={`relative flex items-center gap-2 pb-3 pt-1 transition-colors ${active ? "text-gray-900" : "text-gray-500 hover:text-gray-900"}`}><Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="flex-shrink-0" /><span className="text-sm font-semibold">{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-gray-900 rounded-full" />}</button>);
+                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setOwnerTab("search"); setQuery(""); }} aria-current={active ? "page" : undefined} className={`relative flex items-center gap-2 pb-3 pt-1 transition-colors ${active ? "text-fg" : "text-fg-secondary hover:text-fg"}`}><Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="flex-shrink-0" /><span className="text-sm font-semibold">{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-secondary rounded-full" />}</button>);
                   })}
-                  <button onClick={() => openQuoteModal()} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-full transition whitespace-nowrap shadow-sm"><Users size={15} strokeWidth={2} /> {t("multiQuoteBtn")}</button>
+                  <button onClick={() => openQuoteModal()} className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white text-sm font-semibold px-4 py-2 rounded-full transition whitespace-nowrap shadow-sm"><Users size={15} strokeWidth={2} /> {t("multiQuoteBtn")}</button>
                 </div>
                 )}
                 {/* MİSAFİR GEZİNME: giriş yapmamış ziyaretçiye bildirim zili/profil yerine
@@ -1857,12 +1857,12 @@ export function AppShell() {
                   {isAuthed ? (
                     <>
                       <NotifBell />
-                      <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title={t("profileAndSettingsTitle")} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-700 hover:bg-gray-200 transition">{ownerProfile.photo ? <img decoding="async" src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
+                      <button onClick={() => { setScreen("ownerProfilePage"); setOwnerProfileTab("info"); }} title={t("profileAndSettingsTitle")} className="w-9 h-9 rounded-full bg-surface-elevated border border-border flex items-center justify-center overflow-hidden text-xs font-bold text-fg-strong hover:bg-border transition">{ownerProfile.photo ? <img decoding="async" src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}</button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => openAuthGate("", "login")} className="text-sm font-semibold text-gray-700 hover:text-gray-900 px-3 py-2 rounded-full hover:bg-gray-100 transition whitespace-nowrap">{t("authGateLoginTab")}</button>
-                      <button onClick={() => openAuthGate("", "signup")} className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full transition whitespace-nowrap">{t("authGateSignupTab")}</button>
+                      <button onClick={() => openAuthGate("", "login")} className="text-sm font-semibold text-fg-strong hover:text-fg px-3 py-2 rounded-full hover:bg-surface-elevated transition whitespace-nowrap">{t("authGateLoginTab")}</button>
+                      <button onClick={() => openAuthGate("", "signup")} className="text-sm font-semibold text-white bg-primary hover:bg-primary-hover px-4 py-2 rounded-full transition whitespace-nowrap">{t("authGateSignupTab")}</button>
                     </>
                   )}
                 </div>
@@ -1871,41 +1871,41 @@ export function AppShell() {
                 {(ownerTab === "search") && (<>
                   <div className={`transition-all duration-300 ease-out overflow-hidden ${heroCollapsed ? "max-h-0 opacity-0 -translate-y-3 mb-0 pointer-events-none" : "max-h-56 opacity-100 translate-y-0 mb-4"}`}>
                     <div className="flex flex-col items-center gap-2 mb-4 md:hidden">
-                      <div className="inline-flex items-center gap-0.5 bg-gray-100 rounded-full p-1">
-                        <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
-                        <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
-                        <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
+                      <div className="inline-flex items-center gap-0.5 bg-surface-elevated rounded-full p-1">
+                        <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-primary shadow-sm" : "text-fg-secondary"}`}><Wrench size={13} /> {t("findMechanic")}</button>
+                        <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-primary shadow-sm" : "text-fg-secondary"}`}><Car size={13} /> {t("findCar")}</button>
+                        <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-primary shadow-sm" : "text-fg-secondary"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                       </div>
-                      <button onClick={() => openQuoteModal()} className="px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
+                      <button onClick={() => openQuoteModal()} className="px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 bg-primary-tint text-primary hover:bg-blue-100"><Users size={13} /> {t("multiQuoteBtn")}</button>
                     </div>
-                    <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("searchHeroTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-fg text-center">{ownerMode === "mechanics" ? t("searchHeroTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
                   </div>
-                  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center gap-2 p-2 pl-2.5 md:hidden">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${ownerMode === "cars" ? "bg-blue-100" : "bg-blue-50"}`}>{ownerMode === "cars" ? <Car size={18} className="text-blue-700" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-blue-600" /> : <Wrench size={18} className="text-blue-600" />}</div>
-                    <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="flex-1 px-1 py-2 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-focus bg-transparent min-w-0" />
-                    <button onClick={() => setShowFilterModal(true)} aria-label={t("filterBtn")} className="relative flex-shrink-0 w-10 h-10 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-50 transition"><SlidersHorizontal size={16} />{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}</button><button onClick={(e) => e.currentTarget.blur()} className={`flex-shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition ${ownerMode === "cars" ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-600 hover:bg-blue-700"}`}>{t("searchBtn")}</button>
+                  <div className="bg-white rounded-2xl border border-border shadow-sm flex items-center gap-2 p-2 pl-2.5 md:hidden">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${ownerMode === "cars" ? "bg-blue-100" : "bg-primary-tint"}`}>{ownerMode === "cars" ? <Car size={18} className="text-primary-hover" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-primary" /> : <Wrench size={18} className="text-primary" />}</div>
+                    <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="flex-1 px-1 py-2 text-fg-strong text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-focus bg-transparent min-w-0" />
+                    <button onClick={() => setShowFilterModal(true)} aria-label={t("filterBtn")} className="relative flex-shrink-0 w-10 h-10 rounded-xl border border-border text-fg-secondary flex items-center justify-center hover:bg-background transition"><SlidersHorizontal size={16} />{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white rounded-full text-[9px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}</button><button onClick={(e) => e.currentTarget.blur()} className={`flex-shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition ${ownerMode === "cars" ? "bg-primary hover:bg-primary-hover" : "bg-primary hover:bg-primary-hover"}`}>{t("searchBtn")}</button>
                   </div>
-                  <div className={`hidden md:flex items-stretch bg-white rounded-full border border-gray-300 shadow-lg divide-x divide-gray-200 mx-auto overflow-hidden ${ownerMode === "mechanics" ? "max-w-3xl" : "max-w-2xl"}`}>
-                    <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("brandFieldLabel") : ownerMode === "cars" ? t("brandModelFieldLabel") : t("positionFieldLabel")}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
-                    <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("cityLabelShort") : t("locationFieldLabel")}</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchCityPlaceholder") : t("cityOrDistrictPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                  <div className={`hidden md:flex items-stretch bg-white rounded-full border border-fg-muted shadow-lg divide-x divide-border mx-auto overflow-hidden ${ownerMode === "mechanics" ? "max-w-3xl" : "max-w-2xl"}`}>
+                    <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-fg">{ownerMode === "mechanics" ? t("brandFieldLabel") : ownerMode === "cars" ? t("brandModelFieldLabel") : t("positionFieldLabel")}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="w-full text-sm text-fg-strong placeholder:text-fg-muted focus:outline-none bg-transparent" /></div>
+                    <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-fg">{ownerMode === "mechanics" ? t("cityLabelShort") : t("locationFieldLabel")}</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchCityPlaceholder") : t("cityOrDistrictPlaceholder")} className="w-full text-sm text-fg-strong placeholder:text-fg-muted focus:outline-none bg-transparent" /></div>
                     {ownerMode === "mechanics" && (
-                      <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-gray-900">{t("serviceFieldLabel")}</label><input value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} placeholder={t("searchServicePlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                      <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-fg">{t("serviceFieldLabel")}</label><input value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} placeholder={t("searchServicePlaceholder")} className="w-full text-sm text-fg-strong placeholder:text-fg-muted focus:outline-none bg-transparent" /></div>
                     )}
                     {/* Filtrele artık sıralama çipleri arasında değil, Marka / Şehir / Hizmet alanlarıyla AYNI
                       seviyede — arama hapının son bölümü (kullanıcı isteği). Aktif filtre sayısı rozetle görünür. */}
-                  <button onClick={() => setShowFilterModal(true)} className="flex items-center gap-2 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
-                    <SlidersHorizontal size={15} className="text-gray-500" />
+                  <button onClick={() => setShowFilterModal(true)} className="flex items-center gap-2 px-5 text-sm font-semibold text-fg-strong hover:bg-background transition whitespace-nowrap">
+                    <SlidersHorizontal size={15} className="text-fg-secondary" />
                     {t("filterBtn")}
-                    {(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="w-5 h-5 bg-blue-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}
+                    {(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="w-5 h-5 bg-primary text-white rounded-full text-[10px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}
                   </button>
-                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
+                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-primary hover:bg-primary-hover transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
                   </div>
                 </>)}
-                {ownerTab !== "search" && (<button onClick={() => setOwnerTab("search")} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 text-sm mb-3 transition"><ChevronLeft size={16} /> {t("back")}</button>)}
-                {ownerTab === "market" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">🏷️ {t("navMarket")}</h1><p className="text-gray-500 text-sm">{t("myListingsSub")}</p></>)}
-                {ownerTab === "favorites" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">❤️ {t("favorites")}</h1><p className="text-gray-500 text-sm">{t("favoritesSubtitle")}</p></>)}
-                {ownerTab === "chats" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">💬 {t("chats")}</h1></>)}
-                {ownerTab === "appointments" && (<><h1 className="text-xl font-bold mb-1 text-gray-900">📋 {t("appointments")}</h1></>)}
+                {ownerTab !== "search" && (<button onClick={() => setOwnerTab("search")} className="flex items-center gap-1 text-fg-secondary hover:text-fg text-sm mb-3 transition"><ChevronLeft size={16} /> {t("back")}</button>)}
+                {ownerTab === "market" && (<><h1 className="text-xl font-bold mb-1 text-fg">🏷️ {t("navMarket")}</h1><p className="text-fg-secondary text-sm">{t("myListingsSub")}</p></>)}
+                {ownerTab === "favorites" && (<><h1 className="text-xl font-bold mb-1 text-fg">❤️ {t("favorites")}</h1><p className="text-fg-secondary text-sm">{t("favoritesSubtitle")}</p></>)}
+                {ownerTab === "chats" && (<><h1 className="text-xl font-bold mb-1 text-fg">💬 {t("chats")}</h1></>)}
+                {ownerTab === "appointments" && (<><h1 className="text-xl font-bold mb-1 text-fg">📋 {t("appointments")}</h1></>)}
               </div>
             </div>
             {ownerTab === "search" ? <BrowseHome /> : (
@@ -1913,11 +1913,11 @@ export function AppShell() {
                 {ownerTab === "market" && (
                   <div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-                      <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Tag size={17} className="text-blue-500" /> {t("myListingsHeading")} <span className="text-gray-300 font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
-                      <button onClick={startSellFlow} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
+                      <h2 className="text-lg font-bold text-fg flex items-center gap-2"><Tag size={17} className="text-info" /> {t("myListingsHeading")} <span className="text-fg-muted font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
+                      <button onClick={startSellFlow} className="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
                     </div>
                     {listings.filter(isMyListing).length === 0 ? (
-                      <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>
+                      <div className="bg-white border border-dashed border-border rounded-3xl text-center py-24"><Tag size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noOwnListings")}</p></div>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                     )}
@@ -1932,18 +1932,18 @@ export function AppShell() {
                     <div className="max-w-7xl mx-auto w-full px-5 md:px-8 py-6 md:py-8 space-y-8">
                       {favMechs.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Wrench size={17} className="text-blue-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                          <h2 className="text-lg font-bold text-fg mb-4 flex items-center gap-2"><Wrench size={17} className="text-info" /> {t("favoriteMechanicsLabel")} <span className="text-fg-muted font-normal text-sm">({favMechs.length})</span></h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}</div>
                         </div>
                       )}
                       {favListings.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Car size={17} className="text-blue-500" /> {t("favoriteListingsLabel")} <span className="text-gray-300 font-normal text-sm">({favListings.length})</span></h2>
+                          <h2 className="text-lg font-bold text-fg mb-4 flex items-center gap-2"><Car size={17} className="text-info" /> {t("favoriteListingsLabel")} <span className="text-fg-muted font-normal text-sm">({favListings.length})</span></h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{favListings.map(l => (<ListingCard key={l.id} l={l} />))}</div>
                         </div>
                       )}
                       {favMechs.length === 0 && favListings.length === 0 && (
-                        <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesYet")}</p><p className="text-gray-300 text-xs mt-1">{t("noFavoritesHint")}</p></div>
+                        <div className="bg-white border border-dashed border-border rounded-3xl text-center py-24"><Heart size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noFavoritesYet")}</p><p className="text-fg-muted text-xs mt-1">{t("noFavoritesHint")}</p></div>
                       )}
                     </div>
                   );
@@ -1962,7 +1962,7 @@ export function AppShell() {
             içerik sekmelerden biri değil — nerede olduğun belirsiz kalıyordu. Artık kendi ekranı:
             sade başlık, geri düğmesi, dar okunur kolon. Sekme çubuğu yok çünkü burada sekme yok. */}
         {screen === "ownerSettings" && (
-          <div className="w-full bg-gray-50 min-h-screen">
+          <div className="w-full bg-background min-h-screen">
 {/* ÜÇÜNCÜ VARYANT DA HİZALANDI. Bu sayfada ne PageTopBar vardı ne de sitenin geri kalanıyla
                 aynı yerleşim: logo bandın ORTASINDA küçük boyutta, geri oku ise solda yüzüyordu.
                 Tek geri tuşu kuralını ihlal etmiyordu (bir tane vardı) ama aynı işin üç farklı
@@ -1974,11 +1974,11 @@ export function AppShell() {
               
             </div>
             <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10">
-              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 text-gray-500"><Settings size={22} /></div>
+              <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center flex-shrink-0 text-fg-secondary"><Settings size={22} /></div>
                 <div className="min-w-0">
-                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">{ownerSettingsTab === "support" ? t("helpAndSupportTitle") : t("settingsLabel")}</h1>
-                  <p className="text-sm text-gray-400 mt-0.5 truncate">{ownerProfile.name || t("ownerFallbackName")}</p>
+                  <h1 className="text-xl md:text-2xl font-bold text-fg">{ownerSettingsTab === "support" ? t("helpAndSupportTitle") : t("settingsLabel")}</h1>
+                  <p className="text-sm text-fg-muted mt-0.5 truncate">{ownerProfile.name || t("ownerFallbackName")}</p>
                 </div>
               </div>
             </div>
@@ -1989,42 +1989,42 @@ export function AppShell() {
                       Davranıştan profil çıkarmak "profilleme"dir ve açık rıza ister; kapatınca
                       yalnızca durmuyor, birikmiş profil de siliniyor (elde tutmak da işlemedir).
                       Ne tuttuğumuz aşağıda tek tek gösteriliyor: anlaşılmayan bir rıza, rıza sayılmaz. */}
-                  <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
+                  <div className="bg-white border border-border rounded-2xl p-4 mb-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="pr-2 min-w-0">
-                        <h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Sparkles size={14} className="text-blue-500" /> {t("recConsentTitle")}</h4>
-                        <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t("recConsentDesc")}</p>
+                        <h4 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Sparkles size={14} className="text-info" /> {t("recConsentTitle")}</h4>
+                        <p className="text-[11px] text-fg-secondary mt-1 leading-relaxed">{t("recConsentDesc")}</p>
                       </div>
                       <button onClick={() => setRecsConsent(!recommendations.consent)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0">
-                        <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-blue-600" : "bg-gray-200"}`}>
+                        <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-primary" : "bg-border"}`}>
                           <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${recommendations.consent ? "left-6" : "left-1"}`} />
                         </div>
                       </button>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-gray-600 hover:text-blue-600 transition">{t("recProfileShowBtn")}</button>
+                    <div className="mt-3 pt-3 border-t border-surface-elevated">
+                      <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-fg-secondary hover:text-primary transition">{t("recProfileShowBtn")}</button>
                       {recsProfile && (
                         <div className="mt-2">
                           {recsProfile.signals.length === 0 ? (
-                            <p className="text-[11px] text-gray-400">{t("recProfileEmpty")}</p>
+                            <p className="text-[11px] text-fg-muted">{t("recProfileEmpty")}</p>
                           ) : (
                             <>
                               <div className="flex flex-wrap gap-1.5">
                                 {recsProfile.signals.slice(0, 24).map((sg) => (
-                                  <span key={`${sg.kind}:${sg.value}`} className="text-[10px] bg-gray-50 border border-gray-200 text-gray-600 px-2 py-1 rounded-full">
-                                    {sg.value} <span className="text-gray-400">· {sg.weight}</span>
+                                  <span key={`${sg.kind}:${sg.value}`} className="text-[10px] bg-background border border-border text-fg-secondary px-2 py-1 rounded-full">
+                                    {sg.value} <span className="text-fg-muted">· {sg.weight}</span>
                                   </span>
                                 ))}
                               </div>
-                              <button onClick={clearRecsProfile} className="mt-2 text-[11px] font-medium text-red-500 hover:text-red-600">{t("recProfileClearBtn")}</button>
+                              <button onClick={clearRecsProfile} className="mt-2 text-[11px] font-medium text-red-500 hover:text-error">{t("recProfileClearBtn")}</button>
                             </>
                           )}
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-blue-500" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-blue-500" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
+                  <div className="flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-4"><h4 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Bell size={14} className="text-info" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
+                  <div className="flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><MapPin size={14} className="text-info" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-fg-muted mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                   {(() => {
                     // notifyListingUpdates: "izlediğim ilan değişti" — "benim ilanıma teklif geldi"den (notifyOffers)
                     // farklı bir şey, bu yüzden ayrı bir anahtar (bkz. notifyFavoriteWatchers).
@@ -2035,46 +2035,46 @@ export function AppShell() {
                       if (!allNotifsOn && notifPermission !== "granted") requestNotifPermission();
                     };
                     return (
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
-                        <div className="flex items-center justify-between"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-blue-500" /> {t("notifBellTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? t("notifPermDeniedHint") : allNotifsOn ? t("allNotifTypesOnHint") : t("dontMissApptUpdatesHint")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
-                        <button onClick={() => setOwnerNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 hover:text-gray-700 transition"><span>{t("showNotifTypesBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
+                      <div className="bg-white border border-border rounded-2xl p-4 mb-4">
+                        <div className="flex items-center justify-between"><div className="pr-3"><h4 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Bell size={14} className="text-info" /> {t("notifBellTitle")}</h4><p className="text-[11px] text-fg-muted mt-0.5">{notifPermission === "denied" ? t("notifPermDeniedHint") : allNotifsOn ? t("allNotifTypesOnHint") : t("dontMissApptUpdatesHint")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
+                        <button onClick={() => setOwnerNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-surface-elevated text-xs text-fg-secondary hover:text-fg-strong transition"><span>{t("showNotifTypesBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
                         {ownerNotifDetailsOpen && (
                           <div className="mt-3 space-y-2.5">
                             {notifOpts.map(opt => (
-                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setOwnerSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
+                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-fg-secondary">{opt.label}</span><button onClick={() => setOwnerSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-primary" : "bg-border"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
                             ))}
                           </div>
                         )}
                       </div>
                     );
                   })()}
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><h4 className="font-semibold text-gray-800 text-sm">{t("siteLanguage")}</h4><LangSwitch /></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-blue-500" /> {t("messagingLanguageTitle")}</h4><p className="text-[11px] text-gray-400 mt-0.5">{t("ownerMessagingLangHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setOwnerLang(l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${ownerLang === l ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
-                  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-5"><h4 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className="text-blue-500" /> {t("appearanceDarkModeTitle")}</h4><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
-                  <button onClick={() => setOwnerAccountOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Lock size={15} className="text-gray-400" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${ownerAccountOpen ? "rotate-90" : ""}`} /></button>
+                  <div className="flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-4"><h4 className="font-semibold text-fg-strong text-sm">{t("siteLanguage")}</h4><LangSwitch /></div>
+                  <div className="flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Globe size={14} className="text-info" /> {t("messagingLanguageTitle")}</h4><p className="text-[11px] text-fg-muted mt-0.5">{t("ownerMessagingLangHint")}</p></div><div className="flex bg-surface-elevated rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => setOwnerLang(l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${ownerLang === l ? "bg-white text-primary shadow-sm" : "text-fg-muted"}`}>{l.toUpperCase()}</button>))}</div></div>
+                  <div className="flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-5"><h4 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Palette size={14} className="text-info" /> {t("appearanceDarkModeTitle")}</h4><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
+                  <button onClick={() => setOwnerAccountOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Lock size={15} className="text-fg-muted" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-fg-muted transition-transform ${ownerAccountOpen ? "rotate-90" : ""}`} /></button>
                   {ownerAccountOpen && (<>
                     {/* HESAP GÜVENLİĞİ — açık oturumlar ve e-posta değişimi.
                         Şifre değiştirmek eskiden diğer oturumları kapatmıyordu; e-posta ise
                         yalnızca token'la değiştirilebiliyordu (bkz. backend/routes/auth.js). */}
-                    <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-2">
-                      <p className="text-sm font-medium text-gray-700 mb-1">{t("accountSecurityTitle")}</p>
-                      <p className="text-[11px] text-gray-400 mb-3">{t("openSessionsLabel", { n: String(openSessionCount) })} · {t("logoutEverywhereDesc")}</p>
+                    <div className="bg-white border border-border rounded-2xl p-4 mb-2">
+                      <p className="text-sm font-medium text-fg-strong mb-1">{t("accountSecurityTitle")}</p>
+                      <p className="text-[11px] text-fg-muted mb-3">{t("openSessionsLabel", { n: String(openSessionCount) })} · {t("logoutEverywhereDesc")}</p>
                       <div className="flex flex-wrap gap-2">
-                        <button onClick={logoutEverywhere} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("logoutEverywhereBtn")}</button>
-                        <button onClick={() => setEmailChangeForm({ open: true, email: "", password: "", loading: false })} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("changeEmailBtn")}</button>
+                        <button onClick={logoutEverywhere} className="text-xs font-semibold text-fg-strong border border-border rounded-xl px-3 py-2 hover:bg-background transition">{t("logoutEverywhereBtn")}</button>
+                        <button onClick={() => setEmailChangeForm({ open: true, email: "", password: "", loading: false })} className="text-xs font-semibold text-fg-strong border border-border rounded-xl px-3 py-2 hover:bg-background transition">{t("changeEmailBtn")}</button>
                       </div>
                       <KnownDevices devices={knownDevices} loading={devicesLoading} onLoad={loadKnownDevices} t={t} lang={lang} />
                     </div>
-                    <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordTitle")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setOwnerSettingsTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-blue-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                    <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 mb-2 hover:bg-gray-100 transition"><span className="text-sm font-medium text-gray-700">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                    <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-2 hover:bg-surface-elevated transition"><span className="text-sm font-medium text-fg-strong flex items-center gap-2"><Lock size={14} className="text-fg-muted" /> {t("changePasswordTitle")}</span><ChevronRight size={15} className="text-fg-muted" /></button>
+                    <button onClick={() => setOwnerSettingsTab("support")} className="w-full flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-2 hover:bg-surface-elevated transition"><span className="text-sm font-medium text-fg-strong flex items-center gap-2"><LifeBuoy size={14} className="text-fg-muted" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-primary rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-fg-muted" /></button>
+                    <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-2 hover:bg-surface-elevated transition"><span className="text-sm font-medium text-fg-strong">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-fg-muted" /></button>
+                    <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-2 hover:bg-surface-elevated transition"><span className="text-sm font-medium text-fg-strong">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-fg-muted" /></button>
                   </>)}
                   <div className="mt-3" />
-                  <button onClick={() => setOwnerDangerZoneOpen(o => !o)} className="w-full flex items-center justify-between py-2 text-xs text-gray-400 hover:text-gray-600 transition"><span>{t("dangerZoneBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerDangerZoneOpen ? "rotate-90" : ""}`} /></button>
+                  <button onClick={() => setOwnerDangerZoneOpen(o => !o)} className="w-full flex items-center justify-between py-2 text-xs text-fg-muted hover:text-fg-secondary transition"><span>{t("dangerZoneBtn")}</span><ChevronRight size={13} className={`transition-transform ${ownerDangerZoneOpen ? "rotate-90" : ""}`} /></button>
                   {ownerDangerZoneOpen && (
                     <div className="border border-red-100 bg-red-50/50 rounded-2xl p-4 mt-1">
-                      <p className="text-xs text-gray-500 mb-3">{t("ownerDeleteAccountWarningNote")}</p>
+                      <p className="text-xs text-fg-secondary mb-3">{t("ownerDeleteAccountWarningNote")}</p>
                       <button onClick={() => { setShowDeleteAccountModal(true); setDeleteConfirmText(""); }} className="w-full text-red-500 border border-red-200 py-2.5 rounded-xl font-medium text-xs hover:bg-red-100 transition">{t("deleteMyAccountBtn")}</button>
                     </div>
                   )}
@@ -2085,7 +2085,7 @@ export function AppShell() {
           </div>
         )}
         {screen === "ownerProfilePage" && (
-          <div className="w-full bg-gray-50 min-h-screen">
+          <div className="w-full bg-background min-h-screen">
             {/* TEK ÜST ÇUBUK — burada TERS tutarsızlık vardı: bu sayfada hiç üst çubuk YOKTU,
                 yalnızca kapak bandının üstünde yüzen bir geri oku duruyordu. Yani kullanıcı bu
                 sayfada logoyu (ana sayfaya dönüş yolunu) hiç görmüyordu, oysa sitenin geri kalanı
@@ -2119,22 +2119,22 @@ export function AppShell() {
                   Üst çubuk bunların HEPSİNİN üstünde (z-[45]) — sayfa chrome'unun en üst katmanı o. */}
               <div className="absolute top-4 right-4 md:right-8 z-40 flex items-center gap-2">
                 <NotifBell />
-                <button onClick={() => setScreen("owner")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Search size={16} /></button>
-                <button onClick={() => { setScreen("ownerSettings"); setOwnerSettingsTab("settings"); }} title={t("settingsLabel")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
+                <button onClick={() => setScreen("owner")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-fg-strong hover:scale-105 transition"><Search size={16} /></button>
+                <button onClick={() => { setScreen("ownerSettings"); setOwnerSettingsTab("settings"); }} title={t("settingsLabel")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-fg-strong hover:scale-105 transition"><Settings size={16} /></button>
               </div>
               {/* Yüzen geri oku kaldırıldı — geri artık yukarıdaki tek üst çubukta. */}
             </div>
             <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10">
-              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6">
+              <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-blue-50 flex items-center justify-center text-2xl font-bold text-blue-600 overflow-hidden flex-shrink-0">
+                  <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-primary-tint flex items-center justify-center text-2xl font-bold text-primary overflow-hidden flex-shrink-0">
                     {ownerProfile.photo ? <img decoding="async" src={ownerProfile.photo} alt={ownerProfile.name || t("profilePhotoAlt")} className="w-full h-full object-cover" /> : initials(ownerProfile.name || "AS")}
                     <input ref={ownerPhotoRef} type="file" accept="image/*" onChange={ownerPhotoUpload} className="hidden" />
                     <button onClick={() => ownerPhotoRef.current?.click()} aria-label={t("changePhotoBtn")} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={18} /></button>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate">{ownerProfile.name || t("ownerFallbackName")}</h1>
-                    <p className="text-sm text-gray-500 mt-0.5 truncate">{ownerProfile.email}</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-fg truncate">{ownerProfile.name || t("ownerFallbackName")}</h1>
+                    <p className="text-sm text-fg-secondary mt-0.5 truncate">{ownerProfile.email}</p>
                   </div>
                   {/* Garaj özeti: araç sahibinin paneli açar açmaz görmesi gereken üç sayı.
                       Yaklaşan bakım varsa kırmızı — bu tarafın "bekleyen randevu" karşılığı. */}
@@ -2146,7 +2146,7 @@ export function AppShell() {
                     ].map((x, i) => (
                       <div key={i} className="text-center">
                         <p className={`text-xl font-bold leading-none ${x.c}`}>{x.n}</p>
-                        <p className="text-[11px] text-gray-400 mt-1">{x.l}</p>
+                        <p className="text-[11px] text-fg-muted mt-1">{x.l}</p>
                       </div>
                     ))}
                   </div>
@@ -2159,7 +2159,7 @@ export function AppShell() {
                 ALTINA saklanıyordu — sekmeler kısmen ya da tamamen görünmez oluyordu.
                 14 = üst çubuğun yüksekliği (h-14). İkisi artık üst üste binmiyor, alt alta
                 yapışıyor. */}
-            <div className="sticky top-14 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6">
+            <div className="sticky top-14 z-20 bg-white/90 backdrop-blur border-b border-surface-elevated mt-6">
               <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
                 {/* SEKME SIRASI — işin akışına göre: önce kendin ve garajın, sonra günlük iş
                     (randevu → mesaj → teklif), sonra ikincil iş kolu (ilanlar) ve kaydedilenler. */}
@@ -2179,9 +2179,9 @@ export function AppShell() {
                   const active = ownerProfileTab === tb.key
                     || (tb.key === "info" && ["applications", "myReviews"].includes(ownerProfileTab));
                   return (
-                    <button key={tb.key} onClick={() => { setOwnerProfileTab(tb.key); if (tb.key === "vehicles") setSelectedVehicleId(null); }} className={`relative px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-blue-600 border-blue-500" : "text-gray-500 border-transparent hover:text-blue-600 hover:border-blue-200"}`}>
+                    <button key={tb.key} onClick={() => { setOwnerProfileTab(tb.key); if (tb.key === "vehicles") setSelectedVehicleId(null); }} className={`relative px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-primary border-info" : "text-fg-secondary border-transparent hover:text-primary hover:border-blue-200"}`}>
                       <Icon size={14} /> {tb.label}
-                      {tb.badge > 0 && <span className="ml-0.5 min-w-[16px] h-4 px-1 bg-blue-600 rounded-full text-white flex items-center justify-center text-[9px] font-bold">{tb.badge}</span>}
+                      {tb.badge > 0 && <span className="ml-0.5 min-w-[16px] h-4 px-1 bg-primary rounded-full text-white flex items-center justify-center text-[9px] font-bold">{tb.badge}</span>}
                     </button>
                   );
                 })}
@@ -2195,38 +2195,38 @@ export function AppShell() {
                    üstteki sekme çubuğunda; burada yalnızca gerçekten ikincil olanlar kaldı. */
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
                   <div className="min-w-0">
-                    <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
-                      <h3 className="font-bold text-gray-900 text-base mb-4">{t("myInfo")}</h3>
+                    <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                      <h3 className="font-bold text-fg text-base mb-4">{t("myInfo")}</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("fullNameShortPlaceholder")}</span><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder={t("fullNameShortPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
-                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("emailPlaceholder")}</span><input value={ownerProfile.email} readOnly onClick={() => setEmailChangeForm({ open: true, email: ownerProfile.email || "", password: "", loading: false })} title={t("changeEmailDesc")} placeholder={t("emailPlaceholder")} type="email" className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
-                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample2")}</span><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} onBlur={(e) => normalizePhoneField(e.target.value, (v) => updateMyOwnerField("phone", v))} placeholder={t("phonePlaceholderExample2")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
-                        <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholderShort")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder={t("addressPlaceholderShort")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></div></label>
+                        <label className="block"><span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("fullNameShortPlaceholder")}</span><input value={ownerProfile.name} onChange={(e) => updateMyOwnerField("name", e.target.value)} placeholder={t("fullNameShortPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("emailPlaceholder")}</span><input value={ownerProfile.email} readOnly onClick={() => setEmailChangeForm({ open: true, email: ownerProfile.email || "", password: "", loading: false })} title={t("changeEmailDesc")} placeholder={t("emailPlaceholder")} type="email" className="w-full px-3.5 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("phonePlaceholderExample2")}</span><input value={ownerProfile.phone} onChange={(e) => updateMyOwnerField("phone", e.target.value)} onBlur={(e) => normalizePhoneField(e.target.value, (v) => updateMyOwnerField("phone", v))} placeholder={t("phonePlaceholderExample2")} className="w-full px-3.5 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                        <label className="block"><span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("addressPlaceholderShort")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-muted" size={15} /><input value={ownerProfile.address} onChange={(e) => updateMyOwnerField("address", e.target.value)} placeholder={t("addressPlaceholderShort")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></div></label>
                       </div>
-                      <p className="text-[11px] text-gray-400 mt-3">{t("autofillJobAppsNote")}</p>
+                      <p className="text-[11px] text-fg-muted mt-3">{t("autofillJobAppsNote")}</p>
                       <div className="flex flex-wrap items-center gap-3 mt-5">
-                        <button onClick={() => { if (ownerProfile.email && !isValidEmail(ownerProfile.email)) { setToast({ type: "info", text: t("invalidEmailAddrToast") }); return; } if (ownerProfile.phone) { const pc = checkPhone(ownerProfile.phone); if (!pc.valid) { setToast({ type: "info", text: `⚠️ ${pc.message}` }); return; } updateMyOwnerField("phone", pc.normalized); } setToast({ type: "info", text: t("profileUpdatedToast") }); }} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
-                        <span className="text-[11px] text-gray-400">{t("userNumberLabel", { id: String(MY_OWNER_ID) })}</span>
+                        <button onClick={() => { if (ownerProfile.email && !isValidEmail(ownerProfile.email)) { setToast({ type: "info", text: t("invalidEmailAddrToast") }); return; } if (ownerProfile.phone) { const pc = checkPhone(ownerProfile.phone); if (!pc.valid) { setToast({ type: "info", text: `⚠️ ${pc.message}` }); return; } updateMyOwnerField("phone", pc.normalized); } setToast({ type: "info", text: t("profileUpdatedToast") }); }} className="bg-primary text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-primary-hover transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
+                        <span className="text-[11px] text-fg-muted">{t("userNumberLabel", { id: String(MY_OWNER_ID) })}</span>
                       </div>
                     </div>
                   </div>
                   <aside className="lg:sticky lg:top-20 space-y-4">
-                    <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5">
-                      <h3 className="font-bold text-gray-900 text-sm mb-3">{t("quickLinksTitle")}</h3>
+                    <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5">
+                      <h3 className="font-bold text-fg text-sm mb-3">{t("quickLinksTitle")}</h3>
                       <div className="space-y-1.5">
                         {[
                           { key: "applications", icon: Briefcase, label: t("myApplicationsLabel"), n: myApplicationRefs.filter(r => r.role === "owner").length },
                           { key: "myReviews", icon: Star, label: t("reviewsIMadeLabel"), n: myReviews.length },
                           { key: "__settings", icon: Settings, label: t("settingsLabel"), n: 0 },
                         ].map(x => { const Icon = x.icon; return (
-                          <button key={x.key} onClick={() => { if (x.key === "__settings") { setScreen("ownerSettings"); setOwnerSettingsTab("settings"); } else setOwnerProfileTab(x.key); }} className="w-full flex items-center justify-between rounded-2xl px-3.5 py-3 hover:bg-gray-50 transition">
-                            <span className="text-sm font-medium text-gray-700 flex items-center gap-2.5"><Icon size={15} className="text-gray-400" /> {x.label}{x.n > 0 && <span className="text-xs text-gray-400">({x.n})</span>}</span>
-                            <ChevronRight size={15} className="text-gray-300" />
+                          <button key={x.key} onClick={() => { if (x.key === "__settings") { setScreen("ownerSettings"); setOwnerSettingsTab("settings"); } else setOwnerProfileTab(x.key); }} className="w-full flex items-center justify-between rounded-2xl px-3.5 py-3 hover:bg-background transition">
+                            <span className="text-sm font-medium text-fg-strong flex items-center gap-2.5"><Icon size={15} className="text-fg-muted" /> {x.label}{x.n > 0 && <span className="text-xs text-fg-muted">({x.n})</span>}</span>
+                            <ChevronRight size={15} className="text-fg-muted" />
                           </button>
                         ); })}
-                        <button onClick={logoutUser} className="w-full flex items-center justify-between rounded-2xl px-3.5 py-3 hover:bg-red-50 transition group">
-                          <span className="text-sm font-medium text-gray-700 group-hover:text-red-600 flex items-center gap-2.5"><LogOut size={15} className="text-gray-400 group-hover:text-red-500" /> {t("logout")}</span>
-                          <ChevronRight size={15} className="text-gray-300" />
+                        <button onClick={logoutUser} className="w-full flex items-center justify-between rounded-2xl px-3.5 py-3 hover:bg-error-tint transition group">
+                          <span className="text-sm font-medium text-fg-strong group-hover:text-error flex items-center gap-2.5"><LogOut size={15} className="text-fg-muted group-hover:text-red-500" /> {t("logout")}</span>
+                          <ChevronRight size={15} className="text-fg-muted" />
                         </button>
                       </div>
                     </div>
@@ -2235,41 +2235,41 @@ export function AppShell() {
               )}
               {ownerProfileTab === "applications" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-blue-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
-                  <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Briefcase size={16} className="text-blue-500" /> {t("jobApplicationsHeading")}</h2>
+                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-primary mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
+                  <h2 className="font-bold text-fg-strong mb-4 flex items-center gap-2"><Briefcase size={16} className="text-info" /> {t("jobApplicationsHeading")}</h2>
                   <div className="space-y-3">
                     {myApplicationRefs.filter(r => r.role === "owner").map(r => (
-                      <button key={r.id} onClick={() => setSelectedJobId(r.job.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition">
+                      <button key={r.id} onClick={() => setSelectedJobId(r.job.id)} className="w-full text-left bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition">
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-800 text-sm">{r.job.title}</h4>
-                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 ${r.applicant?.status === "rejected" ? "bg-red-50 text-red-500" : r.job.status === "closed" ? "bg-gray-100 text-gray-400" : "bg-gray-100 text-gray-700"}`}>{r.applicant?.status === "rejected" ? t("jobAppRejectedStatus") : r.job.status === "closed" ? t("jobListingClosedStatus") : t("jobAppUnderReviewStatus")}</span>
+                          <h4 className="font-semibold text-fg-strong text-sm">{r.job.title}</h4>
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0 ${r.applicant?.status === "rejected" ? "bg-error-tint text-red-500" : r.job.status === "closed" ? "bg-surface-elevated text-fg-muted" : "bg-surface-elevated text-fg-strong"}`}>{r.applicant?.status === "rejected" ? t("jobAppRejectedStatus") : r.job.status === "closed" ? t("jobListingClosedStatus") : t("jobAppUnderReviewStatus")}</span>
                         </div>
-                        <p className="text-xs text-gray-400 mb-1">{r.job.mechanicName}{r.job.location ? ` · ${r.job.location}` : ""}</p>
-                        <p className="text-[11px] text-gray-300">{t("appliedOnLabel", { date: r.date })}</p>
+                        <p className="text-xs text-fg-muted mb-1">{r.job.mechanicName}{r.job.location ? ` · ${r.job.location}` : ""}</p>
+                        <p className="text-[11px] text-fg-muted">{t("appliedOnLabel", { date: r.date })}</p>
                       </button>
                     ))}
-                    {myApplicationRefs.filter(r => r.role === "owner").length === 0 && <div className="text-center py-16"><Briefcase size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noJobApplicationsNote")}</p></div>}
+                    {myApplicationRefs.filter(r => r.role === "owner").length === 0 && <div className="text-center py-16"><Briefcase size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noJobApplicationsNote")}</p></div>}
                   </div>
                 </>
               )}
               {ownerProfileTab === "myReviews" && (
                 <>
-                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-blue-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
-                  <h2 className="font-bold text-gray-800 mb-1 flex items-center gap-2"><Star size={16} className="text-gray-900" /> {t("reviewsIMadeLabel")}</h2>
-                  <p className="text-xs text-gray-400 mb-4">{t("reviewsCannotEditNote")}</p>
+                  <button onClick={() => setOwnerProfileTab("info")} className="flex items-center gap-1 text-primary mb-4 text-sm"><ChevronLeft size={16} /> {t("backToInfoBtn")}</button>
+                  <h2 className="font-bold text-fg-strong mb-1 flex items-center gap-2"><Star size={16} className="text-fg" /> {t("reviewsIMadeLabel")}</h2>
+                  <p className="text-xs text-fg-muted mb-4">{t("reviewsCannotEditNote")}</p>
                   <div className="space-y-3">
                     {myReviews.map(r => (
-                      <div key={r.id} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
+                      <div key={r.id} className="bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm">
                         <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-800 text-sm">{r.mechanicImg} {r.mechanicName}</h4>
-                          <button onClick={() => setConfirmDialog({ title: t("deleteReviewConfirmTitle"), body: t("deleteReviewConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => deleteMyReview(r.mechanicId, r.id) })} aria-label={t("deleteReviewAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
+                          <h4 className="font-semibold text-fg-strong text-sm">{r.mechanicImg} {r.mechanicName}</h4>
+                          <button onClick={() => setConfirmDialog({ title: t("deleteReviewConfirmTitle"), body: t("deleteReviewConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => deleteMyReview(r.mechanicId, r.id) })} aria-label={t("deleteReviewAria")} className="text-red-400 hover:text-error flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button>
                         </div>
-                        <div className="flex items-center gap-0.5 mb-1.5">{[1, 2, 3, 4, 5].map(n => (<Star key={n} size={12} className={n <= r.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} />))}</div>
-                        <p className="text-xs text-gray-500">{r.comment}</p>
-                        <p className="text-[11px] text-gray-300 mt-1.5">{r.date}</p>
+                        <div className="flex items-center gap-0.5 mb-1.5">{[1, 2, 3, 4, 5].map(n => (<Star key={n} size={12} className={n <= r.rating ? "text-fg fill-fg" : "text-fg-muted fill-fg-muted"} />))}</div>
+                        <p className="text-xs text-fg-secondary">{r.comment}</p>
+                        <p className="text-[11px] text-fg-muted mt-1.5">{r.date}</p>
                       </div>
                     ))}
-                    {myReviews.length === 0 && <div className="text-center py-16"><Star size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noReviewsWrittenNote")}</p></div>}
+                    {myReviews.length === 0 && <div className="text-center py-16"><Star size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noReviewsWrittenNote")}</p></div>}
                   </div>
                 </>
               )}
@@ -2278,11 +2278,11 @@ export function AppShell() {
                    sekmeye geçerken geri bağlantısı göstermek kafa karıştırıcı olurdu. */
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Tag size={17} className="text-blue-500" /> {t("myListingsHeading")} <span className="text-gray-300 font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
-                    <button onClick={startSellFlow} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
+                    <h2 className="text-lg font-bold text-fg flex items-center gap-2"><Tag size={17} className="text-info" /> {t("myListingsHeading")} <span className="text-fg-muted font-normal text-sm">({listings.filter(isMyListing).length})</span></h2>
+                    <button onClick={startSellFlow} className="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
                   </div>
                   {listings.filter(isMyListing).length === 0 ? (
-                    <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>
+                    <div className="bg-white border border-dashed border-border rounded-3xl text-center py-24"><Tag size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noOwnListings")}</p></div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">{listings.filter(isMyListing).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   )}
@@ -2298,20 +2298,20 @@ export function AppShell() {
                   if (favMechs.length === 0) return null;
                   return (
                     <div className="mb-8">
-                      <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Wrench size={16} className="text-blue-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                      <h2 className="font-bold text-fg-strong mb-4 flex items-center gap-2"><Wrench size={16} className="text-info" /> {t("favoriteMechanicsLabel")} <span className="text-fg-muted font-normal text-sm">({favMechs.length})</span></h2>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}
                       </div>
                     </div>
                   );
                 })()}
-                <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Heart size={16} className="text-blue-500" /> {t("favoriteListingsLabel")}</h2>
+                <h2 className="font-bold text-fg-strong mb-4 flex items-center gap-2"><Heart size={16} className="text-info" /> {t("favoriteListingsLabel")}</h2>
                   {listings.filter(l => favoriteIds.includes(l.id)).length === 0 ? (
-                    <div className="text-center py-16"><Heart size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noFavoritesOwnerNote")}</p><p className="text-gray-300 text-xs mt-1">{t("favoritesHintNote")}</p></div>
+                    <div className="text-center py-16"><Heart size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noFavoritesOwnerNote")}</p><p className="text-fg-muted text-xs mt-1">{t("favoritesHintNote")}</p></div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{listings.filter(l => favoriteIds.includes(l.id)).map(l => (<ListingCard key={l.id} l={l} />))}</div>
                   )}
-                  <h2 className="font-bold text-gray-800 mb-3 mt-6 flex items-center gap-2"><Bell size={16} className="text-blue-500" /> {t("savedSearchesLabel")}</h2>
+                  <h2 className="font-bold text-fg-strong mb-3 mt-6 flex items-center gap-2"><Bell size={16} className="text-info" /> {t("savedSearchesLabel")}</h2>
                   <SavedSearchList />
                 </>
               )}
@@ -2325,68 +2325,68 @@ export function AppShell() {
                       garajın en tepesinde duruyordu ve kullanıcı ne işe yaradığını anlamıyordu. */}
                   {!showForeignVinLookup ? (
                     <button onClick={() => setShowForeignVinLookup(true)}
-                      className="mb-5 inline-flex items-center gap-2 text-[12px] font-medium text-gray-500 hover:text-blue-600 transition">
+                      className="mb-5 inline-flex items-center gap-2 text-[12px] font-medium text-fg-secondary hover:text-primary transition">
                       <Search size={13} /> {t("lookupForeignVinCta")}
                     </button>
                   ) : (
                     <div className="mb-5">
                       <VinLookupPanel />
-                      <button onClick={() => setShowForeignVinLookup(false)} className="mt-2 text-[11px] text-gray-400 hover:text-gray-600">{t("cancel")}</button>
+                      <button onClick={() => setShowForeignVinLookup(false)} className="mt-2 text-[11px] text-fg-muted hover:text-fg-secondary">{t("cancel")}</button>
                     </div>
                   )}
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Car size={17} className="text-blue-500" /> {t("myGarageTitle")} <span className="text-gray-300 font-normal text-sm">({vehicles.length})</span></h2>
+                    <h2 className="text-lg font-bold text-fg flex items-center gap-2"><Car size={17} className="text-info" /> {t("myGarageTitle")} <span className="text-fg-muted font-normal text-sm">({vehicles.length})</span></h2>
                   </div>
-                  <button onClick={toggleAddVehicle} className="w-full sm:w-auto sm:px-6 mb-5 border-2 border-dashed border-blue-200 rounded-2xl py-3 flex items-center justify-center gap-2 text-blue-600 text-sm font-medium hover:bg-blue-50 transition"><Plus size={16} /> {t("addVehicle")}</button>
-                  {showAddVehicle && (<div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4 space-y-2">
+                  <button onClick={toggleAddVehicle} className="w-full sm:w-auto sm:px-6 mb-5 border-2 border-dashed border-blue-200 rounded-2xl py-3 flex items-center justify-center gap-2 text-primary text-sm font-medium hover:bg-primary-tint transition"><Plus size={16} /> {t("addVehicle")}</button>
+                  {showAddVehicle && (<div className="bg-white border border-border rounded-2xl p-4 mb-4 space-y-2">
                     <BrandSelect value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b, model: "" })} />
                     <ModelSelect brand={newVehicle.brand} value={newVehicle.model} onChange={(m) => setNewVehicle({ ...newVehicle, model: m })} />
-                    <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                    <select value={newVehicle.country} onChange={(e) => setNewVehicle({ ...newVehicle, country: e.target.value, city: "" })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="tr">🇹🇷 {t("countryTurkeyLabel")}</option><option value="de">🇩🇪 {t("countryGermanyLabel")}</option></select>
+                    <div className="flex gap-2"><input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                    <select value={newVehicle.country} onChange={(e) => setNewVehicle({ ...newVehicle, country: e.target.value, city: "" })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm"><option value="tr">🇹🇷 {t("countryTurkeyLabel")}</option><option value="de">🇩🇪 {t("countryGermanyLabel")}</option></select>
                     {newVehicle.country === "de" ? (
-                      <select value={newVehicle.city} onChange={(e) => setNewVehicle({ ...newVehicle, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="">{t("selectCityForTireDatePlaceholder")}</option>{DE_CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                      <select value={newVehicle.city} onChange={(e) => setNewVehicle({ ...newVehicle, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm"><option value="">{t("selectCityForTireDatePlaceholder")}</option>{DE_CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
                     ) : (
-                      <input value={newVehicle.city} onChange={(e) => setNewVehicle({ ...newVehicle, city: e.target.value })} placeholder={t("cityLabelShort")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                      <input value={newVehicle.city} onChange={(e) => setNewVehicle({ ...newVehicle, city: e.target.value })} placeholder={t("cityLabelShort")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                     )}
-                    <select value={newVehicle.tireType} onChange={(e) => setNewVehicle({ ...newVehicle, tireType: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="mevsimlik">{t("seasonalTireOption")}</option><option value="allseason">{t("allSeasonTireOption")}</option></select>
-                    <div><label className="text-[11px] text-gray-400">{t("lastInspectionLabel")}</label><input type="date" value={newVehicle.lastInspection} onChange={(e) => setNewVehicle({ ...newVehicle, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                    <div><label className="text-[11px] text-gray-400">{t("insuranceEndLabel")}</label><input type="date" value={newVehicle.insuranceEnd} onChange={(e) => setNewVehicle({ ...newVehicle, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                    <select value={newVehicle.tireType} onChange={(e) => setNewVehicle({ ...newVehicle, tireType: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm"><option value="mevsimlik">{t("seasonalTireOption")}</option><option value="allseason">{t("allSeasonTireOption")}</option></select>
+                    <div><label className="text-[11px] text-fg-muted">{t("lastInspectionLabel")}</label><input type="date" value={newVehicle.lastInspection} onChange={(e) => setNewVehicle({ ...newVehicle, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                    <div><label className="text-[11px] text-fg-muted">{t("insuranceEndLabel")}</label><input type="date" value={newVehicle.insuranceEnd} onChange={(e) => setNewVehicle({ ...newVehicle, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
                     {/* ŞASİ (VIN) NUMARASI — isteğe bağlı. Girilirse aracın servis geçmişi sahibe
                         değil ARACA bağlanır: araç satıldığında geçmiş kaybolmaz, yeni sahip aynı
                         numarayla görebilir (bkz. backend/routes/vehicleHistory.js). */}
                     <div>
-                      <label className="text-[11px] text-gray-400 flex items-center gap-1.5">
-                        {t("vinLabel")} <span className="text-gray-300">({t("vinOptional")})</span>
+                      <label className="text-[11px] text-fg-muted flex items-center gap-1.5">
+                        {t("vinLabel")} <span className="text-fg-muted">({t("vinOptional")})</span>
                         <InfoTip text={t("vinTip")} label={t("infoTipAria")} />
                       </label>
-                      <input value={newVehicle.vin} onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide" />
+                      <input value={newVehicle.vin} onChange={(e) => setNewVehicle({ ...newVehicle, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm font-mono tracking-wide" />
                       {String(newVehicle.vin || "").trim() && (
                         <label className="flex items-start gap-2 mt-2 cursor-pointer">
                           <input type="checkbox" checked={newVehicle.vinShared} onChange={(e) => setNewVehicle({ ...newVehicle, vinShared: e.target.checked })} className="mt-0.5 w-4 h-4 accent-blue-600" />
-                          <span className="text-[11px] text-gray-500 leading-relaxed">{t("vinShareLabel")}{!newVehicle.vinShared && <span className="block text-gray-400 mt-0.5">{t("vinShareOffNote")}</span>}</span>
+                          <span className="text-[11px] text-fg-secondary leading-relaxed">{t("vinShareLabel")}{!newVehicle.vinShared && <span className="block text-fg-muted mt-0.5">{t("vinShareOffNote")}</span>}</span>
                         </label>
                       )}
                     </div>
-                    <button onClick={addVehicle} className="w-full bg-blue-600 text-white py-3 rounded-2xl text-sm font-semibold hover:bg-blue-700 transition">{t("add")}</button>
+                    <button onClick={addVehicle} className="w-full bg-primary text-white py-3 rounded-2xl text-sm font-semibold hover:bg-primary-hover transition">{t("add")}</button>
                   </div>)}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-blue-600" /></div><div className="flex-1"><h3 className="font-semibold text-gray-800 text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-gray-400">{v.plate}{vListing && <span className="ml-2 text-blue-500">· {t("forSaleTag")}{vOfferCount > 0 ? ` · ${t("offerCountSuffixShort", { n: String(vOfferCount) })}` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-gray-300" /></button>); })}{vehicles.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><Car size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noVehiclesAddedNote")}</p></div>}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{vehicles.map(v => { const vReminders = computeReminders(v); const vListing = listings.find(l => l.id === v.listingId); const vOfferCount = vListing ? vListing.offers.filter(o => o.status !== "replaced").length : 0; return (<button key={v.id} onClick={() => setSelectedVehicleId(v.id)} className="w-full text-left bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition flex items-center gap-3"><div className="w-12 h-12 bg-primary-tint rounded-xl flex items-center justify-center flex-shrink-0"><Car size={22} className="text-primary" /></div><div className="flex-1"><h3 className="font-semibold text-fg-strong text-sm">{v.brand} {v.model} ({v.year})</h3><p className="text-xs text-fg-muted">{v.plate}{vListing && <span className="ml-2 text-info">· {t("forSaleTag")}{vOfferCount > 0 ? ` · ${t("offerCountSuffixShort", { n: String(vOfferCount) })}` : ""}</span>}</p></div>{ownerSettings.smartReminders && vReminders.filter(r=>r.urgent).length > 0 && <span className="w-5 h-5 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center flex-shrink-0">{vReminders.filter(r=>r.urgent).length}</span>}<ChevronRight size={16} className="text-fg-muted" /></button>); })}{vehicles.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-border rounded-3xl text-center py-24"><Car size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noVehiclesAddedNote")}</p></div>}
                   {listings.filter(l => isMyListing(l) && !vehicles.some(v => v.listingId === l.id)).length > 0 && (
                     <>
-                      <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-1 flex items-center gap-2"><Tag size={15} className="text-gray-400" /> {t("soldOutsideRegisteredVehicleHeading")}</h3>
+                      <h3 className="font-semibold text-fg-strong text-sm mt-6 mb-1 flex items-center gap-2"><Tag size={15} className="text-fg-muted" /> {t("soldOutsideRegisteredVehicleHeading")}</h3>
                       {listings.filter(l => isMyListing(l) && !vehicles.some(v => v.listingId === l.id)).map(l => {
                         const offerCount = l.offers.filter(o => o.status !== "replaced").length;
                         return (
-                          <div key={l.id} className="bg-white border border-gray-200 rounded-2xl p-4">
+                          <div key={l.id} className="bg-white border border-border rounded-2xl p-4">
                             <button onClick={() => setSelectedListingId(l.id)} className="w-full text-left flex items-center gap-3 mb-3">
-                              <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 100)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover" /> : l.photo}</div>
-                              <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{l.brand} {l.model} ({l.year})</p><p className="text-xs text-gray-400">{l.price} · {t("listingNumberLabel", { id: String(l.id) })}</p></div>
-                              <span className={`text-[10px] font-bold text-white px-2 py-1 rounded-full flex-shrink-0 ${l.adminRemoved ? "bg-gray-900" : listingStatusMeta(l.status, t).color}`}>{l.adminRemoved ? t("removedStatusLabel") : listingStatusMeta(l.status, t).label}</span>
+                              <div className="w-12 h-12 rounded-xl bg-surface-elevated flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 100)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover" /> : l.photo}</div>
+                              <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-fg-strong truncate">{l.brand} {l.model} ({l.year})</p><p className="text-xs text-fg-muted">{l.price} · {t("listingNumberLabel", { id: String(l.id) })}</p></div>
+                              <span className={`text-[10px] font-bold text-white px-2 py-1 rounded-full flex-shrink-0 ${l.adminRemoved ? "bg-secondary" : listingStatusMeta(l.status, t).color}`}>{l.adminRemoved ? t("removedStatusLabel") : listingStatusMeta(l.status, t).label}</span>
                             </button>
-                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
-                              <span className="text-[11px] text-gray-400">{offerCount > 0 ? t("offerCountSuffixShort", { n: String(offerCount) }) : t("noOffersYetShort")}</span>
+                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-surface-elevated">
+                              <span className="text-[11px] text-fg-muted">{offerCount > 0 ? t("offerCountSuffixShort", { n: String(offerCount) }) : t("noOffersYetShort")}</span>
                               <div className="flex items-center gap-3">
-                                <button onClick={() => openSellForm({ brand: l.brand, model: l.model, year: l.year, km: l.km, price: l.price, description: l.description, photo: l.photo, fuelType: l.fuelType, transmission: l.transmission, power: l.power, firstReg: l.firstReg, color: l.color, city: l.city || "", _vehicleId: null, _editingId: l.id })} className="text-xs font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1"><Pencil size={12} /> {t("editBtn")}</button>
-                                <button onClick={() => setSelectedListingId(l.id)} className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">{t("viewOffersBtn")} <ChevronRight size={12} /></button>
+                                <button onClick={() => openSellForm({ brand: l.brand, model: l.model, year: l.year, km: l.km, price: l.price, description: l.description, photo: l.photo, fuelType: l.fuelType, transmission: l.transmission, power: l.power, firstReg: l.firstReg, color: l.color, city: l.city || "", _vehicleId: null, _editingId: l.id })} className="text-xs font-medium text-fg-secondary hover:text-fg flex items-center gap-1"><Pencil size={12} /> {t("editBtn")}</button>
+                                <button onClick={() => setSelectedListingId(l.id)} className="text-xs font-medium text-primary hover:text-primary-hover flex items-center gap-1">{t("viewOffersBtn")} <ChevronRight size={12} /></button>
                               </div>
                             </div>
                           </div>
@@ -2399,8 +2399,8 @@ export function AppShell() {
               )}
               {ownerProfileTab === "vehicles" && selectedVehicle && (() => { const linkedListing = listings.find(l => l.id === selectedVehicle.listingId); return (
                 <>
-                  <button onClick={() => setSelectedVehicleId(null)} className="flex items-center gap-1 text-blue-600 mb-4 text-sm"><ChevronLeft size={16} /> {t("backToVehiclesBtn")}</button>
-                  <div className="bg-blue-50 rounded-2xl p-4 mb-5 flex items-center gap-3"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center"><Car size={26} className="text-blue-600" /></div><div className="flex-1"><h2 className="font-bold text-gray-800">{selectedVehicle.brand} {selectedVehicle.model}</h2><p className="text-xs text-gray-500">{selectedVehicle.year} · {selectedVehicle.plate}</p></div><button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} aria-label={t("editVehicleAria")} className="text-blue-600 p-2 -m-2"><Pencil size={16} /></button><button onClick={() => setConfirmDialog({ title: t("deleteVehicleConfirmTitle"), body: t("deleteVehicleConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => removeVehicle(selectedVehicle.id) })} aria-label={t("deleteVehicleAria")} className="text-red-400 hover:text-red-600 p-2 -m-2"><Trash2 size={16} /></button></div>
+                  <button onClick={() => setSelectedVehicleId(null)} className="flex items-center gap-1 text-primary mb-4 text-sm"><ChevronLeft size={16} /> {t("backToVehiclesBtn")}</button>
+                  <div className="bg-primary-tint rounded-2xl p-4 mb-5 flex items-center gap-3"><div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center"><Car size={26} className="text-primary" /></div><div className="flex-1"><h2 className="font-bold text-fg-strong">{selectedVehicle.brand} {selectedVehicle.model}</h2><p className="text-xs text-fg-secondary">{selectedVehicle.year} · {selectedVehicle.plate}</p></div><button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} aria-label={t("editVehicleAria")} className="text-primary p-2 -m-2"><Pencil size={16} /></button><button onClick={() => setConfirmDialog({ title: t("deleteVehicleConfirmTitle"), body: t("deleteVehicleConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => removeVehicle(selectedVehicle.id) })} aria-label={t("deleteVehicleAria")} className="text-red-400 hover:text-error p-2 -m-2"><Trash2 size={16} /></button></div>
                   {/* ARACIN DOĞRULANMIŞ GEÇMİŞİ + PAYLAŞIM ANAHTARI.
                       Kayıtlar şasi numarasına bağlı: araç satıldığında yeni sahip aynı numarayla
                       görebilir. Paylaşımı kapatmak yalnızca BU sahibin dönemindeki kayıtları
@@ -2412,13 +2412,13 @@ export function AppShell() {
                       sorgulanıyor ve tüm paylaşılan geçmiş görünüyor. */}
                   {String(selectedVehicle.vin || "").trim() && (() => {
                     return (
-                      <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5">
-                        <h3 className="font-semibold text-gray-800 text-sm mb-1 flex items-center gap-2">{t("vehicleHistoryVerifiedTitle")}<InfoTip text={t("vinTip")} label={t("infoTipAria")} /></h3>
-                        <p className="text-[11px] text-gray-400 mb-3 font-mono tracking-wide">{selectedVehicle.vin}</p>
+                      <div className="bg-white border border-border rounded-2xl p-4 mb-5">
+                        <h3 className="font-semibold text-fg-strong text-sm mb-1 flex items-center gap-2">{t("vehicleHistoryVerifiedTitle")}<InfoTip text={t("vinTip")} label={t("infoTipAria")} /></h3>
+                        <p className="text-[11px] text-fg-muted mb-3 font-mono tracking-wide">{selectedVehicle.vin}</p>
                         <VehicleOwnHistory vin={selectedVehicle.vin} />
                         <label className="flex items-start gap-2 mt-3 cursor-pointer">
                           <input type="checkbox" checked={selectedVehicle.vinShared !== false} onChange={(e) => setVehicleHistoryShared(selectedVehicle, e.target.checked)} className="mt-0.5 w-4 h-4 accent-blue-600" />
-                          <span className="text-[11px] text-gray-500 leading-relaxed">{t("vinShareLabel")}{selectedVehicle.vinShared === false && <span className="block text-gray-400 mt-0.5">{t("vinShareOffNote")}</span>}</span>
+                          <span className="text-[11px] text-fg-secondary leading-relaxed">{t("vinShareLabel")}{selectedVehicle.vinShared === false && <span className="block text-fg-muted mt-0.5">{t("vinShareOffNote")}</span>}</span>
                         </label>
                       </div>
                     );
@@ -2426,105 +2426,105 @@ export function AppShell() {
                   {/* Şasi numarası YOKSA bölüm eskiden hiç görünmüyordu; kullanıcı böyle bir
                       özelliğin varlığından habersiz kalıyordu. Artık ne kaçırdığı söyleniyor. */}
                   {!String(selectedVehicle.vin || "").trim() && (
-                    <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-4 mb-5">
-                      <h3 className="font-semibold text-gray-800 text-sm mb-1 flex items-center gap-2">{t("vehicleHistoryVerifiedTitle")}<InfoTip text={t("vinTip")} label={t("infoTipAria")} /></h3>
-                      <p className="text-[12px] text-gray-500 leading-relaxed">{t("vehicleNoVinHistoryHint")}</p>
-                      <button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} className="mt-3 text-[12px] font-semibold text-blue-600 hover:text-blue-700">{t("vehicleAddVinCta")}</button>
+                    <div className="bg-white border border-dashed border-border rounded-2xl p-4 mb-5">
+                      <h3 className="font-semibold text-fg-strong text-sm mb-1 flex items-center gap-2">{t("vehicleHistoryVerifiedTitle")}<InfoTip text={t("vinTip")} label={t("infoTipAria")} /></h3>
+                      <p className="text-[12px] text-fg-secondary leading-relaxed">{t("vehicleNoVinHistoryHint")}</p>
+                      <button onClick={() => { setEditVehicleForm({ ...selectedVehicle }); setShowEditVehicle(true); }} className="mt-3 text-[12px] font-semibold text-primary hover:text-primary-hover">{t("vehicleAddVinCta")}</button>
                     </div>
                   )}
                   {showEditVehicle && editVehicleForm && (
-                    <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-5 space-y-2">
-                      <h3 className="font-semibold text-gray-800 text-sm mb-1">{t("editVehicleInfoTitle")}</h3>
+                    <div className="bg-white border border-border rounded-2xl p-4 mb-5 space-y-2">
+                      <h3 className="font-semibold text-fg-strong text-sm mb-1">{t("editVehicleInfoTitle")}</h3>
                       <div className="flex gap-2 items-start"><BrandSelect className="w-1/2" value={editVehicleForm.brand} onChange={(b) => setEditVehicleForm({ ...editVehicleForm, brand: b, model: "" })} /><ModelSelect className="w-1/2" brand={editVehicleForm.brand} value={editVehicleForm.model} onChange={(m) => setEditVehicleForm({ ...editVehicleForm, model: m })} /></div>
-                      <div className="flex gap-2"><input value={editVehicleForm.year} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={editVehicleForm.plate} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                      <select value={editVehicleForm.country} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, country: e.target.value, city: "" })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="tr">🇹🇷 {t("countryTurkeyLabel")}</option><option value="de">🇩🇪 {t("countryGermanyLabel")}</option></select>
+                      <div className="flex gap-2"><input value={editVehicleForm.year} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input value={editVehicleForm.plate} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                      <select value={editVehicleForm.country} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, country: e.target.value, city: "" })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm"><option value="tr">🇹🇷 {t("countryTurkeyLabel")}</option><option value="de">🇩🇪 {t("countryGermanyLabel")}</option></select>
                       {editVehicleForm.country === "de" ? (
-                        <select value={editVehicleForm.city || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="">{t("selectCityForTireDatePlaceholder")}</option>{DE_CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                        <select value={editVehicleForm.city || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, city: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm"><option value="">{t("selectCityForTireDatePlaceholder")}</option>{DE_CITIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
                       ) : (
-                        <input value={editVehicleForm.city || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, city: e.target.value })} placeholder={t("cityLabelShort")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                        <input value={editVehicleForm.city || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, city: e.target.value })} placeholder={t("cityLabelShort")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                       )}
-                      <select value={editVehicleForm.tireType} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, tireType: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm"><option value="mevsimlik">{t("seasonalTireOption")}</option><option value="allseason">{t("allSeasonTireOption")}</option></select>
-                      <div><label className="text-[11px] text-gray-400">{t("lastInspectionLabel")}</label><input type="date" value={editVehicleForm.lastInspection || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                      <div><label className="text-[11px] text-gray-400">{t("lastMaintenanceLabel")}</label><input type="date" value={editVehicleForm.lastMaintenance || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastMaintenance: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                      <div><label className="text-[11px] text-gray-400">{t("insuranceEndLabel")}</label><input type="date" value={editVehicleForm.insuranceEnd || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                      <select value={editVehicleForm.tireType} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, tireType: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm"><option value="mevsimlik">{t("seasonalTireOption")}</option><option value="allseason">{t("allSeasonTireOption")}</option></select>
+                      <div><label className="text-[11px] text-fg-muted">{t("lastInspectionLabel")}</label><input type="date" value={editVehicleForm.lastInspection || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastInspection: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                      <div><label className="text-[11px] text-fg-muted">{t("lastMaintenanceLabel")}</label><input type="date" value={editVehicleForm.lastMaintenance || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, lastMaintenance: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                      <div><label className="text-[11px] text-fg-muted">{t("insuranceEndLabel")}</label><input type="date" value={editVehicleForm.insuranceEnd || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, insuranceEnd: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
                       {/* ŞASİ (VIN) NUMARASI — sonradan da eklenebilir. Girildiği andan itibaren
                           Fixperto üzerinden yapılan işler araca bağlanır. */}
                       <div>
-                        <label className="text-[11px] text-gray-400 flex items-center gap-1.5">{t("vinLabel")} <span className="text-gray-300">({t("vinOptional")})</span><InfoTip text={t("vinTip")} label={t("infoTipAria")} /></label>
-                        <input value={editVehicleForm.vin || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide" />
+                        <label className="text-[11px] text-fg-muted flex items-center gap-1.5">{t("vinLabel")} <span className="text-fg-muted">({t("vinOptional")})</span><InfoTip text={t("vinTip")} label={t("infoTipAria")} /></label>
+                        <input value={editVehicleForm.vin || ""} onChange={(e) => setEditVehicleForm({ ...editVehicleForm, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm font-mono tracking-wide" />
                       </div>
-                      <div className="flex gap-2 pt-1"><button onClick={() => setShowEditVehicle(false)} className="flex-1 border border-gray-200 text-gray-500 py-2 rounded-xl text-sm">{t("cancel")}</button><button onClick={() => { if (editVehicleForm.lastInspection && !isValidDateStr(editVehicleForm.lastInspection)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastInspectionLabel") }) }); return; } if (editVehicleForm.lastMaintenance && !isValidDateStr(editVehicleForm.lastMaintenance)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastMaintenanceLabel") }) }); return; } if (editVehicleForm.insuranceEnd && !isValidDateStr(editVehicleForm.insuranceEnd)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("insuranceEndLabel") }) }); return; } updateVehicleFields(selectedVehicle.id, editVehicleForm); setShowEditVehicle(false); setToast({ type: "info", text: t("vehicleInfoUpdatedToast") }); }} className="flex-1 bg-blue-600 text-white py-2 rounded-xl text-sm font-medium">{t("save")}</button></div>
+                      <div className="flex gap-2 pt-1"><button onClick={() => setShowEditVehicle(false)} className="flex-1 border border-border text-fg-secondary py-2 rounded-xl text-sm">{t("cancel")}</button><button onClick={() => { if (editVehicleForm.lastInspection && !isValidDateStr(editVehicleForm.lastInspection)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastInspectionLabel") }) }); return; } if (editVehicleForm.lastMaintenance && !isValidDateStr(editVehicleForm.lastMaintenance)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("lastMaintenanceLabel") }) }); return; } if (editVehicleForm.insuranceEnd && !isValidDateStr(editVehicleForm.insuranceEnd)) { setToast({ type: "info", text: t("invalidDateFieldToast", { field: t("insuranceEndLabel") }) }); return; } updateVehicleFields(selectedVehicle.id, editVehicleForm); setShowEditVehicle(false); setToast({ type: "info", text: t("vehicleInfoUpdatedToast") }); }} className="flex-1 bg-primary text-white py-2 rounded-xl text-sm font-medium">{t("save")}</button></div>
                     </div>
                   )}
-                  {linkedListing ? (<div className="mb-5 bg-white border border-gray-100 rounded-2xl p-4"><div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Tag size={15} className="text-blue-500" /> {t("listingStatus")}</h3><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(linkedListing.status, t).color}`}>{listingStatusMeta(linkedListing.status, t).label}</span></div><div className="flex gap-2 mb-3">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(linkedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${linkedListing.status === st ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div><p className="text-[11px] text-gray-400 mb-3">{(() => { const oc = linkedListing.offers.filter(o => o.status !== "replaced").length; return oc > 0 ? t("offersCameInSuffix", { n: String(oc) }) : t("noOffersYetOnListing"); })()}</p><div className="flex gap-2"><button onClick={() => openSellForm({ ...linkedListing, _vehicleId: selectedVehicle.id, _editingId: linkedListing.id })} className="flex-1 bg-gray-50 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-100 transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListing")}</button><button onClick={() => setSelectedListingId(linkedListing.id)} className="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl text-sm font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2"><MessageCircle size={14} /> {t("viewOffersBtn")}</button></div></div>) : (<button onClick={() => openSellForm({ brand: selectedVehicle.brand, model: selectedVehicle.model, year: selectedVehicle.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: selectedVehicle.id, _editingId: null })} className="w-full mb-5 bg-white border border-blue-200 text-blue-600 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-50 transition flex items-center justify-center gap-2"><Tag size={15} /> {t("sellThisCar")}</button>)}
+                  {linkedListing ? (<div className="mb-5 bg-white border border-surface-elevated rounded-2xl p-4"><div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Tag size={15} className="text-info" /> {t("listingStatus")}</h3><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(linkedListing.status, t).color}`}>{listingStatusMeta(linkedListing.status, t).label}</span></div><div className="flex gap-2 mb-3">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(linkedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${linkedListing.status === st ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{listingStatusMeta(st, t).label}</button>))}</div><p className="text-[11px] text-fg-muted mb-3">{(() => { const oc = linkedListing.offers.filter(o => o.status !== "replaced").length; return oc > 0 ? t("offersCameInSuffix", { n: String(oc) }) : t("noOffersYetOnListing"); })()}</p><div className="flex gap-2"><button onClick={() => openSellForm({ ...linkedListing, _vehicleId: selectedVehicle.id, _editingId: linkedListing.id })} className="flex-1 bg-background text-fg-strong py-2 rounded-xl text-sm font-medium hover:bg-surface-elevated transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListing")}</button><button onClick={() => setSelectedListingId(linkedListing.id)} className="flex-1 bg-primary-tint text-primary py-2 rounded-xl text-sm font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2"><MessageCircle size={14} /> {t("viewOffersBtn")}</button></div></div>) : (<button onClick={() => openSellForm({ brand: selectedVehicle.brand, model: selectedVehicle.model, year: selectedVehicle.year, km: "", price: "", description: "", photo: "🚗", fuelType: "Benzin", transmission: "Manuel", power: "", firstReg: "", color: "", _vehicleId: selectedVehicle.id, _editingId: null })} className="w-full mb-5 bg-white border border-blue-200 text-primary py-2.5 rounded-xl text-sm font-medium hover:bg-primary-tint transition flex items-center justify-center gap-2"><Tag size={15} /> {t("sellThisCar")}</button>)}
                   {ownerSettings.smartReminders && (() => {
                     const vReminders = computeReminders(selectedVehicle);
                     const disabledKinds = Object.entries(selectedVehicle.reminderOverrides || {}).filter(([, ov]: [string, any]) => ov && ov.enabled === false).map(([k]) => k);
                     return (
                     <>
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={16} className="text-blue-500" /> {t("smartReminders")}</h3>
-                        {selectedVehicle.city && <span className="text-[10px] text-gray-400">📍 {selectedVehicle.city}</span>}
+                        <h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Bell size={16} className="text-info" /> {t("smartReminders")}</h3>
+                        {selectedVehicle.city && <span className="text-[10px] text-fg-muted">📍 {selectedVehicle.city}</span>}
                       </div>
-                      <p className="text-[11px] text-gray-400 -mt-2 mb-3">{t("smartRemindersAutoNote")}</p>
+                      <p className="text-[11px] text-fg-muted -mt-2 mb-3">{t("smartRemindersAutoNote")}</p>
                       <div className="space-y-2 mb-3">
                         {vReminders.map((r) => (
-                          <div key={r.kind} className={`rounded-xl p-3 ${r.urgent ? "bg-red-50" : "bg-gray-100"}`}>
+                          <div key={r.kind} className={`rounded-xl p-3 ${r.urgent ? "bg-error-tint" : "bg-surface-elevated"}`}>
                             <div className="flex items-start gap-2">
                               <span className="text-lg flex-shrink-0">{r.icon}</span>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 flex-wrap">
-                                  <p className={`text-xs font-semibold ${r.urgent ? "text-red-600" : "text-gray-700"}`}>{r.title}</p>
-                                  {r.customized && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{t("customSettingBadge")}</span>}
+                                  <p className={`text-xs font-semibold ${r.urgent ? "text-error" : "text-fg-strong"}`}>{r.title}</p>
+                                  {r.customized && <span className="text-[9px] bg-blue-100 text-primary px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">{t("customSettingBadge")}</span>}
                                 </div>
-                                <p className="text-[11px] text-gray-500 mt-0.5">{r.detail}</p>
+                                <p className="text-[11px] text-fg-secondary mt-0.5">{r.detail}</p>
                               </div>
-                              <button onClick={() => { if (editingReminderKind === r.kind) { setEditingReminderKind(null); } else { setEditingReminderKind(r.kind); setReminderEditForm({ enabled: true, customDate: r.dueDate ? r.dueDate.toISOString().slice(0, 10) : "", leadDays: String(r.leadDays ?? "") }); } }} aria-label={t("editReminderAria")} className="text-gray-400 hover:text-gray-600 flex-shrink-0 p-2 -m-1.5"><Pencil size={13} /></button>
+                              <button onClick={() => { if (editingReminderKind === r.kind) { setEditingReminderKind(null); } else { setEditingReminderKind(r.kind); setReminderEditForm({ enabled: true, customDate: r.dueDate ? r.dueDate.toISOString().slice(0, 10) : "", leadDays: String(r.leadDays ?? "") }); } }} aria-label={t("editReminderAria")} className="text-fg-muted hover:text-fg-secondary flex-shrink-0 p-2 -m-1.5"><Pencil size={13} /></button>
                             </div>
                             {editingReminderKind === r.kind && (
                               <div className="mt-3 pt-3 border-t border-black/5 space-y-2">
-                                <div><label className="text-[10px] text-gray-400">{r.isUserCreated ? t("reminderDateLabel") : t("reminderDateAutoHint")}</label><input type="date" min={TODAY_STR} value={reminderEditForm.customDate} onChange={(e) => setReminderEditForm(f => ({ ...f, customDate: e.target.value }))} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs mt-0.5" /></div>
-                                <div><label className="text-[10px] text-gray-400">{t("leadDaysQuestionLabel")}</label><input type="number" min="0" value={reminderEditForm.leadDays} onChange={(e) => setReminderEditForm(f => ({ ...f, leadDays: e.target.value }))} placeholder={String(r.leadDays)} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-xs mt-0.5" /></div>
+                                <div><label className="text-[10px] text-fg-muted">{r.isUserCreated ? t("reminderDateLabel") : t("reminderDateAutoHint")}</label><input type="date" min={TODAY_STR} value={reminderEditForm.customDate} onChange={(e) => setReminderEditForm(f => ({ ...f, customDate: e.target.value }))} className="w-full px-2.5 py-1.5 rounded-lg border border-border text-xs mt-0.5" /></div>
+                                <div><label className="text-[10px] text-fg-muted">{t("leadDaysQuestionLabel")}</label><input type="number" min="0" value={reminderEditForm.leadDays} onChange={(e) => setReminderEditForm(f => ({ ...f, leadDays: e.target.value }))} placeholder={String(r.leadDays)} className="w-full px-2.5 py-1.5 rounded-lg border border-border text-xs mt-0.5" /></div>
                                 {r.isUserCreated ? (
                                   <div className="flex gap-2 pt-1">
-                                    <button onClick={() => updateCustomReminder(selectedVehicle.id, r.customId, { date: reminderEditForm.customDate || r.dueDate.toISOString().slice(0, 10), leadDays: reminderEditForm.leadDays || "7" })} className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
+                                    <button onClick={() => updateCustomReminder(selectedVehicle.id, r.customId, { date: reminderEditForm.customDate || r.dueDate.toISOString().slice(0, 10), leadDays: reminderEditForm.leadDays || "7" })} className="flex-1 bg-primary text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
                                     <button onClick={() => removeCustomReminder(selectedVehicle.id, r.customId)} className="flex-1 border border-red-200 text-red-500 py-1.5 rounded-lg text-[11px] font-medium">{t("deleteBtnShort")}</button>
                                   </div>
                                 ) : (
                                   <>
                                     <div className="flex gap-2 pt-1">
-                                      <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: true, customDate: reminderEditForm.customDate || null, leadDays: reminderEditForm.leadDays === "" ? null : Number(reminderEditForm.leadDays) })} className="flex-1 bg-blue-600 text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
-                                      <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: false })} className="flex-1 border border-gray-200 text-gray-500 py-1.5 rounded-lg text-[11px] font-medium">{t("turnOffThisBtn")}</button>
+                                      <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: true, customDate: reminderEditForm.customDate || null, leadDays: reminderEditForm.leadDays === "" ? null : Number(reminderEditForm.leadDays) })} className="flex-1 bg-primary text-white py-1.5 rounded-lg text-[11px] font-medium">{t("save")}</button>
+                                      <button onClick={() => saveReminderOverride(selectedVehicle.id, r.kind, { enabled: false })} className="flex-1 border border-border text-fg-secondary py-1.5 rounded-lg text-[11px] font-medium">{t("turnOffThisBtn")}</button>
                                     </div>
-                                    {r.customized && <button onClick={() => resetReminderOverride(selectedVehicle.id, r.kind)} className="w-full text-blue-600 text-[11px] font-medium py-1">{t("resetToDefaultDateBtn")}</button>}
+                                    {r.customized && <button onClick={() => resetReminderOverride(selectedVehicle.id, r.kind)} className="w-full text-primary text-[11px] font-medium py-1">{t("resetToDefaultDateBtn")}</button>}
                                   </>
                                 )}
                               </div>
                             )}
                           </div>
                         ))}
-                        {vReminders.length === 0 && <p className="text-center text-gray-400 text-xs py-3">{t("noActiveRemindersNote")}</p>}
+                        {vReminders.length === 0 && <p className="text-center text-fg-muted text-xs py-3">{t("noActiveRemindersNote")}</p>}
                       </div>
                       {disabledKinds.length > 0 && (
-                        <div className="mb-5 bg-white border border-gray-200 rounded-xl p-3">
-                          <p className="text-[10px] text-gray-400 mb-2">{t("disabledRemindersLabel")}</p>
+                        <div className="mb-5 bg-white border border-border rounded-xl p-3">
+                          <p className="text-[10px] text-fg-muted mb-2">{t("disabledRemindersLabel")}</p>
                           <div className="flex flex-wrap gap-1.5">
-                            {disabledKinds.map(k => (<button key={k} onClick={() => resetReminderOverride(selectedVehicle.id, k)} className="text-[10px] bg-white border border-gray-200 text-gray-500 px-2 py-1 rounded-full hover:border-blue-300 hover:text-blue-600 transition">{REMINDER_KIND_LABELS[k] || k} · {t("reopenSuffixBtn")}</button>))}
+                            {disabledKinds.map(k => (<button key={k} onClick={() => resetReminderOverride(selectedVehicle.id, k)} className="text-[10px] bg-white border border-border text-fg-secondary px-2 py-1 rounded-full hover:border-blue-300 hover:text-primary transition">{REMINDER_KIND_LABELS[k] || k} · {t("reopenSuffixBtn")}</button>))}
                           </div>
                         </div>
                       )}
                       {!showAddReminderForm ? (
-                        <button onClick={() => { setShowAddReminderForm(true); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="w-full border-2 border-dashed border-blue-200 rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-blue-600 text-xs font-medium hover:bg-blue-50 transition mb-5"><Plus size={14} /> {t("addNewReminderBtn")}</button>
+                        <button onClick={() => { setShowAddReminderForm(true); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="w-full border-2 border-dashed border-blue-200 rounded-xl py-2.5 flex items-center justify-center gap-1.5 text-primary text-xs font-medium hover:bg-primary-tint transition mb-5"><Plus size={14} /> {t("addNewReminderBtn")}</button>
                       ) : (
-                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-5 space-y-2">
-                          <input autoFocus value={newReminderForm.title} onChange={(e) => setNewReminderForm(f => ({ ...f, title: e.target.value }))} placeholder={t("reminderTitlePlaceholderExample")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" />
+                        <div className="bg-primary-tint border border-blue-100 rounded-xl p-3 mb-5 space-y-2">
+                          <input autoFocus value={newReminderForm.title} onChange={(e) => setNewReminderForm(f => ({ ...f, title: e.target.value }))} placeholder={t("reminderTitlePlaceholderExample")} className="w-full px-2.5 py-2 rounded-lg border border-border text-xs bg-white" />
                           <div className="flex gap-2">
-                            <div className="flex-1"><label className="text-[9px] text-gray-400 block mb-0.5">{t("dateLabel")}</label><input type="date" min={TODAY_STR} value={newReminderForm.date} onChange={(e) => setNewReminderForm(f => ({ ...f, date: e.target.value }))} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
-                            <div className="w-28"><label className="text-[9px] text-gray-400 block mb-0.5">{t("leadDaysQuestionLabel")}</label><input type="number" min="0" value={newReminderForm.leadDays} onChange={(e) => setNewReminderForm(f => ({ ...f, leadDays: e.target.value }))} placeholder={t("daysFieldPlaceholder")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
+                            <div className="flex-1"><label className="text-[9px] text-fg-muted block mb-0.5">{t("dateLabel")}</label><input type="date" min={TODAY_STR} value={newReminderForm.date} onChange={(e) => setNewReminderForm(f => ({ ...f, date: e.target.value }))} className="w-full px-2.5 py-2 rounded-lg border border-border text-xs bg-white" /></div>
+                            <div className="w-28"><label className="text-[9px] text-fg-muted block mb-0.5">{t("leadDaysQuestionLabel")}</label><input type="number" min="0" value={newReminderForm.leadDays} onChange={(e) => setNewReminderForm(f => ({ ...f, leadDays: e.target.value }))} placeholder={t("daysFieldPlaceholder")} className="w-full px-2.5 py-2 rounded-lg border border-border text-xs bg-white" /></div>
                           </div>
                           <div className="flex gap-2">
-                            <button onClick={() => { setShowAddReminderForm(false); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("cancel")}</button>
-                            <button disabled={!newReminderForm.title.trim() || !newReminderForm.date} onClick={() => submitNewReminder(selectedVehicle.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium transition ${newReminderForm.title.trim() && newReminderForm.date ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("add")}</button>
+                            <button onClick={() => { setShowAddReminderForm(false); setNewReminderForm({ title: "", date: "", leadDays: "7" }); }} className="flex-1 border border-border text-fg-secondary text-[11px] py-1.5 rounded-lg font-medium">{t("cancel")}</button>
+                            <button disabled={!newReminderForm.title.trim() || !newReminderForm.date} onClick={() => submitNewReminder(selectedVehicle.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium transition ${newReminderForm.title.trim() && newReminderForm.date ? "bg-primary text-white hover:bg-primary-hover" : "bg-border text-fg-muted cursor-not-allowed"}`}>{t("add")}</button>
                           </div>
                         </div>
                       )}
@@ -2533,60 +2533,60 @@ export function AppShell() {
                   })()}
                   <div className="w-full flex items-center justify-between mb-3">
                     <button onClick={() => setShowMaintenanceHistory(o => !o)} className="flex-1 flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><History size={16} /> {t("maintenanceHistory")} <span className="text-gray-300 font-normal">({selectedVehicle.history.length})</span></h3>
-                      <ChevronRight size={16} className={`text-gray-300 transition-transform ${showMaintenanceHistory ? "rotate-90" : ""}`} />
+                      <h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><History size={16} /> {t("maintenanceHistory")} <span className="text-fg-muted font-normal">({selectedVehicle.history.length})</span></h3>
+                      <ChevronRight size={16} className={`text-fg-muted transition-transform ${showMaintenanceHistory ? "rotate-90" : ""}`} />
                     </button>
-                    {selectedVehicle.history.length > 0 && (<button onClick={() => downloadMaintenanceReport(selectedVehicle)} title={t("downloadReportAria")} className="ml-2 w-7 h-7 flex-shrink-0 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition"><FileText size={13} /></button>)}
+                    {selectedVehicle.history.length > 0 && (<button onClick={() => downloadMaintenanceReport(selectedVehicle)} title={t("downloadReportAria")} className="ml-2 w-7 h-7 flex-shrink-0 rounded-full bg-surface-elevated hover:bg-border flex items-center justify-center text-fg-secondary transition"><FileText size={13} /></button>)}
                   </div>
                   {showMaintenanceHistory && (selectedVehicle.history.length === 0 ? (
-                    <p className="text-center text-gray-400 text-xs py-6">{t("noMaintenanceRecordNote")}</p>
+                    <p className="text-center text-fg-muted text-xs py-6">{t("noMaintenanceRecordNote")}</p>
                   ) : (
                     <>
-                      <div className={selectedVehicle.history.length > 4 ? "max-h-64 overflow-y-auto pr-1 rounded-xl ring-1 ring-gray-100 p-1" : ""}>
+                      <div className={selectedVehicle.history.length > 4 ? "max-h-64 overflow-y-auto pr-1 rounded-xl ring-1 ring-surface-elevated p-1" : ""}>
                         <div className="space-y-2">{selectedVehicle.history.map((h, i) => (
-                          <div key={i} className="border border-gray-100 rounded-xl p-3">
-                            <div className="flex justify-between items-start gap-2 mb-1"><h4 className="font-semibold text-gray-800 text-sm">{h.type}</h4><span className="text-xs font-bold text-blue-600 whitespace-nowrap">{h.price}</span></div>
-                            <div className="flex items-center justify-between gap-2 text-[11px] text-gray-400"><span className="truncate">{h.mechanic}</span><span className="flex items-center gap-1 flex-shrink-0"><Calendar size={10} />{h.date}</span></div>
+                          <div key={i} className="border border-surface-elevated rounded-xl p-3">
+                            <div className="flex justify-between items-start gap-2 mb-1"><h4 className="font-semibold text-fg-strong text-sm">{h.type}</h4><span className="text-xs font-bold text-primary whitespace-nowrap">{h.price}</span></div>
+                            <div className="flex items-center justify-between gap-2 text-[11px] text-fg-muted"><span className="truncate">{h.mechanic}</span><span className="flex items-center gap-1 flex-shrink-0"><Calendar size={10} />{h.date}</span></div>
                           </div>
                         ))}</div>
                       </div>
-                      {selectedVehicle.history.length > 4 && <p className="text-center text-[10px] text-gray-300 mt-1.5 flex items-center justify-center gap-1"><ChevronRight size={10} className="rotate-90" /> {t("scrollForMoreHint")}</p>}
+                      {selectedVehicle.history.length > 4 && <p className="text-center text-[10px] text-fg-muted mt-1.5 flex items-center justify-center gap-1"><ChevronRight size={10} className="rotate-90" /> {t("scrollForMoreHint")}</p>}
                     </>
                   ))}
                 </>
               ); })()}
               {ownerProfileTab === "appts" && <OwnerAppointmentsView />}
-              {ownerProfileTab === "chats" && (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition flex items-center gap-3"><div className="text-2xl bg-blue-50 rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-gray-800 text-sm">{c.mechanicName}</h4><p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-gray-300" /></button>); })}{conversations.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24"><MessageCircle size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noChatsShort")}</p></div>}</div>)}
+              {ownerProfileTab === "chats" && (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition flex items-center gap-3"><div className="text-2xl bg-primary-tint rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-fg-strong text-sm">{c.mechanicName}</h4><p className="text-xs text-fg-muted truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-fg-muted" /></button>); })}{conversations.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-border rounded-3xl text-center py-24"><MessageCircle size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noChatsShort")}</p></div>}</div>)}
               {ownerProfileTab === "offers" && (<>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersMade")}</h3>
+                <h3 className="font-semibold text-fg-strong text-sm mb-2">{t("offersMade")}</h3>
                 <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
-                  <div key={o.id} className="bg-white border border-gray-200 rounded-xl p-3">
+                  <div key={o.id} className="bg-white border border-border rounded-xl p-3">
                     <div className="flex justify-between items-center gap-3">
                       <button onClick={() => setSelectedListingId(o.listing.id)} className="text-left min-w-0 flex-1">
-                        <p className="text-xs font-medium text-gray-700 truncate">{o.listing.brand} {o.listing.model}</p>
-                        <p className="text-[10px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("pendingSeenStatus") : t("pendingStatus")}</p>
+                        <p className="text-xs font-medium text-fg-strong truncate">{o.listing.brand} {o.listing.model}</p>
+                        <p className="text-[10px] text-fg-muted">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("pendingSeenStatus") : t("pendingStatus")}</p>
                       </button>
-                      <span className="font-bold text-blue-600 text-sm flex-shrink-0">{o.amount}{o.currency || "₺"}</span>
+                      <span className="font-bold text-primary text-sm flex-shrink-0">{o.amount}{o.currency || "₺"}</span>
                     </div>
                     {/* TEKRAR TEKLİF: satıcı teklifi henüz görmediyse tutar değiştirilebilir,
                         reddettiyse yeni teklif verilebilir. Kural sunucuda da var (bkz.
                         backend/routes/listingInteractions.js) — buradaki düğme sadece kısayol. */}
                     {canReoffer(o) && (
-                      <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-gray-100">
-                        <span className="text-[10px] text-gray-400">{o.status === "rejected" ? t("reofferRejectedHint") : t("reofferUnseenHint")}</span>
-                        <button onClick={() => startReoffer(o.listing, o)} className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
+                      <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-surface-elevated">
+                        <span className="text-[10px] text-fg-muted">{o.status === "rejected" ? t("reofferRejectedHint") : t("reofferUnseenHint")}</span>
+                        <button onClick={() => startReoffer(o.listing, o)} className="text-[11px] font-semibold text-primary hover:text-primary-hover flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
                       </div>
                     )}
                   </div>
                 ))}
-                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">{t("noOffersMadeNote")}</p>}</div>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("offersReceived")}</h3>
+                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-fg-muted text-sm py-4">{t("noOffersMadeNote")}</p>}</div>
+                <h3 className="font-semibold text-fg-strong text-sm mb-2">{t("offersReceived")}</h3>
                 <div className="space-y-2">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
-                  <div key={o.id} className="bg-white border border-gray-100 rounded-xl p-3">
-                    <div className="flex justify-between items-center mb-2"><div><p className="text-xs font-medium text-gray-700">{o.from}</p><p className="text-[10px] text-gray-400">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-blue-600 text-sm">{o.amount}{o.currency || "₺"}</span></div>
-                    {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>) : (<p className="text-[11px] text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>)}
+                  <div key={o.id} className="bg-white border border-surface-elevated rounded-xl p-3">
+                    <div className="flex justify-between items-center mb-2"><div><p className="text-xs font-medium text-fg-strong">{o.from}</p><p className="text-[10px] text-fg-muted">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-primary text-sm">{o.amount}{o.currency || "₺"}</span></div>
+                    {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-border text-fg-secondary text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>) : (<p className="text-[11px] text-fg-muted">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>)}
                   </div>
-                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-4">{t("noOffersReceivedNote")}</p>}</div>
+                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-fg-muted text-sm py-4">{t("noOffersReceivedNote")}</p>}</div>
               </>)}
             </div>
           </div>
@@ -2614,8 +2614,8 @@ export function AppShell() {
             <div className="relative">
               <button aria-label={t("a11yBack")} onClick={() => setSelectedListingId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-black/30 backdrop-blur rounded-full flex items-center justify-center text-white"><ChevronLeft size={18} /></button>
               <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-                <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} onShare={(channel, refCode) => recordShare("listing", selectedListing.id, channel, refCode)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition" />
-                <button aria-label={t("a11yToggleFavorite")} onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-blue-600 text-blue-600" : "text-gray-500"} /></button>
+                <ShareButton title={`${selectedListing.brand} ${selectedListing.model}`} text={`${selectedListing.brand} ${selectedListing.model} — ${selectedListing.price}`} path={`?listing=${selectedListing.id}`} onShare={(channel, refCode) => recordShare("listing", selectedListing.id, channel, refCode)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-fg-secondary hover:bg-white transition" />
+                <button aria-label={t("a11yToggleFavorite")} onClick={() => toggleFavorite(selectedListing.id)} className="w-9 h-9 bg-white/90 rounded-full flex items-center justify-center"><Heart size={16} className={favoriteIds.includes(selectedListing.id) ? "fill-primary text-primary" : "text-fg-secondary"} /></button>
               </div>
               {(() => {
                 const galleryPhotos = (selectedListing.photos && selectedListing.photos.length > 0) ? [selectedListing.photo, ...selectedListing.photos] : [selectedListing.photo];
@@ -2641,9 +2641,9 @@ export function AppShell() {
                       <span className={`absolute bottom-3 right-4 text-white text-xs font-bold px-3 py-1.5 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span>
                     </button>
                     {galleryPhotos.length > 1 && (
-                      <div className="flex gap-1.5 px-4 py-2 bg-gray-50 overflow-x-auto">
+                      <div className="flex gap-1.5 px-4 py-2 bg-background overflow-x-auto">
                         {galleryPhotos.map((p, i) => (
-                          <button key={i} onClick={() => { setSelectedListingPhotoIndex(i); setListingLightboxOpen(true); }} className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 flex items-center justify-center text-xl bg-white ${i === activeIdx ? "border-blue-600" : "border-transparent opacity-70"}`}>
+                          <button key={i} onClick={() => { setSelectedListingPhotoIndex(i); setListingLightboxOpen(true); }} className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border-2 flex items-center justify-center text-xl bg-white ${i === activeIdx ? "border-primary" : "border-transparent opacity-70"}`}>
                             {isImgUrl(p) ? <img src={imgThumb(p, 160)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("photoNumberAlt", { n: String(i + 1) })} className="w-full h-full object-cover" /> : p}
                           </button>
                         ))}
@@ -2666,38 +2666,38 @@ export function AppShell() {
               {/* HIZLI GÖRÜNTÜLEME → TAM SAYFA geçişi: bu modal aracın özetini gösteriyor; tüm
                   teknik künye, donanım grupları, araç geçmişi ve fiyat değerlendirmesi tam sayfada.
                   Bağlantı başlığın hemen üstünde, kullanıcı içeriği okumaya başlamadan görsün diye. */}
-              <button onClick={() => openListingPage(selectedListing.id)} className="mb-3 w-full flex items-center justify-center gap-1.5 bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-xs hover:bg-gray-800 transition">
+              <button onClick={() => openListingPage(selectedListing.id)} className="mb-3 w-full flex items-center justify-center gap-1.5 bg-secondary text-white py-2.5 rounded-xl font-semibold text-xs hover:bg-fg-strong transition">
                 <Maximize2 size={13} /> {t("viewFullPageBtn")}
               </button>
-              <h1 className="text-xl font-bold text-gray-800">{selectedListing.brand} {selectedListing.model}</h1>
-              {selectedListing.city && <p className="text-gray-400 text-xs mt-1 flex items-center gap-1"><MapPin size={12} />{selectedListing.city}</p>}
+              <h1 className="text-xl font-bold text-fg-strong">{selectedListing.brand} {selectedListing.model}</h1>
+              {selectedListing.city && <p className="text-fg-muted text-xs mt-1 flex items-center gap-1"><MapPin size={12} />{selectedListing.city}</p>}
               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <p className="text-3xl font-bold text-blue-700">{selectedListing.price}</p>
-                {selectedListing.negotiable && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">{t("negotiableBadge")}</span>}
-                {selectedListing.featured && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{t("featuredBadge")}</span>}
+                <p className="text-3xl font-bold text-primary-hover">{selectedListing.price}</p>
+                {selectedListing.negotiable && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary-tint text-primary-hover border border-blue-200">{t("negotiableBadge")}</span>}
+                {selectedListing.featured && <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-warning-tint text-amber-700 border border-amber-200">{t("featuredBadge")}</span>}
               </div>
               {(() => {
                 const cmp = listingPriceComparison(selectedListing);
                 if (!cmp || cmp.tier === "average") return null;
                 return (
-                  <p className={`text-[11px] font-medium mt-1 ${cmp.tier === "below" ? "text-emerald-600" : "text-amber-600"}`}>
+                  <p className={`text-[11px] font-medium mt-1 ${cmp.tier === "below" ? "text-emerald-600" : "text-warning"}`}>
                     {cmp.tier === "below" ? t("priceBelowAverage", { pct: String(Math.abs(cmp.diffPercent)) }) : t("priceAboveAverage", { pct: String(cmp.diffPercent) })}
                   </p>
                 );
               })()}
               <div className="grid grid-cols-3 gap-2 mt-4">
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Gauge size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("mileage")}</p><p className="text-xs font-bold text-gray-700">{Number(selectedListing.km).toLocaleString("tr-TR")} km</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><CalendarDays size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("firstReg")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.firstReg || selectedListing.year}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Fuel size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("fuelType")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.fuelType ? vocabLabel(selectedListing.fuelType, lang, FUEL_TYPE_LABELS_BY_LANG) : "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Cog size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("transmission")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.transmission ? vocabLabel(selectedListing.transmission, lang, TRANSMISSION_LABELS_BY_LANG) : "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Zap size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("power")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.power ? `${selectedListing.power} HP` : "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Palette size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("color")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.color || "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Car size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("bodyTypePlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.bodyType ? vocabLabel(selectedListing.bodyType, lang, BODY_TYPE_LABELS_BY_LANG) : "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Wrench size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("engineSizeLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.engineSize || "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("drivetrainPlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.drivetrain ? vocabLabel(selectedListing.drivetrain, lang, DRIVETRAIN_LABELS_BY_LANG) : "—"}</p></div>
-                <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><DoorOpen size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("doorCountPlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.doorCount || "—"}</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Gauge size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("mileage")}</p><p className="text-xs font-bold text-fg-strong">{Number(selectedListing.km).toLocaleString("tr-TR")} km</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><CalendarDays size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("firstReg")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.firstReg || selectedListing.year}</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Fuel size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("fuelType")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.fuelType ? vocabLabel(selectedListing.fuelType, lang, FUEL_TYPE_LABELS_BY_LANG) : "—"}</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Cog size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("transmission")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.transmission ? vocabLabel(selectedListing.transmission, lang, TRANSMISSION_LABELS_BY_LANG) : "—"}</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Zap size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("power")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.power ? `${selectedListing.power} HP` : "—"}</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Palette size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("color")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.color || "—"}</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Car size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("bodyTypePlaceholder")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.bodyType ? vocabLabel(selectedListing.bodyType, lang, BODY_TYPE_LABELS_BY_LANG) : "—"}</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Wrench size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("engineSizeLabel")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.engineSize || "—"}</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("drivetrainPlaceholder")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.drivetrain ? vocabLabel(selectedListing.drivetrain, lang, DRIVETRAIN_LABELS_BY_LANG) : "—"}</p></div>
+                <div className="bg-white border border-border rounded-xl p-2.5 text-center"><DoorOpen size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("doorCountPlaceholder")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.doorCount || "—"}</p></div>
               </div>
-              <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 flex-wrap"><span className={`px-2 py-1 rounded-full font-medium ${selectedListing.sellerType === "mechanic" ? "bg-blue-100 text-blue-700" : "bg-blue-50 text-blue-600"}`}>{selectedListing.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span><span>{selectedListing.sellerName}</span><span className="text-gray-300">·</span><span className="text-gray-400">{t("listingNumberLabel", { id: String(selectedListing.id) })}</span></div>
+              <div className="mt-4 flex items-center gap-2 text-xs text-fg-secondary flex-wrap"><span className={`px-2 py-1 rounded-full font-medium ${selectedListing.sellerType === "mechanic" ? "bg-blue-100 text-primary-hover" : "bg-primary-tint text-primary"}`}>{selectedListing.sellerType === "mechanic" ? t("sellerTypeMechanic") : t("sellerTypeOwner")}</span><span>{selectedListing.sellerName}</span><span className="text-fg-muted">·</span><span className="text-fg-muted">{t("listingNumberLabel", { id: String(selectedListing.id) })}</span></div>
               {safeHref(selectedListing.inspectionReportUrl) && (
                 <a href={safeHref(selectedListing.inspectionReportUrl)} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition"><FileText size={12} /> {t("inspectionReportAvailableLabel")}</a>
               )}
@@ -2706,66 +2706,66 @@ export function AppShell() {
                 const sellerOwner = selectedListing.sellerType === "owner" ? ownersDirectory.find(o => selectedListing.sellerId != null ? o.id === selectedListing.sellerId : o.name === selectedListing.sellerName) : null;
                 if (!sellerMechanic && !sellerOwner) return null;
                 return (
-                  <div className="mt-3 bg-gray-50 border border-gray-200 rounded-2xl p-3 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg flex-shrink-0">{sellerMechanic ? sellerMechanic.img : "👤"}</div>
+                  <div className="mt-3 bg-background border border-border rounded-2xl p-3 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white border border-border flex items-center justify-center text-lg flex-shrink-0">{sellerMechanic ? sellerMechanic.img : "👤"}</div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-semibold text-gray-800 truncate">{selectedListing.sellerName}</span>
-                        {sellerMechanic?.verified && <BadgeCheck size={14} className="text-blue-500 flex-shrink-0" />}
+                        <span className="text-sm font-semibold text-fg-strong truncate">{selectedListing.sellerName}</span>
+                        {sellerMechanic?.verified && <BadgeCheck size={14} className="text-info flex-shrink-0" />}
                       </div>
                       {sellerMechanic ? (
-                        <p className="text-[11px] text-gray-500">{t("respondsWithinNote", { rating: String(sellerMechanic.rating), reviews: String(sellerMechanic.reviews), mins: String(sellerMechanic.avgResponseMinutes) })}</p>
+                        <p className="text-[11px] text-fg-secondary">{t("respondsWithinNote", { rating: String(sellerMechanic.rating), reviews: String(sellerMechanic.reviews), mins: String(sellerMechanic.avgResponseMinutes) })}</p>
                       ) : sellerOwner ? (
-                        <p className="text-[11px] text-gray-500">{t("memberSinceLabel", { date: sellerOwner.joinDate ? new Date(sellerOwner.joinDate).toLocaleDateString("tr-TR", { year: "numeric", month: "long" }) : "—" })}</p>
+                        <p className="text-[11px] text-fg-secondary">{t("memberSinceLabel", { date: sellerOwner.joinDate ? new Date(sellerOwner.joinDate).toLocaleDateString("tr-TR", { year: "numeric", month: "long" }) : "—" })}</p>
                       ) : null}
                     </div>
                   </div>
                 );
               })()}
-              <p className="text-sm text-gray-600 mt-4 leading-relaxed whitespace-pre-line"><TranslatedText id={`listing-desc-${selectedListing.id}`} scope="public" text={selectedListing.description} fromLang={selectedListing.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
+              <p className="text-sm text-fg-secondary mt-4 leading-relaxed whitespace-pre-line"><TranslatedText id={`listing-desc-${selectedListing.id}`} scope="public" text={selectedListing.description} fromLang={selectedListing.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
               {(selectedListing.ownerCount || selectedListing.paintedParts !== undefined || selectedListing.changedParts !== undefined || selectedListing.tradeIn) && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Shield size={15} className="text-blue-500" /> {t("vehicleHistoryTitle")}</h3>
+                  <h3 className="font-semibold text-fg-strong text-sm mb-2 flex items-center gap-2"><Shield size={15} className="text-info" /> {t("vehicleHistoryTitle")}</h3>
                   <div className="flex flex-wrap gap-2">
-                    {!!selectedListing.ownerCount && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-700"><User size={12} /> {t("ownerNumberLabel", { n: String(selectedListing.ownerCount) })}</span>)}
+                    {!!selectedListing.ownerCount && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-surface-elevated text-fg-strong"><User size={12} /> {t("ownerNumberLabel", { n: String(selectedListing.ownerCount) })}</span>)}
                     {(!Number(selectedListing.paintedParts) && !Number(selectedListing.changedParts)) ? (
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><BadgeCheck size={12} /> {t("noPaintChangeLabel")}</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200"><PaintBucket size={12} /> {t("paintedChangedPartsLabel", { painted: String(Number(selectedListing.paintedParts) || 0), changed: String(Number(selectedListing.changedParts) || 0) })}</span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-warning-tint text-amber-700 border border-amber-200"><PaintBucket size={12} /> {t("paintedChangedPartsLabel", { painted: String(Number(selectedListing.paintedParts) || 0), changed: String(Number(selectedListing.changedParts) || 0) })}</span>
                     )}
-                    {!!selectedListing.tradeIn && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200"><Repeat size={12} /> {t("tradeInAvailableLabel")}</span>)}
+                    {!!selectedListing.tradeIn && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-primary-tint text-primary-hover border border-blue-200"><Repeat size={12} /> {t("tradeInAvailableLabel")}</span>)}
                   </div>
                 </div>
               )}
               {(selectedListing.seatCount || selectedListing.fuelConsumption || selectedListing.co2Emission || selectedListing.emissionClass) && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Leaf size={15} className="text-blue-500" /> {t("fuelConsumptionSection")}</h3>
+                  <h3 className="font-semibold text-fg-strong text-sm mb-2 flex items-center gap-2"><Leaf size={15} className="text-info" /> {t("fuelConsumptionSection")}</h3>
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><User size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("seatCountPlaceholder")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.seatCount || "—"}</p></div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Droplet size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("consumptionLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.fuelConsumption ? `${selectedListing.fuelConsumption} L/100km` : "—"}</p></div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Leaf size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("co2Label")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.co2Emission ? `${selectedListing.co2Emission} g/km` : "—"}</p></div>
+                    <div className="bg-white border border-border rounded-xl p-2.5 text-center"><User size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("seatCountPlaceholder")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.seatCount || "—"}</p></div>
+                    <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Droplet size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("consumptionLabel")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.fuelConsumption ? `${selectedListing.fuelConsumption} L/100km` : "—"}</p></div>
+                    <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Leaf size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("co2Label")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.co2Emission ? `${selectedListing.co2Emission} g/km` : "—"}</p></div>
                   </div>
                   {selectedListing.emissionClass && (<span className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 mt-2"><BadgeCheck size={12} /> {selectedListing.emissionClass}</span>)}
                 </div>
               )}
               {(selectedListing.batteryCapacity || selectedListing.rangeKm) && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><BatteryCharging size={15} className="text-blue-500" /> {t("evDataTitle")}</h3>
+                  <h3 className="font-semibold text-fg-strong text-sm mb-2 flex items-center gap-2"><BatteryCharging size={15} className="text-info" /> {t("evDataTitle")}</h3>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><BatteryCharging size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("batteryLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.batteryCapacity ? `${selectedListing.batteryCapacity} kWh` : "—"}</p></div>
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-gray-400" /><p className="text-[9px] text-gray-400">{t("rangeLabel")}</p><p className="text-xs font-bold text-gray-700">{selectedListing.rangeKm ? `${selectedListing.rangeKm} km` : "—"}</p></div>
+                    <div className="bg-white border border-border rounded-xl p-2.5 text-center"><BatteryCharging size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("batteryLabel")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.batteryCapacity ? `${selectedListing.batteryCapacity} kWh` : "—"}</p></div>
+                    <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Compass size={16} className="mx-auto mb-1 text-fg-muted" /><p className="text-[9px] text-fg-muted">{t("rangeLabel")}</p><p className="text-xs font-bold text-fg-strong">{selectedListing.rangeKm ? `${selectedListing.rangeKm} km` : "—"}</p></div>
                   </div>
                 </div>
               )}
               {selectedListing.features && selectedListing.features.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Tag size={15} className="text-blue-500" /> {t("featuresSection")}</h3>
+                  <h3 className="font-semibold text-fg-strong text-sm mb-2 flex items-center gap-2"><Tag size={15} className="text-info" /> {t("featuresSection")}</h3>
                   {/* Donanım sayısı artık sabit olmayabiliyor (kullanıcı kendi donanımını da
                       ekleyebiliyor, bkz. addCustomFeature) — çok sayıda donanımda karmaşık
                       görünmemesi için renk döngüsü kaldırıldı, tek/sade bir rozet stili kullanılıyor. */}
                   <div className="flex flex-wrap gap-2">
                     {selectedListing.features.map((f) => (
-                      <span key={f} className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border bg-gray-50 text-gray-600 border-gray-200"><Tag size={10} className="text-blue-500" /> {f}</span>
+                      <span key={f} className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border bg-background text-fg-secondary border-border"><Tag size={10} className="text-info" /> {f}</span>
                     ))}
                   </div>
                 </div>
@@ -2775,17 +2775,17 @@ export function AppShell() {
                 if (sims.length === 0) return null;
                 return (
                   <div className="mt-6">
-                    <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2"><Car size={15} className="text-blue-500" /> {t("similarListingsTitle")}</h3>
+                    <h3 className="font-semibold text-fg-strong text-sm mb-2 flex items-center gap-2"><Car size={15} className="text-info" /> {t("similarListingsTitle")}</h3>
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
                       {sims.map(sl => (
-                        <button key={sl.id} onClick={() => { setSelectedListingId(sl.id); setSelectedListingPhotoIndex(0); }} className="flex-shrink-0 w-36 text-left bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition">
-                          <div className="w-full h-24 bg-gray-100 flex items-center justify-center text-3xl overflow-hidden">
+                        <button key={sl.id} onClick={() => { setSelectedListingId(sl.id); setSelectedListingPhotoIndex(0); }} className="flex-shrink-0 w-36 text-left bg-white border border-border rounded-xl overflow-hidden hover:shadow-md transition">
+                          <div className="w-full h-24 bg-surface-elevated flex items-center justify-center text-3xl overflow-hidden">
                             {isImgUrl(sl.photo) ? <img src={imgThumb(sl.photo, 300)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${sl.brand} ${sl.model}`} className="w-full h-full object-cover" /> : sl.photo}
                           </div>
                           <div className="p-2">
-                            <p className="text-[11px] font-semibold text-gray-800 truncate">{sl.brand} {sl.model}</p>
-                            <p className="text-[10px] text-gray-400">{sl.year} · {Number(sl.km).toLocaleString("tr-TR")} km</p>
-                            <p className="text-xs font-bold text-blue-700 mt-0.5">{sl.price}</p>
+                            <p className="text-[11px] font-semibold text-fg-strong truncate">{sl.brand} {sl.model}</p>
+                            <p className="text-[10px] text-fg-muted">{sl.year} · {Number(sl.km).toLocaleString("tr-TR")} km</p>
+                            <p className="text-xs font-bold text-primary-hover mt-0.5">{sl.price}</p>
                           </div>
                         </button>
                       ))}
@@ -2798,15 +2798,15 @@ export function AppShell() {
                 const activeOffers = selectedListing.offers.filter(o => o.status !== "replaced");
                 if (isOwnListing) return (
                   <>
-                    <div className="mt-5 bg-blue-50 rounded-2xl p-3 text-xs text-blue-700 flex items-center gap-2"><Tag size={14} className="flex-shrink-0" /> {t("ownListingNotice")}</div>
+                    <div className="mt-5 bg-primary-tint rounded-2xl p-3 text-xs text-primary-hover flex items-center gap-2"><Tag size={14} className="flex-shrink-0" /> {t("ownListingNotice")}</div>
                     <div className="mt-3 grid grid-cols-3 gap-2">
-                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Eye size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingViewStats?.totalViews ?? "—"}</p><p className="text-[9px] text-gray-400">{t("viewsLabel")}</p></div>
-                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Share2 size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{selectedListing.shareCount || 0}</p><p className="text-[9px] text-gray-400">{t("sharesLabel")}</p></div>
-                      <div className="bg-white border border-gray-200 rounded-xl p-2.5 text-center"><Heart size={14} className="mx-auto mb-1 text-gray-400" /><p className="text-sm font-bold text-gray-800">{listingFavoriteCount(selectedListing.id)}</p><p className="text-[9px] text-gray-400">{t("favoriteLabel")}</p></div>
+                      <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Eye size={14} className="mx-auto mb-1 text-fg-muted" /><p className="text-sm font-bold text-fg-strong">{listingViewStats?.totalViews ?? "—"}</p><p className="text-[9px] text-fg-muted">{t("viewsLabel")}</p></div>
+                      <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Share2 size={14} className="mx-auto mb-1 text-fg-muted" /><p className="text-sm font-bold text-fg-strong">{selectedListing.shareCount || 0}</p><p className="text-[9px] text-fg-muted">{t("sharesLabel")}</p></div>
+                      <div className="bg-white border border-border rounded-xl p-2.5 text-center"><Heart size={14} className="mx-auto mb-1 text-fg-muted" /><p className="text-sm font-bold text-fg-strong">{listingFavoriteCount(selectedListing.id)}</p><p className="text-[9px] text-fg-muted">{t("favoriteLabel")}</p></div>
                     </div>
                     {listingViewStats?.monthly && listingViewStats.monthly.length > 1 && (
-                      <div className="mt-2 bg-white border border-gray-200 rounded-2xl p-3">
-                        <h4 className="text-[11px] font-semibold text-gray-500 mb-2">{t("viewTrendTitle")}</h4>
+                      <div className="mt-2 bg-white border border-border rounded-2xl p-3">
+                        <h4 className="text-[11px] font-semibold text-fg-secondary mb-2">{t("viewTrendTitle")}</h4>
                         <div className="flex items-end gap-1.5 h-14">
                           {listingViewStats.monthly.map((m) => {
                             const max = Math.max(...listingViewStats.monthly.map(x => x.views), 1);
@@ -2814,42 +2814,42 @@ export function AppShell() {
                             return (
                               <div key={m.month} className="flex-1 flex flex-col items-center justify-end gap-1" title={t("viewsTooltip", { month: m.month, views: String(m.views) })}>
                                 <div className="w-full bg-blue-200 rounded-t" style={{ height: `${h}px` }} />
-                                <span className="text-[8px] text-gray-400 whitespace-nowrap">{m.month.slice(5)}</span>
+                                <span className="text-[8px] text-fg-muted whitespace-nowrap">{m.month.slice(5)}</span>
                               </div>
                             );
                           })}
                         </div>
                       </div>
                     )}
-                    <div className="mt-3 bg-white border border-gray-200 rounded-2xl p-3"><div className="flex items-center justify-between mb-2"><h4 className="text-xs font-semibold text-gray-500">{t("listingStatus")}</h4><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span></div><div className="flex gap-2">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(selectedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${selectedListing.status === st ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-500 border-gray-200"}`}>{listingStatusMeta(st, t).label}</button>))}</div></div>
-                    <button onClick={() => requestFeaturedListing(selectedListing.id)} className={`w-full mt-2 py-2.5 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 border ${selectedListing.featured ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}>⭐ {selectedListing.featured ? t("removeFromFeaturedBtn") : t("featureListingBtn", { price: String(FEATURED_LISTING_PRICE) })}</button>
+                    <div className="mt-3 bg-white border border-border rounded-2xl p-3"><div className="flex items-center justify-between mb-2"><h4 className="text-xs font-semibold text-fg-secondary">{t("listingStatus")}</h4><span className={`text-[10px] text-white font-bold px-2 py-1 rounded-full ${listingStatusMeta(selectedListing.status, t).color}`}>{listingStatusMeta(selectedListing.status, t).label}</span></div><div className="flex gap-2">{["active", "reserved", "sold"].map(st => (<button key={st} onClick={() => setListingStatus(selectedListing.id, st)} className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition ${selectedListing.status === st ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{listingStatusMeta(st, t).label}</button>))}</div></div>
+                    <button onClick={() => requestFeaturedListing(selectedListing.id)} className={`w-full mt-2 py-2.5 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 border ${selectedListing.featured ? "bg-warning-tint text-amber-700 border-amber-200 hover:bg-amber-100" : "bg-white text-fg-secondary border-border hover:bg-background"}`}>⭐ {selectedListing.featured ? t("removeFromFeaturedBtn") : t("featureListingBtn", { price: String(FEATURED_LISTING_PRICE) })}</button>
                     <div className="flex gap-2 mt-2">
-                      <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, bodyType: selectedListing.bodyType || "", engineSize: selectedListing.engineSize || "", drivetrain: selectedListing.drivetrain || "", ownerCount: selectedListing.ownerCount || "", paintedParts: selectedListing.paintedParts ?? "", changedParts: selectedListing.changedParts ?? "", tradeIn: !!selectedListing.tradeIn, doorCount: selectedListing.doorCount || "", features: selectedListing.features || [], photos: selectedListing.photos || [], seatCount: selectedListing.seatCount || "", fuelConsumption: selectedListing.fuelConsumption || "", co2Emission: selectedListing.co2Emission || "", emissionClass: selectedListing.emissionClass || "", batteryCapacity: selectedListing.batteryCapacity || "", rangeKm: selectedListing.rangeKm || "", city: selectedListing.city || "", negotiable: !!selectedListing.negotiable, inspectionReportUrl: selectedListing.inspectionReportUrl || "", featured: !!selectedListing.featured, _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-gray-200 text-gray-700 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListingBtn")}</button>
-                      <button onClick={() => setConfirmDialog({ title: t("deleteListingConfirmTitle"), body: t("deleteListingConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => { removeListing(selectedListing.id); setSelectedListingId(null); } })} aria-label={t("deleteListingAria")} className="flex-shrink-0 border border-gray-200 text-red-400 hover:text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-xl transition"><Trash2 size={16} /></button>
+                      <button onClick={() => openSellForm({ brand: selectedListing.brand, model: selectedListing.model, year: selectedListing.year, km: selectedListing.km, price: selectedListing.price, description: selectedListing.description, photo: selectedListing.photo, fuelType: selectedListing.fuelType, transmission: selectedListing.transmission, power: selectedListing.power, firstReg: selectedListing.firstReg, color: selectedListing.color, bodyType: selectedListing.bodyType || "", engineSize: selectedListing.engineSize || "", drivetrain: selectedListing.drivetrain || "", ownerCount: selectedListing.ownerCount || "", paintedParts: selectedListing.paintedParts ?? "", changedParts: selectedListing.changedParts ?? "", tradeIn: !!selectedListing.tradeIn, doorCount: selectedListing.doorCount || "", features: selectedListing.features || [], photos: selectedListing.photos || [], seatCount: selectedListing.seatCount || "", fuelConsumption: selectedListing.fuelConsumption || "", co2Emission: selectedListing.co2Emission || "", emissionClass: selectedListing.emissionClass || "", batteryCapacity: selectedListing.batteryCapacity || "", rangeKm: selectedListing.rangeKm || "", city: selectedListing.city || "", negotiable: !!selectedListing.negotiable, inspectionReportUrl: selectedListing.inspectionReportUrl || "", featured: !!selectedListing.featured, _vehicleId: selectedListing._vehicleId || null, _editingId: selectedListing.id })} className="flex-1 border border-border text-fg-strong py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><Pencil size={14} /> {t("editListingBtn")}</button>
+                      <button onClick={() => setConfirmDialog({ title: t("deleteListingConfirmTitle"), body: t("deleteListingConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => { removeListing(selectedListing.id); setSelectedListingId(null); } })} aria-label={t("deleteListingAria")} className="flex-shrink-0 border border-border text-red-400 hover:text-error hover:bg-error-tint px-4 py-2.5 rounded-xl transition"><Trash2 size={16} /></button>
                     </div>
-                    <h3 className="font-semibold text-gray-800 text-sm mt-6 mb-2 flex items-center gap-2"><Banknote size={15} className="text-blue-600" /> {t("tabLabelOffers")} {activeOffers.length > 0 && <span className="text-gray-300 font-normal">({activeOffers.length})</span>}</h3>
+                    <h3 className="font-semibold text-fg-strong text-sm mt-6 mb-2 flex items-center gap-2"><Banknote size={15} className="text-primary" /> {t("tabLabelOffers")} {activeOffers.length > 0 && <span className="text-fg-muted font-normal">({activeOffers.length})</span>}</h3>
                     {activeOffers.length === 0 ? (
-                      <p className="text-center text-gray-400 text-xs py-4">{t("noOffersYetOnListing")}</p>
+                      <p className="text-center text-fg-muted text-xs py-4">{t("noOffersYetOnListing")}</p>
                     ) : (
                       <div className="space-y-2 mb-2">{activeOffers.map(o => (
-                        <div key={o.id} className="bg-white border border-gray-100 rounded-xl p-3">
-                          <div className="flex justify-between items-center mb-1"><span className="text-xs font-medium text-gray-700">{o.from}</span><span className="font-bold text-blue-700 text-sm">{o.amount}{o.currency || "₺"}</span></div>
+                        <div key={o.id} className="bg-white border border-surface-elevated rounded-xl p-3">
+                          <div className="flex justify-between items-center mb-1"><span className="text-xs font-medium text-fg-strong">{o.from}</span><span className="font-bold text-primary-hover text-sm">{o.amount}{o.currency || "₺"}</span></div>
                           {o.status === "pending" ? (
-                            <div className="flex gap-2 mt-2"><button onClick={() => respondOffer(selectedListing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(selectedListing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>
+                            <div className="flex gap-2 mt-2"><button onClick={() => respondOffer(selectedListing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-[11px] py-1.5 rounded-lg font-medium">{t("accept")}</button><button onClick={() => respondOffer(selectedListing.id, o.id, "rejected")} className="flex-1 border border-border text-fg-secondary text-[11px] py-1.5 rounded-lg font-medium">{t("reject")}</button></div>
                           ) : (
-                            <p className="text-[11px] text-gray-400 mt-1">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>
+                            <p className="text-[11px] text-fg-muted mt-1">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>
                           )}
                         </div>
                       ))}</div>
                     )}
                     {selectedListing.messages.length > 0 && (<>
-                      <h3 className="font-semibold text-gray-800 text-sm mt-5 mb-2 flex items-center gap-2"><MessageCircle size={15} className="text-blue-500" /> {t("questionsTitle")}</h3>
-                      <div className="space-y-2">{selectedListing.messages.map(m => (<div key={m.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs"><span className="font-medium text-gray-700">{m.from}{m.isSellerReply && <span className="ml-1 text-[9px] font-bold uppercase text-emerald-600 bg-emerald-50 rounded px-1 py-0.5">{t("sellerReplyBadge")}</span>}:</span> <span className="text-gray-600"><TranslatedText id={`listingmsg-${m.id}`} scope="public" text={m.text} fromLang={m.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></span></div>))}</div>
+                      <h3 className="font-semibold text-fg-strong text-sm mt-5 mb-2 flex items-center gap-2"><MessageCircle size={15} className="text-info" /> {t("questionsTitle")}</h3>
+                      <div className="space-y-2">{selectedListing.messages.map(m => (<div key={m.id} className="bg-white border border-border rounded-xl p-3 text-xs"><span className="font-medium text-fg-strong">{m.from}{m.isSellerReply && <span className="ml-1 text-[9px] font-bold uppercase text-emerald-600 bg-emerald-50 rounded px-1 py-0.5">{t("sellerReplyBadge")}</span>}:</span> <span className="text-fg-secondary"><TranslatedText id={`listingmsg-${m.id}`} scope="public" text={m.text} fromLang={m.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></span></div>))}</div>
                       {/* SATICININ CEVABI — eksik olan yarı. Alıcı soru sorabiliyordu ama satıcının
                           cevap verecek bir yeri yoktu; soru ilan yönetiminde okunup orada kalıyordu. */}
                       <div className="flex gap-2 mt-2">
-                        <input value={listingReply} onChange={(e) => setListingReply(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitListingReply(selectedListing); }} placeholder={t("listingReplyPlaceholder")} aria-label={t("listingReplyPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs" />
-                        <button onClick={() => submitListingReply(selectedListing)} className="bg-gray-900 text-white px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-gray-800 transition flex-shrink-0">{t("listingReplySendBtn")}</button>
+                        <input value={listingReply} onChange={(e) => setListingReply(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitListingReply(selectedListing); }} placeholder={t("listingReplyPlaceholder")} aria-label={t("listingReplyPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-border text-xs" />
+                        <button onClick={() => submitListingReply(selectedListing)} className="bg-secondary text-white px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-fg-strong transition flex-shrink-0">{t("listingReplySendBtn")}</button>
                       </div>
                     </>)}
                   </>
@@ -2861,18 +2861,18 @@ export function AppShell() {
                   ? mechanicsList.find(m => selectedListing.sellerId != null ? m.id === selectedListing.sellerId : m.name === selectedListing.sellerName)?.phone
                   : ownersDirectory.find(o => selectedListing.sellerId != null ? o.id === selectedListing.sellerId : o.name === selectedListing.sellerName)?.phone;
                 return (
-                  <div className="grid grid-cols-2 gap-2 mt-5 sticky bottom-0 bg-white/95 backdrop-blur-sm pt-3 pb-2 -mx-5 px-5 md:-mx-8 md:px-8 border-t border-gray-100">
-                    <button onClick={openOfferForm} disabled={offerBtn.disabled} title={offerBtn.hintKey ? t(offerBtn.hintKey) : undefined} className={`py-3 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 ${offerBtn.disabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"}`}><Banknote size={15} /> {t(offerBtn.labelKey)}</button>
+                  <div className="grid grid-cols-2 gap-2 mt-5 sticky bottom-0 bg-white/95 backdrop-blur-sm pt-3 pb-2 -mx-5 px-5 md:-mx-8 md:px-8 border-t border-surface-elevated">
+                    <button onClick={openOfferForm} disabled={offerBtn.disabled} title={offerBtn.hintKey ? t(offerBtn.hintKey) : undefined} className={`py-3 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 ${offerBtn.disabled ? "bg-surface-elevated text-fg-muted cursor-not-allowed" : "bg-primary text-white hover:bg-primary-hover"}`}><Banknote size={15} /> {t(offerBtn.labelKey)}</button>
                     {selectedListing.sellerType === "mechanic" ? (
-                      <button onClick={() => { const mech = mechanicsList.find(m => m.name === selectedListing.sellerName); if (mech) openChatWithMechanic(mech, `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`); setSelectedListingId(null); }} className="border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
+                      <button onClick={() => { const mech = mechanicsList.find(m => m.name === selectedListing.sellerName); if (mech) openChatWithMechanic(mech, `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`); setSelectedListingId(null); }} className="border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
                     ) : (
-                      <button onClick={() => { const contextNote = `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`; if (role === "mechanic") { openMechChatWithOwnerListing(contextNote, selectedListing.sellerType === "owner" ? selectedListing.sellerId ?? null : null); } else { openChatWithMechanic({ id: `seller-${selectedListing.sellerName}`, name: selectedListing.sellerName, img: "👤", lang: "tr" }, contextNote); } setSelectedListingId(null); }} className="border border-gray-200 text-gray-700 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
+                      <button onClick={() => { const contextNote = `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`; if (role === "mechanic") { openMechChatWithOwnerListing(contextNote, selectedListing.sellerType === "owner" ? selectedListing.sellerId ?? null : null); } else { openChatWithMechanic({ id: `seller-${selectedListing.sellerName}`, name: selectedListing.sellerName, img: "👤", lang: "tr" }, contextNote); } setSelectedListingId(null); }} className="border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
                     )}
                     {sellerPhone && (
-                      <a href={`tel:${sellerPhone.replace(/\s+/g, "")}`} className="col-span-2 border border-gray-200 text-gray-700 py-2.5 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"><Phone size={14} /> {t("callPhoneBtn", { phone: sellerPhone })}</a>
+                      <a href={`tel:${sellerPhone.replace(/\s+/g, "")}`} className="col-span-2 border border-border text-fg-strong py-2.5 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><Phone size={14} /> {t("callPhoneBtn", { phone: sellerPhone })}</a>
                     )}
-                    {myOffer && <p className="col-span-2 text-[11px] text-gray-400 text-center">{t("myCurrentOfferNote", { amount: String(myOffer.amount), currency })}{myOffer.seen ? ` · ${t("sellerSawItSuffix")}` : ` · ${t("notSeenYetSuffix")}`}</p>}
-                    <button onClick={() => openReportForm("listing", `İlan #${selectedListing.id} · ${selectedListing.sellerName}`, `"${selectedListing.brand} ${selectedListing.model}" ilanını bildiriyorum`)} className="col-span-2 flex items-center justify-center gap-1.5 text-[11px] text-gray-400 hover:text-red-500 transition py-1"><Flag size={11} /> {t("reportThisListingBtn")}</button>
+                    {myOffer && <p className="col-span-2 text-[11px] text-fg-muted text-center">{t("myCurrentOfferNote", { amount: String(myOffer.amount), currency })}{myOffer.seen ? ` · ${t("sellerSawItSuffix")}` : ` · ${t("notSeenYetSuffix")}`}</p>}
+                    <button onClick={() => openReportForm("listing", `İlan #${selectedListing.id} · ${selectedListing.sellerName}`, `"${selectedListing.brand} ${selectedListing.model}" ilanını bildiriyorum`)} className="col-span-2 flex items-center justify-center gap-1.5 text-[11px] text-fg-muted hover:text-red-500 transition py-1"><Flag size={11} /> {t("reportThisListingBtn")}</button>
                   </div>
                 );
               })()}
@@ -2882,54 +2882,54 @@ export function AppShell() {
         {selectedJobId && selectedJob && (() => { const isOwnJob = role === "mechanic" && (selectedJob.mechanicId != null ? selectedJob.mechanicId === MY_MECHANIC_ID : selectedJob.mechanicName === myProfile?.name); return (<>
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" data-modal-backdrop onClick={() => setSelectedJobId(null)} />
           <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-md md:max-w-2xl mx-auto md:my-6 md:rounded-3xl md:shadow-2xl overflow-hidden">
-            <div className="bg-white text-gray-900 px-5 pt-6 pb-6 relative flex-shrink-0 border-b border-gray-200 shadow-sm">
-              <button aria-label={t("a11yBack")} onClick={() => setSelectedJobId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition"><ChevronLeft size={18} /></button>
+            <div className="bg-white text-fg px-5 pt-6 pb-6 relative flex-shrink-0 border-b border-border shadow-sm">
+              <button aria-label={t("a11yBack")} onClick={() => setSelectedJobId(null)} className="absolute top-4 left-4 z-10 w-9 h-9 bg-surface-elevated rounded-full flex items-center justify-center text-fg-strong hover:bg-border transition"><ChevronLeft size={18} /></button>
               <div className="absolute top-4 right-4 z-10">
-                <ShareButton title={selectedJob.title} text={`${selectedJob.title} — ${selectedJob.mechanicName}`} path={`?job=${selectedJob.id}`} onShare={(channel, refCode) => recordShare("job", selectedJob.id, channel, refCode)} className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition" />
+                <ShareButton title={selectedJob.title} text={`${selectedJob.title} — ${selectedJob.mechanicName}`} path={`?job=${selectedJob.id}`} onShare={(channel, refCode) => recordShare("job", selectedJob.id, channel, refCode)} className="w-9 h-9 bg-surface-elevated rounded-full flex items-center justify-center text-fg-strong hover:bg-border transition" />
               </div>
               <div className="flex items-center gap-3 mt-8">
-                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">{selectedJob.mechanicImg}</div>
+                <div className="w-14 h-14 bg-primary-tint rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">{selectedJob.mechanicImg}</div>
                 <div className="min-w-0">
-                  <h1 className="text-lg font-bold leading-tight text-gray-900">{selectedJob.title}</h1>
-                  <p className="text-gray-500 text-sm truncate">{selectedJob.mechanicName} · {selectedJob.location}</p>
+                  <h1 className="text-lg font-bold leading-tight text-fg">{selectedJob.title}</h1>
+                  <p className="text-fg-secondary text-sm truncate">{selectedJob.mechanicName} · {selectedJob.location}</p>
                 </div>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-5 md:p-8">
               <div className="flex flex-wrap items-center gap-2 mb-5">
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${jobEmploymentColor(selectedJob.employmentType)}`}>{vocabLabel(selectedJob.employmentType, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG)}</span>
-                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-gray-50 text-gray-500 flex items-center gap-1"><GraduationCap size={12} /> {vocabLabel(selectedJob.experienceLevel, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG)}</span>
-                {(selectedJob.salaryMin || selectedJob.salaryMax) && <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-green-50 text-green-600 flex items-center gap-1"><Banknote size={12} /> {selectedJob.salaryMin && selectedJob.salaryMax ? `${Number(selectedJob.salaryMin).toLocaleString("tr-TR")} - ${Number(selectedJob.salaryMax).toLocaleString("tr-TR")}₺` : `${Number(selectedJob.salaryMin || selectedJob.salaryMax).toLocaleString("tr-TR")}₺+`}</span>}
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-background text-fg-secondary flex items-center gap-1"><GraduationCap size={12} /> {vocabLabel(selectedJob.experienceLevel, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG)}</span>
+                {(selectedJob.salaryMin || selectedJob.salaryMax) && <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-success-tint text-success flex items-center gap-1"><Banknote size={12} /> {selectedJob.salaryMin && selectedJob.salaryMax ? `${Number(selectedJob.salaryMin).toLocaleString("tr-TR")} - ${Number(selectedJob.salaryMax).toLocaleString("tr-TR")}₺` : `${Number(selectedJob.salaryMin || selectedJob.salaryMax).toLocaleString("tr-TR")}₺+`}</span>}
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full text-white ${jobStatusMeta(selectedJob.status, t).color}`}>{jobStatusMeta(selectedJob.status, t).label}</span>
               </div>
-              <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("positionDescriptionTitle")}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed mb-5">{selectedJob.description ? <TranslatedText id={`job-desc-${selectedJob.id}`} scope="public" text={selectedJob.description} fromLang={selectedJob.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /> : "—"}</p>
+              <h3 className="font-semibold text-fg-strong text-sm mb-2">{t("positionDescriptionTitle")}</h3>
+              <p className="text-sm text-fg-secondary leading-relaxed mb-5">{selectedJob.description ? <TranslatedText id={`job-desc-${selectedJob.id}`} scope="public" text={selectedJob.description} fromLang={selectedJob.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /> : "—"}</p>
               {selectedJob.requirements.length > 0 && (<>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("requiredQualificationsTitle")}</h3>
-                <div className="space-y-1.5 mb-5">{selectedJob.requirements.map((r, i) => (<div key={i} className="flex items-start gap-2 text-sm text-gray-600"><CheckCircle2 size={14} className="text-blue-500 flex-shrink-0 mt-0.5" /><span>{r}</span></div>))}</div>
+                <h3 className="font-semibold text-fg-strong text-sm mb-2">{t("requiredQualificationsTitle")}</h3>
+                <div className="space-y-1.5 mb-5">{selectedJob.requirements.map((r, i) => (<div key={i} className="flex items-start gap-2 text-sm text-fg-secondary"><CheckCircle2 size={14} className="text-info flex-shrink-0 mt-0.5" /><span>{r}</span></div>))}</div>
               </>)}
               {selectedJob.skills.length > 0 && (<>
-                <h3 className="font-semibold text-gray-800 text-sm mb-2">{t("skillsTitle")}</h3>
-                <div className="flex flex-wrap gap-1.5 mb-5">{selectedJob.skills.map((s, i) => (<span key={i} className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">{s}</span>))}</div>
+                <h3 className="font-semibold text-fg-strong text-sm mb-2">{t("skillsTitle")}</h3>
+                <div className="flex flex-wrap gap-1.5 mb-5">{selectedJob.skills.map((s, i) => (<span key={i} className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary-tint text-primary">{s}</span>))}</div>
               </>)}
-              <p className="text-[11px] text-gray-400 flex items-center gap-1 mb-5"><Clock size={11} /> {t("postedOnLabel", { date: selectedJob.postedDate })}</p>
+              <p className="text-[11px] text-fg-muted flex items-center gap-1 mb-5"><Clock size={11} /> {t("postedOnLabel", { date: selectedJob.postedDate })}</p>
               {isOwnJob ? (
-                <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                  <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Users size={15} /> {t("applicationsTitle", { n: String(selectedJob.applicants.length) })}</h3>
-                  <div className="space-y-2">{selectedJob.applicants.map(a => (<div key={a.id} className="bg-white border border-gray-100 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><span className="text-xs font-semibold text-gray-700">{a.name}</span><div className="flex items-center gap-1.5 flex-shrink-0">{a.status === "rejected" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-500">{t("rejectedLabel")}</span>}<span className="text-[10px] text-gray-400">{a.date}</span></div></div>{(a.phone || a.email || a.address) && (<div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-gray-400 mb-1.5">{a.phone && <span className="flex items-center gap-1"><Phone size={10} /> {a.phone}</span>}{a.email && <span className="flex items-center gap-1"><Mail size={10} /> {a.email}</span>}{a.address && <span className="flex items-center gap-1"><MapPin size={10} /> {a.address}</span>}</div>)}{a.message && <p className="text-xs text-gray-500 mb-1.5"><TranslatedText id={`job-applicant-msg-${a.id}`} text={a.message} fromLang={a.lang || "tr"} viewerLang={myProfile?.lang || "tr"} compact /></p>}<div className="flex items-center gap-2 flex-wrap">{safeHref(a.cvUrl) ? (<a href={safeHref(a.cvUrl)} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[11px] font-medium text-blue-600 hover:text-blue-700 bg-blue-50 rounded-lg px-2 py-1 max-w-full min-w-0"><FileText size={12} className="flex-shrink-0" /><span className="truncate min-w-0">{a.cvName || "CV"}</span></a>) : (<span className="inline-flex items-center gap-1.5 text-[11px] text-gray-300"><FileText size={12} /> {t("noCvAttached")}</span>)}{a.status !== "rejected" && (<button onClick={() => rejectApplication(selectedJob.id, a.id)} className="text-[11px] font-medium text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg px-2 py-1 transition flex-shrink-0">{t("rejectCvBtn")}</button>)}</div></div>))}{selectedJob.applicants.length === 0 && <p className="text-center text-gray-400 text-xs py-4">{t("noApplicationsYet")}</p>}</div>
+                <div className="bg-white border border-border rounded-2xl p-4">
+                  <h3 className="font-semibold text-fg-strong text-sm mb-3 flex items-center gap-2"><Users size={15} /> {t("applicationsTitle", { n: String(selectedJob.applicants.length) })}</h3>
+                  <div className="space-y-2">{selectedJob.applicants.map(a => (<div key={a.id} className="bg-white border border-surface-elevated rounded-xl p-3"><div className="flex justify-between items-center mb-1"><span className="text-xs font-semibold text-fg-strong">{a.name}</span><div className="flex items-center gap-1.5 flex-shrink-0">{a.status === "rejected" && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-error-tint text-red-500">{t("rejectedLabel")}</span>}<span className="text-[10px] text-fg-muted">{a.date}</span></div></div>{(a.phone || a.email || a.address) && (<div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-fg-muted mb-1.5">{a.phone && <span className="flex items-center gap-1"><Phone size={10} /> {a.phone}</span>}{a.email && <span className="flex items-center gap-1"><Mail size={10} /> {a.email}</span>}{a.address && <span className="flex items-center gap-1"><MapPin size={10} /> {a.address}</span>}</div>)}{a.message && <p className="text-xs text-fg-secondary mb-1.5"><TranslatedText id={`job-applicant-msg-${a.id}`} text={a.message} fromLang={a.lang || "tr"} viewerLang={myProfile?.lang || "tr"} compact /></p>}<div className="flex items-center gap-2 flex-wrap">{safeHref(a.cvUrl) ? (<a href={safeHref(a.cvUrl)} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-[11px] font-medium text-primary hover:text-primary-hover bg-primary-tint rounded-lg px-2 py-1 max-w-full min-w-0"><FileText size={12} className="flex-shrink-0" /><span className="truncate min-w-0">{a.cvName || "CV"}</span></a>) : (<span className="inline-flex items-center gap-1.5 text-[11px] text-fg-muted"><FileText size={12} /> {t("noCvAttached")}</span>)}{a.status !== "rejected" && (<button onClick={() => rejectApplication(selectedJob.id, a.id)} className="text-[11px] font-medium text-red-500 hover:text-error bg-error-tint hover:bg-red-100 rounded-lg px-2 py-1 transition flex-shrink-0">{t("rejectCvBtn")}</button>)}</div></div>))}{selectedJob.applicants.length === 0 && <p className="text-center text-fg-muted text-xs py-4">{t("noApplicationsYet")}</p>}</div>
                   <div className="flex gap-2 mt-4">
-                    <button onClick={() => { openJobForm({ title: selectedJob.title, employmentType: selectedJob.employmentType, experienceLevel: selectedJob.experienceLevel, location: selectedJob.location, salaryMin: selectedJob.salaryMin, salaryMax: selectedJob.salaryMax, description: selectedJob.description, requirements: selectedJob.requirements.join("\n"), skills: selectedJob.skills.join(", "), _editingId: selectedJob.id }); setSelectedJobId(null); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-xs font-medium hover:bg-gray-100 transition flex items-center justify-center gap-1"><Pencil size={13} /> {t("editBtn")}</button>
-                    <button onClick={() => { setJobListingStatus(selectedJob.id, selectedJob.status === "active" ? "closed" : "active"); }} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-xs font-medium hover:bg-gray-100 transition">{selectedJob.status === "active" ? t("closeListingBtn") : t("reopenListingBtn")}</button>
-                    <button onClick={() => setConfirmDialog({ title: t("deleteListingConfirmTitle"), body: t("deleteJobConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => { removeJobListing(selectedJob.id); setSelectedJobId(null); } })} aria-label={t("deleteListingAria")} className="text-red-400 hover:text-red-600 px-3 py-2.5"><Trash2 size={16} /></button>
+                    <button onClick={() => { openJobForm({ title: selectedJob.title, employmentType: selectedJob.employmentType, experienceLevel: selectedJob.experienceLevel, location: selectedJob.location, salaryMin: selectedJob.salaryMin, salaryMax: selectedJob.salaryMax, description: selectedJob.description, requirements: selectedJob.requirements.join("\n"), skills: selectedJob.skills.join(", "), _editingId: selectedJob.id }); setSelectedJobId(null); }} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-xs font-medium hover:bg-surface-elevated transition flex items-center justify-center gap-1"><Pencil size={13} /> {t("editBtn")}</button>
+                    <button onClick={() => { setJobListingStatus(selectedJob.id, selectedJob.status === "active" ? "closed" : "active"); }} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-xs font-medium hover:bg-surface-elevated transition">{selectedJob.status === "active" ? t("closeListingBtn") : t("reopenListingBtn")}</button>
+                    <button onClick={() => setConfirmDialog({ title: t("deleteListingConfirmTitle"), body: t("deleteJobConfirmBody"), confirmLabel: t("yesDeleteConfirmLabel"), danger: true, onConfirm: () => { removeJobListing(selectedJob.id); setSelectedJobId(null); } })} aria-label={t("deleteListingAria")} className="text-red-400 hover:text-error px-3 py-2.5"><Trash2 size={16} /></button>
                   </div>
                 </div>
               ) : role === "mechanic" ? (
-                <div className="bg-gray-100 border border-gray-200 rounded-2xl p-4 text-center">
-                  <p className="text-sm text-gray-600 mb-3">{t("needOwnerAccountToApplyNote")}</p>
-                  <button onClick={goHome} className="w-full bg-gray-900 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-800 transition">{t("createOwnerAccountBtn")}</button>
+                <div className="bg-surface-elevated border border-border rounded-2xl p-4 text-center">
+                  <p className="text-sm text-fg-secondary mb-3">{t("needOwnerAccountToApplyNote")}</p>
+                  <button onClick={goHome} className="w-full bg-secondary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-fg-strong transition">{t("createOwnerAccountBtn")}</button>
                 </div>
               ) : (
-                <button onClick={openJobApplyForm} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition flex items-center justify-center gap-2"><Briefcase size={15} /> {t("applyBtn")}</button>
+                <button onClick={openJobApplyForm} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-2"><Briefcase size={15} /> {t("applyBtn")}</button>
               )}
             </div>
           </div>
@@ -2939,12 +2939,12 @@ export function AppShell() {
             {/* Logo sohbette de var: kullanıcı yazışmanın ortasındayken ana sayfaya dönebilmeli. */}
             <PageTopBar onBack={() => setScreen("owner")} />
             <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
-            <div className="bg-white text-gray-900 px-5 pt-6 pb-4 border-b border-gray-200 shadow-sm">{/* GERİ TUŞU KALDIRILDI: bu sayfa yukarıda PageTopBar kullanıyor ve orada zaten bir geri
+            <div className="bg-white text-fg px-5 pt-6 pb-4 border-b border-border shadow-sm">{/* GERİ TUŞU KALDIRILDI: bu sayfa yukarıda PageTopBar kullanıyor ve orada zaten bir geri
                     oku var (kullanıcı bildirdi: "iki tane geri tuşu saçma"). Bant artık yalnızca
-                    karşı tarafın adını ve durumunu gösteriyor. */}<div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="text-2xl bg-blue-50 rounded-xl w-11 h-11 flex items-center justify-center">{activeConvo.mechanicImg}</div><h1 className="text-base font-bold text-gray-900">{activeConvo.mechanicName}</h1></div><select value={ownerLang} onChange={(e) => setOwnerLang(e.target.value)} className="bg-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1 border-none outline-none focus:ring-2 focus:ring-focus"><option className="text-black" value="tr">🇹🇷 TR</option><option className="text-black" value="en">🇬🇧 EN</option><option className="text-black" value="de">🇩🇪 DE</option></select></div></div>
+                    karşı tarafın adını ve durumunu gösteriyor. */}<div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="text-2xl bg-primary-tint rounded-xl w-11 h-11 flex items-center justify-center">{activeConvo.mechanicImg}</div><h1 className="text-base font-bold text-fg">{activeConvo.mechanicName}</h1></div><select value={ownerLang} onChange={(e) => setOwnerLang(e.target.value)} className="bg-surface-elevated text-fg-strong text-xs rounded-lg px-2 py-1 border-none outline-none focus:ring-2 focus:ring-focus"><option className="text-black" value="tr">🇹🇷 TR</option><option className="text-black" value="en">🇬🇧 EN</option><option className="text-black" value="de">🇩🇪 DE</option></select></div></div>
             <div className="flex-1 px-5 py-4 overflow-y-auto">{activeConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={ownerLang} mine={m.sender === "owner"} />))}</div>
             {activeConvo.messages.length > 0 && activeConvo.messages[activeConvo.messages.length - 1].isRejectionNotice ? (
-              <div className="px-5 pb-6 pt-2 border-t border-gray-100"><div className="bg-gray-100 text-gray-500 text-xs text-center py-3 rounded-xl">{t("applicationRejectedNotice")}</div></div>
+              <div className="px-5 pb-6 pt-2 border-t border-surface-elevated"><div className="bg-surface-elevated text-fg-secondary text-xs text-center py-3 rounded-xl">{t("applicationRejectedNotice")}</div></div>
             ) : (<>
               <div className="px-5 pb-2"><button onClick={() => {
                 // Sohbet ekranı kendi tamirci bağlamını activeConvo.mechanicId üzerinden tutuyor —
@@ -2957,8 +2957,8 @@ export function AppShell() {
                 setSelectedMechanicId(mech.id);
                 setSelectedDate(null); setSelectedTime(null); setBookingService(null); setProblemDesc(""); setProblemPhotos([]);
                 setScreen("booking");
-              }} className="w-full mb-3 bg-blue-50 text-blue-600 text-xs font-medium py-2 rounded-xl hover:bg-blue-100 transition flex items-center justify-center gap-1"><Calendar size={14} /> {t("bookWithThisMechanic")}</button></div>
-              <div className="px-5 pb-6 pt-2 border-t border-gray-100 flex items-center gap-2"><input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition flex-shrink-0"><ImageIcon size={18} /></button><input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendOwnerMessageWithReply(chatInput); }} placeholder={t("chatInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" /><button onClick={() => sendOwnerMessageWithReply(chatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition flex-shrink-0"><Send size={16} /></button></div>
+              }} className="w-full mb-3 bg-primary-tint text-primary text-xs font-medium py-2 rounded-xl hover:bg-blue-100 transition flex items-center justify-center gap-1"><Calendar size={14} /> {t("bookWithThisMechanic")}</button></div>
+              <div className="px-5 pb-6 pt-2 border-t border-surface-elevated flex items-center gap-2"><input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-elevated text-fg-secondary hover:bg-border transition flex-shrink-0"><ImageIcon size={18} /></button><input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendOwnerMessageWithReply(chatInput); }} placeholder={t("chatInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" /><button onClick={() => sendOwnerMessageWithReply(chatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary-hover transition flex-shrink-0"><Send size={16} /></button></div>
             </>)}
           </div>
           </div>
@@ -2998,11 +2998,11 @@ export function AppShell() {
 
 
           return (
-          <div className="w-full bg-gray-50 min-h-screen">
+          <div className="w-full bg-background min-h-screen">
             <PageTopBar onBack={() => setScreen(detailReturnScreen || "detail")} />
             <div className="max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{t("bookingTitle")}</h1>
-              <p className="text-sm text-gray-500 mb-6">{t("bookingSubtitle", { name: selectedMechanic.name })}</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-fg mb-1">{t("bookingTitle")}</h1>
+              <p className="text-sm text-fg-secondary mb-6">{t("bookingSubtitle", { name: selectedMechanic.name })}</p>
 
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
                 {/* ---- SOL: adımlar ---- */}
@@ -3010,45 +3010,45 @@ export function AppShell() {
                   {/* 1) ARAÇ */}
                   <SectionCard step={steps[0]} icon={Car} title={t("bookingSelectVehicle")} hint={t("bookingVehicleHint")}>
                     {vehicles.length === 0 && !showAddVehicle ? (
-                      <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 mb-3 flex items-start gap-2.5">
-                        <Car size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-gray-600">{t("bookingNoVehicles")}</p>
+                      <div className="bg-primary-tint border border-blue-100 rounded-2xl px-4 py-3 mb-3 flex items-start gap-2.5">
+                        <Car size={16} className="text-info flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-fg-secondary">{t("bookingNoVehicles")}</p>
                       </div>
                     ) : vehicles.length > 0 ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                         {vehicles.map(v => { const isSel = selectedBookingVehicleId === v.id; return (
-                          <button key={v.id} onClick={() => setSelectedBookingVehicleId(v.id)} className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 text-gray-700 hover:border-blue-300"}`}>
+                          <button key={v.id} onClick={() => setSelectedBookingVehicleId(v.id)} className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-primary border-primary text-white" : "border-border text-fg-strong hover:border-blue-300"}`}>
                             <Car size={18} className="flex-shrink-0" />
                             <div className="min-w-0">
                               <p className="text-sm font-semibold leading-tight truncate">{v.brand} {v.model}</p>
-                              <p className={`text-xs leading-tight ${isSel ? "text-blue-100" : "text-gray-400"}`}>{v.plate}</p>
+                              <p className={`text-xs leading-tight ${isSel ? "text-blue-100" : "text-fg-muted"}`}>{v.plate}</p>
                             </div>
                             {isSel && <Check size={16} className="ml-auto flex-shrink-0" />}
                           </button>
                         ); })}
                       </div>
                     ) : null}
-                    <button onClick={toggleAddVehicle} className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1.5"><Plus size={15} /> {t("addVehicle")}</button>
+                    <button onClick={toggleAddVehicle} className="text-sm font-semibold text-primary hover:text-primary-hover flex items-center gap-1.5"><Plus size={15} /> {t("addVehicle")}</button>
                     {(vehicles.length === 0 || showAddVehicle) && (
-                      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 mt-3">
+                      <div className="bg-background border border-surface-elevated rounded-2xl p-4 mt-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <BrandSelect value={newVehicle.brand} onChange={(b) => setNewVehicle({ ...newVehicle, brand: b, model: "" })} />
                           <ModelSelect brand={newVehicle.brand} value={newVehicle.model} onChange={(m) => setNewVehicle({ ...newVehicle, model: m })} />
-                          <input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
-                          <input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white" />
+                          <input value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} placeholder={t("bookingYearPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-white" />
+                          <input value={newVehicle.plate} onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })} placeholder={t("bookingPlatePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm bg-white" />
                         </div>
                         {/* KAYDETME SORUSU: randevu için yazılan araç garaja kaydedilsin mi?
                             Varsayılan işaretli — aynı aracı her randevuda yeniden yazmak anlamsız.
                             Kapatma seçeneği duruyor: tek seferlik bir araç garajı kirletmesin. */}
-                        <label className="mt-3 flex items-start gap-2.5 bg-white border border-gray-200 rounded-xl p-3 cursor-pointer">
+                        <label className="mt-3 flex items-start gap-2.5 bg-white border border-border rounded-xl p-3 cursor-pointer">
                           <input type="checkbox" checked={saveVehicleToGarage} onChange={(e) => setSaveVehicleToGarage(e.target.checked)} className="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0" />
-                          <span className="text-xs text-gray-600"><span className="font-semibold text-gray-800">{t("saveVehicleToGarageLabel")}</span><br />{t("saveVehicleToGarageHint")}</span>
+                          <span className="text-xs text-fg-secondary"><span className="font-semibold text-fg-strong">{t("saveVehicleToGarageLabel")}</span><br />{t("saveVehicleToGarageHint")}</span>
                         </label>
-                        <button onClick={addVehicle} className="mt-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition">{t("addVehicle")}</button>
+                        <button onClick={addVehicle} className="mt-2 bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-hover transition">{t("addVehicle")}</button>
                       </div>
                     )}
                     {brandUnsupported && (
-                      <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 flex items-start gap-2"><AlertTriangle size={13} className="flex-shrink-0 mt-0.5" /> {t("bookingBrandNotServed", { brand: vehicleBrand, name: selectedMechanic.name })}</p>
+                      <p className="mt-3 text-xs text-amber-700 bg-warning-tint border border-amber-100 rounded-xl px-3 py-2.5 flex items-start gap-2"><AlertTriangle size={13} className="flex-shrink-0 mt-0.5" /> {t("bookingBrandNotServed", { brand: vehicleBrand, name: selectedMechanic.name })}</p>
                     )}
                   </SectionCard>
 
@@ -3056,15 +3056,15 @@ export function AppShell() {
                   <SectionCard step={steps[1]} icon={ToolIcon} title={t("bookingSelectService")}
                     hint={vehicleBrand ? t("bookingServiceBrandHint", { brand: vehicleBrand }) : t("bookingServiceNoBrandHint")}>
                     <div className="relative mb-3">
-                      <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input value={bookingServiceSearch} onChange={(e) => setBookingServiceSearch(e.target.value)} placeholder={t("bookingServiceSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" />
+                      <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-muted" />
+                      <input value={bookingServiceSearch} onChange={(e) => setBookingServiceSearch(e.target.value)} placeholder={t("bookingServiceSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" />
                     </div>
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 max-h-[26rem] overflow-y-auto pr-0.5">
-                      {bookingServiceOptions.length === 0 && (<p className="text-sm text-gray-400 text-center py-6 xl:col-span-2">{t("noServiceMatch", { q: bookingServiceSearch })}</p>)}
+                      {bookingServiceOptions.length === 0 && (<p className="text-sm text-fg-muted text-center py-6 xl:col-span-2">{t("noServiceMatch", { q: bookingServiceSearch })}</p>)}
                       {bookingServiceOptions.map((s, i) => {
                         const isSel = bookingService && !bookingService.other && bookingService.name === s.name;
                         return (
-                          <button key={i} onClick={() => setBookingService({ name: s.name, price: s.price, other: false, fixed: s.fixed })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-blue-600 border-blue-600 text-white" : "border-gray-200 hover:border-blue-300"}`}>
+                          <button key={i} onClick={() => setBookingService({ name: s.name, price: s.price, other: false, fixed: s.fixed })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${isSel ? "bg-primary border-primary text-white" : "border-border hover:border-blue-300"}`}>
                             <span className="text-sm font-medium flex flex-col gap-0.5 min-w-0">
                               <span className="flex items-center gap-2 min-w-0">
                                 <ToolIcon size={13} className={`flex-shrink-0 ${isSel ? "text-white" : "text-blue-400"}`} />
@@ -3081,7 +3081,7 @@ export function AppShell() {
                                 <span className={`text-[10px] font-semibold flex items-center gap-1 flex-wrap ${isSel ? "text-white/90" : PRICE_COMPARE_TONE[s.marketCompare.level]}`}>
                                   {PRICE_COMPARE_ARROW[s.marketCompare.level]}
                                   {t(PRICE_COMPARE_LABEL_KEY[s.marketCompare.level])}
-                                  <span className={isSel ? "text-white/60 font-normal" : "text-gray-400 font-normal"}>
+                                  <span className={isSel ? "text-white/60 font-normal" : "text-fg-muted font-normal"}>
                                     · {t("priceCompareDetail", { count: String(s.marketCompare.sampleSize), median: String(s.marketCompare.median) })}
                                   </span>
                                   <InfoTip inline text={t("priceCompareTip")} label={t("infoTipAria")} />
@@ -3090,8 +3090,8 @@ export function AppShell() {
                             </span>
                             <span className="flex items-center gap-2 flex-shrink-0">
                               {/* Marka rozeti: bu fiyatın SENİN aracın için olduğunu açıkça söyler. */}
-                              {s.brandPriced && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isSel ? "bg-white/20 text-white" : "bg-blue-50 text-blue-600"}`}>{vehicleBrand}</span>}
-                              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 ${isSel ? "bg-white/20 text-white" : s.fixed ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500"}`}>
+                              {s.brandPriced && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isSel ? "bg-white/20 text-white" : "bg-primary-tint text-primary"}`}>{vehicleBrand}</span>}
+                              <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap flex items-center gap-1 ${isSel ? "bg-white/20 text-white" : s.fixed ? "bg-success-tint text-success" : "bg-surface-elevated text-fg-secondary"}`}>
                                 {s.fixed ? t("fixedPriceBadge") : t("variableLabel")}
                                 {/* Değişken fiyat araç sahibine hiçbir şey anlatmıyordu: "peki ne kadar
                                     tutacak, şimdi para mı ödeyeceğim?" Balon bunu cevaplıyor. Satırın
@@ -3103,9 +3103,9 @@ export function AppShell() {
                           </button>
                         );
                       })}
-                      <button onClick={() => setBookingService({ name: t("otherServiceLabel"), price: null, other: true, fixed: false })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${bookingService?.other ? "bg-blue-600 border-blue-600 text-white" : "border-dashed border-gray-300 hover:border-blue-300"}`}>
+                      <button onClick={() => setBookingService({ name: t("otherServiceLabel"), price: null, other: true, fixed: false })} className={`flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl border text-left transition ${bookingService?.other ? "bg-primary border-primary text-white" : "border-dashed border-fg-muted hover:border-blue-300"}`}>
                         <span className="text-sm font-medium">{t("otherServiceLabel")}</span>
-                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${bookingService?.other ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}>{t("variableLabel")}</span>
+                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${bookingService?.other ? "bg-white/20 text-white" : "bg-surface-elevated text-fg-secondary"}`}>{t("variableLabel")}</span>
                       </button>
                     </div>
                   </SectionCard>
@@ -3124,61 +3124,61 @@ export function AppShell() {
                   </SectionCard>
 
                   {/* 4) SORUN AÇIKLAMASI */}
-                  <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
-                    <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><FileText size={16} className="text-blue-500" /> {t("problemDescLabel")}</h3>
-                    <p className="text-xs text-gray-400 mb-4">{t("problemPhotoHint")}</p>
-                    <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} placeholder={t("problemDescPlaceholder")} rows={4} className="w-full px-3.5 py-3 rounded-2xl border border-gray-200 text-sm resize-none mb-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" />
+                  <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                    <h3 className="font-bold text-fg text-base mb-1 flex items-center gap-2"><FileText size={16} className="text-info" /> {t("problemDescLabel")}</h3>
+                    <p className="text-xs text-fg-muted mb-4">{t("problemPhotoHint")}</p>
+                    <textarea value={problemDesc} onChange={(e) => setProblemDesc(e.target.value)} placeholder={t("problemDescPlaceholder")} rows={4} className="w-full px-3.5 py-3 rounded-2xl border border-border text-sm resize-none mb-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" />
                     <div className="flex items-center gap-2 flex-wrap">
                       <input ref={problemPhotoRef} type="file" accept="image/*" onChange={addProblemPhoto} className="hidden" />
                       {problemPhotos.map((src, i) => (
-                        <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                        <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden border border-border flex-shrink-0">
                           <img decoding="async" src={src} alt={t("vehiclePhotoAlt")} className="w-full h-full object-cover" />
                           <button onClick={() => removeProblemPhoto(i)} aria-label={t("removePhotoAria")} className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full text-white flex items-center justify-center"><X size={11} /></button>
                         </div>
                       ))}
-                      <button onClick={() => problemPhotoRef.current?.click()} aria-label={t("addPhotoAria")} className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-blue-300 hover:text-blue-500 transition"><Camera size={18} /></button>
+                      <button onClick={() => problemPhotoRef.current?.click()} aria-label={t("addPhotoAria")} className="w-16 h-16 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-fg-muted hover:border-blue-300 hover:text-info transition"><Camera size={18} /></button>
                     </div>
-                    <label className="flex items-start gap-2.5 mt-4 bg-gray-50 rounded-2xl p-3.5 cursor-pointer">
+                    <label className="flex items-start gap-2.5 mt-4 bg-background rounded-2xl p-3.5 cursor-pointer">
                       <input type="checkbox" checked={shareHistoryConsent} onChange={(e) => setShareHistoryConsent(e.target.checked)} className="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0" />
-                      <span className="text-xs text-gray-600"><span className="font-semibold text-gray-800">{t("historyShareConsentTitle")}</span> {t("historyShareConsentDesc")}</span>
+                      <span className="text-xs text-fg-secondary"><span className="font-semibold text-fg-strong">{t("historyShareConsentTitle")}</span> {t("historyShareConsentDesc")}</span>
                     </label>
                   </div>
                 </div>
 
                 {/* ---- SAĞ: yapışkan özet ---- */}
                 <aside className="lg:sticky lg:top-20">
-                  <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6">
-                    <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-100">
-                      <div className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                  <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6">
+                    <div className="flex items-center gap-3 pb-4 mb-4 border-b border-surface-elevated">
+                      <div className="w-12 h-12 rounded-2xl bg-background border border-surface-elevated flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
                         {isImgUrl(selectedMechanic.img) ? <img decoding="async" src={imgThumb(selectedMechanic.img, 100)} onError={imgFallbackHandler} alt={selectedMechanic.name} className="w-full h-full object-cover" /> : selectedMechanic.img}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-gray-900 truncate">{selectedMechanic.name}</p>
-                        <p className="text-xs text-gray-400 flex items-center gap-1"><Star size={11} className="fill-gray-400" />{formatNumber(selectedMechanic.rating, 1, "0.0")} · {selectedMechanic.reviews || 0}</p>
+                        <p className="font-bold text-fg truncate">{selectedMechanic.name}</p>
+                        <p className="text-xs text-fg-muted flex items-center gap-1"><Star size={11} className="fill-fg-muted" />{formatNumber(selectedMechanic.rating, 1, "0.0")} · {selectedMechanic.reviews || 0}</p>
                       </div>
                     </div>
 
                     <dl className="space-y-2.5 text-sm">
-                      <div className="flex justify-between gap-3"><dt className="text-gray-400">{t("bookingSummaryVehicle")}</dt><dd className="font-medium text-gray-800 text-right min-w-0 truncate">{bookingVehicle ? `${bookingVehicle.brand} ${bookingVehicle.model}` : "—"}</dd></div>
-                      <div className="flex justify-between gap-3"><dt className="text-gray-400">{t("serviceLabel")}</dt><dd className="font-medium text-gray-800 text-right min-w-0 truncate">{bookingService?.name || "—"}</dd></div>
-                      <div className="flex justify-between gap-3"><dt className="text-gray-400">{t("bookingSummaryWhen")}</dt><dd className="font-medium text-gray-800 text-right">{selectedDate && selectedTime ? `${selectedDate.toLocaleDateString(lang === "de" ? "de-DE" : lang === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long" })} · ${selectedTime}` : "—"}</dd></div>
+                      <div className="flex justify-between gap-3"><dt className="text-fg-muted">{t("bookingSummaryVehicle")}</dt><dd className="font-medium text-fg-strong text-right min-w-0 truncate">{bookingVehicle ? `${bookingVehicle.brand} ${bookingVehicle.model}` : "—"}</dd></div>
+                      <div className="flex justify-between gap-3"><dt className="text-fg-muted">{t("serviceLabel")}</dt><dd className="font-medium text-fg-strong text-right min-w-0 truncate">{bookingService?.name || "—"}</dd></div>
+                      <div className="flex justify-between gap-3"><dt className="text-fg-muted">{t("bookingSummaryWhen")}</dt><dd className="font-medium text-fg-strong text-right">{selectedDate && selectedTime ? `${selectedDate.toLocaleDateString(lang === "de" ? "de-DE" : lang === "en" ? "en-GB" : "tr-TR", { day: "numeric", month: "long" })} · ${selectedTime}` : "—"}</dd></div>
                     </dl>
 
-                    <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="mt-4 pt-4 border-t border-surface-elevated">
                       {!bookingService ? (
-                        <p className="text-sm text-gray-400">{t("bookingSelectServiceForPrice")}</p>
+                        <p className="text-sm text-fg-muted">{t("bookingSelectServiceForPrice")}</p>
                       ) : bookingService.other || !bookingService.fixed ? (
                         <>
-                          <div className="flex justify-between items-baseline"><span className="text-sm text-gray-500">{t("bookingSummaryPrice")}</span><span className="text-base font-bold text-gray-900">{t("priceUponInspectionLabel")}</span></div>
-                          <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{t("noFixedPriceNotice")}</p>
+                          <div className="flex justify-between items-baseline"><span className="text-sm text-fg-secondary">{t("bookingSummaryPrice")}</span><span className="text-base font-bold text-fg">{t("priceUponInspectionLabel")}</span></div>
+                          <p className="text-xs text-fg-muted mt-1.5 leading-relaxed">{t("noFixedPriceNotice")}</p>
                         </>
                       ) : (
                         <>
                           <div className="flex justify-between items-baseline">
-                            <span className="text-sm text-gray-500">{t("bookingSummaryPrice")}</span>
-                            <span className="text-2xl font-bold text-blue-600">{bookingService.price}</span>
+                            <span className="text-sm text-fg-secondary">{t("bookingSummaryPrice")}</span>
+                            <span className="text-2xl font-bold text-primary">{bookingService.price}</span>
                           </div>
-                          {vehicleBrand && <p className="text-[11px] text-gray-400 mt-1">{t("bookingPriceForBrand", { brand: vehicleBrand })}</p>}
+                          {vehicleBrand && <p className="text-[11px] text-fg-muted mt-1">{t("bookingPriceForBrand", { brand: vehicleBrand })}</p>}
                         </>
                       )}
                     </div>
@@ -3187,24 +3187,24 @@ export function AppShell() {
                         Ödeme iş bitince yerinde yapılıyor; müşteri hangi yöntemlerin
                         geçerli olduğunu önceden bilsin diye burada. */}
                     {payMethods.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-gray-100">
-                        <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5"><Banknote size={13} className="text-gray-400" /> {t("bookingAcceptedPayments")}</p>
+                      <div className="mt-4 pt-4 border-t border-surface-elevated">
+                        <p className="text-xs font-semibold text-fg-secondary mb-2 flex items-center gap-1.5"><Banknote size={13} className="text-fg-muted" /> {t("bookingAcceptedPayments")}</p>
                         <div className="flex flex-wrap gap-1.5">
-                          {payMethods.map(m => (<span key={m} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">{m}</span>))}
+                          {payMethods.map(m => (<span key={m} className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-surface-elevated text-fg-secondary">{m}</span>))}
                         </div>
-                        <p className="text-[11px] text-gray-400 mt-2">{t("bookingPayAtShopNote")}</p>
+                        <p className="text-[11px] text-fg-muted mt-2">{t("bookingPayAtShopNote")}</p>
                       </div>
                     )}
 
                     {bookingService?.fixed && !bookingService.other && parsePriceNumber(bookingService.price) > EXPENSIVE_SERVICE_THRESHOLD && (
-                      <label className="flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl p-3 mt-4 cursor-pointer">
+                      <label className="flex items-start gap-2 bg-warning-tint border border-amber-100 rounded-xl p-3 mt-4 cursor-pointer">
                         <input type="checkbox" checked={approveExpensiveService} onChange={(e) => setApproveExpensiveService(e.target.checked)} className="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0" />
-                        <span className="text-xs text-gray-700">{t("expensiveServiceConfirmPrefix")} <strong>{bookingService.price}</strong> {t("expensiveServiceConfirmSuffix")}</span>
+                        <span className="text-xs text-fg-strong">{t("expensiveServiceConfirmPrefix")} <strong>{bookingService.price}</strong> {t("expensiveServiceConfirmSuffix")}</span>
                       </label>
                     )}
 
-                    <button disabled={!ready} onClick={confirmBooking} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition mt-5 ${ready ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("confirmBookingBtn")}</button>
-                    {!ready && <p className="text-[11px] text-gray-400 text-center mt-2">{t("bookingCompleteStepsNote")}</p>}
+                    <button disabled={!ready} onClick={confirmBooking} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition mt-5 ${ready ? "bg-primary text-white hover:bg-primary-hover" : "bg-border text-fg-muted cursor-not-allowed"}`}>{t("confirmBookingBtn")}</button>
+                    {!ready && <p className="text-[11px] text-fg-muted text-center mt-2">{t("bookingCompleteStepsNote")}</p>}
                   </div>
                 </aside>
               </div>
@@ -3214,56 +3214,56 @@ export function AppShell() {
         })()}
         {screen === "mechBrowse" && (
           <>
-            <div className="bg-gradient-to-b from-blue-50 to-white text-gray-900 px-5 md:px-8 pt-6 pb-5 border-b border-gray-100 shadow-sm relative overflow-hidden">
+            <div className="bg-gradient-to-b from-blue-50 to-white text-fg px-5 md:px-8 pt-6 pb-5 border-b border-surface-elevated shadow-sm relative overflow-hidden">
               <div className="flex items-center justify-between mb-3 max-w-7xl mx-auto w-full relative md:hidden">
-                <span className="text-xs text-gray-500">{t("greetingHello")}{form.name ? `, ${form.name}` : ""} 🔧</span>
-                <button onClick={() => setScreen("mechanicDashboard")} className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1"><ChevronLeft size={14}/> {t("backToDashboardBtn")}</button>
+                <span className="text-xs text-fg-secondary">{t("greetingHello")}{form.name ? `, ${form.name}` : ""} 🔧</span>
+                <button onClick={() => setScreen("mechanicDashboard")} className="text-xs text-fg-secondary hover:text-fg flex items-center gap-1"><ChevronLeft size={14}/> {t("backToDashboardBtn")}</button>
               </div>
               <div className="hidden md:flex items-center justify-between max-w-7xl mx-auto w-full relative mb-5">
-                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-gray-900">Fix<span className="text-blue-600">perto</span></span></button>
+                <button onClick={goToLandingPage} title={t("backToHomeBtn")} aria-label={t("backToHomeBtn")} className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition"><div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div><span className="text-lg font-extrabold text-fg">Fix<span className="text-primary">perto</span></span></button>
                 <div className="flex items-center gap-8">
                   {[{ key: "mechanics", label: t("findMechanic"), icon: Wrench }, { key: "cars", label: t("findCar"), icon: Car }, { key: "jobs", label: t("jobListingsNavLabel"), icon: Briefcase }].map(tab => {
                     const Icon = tab.icon; const active = ownerMode === tab.key;
-                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setQuery(""); }} aria-current={active ? "page" : undefined} className={`relative flex items-center gap-2 pb-3 pt-1 transition-colors ${active ? "text-gray-900" : "text-gray-500 hover:text-gray-900"}`}><Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="flex-shrink-0" /><span className="text-sm font-semibold">{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-gray-900 rounded-full" />}</button>);
+                    return (<button key={tab.key} onClick={() => { setOwnerMode(tab.key); setQuery(""); }} aria-current={active ? "page" : undefined} className={`relative flex items-center gap-2 pb-3 pt-1 transition-colors ${active ? "text-fg" : "text-fg-secondary hover:text-fg"}`}><Icon size={16} strokeWidth={active ? 2.25 : 1.75} className="flex-shrink-0" /><span className="text-sm font-semibold">{tab.label}</span>{active && <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-secondary rounded-full" />}</button>);
                   })}
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <button onClick={() => setScreen("mechanicDashboard")} className="text-sm font-semibold text-gray-800 hover:bg-gray-100 px-3 py-2 rounded-full transition whitespace-nowrap">{t("backToDashboardBtn")}</button>
-                  <button onClick={() => { setScreen("mechanicDashboard"); setMechTab("profile"); }} title={t("tabLabelProfile")} className="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden text-lg">{myProfile?.img || "🔧"}</button>
+                  <button onClick={() => setScreen("mechanicDashboard")} className="text-sm font-semibold text-fg-strong hover:bg-surface-elevated px-3 py-2 rounded-full transition whitespace-nowrap">{t("backToDashboardBtn")}</button>
+                  <button onClick={() => { setScreen("mechanicDashboard"); setMechTab("profile"); }} title={t("tabLabelProfile")} className="w-9 h-9 rounded-full bg-surface-elevated border border-border flex items-center justify-center overflow-hidden text-lg">{myProfile?.img || "🔧"}</button>
                 </div>
               </div>
               <div className="max-w-7xl mx-auto w-full relative">
                 <div className={`transition-all duration-300 ease-out overflow-hidden ${heroCollapsed ? "max-h-0 opacity-0 -translate-y-3 mb-0 pointer-events-none" : "max-h-56 opacity-100 translate-y-0 mb-4"}`}>
                   <div className="flex items-center justify-center md:hidden mb-4">
-                    <div className="inline-flex items-center gap-0.5 bg-gray-100 rounded-full p-1">
-                      <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Wrench size={13} /> {t("findMechanic")}</button>
-                      <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Car size={13} /> {t("findCar")}</button>
-                      <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
+                    <div className="inline-flex items-center gap-0.5 bg-surface-elevated rounded-full p-1">
+                      <button onClick={() => { setOwnerMode("mechanics"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "mechanics" ? "bg-white text-primary shadow-sm" : "text-fg-secondary"}`}><Wrench size={13} /> {t("findMechanic")}</button>
+                      <button onClick={() => { setOwnerMode("cars"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "cars" ? "bg-white text-primary shadow-sm" : "text-fg-secondary"}`}><Car size={13} /> {t("findCar")}</button>
+                      <button onClick={() => { setOwnerMode("jobs"); setQuery(""); }} className={`px-3.5 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${ownerMode === "jobs" ? "bg-white text-primary shadow-sm" : "text-fg-secondary"}`}><Briefcase size={13} /> {t("jobListingsNavLabel")}</button>
                     </div>
                   </div>
-                  <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-gray-900 text-center">{ownerMode === "mechanics" ? t("discoverOtherMechanicsTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
+                  <h1 className="text-2xl md:text-3xl font-bold mb-0 leading-snug text-fg text-center">{ownerMode === "mechanics" ? t("discoverOtherMechanicsTitle") : ownerMode === "cars" ? t("carMarket") : t("jobListingsNavLabel")}</h1>
                 </div>
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex items-center gap-2 p-2 pl-2.5 md:hidden">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">{ownerMode === "cars" ? <Car size={18} className="text-blue-700" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-blue-700" /> : <Wrench size={18} className="text-blue-700" />}</div>
-                  <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="flex-1 px-1 py-2 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-focus bg-transparent min-w-0" />
-                  <button onClick={() => setShowFilterModal(true)} aria-label={t("filterBtn")} className="relative flex-shrink-0 w-10 h-10 rounded-xl border border-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-50 transition"><SlidersHorizontal size={16} />{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}</button><button onClick={(e) => e.currentTarget.blur()} className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">{t("searchBtn")}</button>
+                <div className="bg-white rounded-2xl border border-border shadow-sm flex items-center gap-2 p-2 pl-2.5 md:hidden">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">{ownerMode === "cars" ? <Car size={18} className="text-primary-hover" /> : ownerMode === "jobs" ? <Briefcase size={18} className="text-primary-hover" /> : <Wrench size={18} className="text-primary-hover" />}</div>
+                  <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="flex-1 px-1 py-2 text-fg-strong text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-focus bg-transparent min-w-0" />
+                  <button onClick={() => setShowFilterModal(true)} aria-label={t("filterBtn")} className="relative flex-shrink-0 w-10 h-10 rounded-xl border border-border text-fg-secondary flex items-center justify-center hover:bg-background transition"><SlidersHorizontal size={16} />{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white rounded-full text-[9px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}</button><button onClick={(e) => e.currentTarget.blur()} className="flex-shrink-0 bg-primary hover:bg-primary-hover text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition">{t("searchBtn")}</button>
                 </div>
-                <div className={`hidden md:flex items-stretch bg-white rounded-full border border-gray-300 shadow-lg divide-x divide-gray-200 mx-auto overflow-hidden ${ownerMode === "mechanics" ? "max-w-3xl" : "max-w-2xl"}`}>
-                  <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("brandFieldLabel") : ownerMode === "cars" ? t("brandModelFieldLabel") : t("positionFieldLabel")}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
-                  <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-gray-900">{ownerMode === "mechanics" ? t("cityLabelShort") : t("locationFieldLabel")}</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchCityPlaceholder") : t("cityOrDistrictPlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                <div className={`hidden md:flex items-stretch bg-white rounded-full border border-fg-muted shadow-lg divide-x divide-border mx-auto overflow-hidden ${ownerMode === "mechanics" ? "max-w-3xl" : "max-w-2xl"}`}>
+                  <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-fg">{ownerMode === "mechanics" ? t("brandFieldLabel") : ownerMode === "cars" ? t("brandModelFieldLabel") : t("positionFieldLabel")}</label><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchPlaceholder") : ownerMode === "cars" ? t("searchBrandModelPlaceholder") : t("searchPositionSkillPlaceholder")} className="w-full text-sm text-fg-strong placeholder:text-fg-muted focus:outline-none bg-transparent" /></div>
+                  <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-fg">{ownerMode === "mechanics" ? t("cityLabelShort") : t("locationFieldLabel")}</label><input value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} placeholder={ownerMode === "mechanics" ? t("searchCityPlaceholder") : t("cityOrDistrictPlaceholder")} className="w-full text-sm text-fg-strong placeholder:text-fg-muted focus:outline-none bg-transparent" /></div>
                   {/* Tamirci tarafındaki keşif ekranı da araç sahibi tarafıyla aynı arama alanlarına
                       sahip olmalı — "Hizmet / Servis" alanı burada eksikti, eklendi. */}
                   {ownerMode === "mechanics" && (
-                    <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-gray-900">{t("serviceFieldLabel")}</label><input value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} placeholder={t("searchServicePlaceholder")} className="w-full text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none bg-transparent" /></div>
+                    <div className="flex-1 px-6 py-2.5 rounded-2xl focus-within:ring-2 focus-within:ring-focus"><label className="block text-[11px] font-bold text-fg">{t("serviceFieldLabel")}</label><input value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} placeholder={t("searchServicePlaceholder")} className="w-full text-sm text-fg-strong placeholder:text-fg-muted focus:outline-none bg-transparent" /></div>
                   )}
                   {/* Filtrele artık sıralama çipleri arasında değil, Marka / Şehir / Hizmet alanlarıyla AYNI
                       seviyede — arama hapının son bölümü (kullanıcı isteği). Aktif filtre sayısı rozetle görünür. */}
-                  <button onClick={() => setShowFilterModal(true)} className="flex items-center gap-2 px-5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition whitespace-nowrap">
-                    <SlidersHorizontal size={15} className="text-gray-500" />
+                  <button onClick={() => setShowFilterModal(true)} className="flex items-center gap-2 px-5 text-sm font-semibold text-fg-strong hover:bg-background transition whitespace-nowrap">
+                    <SlidersHorizontal size={15} className="text-fg-secondary" />
                     {t("filterBtn")}
-                    {(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="w-5 h-5 bg-blue-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}
+                    {(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount) > 0 && (<span className="w-5 h-5 bg-primary text-white rounded-full text-[10px] font-bold flex items-center justify-center">{(ownerMode === "mechanics" ? activeFilterCount : ownerMode === "cars" ? activeListingFilterCount : activeJobFilterCount)}</span>)}
                   </button>
-                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-700 transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
+                  <div className="flex items-center pr-2 pl-1"><button onClick={(e) => e.currentTarget.blur()} aria-label={t("searchBtn")} className="w-11 h-11 rounded-full bg-primary hover:bg-primary-hover transition flex items-center justify-center flex-shrink-0"><Search size={17} className="text-white" /></button></div>
                 </div>
               </div>
             </div>
@@ -3271,7 +3271,7 @@ export function AppShell() {
           </>
         )}
         {screen === "mechanicDashboard" && (
-          <div className="w-full bg-gray-50 min-h-screen">
+          <div className="w-full bg-background min-h-screen">
             {/* NOT — GERÇEK HATA DÜZELTMESİ: burası eskiden `flex flex-col` idi. Flex kapsayıcının
                 DOĞRUDAN çocuğuna `mx-auto` verildiğinde (max-w-7xl mx-auto) öğe stretch'i bırakıp
                 İÇERİĞİNE GÖRE DARALIYOR ve ortalanıyor — başlık kartı bu yüzden koca sayfanın
@@ -3292,8 +3292,8 @@ export function AppShell() {
                   yapışkan sekme çubuğunun (z-20) üstünde. */}
               <div className="absolute top-4 right-4 md:right-8 z-40 flex items-center gap-2">
                 <NotifBell />
-                <button onClick={() => setScreen("mechBrowse")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Search size={16} /></button>
-                <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("settings"); }} title={t("tabLabelSettings")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-gray-700 hover:scale-105 transition"><Settings size={16} /></button>
+                <button onClick={() => setScreen("mechBrowse")} title={t("searchMechOrCarTitle")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-fg-strong hover:scale-105 transition"><Search size={16} /></button>
+                <button onClick={() => { setScreen("mechProfilePage"); setMechProfileTab("settings"); }} title={t("tabLabelSettings")} className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-sm flex items-center justify-center text-fg-strong hover:scale-105 transition"><Settings size={16} /></button>
               </div>
             </div>
             {/* GERÇEK HATA DÜZELTMESİ — `relative z-10` olmadan kart bandın ALTINDA kalıyordu.
@@ -3304,12 +3304,12 @@ export function AppShell() {
                 kartın ilk ~48 pikselini kapatıyordu: "Merhaba, <isim>" satırı hiç görünmüyor,
                 avatarın tepesi kesik duruyordu. Karta da konum verince doğru sıraya giriyor. */}
             <div className="max-w-7xl mx-auto px-5 md:px-8 relative z-10">
-              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6">
+              <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-100 flex items-center justify-center text-2xl md:text-3xl flex-shrink-0">{myProfile?.img || "🔧"}</div>
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-surface-elevated flex items-center justify-center text-2xl md:text-3xl flex-shrink-0">{myProfile?.img || "🔧"}</div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-gray-400">{t("greetingHello")}{myProfile?.name ? `, ${myProfile.name}` : ""}</p>
-                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 truncate">{t("mechPanelTitle")}</h1>
+                    <p className="text-xs text-fg-muted">{t("greetingHello")}{myProfile?.name ? `, ${myProfile.name}` : ""}</p>
+                    <h1 className="text-xl md:text-2xl font-bold text-fg truncate">{t("mechPanelTitle")}</h1>
                   </div>
                   {/* Özet sayaçlar: tamircinin panoyu açar açmaz görmesi gereken üç sayı. */}
                   <div className="hidden sm:flex items-center gap-5 flex-shrink-0">
@@ -3320,14 +3320,14 @@ export function AppShell() {
                     ].map((s, i) => (
                       <div key={i} className="text-center">
                         <p className={`text-xl font-bold leading-none ${s.c}`}>{s.n}</p>
-                        <p className="text-[11px] text-gray-400 mt-1">{s.l}</p>
+                        <p className="text-[11px] text-fg-muted mt-1">{s.l}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-gray-100 mt-6">
+            <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-surface-elevated mt-6">
               <div className="max-w-7xl mx-auto px-5 md:px-8 flex gap-1 overflow-x-auto">
                 {[
                   // SEKME SIRASI — işin akışına göre, rastgele değil:
@@ -3350,7 +3350,7 @@ export function AppShell() {
                   { key: "analytics", label: t("mechTabAnalytics"), icon: TrendingUp },
                 ].map((tb) => {
                   const Icon = tb.icon; const active = mechTab === tb.key;
-                  return (<button key={tb.key} onClick={() => setMechTab(tb.key)} className={`px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-blue-600 border-blue-500" : "text-gray-500 border-transparent hover:text-blue-600 hover:border-blue-200"}`}><Icon size={14} /> {tb.label}</button>);
+                  return (<button key={tb.key} onClick={() => setMechTab(tb.key)} className={`px-4 py-3.5 text-sm font-medium flex items-center gap-1.5 border-b-2 transition whitespace-nowrap ${active ? "text-primary border-info" : "text-fg-secondary border-transparent hover:text-primary hover:border-blue-200"}`}><Icon size={14} /> {tb.label}</button>);
                 })}
               </div>
             </div>
@@ -3363,13 +3363,13 @@ export function AppShell() {
                 {/* TASARIM NOTU: bu segment çubuğu eskiden `flex` + `flex-1` idi; telefonda doğru
                     görünüyordu ama geniş ekranda 1280 piksele yayılıp ortasında 10 piksellik yazılar
                     kalıyordu. Artık içeriğine göre daralan (inline-flex) gerçek bir segment kontrolü. */}
-                <div className="inline-flex bg-gray-100 rounded-2xl p-1 mb-6 max-w-full overflow-x-auto">
+                <div className="inline-flex bg-surface-elevated rounded-2xl p-1 mb-6 max-w-full overflow-x-auto">
                   {[
                     { key: "active", label: `${t("activeReqTab")} (${activeAppts.length})`, icon: Wrench, dot: false },
                     { key: "quotes", label: t("quotesReqTab"), icon: ClipboardList, dot: myQuoteOffers.filter(o => o.status === "pending").length > 0 },
                     { key: "history", label: t("historyReqTab"), icon: Calendar, dot: false },
                   ].map(sv => { const Icon = sv.icon; const on = mechReqView === sv.key; return (
-                    <button key={sv.key} onClick={() => setMechReqView(sv.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-blue-700" : "text-gray-500 hover:text-gray-800"}`}><Icon size={14} /> {sv.label}{sv.dot && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />}</button>
+                    <button key={sv.key} onClick={() => setMechReqView(sv.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-primary-hover" : "text-fg-secondary hover:text-fg-strong"}`}><Icon size={14} /> {sv.label}{sv.dot && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}</button>
                   ); })}
                 </div>
                 {mechReqView === "active" && (<>
@@ -3380,9 +3380,9 @@ export function AppShell() {
                       { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Tamire Alındı").length, l: t("statInProgress"), icon: Wrench, ring: "bg-blue-50 text-blue-600", num: "text-blue-600" },
                       { n: appointments.filter(a=>isSameMechanicAppt(a)&&a.status==="Tamir Tamamlandı").length, l: t("statCompleted"), icon: CheckCircle2, ring: "bg-green-50 text-green-600", num: "text-green-600" },
                     ].map((c, i) => { const Icon = c.icon; return (
-                      <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm flex items-center gap-3.5">
+                      <div key={i} className="bg-white border border-surface-elevated rounded-2xl p-4 md:p-5 shadow-sm flex items-center gap-3.5">
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${c.ring}`}><Icon size={18} /></div>
-                        <div className="min-w-0"><p className={`text-2xl font-bold leading-none ${c.num}`}>{c.n}</p><p className="text-xs text-gray-400 mt-1.5 truncate">{c.l}</p></div>
+                        <div className="min-w-0"><p className={`text-2xl font-bold leading-none ${c.num}`}>{c.n}</p><p className="text-xs text-fg-muted mt-1.5 truncate">{c.l}</p></div>
                       </div>
                     ); })}
                   </div>
@@ -3390,56 +3390,56 @@ export function AppShell() {
                       Artık geniş ekranda 2, çok geniş ekranda 3 sütunlu okunabilir bir ızgara. */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">
                     {activeAppts.map(r => (
-                      <div key={r.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
-                        <div className="flex justify-between items-start mb-2.5 gap-3"><div><div className="flex items-center gap-1.5"><h4 className="font-semibold text-gray-900 text-[15px]">{r.customer}</h4>{customerNoShowCount(r.ownerId) > 0 && (<span title={t("noShowHistoryTitle", { n: String(customerNoShowCount(r.ownerId)) })} className="flex items-center gap-0.5 text-[10px] md:text-xs px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 font-semibold"><AlertTriangle size={9} /> {t("noShowBadge", { n: String(customerNoShowCount(r.ownerId)) })}</span>)}</div><p className="text-xs text-gray-400">{r.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div>
-                        <p className="text-xs text-gray-500 mb-3"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} /></p>
-                        {r.issuePhotos && r.issuePhotos.length > 0 && (<div className="flex gap-1.5 mb-3">{r.issuePhotos.map((src, i) => (<img loading="lazy" decoding="async" key={i} src={src} alt={t("issuePhotoAlt", { n: String(i + 1) })} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
-                        <div className="flex items-center justify-between gap-3 text-xs text-gray-400 mb-3"><div className="flex items-center gap-3"><span className="flex items-center gap-1"><Calendar size={12} />{r.date}</span><span className="flex items-center gap-1"><Clock size={12} />{r.time}</span></div><button onClick={() => openReportForm("customer", `Randevu #${r.id} · ${r.customer}`, `"${r.customer}" müşterisini bildiriyorum`)} className="flex items-center gap-1 text-gray-300 hover:text-red-500 transition"><Flag size={11} /> {t("reportBtn")}</button></div>
-                        {r.historyShareConsent === false ? (<p className="flex items-center gap-1 text-[11px] text-gray-300 mb-3"><Lock size={11} /> {t("historyShareDeclinedNotice")}</p>) : (() => { const past = appointments.filter(a => a.ownerId === r.ownerId && a.id !== r.id && ["Tamir Tamamlandı", "İptal Edildi", "Reddedildi", "Gelmedi"].includes(a.status) && a.historyShareConsent !== false && isSameMechanicAppt(a)); if (past.length === 0) return null; const isOpen = expandedCustomerHistory === r.id; return (
+                      <div key={r.id} className="bg-white border border-surface-elevated rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                        <div className="flex justify-between items-start mb-2.5 gap-3"><div><div className="flex items-center gap-1.5"><h4 className="font-semibold text-fg text-[15px]">{r.customer}</h4>{customerNoShowCount(r.ownerId) > 0 && (<span title={t("noShowHistoryTitle", { n: String(customerNoShowCount(r.ownerId)) })} className="flex items-center gap-0.5 text-[10px] md:text-xs px-1.5 py-0.5 rounded-full bg-warning-tint text-warning font-semibold"><AlertTriangle size={9} /> {t("noShowBadge", { n: String(customerNoShowCount(r.ownerId)) })}</span>)}</div><p className="text-xs text-fg-muted">{r.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div>
+                        <p className="text-xs text-fg-secondary mb-3"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} /></p>
+                        {r.issuePhotos && r.issuePhotos.length > 0 && (<div className="flex gap-1.5 mb-3">{r.issuePhotos.map((src, i) => (<img loading="lazy" decoding="async" key={i} src={src} alt={t("issuePhotoAlt", { n: String(i + 1) })} className="w-12 h-12 rounded-lg object-cover border border-surface-elevated" />))}</div>)}
+                        <div className="flex items-center justify-between gap-3 text-xs text-fg-muted mb-3"><div className="flex items-center gap-3"><span className="flex items-center gap-1"><Calendar size={12} />{r.date}</span><span className="flex items-center gap-1"><Clock size={12} />{r.time}</span></div><button onClick={() => openReportForm("customer", `Randevu #${r.id} · ${r.customer}`, `"${r.customer}" müşterisini bildiriyorum`)} className="flex items-center gap-1 text-fg-muted hover:text-red-500 transition"><Flag size={11} /> {t("reportBtn")}</button></div>
+                        {r.historyShareConsent === false ? (<p className="flex items-center gap-1 text-[11px] text-fg-muted mb-3"><Lock size={11} /> {t("historyShareDeclinedNotice")}</p>) : (() => { const past = appointments.filter(a => a.ownerId === r.ownerId && a.id !== r.id && ["Tamir Tamamlandı", "İptal Edildi", "Reddedildi", "Gelmedi"].includes(a.status) && a.historyShareConsent !== false && isSameMechanicAppt(a)); if (past.length === 0) return null; const isOpen = expandedCustomerHistory === r.id; return (
                           <div className="mb-3">
-                            <button onClick={() => setExpandedCustomerHistory(isOpen ? null : r.id)} className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-blue-600 transition"><History size={11} /> {t("pastAppointmentsCount", { n: String(past.length) })} {isOpen ? t("hideLabel") : t("showLabel")} <ChevronRight size={11} className={`transition-transform ${isOpen ? "rotate-90" : ""}`} /></button>
-                            {isOpen && (<div className="mt-2 space-y-1.5 bg-gray-50 rounded-xl p-2.5">{past.map(p => (<div key={p.id} className="flex items-center justify-between text-[11px] md:text-xs"><span className="text-gray-500 truncate">{p.date} · <TranslatedText id={`appt-issue-${p.id}`} text={p.issue} fromLang={ownerLangFor(p.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></span><span className={`text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ml-2 ${statusColor(p.status)}`}>{apptStatusLabel(p.status, lang)}</span></div>))}</div>)}
+                            <button onClick={() => setExpandedCustomerHistory(isOpen ? null : r.id)} className="flex items-center gap-1 text-[11px] text-fg-muted hover:text-primary transition"><History size={11} /> {t("pastAppointmentsCount", { n: String(past.length) })} {isOpen ? t("hideLabel") : t("showLabel")} <ChevronRight size={11} className={`transition-transform ${isOpen ? "rotate-90" : ""}`} /></button>
+                            {isOpen && (<div className="mt-2 space-y-1.5 bg-background rounded-xl p-2.5">{past.map(p => (<div key={p.id} className="flex items-center justify-between text-[11px] md:text-xs"><span className="text-fg-secondary truncate">{p.date} · <TranslatedText id={`appt-issue-${p.id}`} text={p.issue} fromLang={ownerLangFor(p.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></span><span className={`text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ml-2 ${statusColor(p.status)}`}>{apptStatusLabel(p.status, lang)}</span></div>))}</div>)}
                           </div>
                         ); })()}
-                        {r.status === "Onay Bekliyor" && (<div className="flex gap-2"><button onClick={() => acceptAppt(r.id)} className="flex-1 bg-blue-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-blue-700 transition flex items-center justify-center gap-1"><ThumbsUp size={12} /> {t("acceptBtn")}</button><button onClick={() => rejectAppt(r.id)} className="flex-1 border border-gray-200 text-gray-500 text-xs py-2 rounded-xl font-medium hover:bg-gray-50 transition flex items-center justify-center gap-1"><ThumbsDown size={12} /> {t("rejectBtn")}</button></div>)}
-                        {(r.status === "Sırada" || r.status === "Tamire Alındı") && (<div className="flex gap-2"><button onClick={() => r.status === "Tamire Alındı" ? setCompletingApptId(r.id) : advanceStatus(r.id)} className="flex-1 bg-blue-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-blue-700 transition">{r.status === "Sırada" ? t("takeInForRepairBtn") : t("completedSmsBtn")}</button>{r.status === "Sırada" && (<button onClick={() => markNoShow(r.id)} className="border border-gray-200 text-gray-500 text-xs py-2 px-3 rounded-xl font-medium hover:bg-gray-50 transition whitespace-nowrap">{t("noShowBtn")}</button>)}</div>)}
+                        {r.status === "Onay Bekliyor" && (<div className="flex gap-2"><button onClick={() => acceptAppt(r.id)} className="flex-1 bg-primary text-white text-xs py-2 rounded-xl font-medium hover:bg-primary-hover transition flex items-center justify-center gap-1"><ThumbsUp size={12} /> {t("acceptBtn")}</button><button onClick={() => rejectAppt(r.id)} className="flex-1 border border-border text-fg-secondary text-xs py-2 rounded-xl font-medium hover:bg-background transition flex items-center justify-center gap-1"><ThumbsDown size={12} /> {t("rejectBtn")}</button></div>)}
+                        {(r.status === "Sırada" || r.status === "Tamire Alındı") && (<div className="flex gap-2"><button onClick={() => r.status === "Tamire Alındı" ? setCompletingApptId(r.id) : advanceStatus(r.id)} className="flex-1 bg-primary text-white text-xs py-2 rounded-xl font-medium hover:bg-primary-hover transition">{r.status === "Sırada" ? t("takeInForRepairBtn") : t("completedSmsBtn")}</button>{r.status === "Sırada" && (<button onClick={() => markNoShow(r.id)} className="border border-border text-fg-secondary text-xs py-2 px-3 rounded-xl font-medium hover:bg-background transition whitespace-nowrap">{t("noShowBtn")}</button>)}</div>)}
                       </div>
                     ))}
                   </div>
-                  {activeAppts.length === 0 && (<div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-20"><Calendar size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noPendingWorkNotice")}</p></div>)}
+                  {activeAppts.length === 0 && (<div className="bg-white border border-dashed border-border rounded-3xl text-center py-20"><Calendar size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noPendingWorkNotice")}</p></div>)}
                 </>)}
                 {mechReqView === "quotes" && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">
-                    {myQuoteOffers.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-20"><ClipboardList size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noQuoteRequestsNotice")}</p></div>}
+                    {myQuoteOffers.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-border rounded-3xl text-center py-20"><ClipboardList size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noQuoteRequestsNotice")}</p></div>}
                     {myQuoteOffers.map(o => {
                       const req = quoteRequests.find(r => r.id === o.requestId);
                       if (!req) return null;
                       const responding = respondingQuoteOfferId === o.id;
                       return (
-                        <div key={o.id} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
-                          <div className="flex justify-between items-start mb-2"><div><h4 className="font-semibold text-gray-800 text-sm">{req.customer}</h4><p className="text-xs text-gray-400">{req.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${o.status === "pending" ? "bg-amber-50 text-amber-600" : o.status === "submitted" ? "bg-blue-50 text-blue-600" : o.status === "accepted" ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>{o.status === "pending" ? t("quoteStatusPending") : o.status === "submitted" ? t("quoteStatusSubmitted") : o.status === "accepted" ? t("quoteStatusAccepted") : o.status === "declined" ? t("quoteStatusDeclined") : t("quoteStatusLost")}</span></div>
-                          <p className="text-xs text-gray-500 mb-3"><TranslatedText id={`quotereq-issue-${req.id}`} text={req.issue} fromLang={ownerLangFor(req.ownerId)} viewerLang={myProfile.lang || "tr"} /></p>
-                          {req.photos && req.photos.length > 0 && (<div className="flex gap-1.5 mb-3">{req.photos.map((src, i) => (<img loading="lazy" decoding="async" key={i} src={src} alt={t("issuePhotoAlt", { n: String(i + 1) })} className="w-12 h-12 rounded-lg object-cover border border-gray-100" />))}</div>)}
-                          {o.status === "pending" && !responding && (<div className="flex gap-2"><button onClick={() => { setRespondingQuoteOfferId(o.id); setQuoteOfferForm({ price: "", etaDays: "", note: "" }); }} className="flex-1 bg-blue-600 text-white text-xs py-2 rounded-xl font-medium hover:bg-blue-700 transition">{t("giveQuoteBtn")}</button><button onClick={() => declineQuoteOffer(o.id)} className="border border-gray-200 text-gray-500 text-xs px-3 py-2 rounded-xl font-medium hover:bg-gray-50 transition">{t("declineQuoteBtn")}</button></div>)}
+                        <div key={o.id} className="bg-white border border-surface-elevated rounded-2xl p-5 shadow-sm hover:shadow-md transition">
+                          <div className="flex justify-between items-start mb-2"><div><h4 className="font-semibold text-fg-strong text-sm">{req.customer}</h4><p className="text-xs text-fg-muted">{req.vehicle}</p></div><span className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${o.status === "pending" ? "bg-warning-tint text-warning" : o.status === "submitted" ? "bg-primary-tint text-primary" : o.status === "accepted" ? "bg-success-tint text-success" : "bg-surface-elevated text-fg-muted"}`}>{o.status === "pending" ? t("quoteStatusPending") : o.status === "submitted" ? t("quoteStatusSubmitted") : o.status === "accepted" ? t("quoteStatusAccepted") : o.status === "declined" ? t("quoteStatusDeclined") : t("quoteStatusLost")}</span></div>
+                          <p className="text-xs text-fg-secondary mb-3"><TranslatedText id={`quotereq-issue-${req.id}`} text={req.issue} fromLang={ownerLangFor(req.ownerId)} viewerLang={myProfile.lang || "tr"} /></p>
+                          {req.photos && req.photos.length > 0 && (<div className="flex gap-1.5 mb-3">{req.photos.map((src, i) => (<img loading="lazy" decoding="async" key={i} src={src} alt={t("issuePhotoAlt", { n: String(i + 1) })} className="w-12 h-12 rounded-lg object-cover border border-surface-elevated" />))}</div>)}
+                          {o.status === "pending" && !responding && (<div className="flex gap-2"><button onClick={() => { setRespondingQuoteOfferId(o.id); setQuoteOfferForm({ price: "", etaDays: "", note: "" }); }} className="flex-1 bg-primary text-white text-xs py-2 rounded-xl font-medium hover:bg-primary-hover transition">{t("giveQuoteBtn")}</button><button onClick={() => declineQuoteOffer(o.id)} className="border border-border text-fg-secondary text-xs px-3 py-2 rounded-xl font-medium hover:bg-background transition">{t("declineQuoteBtn")}</button></div>)}
                           {o.status === "pending" && responding && (
-                            <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+                            <div className="bg-background rounded-xl p-3 space-y-2">
                               <div className="flex gap-2">
-                                <div className="flex-1"><label className="text-[10px] md:text-xs text-gray-400 block mb-0.5">{t("priceLabel")}</label><input type="number" min="0" value={quoteOfferForm.price} onChange={(e) => setQuoteOfferForm(f => ({ ...f, price: e.target.value }))} placeholder={t("pricePlaceholderExample")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
-                                <div className="w-24"><label className="text-[10px] md:text-xs text-gray-400 block mb-0.5">{t("durationDaysLabel")}</label><input type="number" min="0" value={quoteOfferForm.etaDays} onChange={(e) => setQuoteOfferForm(f => ({ ...f, etaDays: e.target.value }))} placeholder="1" className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white" /></div>
+                                <div className="flex-1"><label className="text-[10px] md:text-xs text-fg-muted block mb-0.5">{t("priceLabel")}</label><input type="number" min="0" value={quoteOfferForm.price} onChange={(e) => setQuoteOfferForm(f => ({ ...f, price: e.target.value }))} placeholder={t("pricePlaceholderExample")} className="w-full px-2.5 py-2 rounded-lg border border-border text-xs bg-white" /></div>
+                                <div className="w-24"><label className="text-[10px] md:text-xs text-fg-muted block mb-0.5">{t("durationDaysLabel")}</label><input type="number" min="0" value={quoteOfferForm.etaDays} onChange={(e) => setQuoteOfferForm(f => ({ ...f, etaDays: e.target.value }))} placeholder="1" className="w-full px-2.5 py-2 rounded-lg border border-border text-xs bg-white" /></div>
                               </div>
-                              <textarea value={quoteOfferForm.note} onChange={(e) => setQuoteOfferForm(f => ({ ...f, note: e.target.value }))} rows={2} placeholder={t("noteOptionalPlaceholder")} className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-xs bg-white resize-none" />
+                              <textarea value={quoteOfferForm.note} onChange={(e) => setQuoteOfferForm(f => ({ ...f, note: e.target.value }))} rows={2} placeholder={t("noteOptionalPlaceholder")} className="w-full px-2.5 py-2 rounded-lg border border-border text-xs bg-white resize-none" />
                               {/* GERÇEK HATA DÜZELTMESİ: buton önceden `disabled` ile tamamen tıklanamaz hale geliyordu —
                               tarayıcılar disabled elemanlarda hiçbir click olayı ateşlemez, bu da geçersiz bir fiyatta
                               (ör. otomatik doldurma React state'ini senkronize etmeden inputu doldurmuşsa) kullanıcının
                               "butona basıyorum hiçbir şey olmuyor" şeklinde algılamasına yol açıyordu. Artık buton her
                               zaman tıklanabilir; geçersiz fiyatta submitQuoteOffer kendi içinde net bir uyarı gösteriyor. */}
-                              <div className="flex gap-2"><button onClick={() => setRespondingQuoteOfferId(null)} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-1.5 rounded-lg font-medium">{t("giveUpBtn")}</button><button onClick={() => submitQuoteOffer(o.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium ${parsePriceNumber(quoteOfferForm.price) ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-300 text-gray-600"}`}>{t("sendQuoteBtn")}</button></div>
+                              <div className="flex gap-2"><button onClick={() => setRespondingQuoteOfferId(null)} className="flex-1 border border-border text-fg-secondary text-[11px] py-1.5 rounded-lg font-medium">{t("giveUpBtn")}</button><button onClick={() => submitQuoteOffer(o.id)} className={`flex-1 text-[11px] py-1.5 rounded-lg font-medium ${parsePriceNumber(quoteOfferForm.price) ? "bg-primary text-white hover:bg-primary-hover" : "bg-fg-muted text-fg-secondary"}`}>{t("sendQuoteBtn")}</button></div>
                             </div>
                           )}
-                          {o.status === "submitted" && (<div className="bg-blue-50 rounded-xl p-3 flex items-center justify-between"><span className="text-xs text-gray-600">{t("yourQuoteLabel")} <strong className="text-blue-600">{o.price}₺</strong>{o.etaDays ? ` · ${o.etaDays} ${t("daysSuffix")}` : ""}</span><span className="text-[10px] text-gray-400">{t("awaitingResponseEllipsis")}</span></div>)}
-                          {o.status === "accepted" && (<p className="text-[11px] text-green-600 flex items-center gap-1"><CheckCircle2 size={12} /> {t("quoteAcceptedNotice")}</p>)}
-                          {o.status === "lost" && (<p className="text-[11px] text-gray-400">{t("quoteLostNotice")}</p>)}
-                          {o.status === "declined" && (<p className="text-[11px] text-gray-400">{t("quoteDeclinedNotice")}</p>)}
+                          {o.status === "submitted" && (<div className="bg-primary-tint rounded-xl p-3 flex items-center justify-between"><span className="text-xs text-fg-secondary">{t("yourQuoteLabel")} <strong className="text-primary">{o.price}₺</strong>{o.etaDays ? ` · ${o.etaDays} ${t("daysSuffix")}` : ""}</span><span className="text-[10px] text-fg-muted">{t("awaitingResponseEllipsis")}</span></div>)}
+                          {o.status === "accepted" && (<p className="text-[11px] text-success flex items-center gap-1"><CheckCircle2 size={12} /> {t("quoteAcceptedNotice")}</p>)}
+                          {o.status === "lost" && (<p className="text-[11px] text-fg-muted">{t("quoteLostNotice")}</p>)}
+                          {o.status === "declined" && (<p className="text-[11px] text-fg-muted">{t("quoteDeclinedNotice")}</p>)}
                         </div>
                       );
                     })}
@@ -3447,17 +3447,17 @@ export function AppShell() {
                 )}
                 {mechReqView === "history" && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
-                    {historyByDate.length === 0 && <div className="lg:col-span-2 bg-white border border-dashed border-gray-200 rounded-3xl text-center py-20"><History size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noHistoryYetNotice")}</p></div>}
+                    {historyByDate.length === 0 && <div className="lg:col-span-2 bg-white border border-dashed border-border rounded-3xl text-center py-20"><History size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noHistoryYetNotice")}</p></div>}
                     {historyByDate.map(([date, items]) => {
                       const isOpen = historyExpandedDate === date;
                       const completedCount = items.filter(i => i.status === "Tamir Tamamlandı").length;
                       return (
-                        <div key={date} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+                        <div key={date} className="bg-white border border-surface-elevated rounded-2xl overflow-hidden">
                           <button onClick={() => setHistoryExpandedDate(isOpen ? null : date)} className="w-full flex items-center justify-between p-3">
-                            <div className="flex items-center gap-2"><div className="w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center"><Calendar size={15} className="text-gray-400" /></div><div className="text-left"><p className="text-sm font-semibold text-gray-700">{date}</p><p className="text-[10px] text-gray-400">{t("completedAndRecordsCount", { done: String(completedCount), total: String(items.length) })}</p></div></div>
-                            <ChevronRight size={14} className={`text-gray-300 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                            <div className="flex items-center gap-2"><div className="w-9 h-9 bg-white border border-border rounded-xl flex items-center justify-center"><Calendar size={15} className="text-fg-muted" /></div><div className="text-left"><p className="text-sm font-semibold text-fg-strong">{date}</p><p className="text-[10px] text-fg-muted">{t("completedAndRecordsCount", { done: String(completedCount), total: String(items.length) })}</p></div></div>
+                            <ChevronRight size={14} className={`text-fg-muted transition-transform ${isOpen ? "rotate-90" : ""}`} />
                           </button>
-                          {isOpen && (<div className="px-3 pb-3 border-t border-gray-50 pt-2 space-y-2">{items.map(r => (<div key={r.id} className="bg-white border border-gray-200 rounded-xl p-3"><div className="flex justify-between items-start mb-1"><h4 className="text-xs font-semibold text-gray-700">{r.customer}</h4><span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div><p className="text-[11px] text-gray-400">{r.vehicle}</p><p className="text-[11px] text-gray-500 mt-1"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></p><div className="flex items-center justify-between mt-1"><p className="text-[10px] text-gray-300 flex items-center gap-1"><Clock size={10} />{r.time}</p>{r.status === "Tamir Tamamlandı" && (<button onClick={() => downloadAppointmentReceipt(r)} className="text-[10px] text-blue-600 font-medium flex items-center gap-0.5 hover:underline"><FileText size={10} /> {t("downloadReceiptBtn")}</button>)}</div></div>))}</div>)}
+                          {isOpen && (<div className="px-3 pb-3 border-t border-background pt-2 space-y-2">{items.map(r => (<div key={r.id} className="bg-white border border-border rounded-xl p-3"><div className="flex justify-between items-start mb-1"><h4 className="text-xs font-semibold text-fg-strong">{r.customer}</h4><span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(r.status)}`}>{apptStatusLabel(r.status, lang)}</span></div><p className="text-[11px] text-fg-muted">{r.vehicle}</p><p className="text-[11px] text-fg-secondary mt-1"><TranslatedText id={`appt-issue-${r.id}`} text={r.issue} fromLang={ownerLangFor(r.ownerId)} viewerLang={myProfile.lang || "tr"} compact /></p><div className="flex items-center justify-between mt-1"><p className="text-[10px] text-fg-muted flex items-center gap-1"><Clock size={10} />{r.time}</p>{r.status === "Tamir Tamamlandı" && (<button onClick={() => downloadAppointmentReceipt(r)} className="text-[10px] text-primary font-medium flex items-center gap-0.5 hover:underline"><FileText size={10} /> {t("downloadReceiptBtn")}</button>)}</div></div>))}</div>)}
                         </div>
                       );
                     })}
@@ -3483,49 +3483,49 @@ export function AppShell() {
                 <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
                   <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-5 items-start">
                     {/* SOL: sohbet listesi */}
-                    <div className={`bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden ${mechConvo ? "hidden lg:block" : ""}`}>
-                      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h3 className="font-bold text-gray-900 text-sm">{t("mechTabMessages")}</h3>
-                        <span className="text-xs text-gray-400">{myConvos.length}</span>
+                    <div className={`bg-white border border-surface-elevated rounded-3xl shadow-sm overflow-hidden ${mechConvo ? "hidden lg:block" : ""}`}>
+                      <div className="px-5 py-4 border-b border-surface-elevated flex items-center justify-between">
+                        <h3 className="font-bold text-fg text-sm">{t("mechTabMessages")}</h3>
+                        <span className="text-xs text-fg-muted">{myConvos.length}</span>
                       </div>
-                      <div className="max-h-[62vh] overflow-y-auto divide-y divide-gray-50">
+                      <div className="max-h-[62vh] overflow-y-auto divide-y divide-background">
                         {myConvos.map(c => {
                           const last = c.messages[c.messages.length - 1];
                           const on = mechActiveConvoId === c.id;
                           return (
-                            <button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className={`w-full text-left px-5 py-4 transition flex items-center gap-3 ${on ? "bg-blue-50/70" : "hover:bg-gray-50"}`}>
-                              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={18} className="text-blue-600" /></div>
+                            <button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className={`w-full text-left px-5 py-4 transition flex items-center gap-3 ${on ? "bg-blue-50/70" : "hover:bg-background"}`}>
+                              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={18} className="text-primary" /></div>
                               <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-gray-900 text-sm truncate">{t("vehicleOwnerLabel")}</h4>
-                                <p className="text-xs text-gray-400 truncate">{last ? last.text : t("noMessagesYet")}</p>
+                                <h4 className="font-semibold text-fg text-sm truncate">{t("vehicleOwnerLabel")}</h4>
+                                <p className="text-xs text-fg-muted truncate">{last ? last.text : t("noMessagesYet")}</p>
                               </div>
-                              <ChevronRight size={15} className={`flex-shrink-0 ${on ? "text-blue-400" : "text-gray-300"}`} />
+                              <ChevronRight size={15} className={`flex-shrink-0 ${on ? "text-blue-400" : "text-fg-muted"}`} />
                             </button>
                           );
                         })}
-                        {myConvos.length === 0 && (<div className="text-center py-16 px-5"><MessageCircle size={36} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noMessagesYet")}</p></div>)}
+                        {myConvos.length === 0 && (<div className="text-center py-16 px-5"><MessageCircle size={36} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noMessagesYet")}</p></div>)}
                       </div>
                     </div>
                     {/* SAĞ: seçili sohbet */}
-                    <div className={`bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[62vh] ${mechConvo ? "" : "hidden lg:flex"}`}>
+                    <div className={`bg-white border border-surface-elevated rounded-3xl shadow-sm overflow-hidden flex flex-col min-h-[62vh] ${mechConvo ? "" : "hidden lg:flex"}`}>
                       {mechConvo ? (<>
-                        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5">
-                          <button onClick={() => setMechActiveConvoId(null)} aria-label={t("back")} className="text-gray-400 hover:text-gray-700 lg:hidden"><ChevronLeft size={18} /></button>
-                          <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={16} className="text-blue-600" /></div>
-                          <span className="text-sm font-semibold text-gray-900">{t("vehicleOwnerChatTitle")}</span>
+                        <div className="px-5 py-4 border-b border-surface-elevated flex items-center gap-2.5">
+                          <button onClick={() => setMechActiveConvoId(null)} aria-label={t("back")} className="text-fg-muted hover:text-fg-strong lg:hidden"><ChevronLeft size={18} /></button>
+                          <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={16} className="text-primary" /></div>
+                          <span className="text-sm font-semibold text-fg">{t("vehicleOwnerChatTitle")}</span>
                         </div>
                         <div className="flex-1 px-5 py-5 overflow-y-auto max-h-[52vh] bg-gray-50/50">
                           {mechConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={myProfile.lang || "tr"} mine={m.sender === "mechanic"} />))}
                         </div>
-                        <div className="px-5 py-4 border-t border-gray-100 flex items-center gap-2">
+                        <div className="px-5 py-4 border-t border-surface-elevated flex items-center gap-2">
                           <EmojiPicker onPick={(em) => setMechChatInput((v) => `${v || ""}${em}`)} />
-                          <input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder={t("replyInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
-                          <button onClick={() => sendMechMessage(mechChatInput)} aria-label={t("sendBtn")} className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition flex-shrink-0"><Send size={16} /></button>
+                          <input value={mechChatInput} onChange={(e) => setMechChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMechMessage(mechChatInput); }} placeholder={t("replyInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+                          <button onClick={() => sendMechMessage(mechChatInput)} aria-label={t("sendBtn")} className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary-hover transition flex-shrink-0"><Send size={16} /></button>
                         </div>
                       </>) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-center px-8 py-20">
-                          <MessageCircle size={40} className="text-gray-200 mb-3" />
-                          <p className="text-gray-400 text-sm">{t("selectConversationHint")}</p>
+                          <MessageCircle size={40} className="text-fg-muted mb-3" />
+                          <p className="text-fg-muted text-sm">{t("selectConversationHint")}</p>
                         </div>
                       )}
                     </div>
@@ -3535,9 +3535,9 @@ export function AppShell() {
             })()}
             {mechTab === "market" && (
               <div className="w-full max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-8">
-                <div className="inline-flex bg-gray-100 rounded-2xl p-1 mb-6">
-                  <button onClick={() => setMechListingsSubTab("cars")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "cars" ? "bg-white shadow-sm text-blue-700" : "text-gray-500 hover:text-gray-800"}`}><Car size={14} /> {t("myCarListingsTab")}</button>
-                  <button onClick={() => setMechListingsSubTab("jobs")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "jobs" ? "bg-white shadow-sm text-blue-700" : "text-gray-500 hover:text-gray-800"}`}><Briefcase size={14} /> {t("myJobListingsTab")}</button>
+                <div className="inline-flex bg-surface-elevated rounded-2xl p-1 mb-6">
+                  <button onClick={() => setMechListingsSubTab("cars")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "cars" ? "bg-white shadow-sm text-primary-hover" : "text-fg-secondary hover:text-fg-strong"}`}><Car size={14} /> {t("myCarListingsTab")}</button>
+                  <button onClick={() => setMechListingsSubTab("jobs")} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${mechListingsSubTab === "jobs" ? "bg-white shadow-sm text-primary-hover" : "text-fg-secondary hover:text-fg-strong"}`}><Briefcase size={14} /> {t("myJobListingsTab")}</button>
                 </div>
                 {mechListingsSubTab === "cars" && (() => {
                   const myCarListings = listings.filter(isMyListing);
@@ -3548,28 +3548,28 @@ export function AppShell() {
                           uzayan dev buton yerine içeriğine göre daralan bir buton. */}
                       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <h2 className="text-lg font-bold text-gray-900">{t("myCarListingsTab")}</h2>
-                          <span className="text-sm text-gray-300">({myCarListings.length})</span>
-                          {myProfile?.verified && <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 flex items-center gap-1 flex-shrink-0"><BadgeCheck size={12} /> {t("authorizedDealerBadge")}</span>}
+                          <h2 className="text-lg font-bold text-fg">{t("myCarListingsTab")}</h2>
+                          <span className="text-sm text-fg-muted">({myCarListings.length})</span>
+                          {myProfile?.verified && <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-primary-tint text-primary flex items-center gap-1 flex-shrink-0"><BadgeCheck size={12} /> {t("authorizedDealerBadge")}</span>}
                         </div>
-                        <button onClick={() => openSellForm(null)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
+                        <button onClick={() => openSellForm(null)} className="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("sellMyCar")}</button>
                       </div>
-                      <p className="text-xs text-gray-400 -mt-3 mb-5">{t("myListingsSub")}</p>
+                      <p className="text-xs text-fg-muted -mt-3 mb-5">{t("myListingsSub")}</p>
                       {myCarListings.length === 0 ? (
-                        <div className="text-center py-16"><Tag size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnListings")}</p></div>
+                        <div className="text-center py-16"><Tag size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noOwnListings")}</p></div>
                       ) : (
                         <>
                           <div className="flex items-center justify-between mb-2">
-                            <button onClick={() => setGallerySelectedIds(allSelected ? [] : myCarListings.map(l => l.id))} className="text-xs font-medium text-gray-500 hover:text-gray-800">{allSelected || gallerySelectedIds.length > 0 ? t("galleryClearSelectionBtn") : t("gallerySelectAllBtn")}</button>
-                            {gallerySelectedIds.length > 0 && <span className="text-xs font-semibold text-blue-600">{t("gallerySelectedCountLabel", { n: String(gallerySelectedIds.length) })}</span>}
+                            <button onClick={() => setGallerySelectedIds(allSelected ? [] : myCarListings.map(l => l.id))} className="text-xs font-medium text-fg-secondary hover:text-fg-strong">{allSelected || gallerySelectedIds.length > 0 ? t("galleryClearSelectionBtn") : t("gallerySelectAllBtn")}</button>
+                            {gallerySelectedIds.length > 0 && <span className="text-xs font-semibold text-primary">{t("gallerySelectedCountLabel", { n: String(gallerySelectedIds.length) })}</span>}
                           </div>
                           {gallerySelectedIds.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-3 bg-blue-50 border border-blue-100 rounded-xl p-2.5">
-                              <button onClick={() => bulkFeatureSelectedListings(true)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-blue-300 transition">{t("galleryBulkFeatureBtn")}</button>
-                              <button onClick={() => bulkFeatureSelectedListings(false)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-blue-300 transition">{t("galleryBulkUnfeatureBtn")}</button>
-                              <button onClick={() => bulkSetStatusSelectedListings("sold")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-blue-300 transition">{t("galleryBulkMarkSoldBtn")}</button>
-                              <button onClick={() => bulkSetStatusSelectedListings("active")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:border-blue-300 transition">{t("galleryBulkMarkActiveBtn")}</button>
-                              <button onClick={bulkDeleteSelectedListings} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-red-200 text-red-600 hover:bg-red-50 transition flex items-center gap-1"><Trash2 size={12} /> {t("galleryBulkDeleteBtn")}</button>
+                            <div className="flex flex-wrap gap-2 mb-3 bg-primary-tint border border-blue-100 rounded-xl p-2.5">
+                              <button onClick={() => bulkFeatureSelectedListings(true)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-border text-fg-strong hover:border-blue-300 transition">{t("galleryBulkFeatureBtn")}</button>
+                              <button onClick={() => bulkFeatureSelectedListings(false)} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-border text-fg-strong hover:border-blue-300 transition">{t("galleryBulkUnfeatureBtn")}</button>
+                              <button onClick={() => bulkSetStatusSelectedListings("sold")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-border text-fg-strong hover:border-blue-300 transition">{t("galleryBulkMarkSoldBtn")}</button>
+                              <button onClick={() => bulkSetStatusSelectedListings("active")} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-border text-fg-strong hover:border-blue-300 transition">{t("galleryBulkMarkActiveBtn")}</button>
+                              <button onClick={bulkDeleteSelectedListings} className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-red-200 text-error hover:bg-error-tint transition flex items-center gap-1"><Trash2 size={12} /> {t("galleryBulkDeleteBtn")}</button>
                             </div>
                           )}
                           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">
@@ -3580,26 +3580,26 @@ export function AppShell() {
                               const offerCount = (l.offers || []).filter(o => o.status !== "replaced").length;
                               const checked = gallerySelectedIds.includes(l.id);
                               return (
-                                <div key={l.id} className={`bg-white border rounded-2xl p-4 shadow-sm transition ${checked ? "border-blue-300 ring-1 ring-blue-100" : "border-gray-100 hover:shadow-md"}`}>
+                                <div key={l.id} className={`bg-white border rounded-2xl p-4 shadow-sm transition ${checked ? "border-blue-300 ring-1 ring-blue-100" : "border-surface-elevated hover:shadow-md"}`}>
                                   <div className="flex items-center gap-3">
                                     <input type="checkbox" checked={checked} onChange={() => toggleGallerySelect(l.id)} aria-label={t("gallerySelectAllBtn")} className="w-4 h-4 flex-shrink-0 accent-blue-600" />
                                     <button onClick={() => setSelectedListingId(l.id)} className="flex items-center gap-3 flex-1 min-w-0 text-left">
-                                      <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 100)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover" /> : l.photo}</div>
+                                      <div className="w-12 h-12 rounded-xl bg-surface-elevated flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(l.photo) ? <img src={imgThumb(l.photo, 100)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={`${l.brand ?? ""} ${l.model ?? ""}`.trim() || t("listingPhotoAlt")} className="w-full h-full object-cover" /> : l.photo}</div>
                                       <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-semibold text-gray-800 truncate">{l.brand} {l.model} ({l.year})</p>
-                                        <p className="text-xs text-gray-400">{l.price}{l.featured && <span className="ml-1.5 text-amber-500">★</span>}</p>
+                                        <p className="text-sm font-semibold text-fg-strong truncate">{l.brand} {l.model} ({l.year})</p>
+                                        <p className="text-xs text-fg-muted">{l.price}{l.featured && <span className="ml-1.5 text-amber-500">★</span>}</p>
                                       </div>
                                     </button>
-                                    <span className={`text-[10px] font-bold text-white px-2 py-1 rounded-full flex-shrink-0 ${l.adminRemoved ? "bg-gray-900" : listingStatusMeta(l.status, t).color}`}>{l.adminRemoved ? t("removedStatusLabel") : listingStatusMeta(l.status, t).label}</span>
+                                    <span className={`text-[10px] font-bold text-white px-2 py-1 rounded-full flex-shrink-0 ${l.adminRemoved ? "bg-secondary" : listingStatusMeta(l.status, t).color}`}>{l.adminRemoved ? t("removedStatusLabel") : listingStatusMeta(l.status, t).label}</span>
                                   </div>
-                                  <div className="flex items-center justify-between gap-2 pt-2.5 mt-2.5 border-t border-gray-100 text-[11px] text-gray-400">
+                                  <div className="flex items-center justify-between gap-2 pt-2.5 mt-2.5 border-t border-surface-elevated text-[11px] text-fg-muted">
                                     <div className="flex items-center gap-3 flex-wrap">
                                       <span>{days != null ? t("galleryDaysActiveLabel", { n: String(days) }) : "—"}</span>
                                       <span className="flex items-center gap-1"><Eye size={11} /> {stats ? t("galleryViewsCountLabel", { n: String(stats.totalViews) }) : "…"}</span>
                                       <span>{t("galleryMessagesCountLabel", { n: String(msgCount) })}</span>
                                       <span>{offerCount > 0 ? t("offerCountSuffixShort", { n: String(offerCount) }) : t("noOffersYetShort")}</span>
                                     </div>
-                                    <button onClick={() => openSellForm({ brand: l.brand, model: l.model, year: l.year, km: l.km, price: l.price, description: l.description, photo: l.photo, fuelType: l.fuelType, transmission: l.transmission, power: l.power, firstReg: l.firstReg, color: l.color, city: l.city || "", _vehicleId: null, _editingId: l.id })} className="text-gray-500 hover:text-gray-900 flex items-center gap-1 flex-shrink-0"><Pencil size={11} /> {t("editBtn")}</button>
+                                    <button onClick={() => openSellForm({ brand: l.brand, model: l.model, year: l.year, km: l.km, price: l.price, description: l.description, photo: l.photo, fuelType: l.fuelType, transmission: l.transmission, power: l.power, firstReg: l.firstReg, color: l.color, city: l.city || "", _vehicleId: null, _editingId: l.id })} className="text-fg-secondary hover:text-fg flex items-center gap-1 flex-shrink-0"><Pencil size={11} /> {t("editBtn")}</button>
                                   </div>
                                 </div>
                               );
@@ -3612,14 +3612,14 @@ export function AppShell() {
                 })()}
                 {mechListingsSubTab === "jobs" && (<>
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-                    <h2 className="text-lg font-bold text-gray-900">{t("myJobListingsTab")}</h2>
-                    <button onClick={() => openJobForm(null)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("postNewJobBtn")}</button>
+                    <h2 className="text-lg font-bold text-fg">{t("myJobListingsTab")}</h2>
+                    <button onClick={() => openJobForm(null)} className="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center gap-2 flex-shrink-0"><Plus size={16} /> {t("postNewJobBtn")}</button>
                   </div>
-                  <p className="text-xs text-gray-400 mb-5">{t("jobListingsHint")}</p>
+                  <p className="text-xs text-fg-muted mb-5">{t("jobListingsHint")}</p>
                   {/* ÖNEMLİ: mechanicId ile eşleştir — mechanicName (isim) ile eşleştirme, tamirci
                       işletme adını değiştirdiğinde kendi iş ilanlarının bu listeden tamamen
                       kaybolmasına (düzenleyememesine/kapatamamasına) yol açıyordu. */}
-                  {jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).length === 0 ? (<div className="text-center py-16"><Briefcase size={40} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noOwnJobListings")}</p></div>) : (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">{jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).map(j => (<JobCard key={j.id} j={j} />))}</div>)}
+                  {jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).length === 0 ? (<div className="text-center py-16"><Briefcase size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noOwnJobListings")}</p></div>) : (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">{jobListings.filter(j => j.mechanicId != null ? j.mechanicId === MY_MECHANIC_ID : j.mechanicName === myProfile?.name).map(j => (<JobCard key={j.id} j={j} />))}</div>)}
                 </>)}
               </div>
             )}
@@ -3636,7 +3636,7 @@ export function AppShell() {
                     <div className="min-w-0 space-y-8">
                       {favMechs.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Wrench size={17} className="text-blue-500" /> {t("favoriteMechanicsLabel")} <span className="text-gray-300 font-normal text-sm">({favMechs.length})</span></h2>
+                          <h2 className="text-lg font-bold text-fg mb-4 flex items-center gap-2"><Wrench size={17} className="text-info" /> {t("favoriteMechanicsLabel")} <span className="text-fg-muted font-normal text-sm">({favMechs.length})</span></h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">
                             {favMechs.map(m => (<MechCard key={m.id} m={{ ...m, effectiveDistance: getEffectiveDistance(m) }} onHover={undefined} />))}
                           </div>
@@ -3644,21 +3644,21 @@ export function AppShell() {
                       )}
                       {favListings.length > 0 && (
                         <div>
-                          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Car size={17} className="text-blue-500" /> {t("favoriteListingsLabel")} <span className="text-gray-300 font-normal text-sm">({favListings.length})</span></h2>
+                          <h2 className="text-lg font-bold text-fg mb-4 flex items-center gap-2"><Car size={17} className="text-info" /> {t("favoriteListingsLabel")} <span className="text-fg-muted font-normal text-sm">({favListings.length})</span></h2>
                           <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4">{favListings.map(l => (<ListingCard key={l.id} l={l} />))}</div>
                         </div>
                       )}
                       {favMechs.length === 0 && favListings.length === 0 && (
-                        <div className="bg-white border border-dashed border-gray-200 rounded-3xl text-center py-24">
-                          <Heart size={40} className="mx-auto text-gray-200 mb-3" />
-                          <p className="text-gray-400 text-sm">{t("noFavoritesYet")}</p>
-                          <p className="text-gray-300 text-xs mt-1">{t("noFavoritesHint")}</p>
+                        <div className="bg-white border border-dashed border-border rounded-3xl text-center py-24">
+                          <Heart size={40} className="mx-auto text-fg-muted mb-3" />
+                          <p className="text-fg-muted text-sm">{t("noFavoritesYet")}</p>
+                          <p className="text-fg-muted text-xs mt-1">{t("noFavoritesHint")}</p>
                         </div>
                       )}
                     </div>
                     <aside className="lg:sticky lg:top-20">
-                      <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5">
-                        <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm"><Bell size={15} className="text-blue-500" /> {t("savedSearchesLabel")} <span className="text-gray-300 font-normal">({savedSearches.length})</span></h2>
+                      <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5">
+                        <h2 className="font-bold text-fg mb-4 flex items-center gap-2 text-sm"><Bell size={15} className="text-info" /> {t("savedSearchesLabel")} <span className="text-fg-muted font-normal">({savedSearches.length})</span></h2>
                         <SavedSearchList showUpdate compact />
                       </div>
                     </aside>
@@ -3752,20 +3752,20 @@ export function AppShell() {
                       duruyordu. Artık tek bir başlık satırında: solda segment, sağda PDF; altında
                       zaman aralığı çipleri. */}
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <div className="inline-flex bg-gray-100 rounded-2xl p-1 max-w-full overflow-x-auto">
+                    <div className="inline-flex bg-surface-elevated rounded-2xl p-1 max-w-full overflow-x-auto">
                       {[
                         { key: "overview", label: t("analyticsOverviewTab"), icon: TrendingUp },
                         { key: "earnings", label: t("analyticsEarningsTab"), icon: Banknote },
                         { key: "traffic", label: t("analyticsTrafficTab"), icon: Compass },
                       ].map(av => { const Icon = av.icon; const on = mechAnalyticsView === av.key; return (
-                        <button key={av.key} onClick={() => setMechAnalyticsView(av.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-blue-700" : "text-gray-500 hover:text-gray-800"}`}><Icon size={14} /> {av.label}</button>
+                        <button key={av.key} onClick={() => setMechAnalyticsView(av.key)} className={`px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 whitespace-nowrap ${on ? "bg-white shadow-sm text-primary-hover" : "text-fg-secondary hover:text-fg-strong"}`}><Icon size={14} /> {av.label}</button>
                       ); })}
                     </div>
-                    <button onClick={handleDownloadPdf} className="border border-blue-200 text-blue-600 px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-50 transition flex items-center gap-2 flex-shrink-0"><Download size={15} /> {t("downloadPdfReportBtn")}</button>
+                    <button onClick={handleDownloadPdf} className="border border-blue-200 text-primary px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-tint transition flex items-center gap-2 flex-shrink-0"><Download size={15} /> {t("downloadPdfReportBtn")}</button>
                   </div>
                   <div className="flex gap-1.5 overflow-x-auto pb-1 mb-6">
                     {ANALYTICS_RANGES.map(r => { const key = RANGE_LABEL_KEYS[r.key]; return (
-                      <button key={r.key} onClick={() => setAnalyticsRange(r.key)} className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${analyticsRange === r.key ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t(key)}</button>
+                      <button key={r.key} onClick={() => setAnalyticsRange(r.key)} className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${analyticsRange === r.key ? "bg-primary text-white" : "bg-surface-elevated text-fg-secondary hover:bg-border"}`}>{t(key)}</button>
                     ); })}
                   </div>
                   {mechAnalyticsView === "overview" && (<>
@@ -3777,50 +3777,50 @@ export function AppShell() {
                         { v: cancelledAll.length, l: t("cancelledRejectedLabel"), icon: X, ring: "bg-red-50 text-red-500", num: "text-red-500" },
                         { v: noShowAll.length, l: t("noShowBtn"), icon: AlertTriangle, ring: "bg-amber-50 text-amber-600", num: "text-amber-600" },
                       ].map((c, i) => { const Icon = c.icon; return (
-                        <div key={i} className="bg-white border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm">
+                        <div key={i} className="bg-white border border-surface-elevated rounded-2xl p-4 md:p-5 shadow-sm">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${c.ring}`}><Icon size={17} /></div>
                           <p className={`text-2xl font-bold leading-none ${c.num}`}>{c.v}</p>
-                          <p className="text-xs text-gray-400 mt-2">{c.l}</p>
+                          <p className="text-xs text-fg-muted mt-2">{c.l}</p>
                         </div>
                       ); })}
                     </div>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-                    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-                      <div className="flex items-center justify-between mb-1"><h3 className="text-sm font-bold text-gray-800">{t("completionRateTitle")}</h3><span className="text-sm font-bold text-blue-600">%{completionRate}</span></div>
-                      <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-600 rounded-full" style={{ width: `${completionRate}%` }} /></div>
-                      <p className="text-[11px] text-gray-400 mt-2">{t("completedOfTotalNote", { completed: String(completedAll.length), total: String(totalBooked) })}</p>
+                    <div className="bg-white border border-surface-elevated rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-center justify-between mb-1"><h3 className="text-sm font-bold text-fg-strong">{t("completionRateTitle")}</h3><span className="text-sm font-bold text-primary">%{completionRate}</span></div>
+                      <div className="w-full h-2 bg-surface-elevated rounded-full overflow-hidden"><div className="h-full bg-primary rounded-full" style={{ width: `${completionRate}%` }} /></div>
+                      <p className="text-[11px] text-fg-muted mt-2">{t("completedOfTotalNote", { completed: String(completedAll.length), total: String(totalBooked) })}</p>
                     </div>
-                    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
-                      <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-bold text-gray-800">{t("customerSatisfactionTitle")}</h3><span className="flex items-center gap-1 text-sm font-bold text-gray-900"><Star size={14} className="fill-gray-900" />{formatNumber(avgRating, 1, "0.0")}</span></div>
+                    <div className="bg-white border border-surface-elevated rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-bold text-fg-strong">{t("customerSatisfactionTitle")}</h3><span className="flex items-center gap-1 text-sm font-bold text-fg"><Star size={14} className="fill-fg" />{formatNumber(avgRating, 1, "0.0")}</span></div>
                       {reviewList.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-4">{t("noReviewsYetNotice")}</p>
+                        <p className="text-xs text-fg-muted text-center py-4">{t("noReviewsYetNotice")}</p>
                       ) : (
                         <div className="space-y-1.5">
                           {ratingBreakdown.map(r => (
                             <div key={r.star} className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400 w-6 flex-shrink-0">{r.star}★</span>
-                              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-amber-400 rounded-full" style={{ width: `${(r.count / maxBreakdown) * 100}%` }} /></div>
-                              <span className="text-[10px] text-gray-400 w-5 flex-shrink-0 text-right">{r.count}</span>
+                              <span className="text-[10px] text-fg-muted w-6 flex-shrink-0">{r.star}★</span>
+                              <div className="flex-1 h-1.5 bg-surface-elevated rounded-full overflow-hidden"><div className="h-full bg-amber-400 rounded-full" style={{ width: `${(r.count / maxBreakdown) * 100}%` }} /></div>
+                              <span className="text-[10px] text-fg-muted w-5 flex-shrink-0 text-right">{r.count}</span>
                             </div>
                           ))}
                         </div>
                       )}
-                      <p className="text-[11px] text-gray-300 mt-3">{t("basedOnReviewsNote", { n: String(reviewList.length) })}</p>
+                      <p className="text-[11px] text-fg-muted mt-3">{t("basedOnReviewsNote", { n: String(reviewList.length) })}</p>
                     </div>
                     </div>
                   </>)}
                   {mechAnalyticsView === "earnings" && (<>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
-                      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3"><Banknote size={17} /></div><p className="text-2xl font-bold text-blue-600 leading-none">{total.toLocaleString("tr-TR")}₺</p><p className="text-xs text-gray-400 mt-2">{t("totalEarningsRow")}</p></div>
-                      <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"><div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center mb-3"><CheckCircle2 size={17} /></div><p className="text-2xl font-bold text-gray-900 leading-none">{completed.length}</p><p className="text-xs text-gray-400 mt-2">{t("completedBookingsRow")}</p></div>
+                      <div className="bg-white border border-surface-elevated rounded-2xl p-5 shadow-sm"><div className="w-10 h-10 rounded-xl bg-primary-tint text-primary flex items-center justify-center mb-3"><Banknote size={17} /></div><p className="text-2xl font-bold text-primary leading-none">{total.toLocaleString("tr-TR")}₺</p><p className="text-xs text-fg-muted mt-2">{t("totalEarningsRow")}</p></div>
+                      <div className="bg-white border border-surface-elevated rounded-2xl p-5 shadow-sm"><div className="w-10 h-10 rounded-xl bg-success-tint text-success flex items-center justify-center mb-3"><CheckCircle2 size={17} /></div><p className="text-2xl font-bold text-fg leading-none">{completed.length}</p><p className="text-xs text-fg-muted mt-2">{t("completedBookingsRow")}</p></div>
                     </div>
-                    <h3 className="text-base font-bold text-gray-900 mb-3">{t("topEarningServicesTitle")}</h3>
+                    <h3 className="text-base font-bold text-fg mb-3">{t("topEarningServicesTitle")}</h3>
                     {topServices.length === 0 ? (
-                      <div className="text-center py-14"><Banknote size={36} className="mx-auto text-gray-200 mb-3" /><p className="text-gray-400 text-sm">{t("noPaidWorkYet")}</p></div>
+                      <div className="text-center py-14"><Banknote size={36} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noPaidWorkYet")}</p></div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{topServices.map(([name, s]) => (<div key={name} className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm"><div className="min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{name}</p><p className="text-[11px] text-gray-400 mt-0.5">{s.count} {t("transactionsCountSuffix")}</p></div><p className="text-base font-bold text-blue-600 flex-shrink-0 ml-2">{s.total}₺</p></div>))}</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{topServices.map(([name, s]) => (<div key={name} className="flex items-center justify-between bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm"><div className="min-w-0"><p className="text-sm font-semibold text-fg-strong truncate">{name}</p><p className="text-[11px] text-fg-muted mt-0.5">{s.count} {t("transactionsCountSuffix")}</p></div><p className="text-base font-bold text-primary flex-shrink-0 ml-2">{s.total}₺</p></div>))}</div>
                     )}
-                    <p className="text-[10px] text-gray-300 mt-4 text-center">{t("basedOnCompletedJobsNote", { n: String(completed.length) })}</p>
+                    <p className="text-[10px] text-fg-muted mt-4 text-center">{t("basedOnCompletedJobsNote", { n: String(completed.length) })}</p>
                   </>)}
                   {mechAnalyticsView === "traffic" && (() => {
                     // OLAY TABANLI HUNİ (yeni): aşağıdaki eski "profil ziyaretleri" bloğu tek bir
@@ -3833,13 +3833,13 @@ export function AppShell() {
                       <>
                         {ma && (ma.views > 0 || (ma.cityDemand || []).length > 0) && (
                           <div className="mb-6">
-                            <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><TrendingUp size={14} className="text-blue-500" /> {t("mechFunnelTitle")}</h3>
+                            <h3 className="text-sm font-bold text-fg-strong mb-2.5 flex items-center gap-1.5"><TrendingUp size={14} className="text-info" /> {t("mechFunnelTitle")}</h3>
                             <div className="grid grid-cols-3 gap-2 mb-3">
-                              <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-gray-900 leading-none">{ma.uniqueViewers}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelView")}</p></div>
-                              <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-gray-900 leading-none">{ma.contacts}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelContact")}</p></div>
-                              <div className="bg-white border border-gray-200 rounded-xl p-3 text-center"><p className="text-lg font-bold text-blue-600 leading-none">{ma.appointments}</p><p className="text-[10px] text-gray-400 mt-1">{t("mechFunnelAppointment")}</p></div>
+                              <div className="bg-white border border-border rounded-xl p-3 text-center"><p className="text-lg font-bold text-fg leading-none">{ma.uniqueViewers}</p><p className="text-[10px] text-fg-muted mt-1">{t("mechFunnelView")}</p></div>
+                              <div className="bg-white border border-border rounded-xl p-3 text-center"><p className="text-lg font-bold text-fg leading-none">{ma.contacts}</p><p className="text-[10px] text-fg-muted mt-1">{t("mechFunnelContact")}</p></div>
+                              <div className="bg-white border border-border rounded-xl p-3 text-center"><p className="text-lg font-bold text-primary leading-none">{ma.appointments}</p><p className="text-[10px] text-fg-muted mt-1">{t("mechFunnelAppointment")}</p></div>
                             </div>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2">
+                            <div className="bg-white border border-border rounded-2xl p-4 space-y-2">
                               {(ma.funnel || []).map((step, i) => {
                                 const pct = maTop > 0 ? Math.round((step.count / maTop) * 100) : 0;
                                 const prev = i > 0 ? ma.funnel[i - 1].count : null;
@@ -3847,22 +3847,22 @@ export function AppShell() {
                                 return (
                                   <div key={step.key}>
                                     <div className="flex items-center justify-between text-[11px] mb-1">
-                                      <span className="text-gray-600">{maFunnelLabels[step.key]}</span>
-                                      <span className="font-semibold text-gray-900">{step.count}{stepPct != null && <span className="text-gray-400 font-normal"> · {stepPct}%</span>}</span>
+                                      <span className="text-fg-secondary">{maFunnelLabels[step.key]}</span>
+                                      <span className="font-semibold text-fg">{step.count}{stepPct != null && <span className="text-fg-muted font-normal"> · {stepPct}%</span>}</span>
                                     </div>
-                                    <div className="h-4 bg-gray-100 rounded-md overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-md" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
+                                    <div className="h-4 bg-surface-elevated rounded-md overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-md" style={{ width: `${Math.max(pct, 1)}%` }} /></div>
                                   </div>
                                 );
                               })}
                             </div>
                             {(ma.sources || []).length > 0 && (
-                              <div className="bg-white border border-gray-200 rounded-2xl p-4 mt-3">
-                                <h4 className="text-xs font-bold text-gray-700 mb-2.5">{t("mechTrafficSourceTitle")}</h4>
+                              <div className="bg-white border border-border rounded-2xl p-4 mt-3">
+                                <h4 className="text-xs font-bold text-fg-strong mb-2.5">{t("mechTrafficSourceTitle")}</h4>
                                 {ma.sources.map(r => { const max = Math.max(1, ...ma.sources.map(x => x.visitors)); return (
                                   <div key={r.label} className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[11px] text-gray-600 w-24 truncate">{r.label}</span>
-                                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.round((r.visitors / max) * 100)}%` }} /></div>
-                                    <span className="text-[11px] font-semibold text-gray-700 w-8 text-right">{r.visitors}</span>
+                                    <span className="text-[11px] text-fg-secondary w-24 truncate">{r.label}</span>
+                                    <div className="flex-1 h-2 bg-surface-elevated rounded-full overflow-hidden"><div className="h-full bg-info rounded-full" style={{ width: `${Math.round((r.visitors / max) * 100)}%` }} /></div>
+                                    <span className="text-[11px] font-semibold text-fg-strong w-8 text-right">{r.visitors}</span>
                                   </div>
                                 ); })}
                               </div>
@@ -3870,14 +3870,14 @@ export function AppShell() {
                             {/* ŞEHRİNDEKİ TALEP: kişi bazlı değil, toplu arama sayıları. Tamirciye
                                 "hangi hizmete talep var ama sen sunmuyorsun" sinyali veriyor. */}
                             {(ma.cityDemand || []).length > 0 && (
-                              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mt-3">
+                              <div className="bg-primary-tint border border-blue-200 rounded-2xl p-4 mt-3">
                                 <h4 className="text-xs font-bold text-blue-900 mb-1">{t("mechDemandTitle")}</h4>
-                                <p className="text-[11px] text-blue-700 mb-2.5">{t("mechDemandHint")}</p>
+                                <p className="text-[11px] text-primary-hover mb-2.5">{t("mechDemandHint")}</p>
                                 {ma.cityDemand.slice(0, 6).map(r => {
                                   const iOffer = (myProfile?.services || []).some(sv => (sv.name || "").toLocaleLowerCase("tr-TR") === String(r.label || "").toLocaleLowerCase("tr-TR"));
                                   return (
                                     <div key={r.label} className="flex items-center justify-between text-[11px] py-1">
-                                      <span className="text-blue-900 truncate flex items-center gap-1.5">{r.label}{!iOffer && <span className="text-[10px] md:text-xs font-bold bg-white border border-blue-300 text-blue-700 rounded px-1.5 py-0.5">{t("mechDemandNotOffered")}</span>}</span>
+                                      <span className="text-blue-900 truncate flex items-center gap-1.5">{r.label}{!iOffer && <span className="text-[10px] md:text-xs font-bold bg-white border border-blue-300 text-primary-hover rounded px-1.5 py-0.5">{t("mechDemandNotOffered")}</span>}</span>
                                       <span className="font-bold text-blue-900">{r.n}</span>
                                     </div>
                                   );
@@ -3886,37 +3886,37 @@ export function AppShell() {
                             )}
                           </div>
                         )}
-                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><Compass size={14} className="text-blue-500" /> {t("profileVisitsTitle")}</h3>
+                        <h3 className="text-sm font-bold text-fg-strong mb-2.5 flex items-center gap-1.5"><Compass size={14} className="text-info" /> {t("profileVisitsTitle")}</h3>
                         {!stats ? (
-                          <div className="text-center py-10 text-xs text-gray-400">{t("loadingEllipsis")}</div>
+                          <div className="text-center py-10 text-xs text-fg-muted">{t("loadingEllipsis")}</div>
                         ) : (
                           <>
                             <div className="grid grid-cols-3 gap-2 mb-4">
-                              <div className="bg-blue-50 rounded-xl p-3 text-center"><p className="text-base font-bold text-blue-600">{rangeViews}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("analyticsVisitsLabel")}</p></div>
-                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">{rangeConversions}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("analyticsConversionsLabel")}</p></div>
-                              <div className="bg-gray-100 rounded-xl p-3 text-center"><p className="text-base font-bold text-gray-700">%{viewConvRate}</p><p className="text-[10px] md:text-xs text-gray-500 mt-0.5">{t("conversionRateLabel")}</p></div>
+                              <div className="bg-primary-tint rounded-xl p-3 text-center"><p className="text-base font-bold text-primary">{rangeViews}</p><p className="text-[10px] md:text-xs text-fg-secondary mt-0.5">{t("analyticsVisitsLabel")}</p></div>
+                              <div className="bg-surface-elevated rounded-xl p-3 text-center"><p className="text-base font-bold text-fg-strong">{rangeConversions}</p><p className="text-[10px] md:text-xs text-fg-secondary mt-0.5">{t("analyticsConversionsLabel")}</p></div>
+                              <div className="bg-surface-elevated rounded-xl p-3 text-center"><p className="text-base font-bold text-fg-strong">%{viewConvRate}</p><p className="text-[10px] md:text-xs text-fg-secondary mt-0.5">{t("conversionRateLabel")}</p></div>
                             </div>
                             {stats.monthly.length > 0 && (
-                              <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-5">
-                                <h4 className="text-xs font-semibold text-gray-700 mb-3">{t("monthlyVisitTrendTitle")}</h4>
+                              <div className="bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm mb-5">
+                                <h4 className="text-xs font-semibold text-fg-strong mb-3">{t("monthlyVisitTrendTitle")}</h4>
                                 <MiniBarChart labels={stats.monthly.map(m => formatMonth(m.month))} values={stats.monthly.map(m => m.views)} colorClass="bg-blue-500" />
                               </div>
                             )}
-                            <p className="text-[10px] text-gray-300 mb-5">{t("totalAllTimeNote", { views: String(stats.totalViews), conversions: String(stats.conversions) })}</p>
+                            <p className="text-[10px] text-fg-muted mb-5">{t("totalAllTimeNote", { views: String(stats.totalViews), conversions: String(stats.conversions) })}</p>
                           </>
                         )}
-                        <h3 className="text-sm font-bold text-gray-800 mb-2.5 flex items-center gap-1.5"><History size={14} className="text-blue-500" /> {t("periodSummaryReportTitle")}</h3>
-                        <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-2">
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalBookingsRow")}</span><span className="font-semibold text-gray-800">{totalBooked}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("completedBookingsRow")}</span><span className="font-semibold text-gray-800">{completedAll.length} (%{completionRate})</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalEarningsRow")}</span><span className="font-semibold text-gray-800">{total.toLocaleString("tr-TR")}₺</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("avgRatingRow")}</span><span className="font-semibold text-gray-800 flex items-center gap-1"><Star size={12} className="fill-gray-900" /> {formatNumber(avgRating, 1, "0.0")} {t("reviewsCountParens", { n: String(reviewList.length) })}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("profileAndListingSharesRow")}</span><span className="font-semibold text-gray-800">{myTotalShares}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("analyticsVisitsLabel")}</span><span className="font-semibold text-gray-800">{rangeViews}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("activeCarListingsRow")}</span><span className="font-semibold text-gray-800">{myOwnListings.filter(l => !l.adminRemoved).length}</span></div>
-                          <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("totalJobApplicantsRow")}</span><span className="font-semibold text-gray-800">{myTotalApplicants}</span></div>
+                        <h3 className="text-sm font-bold text-fg-strong mb-2.5 flex items-center gap-1.5"><History size={14} className="text-info" /> {t("periodSummaryReportTitle")}</h3>
+                        <div className="bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm space-y-2">
+                          <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">{t("totalBookingsRow")}</span><span className="font-semibold text-fg-strong">{totalBooked}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">{t("completedBookingsRow")}</span><span className="font-semibold text-fg-strong">{completedAll.length} (%{completionRate})</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">{t("totalEarningsRow")}</span><span className="font-semibold text-fg-strong">{total.toLocaleString("tr-TR")}₺</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">{t("avgRatingRow")}</span><span className="font-semibold text-fg-strong flex items-center gap-1"><Star size={12} className="fill-fg" /> {formatNumber(avgRating, 1, "0.0")} {t("reviewsCountParens", { n: String(reviewList.length) })}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">{t("profileAndListingSharesRow")}</span><span className="font-semibold text-fg-strong">{myTotalShares}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">{t("analyticsVisitsLabel")}</span><span className="font-semibold text-fg-strong">{rangeViews}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">{t("activeCarListingsRow")}</span><span className="font-semibold text-fg-strong">{myOwnListings.filter(l => !l.adminRemoved).length}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-fg-secondary">{t("totalJobApplicantsRow")}</span><span className="font-semibold text-fg-strong">{myTotalApplicants}</span></div>
                         </div>
-                        <p className="text-[10px] text-gray-300 mt-3 text-center">{t("yearlyReportFootnote")}</p>
+                        <p className="text-[10px] text-fg-muted mt-3 text-center">{t("yearlyReportFootnote")}</p>
                       </>
                     );
                   })()}
@@ -3946,31 +3946,31 @@ export function AppShell() {
               return (
               <div className="max-w-7xl mx-auto px-5 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
                 <aside className="hidden lg:block lg:order-2 lg:sticky lg:top-20">
-                  <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-lg shadow-gray-100">
+                  <div className="bg-white border border-border rounded-3xl p-5 shadow-lg shadow-gray-100">
                     <div className="flex items-end justify-between mb-2">
-                      <p className="text-sm font-bold text-gray-800">{t("profileCompletenessTitle")}</p>
-                      <span className={`text-2xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-blue-600"}`}>%{pct}</span>
+                      <p className="text-sm font-bold text-fg-strong">{t("profileCompletenessTitle")}</p>
+                      <span className={`text-2xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-primary"}`}>%{pct}</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
-                      <div className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : "bg-blue-500"}`} style={{ width: `${pct}%` }} />
+                    <div className="h-2 bg-surface-elevated rounded-full overflow-hidden mb-3">
+                      <div className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-500" : "bg-info"}`} style={{ width: `${pct}%` }} />
                     </div>
-                    <p className="text-[11px] text-gray-400 mb-4 leading-snug">{t("profileCompletenessHint")}</p>
+                    <p className="text-[11px] text-fg-muted mb-4 leading-snug">{t("profileCompletenessHint")}</p>
                     <div className="space-y-1.5">
                       {checks.map((c) => (
                         // Tamamlanmış madde düz metin; EKSİK madde düğme — tıklayınca ilgili bölüme
                         // kaydırıyor (scrollToSection). Tamamlanmışı da tıklanabilir yapmak,
                         // "burada yapılacak bir şey var" izlenimi verirdi.
                         c.ok ? (
-                          <div key={c.label} className="flex items-center gap-2 text-xs text-gray-400">
+                          <div key={c.label} className="flex items-center gap-2 text-xs text-fg-muted">
                             <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0" />
                             <span className="line-through">{c.label}</span>
                           </div>
                         ) : (
                           <button key={c.label} onClick={() => scrollToSection(c.target)}
-                            className="w-full flex items-center gap-2 text-xs text-gray-700 font-medium hover:text-blue-600 transition text-left group">
-                            <CircleDot size={14} className="text-gray-300 group-hover:text-blue-400 flex-shrink-0" />
+                            className="w-full flex items-center gap-2 text-xs text-fg-strong font-medium hover:text-primary transition text-left group">
+                            <CircleDot size={14} className="text-fg-muted group-hover:text-blue-400 flex-shrink-0" />
                             <span className="flex-1">{c.label}</span>
-                            <ChevronRight size={13} className="text-gray-300 group-hover:text-blue-400 flex-shrink-0" />
+                            <ChevronRight size={13} className="text-fg-muted group-hover:text-blue-400 flex-shrink-0" />
                           </button>
                         )
                       ))}
@@ -3978,37 +3978,37 @@ export function AppShell() {
                   </div>
                 </aside>
                 <div className="lg:col-span-2 lg:order-1">
-                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3.5 mb-5 text-xs text-blue-800 flex items-center gap-2"><Pencil size={14} /> {t("changesApplyInstantly")}</div>
+                <div className="bg-primary-tint border border-blue-100 rounded-2xl p-3.5 mb-5 text-xs text-primary-active flex items-center gap-2"><Pencil size={14} /> {t("changesApplyInstantly")}</div>
                 {/* TASARIM: alanlar eskiden etiketsiz ve alt alta tek sütundu; sayfa genişleyince
                     tek satırlık "İşletme adı" kutusu ekranın sonuna kadar uzuyordu. Artık bölüm
                     kartı içinde, etiketli ve iki sütunlu — uzun alanlar (adres) tam satır. */}
-                <div id="mech-sec-basic" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
-                  <h3 className="font-bold text-gray-900 text-base mb-4">{t("basicInfoTitle")}</h3>
+                <div id="mech-sec-basic" className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
+                  <h3 className="font-bold text-fg text-base mb-4">{t("basicInfoTitle")}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("businessNamePlaceholder")}</span><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
-                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("specialtyPlaceholder")}</span><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
-                    <label className="block sm:col-span-2"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("addressPlaceholder")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></div></label>
-                    <label className="block"><span className="text-xs font-medium text-gray-500 block mb-1.5">{t("phonePlaceholderExample")}</span><div className="relative"><Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={15} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} onBlur={(e) => normalizePhoneField(e.target.value, (v) => updateMyField("phone", v))} placeholder={t("phonePlaceholderExample")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></div></label>
+                    <label className="block"><span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("businessNamePlaceholder")}</span><input value={myProfile.name} onChange={(e) => updateMyField("name", e.target.value)} placeholder={t("businessNamePlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                    <label className="block"><span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("specialtyPlaceholder")}</span><input value={myProfile.specialty} onChange={(e) => updateMyField("specialty", e.target.value)} placeholder={t("specialtyPlaceholder")} className="w-full px-3.5 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></label>
+                    <label className="block sm:col-span-2"><span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("addressPlaceholder")}</span><div className="relative"><MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-muted" size={15} /><input value={myProfile.address} onChange={(e) => updateMyField("address", e.target.value)} placeholder={t("addressPlaceholder")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></div></label>
+                    <label className="block"><span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("phonePlaceholderExample")}</span><div className="relative"><Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-muted" size={15} /><input value={myProfile.phone || ""} onChange={(e) => updateMyField("phone", e.target.value)} onBlur={(e) => normalizePhoneField(e.target.value, (v) => updateMyField("phone", v))} placeholder={t("phonePlaceholderExample")} className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" /></div></label>
                     {/* KALDIRILDI — "saatlik ücret": tamircinin elle yazdığı, hiçbir yerde
                         doğrulanmayan uydurma bir sayıydı ve müşteriye yanlış beklenti veriyordu.
                         Yerine aşağıdaki hizmet listesinden otomatik türetilen "başlangıç fiyatı"
                         geçti (bkz. startingPriceFromServices) — filtreler ve kartlar aynı alanı
                         okumaya devam ediyor, ama artık gerçek fiyatlardan geliyor. */}
-                    <div className="sm:col-span-2 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+                    <div className="sm:col-span-2 bg-background border border-surface-elevated rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-gray-700">{t("startingPriceLabel")}</p>
-                        <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">{t("startingPriceHint")}</p>
+                        <p className="text-xs font-semibold text-fg-strong">{t("startingPriceLabel")}</p>
+                        <p className="text-[11px] text-fg-muted mt-0.5 leading-relaxed">{t("startingPriceHint")}</p>
                         {mechanicStartingPrice(myProfile) <= 0 && (
-                          <p className="text-[11px] text-amber-600 mt-1.5 leading-relaxed">⚠️ {t("startingPriceEmptyWarn")}</p>
+                          <p className="text-[11px] text-warning mt-1.5 leading-relaxed">⚠️ {t("startingPriceEmptyWarn")}</p>
                         )}
                       </div>
-                      <span className="text-lg font-bold text-blue-600 flex-shrink-0">{mechanicStartingPrice(myProfile) > 0 ? t("landingServiceFromPrice", { price: `${mechanicStartingPrice(myProfile).toLocaleString("tr-TR")}₺` }) : "—"}</span>
+                      <span className="text-lg font-bold text-primary flex-shrink-0">{mechanicStartingPrice(myProfile) > 0 ? t("landingServiceFromPrice", { price: `${mechanicStartingPrice(myProfile).toLocaleString("tr-TR")}₺` }) : "—"}</span>
                     </div>
                   </div>
                 </div>
-                <div id="mech-sec-brands" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
-                <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Tag size={16} className="text-blue-500" /> {t("brandsServicedTitle")}</h3>
-                <p className="text-xs text-gray-400 mb-4">{t("brandsServicedHint")}</p>
+                <div id="mech-sec-brands" className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
+                <h3 className="font-bold text-fg text-base mb-1 flex items-center gap-2"><Tag size={16} className="text-info" /> {t("brandsServicedTitle")}</h3>
+                <p className="text-xs text-fg-muted mb-4">{t("brandsServicedHint")}</p>
                 {/* Donanımdaki gibi: sabit CAR_BRANDS listesinde olmayan bir marka da serbest metin
                     olarak eklenebiliyor; 25 sabit marka + eklenenler tek ızgarada karmaşık
                     görünmesin diye seçilmemiş olanlar varsayılan olarak daraltılıp "+N tane daha"
@@ -4024,31 +4024,31 @@ export function AppShell() {
                       {selectedBrands.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {selectedBrands.map(b => (
-                            <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-blue-600 border-blue-600 text-white flex items-center gap-1 transition hover:bg-blue-700">{b} <X size={11} /></button>
+                            <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-primary border-primary text-white flex items-center gap-1 transition hover:bg-primary-hover">{b} <X size={11} /></button>
                           ))}
                         </div>
                       )}
                       <div className="flex flex-wrap gap-1.5">
                         {visibleUnselected.map(b => (
-                          <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border bg-white border-gray-200 text-gray-500 hover:border-blue-300 transition">{b}</button>
+                          <button key={b} type="button" onClick={() => toggleBrandServiced(b)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border bg-white border-border text-fg-secondary hover:border-blue-300 transition">{b}</button>
                         ))}
                         {hiddenCount > 0 && (
-                          <button type="button" onClick={() => setShowAllBrandOptions(true)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 hover:border-blue-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
+                          <button type="button" onClick={() => setShowAllBrandOptions(true)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-fg-muted text-fg-muted hover:text-info hover:border-blue-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
                         )}
                         {showAllBrandOptions && unselectedBrands.length > VISIBLE_COUNT && (
-                          <button type="button" onClick={() => setShowAllBrandOptions(false)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 hover:border-blue-300 transition">{t("showLessFeaturesLabel")}</button>
+                          <button type="button" onClick={() => setShowAllBrandOptions(false)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border border-dashed border-fg-muted text-fg-muted hover:text-info hover:border-blue-300 transition">{t("showLessFeaturesLabel")}</button>
                         )}
                       </div>
                       <div className="flex gap-2 pt-1">
-                        <input value={customBrandInput} onChange={(e) => setCustomBrandInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomBrand(); } }} placeholder={t("customBrandPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
-                        <button type="button" onClick={addCustomBrand} aria-label={t("addCustomBrandAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
+                        <input value={customBrandInput} onChange={(e) => setCustomBrandInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomBrand(); } }} placeholder={t("customBrandPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-border text-sm" />
+                        <button type="button" onClick={addCustomBrand} aria-label={t("addCustomBrandAria")} className="px-3 py-2 rounded-xl bg-surface-elevated text-fg-secondary hover:bg-primary-tint hover:text-primary transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
                       </div>
                     </div>
                   );
                 })()}
                 </div>
-                <div id="mech-sec-payment" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
-                <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><CreditCard size={16} className="text-blue-500" /> {t("paymentMethodsTitle")}</h3>
+                <div id="mech-sec-payment" className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
+                <h3 className="font-bold text-fg text-base mb-4 flex items-center gap-2"><CreditCard size={16} className="text-info" /> {t("paymentMethodsTitle")}</h3>
                 {(() => {
                   const selectedPayments = myProfile.paymentMethods || [];
                   const unselectedPayments = PAYMENT_METHOD_OPTIONS.filter(p => !selectedPayments.includes(p));
@@ -4057,20 +4057,20 @@ export function AppShell() {
                       {selectedPayments.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {selectedPayments.map(p => (
-                            <button key={p} type="button" onClick={() => togglePaymentMethod(p)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-gray-900 border-gray-900 text-white flex items-center gap-1 transition hover:bg-gray-800">{p} <X size={11} /></button>
+                            <button key={p} type="button" onClick={() => togglePaymentMethod(p)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-secondary border-secondary text-white flex items-center gap-1 transition hover:bg-fg-strong">{p} <X size={11} /></button>
                           ))}
                         </div>
                       )}
                       {unselectedPayments.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {unselectedPayments.map(p => (
-                            <button key={p} type="button" onClick={() => togglePaymentMethod(p)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border bg-white border-gray-200 text-gray-500 hover:border-gray-400 transition">{p}</button>
+                            <button key={p} type="button" onClick={() => togglePaymentMethod(p)} className="text-xs font-semibold px-2.5 py-1.5 rounded-full border bg-white border-border text-fg-secondary hover:border-fg-muted transition">{p}</button>
                           ))}
                         </div>
                       )}
                       <div className="flex gap-2 pt-1">
-                        <input value={customPaymentInput} onChange={(e) => setCustomPaymentInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomPaymentMethod(); } }} placeholder={t("customPaymentPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
-                        <button type="button" onClick={addCustomPaymentMethod} aria-label={t("addCustomPaymentAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
+                        <input value={customPaymentInput} onChange={(e) => setCustomPaymentInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomPaymentMethod(); } }} placeholder={t("customPaymentPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-border text-sm" />
+                        <button type="button" onClick={addCustomPaymentMethod} aria-label={t("addCustomPaymentAria")} className="px-3 py-2 rounded-xl bg-surface-elevated text-fg-secondary hover:bg-primary-tint hover:text-primary transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
                       </div>
                     </div>
                   );
@@ -4083,20 +4083,20 @@ export function AppShell() {
                     katalogdan çoklu seçim yapılıyor; katalogda olmayan iş için serbest ekleme yolu
                     duruyor. Her hizmetin varsayılan bir fiyatı, istenirse MARKA BAZLI fiyatları var
                     (aynı iş BMW'de başka, Toyota'da başka tutabiliyor — ATU da önce marka soruyor). */}
-                <div id="mech-sec-services" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
+                <div id="mech-sec-services" className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
-                    <h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Wrench size={16} className="text-blue-500" /> {t("servicesTitle")} <span className="text-gray-300 font-normal text-sm">({myProfile.services.length})</span></h3>
+                    <h3 className="font-bold text-fg text-base flex items-center gap-2"><Wrench size={16} className="text-info" /> {t("servicesTitle")} <span className="text-fg-muted font-normal text-sm">({myProfile.services.length})</span></h3>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => { setServicePickerOpen(true); setServicePickerQuery(""); setServicePickerCat("all"); }} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-1.5"><ClipboardList size={15} /> {t("pickFromCatalogBtn")}</button>
-                      {!showAddServiceForm && <button onClick={() => setShowAddServiceForm(true)} className="text-sm text-gray-500 font-semibold flex items-center gap-1 hover:text-blue-700 transition"><Plus size={15} /> {t("addCustomServiceBtn")}</button>}
+                      <button onClick={() => { setServicePickerOpen(true); setServicePickerQuery(""); setServicePickerCat("all"); }} className="bg-primary text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-primary-hover transition flex items-center gap-1.5"><ClipboardList size={15} /> {t("pickFromCatalogBtn")}</button>
+                      {!showAddServiceForm && <button onClick={() => setShowAddServiceForm(true)} className="text-sm text-fg-secondary font-semibold flex items-center gap-1 hover:text-primary-hover transition"><Plus size={15} /> {t("addCustomServiceBtn")}</button>}
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400 mb-4">{t("servicesFixedPriceHint")}</p>
+                  <p className="text-xs text-fg-muted mb-4">{t("servicesFixedPriceHint")}</p>
                   {myProfile.services.length === 0 && !showAddServiceForm && (
-                    <button onClick={() => setServicePickerOpen(true)} className="w-full border-2 border-dashed border-gray-200 rounded-2xl py-10 text-center hover:border-blue-300 hover:bg-blue-50/40 transition">
-                      <ClipboardList size={32} className="mx-auto text-gray-200 mb-2" />
-                      <p className="text-sm text-gray-500 font-medium">{t("noServicesYetTitle")}</p>
-                      <p className="text-xs text-gray-400 mt-1">{t("noServicesYetHint")}</p>
+                    <button onClick={() => setServicePickerOpen(true)} className="w-full border-2 border-dashed border-border rounded-2xl py-10 text-center hover:border-blue-300 hover:bg-blue-50/40 transition">
+                      <ClipboardList size={32} className="mx-auto text-fg-muted mb-2" />
+                      <p className="text-sm text-fg-secondary font-medium">{t("noServicesYetTitle")}</p>
+                      <p className="text-xs text-fg-muted mt-1">{t("noServicesYetHint")}</p>
                     </button>
                   )}
                   {/* HİZMETLER KATEGORİYE GÖRE GRUPLANIYOR (kullanıcı bildirdi: "çok seçince
@@ -4137,8 +4137,8 @@ export function AppShell() {
                           return (
                             <div key={g.key}>
                               <div className="flex items-baseline justify-between gap-2 mb-1.5">
-                                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">{g.label}</p>
-                                <span className="text-[11px] text-gray-300">{g.rows.length}</span>
+                                <p className="text-[11px] font-bold uppercase tracking-wider text-fg-muted">{g.label}</p>
+                                <span className="text-[11px] text-fg-muted">{g.rows.length}</span>
                               </div>
                               <div className={`space-y-2.5 ${scrollable ? "overflow-y-auto pr-1" : ""}`}
                                 style={scrollable ? { maxHeight: SECTION_SCROLL_ROWS * SERVICE_ROW_PX } : undefined}>
@@ -4147,48 +4147,48 @@ export function AppShell() {
                       const bpCount = Object.keys(bp).length;
                       const open = brandPriceEditKey === (s.key || `custom-${i}`);
                       return (
-                        <div key={s.key || `custom-${i}`} className={`border rounded-2xl transition ${open ? "border-blue-300 bg-blue-50/30" : "border-gray-100 hover:border-gray-200"}`}>
+                        <div key={s.key || `custom-${i}`} className={`border rounded-2xl transition ${open ? "border-blue-300 bg-blue-50/30" : "border-surface-elevated hover:border-border"}`}>
                           <div className="flex flex-wrap items-center gap-2 p-3">
                             <div className="flex-1 min-w-[160px]">
                               {s.key ? (
-                                <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">{serviceLabel(s)}<Check size={13} className="text-emerald-500" /></p>
+                                <p className="text-sm font-semibold text-fg-strong flex items-center gap-1.5">{serviceLabel(s)}<Check size={13} className="text-emerald-500" /></p>
                               ) : (
-                                <input value={s.name} onChange={(e) => updateService(i, "name", e.target.value)} placeholder={t("servicePlaceholder")} className="w-full px-2.5 py-1.5 rounded-lg border border-gray-200 text-sm" />
+                                <input value={s.name} onChange={(e) => updateService(i, "name", e.target.value)} placeholder={t("servicePlaceholder")} className="w-full px-2.5 py-1.5 rounded-lg border border-border text-sm" />
                               )}
-                              {s.key && <p className="text-[11px] text-gray-400 mt-0.5">{t("catalogServiceLabel")}</p>}
+                              {s.key && <p className="text-[11px] text-fg-muted mt-0.5">{t("catalogServiceLabel")}</p>}
                             </div>
                             <div className="relative">
-                              <input value={s.price} onChange={(e) => updateService(i, "price", e.target.value.replace(/[^0-9]/g, ""))} placeholder={s.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-28 pl-2.5 pr-6 py-1.5 rounded-lg border text-sm ${s.fixed && !String(s.price || "").trim() ? "border-red-300" : "border-gray-200"}`} />
-                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">₺</span>
+                              <input value={s.price} onChange={(e) => updateService(i, "price", e.target.value.replace(/[^0-9]/g, ""))} placeholder={s.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-28 pl-2.5 pr-6 py-1.5 rounded-lg border text-sm ${s.fixed && !String(s.price || "").trim() ? "border-red-300" : "border-border"}`} />
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-fg-muted text-xs pointer-events-none">₺</span>
                             </div>
                             {/* SABİT / DEĞİŞKEN — iki ayrı seçenek.
                                 Eskiden tek düğmeydi ve üzerinde MEVCUT durum yazıyordu: "Değişken"
                                 yazan düğmeye basan tamirci aslında "sabit yap" komutu veriyor ve
                                 "önce fiyat girin" uyarısı alıyordu. Niyetin tam tersi. Artık
                                 "Değişken" her zaman serbest, uyarı yalnızca "Sabit" seçilince çıkar. */}
-                            <div className="flex-shrink-0 flex items-center rounded-lg bg-gray-100 p-0.5" role="group" aria-label={t("fixedPriceHelpTitle")}>
-                              <button onClick={() => setServiceFixed(i, true)} aria-pressed={!!s.fixed} title={t("fixedPriceHelpTitle")} className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap transition ${s.fixed ? "bg-white text-green-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("fixedLabelShort")}</button>
-                              <button onClick={() => setServiceFixed(i, false)} aria-pressed={!s.fixed} title={t("fixedPriceHelpTitle")} className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap transition flex items-center gap-1 ${!s.fixed ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("variableLabel")}</button>
-                              <span className="px-1 text-gray-400"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} /></span>
+                            <div className="flex-shrink-0 flex items-center rounded-lg bg-surface-elevated p-0.5" role="group" aria-label={t("fixedPriceHelpTitle")}>
+                              <button onClick={() => setServiceFixed(i, true)} aria-pressed={!!s.fixed} title={t("fixedPriceHelpTitle")} className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap transition ${s.fixed ? "bg-white text-green-700 shadow-sm" : "text-fg-secondary hover:text-fg-strong"}`}>{t("fixedLabelShort")}</button>
+                              <button onClick={() => setServiceFixed(i, false)} aria-pressed={!s.fixed} title={t("fixedPriceHelpTitle")} className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap transition flex items-center gap-1 ${!s.fixed ? "bg-white text-fg-strong shadow-sm" : "text-fg-secondary hover:text-fg-strong"}`}>{t("variableLabel")}</button>
+                              <span className="px-1 text-fg-muted"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} /></span>
                             </div>
-                            <button onClick={() => setBrandPriceEditKey(open ? null : (s.key || `custom-${i}`))} className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1 ${bpCount > 0 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}><Tag size={12} /> {bpCount > 0 ? t("brandPriceCountLabel", { n: String(bpCount) }) : t("brandPriceAddLabel")}</button>
-                            <button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-1"><Trash2 size={15} /></button>
+                            <button onClick={() => setBrandPriceEditKey(open ? null : (s.key || `custom-${i}`))} className={`flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1 ${bpCount > 0 ? "bg-blue-100 text-primary-hover" : "bg-surface-elevated text-fg-secondary hover:bg-border"}`}><Tag size={12} /> {bpCount > 0 ? t("brandPriceCountLabel", { n: String(bpCount) }) : t("brandPriceAddLabel")}</button>
+                            <button onClick={() => removeService(i)} aria-label={t("removeServiceAria")} className="text-red-400 hover:text-error flex-shrink-0 p-2 -m-1"><Trash2 size={15} /></button>
                           </div>
                           {open && (
                             <div className="px-3 pb-3 pt-1 border-t border-blue-100">
-                              <p className="text-[11px] text-gray-500 mb-2.5">{t("brandPriceHint", { price: String(s.price || "—") })}</p>
+                              <p className="text-[11px] text-fg-secondary mb-2.5">{t("brandPriceHint", { price: String(s.price || "—") })}</p>
                               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                                 {brandPriceOptions.map(b => (
                                   <div key={b} className="relative">
-                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-gray-500 pointer-events-none max-w-[70px] truncate">{b}</span>
-                                    <input value={bp[b] ?? ""} onChange={(e) => setServiceBrandPrice(i, b, e.target.value)} placeholder={s.price ? String(s.price) : "—"} className={`w-full pl-[76px] pr-5 py-2 rounded-lg border text-sm text-right ${bp[b] ? "border-blue-300 bg-white" : "border-gray-200 bg-white"}`} />
-                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] pointer-events-none">₺</span>
+                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-fg-secondary pointer-events-none max-w-[70px] truncate">{b}</span>
+                                    <input value={bp[b] ?? ""} onChange={(e) => setServiceBrandPrice(i, b, e.target.value)} placeholder={s.price ? String(s.price) : "—"} className={`w-full pl-[76px] pr-5 py-2 rounded-lg border text-sm text-right ${bp[b] ? "border-blue-300 bg-white" : "border-border bg-white"}`} />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-muted text-[11px] pointer-events-none">₺</span>
                                   </div>
                                 ))}
                               </div>
                               <div className="flex items-center justify-between mt-3">
-                                <p className="text-[11px] text-gray-400">{(myProfile.brandsServiced || []).length === 0 ? t("brandPriceNoBrandsNote") : t("brandPriceEmptyMeansDefault")}</p>
-                                {bpCount > 0 && <button onClick={() => clearServiceBrandPrices(i)} className="text-[11px] font-semibold text-gray-400 hover:text-red-500 transition flex-shrink-0">{t("brandPriceClearBtn")}</button>}
+                                <p className="text-[11px] text-fg-muted">{(myProfile.brandsServiced || []).length === 0 ? t("brandPriceNoBrandsNote") : t("brandPriceEmptyMeansDefault")}</p>
+                                {bpCount > 0 && <button onClick={() => clearServiceBrandPrices(i)} className="text-[11px] font-semibold text-fg-muted hover:text-red-500 transition flex-shrink-0">{t("brandPriceClearBtn")}</button>}
                               </div>
                             </div>
                           )}
@@ -4197,7 +4197,7 @@ export function AppShell() {
                                 })}
                               </div>
                               {scrollable && (
-                                <p className="text-[10px] text-gray-400 mt-1">{t("serviceSectionScrollNote", { shown: String(SECTION_SCROLL_ROWS), total: String(g.rows.length) })}</p>
+                                <p className="text-[10px] text-fg-muted mt-1">{t("serviceSectionScrollNote", { shown: String(SECTION_SCROLL_ROWS), total: String(g.rows.length) })}</p>
                               )}
                             </div>
                           );
@@ -4206,32 +4206,32 @@ export function AppShell() {
                     );
                   })()}
                   {showAddServiceForm && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-                      <p className="text-xs font-semibold text-gray-700 mb-2.5">{t("addCustomServiceBtn")}</p>
+                    <div className="bg-primary-tint border border-blue-200 rounded-2xl p-4">
+                      <p className="text-xs font-semibold text-fg-strong mb-2.5">{t("addCustomServiceBtn")}</p>
                       <div className="flex items-center gap-2 mb-2">
-                        <input autoFocus value={newServiceForm.name} onChange={(e) => { const val = e.target.value; setNewServiceForm(f => ({ ...f, name: val, fixed: f.fixedTouched ? f.fixed : isFixedPriceService(val) })); setDuplicateServiceWarning(null); }} placeholder={t("newServiceNamePlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white" />
-                        <input value={newServiceForm.price} onChange={(e) => setNewServiceForm(f => ({ ...f, price: e.target.value.replace(/[^0-9]/g, "") }))} placeholder={newServiceForm.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-24 px-3 py-2 rounded-xl border text-sm bg-white ${newServiceForm.fixed && !newServiceForm.price.trim() ? "border-red-300" : "border-gray-200"}`} />
+                        <input autoFocus value={newServiceForm.name} onChange={(e) => { const val = e.target.value; setNewServiceForm(f => ({ ...f, name: val, fixed: f.fixedTouched ? f.fixed : isFixedPriceService(val) })); setDuplicateServiceWarning(null); }} placeholder={t("newServiceNamePlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-border text-sm bg-white" />
+                        <input value={newServiceForm.price} onChange={(e) => setNewServiceForm(f => ({ ...f, price: e.target.value.replace(/[^0-9]/g, "") }))} placeholder={newServiceForm.fixed ? t("priceRequiredShort") : t("priceOptionalShort")} className={`w-24 px-3 py-2 rounded-xl border text-sm bg-white ${newServiceForm.fixed && !newServiceForm.price.trim() ? "border-red-300" : "border-border"}`} />
                       </div>
                       {/* Hizmet satırındakiyle AYNI desen: iki ayrı seçenek. Burada da tek düğme vardı ve
                           üzerinde mevcut durum yazıyordu — hangi düğmeye basınca ne olacağı belirsizdi. */}
-                      <div className="w-full mb-2 flex items-center gap-1 rounded-xl bg-gray-100 p-0.5" role="group" aria-label={t("fixedPriceHelpTitle")}>
-                        <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: true, fixedTouched: true }))} aria-pressed={!!newServiceForm.fixed} className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg transition ${newServiceForm.fixed ? "bg-white text-green-700 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("fixedPricePrepayNote")}</button>
-                        <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: false, fixedTouched: true }))} aria-pressed={!newServiceForm.fixed} className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg transition ${!newServiceForm.fixed ? "bg-white text-gray-800 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>{t("variablePriceAfterNote")}</button>
-                        <span className="px-1 text-gray-400"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} /></span>
+                      <div className="w-full mb-2 flex items-center gap-1 rounded-xl bg-surface-elevated p-0.5" role="group" aria-label={t("fixedPriceHelpTitle")}>
+                        <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: true, fixedTouched: true }))} aria-pressed={!!newServiceForm.fixed} className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg transition ${newServiceForm.fixed ? "bg-white text-green-700 shadow-sm" : "text-fg-secondary hover:text-fg-strong"}`}>{t("fixedPricePrepayNote")}</button>
+                        <button onClick={() => setNewServiceForm(f => ({ ...f, fixed: false, fixedTouched: true }))} aria-pressed={!newServiceForm.fixed} className={`flex-1 text-[11px] font-semibold py-1.5 rounded-lg transition ${!newServiceForm.fixed ? "bg-white text-fg-strong shadow-sm" : "text-fg-secondary hover:text-fg-strong"}`}>{t("variablePriceAfterNote")}</button>
+                        <span className="px-1 text-fg-muted"><InfoTip text={t("variablePriceTip")} label={t("infoTipAria")} /></span>
                       </div>
                       {newServiceForm.fixed && !newServiceForm.price.trim() && (<p className="text-[11px] text-red-500 mb-2 -mt-1">{t("fixedPriceRequiredWarning")}</p>)}
                       {duplicateServiceWarning ? (
-                        <div className="bg-white border border-gray-300 rounded-xl p-3 mb-2">
-                          <p className="text-[11px] text-gray-700 mb-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {t("duplicateServiceWarningText", { name: duplicateServiceWarning.name })}</p>
+                        <div className="bg-white border border-fg-muted rounded-xl p-3 mb-2">
+                          <p className="text-[11px] text-fg-strong mb-2 flex items-start gap-1.5"><Bell size={12} className="flex-shrink-0 mt-0.5" /> {t("duplicateServiceWarningText", { name: duplicateServiceWarning.name })}</p>
                           <div className="flex gap-2">
-                            <button onClick={() => setDuplicateServiceWarning(null)} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-2 rounded-lg font-semibold">{t("giveUpBtn")}</button>
-                            <button onClick={() => finalizeAddService(duplicateServiceWarning.name, duplicateServiceWarning.price, duplicateServiceWarning.fixed)} className="flex-1 bg-blue-600 text-white text-[11px] py-2 rounded-lg font-semibold hover:bg-blue-700 transition">{t("addAnywayBtn")}</button>
+                            <button onClick={() => setDuplicateServiceWarning(null)} className="flex-1 border border-border text-fg-secondary text-[11px] py-2 rounded-lg font-semibold">{t("giveUpBtn")}</button>
+                            <button onClick={() => finalizeAddService(duplicateServiceWarning.name, duplicateServiceWarning.price, duplicateServiceWarning.fixed)} className="flex-1 bg-primary text-white text-[11px] py-2 rounded-lg font-semibold hover:bg-primary-hover transition">{t("addAnywayBtn")}</button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex gap-2">
-                          <button onClick={cancelAddService} className="flex-1 border border-gray-200 text-gray-500 text-[11px] py-2 rounded-lg font-semibold bg-white">{t("cancel")}</button>
-                          <button onClick={tryAddService} className={`flex-1 text-[11px] py-2 rounded-lg font-semibold transition ${newServiceForm.name.trim() && (!newServiceForm.fixed || newServiceForm.price.trim()) ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-500"}`}>{t("genericAddBtn")}</button>
+                          <button onClick={cancelAddService} className="flex-1 border border-border text-fg-secondary text-[11px] py-2 rounded-lg font-semibold bg-white">{t("cancel")}</button>
+                          <button onClick={tryAddService} className={`flex-1 text-[11px] py-2 rounded-lg font-semibold transition ${newServiceForm.name.trim() && (!newServiceForm.fixed || newServiceForm.price.trim()) ? "bg-primary text-white hover:bg-primary-hover" : "bg-border text-fg-secondary"}`}>{t("genericAddBtn")}</button>
                         </div>
                       )}
                     </div>
@@ -4242,22 +4242,22 @@ export function AppShell() {
                     bir bilgi — adres, telefon, hizmetler gibi. Müşteriye görünen her şey artık tek
                     yerde, profilin altında düzenleniyor; Ayarlar sekmesi yalnızca hesabı/uygulamayı
                     ilgilendiren şeylere (bildirim, dil, ödeme bilgisi, şifre) ayrıldı. */}
-                <div id="mech-sec-hours" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
-                  <h3 className="font-bold text-gray-900 text-base mb-1 flex items-center gap-2"><Clock size={16} className="text-blue-500" /> {t("workingHours")}</h3>
-                  <p className="text-xs text-gray-400 mb-4">{t("workingHoursHint")}</p>
+                <div id="mech-sec-hours" className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
+                  <h3 className="font-bold text-fg text-base mb-1 flex items-center gap-2"><Clock size={16} className="text-info" /> {t("workingHours")}</h3>
+                  <p className="text-xs text-fg-muted mb-4">{t("workingHoursHint")}</p>
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
                   {DAY_KEYS.map(key => { const day = mechanicHours[key]; const isOpen = expandedDay === key; const slots = getDaySlots(day); const summary = day.open ? `${day.start} - ${dayClosingTime(day)}` : t("closed"); return (
-                    <div key={key} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+                    <div key={key} className="bg-white border border-surface-elevated rounded-2xl overflow-hidden">
                       <button onClick={() => setExpandedDay(isOpen ? null : key)} className="w-full flex items-center justify-between p-3">
-                        <span className="text-sm font-semibold text-gray-700">{(DAY_LABELS_FULL_BY_LANG[lang] || DAY_LABELS_FULL)[key]}</span>
-                        <div className="flex items-center gap-2"><span className={`text-[11px] ${day.open ? "text-gray-400" : "text-red-400"}`}>{summary}</span><ChevronRight size={14} className={`text-gray-300 transition-transform ${isOpen ? "rotate-90" : ""}`} /></div>
+                        <span className="text-sm font-semibold text-fg-strong">{(DAY_LABELS_FULL_BY_LANG[lang] || DAY_LABELS_FULL)[key]}</span>
+                        <div className="flex items-center gap-2"><span className={`text-[11px] ${day.open ? "text-fg-muted" : "text-red-400"}`}>{summary}</span><ChevronRight size={14} className={`text-fg-muted transition-transform ${isOpen ? "rotate-90" : ""}`} /></div>
                       </button>
                       {isOpen && (
-                        <div className="px-3 pb-3 border-t border-gray-50 pt-3">
-                          <div className="flex items-center justify-between mb-2"><span className="text-xs text-gray-500">{t("dayOpenLabel")}</span><button onClick={() => toggleDayOpen(key)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-11 h-6 rounded-full transition relative ${day.open ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition ${day.open ? "left-6" : "left-1"}`} /></div></button></div>
+                        <div className="px-3 pb-3 border-t border-background pt-3">
+                          <div className="flex items-center justify-between mb-2"><span className="text-xs text-fg-secondary">{t("dayOpenLabel")}</span><button onClick={() => toggleDayOpen(key)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-11 h-6 rounded-full transition relative ${day.open ? "bg-primary" : "bg-border"}`}><div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition ${day.open ? "left-6" : "left-1"}`} /></div></button></div>
                           {day.open && (<>
-                            <div className="flex flex-wrap gap-1.5 mb-3">{slots.map(slot => { const closed = day.closedSlots.includes(slot); return (<button key={slot} onClick={() => toggleSlotClosed(key, slot)} className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition ${closed ? "bg-red-50 text-red-400 border-red-100 line-through" : "bg-green-50 text-green-600 border-green-100"}`}>{slot}</button>); })}</div>
-                            <div className="flex items-center gap-2"><input type="time" value={expandedDay === key ? newSlotTime : ""} onChange={(e) => setNewSlotTime(e.target.value)} step="1800" className="flex-1 px-2 py-1.5 rounded-lg border border-gray-200 text-xs" /><button aria-label={t("a11yAddSlot")} onClick={() => { addExtraSlot(key, newSlotTime); setNewSlotTime(""); }} className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-blue-700 transition"><Plus size={16} /></button></div>
+                            <div className="flex flex-wrap gap-1.5 mb-3">{slots.map(slot => { const closed = day.closedSlots.includes(slot); return (<button key={slot} onClick={() => toggleSlotClosed(key, slot)} className={`px-2 py-1 rounded-lg text-[10px] font-medium border transition ${closed ? "bg-error-tint text-red-400 border-red-100 line-through" : "bg-success-tint text-success border-green-100"}`}>{slot}</button>); })}</div>
+                            <div className="flex items-center gap-2"><input type="time" value={expandedDay === key ? newSlotTime : ""} onChange={(e) => setNewSlotTime(e.target.value)} step="1800" className="flex-1 px-2 py-1.5 rounded-lg border border-border text-xs" /><button aria-label={t("a11yAddSlot")} onClick={() => { addExtraSlot(key, newSlotTime); setNewSlotTime(""); }} className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center flex-shrink-0 hover:bg-primary-hover transition"><Plus size={16} /></button></div>
                           </>)}
                         </div>
                       )}
@@ -4265,33 +4265,33 @@ export function AppShell() {
                   ); })}
                 </div>
                 </div>
-                <div id="mech-sec-cover" className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
-                <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2"><Camera size={16} className="text-blue-500" /> {t("coverPhotoTitle")}</h3>
+                <div id="mech-sec-cover" className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5 scroll-mt-24">
+                <h3 className="font-bold text-fg text-base mb-4 flex items-center gap-2"><Camera size={16} className="text-info" /> {t("coverPhotoTitle")}</h3>
                 <input ref={coverFileRef} type="file" accept="image/*" onChange={uploadCoverPhoto} className="hidden" />
-                {myProfile.coverPhoto ? (<div className="relative w-full h-40 md:h-48 rounded-2xl overflow-hidden"><img decoding="async" src={imgThumb(myProfile.coverPhoto, 700)} onError={imgFallbackHandler} alt={t("coverPhotoAlt")} className="w-full h-full object-cover" /><button onClick={() => coverFileRef.current?.click()} aria-label={t("changeCoverPhotoAria")} className="absolute top-2 right-12 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><Pencil size={14} /></button><button onClick={removeCoverPhoto} aria-label={t("removeCoverPhotoAria")} className="absolute top-2 right-2 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><X size={14} /></button></div>) : (<div><div className="flex gap-2 mb-3">{Object.entries(BANNER_PRESETS).map(([key, grad]) => (<button key={key} onClick={() => updateMyField("bannerPreset", key)} className={`flex-1 h-20 rounded-xl bg-gradient-to-br ${grad} ${myProfile.bannerPreset === key ? "ring-2 ring-offset-2 ring-blue-600" : ""}`} />))}</div><button onClick={() => coverFileRef.current?.click()} className="w-full border-2 border-dashed border-blue-300 rounded-xl py-2.5 text-blue-600 text-xs font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2"><Camera size={14} /> {t("uploadOwnPhotoBtn")}</button></div>)}
+                {myProfile.coverPhoto ? (<div className="relative w-full h-40 md:h-48 rounded-2xl overflow-hidden"><img decoding="async" src={imgThumb(myProfile.coverPhoto, 700)} onError={imgFallbackHandler} alt={t("coverPhotoAlt")} className="w-full h-full object-cover" /><button onClick={() => coverFileRef.current?.click()} aria-label={t("changeCoverPhotoAria")} className="absolute top-2 right-12 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><Pencil size={14} /></button><button onClick={removeCoverPhoto} aria-label={t("removeCoverPhotoAria")} className="absolute top-2 right-2 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white"><X size={14} /></button></div>) : (<div><div className="flex gap-2 mb-3">{Object.entries(BANNER_PRESETS).map(([key, grad]) => (<button key={key} onClick={() => updateMyField("bannerPreset", key)} className={`flex-1 h-20 rounded-xl bg-gradient-to-br ${grad} ${myProfile.bannerPreset === key ? "ring-2 ring-offset-2 ring-primary" : ""}`} />))}</div><button onClick={() => coverFileRef.current?.click()} className="w-full border-2 border-dashed border-blue-300 rounded-xl py-2.5 text-primary text-xs font-medium hover:bg-blue-100 transition flex items-center justify-center gap-2"><Camera size={14} /> {t("uploadOwnPhotoBtn")}</button></div>)}
                 </div>
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6 mb-5">
-                <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-900 text-base flex items-center gap-2"><Users size={16} className="text-blue-500" /> {t("team")}</h3><button onClick={addStaff} className="text-sm text-blue-700 font-semibold flex items-center gap-1 hover:text-blue-800"><Plus size={15} /> {t("genericAddBtn")}</button></div>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img loading="lazy" decoding="async" src={s.emoji} alt={s.name || t("staffPhotoFallbackAlt")} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button aria-label={t("a11yEditStaff")} onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder={t("fullNamePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder={t("rolePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-gray-200 text-xs" /></div><button onClick={() => removeStaff(i)} aria-label={t("removeStaffAria")} className="text-red-400 hover:text-red-600 flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
+                <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6 mb-5">
+                <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-fg text-base flex items-center gap-2"><Users size={16} className="text-info" /> {t("team")}</h3><button onClick={addStaff} className="text-sm text-primary-hover font-semibold flex items-center gap-1 hover:text-primary-active"><Plus size={15} /> {t("genericAddBtn")}</button></div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{myProfile.staff.map((s, i) => (<div key={i} className="flex items-center gap-2 bg-white border border-border rounded-xl p-2"><div className="relative w-11 h-11 rounded-full bg-primary-tint flex items-center justify-center text-xl flex-shrink-0 overflow-hidden">{isImgUrl(s.emoji) ? <img loading="lazy" decoding="async" src={s.emoji} alt={s.name || t("staffPhotoFallbackAlt")} className="w-full h-full object-cover" /> : s.emoji}<input ref={(el) => (staffFileRefs.current[i] = el)} type="file" accept="image/*" onChange={(e) => staffAvatarUpload(i, e)} className="hidden" /><button aria-label={t("a11yEditStaff")} onClick={() => staffFileRefs.current[i]?.click()} className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center text-transparent hover:text-white"><Pencil size={12} /></button></div><div className="flex-1 space-y-1"><input value={s.name} onChange={(e) => updateStaffField(i, "name", e.target.value)} placeholder={t("fullNamePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-border text-xs" /><input value={s.role} onChange={(e) => updateStaffField(i, "role", e.target.value)} placeholder={t("rolePlaceholder")} className="w-full px-2 py-1 rounded-lg border border-border text-xs" /></div><button onClick={() => removeStaff(i)} aria-label={t("removeStaffAria")} className="text-red-400 hover:text-error flex-shrink-0 p-2 -m-2"><Trash2 size={14} /></button></div>))}</div>
                 </div>
                 <div className="flex flex-wrap gap-3 mb-6">
-                  <button onClick={saveMyProfile} className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
-                  <button onClick={previewMyProfile} className="border border-gray-200 text-gray-600 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("previewMyPageBtn")}</button>
+                  <button onClick={saveMyProfile} className="bg-primary text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-primary-hover transition flex items-center gap-2"><Save size={16} /> {t("save")}</button>
+                  <button onClick={previewMyProfile} className="border border-border text-fg-secondary px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-background transition">{t("previewMyPageBtn")}</button>
                 </div>
                   {/* Mobilde tamamlanma kartı en altta — yapışkan sağ kolon yok. */}
-                  <div className="lg:hidden bg-white border border-gray-200 rounded-2xl p-4 mb-4">
+                  <div className="lg:hidden bg-white border border-border rounded-2xl p-4 mb-4">
                     <div className="flex items-end justify-between mb-2">
-                      <p className="text-sm font-bold text-gray-800">{t("profileCompletenessTitle")}</p>
-                      <span className={`text-xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-blue-600"}`}>%{pct}</span>
+                      <p className="text-sm font-bold text-fg-strong">{t("profileCompletenessTitle")}</p>
+                      <span className={`text-xl font-bold leading-none ${pct === 100 ? "text-emerald-600" : "text-primary"}`}>%{pct}</span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden"><div className={`h-full rounded-full ${pct === 100 ? "bg-emerald-500" : "bg-blue-500"}`} style={{ width: `${pct}%` }} /></div>
+                    <div className="h-2 bg-surface-elevated rounded-full overflow-hidden"><div className={`h-full rounded-full ${pct === 100 ? "bg-emerald-500" : "bg-info"}`} style={{ width: `${pct}%` }} /></div>
                     {/* Mobilde de eksik maddeler tıklanabilir: kullanıcı uzun formda o alanı
                         kendisi aramak zorunda kalmasın (masaüstü paneliyle aynı davranış). */}
                     {checks.some((c) => !c.ok) && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {checks.filter((c) => !c.ok).map((c) => (
                           <button key={c.label} onClick={() => scrollToSection(c.target)}
-                            className="text-[11px] font-semibold text-blue-600 bg-blue-50 rounded-lg px-2 py-1 hover:bg-blue-100 transition">
+                            className="text-[11px] font-semibold text-primary bg-primary-tint rounded-lg px-2 py-1 hover:bg-blue-100 transition">
                             {c.label}
                           </button>
                         ))}
@@ -4305,42 +4305,42 @@ export function AppShell() {
               /* TASARIM: verilen ve alınan teklifler geniş ekranda yan yana iki sütun; kartlar
                  okunabilir boyutta. Eskiden 10 piksellik yazılarla tek sütun alt alta uzuyordu. */
               <div className="w-full max-w-6xl mx-auto px-5 md:px-8 py-6 md:py-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6">
-                <h3 className="font-bold text-gray-900 text-base mb-4">{t("offersMade")}</h3>
+                <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6">
+                <h3 className="font-bold text-fg text-base mb-4">{t("offersMade")}</h3>
                 <div className="space-y-2.5">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
-                  <div key={o.id} className="border border-gray-100 rounded-2xl p-3.5 hover:border-blue-300 hover:shadow-sm transition">
+                  <div key={o.id} className="border border-surface-elevated rounded-2xl p-3.5 hover:border-blue-300 hover:shadow-sm transition">
                     <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center">
-                      <div className="min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{o.listing.brand} {o.listing.model}</p><p className="text-xs text-gray-400 mt-0.5">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("offerPendingSeenStatus") : t("offerPendingStatus")}</p></div>
-                      <span className="font-bold text-blue-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span>
+                      <div className="min-w-0"><p className="text-sm font-semibold text-fg-strong truncate">{o.listing.brand} {o.listing.model}</p><p className="text-xs text-fg-muted mt-0.5">{o.status === "accepted" ? t("offerAcceptedStatus") : o.status === "rejected" ? t("offerRejectedStatus") : o.seen ? t("offerPendingSeenStatus") : t("offerPendingStatus")}</p></div>
+                      <span className="font-bold text-primary text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span>
                     </button>
                     {/* Araç sahibi tarafındaki ile AYNI kural ve aynı düğme (bkz. o taraf). */}
                     {canReoffer(o) && (
-                      <div className="flex items-center justify-between gap-2 mt-2.5 pt-2.5 border-t border-gray-100">
-                        <span className="text-[11px] text-gray-400">{o.status === "rejected" ? t("reofferRejectedHint") : t("reofferUnseenHint")}</span>
-                        <button onClick={() => startReoffer(o.listing, o)} className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
+                      <div className="flex items-center justify-between gap-2 mt-2.5 pt-2.5 border-t border-surface-elevated">
+                        <span className="text-[11px] text-fg-muted">{o.status === "rejected" ? t("reofferRejectedHint") : t("reofferUnseenHint")}</span>
+                        <button onClick={() => startReoffer(o.listing, o)} className="text-xs font-semibold text-primary hover:text-primary-hover flex-shrink-0">{o.status === "rejected" ? t("reofferBtn") : t("reofferUpdateBtn")}</button>
                       </div>
                     )}
                   </div>))}
-                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noOffersMadeYet")}</p>}</div>
+                {listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name) && o.status !== "replaced")).length === 0 && <p className="text-center text-fg-muted text-sm py-10">{t("noOffersMadeYet")}</p>}</div>
                 {listings.filter(l => l.offers.some(o => o.status === "rejected" && (o.buyerId != null ? o.buyerId === MY_MECHANIC_ID : o.from === myProfile.name))).length > 0 && (
-                  <p className="text-[11px] text-gray-400 mt-4 flex items-start gap-1.5"><AlertTriangle size={12} className="flex-shrink-0 mt-0.5 text-amber-500" /> {t("rejectedOfferHint")}</p>
+                  <p className="text-[11px] text-fg-muted mt-4 flex items-start gap-1.5"><AlertTriangle size={12} className="flex-shrink-0 mt-0.5 text-amber-500" /> {t("rejectedOfferHint")}</p>
                 )}
                 </div>
-                <div className="bg-white border border-gray-100 rounded-3xl shadow-sm p-5 md:p-6">
-                <h3 className="font-bold text-gray-900 text-base mb-4">{t("offersReceived")}</h3>
+                <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm p-5 md:p-6">
+                <h3 className="font-bold text-fg text-base mb-4">{t("offersReceived")}</h3>
                 <div className="space-y-2.5">{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
-                  <div key={o.id} className="border border-gray-100 rounded-2xl p-3.5">
-                    <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center mb-2.5"><div><p className="text-sm font-semibold text-gray-800">{o.from}</p><p className="text-xs text-gray-400 mt-0.5">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-blue-600 text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span></button>
-                    {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-xs py-2 rounded-xl font-semibold hover:bg-green-600 transition">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-gray-200 text-gray-500 text-xs py-2 rounded-xl font-semibold hover:bg-gray-50 transition">{t("reject")}</button></div>) : (<p className="text-xs text-gray-400">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>)}
+                  <div key={o.id} className="border border-surface-elevated rounded-2xl p-3.5">
+                    <button onClick={() => setSelectedListingId(o.listing.id)} className="w-full text-left flex justify-between items-center mb-2.5"><div><p className="text-sm font-semibold text-fg-strong">{o.from}</p><p className="text-xs text-fg-muted mt-0.5">{o.listing.brand} {o.listing.model}</p></div><span className="font-bold text-primary text-base flex-shrink-0 ml-3">{o.amount}{o.currency || "₺"}</span></button>
+                    {o.status === "pending" ? (<div className="flex gap-2"><button onClick={() => respondOffer(o.listing.id, o.id, "accepted")} className="flex-1 bg-green-500 text-white text-xs py-2 rounded-xl font-semibold hover:bg-success transition">{t("accept")}</button><button onClick={() => respondOffer(o.listing.id, o.id, "rejected")} className="flex-1 border border-border text-fg-secondary text-xs py-2 rounded-xl font-semibold hover:bg-background transition">{t("reject")}</button></div>) : (<p className="text-xs text-fg-muted">{o.status === "accepted" ? t("offerAcceptedStatus") : t("offerRejectedStatus")}</p>)}
                   </div>
-                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-gray-400 text-sm py-10">{t("noOffersReceivedYet")}</p>}</div>
+                ))}{listings.filter(isMyListing).flatMap(l => l.offers.filter(o => o.status !== "replaced")).length === 0 && <p className="text-center text-fg-muted text-sm py-10">{t("noOffersReceivedYet")}</p>}</div>
                 </div>
               </div>
             )}
           </div>
         )}
         {screen === "mechProfilePage" && myProfile && (
-          <div className="w-full bg-gray-50 min-h-screen">
+          <div className="w-full bg-background min-h-screen">
             {/* ---- AYARLAR ----
                 SADELEŞTİRİLDİ: bu ekran eskiden "işletme paneli"ydi ve içinde Profil / Teklifler /
                 Ayarlar diye ÜÇÜNCÜ bir sekme çubuğu vardı — panonun kendi sekme çubuğunun altında
@@ -4356,11 +4356,11 @@ export function AppShell() {
             <div className="h-16 md:h-20 bg-gradient-to-br from-gray-100 via-gray-50 to-blue-50" />
             {/* Aynı katman hatası burada da vardı — bkz. panodaki uzun not. */}
             <div className="max-w-3xl mx-auto px-5 md:px-8 relative z-10">
-              <div className="bg-white border border-gray-100 rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 text-gray-500"><Settings size={22} /></div>
+              <div className="bg-white border border-surface-elevated rounded-3xl shadow-sm -mt-10 md:-mt-12 p-5 md:p-6 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-surface-elevated border border-border flex items-center justify-center flex-shrink-0 text-fg-secondary"><Settings size={22} /></div>
                 <div className="min-w-0">
-                  <h1 className="text-xl md:text-2xl font-bold text-gray-900">{mechProfileTab === "support" ? t("helpAndSupportTitle") : t("tabLabelSettings")}</h1>
-                  <p className="text-sm text-gray-400 mt-0.5 truncate">{myProfile.name || t("myBusinessFallback")}</p>
+                  <h1 className="text-xl md:text-2xl font-bold text-fg">{mechProfileTab === "support" ? t("helpAndSupportTitle") : t("tabLabelSettings")}</h1>
+                  <p className="text-sm text-fg-muted mt-0.5 truncate">{myProfile.name || t("myBusinessFallback")}</p>
                 </div>
               </div>
             </div>
@@ -4373,34 +4373,34 @@ export function AppShell() {
                 {/* Aynı kişiselleştirme rızası tamirci tarafında da var: tamirciler de araç
                     ilanlarına bakıyor ve satıyor. Rıza rol bazlı tutuluyor (bkz. taste_signals),
                     yani bir kişinin iki hesabı varsa ikisi ayrı ayrı karar veriyor. */}
-                <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
+                <div className="bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm mb-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="pr-2 min-w-0">
-                      <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Sparkles size={14} className="text-blue-500" /> {t("recConsentTitle")}</h3>
-                      <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">{t("recConsentDesc")}</p>
+                      <h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Sparkles size={14} className="text-info" /> {t("recConsentTitle")}</h3>
+                      <p className="text-[11px] text-fg-secondary mt-1 leading-relaxed">{t("recConsentDesc")}</p>
                     </div>
                     <button onClick={() => setRecsConsent(!recommendations.consent)} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0">
-                      <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-blue-600" : "bg-gray-200"}`}>
+                      <div className={`w-12 h-7 rounded-full transition relative ${recommendations.consent ? "bg-primary" : "bg-border"}`}>
                         <div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${recommendations.consent ? "left-6" : "left-1"}`} />
                       </div>
                     </button>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-gray-600 hover:text-blue-600 transition">{t("recProfileShowBtn")}</button>
+                  <div className="mt-3 pt-3 border-t border-surface-elevated">
+                    <button onClick={refreshRecsProfile} className="text-[12px] font-medium text-fg-secondary hover:text-primary transition">{t("recProfileShowBtn")}</button>
                     {recsProfile && (
                       recsProfile.signals.length === 0
-                        ? <p className="text-[11px] text-gray-400 mt-2">{t("recProfileEmpty")}</p>
+                        ? <p className="text-[11px] text-fg-muted mt-2">{t("recProfileEmpty")}</p>
                         : (<div className="mt-2">
                             <div className="flex flex-wrap gap-1.5">{recsProfile.signals.slice(0, 24).map((sg) => (
-                              <span key={`${sg.kind}:${sg.value}`} className="text-[10px] bg-gray-50 border border-gray-200 text-gray-600 px-2 py-1 rounded-full">{sg.value} <span className="text-gray-400">· {sg.weight}</span></span>
+                              <span key={`${sg.kind}:${sg.value}`} className="text-[10px] bg-background border border-border text-fg-secondary px-2 py-1 rounded-full">{sg.value} <span className="text-fg-muted">· {sg.weight}</span></span>
                             ))}</div>
-                            <button onClick={clearRecsProfile} className="mt-2 text-[11px] font-medium text-red-500 hover:text-red-600">{t("recProfileClearBtn")}</button>
+                            <button onClick={clearRecsProfile} className="mt-2 text-[11px] font-medium text-red-500 hover:text-error">{t("recProfileClearBtn")}</button>
                           </div>)
                     )}
                   </div>
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-gray-800 text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={toggleAutoAccept} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
-                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><MapPin size={14} className="text-blue-600" /> {t("useMyLocationTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
+                <div className="bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm mb-4"><div className="flex items-center justify-between mb-2"><h3 className="font-semibold text-fg-strong text-sm">{t("autoAcceptAppointmentsTitle")}</h3><button onClick={toggleAutoAccept} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${autoAccept ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${autoAccept ? "left-6" : "left-1"}`} /></div></button></div></div>
+                <div className="flex items-center justify-between bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><MapPin size={14} className="text-primary" /> {t("useMyLocationTitle")}</h3><p className="text-[11px] text-fg-muted mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                 {(() => {
                   const notifOpts = [{ key: "notifyAppointments", label: t("notifyAppointmentsLabel") }, { key: "notifyOffers", label: t("notifyOffersLabel") }, { key: "notifyMessages", label: t("notifyMessagesLabel") }, { key: "notifyJobApplications", label: t("notifyJobApplicationsLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }, { key: "notifySavedSearches", label: t("notifySavedSearchesLabel") }];
                   const allNotifsOn = notifOpts.every(opt => mechSettings[opt.key]);
@@ -4409,58 +4409,58 @@ export function AppShell() {
                     if (!allNotifsOn && notifPermission !== "granted") requestNotifPermission();
                   };
                   return (
-                    <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
-                      <div className="flex items-center justify-between"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Bell size={14} className="text-blue-600" /> {t("notificationsTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{notifPermission === "denied" ? t("notifPermissionDeniedNote") : allNotifsOn ? t("allNotifsOnNote") : t("enableBrowserNotifsNote")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
-                      <button onClick={() => setMechNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 hover:text-gray-700 transition"><span>{t("showNotifTypesBtn")}</span><ChevronRight size={13} className={`transition-transform ${mechNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
+                    <div className="bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm mb-4">
+                      <div className="flex items-center justify-between"><div className="pr-3"><h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Bell size={14} className="text-primary" /> {t("notificationsTitle")}</h3><p className="text-[11px] text-fg-muted mt-0.5">{notifPermission === "denied" ? t("notifPermissionDeniedNote") : allNotifsOn ? t("allNotifsOnNote") : t("enableBrowserNotifsNote")}</p></div><button onClick={toggleAllNotifs} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${allNotifsOn ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${allNotifsOn ? "left-6" : "left-1"}`} /></div></button></div>
+                      <button onClick={() => setMechNotifDetailsOpen(o => !o)} className="w-full flex items-center justify-between mt-3 pt-3 border-t border-surface-elevated text-xs text-fg-secondary hover:text-fg-strong transition"><span>{t("showNotifTypesBtn")}</span><ChevronRight size={13} className={`transition-transform ${mechNotifDetailsOpen ? "rotate-90" : ""}`} /></button>
                       {mechNotifDetailsOpen && (
                         <div className="mt-3 space-y-2.5">
                           {notifOpts.map(opt => (
-                            <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-gray-600">{opt.label}</span><button onClick={() => setMechSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${mechSettings[opt.key] ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${mechSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
+                            <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-fg-secondary">{opt.label}</span><button onClick={() => setMechSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${mechSettings[opt.key] ? "bg-primary" : "bg-border"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${mechSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
                           ))}
                         </div>
                       )}
                     </div>
                   );
                 })()}
-                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><h3 className="font-semibold text-gray-800 text-sm">{t("siteLanguage")}</h3><LangSwitch /></div>
-                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Globe size={14} className="text-blue-600" /> {t("messagingLanguageTitle")}</h3><p className="text-[11px] text-gray-400 mt-0.5">{t("messagingLanguageHint")}</p></div><div className="flex bg-gray-100 rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => updateMyField("lang", l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${(myProfile.lang || "tr") === l ? "bg-white text-blue-600 shadow-sm" : "text-gray-400"}`}>{l.toUpperCase()}</button>))}</div></div>
-                <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Palette size={14} className={darkMode ? "text-blue-500" : "text-blue-600"} /> {t("darkModeAppearanceTitle")}</h3><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-blue-600" : "bg-gray-200"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
-                <h3 className="font-semibold text-gray-800 text-sm mb-3 flex items-center gap-2"><Bell size={16} /> {t("smsNotifHistoryTitle")}</h3>
-                <div className="space-y-2 mb-6">{smsLog.map(s => (<div key={s.id} className="bg-white border border-gray-200 rounded-xl p-3 text-xs text-gray-600">{s.text}</div>))}{smsLog.length === 0 && <p className="text-center text-gray-400 text-sm py-8">{t("noSmsSentYet")}</p>}</div>
-                <button onClick={() => setMechPaymentInfoOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Banknote size={16} /> {t("paymentInfoTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${mechPaymentInfoOpen ? "rotate-90" : ""}`} /></button>
+                <div className="flex items-center justify-between bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm mb-4"><h3 className="font-semibold text-fg-strong text-sm">{t("siteLanguage")}</h3><LangSwitch /></div>
+                <div className="flex items-center justify-between bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm mb-4"><div className="pr-3"><h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Globe size={14} className="text-primary" /> {t("messagingLanguageTitle")}</h3><p className="text-[11px] text-fg-muted mt-0.5">{t("messagingLanguageHint")}</p></div><div className="flex bg-surface-elevated rounded-full p-0.5 gap-0.5 flex-shrink-0">{["tr", "en", "de"].map(l => (<button key={l} onClick={() => updateMyField("lang", l)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${(myProfile.lang || "tr") === l ? "bg-white text-primary shadow-sm" : "text-fg-muted"}`}>{l.toUpperCase()}</button>))}</div></div>
+                <div className="flex items-center justify-between bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm mb-4"><h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Palette size={14} className={darkMode ? "text-info" : "text-primary"} /> {t("darkModeAppearanceTitle")}</h3><button onClick={() => setDarkMode(d => !d)} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${darkMode ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${darkMode ? "left-6" : "left-1"}`} /></div></button></div>
+                <h3 className="font-semibold text-fg-strong text-sm mb-3 flex items-center gap-2"><Bell size={16} /> {t("smsNotifHistoryTitle")}</h3>
+                <div className="space-y-2 mb-6">{smsLog.map(s => (<div key={s.id} className="bg-white border border-border rounded-xl p-3 text-xs text-fg-secondary">{s.text}</div>))}{smsLog.length === 0 && <p className="text-center text-fg-muted text-sm py-8">{t("noSmsSentYet")}</p>}</div>
+                <button onClick={() => setMechPaymentInfoOpen(o => !o)} className="w-full flex items-center justify-between mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Banknote size={16} /> {t("paymentInfoTitle")}</h3><ChevronRight size={15} className={`text-fg-muted transition-transform ${mechPaymentInfoOpen ? "rotate-90" : ""}`} /></button>
                 {mechPaymentInfoOpen && (<>
-                  <p className="text-[11px] text-gray-400 mb-3">{t("paymentInfoHint")}</p>
-                  <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm space-y-2 mb-6">
-                    <input value={myProfile?.accountHolder || ""} onChange={(e) => updateMyField("accountHolder", e.target.value)} placeholder={t("accountHolderPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                    <input value={myProfile?.bankName || ""} onChange={(e) => updateMyField("bankName", e.target.value)} placeholder={t("bankNamePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                    <input value={myProfile?.iban || ""} onChange={(e) => updateMyField("iban", e.target.value)} placeholder={t("ibanPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                    <button onClick={() => setToast({ type: "info", text: t("paymentInfoSavedToast") })} className="w-full bg-gray-800 text-white py-2 rounded-xl text-sm font-medium hover:bg-gray-900 transition mt-1">{t("save")}</button>
+                  <p className="text-[11px] text-fg-muted mb-3">{t("paymentInfoHint")}</p>
+                  <div className="bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm space-y-2 mb-6">
+                    <input value={myProfile?.accountHolder || ""} onChange={(e) => updateMyField("accountHolder", e.target.value)} placeholder={t("accountHolderPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+                    <input value={myProfile?.bankName || ""} onChange={(e) => updateMyField("bankName", e.target.value)} placeholder={t("bankNamePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+                    <input value={myProfile?.iban || ""} onChange={(e) => updateMyField("iban", e.target.value)} placeholder={t("ibanPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+                    <button onClick={() => setToast({ type: "info", text: t("paymentInfoSavedToast") })} className="w-full bg-fg-strong text-white py-2 rounded-xl text-sm font-medium hover:bg-secondary transition mt-1">{t("save")}</button>
                   </div>
                 </>)}
-                <button onClick={() => setMechAccountOpen(o => !o)} className="w-full flex items-center justify-between mt-2 mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2"><Lock size={15} className="text-gray-400" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-gray-300 transition-transform ${mechAccountOpen ? "rotate-90" : ""}`} /></button>
+                <button onClick={() => setMechAccountOpen(o => !o)} className="w-full flex items-center justify-between mt-2 mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Lock size={15} className="text-fg-muted" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-fg-muted transition-transform ${mechAccountOpen ? "rotate-90" : ""}`} /></button>
                 {mechAccountOpen && (<>
                   {/* HESAP GÜVENLİĞİ — açık oturumlar ve e-posta değişimi.
                       Şifre değiştirmek eskiden diğer oturumları kapatmıyordu; e-posta ise
                       yalnızca token'la değiştirilebiliyordu (bkz. backend/routes/auth.js). */}
-                  <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-2">
-                    <p className="text-sm font-medium text-gray-700 mb-1">{t("accountSecurityTitle")}</p>
-                    <p className="text-[11px] text-gray-400 mb-3">{t("openSessionsLabel", { n: String(openSessionCount) })} · {t("logoutEverywhereDesc")}</p>
+                  <div className="bg-white border border-border rounded-2xl p-4 mb-2">
+                    <p className="text-sm font-medium text-fg-strong mb-1">{t("accountSecurityTitle")}</p>
+                    <p className="text-[11px] text-fg-muted mb-3">{t("openSessionsLabel", { n: String(openSessionCount) })} · {t("logoutEverywhereDesc")}</p>
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={logoutEverywhere} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("logoutEverywhereBtn")}</button>
-                      <button onClick={() => setEmailChangeForm({ open: true, email: "", password: "", loading: false })} className="text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl px-3 py-2 hover:bg-gray-50 transition">{t("changeEmailBtn")}</button>
+                      <button onClick={logoutEverywhere} className="text-xs font-semibold text-fg-strong border border-border rounded-xl px-3 py-2 hover:bg-background transition">{t("logoutEverywhereBtn")}</button>
+                      <button onClick={() => setEmailChangeForm({ open: true, email: "", password: "", loading: false })} className="text-xs font-semibold text-fg-strong border border-border rounded-xl px-3 py-2 hover:bg-background transition">{t("changeEmailBtn")}</button>
                     </div>
                     <KnownDevices devices={knownDevices} loading={devicesLoading} onLoad={loadKnownDevices} t={t} lang={lang} />
                   </div>
-                  <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><Lock size={14} className="text-gray-400" /> {t("changePasswordBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                  <button onClick={() => setMechProfileTab("support")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700 flex items-center gap-2"><LifeBuoy size={14} className="text-gray-400" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-blue-600 rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-gray-300" /></button>
-                  <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
-                  <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-4 mb-2 shadow-sm hover:bg-gray-50 transition"><span className="text-sm font-medium text-gray-700">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-gray-300" /></button>
+                  <button onClick={() => setShowPasswordModal(true)} className="w-full flex items-center justify-between bg-white border border-surface-elevated rounded-2xl p-4 mb-2 shadow-sm hover:bg-background transition"><span className="text-sm font-medium text-fg-strong flex items-center gap-2"><Lock size={14} className="text-fg-muted" /> {t("changePasswordBtn")}</span><ChevronRight size={15} className="text-fg-muted" /></button>
+                  <button onClick={() => setMechProfileTab("support")} className="w-full flex items-center justify-between bg-white border border-surface-elevated rounded-2xl p-4 mb-2 shadow-sm hover:bg-background transition"><span className="text-sm font-medium text-fg-strong flex items-center gap-2"><LifeBuoy size={14} className="text-fg-muted" /> {t("helpSupportBtn")}</span>{mySupportTickets().filter(tk => tk.status !== "resolved").length > 0 && <span className="text-[10px] font-bold text-white bg-primary rounded-full px-1.5 py-0.5 flex-shrink-0">{mySupportTickets().filter(tk => tk.status !== "resolved").length}</span>}<ChevronRight size={15} className="text-fg-muted" /></button>
+                  <button onClick={() => setLegalModalTopic("terms")} className="w-full flex items-center justify-between bg-white border border-surface-elevated rounded-2xl p-4 mb-2 shadow-sm hover:bg-background transition"><span className="text-sm font-medium text-fg-strong">{t("termsOfUseBtn")}</span><ChevronRight size={15} className="text-fg-muted" /></button>
+                  <button onClick={() => setLegalModalTopic("privacy")} className="w-full flex items-center justify-between bg-white border border-surface-elevated rounded-2xl p-4 mb-2 shadow-sm hover:bg-background transition"><span className="text-sm font-medium text-fg-strong">{t("privacyPolicyBtn")}</span><ChevronRight size={15} className="text-fg-muted" /></button>
                 </>)}
-                <button onClick={logoutUser} className="w-full border border-gray-200 text-gray-600 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition mb-5 mt-3">{t("logout")}</button>
-                <button onClick={() => setMechDangerZoneOpen(o => !o)} className="w-full flex items-center justify-between py-2 text-xs text-gray-400 hover:text-gray-600 transition"><span>{t("dangerZoneBtn")}</span><ChevronRight size={13} className={`transition-transform ${mechDangerZoneOpen ? "rotate-90" : ""}`} /></button>
+                <button onClick={logoutUser} className="w-full border border-border text-fg-secondary py-3 rounded-2xl font-semibold text-sm hover:bg-background transition mb-5 mt-3">{t("logout")}</button>
+                <button onClick={() => setMechDangerZoneOpen(o => !o)} className="w-full flex items-center justify-between py-2 text-xs text-fg-muted hover:text-fg-secondary transition"><span>{t("dangerZoneBtn")}</span><ChevronRight size={13} className={`transition-transform ${mechDangerZoneOpen ? "rotate-90" : ""}`} /></button>
                 {mechDangerZoneOpen && (
                   <div className="border border-red-100 bg-red-50/50 rounded-2xl p-4 mt-1">
-                    <p className="text-xs text-gray-500 mb-3">{t("deleteBusinessWarning")}</p>
+                    <p className="text-xs text-fg-secondary mb-3">{t("deleteBusinessWarning")}</p>
                     <button onClick={() => { setShowDeleteAccountModal(true); setDeleteConfirmText(""); }} className="w-full text-red-500 border border-red-200 py-2.5 rounded-xl font-medium text-xs hover:bg-red-100 transition">{t("deleteBusinessBtn")}</button>
                   </div>
                 )}
@@ -4477,24 +4477,24 @@ export function AppShell() {
       {showFilterModal && (
         <div data-modal-backdrop className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" style={{ zIndex: 9500 }} onClick={() => setShowFilterModal(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><SlidersHorizontal size={18} /> {t("filterBtn")}</h3><button onClick={() => setShowFilterModal(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-fg-strong flex items-center gap-2"><SlidersHorizontal size={18} /> {t("filterBtn")}</h3><button onClick={() => setShowFilterModal(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div>
             {ownerMode === "mechanics" ? (
               <>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("priceRangeLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "cheap", label: t("affordablePriceTier") }, { key: "mid", label: t("midPriceTier") }, { key: "expensive", label: t("expensivePriceTier") }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, priceTier: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.priceTier === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("minRatingLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: 0, label: t("allFilterLabel") }, { key: 4.0, label: "⭐ 4.0+" }, { key: 4.5, label: "⭐ 4.5+" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, minRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.minRating === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MapPin size={13} /> {t("maxDistanceLabel")}</h4>
-                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 1, label: "< 1 km" }, { key: 2, label: "< 2 km" }, { key: 5, label: "< 5 km" }].map(o => (<button key={o.key} onClick={() => handleDistanceFilterClick(o.key)} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.maxDistance === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                {!userLocation && (<p className="text-[11px] text-gray-400 mb-5 flex items-center gap-1"><MapPin size={11} /> {t("estimatedDistanceFilterHint")}</p>)}
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Car size={13} /> {t("vehicleBrandLabel")}</h4>
-                <select value={filters.brand} onChange={(e) => setFilters(f => ({ ...f, brand: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allBrandsOption")}</option>{CAR_BRANDS.map(b => (<option key={b} value={b}>{b}</option>))}</select>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Wrench size={13} /> {t("serviceLabelFilter")}</h4>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2">{t("priceRangeLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "cheap", label: t("affordablePriceTier") }, { key: "mid", label: t("midPriceTier") }, { key: "expensive", label: t("expensivePriceTier") }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, priceTier: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.priceTier === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2">{t("minRatingLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: 0, label: t("allFilterLabel") }, { key: 4.0, label: "⭐ 4.0+" }, { key: 4.5, label: "⭐ 4.5+" }].map(o => (<button key={o.key} onClick={() => setFilters(f => ({ ...f, minRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.minRating === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><MapPin size={13} /> {t("maxDistanceLabel")}</h4>
+                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 1, label: "< 1 km" }, { key: 2, label: "< 2 km" }, { key: 5, label: "< 5 km" }].map(o => (<button key={o.key} onClick={() => handleDistanceFilterClick(o.key)} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${filters.maxDistance === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                {!userLocation && (<p className="text-[11px] text-fg-muted mb-5 flex items-center gap-1"><MapPin size={11} /> {t("estimatedDistanceFilterHint")}</p>)}
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Car size={13} /> {t("vehicleBrandLabel")}</h4>
+                <select value={filters.brand} onChange={(e) => setFilters(f => ({ ...f, brand: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="">{t("allBrandsOption")}</option>{CAR_BRANDS.map(b => (<option key={b} value={b}>{b}</option>))}</select>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Wrench size={13} /> {t("serviceLabelFilter")}</h4>
                 {/* Filtre listesi artık 14 satırlık kısa sabit liste değil, tamircilerin de seçtiği TAM katalog —
                     kategorilere göre gruplanmış. Filtre değeri Türkçe ad üzerinden eşleşiyor
                     (serviceNameMatches katalog anahtarıyla üç dili birden karşılaştırıyor), bu yüzden
                     arayüz dili ne olursa olsun doğru tamirciler çıkıyor. */}
-                <select value={filters.service} onChange={(e) => setFilters(f => ({ ...f, service: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white">
+                <select value={filters.service} onChange={(e) => setFilters(f => ({ ...f, service: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white">
                   <option value="">{t("allServicesOption")}</option>
                   {SERVICE_CATALOG.map(cat => (
                     <optgroup key={cat.key} label={cat[lang] || cat.tr}>
@@ -4503,146 +4503,146 @@ export function AppShell() {
                   ))}
                 </select>
                 {/* ---- Genişletilmiş tamirci filtreleri: kalite/güven ve hizmet/ödeme grupları ---- */}
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("mechFilterSectionQuality")}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 pt-1 border-t border-surface-elevated">{t("mechFilterSectionQuality")}</p>
                 <div className="space-y-2 mb-5">
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.openNow} onChange={(e) => setFilters(f => ({ ...f, openNow: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <Clock size={13} className="text-gray-400" /> {t("filterOpenNow")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.verifiedOnly} onChange={(e) => setFilters(f => ({ ...f, verifiedOnly: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <BadgeCheck size={13} className="text-gray-400" /> {t("filterVerifiedOnly")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={filters.fixedPriceOnly} onChange={(e) => setFilters(f => ({ ...f, fixedPriceOnly: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <Tag size={13} className="text-gray-400" /> {t("filterFixedPriceOnly")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={filters.openNow} onChange={(e) => setFilters(f => ({ ...f, openNow: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <Clock size={13} className="text-fg-muted" /> {t("filterOpenNow")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={filters.verifiedOnly} onChange={(e) => setFilters(f => ({ ...f, verifiedOnly: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <BadgeCheck size={13} className="text-fg-muted" /> {t("filterVerifiedOnly")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={filters.fixedPriceOnly} onChange={(e) => setFilters(f => ({ ...f, fixedPriceOnly: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <Tag size={13} className="text-fg-muted" /> {t("filterFixedPriceOnly")}</label>
                 </div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Clock size={13} /> {t("maxResponseLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...RESPONSE_TIME_OPTIONS.map(n => ({ key: String(n), label: t("maxResponseOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, maxResponse: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.maxResponse) === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MessageCircle size={13} /> {t("minReviewsLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...MIN_REVIEW_COUNT_OPTIONS.map(n => ({ key: String(n), label: t("minReviewsOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, minReviews: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.minReviews) === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("mechFilterSectionService")}</p>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Clock size={13} /> {t("maxResponseLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...RESPONSE_TIME_OPTIONS.map(n => ({ key: String(n), label: t("maxResponseOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, maxResponse: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.maxResponse) === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><MessageCircle size={13} /> {t("minReviewsLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "", label: t("allFilterLabel") }, ...MIN_REVIEW_COUNT_OPTIONS.map(n => ({ key: String(n), label: t("minReviewsOption", { n: String(n) }) }))].map(o => (<button key={o.key || "all"} onClick={() => setFilters(f => ({ ...f, minReviews: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${String(filters.minReviews) === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 pt-1 border-t border-surface-elevated">{t("mechFilterSectionService")}</p>
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("maxPriceLabel")}</h4>
-                    <input type="number" min="0" value={filters.maxPrice} onChange={(e) => setFilters(f => ({ ...f, maxPrice: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Banknote size={13} /> {t("maxPriceLabel")}</h4>
+                    <input type="number" min="0" value={filters.maxPrice} onChange={(e) => setFilters(f => ({ ...f, maxPrice: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Globe size={13} /> {t("mechLangLabel")}</h4>
-                    <select value={filters.mechLang} onChange={(e) => setFilters(f => ({ ...f, mechLang: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{Object.entries(LANG_LABELS).map(([code, label]) => (<option key={code} value={code}>{label}</option>))}</select>
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Globe size={13} /> {t("mechLangLabel")}</h4>
+                    <select value={filters.mechLang} onChange={(e) => setFilters(f => ({ ...f, mechLang: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="all">{t("allFilterLabel")}</option>{Object.entries(LANG_LABELS).map(([code, label]) => (<option key={code} value={code}>{label}</option>))}</select>
                   </div>
                 </div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("paymentMethodFilterLabel")}</h4>
-                <select value={filters.paymentMethod} onChange={(e) => setFilters(f => ({ ...f, paymentMethod: e.target.value }))} className="w-full mb-6 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("allPaymentMethodsOption")}</option>{PAYMENT_METHOD_OPTIONS.map(p => (<option key={p} value={p}>{p}</option>))}</select>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Banknote size={13} /> {t("paymentMethodFilterLabel")}</h4>
+                <select value={filters.paymentMethod} onChange={(e) => setFilters(f => ({ ...f, paymentMethod: e.target.value }))} className="w-full mb-6 px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="">{t("allPaymentMethodsOption")}</option>{PAYMENT_METHOD_OPTIONS.map(p => (<option key={p} value={p}>{p}</option>))}</select>
               </>
             ) : ownerMode === "cars" ? (
               <>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Cog size={13} /> {t("transmissionLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...TRANSMISSIONS.map(tv => ({ key: tv, label: vocabLabel(tv, lang, TRANSMISSION_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, transmission: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.transmission === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Fuel size={13} /> {t("fuelTypeLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...FUEL_TYPES.map(fv => ({ key: fv, label: vocabLabel(fv, lang, FUEL_TYPE_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, fuelType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.fuelType === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("priceRangeTlLabel")}</h4>
-                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minPlaceholder")} value={listingFilters.minPrice} onChange={(e) => setListingFilters(f => ({ ...f, minPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxPlaceholder")} value={listingFilters.maxPrice} onChange={(e) => setListingFilters(f => ({ ...f, maxPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Gauge size={13} /> {t("kmRangeLabel")}</h4>
-                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minKmPlaceholder")} value={listingFilters.minKm} onChange={(e) => setListingFilters(f => ({ ...f, minKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxKmPlaceholder")} value={listingFilters.maxKm} onChange={(e) => setListingFilters(f => ({ ...f, maxKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><CalendarDays size={13} /> {t("modelYearLabel")}</h4>
-                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minYearPlaceholder")} value={listingFilters.minYear} onChange={(e) => setListingFilters(f => ({ ...f, minYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxYearPlaceholder")} value={listingFilters.maxYear} onChange={(e) => setListingFilters(f => ({ ...f, maxYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Cog size={13} /> {t("transmissionLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...TRANSMISSIONS.map(tv => ({ key: tv, label: vocabLabel(tv, lang, TRANSMISSION_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, transmission: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.transmission === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Fuel size={13} /> {t("fuelTypeLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...FUEL_TYPES.map(fv => ({ key: fv, label: vocabLabel(fv, lang, FUEL_TYPE_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, fuelType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.fuelType === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Banknote size={13} /> {t("priceRangeTlLabel")}</h4>
+                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minPlaceholder")} value={listingFilters.minPrice} onChange={(e) => setListingFilters(f => ({ ...f, minPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input type="number" placeholder={t("maxPlaceholder")} value={listingFilters.maxPrice} onChange={(e) => setListingFilters(f => ({ ...f, maxPrice: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Gauge size={13} /> {t("kmRangeLabel")}</h4>
+                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minKmPlaceholder")} value={listingFilters.minKm} onChange={(e) => setListingFilters(f => ({ ...f, minKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input type="number" placeholder={t("maxKmPlaceholder")} value={listingFilters.maxKm} onChange={(e) => setListingFilters(f => ({ ...f, maxKm: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><CalendarDays size={13} /> {t("modelYearLabel")}</h4>
+                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minYearPlaceholder")} value={listingFilters.minYear} onChange={(e) => setListingFilters(f => ({ ...f, minYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input type="number" placeholder={t("maxYearPlaceholder")} value={listingFilters.maxYear} onChange={(e) => setListingFilters(f => ({ ...f, maxYear: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
                 {/* AutoScout24 tarzı genişletilmiş araç filtreleri (bkz. AppLogicProvider EMPTY_LISTING_FILTERS) */}
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Car size={13} /> {t("bodyTypePlaceholder")}</h4>
-                <select value={listingFilters.bodyType} onChange={(e) => setListingFilters(f => ({ ...f, bodyType: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{BODY_TYPES.map(b => (<option key={b} value={b}>{vocabLabel(b, lang, BODY_TYPE_LABELS_BY_LANG)}</option>))}</select>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Compass size={13} /> {t("drivetrainPlaceholder")}</h4>
-                <select value={listingFilters.drivetrain} onChange={(e) => setListingFilters(f => ({ ...f, drivetrain: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{DRIVETRAIN_OPTIONS.map(d => (<option key={d} value={d}>{vocabLabel(d, lang, DRIVETRAIN_LABELS_BY_LANG)}</option>))}</select>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Zap size={13} /> {t("powerRangeLabel")}</h4>
-                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minPlaceholder")} value={listingFilters.minPower} onChange={(e) => setListingFilters(f => ({ ...f, minPower: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" placeholder={t("maxPlaceholder")} value={listingFilters.maxPower} onChange={(e) => setListingFilters(f => ({ ...f, maxPower: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Car size={13} /> {t("bodyTypePlaceholder")}</h4>
+                <select value={listingFilters.bodyType} onChange={(e) => setListingFilters(f => ({ ...f, bodyType: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="all">{t("allFilterLabel")}</option>{BODY_TYPES.map(b => (<option key={b} value={b}>{vocabLabel(b, lang, BODY_TYPE_LABELS_BY_LANG)}</option>))}</select>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Compass size={13} /> {t("drivetrainPlaceholder")}</h4>
+                <select value={listingFilters.drivetrain} onChange={(e) => setListingFilters(f => ({ ...f, drivetrain: e.target.value }))} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="all">{t("allFilterLabel")}</option>{DRIVETRAIN_OPTIONS.map(d => (<option key={d} value={d}>{vocabLabel(d, lang, DRIVETRAIN_LABELS_BY_LANG)}</option>))}</select>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Zap size={13} /> {t("powerRangeLabel")}</h4>
+                <div className="flex gap-2 mb-5"><input type="number" placeholder={t("minPlaceholder")} value={listingFilters.minPower} onChange={(e) => setListingFilters(f => ({ ...f, minPower: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input type="number" placeholder={t("maxPlaceholder")} value={listingFilters.maxPower} onChange={(e) => setListingFilters(f => ({ ...f, maxPower: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><DoorOpen size={13} /> {t("doorCountPlaceholder")}</h4>
-                    <select value={listingFilters.doorCount} onChange={(e) => setListingFilters(f => ({ ...f, doorCount: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{DOOR_COUNT_OPTIONS.map(d => (<option key={d} value={d}>{d}</option>))}</select>
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><DoorOpen size={13} /> {t("doorCountPlaceholder")}</h4>
+                    <select value={listingFilters.doorCount} onChange={(e) => setListingFilters(f => ({ ...f, doorCount: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="all">{t("allFilterLabel")}</option>{DOOR_COUNT_OPTIONS.map(d => (<option key={d} value={d}>{d}</option>))}</select>
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Users size={13} /> {t("seatCountLabel")}</h4>
-                    <select value={listingFilters.seatCount} onChange={(e) => setListingFilters(f => ({ ...f, seatCount: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{SEAT_COUNT_OPTIONS.map(sc => (<option key={sc} value={sc}>{sc}</option>))}</select>
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Users size={13} /> {t("seatCountLabel")}</h4>
+                    <select value={listingFilters.seatCount} onChange={(e) => setListingFilters(f => ({ ...f, seatCount: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="all">{t("allFilterLabel")}</option>{SEAT_COUNT_OPTIONS.map(sc => (<option key={sc} value={sc}>{sc}</option>))}</select>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Palette size={13} /> {t("color")}</h4>
-                    <input value={listingFilters.color} onChange={(e) => setListingFilters(f => ({ ...f, color: e.target.value }))} placeholder={t("colorPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Palette size={13} /> {t("color")}</h4>
+                    <input value={listingFilters.color} onChange={(e) => setListingFilters(f => ({ ...f, color: e.target.value }))} placeholder={t("colorPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><User size={13} /> {t("sellerTypeLabel")}</h4>
-                    <select value={listingFilters.sellerType} onChange={(e) => setListingFilters(f => ({ ...f, sellerType: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option><option value="owner">{t("sellerTypeOwner")}</option><option value="mechanic">{t("sellerTypeMechanic")}</option></select>
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><User size={13} /> {t("sellerTypeLabel")}</h4>
+                    <select value={listingFilters.sellerType} onChange={(e) => setListingFilters(f => ({ ...f, sellerType: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="all">{t("allFilterLabel")}</option><option value="owner">{t("sellerTypeOwner")}</option><option value="mechanic">{t("sellerTypeMechanic")}</option></select>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-5">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Leaf size={13} /> {t("emissionClassLabel")}</h4>
-                    <select value={listingFilters.emissionClass} onChange={(e) => setListingFilters(f => ({ ...f, emissionClass: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="all">{t("allFilterLabel")}</option>{EMISSION_CLASS_OPTIONS.map(ec => (<option key={ec} value={ec}>{ec}</option>))}</select>
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Leaf size={13} /> {t("emissionClassLabel")}</h4>
+                    <select value={listingFilters.emissionClass} onChange={(e) => setListingFilters(f => ({ ...f, emissionClass: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="all">{t("allFilterLabel")}</option>{EMISSION_CLASS_OPTIONS.map(ec => (<option key={ec} value={ec}>{ec}</option>))}</select>
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Droplet size={13} /> {t("maxCo2Label")}</h4>
-                    <input type="number" value={listingFilters.maxCo2} onChange={(e) => setListingFilters(f => ({ ...f, maxCo2: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Droplet size={13} /> {t("maxCo2Label")}</h4>
+                    <input type="number" value={listingFilters.maxCo2} onChange={(e) => setListingFilters(f => ({ ...f, maxCo2: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                   </div>
                 </div>
                 {/* ---- Motor & tüketim (AutoScout24: Leistung / Verbrauch / Elektro) ---- */}
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("filterSectionEngine")}</p>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Cog size={13} /> {t("engineSizeRangeLabel")}</h4>
-                <div className="flex gap-2 mb-5"><input type="number" step="0.1" min="0" placeholder={t("minPlaceholder")} value={listingFilters.minEngine} onChange={(e) => setListingFilters(f => ({ ...f, minEngine: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input type="number" step="0.1" min="0" placeholder={t("maxPlaceholder")} value={listingFilters.maxEngine} onChange={(e) => setListingFilters(f => ({ ...f, maxEngine: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 pt-1 border-t border-surface-elevated">{t("filterSectionEngine")}</p>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Cog size={13} /> {t("engineSizeRangeLabel")}</h4>
+                <div className="flex gap-2 mb-5"><input type="number" step="0.1" min="0" placeholder={t("minPlaceholder")} value={listingFilters.minEngine} onChange={(e) => setListingFilters(f => ({ ...f, minEngine: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input type="number" step="0.1" min="0" placeholder={t("maxPlaceholder")} value={listingFilters.maxEngine} onChange={(e) => setListingFilters(f => ({ ...f, maxEngine: e.target.value }))} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
                 <div className="grid grid-cols-2 gap-3 mb-2">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Fuel size={13} /> {t("maxFuelConsumptionLabel")}</h4>
-                    <input type="number" step="0.1" min="0" value={listingFilters.maxFuelConsumption} onChange={(e) => setListingFilters(f => ({ ...f, maxFuelConsumption: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Fuel size={13} /> {t("maxFuelConsumptionLabel")}</h4>
+                    <input type="number" step="0.1" min="0" value={listingFilters.maxFuelConsumption} onChange={(e) => setListingFilters(f => ({ ...f, maxFuelConsumption: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Zap size={13} /> {t("minRangeLabel")}</h4>
-                    <input type="number" min="0" value={listingFilters.minRange} onChange={(e) => setListingFilters(f => ({ ...f, minRange: e.target.value }))} placeholder={t("minPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Zap size={13} /> {t("minRangeLabel")}</h4>
+                    <input type="number" min="0" value={listingFilters.minRange} onChange={(e) => setListingFilters(f => ({ ...f, minRange: e.target.value }))} placeholder={t("minPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                   </div>
                 </div>
-                <p className="text-[11px] text-gray-400 mb-5 px-1">{t("minRangeHint")}</p>
+                <p className="text-[11px] text-fg-muted mb-5 px-1">{t("minRangeHint")}</p>
                 {/* ---- Durum & geçmiş (AutoScout24: Garantie und Historie + TR hasar kaydı) ---- */}
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("filterSectionCondition")}</p>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><History size={13} /> {t("maxOwnerCountLabel")}</h4>
-                <input type="number" min="1" value={listingFilters.maxOwnerCount} onChange={(e) => setListingFilters(f => ({ ...f, maxOwnerCount: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 pt-1 border-t border-surface-elevated">{t("filterSectionCondition")}</p>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><History size={13} /> {t("maxOwnerCountLabel")}</h4>
+                <input type="number" min="1" value={listingFilters.maxOwnerCount} onChange={(e) => setListingFilters(f => ({ ...f, maxOwnerCount: e.target.value }))} placeholder={t("maxPlaceholder")} className="w-full mb-5 px-3 py-2.5 rounded-xl border border-border text-sm" />
                 {/* Hasar kaydı artık ikili değil: "hasarsız" kısayolu duruyor ama alıcı "en fazla 2 boyalı
                     parça olsun" gibi gerçekçi bir tolerans da verebiliyor (sahibinden.com deseni). */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("maxPaintedPartsLabel")}</h4>
-                    <select value={listingFilters.maxPaintedParts} onChange={(e) => setListingFilters(f => ({ ...f, maxPaintedParts: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("damagePartsAnyOption")}</option>{[0, 1, 2, 3, 5].map(n => (<option key={n} value={String(n)}>{n}</option>))}</select>
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2">{t("maxPaintedPartsLabel")}</h4>
+                    <select value={listingFilters.maxPaintedParts} onChange={(e) => setListingFilters(f => ({ ...f, maxPaintedParts: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="">{t("damagePartsAnyOption")}</option>{[0, 1, 2, 3, 5].map(n => (<option key={n} value={String(n)}>{n}</option>))}</select>
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">{t("maxChangedPartsLabel")}</h4>
-                    <select value={listingFilters.maxChangedParts} onChange={(e) => setListingFilters(f => ({ ...f, maxChangedParts: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700 bg-white"><option value="">{t("damagePartsAnyOption")}</option>{[0, 1, 2, 3, 5].map(n => (<option key={n} value={String(n)}>{n}</option>))}</select>
+                    <h4 className="text-sm font-semibold text-fg-strong mb-2">{t("maxChangedPartsLabel")}</h4>
+                    <select value={listingFilters.maxChangedParts} onChange={(e) => setListingFilters(f => ({ ...f, maxChangedParts: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong bg-white"><option value="">{t("damagePartsAnyOption")}</option>{[0, 1, 2, 3, 5].map(n => (<option key={n} value={String(n)}>{n}</option>))}</select>
                   </div>
                 </div>
                 <div className="space-y-2 mb-5">
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.damageFree} onChange={(e) => setListingFilters(f => ({ ...f, damageFree: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("filterDamageFree")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.hasInspectionReport} onChange={(e) => setListingFilters(f => ({ ...f, hasInspectionReport: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <FileText size={13} className="text-gray-400" /> {t("filterHasInspectionReport")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.tradeIn} onChange={(e) => setListingFilters(f => ({ ...f, tradeIn: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("tradeInAvailableLabel")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.negotiable} onChange={(e) => setListingFilters(f => ({ ...f, negotiable: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("negotiableBadge")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={listingFilters.damageFree} onChange={(e) => setListingFilters(f => ({ ...f, damageFree: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("filterDamageFree")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={listingFilters.hasInspectionReport} onChange={(e) => setListingFilters(f => ({ ...f, hasInspectionReport: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <FileText size={13} className="text-fg-muted" /> {t("filterHasInspectionReport")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={listingFilters.tradeIn} onChange={(e) => setListingFilters(f => ({ ...f, tradeIn: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("tradeInAvailableLabel")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={listingFilters.negotiable} onChange={(e) => setListingFilters(f => ({ ...f, negotiable: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("negotiableBadge")}</label>
                 </div>
                 {/* ---- Güven & ilan (AutoScout24: Preisbewertung / Verkäufer / Standort) ---- */}
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2 pt-1 border-t border-gray-100">{t("filterSectionTrust")}</p>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Banknote size={13} /> {t("priceRatingLabel")}</h4>
-                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "below", label: `💚 ${t("priceRatingBelow")}` }, { key: "average", label: t("priceRatingAverage") }].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, priceRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.priceRating === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <p className="text-[11px] text-gray-400 mb-5 px-1">{t("priceRatingHint")}</p>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><MapPin size={13} /> {t("listingRadiusLabel")}</h4>
-                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 25, label: "< 25 km" }, { key: 50, label: "< 50 km" }, { key: 100, label: "< 100 km" }, { key: 250, label: "< 250 km" }].map(o => (<button key={o.key} onClick={() => { if (o.key !== 999 && !userLocation) requestLocation(); setListingFilters(f => ({ ...f, maxDistance: o.key })); }} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.maxDistance === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                {!userLocation && (<p className="text-[11px] text-gray-400 mb-5 flex items-center gap-1"><MapPin size={11} /> {t("listingRadiusNeedsLocation")}</p>)}
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><CalendarDays size={13} /> {t("listedWithinLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...LISTED_WITHIN_OPTIONS.map(n => ({ key: n, label: n === "1" ? t("listedWithinToday") : t("listedWithinOption", { n }) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, listedWithin: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.listedWithin === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mb-2 pt-1 border-t border-surface-elevated">{t("filterSectionTrust")}</p>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Banknote size={13} /> {t("priceRatingLabel")}</h4>
+                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, { key: "below", label: `💚 ${t("priceRatingBelow")}` }, { key: "average", label: t("priceRatingAverage") }].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, priceRating: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.priceRating === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                <p className="text-[11px] text-fg-muted mb-5 px-1">{t("priceRatingHint")}</p>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><MapPin size={13} /> {t("listingRadiusLabel")}</h4>
+                <div className="flex gap-2 mb-1 flex-wrap">{[{ key: 999, label: t("allFilterLabel") }, { key: 25, label: "< 25 km" }, { key: 50, label: "< 50 km" }, { key: 100, label: "< 100 km" }, { key: 250, label: "< 250 km" }].map(o => (<button key={o.key} onClick={() => { if (o.key !== 999 && !userLocation) requestLocation(); setListingFilters(f => ({ ...f, maxDistance: o.key })); }} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.maxDistance === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                {!userLocation && (<p className="text-[11px] text-fg-muted mb-5 flex items-center gap-1"><MapPin size={11} /> {t("listingRadiusNeedsLocation")}</p>)}
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><CalendarDays size={13} /> {t("listedWithinLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...LISTED_WITHIN_OPTIONS.map(n => ({ key: n, label: n === "1" ? t("listedWithinToday") : t("listedWithinOption", { n }) }))].map(o => (<button key={o.key} onClick={() => setListingFilters(f => ({ ...f, listedWithin: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${listingFilters.listedWithin === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
                 <div className="space-y-2 mb-5">
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.verifiedSeller} onChange={(e) => setListingFilters(f => ({ ...f, verifiedSeller: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <BadgeCheck size={13} className="text-gray-400" /> {t("filterVerifiedSeller")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.withPhotos} onChange={(e) => setListingFilters(f => ({ ...f, withPhotos: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <ImageIcon size={13} className="text-gray-400" /> {t("filterWithPhotos")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.featuredOnly} onChange={(e) => setListingFilters(f => ({ ...f, featuredOnly: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <Star size={13} className="text-gray-400" /> {t("filterFeaturedOnly")}</label>
-                  <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={listingFilters.hideSold} onChange={(e) => setListingFilters(f => ({ ...f, hideSold: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("filterHideSold")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={listingFilters.verifiedSeller} onChange={(e) => setListingFilters(f => ({ ...f, verifiedSeller: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <BadgeCheck size={13} className="text-fg-muted" /> {t("filterVerifiedSeller")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={listingFilters.withPhotos} onChange={(e) => setListingFilters(f => ({ ...f, withPhotos: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <ImageIcon size={13} className="text-fg-muted" /> {t("filterWithPhotos")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={listingFilters.featuredOnly} onChange={(e) => setListingFilters(f => ({ ...f, featuredOnly: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> <Star size={13} className="text-fg-muted" /> {t("filterFeaturedOnly")}</label>
+                  <label className="flex items-center gap-2 text-sm text-fg-strong cursor-pointer"><input type="checkbox" checked={listingFilters.hideSold} onChange={(e) => setListingFilters(f => ({ ...f, hideSold: e.target.checked }))} className="w-4 h-4 accent-blue-600" /> {t("filterHideSold")}</label>
                 </div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Settings size={13} /> {t("filterFeaturesLabel")}</h4>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Settings size={13} /> {t("filterFeaturesLabel")}</h4>
                 <div className="flex flex-wrap gap-1.5 mb-6">
                   {LISTING_FEATURE_OPTIONS.slice(0, 12).map(feat => {
                     const on = (listingFilters.features || []).includes(feat);
-                    return (<button key={feat} onClick={() => setListingFilters(f => ({ ...f, features: on ? (f.features || []).filter(x => x !== feat) : [...(f.features || []), feat] }))} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${on ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{feat}</button>);
+                    return (<button key={feat} onClick={() => setListingFilters(f => ({ ...f, features: on ? (f.features || []).filter(x => x !== feat) : [...(f.features || []), feat] }))} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${on ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{feat}</button>);
                   })}
                 </div>
               </>
             ) : (
               <>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><Briefcase size={13} /> {t("employmentTypeFilterLabel")}</h4>
-                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EMPLOYMENT_TYPES.map(et => ({ key: et, label: vocabLabel(et, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, employmentType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.employmentType === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1"><GraduationCap size={13} /> {t("experienceLevelFilterLabel")}</h4>
-                <div className="flex gap-2 mb-6 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EXPERIENCE_LEVELS.map(ex => ({ key: ex, label: vocabLabel(ex, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, experienceLevel: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.experienceLevel === o.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><Briefcase size={13} /> {t("employmentTypeFilterLabel")}</h4>
+                <div className="flex gap-2 mb-5 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EMPLOYMENT_TYPES.map(et => ({ key: et, label: vocabLabel(et, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, employmentType: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.employmentType === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
+                <h4 className="text-sm font-semibold text-fg-strong mb-2 flex items-center gap-1"><GraduationCap size={13} /> {t("experienceLevelFilterLabel")}</h4>
+                <div className="flex gap-2 mb-6 flex-wrap">{[{ key: "all", label: t("allFilterLabel") }, ...EXPERIENCE_LEVELS.map(ex => ({ key: ex, label: vocabLabel(ex, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG) }))].map(o => (<button key={o.key} onClick={() => setJobFilters(f => ({ ...f, experienceLevel: o.key }))} className={`px-3 py-2 rounded-xl text-xs font-medium border transition ${jobFilters.experienceLevel === o.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{o.label}</button>))}</div>
               </>
             )}
             {/* "Bu aramayı kaydet" (AutoScout24'teki "Suche speichern"): artık ÜÇ arama türü için de
@@ -4650,41 +4650,41 @@ export function AppShell() {
                 saklanıyor, yeni eşleşmede bildirim gidiyor (bkz. AppLogicProvider saveCurrentSearch). */}
             {showSaveSearchInput ? (
               <div className="mb-4 flex gap-2">
-                <input autoFocus value={saveSearchNameInput} onChange={(e) => setSaveSearchNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveCurrentSearch(saveSearchNameInput, ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics"); }} placeholder={t("savedSearchNamePlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                <button onClick={() => saveCurrentSearch(saveSearchNameInput, ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics")} className="px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition">{t("saveBtn")}</button>
-                <button onClick={() => { setShowSaveSearchInput(false); setSaveSearchNameInput(""); }} aria-label={t("closeAria")} className="w-11 h-11 rounded-xl border border-gray-200 text-gray-400 flex items-center justify-center flex-shrink-0"><X size={16} /></button>
+                <input autoFocus value={saveSearchNameInput} onChange={(e) => setSaveSearchNameInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") saveCurrentSearch(saveSearchNameInput, ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics"); }} placeholder={t("savedSearchNamePlaceholder")} className="flex-1 px-3 py-2.5 rounded-xl border border-border text-sm" />
+                <button onClick={() => saveCurrentSearch(saveSearchNameInput, ownerMode === "cars" ? "cars" : ownerMode === "jobs" ? "jobs" : "mechanics")} className="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition">{t("saveBtn")}</button>
+                <button onClick={() => { setShowSaveSearchInput(false); setSaveSearchNameInput(""); }} aria-label={t("closeAria")} className="w-11 h-11 rounded-xl border border-border text-fg-muted flex items-center justify-center flex-shrink-0"><X size={16} /></button>
               </div>
             ) : (
-              <button onClick={() => setShowSaveSearchInput(true)} className="mb-4 w-full flex items-center justify-center gap-1.5 border border-dashed border-blue-300 text-blue-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-50 transition"><Bell size={14} /> {t("saveThisSearchBtn")}</button>
+              <button onClick={() => setShowSaveSearchInput(true)} className="mb-4 w-full flex items-center justify-center gap-1.5 border border-dashed border-blue-300 text-primary py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-tint transition"><Bell size={14} /> {t("saveThisSearchBtn")}</button>
             )}
             <div className="flex gap-2">
-              <button onClick={() => ownerMode === "mechanics" ? (() => { clearMechFilters(); setQuery(""); setLocationQuery(""); setServiceQuery(""); })() : ownerMode === "cars" ? clearListingFilters() : clearJobFilters()} className="flex-1 border border-gray-200 text-gray-500 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("clear")}</button>
-              <button onClick={() => setShowFilterModal(false)} className={`flex-1 text-white py-3 rounded-2xl font-semibold text-sm transition ${ownerMode === "mechanics" ? "bg-blue-600 hover:bg-blue-700" : ownerMode === "cars" ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-600 hover:bg-blue-700"}`}>{t("apply")}</button>
+              <button onClick={() => ownerMode === "mechanics" ? (() => { clearMechFilters(); setQuery(""); setLocationQuery(""); setServiceQuery(""); })() : ownerMode === "cars" ? clearListingFilters() : clearJobFilters()} className="flex-1 border border-border text-fg-secondary py-3 rounded-2xl font-semibold text-sm hover:bg-background transition">{t("clear")}</button>
+              <button onClick={() => setShowFilterModal(false)} className={`flex-1 text-white py-3 rounded-2xl font-semibold text-sm transition ${ownerMode === "mechanics" ? "bg-primary hover:bg-primary-hover" : ownerMode === "cars" ? "bg-primary hover:bg-primary-hover" : "bg-primary hover:bg-primary-hover"}`}>{t("apply")}</button>
             </div>
           </div>
         </div>
       )}
-      {showMapMobile && (<div className="fixed inset-0 bg-white z-50 flex flex-col md:hidden"><div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between"><h3 className="font-bold text-gray-800">{t("mapMechanicsTitle")}</h3><button onClick={() => setShowMapMobile(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><MapPanel className="flex-1 m-4" items={filtered} onPick={openMapDetail} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /><div className="p-4"><button onClick={() => setShowMapMobile(false)} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm">{t("backToListBtn")}</button></div></div>)}
+      {showMapMobile && (<div className="fixed inset-0 bg-white z-50 flex flex-col md:hidden"><div className="px-5 py-4 border-b border-surface-elevated flex items-center justify-between"><h3 className="font-bold text-fg-strong">{t("mapMechanicsTitle")}</h3><button onClick={() => setShowMapMobile(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div><MapPanel className="flex-1 m-4" items={filtered} onPick={openMapDetail} previewItem={mapPreviewItem} onPreviewChange={setMapPreviewItem} /><div className="p-4"><button onClick={() => setShowMapMobile(false)} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm">{t("backToListBtn")}</button></div></div>)}
       {showSellVehiclePicker && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center p-4" data-modal-backdrop onClick={() => setShowSellVehiclePicker(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-t-3xl md:rounded-3xl p-5 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Car size={18} className="text-blue-600" /> {t("whichVehicleSellTitle")}</h3><button onClick={() => setShowSellVehiclePicker(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
-            <p className="text-xs text-gray-400 mb-4">{t("selectRegisteredVehicleHint")}</p>
+            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-fg-strong flex items-center gap-2"><Car size={18} className="text-primary" /> {t("whichVehicleSellTitle")}</h3><button onClick={() => setShowSellVehiclePicker(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div>
+            <p className="text-xs text-fg-muted mb-4">{t("selectRegisteredVehicleHint")}</p>
             <div className="space-y-2">
               {vehicles.map(v => {
                 const linked = listings.find(l => l.id === v.listingId);
                 return (
-                  <button key={v.id} onClick={() => pickVehicleToSell(v)} className="w-full flex items-center gap-3 bg-white border border-gray-200 rounded-2xl p-3 hover:border-blue-300 transition text-left">
-                    <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0"><Car size={20} className="text-blue-600" /></div>
-                    <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800 truncate">{v.brand} {v.model}</p><p className="text-xs text-gray-400">{v.year} · {v.plate}{linked ? ` · ${t("alreadyListedSuffix")}` : ""}</p></div>
-                    <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+                  <button key={v.id} onClick={() => pickVehicleToSell(v)} className="w-full flex items-center gap-3 bg-white border border-border rounded-2xl p-3 hover:border-blue-300 transition text-left">
+                    <div className="w-11 h-11 bg-primary-tint rounded-xl flex items-center justify-center flex-shrink-0"><Car size={20} className="text-primary" /></div>
+                    <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-fg-strong truncate">{v.brand} {v.model}</p><p className="text-xs text-fg-muted">{v.year} · {v.plate}{linked ? ` · ${t("alreadyListedSuffix")}` : ""}</p></div>
+                    <ChevronRight size={16} className="text-fg-muted flex-shrink-0" />
                   </button>
                 );
               })}
-              <button onClick={pickOtherCarToSell} className="w-full flex items-center gap-3 bg-white border border-dashed border-gray-300 rounded-2xl p-3 hover:border-blue-300 transition text-left">
-                <div className="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0"><Plus size={20} className="text-gray-500" /></div>
-                <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-800">{t("otherVehicleLabel")}</p><p className="text-xs text-gray-400">{t("otherVehicleHint")}</p></div>
-                <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
+              <button onClick={pickOtherCarToSell} className="w-full flex items-center gap-3 bg-white border border-dashed border-fg-muted rounded-2xl p-3 hover:border-blue-300 transition text-left">
+                <div className="w-11 h-11 bg-surface-elevated rounded-xl flex items-center justify-center flex-shrink-0"><Plus size={20} className="text-fg-secondary" /></div>
+                <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-fg-strong">{t("otherVehicleLabel")}</p><p className="text-xs text-fg-muted">{t("otherVehicleHint")}</p></div>
+                <ChevronRight size={16} className="text-fg-muted flex-shrink-0" />
               </button>
             </div>
           </div>
@@ -4693,29 +4693,29 @@ export function AppShell() {
       {showSellForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowSellForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Tag size={18} className="text-blue-600" /> {sellForm._editingId ? t("editListing") : t("sellFormTitle")}</h3><button onClick={() => setShowSellForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-fg-strong flex items-center gap-2"><Tag size={18} className="text-primary" /> {sellForm._editingId ? t("editListing") : t("sellFormTitle")}</h3><button onClick={() => setShowSellForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div>
             <div className="flex justify-center mb-4"><div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-4xl overflow-hidden">{isImgUrl(sellForm.photo) ? <img decoding="async" src={imgThumb(sellForm.photo, 200)} onError={imgFallbackHandler} alt={t("vehiclePhotoAlt")} className="w-full h-full object-cover" /> : sellForm.photo}<input ref={sellPhotoRef} type="file" accept="image/*" onChange={sellPhotoUpload} className="hidden" /><button onClick={() => sellPhotoRef.current?.click()} aria-label={t("a11yChangeProfilePhoto")} className="absolute inset-0 bg-black/0 hover:bg-black/40 transition flex items-center justify-center text-transparent hover:text-white"><Camera size={20} /></button></div></div>
             <div className="space-y-2">
               <div className="flex gap-2 items-start"><BrandSelect className="w-1/2" value={sellForm.brand} onChange={(b) => setSellForm({ ...sellForm, brand: b, model: "" })} /><ModelSelect className="w-1/2" brand={sellForm.brand} value={sellForm.model} onChange={(m) => setSellForm({ ...sellForm, model: m })} /></div>
-              <div className="flex gap-2"><input value={sellForm.year} onChange={(e) => setSellForm({ ...sellForm, year: e.target.value })} placeholder={t("yearRequiredPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.km} onChange={(e) => setSellForm({ ...sellForm, km: e.target.value })} placeholder={t("kmRequiredPlaceholder")} type="number" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-              <input value={sellForm.price} onChange={(e) => setSellForm({ ...sellForm, price: e.target.value })} placeholder={t("priceRequiredPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <p className="text-[10px] text-gray-300 px-1">{t("requiredFieldsNote")}</p>
-              <div className="flex gap-2"><select value={sellForm.fuelType} onChange={(e) => setSellForm({ ...sellForm, fuelType: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm">{FUEL_TYPES.map(f => <option key={f} value={f}>{vocabLabel(f, lang, FUEL_TYPE_LABELS_BY_LANG)}</option>)}</select><select value={sellForm.transmission} onChange={(e) => setSellForm({ ...sellForm, transmission: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm">{TRANSMISSIONS.map(f => <option key={f} value={f}>{vocabLabel(f, lang, TRANSMISSION_LABELS_BY_LANG)}</option>)}</select></div>
-              <div className="flex gap-2"><input value={sellForm.power} onChange={(e) => setSellForm({ ...sellForm, power: e.target.value })} placeholder={t("powerHpPlaceholder")} type="number" className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.color} onChange={(e) => setSellForm({ ...sellForm, color: e.target.value })} placeholder={t("colorPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-              <div className="flex gap-2"><input value={sellForm.firstReg} onChange={(e) => setSellForm({ ...sellForm, firstReg: e.target.value })} placeholder={t("firstRegPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.city} onChange={(e) => setSellForm({ ...sellForm, city: e.target.value })} placeholder={t("cityPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-              <textarea value={sellForm.description} onChange={(e) => setSellForm({ ...sellForm, description: e.target.value })} placeholder={t("descriptionPlaceholder")} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("vehicleDetailsSection")}</p>
-              <div className="flex gap-2"><select value={sellForm.bodyType} onChange={(e) => setSellForm({ ...sellForm, bodyType: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700"><option value="">{t("bodyTypePlaceholder")}</option>{BODY_TYPES.map(b => <option key={b} value={b}>{vocabLabel(b, lang, BODY_TYPE_LABELS_BY_LANG)}</option>)}</select><select value={sellForm.drivetrain} onChange={(e) => setSellForm({ ...sellForm, drivetrain: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700"><option value="">{t("drivetrainPlaceholder")}</option>{DRIVETRAIN_OPTIONS.map(d => <option key={d} value={d}>{vocabLabel(d, lang, DRIVETRAIN_LABELS_BY_LANG)}</option>)}</select></div>
-              <div className="flex gap-2"><input value={sellForm.engineSize} onChange={(e) => setSellForm({ ...sellForm, engineSize: e.target.value })} placeholder={t("engineSizePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><select value={sellForm.doorCount} onChange={(e) => setSellForm({ ...sellForm, doorCount: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700"><option value="">{t("doorCountPlaceholder")}</option>{DOOR_COUNT_OPTIONS.map(d => <option key={d} value={d}>{d} {t("doorSuffix")}</option>)}</select></div>
-              <div className="flex gap-2"><input value={sellForm.ownerCount} onChange={(e) => setSellForm({ ...sellForm, ownerCount: e.target.value })} type="number" min="1" placeholder={t("ownerCountPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><button type="button" onClick={() => setSellForm({ ...sellForm, tradeIn: !sellForm.tradeIn })} className={`w-1/2 px-3 py-2.5 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition ${sellForm.tradeIn ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500"}`}><Repeat size={14} /> {t("tradeInLabel")} {sellForm.tradeIn ? t("yesLabel") : t("noLabel")}</button></div>
-              <div className="flex gap-2"><input value={sellForm.paintedParts} onChange={(e) => setSellForm({ ...sellForm, paintedParts: e.target.value })} type="number" min="0" placeholder={t("paintedPartsPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.changedParts} onChange={(e) => setSellForm({ ...sellForm, changedParts: e.target.value })} type="number" min="0" placeholder={t("changedPartsPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("fuelConsumptionSection")}</p>
-              <div className="flex gap-2"><select value={sellForm.seatCount} onChange={(e) => setSellForm({ ...sellForm, seatCount: e.target.value })} className="w-1/3 px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700"><option value="">{t("seatCountPlaceholder")}</option>{SEAT_COUNT_OPTIONS.map(s => <option key={s} value={s}>{s} {t("seatSuffix")}</option>)}</select><input value={sellForm.fuelConsumption} onChange={(e) => setSellForm({ ...sellForm, fuelConsumption: e.target.value })} placeholder={t("fuelConsumptionPlaceholder")} className="w-1/3 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.co2Emission} onChange={(e) => setSellForm({ ...sellForm, co2Emission: e.target.value })} type="number" min="0" placeholder={t("co2Placeholder")} className="w-1/3 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-              <select value={sellForm.emissionClass} onChange={(e) => setSellForm({ ...sellForm, emissionClass: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-700"><option value="">{t("emissionClassPlaceholder")}</option>{EMISSION_CLASS_OPTIONS.map(e2 => <option key={e2}>{e2}</option>)}</select>
+              <div className="flex gap-2"><input value={sellForm.year} onChange={(e) => setSellForm({ ...sellForm, year: e.target.value })} placeholder={t("yearRequiredPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input value={sellForm.km} onChange={(e) => setSellForm({ ...sellForm, km: e.target.value })} placeholder={t("kmRequiredPlaceholder")} type="number" className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+              <input value={sellForm.price} onChange={(e) => setSellForm({ ...sellForm, price: e.target.value })} placeholder={t("priceRequiredPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+              <p className="text-[10px] text-fg-muted px-1">{t("requiredFieldsNote")}</p>
+              <div className="flex gap-2"><select value={sellForm.fuelType} onChange={(e) => setSellForm({ ...sellForm, fuelType: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm">{FUEL_TYPES.map(f => <option key={f} value={f}>{vocabLabel(f, lang, FUEL_TYPE_LABELS_BY_LANG)}</option>)}</select><select value={sellForm.transmission} onChange={(e) => setSellForm({ ...sellForm, transmission: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm">{TRANSMISSIONS.map(f => <option key={f} value={f}>{vocabLabel(f, lang, TRANSMISSION_LABELS_BY_LANG)}</option>)}</select></div>
+              <div className="flex gap-2"><input value={sellForm.power} onChange={(e) => setSellForm({ ...sellForm, power: e.target.value })} placeholder={t("powerHpPlaceholder")} type="number" className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input value={sellForm.color} onChange={(e) => setSellForm({ ...sellForm, color: e.target.value })} placeholder={t("colorPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+              <div className="flex gap-2"><input value={sellForm.firstReg} onChange={(e) => setSellForm({ ...sellForm, firstReg: e.target.value })} placeholder={t("firstRegPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input value={sellForm.city} onChange={(e) => setSellForm({ ...sellForm, city: e.target.value })} placeholder={t("cityPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+              <textarea value={sellForm.description} onChange={(e) => setSellForm({ ...sellForm, description: e.target.value })} placeholder={t("descriptionPlaceholder")} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm resize-none" />
+              <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted pt-2 px-1">{t("vehicleDetailsSection")}</p>
+              <div className="flex gap-2"><select value={sellForm.bodyType} onChange={(e) => setSellForm({ ...sellForm, bodyType: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong"><option value="">{t("bodyTypePlaceholder")}</option>{BODY_TYPES.map(b => <option key={b} value={b}>{vocabLabel(b, lang, BODY_TYPE_LABELS_BY_LANG)}</option>)}</select><select value={sellForm.drivetrain} onChange={(e) => setSellForm({ ...sellForm, drivetrain: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong"><option value="">{t("drivetrainPlaceholder")}</option>{DRIVETRAIN_OPTIONS.map(d => <option key={d} value={d}>{vocabLabel(d, lang, DRIVETRAIN_LABELS_BY_LANG)}</option>)}</select></div>
+              <div className="flex gap-2"><input value={sellForm.engineSize} onChange={(e) => setSellForm({ ...sellForm, engineSize: e.target.value })} placeholder={t("engineSizePlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><select value={sellForm.doorCount} onChange={(e) => setSellForm({ ...sellForm, doorCount: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong"><option value="">{t("doorCountPlaceholder")}</option>{DOOR_COUNT_OPTIONS.map(d => <option key={d} value={d}>{d} {t("doorSuffix")}</option>)}</select></div>
+              <div className="flex gap-2"><input value={sellForm.ownerCount} onChange={(e) => setSellForm({ ...sellForm, ownerCount: e.target.value })} type="number" min="1" placeholder={t("ownerCountPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><button type="button" onClick={() => setSellForm({ ...sellForm, tradeIn: !sellForm.tradeIn })} className={`w-1/2 px-3 py-2.5 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition ${sellForm.tradeIn ? "bg-primary-tint border-blue-200 text-primary-hover" : "border-border text-fg-secondary"}`}><Repeat size={14} /> {t("tradeInLabel")} {sellForm.tradeIn ? t("yesLabel") : t("noLabel")}</button></div>
+              <div className="flex gap-2"><input value={sellForm.paintedParts} onChange={(e) => setSellForm({ ...sellForm, paintedParts: e.target.value })} type="number" min="0" placeholder={t("paintedPartsPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input value={sellForm.changedParts} onChange={(e) => setSellForm({ ...sellForm, changedParts: e.target.value })} type="number" min="0" placeholder={t("changedPartsPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted pt-2 px-1">{t("fuelConsumptionSection")}</p>
+              <div className="flex gap-2"><select value={sellForm.seatCount} onChange={(e) => setSellForm({ ...sellForm, seatCount: e.target.value })} className="w-1/3 px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong"><option value="">{t("seatCountPlaceholder")}</option>{SEAT_COUNT_OPTIONS.map(s => <option key={s} value={s}>{s} {t("seatSuffix")}</option>)}</select><input value={sellForm.fuelConsumption} onChange={(e) => setSellForm({ ...sellForm, fuelConsumption: e.target.value })} placeholder={t("fuelConsumptionPlaceholder")} className="w-1/3 px-3 py-2.5 rounded-xl border border-border text-sm" /><input value={sellForm.co2Emission} onChange={(e) => setSellForm({ ...sellForm, co2Emission: e.target.value })} type="number" min="0" placeholder={t("co2Placeholder")} className="w-1/3 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+              <select value={sellForm.emissionClass} onChange={(e) => setSellForm({ ...sellForm, emissionClass: e.target.value })} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm text-fg-strong"><option value="">{t("emissionClassPlaceholder")}</option>{EMISSION_CLASS_OPTIONS.map(e2 => <option key={e2}>{e2}</option>)}</select>
               {(sellForm.fuelType === "Elektrik" || sellForm.fuelType === "Hibrit") && (
-                <div className="flex gap-2"><input value={sellForm.batteryCapacity} onChange={(e) => setSellForm({ ...sellForm, batteryCapacity: e.target.value })} placeholder={t("batteryCapacityPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={sellForm.rangeKm} onChange={(e) => setSellForm({ ...sellForm, rangeKm: e.target.value })} type="number" min="0" placeholder={t("rangeKmPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
+                <div className="flex gap-2"><input value={sellForm.batteryCapacity} onChange={(e) => setSellForm({ ...sellForm, batteryCapacity: e.target.value })} placeholder={t("batteryCapacityPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input value={sellForm.rangeKm} onChange={(e) => setSellForm({ ...sellForm, rangeKm: e.target.value })} type="number" min="0" placeholder={t("rangeKmPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
               )}
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("featuresSection")}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted pt-2 px-1">{t("featuresSection")}</p>
               {/* ÖNEMLİ: donanım listesi artık sadece sabit LISTING_FEATURE_OPTIONS ile sınırlı değil —
                   kullanıcı listede olmayan bir donanımı da yazıp ekleyebiliyor (addCustomFeature).
                   Sabit liste + eklenen özel donanımlar toplamda kolayca 30'a ulaşabildiği için hepsini
@@ -4733,7 +4733,7 @@ export function AppShell() {
                     {selectedFeatures.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {selectedFeatures.map(f => (
-                          <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="pl-2.5 pr-2 py-1.5 rounded-full text-[11px] font-medium border bg-blue-600 text-white border-blue-600 flex items-center gap-1 transition hover:bg-blue-700">
+                          <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="pl-2.5 pr-2 py-1.5 rounded-full text-[11px] font-medium border bg-primary text-white border-primary flex items-center gap-1 transition hover:bg-primary-hover">
                             {f} <X size={11} />
                           </button>
                         ))}
@@ -4741,125 +4741,125 @@ export function AppShell() {
                     )}
                     <div className="flex flex-wrap gap-1.5">
                       {visibleUnselected.map(f => (
-                        <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium border bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-600 transition">{f}</button>
+                        <button key={f} type="button" onClick={() => toggleSellFeature(f)} className="px-2.5 py-1.5 rounded-full text-[11px] font-medium border bg-white text-fg-secondary border-border hover:border-blue-300 hover:text-primary transition">{f}</button>
                       ))}
                       {hiddenCount > 0 && (
-                        <button type="button" onClick={() => setShowAllFeatureOptions(true)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 hover:border-blue-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
+                        <button type="button" onClick={() => setShowAllFeatureOptions(true)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-fg-muted text-fg-muted hover:text-info hover:border-blue-300 transition">+{hiddenCount} {t("showMoreFeaturesSuffix")}</button>
                       )}
                       {showAllFeatureOptions && unselectedOptions.length > VISIBLE_UNSELECTED_COUNT && (
-                        <button type="button" onClick={() => setShowAllFeatureOptions(false)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 hover:border-blue-300 transition">{t("showLessFeaturesLabel")}</button>
+                        <button type="button" onClick={() => setShowAllFeatureOptions(false)} className="px-2.5 py-1.5 rounded-full text-[11px] font-semibold border border-dashed border-fg-muted text-fg-muted hover:text-info hover:border-blue-300 transition">{t("showLessFeaturesLabel")}</button>
                       )}
                     </div>
                     <div className="flex gap-2 pt-1">
-                      <input value={customFeatureInput} onChange={(e) => setCustomFeatureInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomFeature(); } }} placeholder={t("customFeaturePlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm" />
-                      <button type="button" onClick={addCustomFeature} aria-label={t("addCustomFeatureAria")} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
+                      <input value={customFeatureInput} onChange={(e) => setCustomFeatureInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomFeature(); } }} placeholder={t("customFeaturePlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-border text-sm" />
+                      <button type="button" onClick={addCustomFeature} aria-label={t("addCustomFeatureAria")} className="px-3 py-2 rounded-xl bg-surface-elevated text-fg-secondary hover:bg-primary-tint hover:text-primary transition flex items-center justify-center flex-shrink-0"><Plus size={16} /></button>
                     </div>
                   </div>
                 );
               })()}
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1 flex items-center justify-between"><span>{t("extraPhotosSection")}</span><span className="normal-case tracking-normal text-gray-300">{(sellForm.photos || []).length}/{MAX_LISTING_GALLERY_PHOTOS}</span></p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted pt-2 px-1 flex items-center justify-between"><span>{t("extraPhotosSection")}</span><span className="normal-case tracking-normal text-fg-muted">{(sellForm.photos || []).length}/{MAX_LISTING_GALLERY_PHOTOS}</span></p>
               <div className="flex flex-wrap gap-2">
                 {(sellForm.photos || []).map((p, i) => (
-                  <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200"><img src={imgThumb(p, 120)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("extraPhotoAlt", { n: String(i + 1) })} className="w-full h-full object-cover" /><button type="button" onClick={() => removeSellPhoto(i)} aria-label={t("removePhotoAria")} className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center text-white"><X size={9} /></button></div>
+                  <div key={i} className="relative w-14 h-14 rounded-xl overflow-hidden border border-border"><img src={imgThumb(p, 120)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("extraPhotoAlt", { n: String(i + 1) })} className="w-full h-full object-cover" /><button type="button" onClick={() => removeSellPhoto(i)} aria-label={t("removePhotoAria")} className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 rounded-full flex items-center justify-center text-white"><X size={9} /></button></div>
                 ))}
                 {(sellForm.photos || []).length < MAX_LISTING_GALLERY_PHOTOS && (
-                  <label className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-300 hover:text-blue-500 hover:border-blue-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
+                  <label className="w-14 h-14 rounded-xl border-2 border-dashed border-border flex items-center justify-center text-fg-muted hover:text-info hover:border-blue-300 transition cursor-pointer"><Plus size={18} /><input type="file" accept="image/*" multiple onChange={sellPhotosUpload} className="hidden" /></label>
                 )}
               </div>
               {/* BAKIM GEÇMİŞİNİ İLANDA GÖSTER — aracın şasi numarasına bağlı, Fixperto üzerinden
                   yapılmış gerçek servis kayıtları ilanda görünür. Kişisel bilgiler (ad, telefon,
                   plaka, ödenen tutar) gösterilmez; bkz. backend/routes/vehicleHistory.js. */}
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("vehicleHistoryVerifiedTitle")}</p>
-              <input value={sellForm.vin || ""} onChange={(e) => setSellForm({ ...sellForm, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} aria-label={t("vinLabel")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm font-mono tracking-wide" />
+              <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted pt-2 px-1">{t("vehicleHistoryVerifiedTitle")}</p>
+              <input value={sellForm.vin || ""} onChange={(e) => setSellForm({ ...sellForm, vin: e.target.value.toUpperCase() })} placeholder={t("vinPlaceholder")} aria-label={t("vinLabel")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm font-mono tracking-wide" />
               <label className="flex items-start gap-2 cursor-pointer px-1">
                 <input type="checkbox" checked={!!sellForm.showHistory} onChange={(e) => setSellForm({ ...sellForm, showHistory: e.target.checked })} className="mt-0.5 w-4 h-4 accent-blue-600" />
-                <span className="text-[11px] text-gray-500 leading-relaxed"><span className="font-semibold text-gray-700">{t("listingShowHistoryLabel")}</span> {t("listingShowHistoryDesc")}</span>
+                <span className="text-[11px] text-fg-secondary leading-relaxed"><span className="font-semibold text-fg-strong">{t("listingShowHistoryLabel")}</span> {t("listingShowHistoryDesc")}</span>
               </label>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 pt-2 px-1">{t("marketingSection")}</p>
-              <input value={sellForm.inspectionReportUrl || ""} onChange={(e) => setSellForm({ ...sellForm, inspectionReportUrl: e.target.value })} placeholder={t("inspectionReportPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <button type="button" onClick={() => setSellForm({ ...sellForm, negotiable: !sellForm.negotiable })} className={`w-full px-3 py-2.5 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition ${sellForm.negotiable ? "bg-blue-50 border-blue-200 text-blue-700" : "border-gray-200 text-gray-500"}`}>{t("negotiableToggle")} {sellForm.negotiable ? t("yesLabel") : t("noLabel")}</button>
-              <p className="text-[10px] text-gray-400 px-1">{t("featuredHintNote")}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted pt-2 px-1">{t("marketingSection")}</p>
+              <input value={sellForm.inspectionReportUrl || ""} onChange={(e) => setSellForm({ ...sellForm, inspectionReportUrl: e.target.value })} placeholder={t("inspectionReportPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+              <button type="button" onClick={() => setSellForm({ ...sellForm, negotiable: !sellForm.negotiable })} className={`w-full px-3 py-2.5 rounded-xl border text-sm font-medium flex items-center justify-center gap-1.5 transition ${sellForm.negotiable ? "bg-primary-tint border-blue-200 text-primary-hover" : "border-border text-fg-secondary"}`}>{t("negotiableToggle")} {sellForm.negotiable ? t("yesLabel") : t("noLabel")}</button>
+              <p className="text-[10px] text-fg-muted px-1">{t("featuredHintNote")}</p>
             </div>
-            <button onClick={() => submitListing(role)} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-blue-700 transition">{sellForm._editingId ? t("updateListing") : t("publishListing")}</button>
+            <button onClick={() => submitListing(role)} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-primary-hover transition">{sellForm._editingId ? t("updateListing") : t("publishListing")}</button>
           </div>
         </div>
       )}
       {showJobForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowJobForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-blue-500" /> {jobForm._editingId ? t("editJobListingTitle") : t("newJobListingTitle")}</h3><button onClick={() => setShowJobForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-fg-strong flex items-center gap-2"><Briefcase size={18} className="text-info" /> {jobForm._editingId ? t("editJobListingTitle") : t("newJobListingTitle")}</h3><button onClick={() => setShowJobForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div>
             <div className="space-y-2">
-              <input value={jobForm.title} onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })} placeholder={t("jobTitlePlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <div className="flex gap-2"><select value={jobForm.employmentType} onChange={(e) => setJobForm({ ...jobForm, employmentType: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm">{EMPLOYMENT_TYPES.map(t2 => <option key={t2} value={t2}>{vocabLabel(t2, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG)}</option>)}</select><select value={jobForm.experienceLevel} onChange={(e) => setJobForm({ ...jobForm, experienceLevel: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm">{EXPERIENCE_LEVELS.map(ex => <option key={ex} value={ex}>{vocabLabel(ex, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG)}</option>)}</select></div>
-              <input value={jobForm.location} onChange={(e) => setJobForm({ ...jobForm, location: e.target.value })} placeholder={t("jobLocationPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <div className="flex gap-2"><input value={jobForm.salaryMin} onChange={(e) => setJobForm({ ...jobForm, salaryMin: e.target.value })} type="number" placeholder={t("minSalaryPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /><input value={jobForm.salaryMax} onChange={(e) => setJobForm({ ...jobForm, salaryMax: e.target.value })} type="number" placeholder={t("maxSalaryPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-gray-200 text-sm" /></div>
-              <textarea value={jobForm.description} onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })} placeholder={t("positionDescPlaceholder")} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
-              <textarea value={jobForm.requirements} onChange={(e) => setJobForm({ ...jobForm, requirements: e.target.value })} placeholder={t("requirementsPlaceholderMulti")} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
-              <input value={jobForm.skills} onChange={(e) => setJobForm({ ...jobForm, skills: e.target.value })} placeholder={t("skillsPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <input value={jobForm.title} onChange={(e) => setJobForm({ ...jobForm, title: e.target.value })} placeholder={t("jobTitlePlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+              <div className="flex gap-2"><select value={jobForm.employmentType} onChange={(e) => setJobForm({ ...jobForm, employmentType: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm">{EMPLOYMENT_TYPES.map(t2 => <option key={t2} value={t2}>{vocabLabel(t2, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG)}</option>)}</select><select value={jobForm.experienceLevel} onChange={(e) => setJobForm({ ...jobForm, experienceLevel: e.target.value })} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm">{EXPERIENCE_LEVELS.map(ex => <option key={ex} value={ex}>{vocabLabel(ex, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG)}</option>)}</select></div>
+              <input value={jobForm.location} onChange={(e) => setJobForm({ ...jobForm, location: e.target.value })} placeholder={t("jobLocationPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+              <div className="flex gap-2"><input value={jobForm.salaryMin} onChange={(e) => setJobForm({ ...jobForm, salaryMin: e.target.value })} type="number" placeholder={t("minSalaryPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /><input value={jobForm.salaryMax} onChange={(e) => setJobForm({ ...jobForm, salaryMax: e.target.value })} type="number" placeholder={t("maxSalaryPlaceholder")} className="w-1/2 px-3 py-2.5 rounded-xl border border-border text-sm" /></div>
+              <textarea value={jobForm.description} onChange={(e) => setJobForm({ ...jobForm, description: e.target.value })} placeholder={t("positionDescPlaceholder")} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm resize-none" />
+              <textarea value={jobForm.requirements} onChange={(e) => setJobForm({ ...jobForm, requirements: e.target.value })} placeholder={t("requirementsPlaceholderMulti")} rows={3} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm resize-none" />
+              <input value={jobForm.skills} onChange={(e) => setJobForm({ ...jobForm, skills: e.target.value })} placeholder={t("skillsPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
             </div>
-            <button disabled={!jobForm.title.trim()} onClick={submitJobListing} className={`w-full py-3 rounded-2xl font-semibold text-sm mt-4 transition ${jobForm.title.trim() ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{jobForm._editingId ? t("updateListingBtn") : t("publishListingBtn")}</button>
+            <button disabled={!jobForm.title.trim()} onClick={submitJobListing} className={`w-full py-3 rounded-2xl font-semibold text-sm mt-4 transition ${jobForm.title.trim() ? "bg-primary text-white hover:bg-primary-hover" : "bg-border text-fg-muted cursor-not-allowed"}`}>{jobForm._editingId ? t("updateListingBtn") : t("publishListingBtn")}</button>
           </div>
         </div>
       )}
       {showOfferForm && selectedListing && (() => { const currency = listingCurrency(selectedListing.price); const existingOffer = myPendingOfferOn(selectedListing); const isUpdate = existingOffer && !existingOffer.seen; return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setShowOfferForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-5">
-            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800">{isUpdate ? t("updateOfferBtn") : t("makeOffer")}</h3><button onClick={() => setShowOfferForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
-            <p className="text-xs text-gray-400 mb-4">{selectedListing.brand} {selectedListing.model} · {selectedListing.price}</p>
-            <input value={offerAmount} onChange={(e) => setOfferAmount(e.target.value)} type="number" placeholder={t("offerAmountPlaceholder", { currency })} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4" />
-            <button disabled={!offerAmount} onClick={submitOffer} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${offerAmount ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{isUpdate ? t("updateOfferSubmitBtn") : t("sendOfferBtn")}</button>
+            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-fg-strong">{isUpdate ? t("updateOfferBtn") : t("makeOffer")}</h3><button onClick={() => setShowOfferForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div>
+            <p className="text-xs text-fg-muted mb-4">{selectedListing.brand} {selectedListing.model} · {selectedListing.price}</p>
+            <input value={offerAmount} onChange={(e) => setOfferAmount(e.target.value)} type="number" placeholder={t("offerAmountPlaceholder", { currency })} className="w-full px-3 py-3 rounded-xl border border-border text-sm mb-4" />
+            <button disabled={!offerAmount} onClick={submitOffer} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${offerAmount ? "bg-primary text-white hover:bg-primary-hover" : "bg-border text-fg-muted cursor-not-allowed"}`}>{isUpdate ? t("updateOfferSubmitBtn") : t("sendOfferBtn")}</button>
           </div>
         </div>
       ); })()}
       {showFeaturedUpsell && selectedListing && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" data-modal-backdrop onClick={() => setShowFeaturedUpsell(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-5">
-            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800 flex items-center gap-2">{t("featuredUpsellTitle")}</h3><button onClick={() => setShowFeaturedUpsell(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
-            <p className="text-xs text-gray-400 mb-4">{selectedListing.brand} {selectedListing.model} · {selectedListing.price}</p>
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
+            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-fg-strong flex items-center gap-2">{t("featuredUpsellTitle")}</h3><button onClick={() => setShowFeaturedUpsell(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div>
+            <p className="text-xs text-fg-muted mb-4">{selectedListing.brand} {selectedListing.model} · {selectedListing.price}</p>
+            <div className="bg-warning-tint border border-amber-200 rounded-2xl p-4 mb-4">
               <p className="text-sm text-amber-900 leading-relaxed">{t("featuredUpsellBadgeNote", { days: String(FEATURED_LISTING_DAYS) })}</p>
               <p className="text-2xl font-bold text-amber-800 mt-2">{FEATURED_LISTING_PRICE}₺</p>
             </div>
-            <p className="text-[11px] text-gray-400 mb-4">{t("featuredUpsellDemoNote")}</p>
-            <button onClick={confirmFeaturedPurchase} className="w-full bg-amber-500 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-amber-600 transition flex items-center justify-center gap-2"><Banknote size={15} /> {t("payAndFeatureBtn", { price: String(FEATURED_LISTING_PRICE) })}</button>
+            <p className="text-[11px] text-fg-muted mb-4">{t("featuredUpsellDemoNote")}</p>
+            <button onClick={confirmFeaturedPurchase} className="w-full bg-amber-500 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-warning transition flex items-center justify-center gap-2"><Banknote size={15} /> {t("payAndFeatureBtn", { price: String(FEATURED_LISTING_PRICE) })}</button>
           </div>
         </div>
       )}
-      {showListingMsgForm && (<div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowListingMsgForm(false)}><div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5"><div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800">{t("messageSeller")}</h3><button onClick={() => setShowListingMsgForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div><textarea value={listingMsg} onChange={(e) => setListingMsg(e.target.value)} rows={3} placeholder={t("listingMsgPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" /><button onClick={submitListingMsg} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition">{t("sendReviewBtn")}</button></div></div>)}
+      {showListingMsgForm && (<div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setShowListingMsgForm(false)}><div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5"><div className="flex items-center justify-between mb-4"><h3 className="font-bold text-fg-strong">{t("messageSeller")}</h3><button onClick={() => setShowListingMsgForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div><textarea value={listingMsg} onChange={(e) => setListingMsg(e.target.value)} rows={3} placeholder={t("listingMsgPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-border text-sm mb-4 resize-none" /><button onClick={submitListingMsg} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-primary-hover transition">{t("sendReviewBtn")}</button></div></div>)}
       {showJobApplyForm && selectedJob && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" data-modal-backdrop onClick={closeJobApplyForm}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-3xl shadow-2xl ring-1 ring-black/5 max-h-[88vh] flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2"><Briefcase size={18} className="text-blue-500" /> {t("applicationTitle")}</h3>
-              <button onClick={closeJobApplyForm} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-surface-elevated flex-shrink-0">
+              <h3 className="font-bold text-fg-strong flex items-center gap-2"><Briefcase size={18} className="text-info" /> {t("applicationTitle")}</h3>
+              <button onClick={closeJobApplyForm} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="text-xs text-gray-400 mb-4">{selectedJob.title} · {selectedJob.mechanicName}</p>
-              <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><User size={13} className="text-gray-400" /> {t("applicationInfoTitle")}</h4>
+              <p className="text-xs text-fg-muted mb-4">{selectedJob.title} · {selectedJob.mechanicName}</p>
+              <h4 className="text-xs font-semibold text-fg-strong mb-2 flex items-center gap-1.5"><User size={13} className="text-fg-muted" /> {t("applicationInfoTitle")}</h4>
               <div className="space-y-2 mb-4">
-                <input value={jobApplyInfo.name} onChange={(e) => setJobApplyInfo(i => ({ ...i, name: e.target.value }))} placeholder={t("fullNameRequiredPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <input value={jobApplyInfo.name} onChange={(e) => setJobApplyInfo(i => ({ ...i, name: e.target.value }))} placeholder={t("fullNameRequiredPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                 <div className="flex gap-2">
-                  <div className="w-1/2"><input value={jobApplyInfo.phone} onChange={(e) => setJobApplyInfo(i => ({ ...i, phone: e.target.value }))} onBlur={(e) => normalizePhoneField(e.target.value, (v) => setJobApplyInfo(i => ({ ...i, phone: v })))} placeholder={t("phoneCountryPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />{jobApplyInfo.phone.trim() && !jobApplyPhoneCheck.valid && <p className="text-[10px] text-red-500 mt-1">{jobApplyPhoneCheck.message}</p>}</div>
-                  <div className="w-1/2"><input value={jobApplyInfo.email} onChange={(e) => setJobApplyInfo(i => ({ ...i, email: e.target.value }))} placeholder={t("emailRequiredPlaceholder")} type="email" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />{jobApplyInfo.email.trim() && !jobApplyEmailValid && <p className="text-[10px] text-red-500 mt-1">{t("invalidEmailNote")}</p>}</div>
+                  <div className="w-1/2"><input value={jobApplyInfo.phone} onChange={(e) => setJobApplyInfo(i => ({ ...i, phone: e.target.value }))} onBlur={(e) => normalizePhoneField(e.target.value, (v) => setJobApplyInfo(i => ({ ...i, phone: v })))} placeholder={t("phoneCountryPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />{jobApplyInfo.phone.trim() && !jobApplyPhoneCheck.valid && <p className="text-[10px] text-red-500 mt-1">{jobApplyPhoneCheck.message}</p>}</div>
+                  <div className="w-1/2"><input value={jobApplyInfo.email} onChange={(e) => setJobApplyInfo(i => ({ ...i, email: e.target.value }))} placeholder={t("emailRequiredPlaceholder")} type="email" className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />{jobApplyInfo.email.trim() && !jobApplyEmailValid && <p className="text-[10px] text-red-500 mt-1">{t("invalidEmailNote")}</p>}</div>
                 </div>
-                <input value={jobApplyInfo.address} onChange={(e) => setJobApplyInfo(i => ({ ...i, address: e.target.value }))} placeholder={t("addressRequiredPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <input value={jobApplyInfo.address} onChange={(e) => setJobApplyInfo(i => ({ ...i, address: e.target.value }))} placeholder={t("addressRequiredPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
               </div>
-              <h4 className="text-xs font-semibold text-gray-700 mb-2">{t("coverLetterTitle")}</h4>
-              <textarea value={jobApplyMsg} onChange={(e) => setJobApplyMsg(e.target.value)} rows={3} placeholder={t("coverLetterPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" />
-              <h4 className="text-xs font-semibold text-gray-700 mb-2">{t("cvRequiredTitle")}</h4>
+              <h4 className="text-xs font-semibold text-fg-strong mb-2">{t("coverLetterTitle")}</h4>
+              <textarea value={jobApplyMsg} onChange={(e) => setJobApplyMsg(e.target.value)} rows={3} placeholder={t("coverLetterPlaceholder")} className="w-full px-3 py-3 rounded-xl border border-border text-sm mb-4 resize-none" />
+              <h4 className="text-xs font-semibold text-fg-strong mb-2">{t("cvRequiredTitle")}</h4>
               <input ref={cvFileRef} type="file" accept=".pdf,.doc,.docx" onChange={handleCvSelect} className="hidden" />
               {jobApplyCv ? (
-                <div className="flex items-center justify-between gap-2 bg-blue-50 rounded-xl px-3 py-2.5">
-                  <span className="flex items-center gap-2 text-xs text-blue-700 min-w-0"><FileText size={15} className="flex-shrink-0" /><span className="truncate">{jobApplyCv.name}</span></span>
+                <div className="flex items-center justify-between gap-2 bg-primary-tint rounded-xl px-3 py-2.5">
+                  <span className="flex items-center gap-2 text-xs text-primary-hover min-w-0"><FileText size={15} className="flex-shrink-0" /><span className="truncate">{jobApplyCv.name}</span></span>
                   <button onClick={removeCv} aria-label={t("removeCvAria")} className="text-blue-400 hover:text-red-500 flex-shrink-0 p-2 -m-2"><X size={15} /></button>
                 </div>
               ) : (
-                <button onClick={() => cvFileRef.current?.click()} className="w-full flex items-center justify-center gap-2 border border-dashed border-gray-300 text-gray-500 rounded-xl py-2.5 text-xs font-medium hover:bg-gray-50 transition"><Paperclip size={14} /> {t("uploadCvBtn")}</button>
+                <button onClick={() => cvFileRef.current?.click()} className="w-full flex items-center justify-center gap-2 border border-dashed border-fg-muted text-fg-secondary rounded-xl py-2.5 text-xs font-medium hover:bg-background transition"><Paperclip size={14} /> {t("uploadCvBtn")}</button>
               )}
-              <p className="text-[10px] text-gray-300 mt-2">{t("requiredFieldsHint")}</p>
+              <p className="text-[10px] text-fg-muted mt-2">{t("requiredFieldsHint")}</p>
             </div>
-            <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
-              <button disabled={!jobApplyReady} onClick={submitJobApplication} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${jobApplyReady ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("submitApplicationBtn")}</button>
+            <div className="px-5 py-4 border-t border-surface-elevated flex-shrink-0">
+              <button disabled={!jobApplyReady} onClick={submitJobApplication} className={`w-full py-3 rounded-2xl font-semibold text-sm transition ${jobApplyReady ? "bg-primary text-white hover:bg-primary-hover" : "bg-border text-fg-muted cursor-not-allowed"}`}>{t("submitApplicationBtn")}</button>
             </div>
           </div>
         </div>
@@ -4867,24 +4867,24 @@ export function AppShell() {
       {reviewingApptId && (() => { const revAppt = appointments.find(a => a.id === reviewingApptId); return (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setReviewingApptId(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
-            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-gray-800">{t("writeReviewTitle")}</h3><button onClick={() => setReviewingApptId(null)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
-            <p className="text-xs text-gray-400 mb-4">{revAppt?.mechanicName}</p>
-            <div className="flex items-center gap-1.5 mb-4 justify-center">{[1, 2, 3, 4, 5].map(n => (<button key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))} aria-label={t("a11yRateStars", { n: String(n) })}><Star size={30} className={n <= reviewForm.rating ? "text-gray-900 fill-gray-900" : "text-gray-200 fill-gray-200"} /></button>))}</div>
-            <textarea value={reviewForm.comment} onChange={(e) => setReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder={t("shareExperiencePlaceholder")} className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm mb-4 resize-none" />
-            <button onClick={submitReview} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-blue-700 transition">{t("sendReviewBtn")}</button>
+            <div className="flex items-center justify-between mb-1"><h3 className="font-bold text-fg-strong">{t("writeReviewTitle")}</h3><button onClick={() => setReviewingApptId(null)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div>
+            <p className="text-xs text-fg-muted mb-4">{revAppt?.mechanicName}</p>
+            <div className="flex items-center gap-1.5 mb-4 justify-center">{[1, 2, 3, 4, 5].map(n => (<button key={n} onClick={() => setReviewForm(f => ({ ...f, rating: n }))} aria-label={t("a11yRateStars", { n: String(n) })}><Star size={30} className={n <= reviewForm.rating ? "text-fg fill-fg" : "text-fg-muted fill-fg-muted"} /></button>))}</div>
+            <textarea value={reviewForm.comment} onChange={(e) => setReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder={t("shareExperiencePlaceholder")} className="w-full px-3 py-3 rounded-xl border border-border text-sm mb-4 resize-none" />
+            <button onClick={submitReview} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-primary-hover transition">{t("sendReviewBtn")}</button>
           </div>
         </div>
       ); })()}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={closePasswordModal}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
-            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><Lock size={18} /> {t("changePasswordTitle")}</h3><button onClick={closePasswordModal} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
+            <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-fg-strong flex items-center gap-2"><Lock size={18} /> {t("changePasswordTitle")}</h3><button onClick={closePasswordModal} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div>
             <div className="space-y-2">
-              <input type="password" value={passwordForm.current} onChange={(e) => setPasswordForm(f => ({ ...f, current: e.target.value }))} placeholder={t("currentPasswordPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <input type="password" value={passwordForm.next} onChange={(e) => setPasswordForm(f => ({ ...f, next: e.target.value }))} placeholder={t("newPasswordPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <input type="password" value={passwordForm.confirm} onChange={(e) => setPasswordForm(f => ({ ...f, confirm: e.target.value }))} placeholder={t("newPasswordRepeatPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+              <input type="password" value={passwordForm.current} onChange={(e) => setPasswordForm(f => ({ ...f, current: e.target.value }))} placeholder={t("currentPasswordPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+              <input type="password" value={passwordForm.next} onChange={(e) => setPasswordForm(f => ({ ...f, next: e.target.value }))} placeholder={t("newPasswordPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+              <input type="password" value={passwordForm.confirm} onChange={(e) => setPasswordForm(f => ({ ...f, confirm: e.target.value }))} placeholder={t("newPasswordRepeatPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
             </div>
-            <button onClick={submitPasswordChange} className="w-full bg-blue-600 text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-blue-700 transition">{t("updatePasswordBtn")}</button>
+            <button onClick={submitPasswordChange} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm mt-4 hover:bg-primary-hover transition">{t("updatePasswordBtn")}</button>
           </div>
         </div>
       )}
@@ -4895,22 +4895,22 @@ export function AppShell() {
       {servicePickerOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-end md:items-center justify-center md:p-6" data-modal-backdrop onClick={() => setServicePickerOpen(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-4xl rounded-t-3xl md:rounded-3xl flex flex-col max-h-[92vh] md:max-h-[85vh] overflow-hidden">
-            <div className="px-5 md:px-6 pt-5 pb-4 border-b border-gray-100">
+            <div className="px-5 md:px-6 pt-5 pb-4 border-b border-surface-elevated">
               <div className="flex items-start justify-between gap-3 mb-1">
                 <div>
-                  <h3 className="font-bold text-gray-900 text-lg">{t("serviceCatalogTitle")}</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">{t("serviceCatalogSub")}</p>
+                  <h3 className="font-bold text-fg text-lg">{t("serviceCatalogTitle")}</h3>
+                  <p className="text-xs text-fg-muted mt-0.5">{t("serviceCatalogSub")}</p>
                 </div>
-                <button onClick={() => setServicePickerOpen(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-1 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button>
+                <button onClick={() => setServicePickerOpen(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-1 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button>
               </div>
               <div className="relative mt-3">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input autoFocus value={servicePickerQuery} onChange={(e) => setServicePickerQuery(e.target.value)} placeholder={t("serviceCatalogSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" />
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-muted" />
+                <input autoFocus value={servicePickerQuery} onChange={(e) => setServicePickerQuery(e.target.value)} placeholder={t("serviceCatalogSearchPlaceholder")} className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300" />
               </div>
               <div className="flex gap-1.5 overflow-x-auto mt-3 pb-1">
-                <button onClick={() => setServicePickerCat("all")} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === "all" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{t("serviceCatalogAllCats")}</button>
+                <button onClick={() => setServicePickerCat("all")} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === "all" ? "bg-primary text-white" : "bg-surface-elevated text-fg-secondary hover:bg-border"}`}>{t("serviceCatalogAllCats")}</button>
                 {SERVICE_CATALOG.map(cat => (
-                  <button key={cat.key} onClick={() => setServicePickerCat(cat.key)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === cat.key ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>{cat[lang] || cat.tr}</button>
+                  <button key={cat.key} onClick={() => setServicePickerCat(cat.key)} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition whitespace-nowrap ${servicePickerCat === cat.key ? "bg-primary text-white" : "bg-surface-elevated text-fg-secondary hover:bg-border"}`}>{cat[lang] || cat.tr}</button>
                 ))}
               </div>
             </div>
@@ -4927,16 +4927,16 @@ export function AppShell() {
               return (
                 <div className="flex-1 overflow-y-auto px-5 md:px-6 py-5">
                   {cats.length === 0 ? (
-                    <div className="text-center py-16"><Search size={32} className="mx-auto text-gray-200 mb-3" /><p className="text-sm text-gray-400">{t("serviceCatalogNoResult")}</p></div>
+                    <div className="text-center py-16"><Search size={32} className="mx-auto text-fg-muted mb-3" /><p className="text-sm text-fg-muted">{t("serviceCatalogNoResult")}</p></div>
                   ) : cats.map(cat => (
                     <div key={cat.key} className="mb-6 last:mb-0">
-                      <h4 className="text-sm font-bold text-gray-900 mb-2.5">{cat[lang] || cat.tr}</h4>
+                      <h4 className="text-sm font-bold text-fg mb-2.5">{cat[lang] || cat.tr}</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         {cat.items.map(it => {
                           const on = selectedKeys.has(it.key);
                           return (
-                            <button key={it.key} onClick={() => toggleCatalogService(it)} className={`text-left px-3.5 py-2.5 rounded-xl border text-sm font-medium transition flex items-center gap-2.5 ${on ? "bg-blue-50 border-blue-300 text-blue-800" : "bg-white border-gray-200 text-gray-600 hover:border-blue-200 hover:bg-blue-50/40"}`}>
-                              <span className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center flex-shrink-0 ${on ? "bg-blue-600 border-blue-600" : "border-gray-300"}`} style={{ width: 18, height: 18 }}>{on && <Check size={12} className="text-white" />}</span>
+                            <button key={it.key} onClick={() => toggleCatalogService(it)} className={`text-left px-3.5 py-2.5 rounded-xl border text-sm font-medium transition flex items-center gap-2.5 ${on ? "bg-primary-tint border-blue-300 text-primary-active" : "bg-white border-border text-fg-secondary hover:border-blue-200 hover:bg-blue-50/40"}`}>
+                              <span className={`w-4.5 h-4.5 rounded-md border flex items-center justify-center flex-shrink-0 ${on ? "bg-primary border-primary" : "border-fg-muted"}`} style={{ width: 18, height: 18 }}>{on && <Check size={12} className="text-white" />}</span>
                               <span className="min-w-0 truncate">{it[lang] || it.tr}</span>
                             </button>
                           );
@@ -4947,9 +4947,9 @@ export function AppShell() {
                 </div>
               );
             })()}
-            <div className="px-5 md:px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
-              <span className="text-xs text-gray-400">{t("serviceCatalogSelectedCount", { n: String((myProfile?.services || []).filter(s => s.key).length) })}</span>
-              <button onClick={() => setServicePickerOpen(false)} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("serviceCatalogDoneBtn")}</button>
+            <div className="px-5 md:px-6 py-4 border-t border-surface-elevated flex items-center justify-between gap-3">
+              <span className="text-xs text-fg-muted">{t("serviceCatalogSelectedCount", { n: String((myProfile?.services || []).filter(s => s.key).length) })}</span>
+              <button onClick={() => setServicePickerOpen(false)} className="bg-primary text-white px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition">{t("serviceCatalogDoneBtn")}</button>
             </div>
           </div>
         </div>
@@ -4957,32 +4957,32 @@ export function AppShell() {
       {showNewTicketForm && (
         <div data-modal-backdrop style={{ zIndex: 9999 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-4" onClick={() => setShowNewTicketForm(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-t-3xl md:rounded-3xl p-5 max-h-[88vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-1"><h3 className="text-base font-bold text-gray-900">{t("newSupportTicketTitle")}</h3><button onClick={() => setShowNewTicketForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 transition flex-shrink-0"><X size={18} /></button></div>
-            <p className="text-xs text-gray-400 mb-4">{t("ticketSummaryHint")}</p>
+            <div className="flex items-center justify-between mb-1"><h3 className="text-base font-bold text-fg">{t("newSupportTicketTitle")}</h3><button onClick={() => setShowNewTicketForm(false)} aria-label={t("closeAria")} className="w-9 h-9 -m-2 rounded-full hover:bg-surface-elevated flex items-center justify-center text-fg-muted transition flex-shrink-0"><X size={18} /></button></div>
+            <p className="text-xs text-fg-muted mb-4">{t("ticketSummaryHint")}</p>
             <div className="space-y-3">
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-1 block">{t("requestTypeLabel")}</label>
-                <select value={newTicketForm.type} onChange={(e) => setNewTicketForm(f => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm">
+                <label className="text-[11px] font-medium text-fg-secondary mb-1 block">{t("requestTypeLabel")}</label>
+                <select value={newTicketForm.type} onChange={(e) => setNewTicketForm(f => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm">
                   {Object.entries(ADMIN_TICKET_TYPE_LABELS).map(([k, label]) => (<option key={k} value={k}>{label}</option>))}
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-1 block">{t("subjectLabel")}</label>
-                <input value={newTicketForm.subject} onChange={(e) => setNewTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder={t("subjectPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
+                <label className="text-[11px] font-medium text-fg-secondary mb-1 block">{t("subjectLabel")}</label>
+                <input value={newTicketForm.subject} onChange={(e) => setNewTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder={t("subjectPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-1 block">{t("descriptionLabel")}</label>
-                <textarea value={newTicketForm.description} onChange={(e) => setNewTicketForm(f => ({ ...f, description: e.target.value }))} rows={4} placeholder={t("describeIssueDetailPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm resize-none" />
+                <label className="text-[11px] font-medium text-fg-secondary mb-1 block">{t("descriptionLabel")}</label>
+                <textarea value={newTicketForm.description} onChange={(e) => setNewTicketForm(f => ({ ...f, description: e.target.value }))} rows={4} placeholder={t("describeIssueDetailPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm resize-none" />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-gray-500 mb-1 block">{t("relatedApptListingMechLabel")}</label>
-                <input value={newTicketForm.relatedNote} onChange={(e) => setNewTicketForm(f => ({ ...f, relatedNote: e.target.value }))} placeholder={t("relatedNotePlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-                <p className="text-[10px] text-gray-300 mt-1">{t("relatedNoteHint")}</p>
+                <label className="text-[11px] font-medium text-fg-secondary mb-1 block">{t("relatedApptListingMechLabel")}</label>
+                <input value={newTicketForm.relatedNote} onChange={(e) => setNewTicketForm(f => ({ ...f, relatedNote: e.target.value }))} placeholder={t("relatedNotePlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+                <p className="text-[10px] text-fg-muted mt-1">{t("relatedNoteHint")}</p>
               </div>
             </div>
             <div className="flex gap-2 mt-5">
-              <button onClick={() => setShowNewTicketForm(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-50 transition">{t("giveUpBtn")}</button>
-              <button onClick={submitSupportTicket} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition">{t("sendReviewBtn")}</button>
+              <button onClick={() => setShowNewTicketForm(false)} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition">{t("giveUpBtn")}</button>
+              <button onClick={submitSupportTicket} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition">{t("sendReviewBtn")}</button>
             </div>
           </div>
         </div>
@@ -4993,15 +4993,15 @@ export function AppShell() {
       {emailChangeForm.open && (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={() => setEmailChangeForm({ open: false, email: "", password: "", loading: false })}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
-            <h3 className="font-bold text-gray-900 mb-1">{t("changeEmailBtn")}</h3>
-            <p className="text-xs text-gray-400 mb-4 leading-relaxed">{t("changeEmailDesc")}</p>
-            <label className="text-[11px] text-gray-500 mb-1 block">{t("newEmailLabel")}</label>
-            <input type="email" value={emailChangeForm.email} onChange={(e) => setEmailChangeForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm mb-3" />
-            <label className="text-[11px] text-gray-500 mb-1 block">{t("currentPasswordLabel")}</label>
-            <input type="password" value={emailChangeForm.password} onChange={(e) => setEmailChangeForm(f => ({ ...f, password: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm mb-4" />
+            <h3 className="font-bold text-fg mb-1">{t("changeEmailBtn")}</h3>
+            <p className="text-xs text-fg-muted mb-4 leading-relaxed">{t("changeEmailDesc")}</p>
+            <label className="text-[11px] text-fg-secondary mb-1 block">{t("newEmailLabel")}</label>
+            <input type="email" value={emailChangeForm.email} onChange={(e) => setEmailChangeForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm mb-3" />
+            <label className="text-[11px] text-fg-secondary mb-1 block">{t("currentPasswordLabel")}</label>
+            <input type="password" value={emailChangeForm.password} onChange={(e) => setEmailChangeForm(f => ({ ...f, password: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm mb-4" />
             <div className="flex gap-2">
-              <button onClick={() => setEmailChangeForm({ open: false, email: "", password: "", loading: false })} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("cancel")}</button>
-              <button onClick={submitEmailChange} disabled={emailChangeForm.loading} className="flex-1 bg-gray-900 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-gray-800 transition disabled:opacity-60">{t("save")}</button>
+              <button onClick={() => setEmailChangeForm({ open: false, email: "", password: "", loading: false })} className="flex-1 border border-border text-fg-secondary py-3 rounded-2xl font-semibold text-sm hover:bg-background transition">{t("cancel")}</button>
+              <button onClick={submitEmailChange} disabled={emailChangeForm.loading} className="flex-1 bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-fg-strong transition disabled:opacity-60">{t("save")}</button>
             </div>
           </div>
         </div>
@@ -5009,23 +5009,23 @@ export function AppShell() {
       {showDeleteAccountModal && (() => { const deleteReady = deleteConfirmText.trim().toLocaleUpperCase("tr-TR") === "SİL"; const closeDeleteModal = () => { setShowDeleteAccountModal(false); setDeleteConfirmText(""); setDeleteAccountPassword(""); }; return (
         <div className="fixed inset-0 bg-black/40 z-[60] flex items-end md:items-center justify-center" data-modal-backdrop onClick={closeDeleteModal}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-5">
-            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-3 mx-auto"><Trash2 size={26} className="text-red-500" /></div>
-            <h3 className="font-bold text-gray-800 text-center mb-1">{t("deleteBusinessOrAccountQuestion", { who: role === "mechanic" ? t("deleteBusinessSubject") : t("deleteAccountSubject") })}</h3>
-            <p className="text-xs text-gray-400 text-center mb-4">{t("deleteAccountIrreversibleNote", { items: role === "mechanic" ? t("mechanicDeleteItemsNote") : t("ownerDeleteItemsNote") })}</p>
-            <div className="bg-red-50 rounded-xl p-3 mb-4">
-              <p className="text-xs text-gray-600 text-center mb-2">{t("typeToConfirmNote", { word: t("deleteWordTr") })}</p>
+            <div className="w-14 h-14 bg-error-tint rounded-full flex items-center justify-center mb-3 mx-auto"><Trash2 size={26} className="text-red-500" /></div>
+            <h3 className="font-bold text-fg-strong text-center mb-1">{t("deleteBusinessOrAccountQuestion", { who: role === "mechanic" ? t("deleteBusinessSubject") : t("deleteAccountSubject") })}</h3>
+            <p className="text-xs text-fg-muted text-center mb-4">{t("deleteAccountIrreversibleNote", { items: role === "mechanic" ? t("mechanicDeleteItemsNote") : t("ownerDeleteItemsNote") })}</p>
+            <div className="bg-error-tint rounded-xl p-3 mb-4">
+              <p className="text-xs text-fg-secondary text-center mb-2">{t("typeToConfirmNote", { word: t("deleteWordTr") })}</p>
               <input value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder={t("deleteWordTr")} className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm text-center font-semibold tracking-widest uppercase focus:outline-none focus:ring-2 focus:ring-red-300" />
             </div>
             {/* Silme artık GERÇEKTEN siliyor (eskiden yalnızca "silindi (demo)" yazıyordu), bu
                 yüzden geri alınamaz bir işlem için mevcut şifre isteniyor. */}
             <div className="mb-4">
-              <label className="text-[11px] text-gray-500 mb-1 block">{t("currentPasswordLabel")}</label>
-              <input type="password" value={deleteAccountPassword} onChange={(e) => setDeleteAccountPassword(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm" />
-              <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">{t("accountDeleteKeepsNote")}</p>
+              <label className="text-[11px] text-fg-secondary mb-1 block">{t("currentPasswordLabel")}</label>
+              <input type="password" value={deleteAccountPassword} onChange={(e) => setDeleteAccountPassword(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
+              <p className="text-[11px] text-fg-muted mt-2 leading-relaxed">{t("accountDeleteKeepsNote")}</p>
             </div>
             <div className="flex gap-2">
-              <button onClick={closeDeleteModal} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition">{t("cancel")}</button>
-              <button disabled={!deleteReady || !deleteAccountPassword || deleteAccountLoading} onClick={confirmDeleteAccount} className={`flex-1 py-3 rounded-2xl font-semibold text-sm transition ${deleteReady && deleteAccountPassword && !deleteAccountLoading ? "bg-red-500 text-white hover:bg-red-600" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>{t("yesDeleteConfirmLabel")}</button>
+              <button onClick={closeDeleteModal} className="flex-1 border border-border text-fg-secondary py-3 rounded-2xl font-semibold text-sm hover:bg-background transition">{t("cancel")}</button>
+              <button disabled={!deleteReady || !deleteAccountPassword || deleteAccountLoading} onClick={confirmDeleteAccount} className={`flex-1 py-3 rounded-2xl font-semibold text-sm transition ${deleteReady && deleteAccountPassword && !deleteAccountLoading ? "bg-red-500 text-white hover:bg-error" : "bg-border text-fg-muted cursor-not-allowed"}`}>{t("yesDeleteConfirmLabel")}</button>
             </div>
           </div>
         </div>

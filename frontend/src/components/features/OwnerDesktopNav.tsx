@@ -112,11 +112,11 @@ export function OwnerDesktopNav() {
   // MİSAFİR GEZİNME: bkz. OwnerBottomNav — arama/pazar herkese açık, kişisel sekmeler giriş istiyor.
   const PUBLIC_TABS = ["search", "market"];
   return (
-    <div className="hidden md:flex items-center gap-1 bg-gray-100 rounded-full p-1 mb-4 w-fit">
+    <div className="hidden md:flex items-center gap-1 bg-surface-elevated rounded-full p-1 mb-4 w-fit">
       {[{ key: "search", label: t("navSearch"), icon: Search }, { key: "market", label: t("navMarket"), icon: Tag }, { key: "favorites", label: t("navFavorites"), icon: Heart }, { key: "chats", label: t("navChats"), icon: MessageCircle }, { key: "appointments", label: t("navAppointments"), icon: ClipboardList }].map(tab => {
         const Icon = tab.icon; const active = ownerTab === tab.key;
         const needsAuth = !isAuthed && !PUBLIC_TABS.includes(tab.key);
-        return (<button key={tab.key} onClick={() => { if (needsAuth) { requireAuthForTab(tab.key); return; } setOwnerTab(tab.key); }} className={`px-4 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}><Icon size={14} />{tab.label}{tab.key === "favorites" && favoriteIds.length > 0 && <span className={`ml-0.5 w-4 h-4 rounded-full text-[9px] flex items-center justify-center ${active ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"}`}>{favoriteIds.length}</span>}</button>);
+        return (<button key={tab.key} onClick={() => { if (needsAuth) { requireAuthForTab(tab.key); return; } setOwnerTab(tab.key); }} className={`px-4 py-2 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${active ? "bg-white text-fg shadow-sm" : "text-fg-secondary hover:text-fg-strong"}`}><Icon size={14} />{tab.label}{tab.key === "favorites" && favoriteIds.length > 0 && <span className={`ml-0.5 w-4 h-4 rounded-full text-[9px] flex items-center justify-center ${active ? "bg-primary text-white" : "bg-border text-fg-secondary"}`}>{favoriteIds.length}</span>}</button>);
       })}
     </div>
   );

@@ -35,15 +35,15 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-6">
-          <div className="max-w-sm w-full bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
-            <h1 className="text-lg font-bold text-gray-900 mb-2">Bir şeyler ters gitti</h1>
-            <p className="text-sm text-gray-500 mb-5">
+        <div className="min-h-screen flex items-center justify-center bg-background px-6">
+          <div className="max-w-sm w-full bg-white border border-border rounded-2xl p-6 text-center shadow-sm">
+            <h1 className="text-lg font-bold text-fg mb-2">Bir şeyler ters gitti</h1>
+            <p className="text-sm text-fg-secondary mb-5">
               Beklenmeyen bir hata oluştu. Sayfayı yenilemeyi deneyin; sorun devam ederse lütfen destek ile iletişime geçin.
             </p>
             <button
               onClick={this.handleReload}
-              className="w-full bg-gray-900 text-white py-3 rounded-2xl font-semibold text-sm hover:bg-gray-800 transition"
+              className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-fg-strong transition"
             >
               Sayfayı Yenile
             </button>

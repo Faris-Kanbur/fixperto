@@ -70,11 +70,11 @@ export function SavedSearchEditModal() {
   const num = (key, placeholder) => (
     <input type="number" inputMode="numeric" value={draft.filters?.[key] ?? ""} placeholder={placeholder}
       onChange={(e) => setF(key, e.target.value)}
-      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+      className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
   );
   const select = (key, options, labelFor = (v) => v) => (
     <select value={draft.filters?.[key] ?? "all"} onChange={(e) => setF(key, e.target.value)}
-      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white">
+      className="w-full px-3 py-2 rounded-xl border border-border text-sm bg-white">
       <option value="all">{t("allFilterLabel")}</option>
       {options.map((o) => <option key={o} value={o}>{labelFor(o)}</option>)}
     </select>
@@ -83,40 +83,40 @@ export function SavedSearchEditModal() {
   return (
     <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4" role="dialog" aria-modal="true" aria-label={t("savedSearchEditTitle")}>
       <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between gap-3">
-          <h3 className="font-bold text-gray-900 text-base">{t("savedSearchEditTitle")}</h3>
-          <button onClick={closeSavedSearchEditor} aria-label={t("cancel")} className="text-gray-400 hover:text-gray-700 p-2 -m-2"><X size={18} /></button>
+        <div className="sticky top-0 bg-white border-b border-surface-elevated px-5 py-4 flex items-center justify-between gap-3">
+          <h3 className="font-bold text-fg text-base">{t("savedSearchEditTitle")}</h3>
+          <button onClick={closeSavedSearchEditor} aria-label={t("cancel")} className="text-fg-muted hover:text-fg-strong p-2 -m-2"><X size={18} /></button>
         </div>
 
         <div className="px-5 py-4 space-y-4">
           <label className="block">
-            <span className="text-xs font-medium text-gray-500 block mb-1.5">{t("savedSearchNameFieldLabel")}</span>
+            <span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("savedSearchNameFieldLabel")}</span>
             <input value={draft.name || ""} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
           </label>
 
           <label className="block">
-            <span className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1.5"><Search size={12} /> {type === "cars" ? t("brandModelFieldLabel") : type === "jobs" ? t("positionFieldLabel") : t("brandFieldLabel")}</span>
+            <span className="text-xs font-medium text-fg-secondary mb-1.5 flex items-center gap-1.5"><Search size={12} /> {type === "cars" ? t("brandModelFieldLabel") : type === "jobs" ? t("positionFieldLabel") : t("brandFieldLabel")}</span>
             <input value={draft.query || ""} onChange={(e) => setDraft((d) => ({ ...d, query: e.target.value }))}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
           </label>
 
           {type === "mechanics" && (
             <label className="block">
-              <span className="text-xs font-medium text-gray-500 block mb-1.5">{t("serviceFieldLabel")}</span>
+              <span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("serviceFieldLabel")}</span>
               <input value={draft.serviceQuery || ""} onChange={(e) => setDraft((d) => ({ ...d, serviceQuery: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
             </label>
           )}
 
           <label className="block">
-            <span className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1.5"><MapPin size={12} /> {t("cityLabelShort")}</span>
+            <span className="text-xs font-medium text-fg-secondary mb-1.5 flex items-center gap-1.5"><MapPin size={12} /> {t("cityLabelShort")}</span>
             <input value={draft.locationQuery || ""} onChange={(e) => setDraft((d) => ({ ...d, locationQuery: e.target.value }))}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
           </label>
 
           <div className="pt-1">
-            <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5"><SlidersHorizontal size={13} className="text-blue-500" /> {t("filterBtn")}</p>
+            <p className="text-xs font-semibold text-fg-strong mb-2 flex items-center gap-1.5"><SlidersHorizontal size={13} className="text-info" /> {t("filterBtn")}</p>
             {type === "cars" && (
               <div className="grid grid-cols-2 gap-2">
                 <div>{select("fuelType", FUEL_TYPES, (v) => vocabLabel(v, lang, FUEL_TYPE_LABELS_BY_LANG))}</div>
@@ -139,7 +139,7 @@ export function SavedSearchEditModal() {
               <div className="grid grid-cols-2 gap-2">
                 <div>{num("minRating", t("minRatingLabel"))}</div>
                 <div>{num("maxPrice", t("maxPlaceholder"))}</div>
-                <label className="col-span-2 flex items-center gap-2 text-sm text-gray-600">
+                <label className="col-span-2 flex items-center gap-2 text-sm text-fg-secondary">
                   <input type="checkbox" checked={!!draft.filters?.verifiedOnly} onChange={(e) => setF("verifiedOnly", e.target.checked)} className="w-4 h-4 accent-blue-600" />
                   {t("nearMissVerified")}
                 </label>
@@ -151,11 +151,11 @@ export function SavedSearchEditModal() {
               Görünmeyen bir filtre, "neden hiç sonuç gelmiyor" sorusunun görünmeyen cevabıdır. */}
           {activeOtherFilters.length > 0 && (
             <div>
-              <p className="text-[11px] text-gray-400 mb-1.5">{t("savedSearchOtherFiltersHint")}</p>
+              <p className="text-[11px] text-fg-muted mb-1.5">{t("savedSearchOtherFiltersHint")}</p>
               <div className="flex flex-wrap gap-1.5">
                 {activeOtherFilters.map((key) => (
                   <button key={key} onClick={() => clearF(key)}
-                    className="inline-flex items-center gap-1 text-[11px] bg-gray-50 border border-gray-200 text-gray-600 px-2 py-1 rounded-full hover:border-red-300 hover:text-red-600 transition">
+                    className="inline-flex items-center gap-1 text-[11px] bg-background border border-border text-fg-secondary px-2 py-1 rounded-full hover:border-red-300 hover:text-error transition">
                     {savedSearchFilterLabel(key)}<X size={10} />
                   </button>
                 ))}
@@ -164,14 +164,14 @@ export function SavedSearchEditModal() {
           )}
 
           {/* Kaydetmeden önce sonucu göster: boş bir arama kaydedip "bildirim gelmiyor" demesin. */}
-          <p className={`text-xs ${matchCount === 0 ? "text-amber-600" : "text-gray-500"}`}>
+          <p className={`text-xs ${matchCount === 0 ? "text-warning" : "text-fg-secondary"}`}>
             {matchCount === 0 ? t("savedSearchEditNoMatch") : t("savedSearchEditMatchCount", { n: String(matchCount) })}
           </p>
         </div>
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-3 flex gap-2">
-          <button onClick={closeSavedSearchEditor} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm font-medium">{t("cancel")}</button>
-          <button onClick={() => saveSavedSearchEdits(draft)} className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition">{t("save")}</button>
+        <div className="sticky bottom-0 bg-white border-t border-surface-elevated px-5 py-3 flex gap-2">
+          <button onClick={closeSavedSearchEditor} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-sm font-medium">{t("cancel")}</button>
+          <button onClick={() => saveSavedSearchEdits(draft)} className="flex-1 bg-primary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-hover transition">{t("save")}</button>
         </div>
       </div>
     </div>

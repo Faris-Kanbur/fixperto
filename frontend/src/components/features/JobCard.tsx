@@ -111,20 +111,20 @@ export function JobCard({ j }) {
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
   return (
-    <button onClick={() => setSelectedJobId(j.id)} className="w-full text-left bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition p-4">
+    <button onClick={() => setSelectedJobId(j.id)} className="w-full text-left bg-white border border-surface-elevated rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition p-4">
       <div className="flex items-start gap-3">
-        <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center text-xl flex-shrink-0">{j.mechanicImg}</div>
+        <div className="w-11 h-11 bg-primary-tint rounded-xl flex items-center justify-center text-xl flex-shrink-0">{j.mechanicImg}</div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5"><h3 className="font-semibold text-gray-800 text-sm truncate">{j.title}</h3>{j.status === "closed" && <span className="flex-shrink-0 text-[9px] font-bold text-white bg-gray-400 px-1.5 py-0.5 rounded-full">{t("jobStatusClosedLabel")}</span>}</div>
-          <p className="text-xs text-gray-400 truncate">{j.mechanicName} · {j.location}</p>
+          <div className="flex items-center gap-1.5"><h3 className="font-semibold text-fg-strong text-sm truncate">{j.title}</h3>{j.status === "closed" && <span className="flex-shrink-0 text-[9px] font-bold text-white bg-fg-muted px-1.5 py-0.5 rounded-full">{t("jobStatusClosedLabel")}</span>}</div>
+          <p className="text-xs text-fg-muted truncate">{j.mechanicName} · {j.location}</p>
           <div className="flex flex-wrap items-center gap-1.5 mt-2">
             <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${jobEmploymentColor(j.employmentType)}`}>{vocabLabel(j.employmentType, lang, EMPLOYMENT_TYPE_LABELS_BY_LANG)}</span>
-            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-50 text-gray-500">{vocabLabel(j.experienceLevel, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG)}</span>
-            {(j.salaryMin || j.salaryMax) && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-50 text-green-600">{j.salaryMin && j.salaryMax ? `${Number(j.salaryMin).toLocaleString("tr-TR")}-${Number(j.salaryMax).toLocaleString("tr-TR")}₺` : `${Number(j.salaryMin || j.salaryMax).toLocaleString("tr-TR")}₺+`}</span>}
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-background text-fg-secondary">{vocabLabel(j.experienceLevel, lang, EXPERIENCE_LEVEL_LABELS_BY_LANG)}</span>
+            {(j.salaryMin || j.salaryMax) && <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-success-tint text-success">{j.salaryMin && j.salaryMax ? `${Number(j.salaryMin).toLocaleString("tr-TR")}-${Number(j.salaryMax).toLocaleString("tr-TR")}₺` : `${Number(j.salaryMin || j.salaryMax).toLocaleString("tr-TR")}₺+`}</span>}
           </div>
         </div>
       </div>
-      <p className="text-[10px] text-gray-300 mt-2.5 flex items-center gap-3"><span className="flex items-center gap-1"><Clock size={10} />{j.postedDate}</span>{(j.applicants?.length ?? 0) > 0 && <span className="flex items-center gap-1"><Users size={10} />{t("applicantsCountSuffix", { n: String(j.applicants.length) })}</span>}</p>
+      <p className="text-[10px] text-fg-muted mt-2.5 flex items-center gap-3"><span className="flex items-center gap-1"><Clock size={10} />{j.postedDate}</span>{(j.applicants?.length ?? 0) > 0 && <span className="flex items-center gap-1"><Users size={10} />{t("applicantsCountSuffix", { n: String(j.applicants.length) })}</span>}</p>
     </button>
   );
 }

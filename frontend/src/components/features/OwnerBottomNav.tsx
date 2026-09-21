@@ -114,11 +114,11 @@ export function OwnerBottomNav() {
   // popup'ı açılıyor ve giriş sonrası kullanıcı istediği sekmede devam ediyor (bkz. requireAuthForTab).
   const PUBLIC_TABS = ["search", "market"];
   return (
-    <div className="border-t border-gray-200 bg-white flex sticky bottom-0 md:hidden pb-safe">
+    <div className="border-t border-border bg-white flex sticky bottom-0 md:hidden pb-safe">
       {[{ key: "search", label: t("navSearch"), icon: Search }, { key: "market", label: t("navMarket"), icon: Tag }, { key: "favorites", label: t("navFavorites"), icon: Heart }, { key: "chats", label: t("navChats"), icon: MessageCircle }, { key: "appointments", label: t("navAppointments"), icon: ClipboardList }].map(tab => {
         const Icon = tab.icon; const active = ownerTab === tab.key;
         const needsAuth = !isAuthed && !PUBLIC_TABS.includes(tab.key);
-        return (<button key={tab.key} onClick={() => { if (needsAuth) { requireAuthForTab(tab.key); return; } setOwnerTab(tab.key); setScreen("owner"); }} className={`flex-1 py-3 flex flex-col items-center gap-1 text-[10px] font-medium transition relative ${active ? "text-blue-600" : "text-gray-400"}`}><Icon size={17} className={tab.key === "favorites" && favoriteIds.length > 0 ? "fill-current" : ""} />{tab.label}{tab.key === "favorites" && favoriteIds.length > 0 && <span className="absolute top-1.5 right-[28%] w-3.5 h-3.5 bg-blue-600 rounded-full text-white text-[8px] flex items-center justify-center">{favoriteIds.length}</span>}</button>);
+        return (<button key={tab.key} onClick={() => { if (needsAuth) { requireAuthForTab(tab.key); return; } setOwnerTab(tab.key); setScreen("owner"); }} className={`flex-1 py-3 flex flex-col items-center gap-1 text-[10px] font-medium transition relative ${active ? "text-primary" : "text-fg-muted"}`}><Icon size={17} className={tab.key === "favorites" && favoriteIds.length > 0 ? "fill-current" : ""} />{tab.label}{tab.key === "favorites" && favoriteIds.length > 0 && <span className="absolute top-1.5 right-[28%] w-3.5 h-3.5 bg-primary rounded-full text-white text-[8px] flex items-center justify-center">{favoriteIds.length}</span>}</button>);
       })}
     </div>
   );

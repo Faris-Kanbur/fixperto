@@ -99,20 +99,20 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
         <div className="flex items-center gap-1">
           <button onClick={() => setWeekStart((w) => addDays(w, -7))} disabled={!canPrevWeek}
             aria-label={t("bookingPrevWeek")}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${canPrevWeek ? "text-gray-500 hover:bg-gray-100" : "text-gray-200 cursor-not-allowed"}`}>
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${canPrevWeek ? "text-fg-secondary hover:bg-surface-elevated" : "text-fg-muted cursor-not-allowed"}`}>
             <ChevronLeft size={16} />
           </button>
-          <span className="text-sm font-semibold text-gray-900 tabular-nums">{rangeLabel}</span>
+          <span className="text-sm font-semibold text-fg tabular-nums">{rangeLabel}</span>
           <button onClick={() => setWeekStart((w) => addDays(w, 7))} disabled={!canNextWeek}
             aria-label={t("bookingNextWeek")}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${canNextWeek ? "text-gray-500 hover:bg-gray-100" : "text-gray-200 cursor-not-allowed"}`}>
+            className={`w-8 h-8 rounded-lg flex items-center justify-center transition ${canNextWeek ? "text-fg-secondary hover:bg-surface-elevated" : "text-fg-muted cursor-not-allowed"}`}>
             <ChevronRight size={16} />
           </button>
         </div>
         <div className="relative" ref={monthRef}>
           <button onClick={() => setShowMonth((v) => !v)}
             aria-expanded={showMonth}
-            className={`flex items-center gap-1.5 px-3 h-8 rounded-lg border text-xs font-semibold transition ${showMonth ? "border-blue-300 text-blue-600 bg-blue-50" : "border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600"}`}>
+            className={`flex items-center gap-1.5 px-3 h-8 rounded-lg border text-xs font-semibold transition ${showMonth ? "border-blue-300 text-primary bg-primary-tint" : "border-border text-fg-secondary hover:border-blue-300 hover:text-primary"}`}>
             <CalendarDays size={14} /> {t("bookingOpenMonth")}
           </button>
           {showMonth && (
@@ -143,16 +143,16 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
             <button key={i} disabled={disabled} onClick={() => pickDay(d)} aria-pressed={isSel}
               aria-label={d.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
               className={`py-2 rounded-xl border text-center transition
-                ${isSel ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                  : disabled ? "border-gray-100 text-gray-300 cursor-not-allowed"
-                  : "border-gray-200 text-gray-700 hover:border-blue-400 hover:bg-blue-50/50"}
+                ${isSel ? "bg-primary border-primary text-white shadow-sm"
+                  : disabled ? "border-surface-elevated text-fg-muted cursor-not-allowed"
+                  : "border-border text-fg-strong hover:border-blue-400 hover:bg-blue-50/50"}
                 ${isToday && !isSel && !disabled ? "ring-1 ring-inset ring-blue-200" : ""}`}>
-              <span className={`block text-[10px] font-semibold uppercase tracking-wide ${isSel ? "text-blue-100" : "text-gray-400"}`}>
+              <span className={`block text-[10px] font-semibold uppercase tracking-wide ${isSel ? "text-blue-100" : "text-fg-muted"}`}>
                 {dayLabels[dayKeys[i]]}
               </span>
               <span className="block text-base font-bold leading-tight tabular-nums">{d.getDate()}</span>
               {/* Boş saat sayısı: bu şeridin asıl faydası. Kapalı/geçmiş günde çizgi. */}
-              <span className={`block text-[10px] leading-tight ${isSel ? "text-blue-100" : free > 0 ? "text-emerald-600 font-semibold" : "text-gray-300"}`}>
+              <span className={`block text-[10px] leading-tight ${isSel ? "text-blue-100" : free > 0 ? "text-emerald-600 font-semibold" : "text-fg-muted"}`}>
                 {disabled ? "—" : free > 0 ? free : t("bookingSlotTaken")}
               </span>
             </button>
@@ -162,11 +162,11 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
 
       {/* ---- SAATLER ---- */}
       {!selectedDate ? (
-        <p className="text-sm text-gray-400 mt-3">{t("bookingPickDayFirst")}</p>
+        <p className="text-sm text-fg-muted mt-3">{t("bookingPickDayFirst")}</p>
       ) : slots.length === 0 ? (
-        <p className="text-sm text-gray-400 mt-3">{t("noSlotsForDay")}</p>
+        <p className="text-sm text-fg-muted mt-3">{t("noSlotsForDay")}</p>
       ) : counts.all === 0 ? (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 mt-3">{t("bookingNoSlotsLeftToday")}</p>
+        <p className="text-sm text-amber-700 bg-warning-tint border border-amber-100 rounded-xl px-3 py-2.5 mt-3">{t("bookingNoSlotsLeftToday")}</p>
       ) : (
         <div className="mt-3">
           {/* Günün bölümleri: üç ayrı başlık yerine tek satır süzgeç — aynı bilgi, üçte bir yer. */}
@@ -174,8 +174,8 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
             <div className="flex items-center gap-1.5 mb-2 overflow-x-auto pb-0.5">
               {filters.map((f) => (
                 <button key={f.key} onClick={() => setPeriod(f.key)}
-                  className={`flex-shrink-0 px-2.5 h-7 rounded-full text-[11px] font-semibold border transition ${period === f.key ? "bg-gray-900 border-gray-900 text-white" : "border-gray-200 text-gray-500 hover:border-gray-400"}`}>
-                  {f.label} <span className={period === f.key ? "text-gray-300" : "text-gray-400"}>{counts[f.key]}</span>
+                  className={`flex-shrink-0 px-2.5 h-7 rounded-full text-[11px] font-semibold border transition ${period === f.key ? "bg-secondary border-secondary text-white" : "border-border text-fg-secondary hover:border-fg-muted"}`}>
+                  {f.label} <span className={period === f.key ? "text-fg-muted" : "text-fg-muted"}>{counts[f.key]}</span>
                 </button>
               ))}
             </div>
@@ -188,9 +188,9 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
                 <button key={s.time} disabled={disabled} onClick={() => onSelectTime(s.time)}
                   title={s.taken ? t("bookingSlotTaken") : s.past ? t("bookingSlotPast") : undefined}
                   className={`h-9 rounded-lg border text-[13px] font-semibold tabular-nums transition
-                    ${isSel ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                      : disabled ? "border-gray-100 text-gray-300 line-through cursor-not-allowed"
-                      : "border-gray-200 text-gray-700 hover:border-blue-400 hover:text-blue-600"}`}>
+                    ${isSel ? "bg-primary border-primary text-white shadow-sm"
+                      : disabled ? "border-surface-elevated text-fg-muted line-through cursor-not-allowed"
+                      : "border-border text-fg-strong hover:border-blue-400 hover:text-primary"}`}>
                   {s.time}
                 </button>
               );
@@ -210,23 +210,23 @@ function MonthPopover({ anchorDate, today, lastBookable, locale, dayLabels, dayK
   const canNext = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1) <= lastBookable;
 
   return (
-    <div className="absolute right-0 top-10 z-30 w-[266px] bg-white border border-gray-200 rounded-2xl shadow-lg p-3">
+    <div className="absolute right-0 top-10 z-30 w-[266px] bg-white border border-border rounded-2xl shadow-lg p-3">
       <div className="flex items-center justify-between mb-2">
         <button onClick={() => setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1))} disabled={!canPrev}
           aria-label={t("bookingPrevMonth")}
-          className={`w-7 h-7 rounded-lg flex items-center justify-center ${canPrev ? "text-gray-500 hover:bg-gray-100" : "text-gray-200 cursor-not-allowed"}`}>
+          className={`w-7 h-7 rounded-lg flex items-center justify-center ${canPrev ? "text-fg-secondary hover:bg-surface-elevated" : "text-fg-muted cursor-not-allowed"}`}>
           <ChevronLeft size={15} />
         </button>
-        <p className="text-xs font-bold text-gray-900 capitalize">{cursor.toLocaleDateString(locale, { month: "long", year: "numeric" })}</p>
+        <p className="text-xs font-bold text-fg capitalize">{cursor.toLocaleDateString(locale, { month: "long", year: "numeric" })}</p>
         <button onClick={() => setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1))} disabled={!canNext}
           aria-label={t("bookingNextMonth")}
-          className={`w-7 h-7 rounded-lg flex items-center justify-center ${canNext ? "text-gray-500 hover:bg-gray-100" : "text-gray-200 cursor-not-allowed"}`}>
+          className={`w-7 h-7 rounded-lg flex items-center justify-center ${canNext ? "text-fg-secondary hover:bg-surface-elevated" : "text-fg-muted cursor-not-allowed"}`}>
           <ChevronRight size={15} />
         </button>
       </div>
       <div className="grid grid-cols-7 gap-0.5 mb-0.5">
         {dayKeys.map((k) => (
-          <div key={k} className="text-[9px] font-semibold text-gray-400 text-center uppercase">{(dayLabels[k] || "").slice(0, 2)}</div>
+          <div key={k} className="text-[9px] font-semibold text-fg-muted text-center uppercase">{(dayLabels[k] || "").slice(0, 2)}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-0.5">
@@ -238,15 +238,15 @@ function MonthPopover({ anchorDate, today, lastBookable, locale, dayLabels, dayK
           return (
             <button key={i} disabled={disabled} onClick={() => onPick(d)}
               className={`h-8 rounded-lg text-xs font-semibold transition
-                ${isSel ? "bg-blue-600 text-white" : disabled ? "text-gray-200 cursor-not-allowed" : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"}`}>
+                ${isSel ? "bg-primary text-white" : disabled ? "text-fg-muted cursor-not-allowed" : "text-fg-strong hover:bg-primary-tint hover:text-primary"}`}>
               {d.getDate()}
             </button>
           );
         })}
       </div>
       {selectedDate && (
-        <p className="text-[10px] text-gray-400 mt-2 flex items-center gap-1">
-          <Check size={10} className="text-blue-500" /> {selectedDate.toLocaleDateString(locale, { day: "numeric", month: "long" })}
+        <p className="text-[10px] text-fg-muted mt-2 flex items-center gap-1">
+          <Check size={10} className="text-info" /> {selectedDate.toLocaleDateString(locale, { day: "numeric", month: "long" })}
         </p>
       )}
     </div>

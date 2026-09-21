@@ -33,25 +33,25 @@ export function AdminAppearancePanel() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-1 flex items-center gap-2"><Palette size={20} className="text-blue-600" /> {t("adminAppearanceTabLabel")}</h1>
-      <p className="text-sm text-gray-500 mb-6">Aktif edilen palet, sitedeki HERKES için anında geçerli olur.</p>
+      <h1 className="text-xl font-bold text-fg mb-1 flex items-center gap-2"><Palette size={20} className="text-primary" /> {t("adminAppearanceTabLabel")}</h1>
+      <p className="text-sm text-fg-secondary mb-6">Aktif edilen palet, sitedeki HERKES için anında geçerli olur.</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {PALETTE_CATALOG.map((p) => {
           const active = p.key === activePalette;
           return (
-            <div key={p.key} className={`bg-white border rounded-2xl p-4 shadow-sm transition ${active ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200"}`}>
+            <div key={p.key} className={`bg-white border rounded-2xl p-4 shadow-sm transition ${active ? "border-info ring-2 ring-blue-100" : "border-border"}`}>
               <div className="flex items-center gap-1.5 mb-3">
                 {[p.preview.primary, p.preview.secondary, p.preview.accent, p.preview.background, p.preview.text, p.preview.success, p.preview.warning, p.preview.error].map((hex, i) => (
                   <div key={i} className="w-6 h-6 rounded-md border border-black/5 flex-shrink-0" style={{ backgroundColor: hex }} />
                 ))}
               </div>
-              <h3 className="font-bold text-gray-900 text-sm mb-1">{t(p.nameKey)}</h3>
-              <p className="text-xs text-gray-500 leading-relaxed mb-4 min-h-[48px]">{t(p.descKey)}</p>
+              <h3 className="font-bold text-fg text-sm mb-1">{t(p.nameKey)}</h3>
+              <p className="text-xs text-fg-secondary leading-relaxed mb-4 min-h-[48px]">{t(p.descKey)}</p>
               <button
                 onClick={() => apply(p.key)}
                 disabled={active || applying === p.key}
                 className={`w-full text-sm font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 ${
-                  active ? "bg-green-50 text-green-700 cursor-default" : "bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-60"
+                  active ? "bg-success-tint text-green-700 cursor-default" : "bg-secondary text-white hover:bg-fg-strong disabled:opacity-60"
                 }`}
               >
                 {active ? (<><Check size={15} /> Aktif</>) : applying === p.key ? "Uygulanıyor…" : "Kullan"}

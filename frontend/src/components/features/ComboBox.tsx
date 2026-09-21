@@ -93,15 +93,15 @@ export function ComboBox({
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         aria-label={ariaLabel || placeholder}
-        className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:text-gray-200"
+        className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-fg-muted hover:text-fg-secondary disabled:text-gray-200"
       >
         <ChevronDown size={15} className={open ? "rotate-180 transition" : "transition"} />
       </button>
 
       {open && !disabled && (
-        <div role="listbox" className="absolute left-0 right-0 top-full mt-1 z-40 bg-white border border-gray-200 rounded-xl shadow-lg max-h-52 overflow-y-auto py-1">
+        <div role="listbox" className="absolute left-0 right-0 top-full mt-1 z-40 bg-white border border-border rounded-xl shadow-lg max-h-52 overflow-y-auto py-1">
           {filtered.length === 0 ? (
-            <p className="px-3 py-2 text-xs text-gray-400">{emptyHint}</p>
+            <p className="px-3 py-2 text-xs text-fg-muted">{emptyHint}</p>
           ) : filtered.map((o, i) => {
             const selected = lc(o) === q;
             return (
@@ -113,10 +113,10 @@ export function ComboBox({
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => commit(o)}
                 className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-2 transition
-                  ${i === highlight ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"}`}
+                  ${i === highlight ? "bg-primary-tint text-primary-hover" : "text-fg-strong hover:bg-background"}`}
               >
                 <span className="truncate">{o}</span>
-                {selected && <Check size={14} className="text-blue-500 flex-shrink-0" />}
+                {selected && <Check size={14} className="text-info flex-shrink-0" />}
               </button>
             );
           })}

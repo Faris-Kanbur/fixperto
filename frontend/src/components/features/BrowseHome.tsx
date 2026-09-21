@@ -20,12 +20,12 @@ function SearchGuidanceBar({ mode }) {
   return (
     <div className="mb-3 flex items-center gap-2 flex-wrap">
       {g.chips.map(chip => (
-        <span key={chip.key} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 text-xs font-medium pl-3 pr-1.5 py-1.5 rounded-full">
-          <span className="text-gray-400">{chip.label}:</span> {chip.value}
-          <button onClick={chip.clear} aria-label={t("clear")} className="w-5 h-5 rounded-full hover:bg-gray-200 flex items-center justify-center text-gray-500"><X size={11} /></button>
+        <span key={chip.key} className="inline-flex items-center gap-1.5 bg-surface-elevated text-fg-strong text-xs font-medium pl-3 pr-1.5 py-1.5 rounded-full">
+          <span className="text-fg-muted">{chip.label}:</span> {chip.value}
+          <button onClick={chip.clear} aria-label={t("clear")} className="w-5 h-5 rounded-full hover:bg-border flex items-center justify-center text-fg-secondary"><X size={11} /></button>
         </span>
       ))}
-      {g.hasAnyCriteria && <span className="text-xs text-gray-400">{t("searchResultCount", { n: String(g.total) })}</span>}
+      {g.hasAnyCriteria && <span className="text-xs text-fg-muted">{t("searchResultCount", { n: String(g.total) })}</span>}
     </div>
   );
 }
@@ -39,22 +39,22 @@ function SearchEmptyState({ mode, emptyText }) {
   const near = nearMisses(mode);
   return (
     <div className="col-span-full text-center py-12 px-4">
-      <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><SlidersHorizontal size={22} className="text-gray-400" /></div>
-      <p className="text-gray-700 text-sm font-semibold mb-1">{emptyText}</p>
-      {!g.hasAnyCriteria && <p className="text-gray-400 text-xs">{t("searchNoDataYet")}</p>}
+      <div className="w-14 h-14 bg-surface-elevated rounded-2xl flex items-center justify-center mx-auto mb-3"><SlidersHorizontal size={22} className="text-fg-muted" /></div>
+      <p className="text-fg-strong text-sm font-semibold mb-1">{emptyText}</p>
+      {!g.hasAnyCriteria && <p className="text-fg-muted text-xs">{t("searchNoDataYet")}</p>}
       {g.citySuggestion && (
-        <p className="text-sm text-gray-500 mt-2">
-          {t("searchDidYouMean")} <button onClick={g.citySuggestion.apply} className="font-bold text-blue-600 hover:underline">{g.citySuggestion.city}</button>
+        <p className="text-sm text-fg-secondary mt-2">
+          {t("searchDidYouMean")} <button onClick={g.citySuggestion.apply} className="font-bold text-primary hover:underline">{g.citySuggestion.city}</button>
         </p>
       )}
       {g.relax.length > 0 && (
         <div className="mt-4 max-w-md mx-auto">
-          <p className="text-xs text-gray-400 mb-2">{t("searchRelaxHint")}</p>
+          <p className="text-xs text-fg-muted mb-2">{t("searchRelaxHint")}</p>
           <div className="flex flex-col gap-2">
             {g.relax.map(r => (
-              <button key={r.key} onClick={r.apply} className="flex items-center justify-between gap-3 bg-white border border-gray-200 hover:border-gray-900 rounded-xl px-3.5 py-2.5 text-left transition">
-                <span className="text-sm text-gray-700 truncate">{t("searchRelaxRemove", { label: r.label, value: r.value })}</span>
-                <span className="text-xs font-bold text-blue-600 whitespace-nowrap">{t("searchRelaxCount", { n: String(r.count) })}</span>
+              <button key={r.key} onClick={r.apply} className="flex items-center justify-between gap-3 bg-white border border-border hover:border-secondary rounded-xl px-3.5 py-2.5 text-left transition">
+                <span className="text-sm text-fg-strong truncate">{t("searchRelaxRemove", { label: r.label, value: r.value })}</span>
+                <span className="text-xs font-bold text-primary whitespace-nowrap">{t("searchRelaxCount", { n: String(r.count) })}</span>
               </button>
             ))}
           </div>
@@ -66,22 +66,22 @@ function SearchEmptyState({ mode, emptyText }) {
           dedirtir ve aramaya olan güveni bitirir. */}
       {near.items.length > 0 && (
         <div className="mt-8 text-left">
-          <div className="border-t border-gray-100 pt-6">
-            <h3 className="text-sm font-bold text-gray-800 mb-1">{t("nearMissTitle")}</h3>
-            <p className="text-xs text-gray-400 mb-4">{t("nearMissHint")}</p>
+          <div className="border-t border-surface-elevated pt-6">
+            <h3 className="text-sm font-bold text-fg-strong mb-1">{t("nearMissTitle")}</h3>
+            <p className="text-xs text-fg-muted mb-4">{t("nearMissHint")}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {near.items.map(({ item, missed, hit }) => (
                 <div key={item.id}>
                   {mode === "cars" ? <ListingCard l={item} /> : mode === "jobs" ? <JobCard j={item} /> : <MechCard m={item} onHover={undefined} />}
                   <div className="mt-1.5 px-1">
-                    <p className="text-[11px] text-gray-500">{t("nearMissMatchCount", { hit: String(hit), total: String(near.criteriaCount) })}</p>
+                    <p className="text-[11px] text-fg-secondary">{t("nearMissMatchCount", { hit: String(hit), total: String(near.criteriaCount) })}</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {missed.slice(0, 3).map((m) => (
-                        <span key={m.key} className="text-[10px] bg-amber-50 border border-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
+                        <span key={m.key} className="text-[10px] bg-warning-tint border border-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
                           {t("nearMissNotMatching", { label: m.label, value: m.value })}
                         </span>
                       ))}
-                      {missed.length > 3 && <span className="text-[10px] text-gray-400 px-1 py-0.5">{t("nearMissMore", { n: String(missed.length - 3) })}</span>}
+                      {missed.length > 3 && <span className="text-[10px] text-fg-muted px-1 py-0.5">{t("nearMissMore", { n: String(missed.length - 3) })}</span>}
                     </div>
                   </div>
                 </div>
@@ -205,14 +205,14 @@ export function BrowseHome({ theme = undefined }) {
     <div ref={browseScrollRef} onScroll={() => setHeroCollapsed(c => { const collapsed = browseScrollRef.current.scrollTop > 36; return c === collapsed ? c : collapsed; })} className="flex-1 overflow-y-auto">
       {topReminder && role === "owner" && (
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 pt-4">
-          <div className={`rounded-2xl p-4 mb-1 flex items-center gap-3 shadow-sm border ${topReminder.urgent ? "bg-red-50 border-red-100" : "bg-blue-50 border-blue-100"}`}>
+          <div className={`rounded-2xl p-4 mb-1 flex items-center gap-3 shadow-sm border ${topReminder.urgent ? "bg-error-tint border-red-100" : "bg-primary-tint border-blue-100"}`}>
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${topReminder.urgent ? "bg-red-100" : "bg-blue-100"}`}>{topReminder.icon}</div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-semibold truncate ${topReminder.urgent ? "text-red-700" : "text-blue-700"}`}>{topReminder.vehicleName} — {topReminder.title}</p>
-              <p className="text-xs text-gray-500 truncate">{topReminder.detail}</p>
+              <p className={`text-sm font-semibold truncate ${topReminder.urgent ? "text-red-700" : "text-primary-hover"}`}>{topReminder.vehicleName} — {topReminder.title}</p>
+              <p className="text-xs text-fg-secondary truncate">{topReminder.detail}</p>
             </div>
-            <button onClick={() => goBookFromReminder(topReminder.key)} className={`flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-xl text-white transition ${topReminder.urgent ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}>{t("bookNow")}</button>
-            <button onClick={() => setDismissedReminderKey(topReminder.key)} aria-label={t("closeAria")} className="flex-shrink-0 text-gray-300 hover:text-gray-500 transition p-2 -m-2"><X size={16} /></button>
+            <button onClick={() => goBookFromReminder(topReminder.key)} className={`flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-xl text-white transition ${topReminder.urgent ? "bg-error hover:bg-red-700" : "bg-primary hover:bg-primary-hover"}`}>{t("bookNow")}</button>
+            <button onClick={() => setDismissedReminderKey(topReminder.key)} aria-label={t("closeAria")} className="flex-shrink-0 text-fg-muted hover:text-fg-secondary transition p-2 -m-2"><X size={16} /></button>
           </div>
         </div>
       )}
@@ -220,10 +220,10 @@ export function BrowseHome({ theme = undefined }) {
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-4">
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              {[{ key: "distance", label: t("sortDistance") }, { key: "price", label: t("sortPrice") }, { key: "rating", label: t("sortRating") }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
-              <button onClick={() => setShowMapMobile(true)} className="md:hidden px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-gray-600 border-gray-200"><MapIcon size={12} /> {t("showMap")}</button>
+              {[{ key: "distance", label: t("sortDistance") }, { key: "price", label: t("sortPrice") }, { key: "rating", label: t("sortRating") }].map(opt => (<button key={opt.key} onClick={() => handleSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${sortBy === opt.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{opt.label}{sortBy === opt.key ? (sortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
+              <button onClick={() => setShowMapMobile(true)} className="md:hidden px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border flex items-center gap-1 bg-white text-fg-secondary border-border"><MapIcon size={12} /> {t("showMap")}</button>
             </div>
-            <p className="text-xs text-gray-400 whitespace-nowrap">{filtered.length} {t("mechanicsFoundSuffix")}</p>
+            <p className="text-xs text-fg-muted whitespace-nowrap">{filtered.length} {t("mechanicsFoundSuffix")}</p>
           </div>
           <SearchGuidanceBar mode="mechanics" />
           <div className="md:flex md:gap-6">
@@ -234,13 +234,13 @@ export function BrowseHome({ theme = undefined }) {
       )}
       {ownerMode === "cars" && (
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-4">
-          <button onClick={startSellFlow} className="w-full md:max-w-xs mb-4 bg-blue-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-blue-700 transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
+          <button onClick={startSellFlow} className="w-full md:max-w-xs mb-4 bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-2"><Plus size={16} /> {t("sellMyCar")}</button>
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
-              <button onClick={() => setListingSort("default")} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === "default" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{t("sortRecommended")}</button>
-              {[{ key: "price", label: t("sortPrice") }, { key: "km", label: t("sortKm") }, { key: "year", label: t("sortYear") }].map(opt => (<button key={opt.key} onClick={() => handleListingSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200"}`}>{opt.label}{listingSort === opt.key ? (listingSortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
+              <button onClick={() => setListingSort("default")} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === "default" ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{t("sortRecommended")}</button>
+              {[{ key: "price", label: t("sortPrice") }, { key: "km", label: t("sortKm") }, { key: "year", label: t("sortYear") }].map(opt => (<button key={opt.key} onClick={() => handleListingSortClick(opt.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition ${listingSort === opt.key ? "bg-primary text-white border-primary" : "bg-white text-fg-secondary border-border"}`}>{opt.label}{listingSort === opt.key ? (listingSortDir === "asc" ? " ↑" : " ↓") : ""}</button>))}
               </div>
-            <p className="text-xs text-gray-400 whitespace-nowrap">{filteredListings.length} {t("listingsFoundSuffix")}</p>
+            <p className="text-xs text-fg-muted whitespace-nowrap">{filteredListings.length} {t("listingsFoundSuffix")}</p>
           </div>
           {/* "SENİN İÇİN": arama sonuçlarının ÜSTÜNDE değil, filtre çubuğunun ALTINDA duruyor —
               kullanıcı aradığı şeyi görmeden öneri okumak zorunda kalmasın. Filtre uygulanmışsa
@@ -256,7 +256,7 @@ export function BrowseHome({ theme = undefined }) {
       {ownerMode === "jobs" && (
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 py-4">
           <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-            <p className="text-xs text-gray-400 whitespace-nowrap">{filteredJobs.length} {t("jobsFoundSuffix")}</p>
+            <p className="text-xs text-fg-muted whitespace-nowrap">{filteredJobs.length} {t("jobsFoundSuffix")}</p>
           </div>
           <SearchGuidanceBar mode="jobs" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{filteredJobs.map(j => (<JobCard key={j.id} j={j} />))}{filteredJobs.length === 0 && (<SearchEmptyState mode="jobs" emptyText={t("noJobsMatchFilters")} />)}</div>
@@ -270,7 +270,7 @@ export function BrowseHome({ theme = undefined }) {
       <div className="mt-auto">
         <SiteFooter />
         <div className="text-center pb-4">
-          <span data-a11y-exempt="gizli yönetici girişi — bilinçli olarak duyurulmuyor" onClick={() => setScreen("adminLogin")} className="text-[9px] text-gray-200 cursor-pointer select-none">{t("allRightsReserved")}</span>
+          <span data-a11y-exempt="gizli yönetici girişi — bilinçli olarak duyurulmuyor" onClick={() => setScreen("adminLogin")} className="text-[9px] text-fg-muted cursor-pointer select-none">{t("allRightsReserved")}</span>
         </div>
       </div>
     </div>

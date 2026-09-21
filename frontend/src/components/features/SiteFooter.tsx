@@ -29,13 +29,13 @@ import { LangSwitch } from "./LangSwitch";
  */
 const Col = ({ title, icon: Icon, children }) => (
   <div>
-    <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><Icon size={15} className="text-blue-500" /> {title}</h3>
+    <h3 className="text-sm font-bold text-fg mb-3 flex items-center gap-2"><Icon size={15} className="text-info" /> {title}</h3>
     <ul className="space-y-2">{children}</ul>
   </div>
 );
 
 const Item = ({ onClick, children }) => (
-  <li><button onClick={onClick} className="text-sm text-gray-500 hover:text-blue-600 transition text-left">{children}</button></li>
+  <li><button onClick={onClick} className="text-sm text-fg-secondary hover:text-primary transition text-left">{children}</button></li>
 );
 
 export function SiteFooter() {
@@ -61,16 +61,16 @@ export function SiteFooter() {
 
 
   return (
-    <footer className="w-full bg-white border-t border-gray-100 mt-12">
+    <footer className="w-full bg-white border-t border-surface-elevated mt-12">
       <div className="max-w-7xl mx-auto px-5 md:px-8 py-10 md:py-14">
         {/* ---- Ana bağlantı sütunları ---- */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mb-10">
           <div className="col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div>
-              <span className="text-lg font-extrabold tracking-tight text-gray-900">Fix<span className="text-blue-600">perto</span></span>
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center"><Wrench size={16} className="text-white" /></div>
+              <span className="text-lg font-extrabold tracking-tight text-fg">Fix<span className="text-primary">perto</span></span>
             </div>
-            <p className="text-sm text-gray-500 leading-relaxed max-w-xs">{t("footerTagline")}</p>
+            <p className="text-sm text-fg-secondary leading-relaxed max-w-xs">{t("footerTagline")}</p>
           </div>
 
           <Col title={t("footerForOwners")} icon={Car}>
@@ -108,22 +108,22 @@ export function SiteFooter() {
         </div>
 
         {/* ---- SEO: popüler aramalar ---- */}
-        <div className="border-t border-gray-100 pt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="border-t border-surface-elevated pt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">{t("footerPopularCities")}</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wide text-fg-muted mb-3">{t("footerPopularCities")}</h4>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               {cities.map((c) => (
-                <button key={c} onClick={() => searchCity(c)} className="text-sm text-gray-500 hover:text-blue-600 transition">
+                <button key={c} onClick={() => searchCity(c)} className="text-sm text-fg-secondary hover:text-primary transition">
                   {t("footerCityMechanics", { city: cityLabel(c) })}
                 </button>
               ))}
             </div>
           </div>
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-3">{t("footerPopularServices")}</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wide text-fg-muted mb-3">{t("footerPopularServices")}</h4>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               {services.map((s) => (
-                <button key={s.key} onClick={() => searchService(s)} className="text-sm text-gray-500 hover:text-blue-600 transition">
+                <button key={s.key} onClick={() => searchService(s)} className="text-sm text-fg-secondary hover:text-primary transition">
                   {s[lang] || s.tr}
                 </button>
               ))}
@@ -133,13 +133,13 @@ export function SiteFooter() {
       </div>
 
       {/* ---- Alt bar: telif, dil, iletişim ---- */}
-      <div className="border-t border-gray-100">
+      <div className="border-t border-surface-elevated">
         <div className="max-w-7xl mx-auto px-5 md:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-gray-400 text-center sm:text-left">
-            © {new Date().getFullYear()} <span className="font-semibold text-gray-500">Fixperto</span> · {t("allRightsReserved")}
+          <p className="text-xs text-fg-muted text-center sm:text-left">
+            © {new Date().getFullYear()} <span className="font-semibold text-fg-secondary">Fixperto</span> · {t("allRightsReserved")}
           </p>
           <div className="flex items-center gap-4">
-            <a href="mailto:destek@fixperto.com" className="text-xs text-gray-400 hover:text-blue-600 transition flex items-center gap-1.5"><Mail size={13} /> destek@fixperto.com</a>
+            <a href="mailto:destek@fixperto.com" className="text-xs text-fg-muted hover:text-primary transition flex items-center gap-1.5"><Mail size={13} /> destek@fixperto.com</a>
             <LangSwitch />
           </div>
         </div>
