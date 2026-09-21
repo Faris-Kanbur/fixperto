@@ -68,7 +68,7 @@ export function TestimonialCarousel({ items }) {
             key={`${r.mechanicName}-${r.id ?? i}`}
             className="snap-start flex-shrink-0 w-[85%] sm:w-[48%] lg:w-[31.5%] bg-white border border-surface-elevated rounded-2xl p-5 shadow-sm flex flex-col"
           >
-            <Quote size={18} className="text-blue-200 mb-2" />
+            <Quote size={18} className="text-primary-subtle mb-2" />
             <p className="text-sm text-fg-secondary leading-relaxed flex-1">{r.comment}</p>
             <div className="flex items-center gap-2 mt-4 pt-4 border-t border-surface-elevated">
               <div className="w-9 h-9 rounded-full bg-surface-elevated flex items-center justify-center text-base flex-shrink-0">{r.avatar || "👤"}</div>
@@ -78,7 +78,7 @@ export function TestimonialCarousel({ items }) {
               </div>
               <div className="ml-auto flex items-center gap-0.5 flex-shrink-0">
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <Star key={n} size={11} className={n <= (r.rating || 0) ? "text-amber-400 fill-amber-400" : "text-fg-muted fill-fg-muted"} />
+                  <Star key={n} size={11} className={n <= (r.rating || 0) ? "text-warning fill-warning" : "text-fg-muted fill-fg-muted"} />
                 ))}
               </div>
             </div>
@@ -89,11 +89,11 @@ export function TestimonialCarousel({ items }) {
       {items.length > 1 && (
         <div className="flex items-center justify-center gap-2 mt-4">
           <button onClick={() => scrollByCard(-1)} aria-label={t("prevBtn")}
-            className="w-9 h-9 rounded-full border border-border bg-white text-fg-secondary hover:text-primary hover:border-blue-300 transition flex items-center justify-center">
+            className="w-9 h-9 rounded-full border border-border bg-white text-fg-secondary hover:text-primary hover:border-primary-subtle transition flex items-center justify-center">
             <ChevronLeft size={16} />
           </button>
           <button onClick={() => scrollByCard(1)} aria-label={t("nextBtn")}
-            className="w-9 h-9 rounded-full border border-border bg-white text-fg-secondary hover:text-primary hover:border-blue-300 transition flex items-center justify-center">
+            className="w-9 h-9 rounded-full border border-border bg-white text-fg-secondary hover:text-primary hover:border-primary-subtle transition flex items-center justify-center">
             <ChevronRight size={16} />
           </button>
         </div>

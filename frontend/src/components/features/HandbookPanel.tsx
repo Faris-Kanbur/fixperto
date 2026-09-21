@@ -62,7 +62,7 @@ export function HandbookPanel() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="El kitabında ara…"
               aria-label="El kitabında ara"
-              className="w-full pl-9 pr-8 py-2 rounded-xl border border-border text-xs focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full pl-9 pr-8 py-2 rounded-xl border border-border text-xs focus:outline-none focus:ring-2 focus:ring-primary-subtle"
             />
             {query && (
               <button onClick={() => setQuery("")} aria-label="Aramayı temizle"

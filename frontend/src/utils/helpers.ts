@@ -4,7 +4,7 @@ import { DAY_KEYS, DAY_LABELS, DAY_LABELS_BY_LANG, CLOSED_LABEL_BY_LANG, APPT_ST
 export function jobStatusMeta(status, t) {
   return status === "closed"
     ? { label: t ? t("jobStatusClosedLabel") : "Kapatıldı", color: "bg-gray-400" }
-    : { label: t ? t("jobStatusOpenLabel") : "Açık", color: "bg-green-500" };
+    : { label: t ? t("jobStatusOpenLabel") : "Açık", color: "bg-success" };
 }
 
 // GERÇEK HATA DÜZELTMESİ: appointment.status iş mantığında kullanılan ham Türkçe bir değer (bkz.
@@ -496,11 +496,11 @@ export function mockTranslate(text, fromLang, toLang) {
 }
 
 export function statusColor(status) {
-  if (status === "Onay Bekliyor") return "bg-gray-100 text-gray-700";
-  if (status === "Sırada") return "bg-gray-100 text-gray-700";
-  if (status === "Tamire Alındı") return "bg-blue-50 text-blue-600";
-  if (status === "Reddedildi" || status === "İptal Edildi" || status === "Gelmedi") return "bg-red-50 text-red-500";
-  return "bg-green-50 text-green-600";
+  if (status === "Onay Bekliyor") return "bg-surface-elevated text-fg-strong";
+  if (status === "Sırada") return "bg-surface-elevated text-fg-strong";
+  if (status === "Tamire Alındı") return "bg-primary-tint text-primary";
+  if (status === "Reddedildi" || status === "İptal Edildi" || status === "Gelmedi") return "bg-error-tint text-error";
+  return "bg-success-tint text-success";
 }
 
 export function isImgUrl(s) {
@@ -534,9 +534,9 @@ export function initials(name) {
 }
 
 export function listingStatusMeta(status, t) {
-  if (status === "reserved") return { label: t("statusReserved"), color: "bg-gray-900" };
-  if (status === "sold") return { label: t("statusSold"), color: "bg-red-500" };
-  return { label: t("statusActive"), color: "bg-green-500" };
+  if (status === "reserved") return { label: t("statusReserved"), color: "bg-secondary" };
+  if (status === "sold") return { label: t("statusSold"), color: "bg-error" };
+  return { label: t("statusActive"), color: "bg-success" };
 }
 
 export function slugifyForEmail(name) {

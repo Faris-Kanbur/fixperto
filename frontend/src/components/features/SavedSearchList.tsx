@@ -41,7 +41,7 @@ export function SavedSearchList({ showUpdate = false, compact = false }: { showU
       {savedSearches.map((s) => {
         const freq = savedSearchFrequency(s);
         return (
-          <div key={s.id} className={`rounded-2xl p-3 transition ${compact ? "border border-surface-elevated hover:border-blue-200" : "bg-white border border-surface-elevated shadow-sm"}`}>
+          <div key={s.id} className={`rounded-2xl p-3 transition ${compact ? "border border-surface-elevated hover:border-primary-subtle" : "bg-white border border-surface-elevated shadow-sm"}`}>
             <div className="flex items-center justify-between gap-2">
             <>
                 <button onClick={() => applySavedSearch(s)} className="flex-1 text-left min-w-0">
@@ -60,7 +60,7 @@ export function SavedSearchList({ showUpdate = false, compact = false }: { showU
                 <button onClick={() => openSavedSearchEditor(s.id)} title={t("savedSearchEditAria")} aria-label={t("savedSearchEditAria")}
                   className="text-fg-muted hover:text-fg-strong flex-shrink-0 p-2 -m-1"><Pencil size={14} /></button>
                 <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")}
-                  className="text-red-400 hover:text-error flex-shrink-0 p-2 -m-1"><Trash2 size={14} /></button>
+                  className="text-error hover:text-error flex-shrink-0 p-2 -m-1"><Trash2 size={14} /></button>
             </>
             </div>
             {/* BİLDİRİM SIKLIĞI — arama başına. Emlak/iş ilanı sitelerinin yaptığı gibi: geniş bir

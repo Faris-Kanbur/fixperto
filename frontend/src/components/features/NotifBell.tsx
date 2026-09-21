@@ -117,7 +117,7 @@ export function NotifBell() {
       <div className="relative">
         <button onClick={openPanel} aria-label={t("notificationsTitle")} className="w-8 h-8 rounded-full bg-white border border-border flex items-center justify-center text-fg-strong hover:bg-surface-elevated transition relative flex-shrink-0">
           <Bell size={15} />
-          {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 rounded-full text-white flex items-center justify-center text-[9px] font-bold">{unread > 9 ? "9+" : unread}</span>}
+          {unread > 0 && <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-error rounded-full text-white flex items-center justify-center text-[9px] font-bold">{unread > 9 ? "9+" : unread}</span>}
         </button>
         {showNotifPanel && (
           <>

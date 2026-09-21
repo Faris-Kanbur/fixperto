@@ -29,6 +29,7 @@ export default {
         "success-tint": "rgb(var(--color-success-tint) / <alpha-value>)",
         "warning-tint": "rgb(var(--color-warning-tint) / <alpha-value>)",
         "error-tint": "rgb(var(--color-error-tint) / <alpha-value>)",
+        "primary-subtle": "rgb(var(--color-primary-subtle) / <alpha-value>)",
       },
     },
   },

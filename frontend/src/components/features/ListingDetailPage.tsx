@@ -165,7 +165,7 @@ export function ListingDetailPage() {
         {l.negotiable && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-primary-tint text-primary-hover whitespace-nowrap">{t("negotiableBadge")}</span>}
       </div>
       {cmp && (
-        <p className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${cmp.tier === "below" ? "text-emerald-600" : cmp.tier === "above" ? "text-warning" : "text-fg-secondary"}`}>
+        <p className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${cmp.tier === "below" ? "text-success" : cmp.tier === "above" ? "text-warning" : "text-fg-secondary"}`}>
           <Scale size={13} />
           {cmp.tier === "below" ? t("priceBelowAverage", { pct: String(Math.abs(cmp.diffPercent)) })
             : cmp.tier === "above" ? t("priceAboveAverage", { pct: String(cmp.diffPercent) })
@@ -212,11 +212,11 @@ export function ListingDetailPage() {
         </>
       )}
       <div className="grid grid-cols-2 gap-2 mt-3">
-        <button onClick={() => toggleFavorite(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${fav ? "border-blue-200 bg-primary-tint text-primary" : "border-border text-fg-secondary hover:bg-background"}`}><Heart size={14} className={fav ? "fill-primary" : ""} /> {t("favoriteLabel")}</button>
-        <button onClick={() => toggleCompareListing(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${inCompare ? "border-blue-200 bg-primary-tint text-primary" : "border-border text-fg-secondary hover:bg-background"}`}><Scale size={14} /> {t("compareBtnLabel")}</button>
+        <button onClick={() => toggleFavorite(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${fav ? "border-primary-subtle bg-primary-tint text-primary" : "border-border text-fg-secondary hover:bg-background"}`}><Heart size={14} className={fav ? "fill-primary" : ""} /> {t("favoriteLabel")}</button>
+        <button onClick={() => toggleCompareListing(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${inCompare ? "border-primary-subtle bg-primary-tint text-primary" : "border-border text-fg-secondary hover:bg-background"}`}><Scale size={14} /> {t("compareBtnLabel")}</button>
       </div>
       {safeHref(l.inspectionReportUrl) && (
-        <a href={safeHref(l.inspectionReportUrl)} target="_blank" rel="noreferrer" className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 py-2.5 rounded-xl hover:bg-emerald-100 transition"><FileText size={13} /> {t("inspectionReportAvailableLabel")}</a>
+        <a href={safeHref(l.inspectionReportUrl)} target="_blank" rel="noreferrer" className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-success bg-success-tint border border-success-tint py-2.5 rounded-xl hover:bg-success-tint transition"><FileText size={13} /> {t("inspectionReportAvailableLabel")}</a>
       )}
     </div>
   );
@@ -333,7 +333,7 @@ export function ListingDetailPage() {
                     <div className="flex flex-wrap gap-1.5">
                       {g.items.map((f) => (
                         <span key={f} className="inline-flex items-center gap-1 text-xs font-medium text-fg-strong bg-background border border-border rounded-full px-3 py-1.5">
-                          <BadgeCheck size={11} className="text-emerald-500" /> {f}
+                          <BadgeCheck size={11} className="text-success" /> {f}
                         </span>
                       ))}
                     </div>
@@ -363,7 +363,7 @@ export function ListingDetailPage() {
             <Section id="ld-price" icon={Scale} title={t("priceRatingLabel")}>
               <div className="bg-white border border-border rounded-2xl p-5">
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${cmp.tier === "below" ? "bg-emerald-50 text-emerald-700" : cmp.tier === "above" ? "bg-warning-tint text-amber-700" : "bg-surface-elevated text-fg-secondary"}`}>
+                  <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${cmp.tier === "below" ? "bg-success-tint text-success" : cmp.tier === "above" ? "bg-warning-tint text-warning" : "bg-surface-elevated text-fg-secondary"}`}>
                     {cmp.tier === "below" ? t("priceRatingBelow") : cmp.tier === "above" ? t("priceRatingAboveLabel") : t("priceAtMarketLabel")}
                   </span>
                   <span className="text-sm font-bold text-fg">{l.price}</span>
@@ -392,7 +392,7 @@ export function ListingDetailPage() {
           <ListingHistorySection listingId={l.id} />
 
           {!mine && (
-            <button onClick={() => openReportForm("listing", `İlan #${l.id} · ${l.brand} ${l.model}`, `"${l.brand} ${l.model}" ilanı hakkında şikayetim var`)} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-red-500 transition py-2"><Flag size={12} /> {t("reportListingBtn")}</button>
+            <button onClick={() => openReportForm("listing", `İlan #${l.id} · ${l.brand} ${l.model}`, `"${l.brand} ${l.model}" ilanı hakkında şikayetim var`)} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-error transition py-2"><Flag size={12} /> {t("reportListingBtn")}</button>
           )}
         </div>
 

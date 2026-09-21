@@ -206,17 +206,17 @@ export function MechDetailBody() {
   // Rozetler: profilin en üstünde "bu servis neden iyi" sorusuna tek bakışta cevap veren şerit.
   // Yalnızca GERÇEKTEN hak edilen rozetler gösteriliyor — herkeste çıkan bir rozet bilgi taşımaz.
   const highlights = [
-    selectedMechanic.rating >= 4.7 && { icon: Star, label: t("mechBadgeTopRated"), tone: "bg-amber-50 text-amber-700 border-amber-200" },
-    selectedMechanic.avgResponseMinutes && selectedMechanic.avgResponseMinutes <= 30 && { icon: Zap, label: t("mechBadgeFastReply"), tone: "bg-blue-50 text-blue-700 border-blue-200" },
+    selectedMechanic.rating >= 4.7 && { icon: Star, label: t("mechBadgeTopRated"), tone: "bg-warning-tint text-warning border-warning-tint" },
+    selectedMechanic.avgResponseMinutes && selectedMechanic.avgResponseMinutes <= 30 && { icon: Zap, label: t("mechBadgeFastReply"), tone: "bg-primary-tint text-primary border-primary-subtle" },
     selectedMechanic.reviews >= 50 && { icon: Users, label: t("mechBadgeManyReviews"), tone: "bg-violet-50 text-violet-700 border-violet-200" },
-    services.some((s) => s.fixed && String(s.price || "").trim()) && { icon: Tag, label: t("mechBadgeFixedPrice"), tone: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-    (selectedMechanic.brandsServiced || []).length >= 3 && { icon: Car, label: t("mechBadgeMultiBrand", { n: String(selectedMechanic.brandsServiced.length) }), tone: "bg-blue-50 text-blue-700 border-blue-200" },
+    services.some((s) => s.fixed && String(s.price || "").trim()) && { icon: Tag, label: t("mechBadgeFixedPrice"), tone: "bg-success-tint text-success border-success-tint" },
+    (selectedMechanic.brandsServiced || []).length >= 3 && { icon: Car, label: t("mechBadgeMultiBrand", { n: String(selectedMechanic.brandsServiced.length) }), tone: "bg-primary-tint text-primary border-primary-subtle" },
   ].filter(Boolean);
   const statTiles = [
-    { icon: Star, label: t("rating"), value: `${selectedMechanic.rating}/5`, tint: "text-amber-500" },
-    { icon: MapPin, label: t("distance"), value: formatDistanceKm(dist), tint: "text-blue-500" },
-    selectedMechanic.avgResponseMinutes ? { icon: Zap, label: t("mechResponseStatLabel"), value: `${selectedMechanic.avgResponseMinutes} ${t("mechMinuteShort")}`, tint: "text-blue-500" } : null,
-    { icon: Banknote, label: t("price"), value: null, tint: "text-emerald-500" },
+    { icon: Star, label: t("rating"), value: `${selectedMechanic.rating}/5`, tint: "text-warning" },
+    { icon: MapPin, label: t("distance"), value: formatDistanceKm(dist), tint: "text-info" },
+    selectedMechanic.avgResponseMinutes ? { icon: Zap, label: t("mechResponseStatLabel"), value: `${selectedMechanic.avgResponseMinutes} ${t("mechMinuteShort")}`, tint: "text-info" } : null,
+    { icon: Banknote, label: t("price"), value: null, tint: "text-success" },
   ].filter(Boolean);
 
   // Bölüm başlığı — tüm bölümlerde aynı tipografi/aralık kullanılsın diye tek yerde tanımlı.
@@ -245,7 +245,7 @@ export function MechDetailBody() {
               farklı ve dürüst olanı şu: çağrı sırası ileride değişirse (araya gerçekten seçimi
               temizleyen bir şey girerse) ön seçim SESSİZCE çalışmaz hâle gelir. Bir satır maliyetle
               o riski baştan kapatıyoruz. */}
-          <button onClick={() => { const preselectId = selectedMechanic.id; closeOverlays(); openQuoteModal(preselectId); }} className="w-full mt-2 border border-dashed border-blue-300 text-primary py-3 rounded-2xl font-semibold text-sm hover:bg-primary-tint transition flex items-center justify-center gap-2 whitespace-nowrap"><Banknote size={16} /> {t("mechFreeQuoteBtn")}</button>
+          <button onClick={() => { const preselectId = selectedMechanic.id; closeOverlays(); openQuoteModal(preselectId); }} className="w-full mt-2 border border-dashed border-primary-subtle text-primary py-3 rounded-2xl font-semibold text-sm hover:bg-primary-tint transition flex items-center justify-center gap-2 whitespace-nowrap"><Banknote size={16} /> {t("mechFreeQuoteBtn")}</button>
           {selectedMechanic.phone && (
             <a href={`tel:${selectedMechanic.phone}`} className="w-full mt-2 text-fg-secondary py-2 rounded-2xl font-medium text-xs hover:text-primary transition flex items-center justify-center gap-1.5"><Phone size={13} /> {t("mechCallBtn")} · {selectedMechanic.phone}</a>
           )}
@@ -305,7 +305,7 @@ export function MechDetailBody() {
               <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-xs text-fg-secondary flex-wrap">
                 <span className="flex items-center gap-1 font-semibold text-fg"><Star size={13} className="fill-fg" />{selectedMechanic.rating}<span className="font-normal text-fg-muted">({selectedMechanic.reviews})</span></span>
                 <span className="flex items-center gap-1"><MapPin size={12} />{formatDistanceKm(dist)}</span>
-                {openNow !== null && (<span className={`px-2 py-0.5 rounded-full font-semibold ${openNow ? "bg-success-tint text-success" : "bg-error-tint text-red-500"}`}>{openNow ? t("mechOpenNow") : t("mechClosedNow")}</span>)}
+                {openNow !== null && (<span className={`px-2 py-0.5 rounded-full font-semibold ${openNow ? "bg-success-tint text-success" : "bg-error-tint text-error"}`}>{openNow ? t("mechOpenNow") : t("mechClosedNow")}</span>)}
                 {selectedMechanic.avgResponseMinutes && <span className="flex items-center gap-1"><Zap size={12} className="text-info" />{t("avgResponsePrefix")} {selectedMechanic.avgResponseMinutes} {t("avgResponseSuffix")}</span>}
               </div>
             </div>
@@ -389,7 +389,7 @@ export function MechDetailBody() {
                 <div className="flex flex-wrap gap-1.5">
                   <button onClick={() => setPriceBrand(null)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === null ? "bg-secondary text-white border-secondary" : "bg-white border-border text-fg-secondary hover:border-fg-muted"}`}>{t("otherBrandsLabel")}</button>
                   {priceBrands.map((b) => (
-                    <button key={b} onClick={() => setPriceBrand(b)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === b ? "bg-primary text-white border-primary" : "bg-white border-border text-fg-secondary hover:border-blue-300"}`}>{b}</button>
+                    <button key={b} onClick={() => setPriceBrand(b)} className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${priceBrand === b ? "bg-primary text-white border-primary" : "bg-white border-border text-fg-secondary hover:border-primary-subtle"}`}>{b}</button>
                   ))}
                 </div>
               </div>
@@ -405,11 +405,11 @@ export function MechDetailBody() {
                 const shown = raw === "" ? "" : (/[₺€$]/.test(raw) ? raw : `${raw}₺`);
                 const isBrandPrice = brandPriceFor(s, priceBrand) != null;
                 return (
-                  <div key={s.key || `c-${i}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50/70 transition">
+                  <div key={s.key || `c-${i}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-background/70 transition">
                     <span className="text-sm text-fg-strong flex items-center gap-2 min-w-0">
-                      <ToolIcon size={13} className="text-blue-400 flex-shrink-0" />
+                      <ToolIcon size={13} className="text-primary-subtle flex-shrink-0" />
                       <span className="truncate">{serviceLabel(s)}</span>
-                      {s.fixed && String(s.price || "").trim() && <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-600 bg-emerald-50 rounded px-1.5 py-0.5 flex-shrink-0">FIX</span>}
+                      {s.fixed && String(s.price || "").trim() && <span className="text-[9px] font-bold uppercase tracking-wide text-success bg-success-tint rounded px-1.5 py-0.5 flex-shrink-0">FIX</span>}
                     </span>
                     <span className="flex items-center gap-2 flex-shrink-0">
                       {isBrandPrice && <span className="text-[10px] font-bold text-primary bg-primary-tint rounded px-1.5 py-0.5">{priceBrand}</span>}
@@ -440,12 +440,12 @@ export function MechDetailBody() {
                 const isClosed = /kapalı|closed|geschlossen/i.test(line);
                 const isToday = i === todayIdx;
                 return (
-                  <div key={i} className={`flex justify-between items-center px-4 py-2.5 text-sm ${isToday ? "bg-blue-50/60" : ""}`}>
+                  <div key={i} className={`flex justify-between items-center px-4 py-2.5 text-sm ${isToday ? "bg-primary-tint/60" : ""}`}>
                     <span className={isToday ? "font-bold text-fg flex items-center gap-2" : "text-fg-secondary"}>
                       {line.split(":")[0]}
-                      {isToday && <span className="text-[9px] font-bold uppercase tracking-wide text-primary bg-white border border-blue-200 rounded px-1.5 py-0.5">{t("mechTodayLabel")}</span>}
+                      {isToday && <span className="text-[9px] font-bold uppercase tracking-wide text-primary bg-white border border-primary-subtle rounded px-1.5 py-0.5">{t("mechTodayLabel")}</span>}
                     </span>
-                    <span className={isClosed ? "text-red-400 font-medium" : isToday ? "font-bold text-fg" : "text-fg-strong font-medium"}>{line.split(/:(.+)/)[1]}</span>
+                    <span className={isClosed ? "text-error font-medium" : isToday ? "font-bold text-fg" : "text-fg-strong font-medium"}>{line.split(/:(.+)/)[1]}</span>
                   </div>
                 );
               })}
@@ -462,7 +462,7 @@ export function MechDetailBody() {
                     <div key={i} className="text-center bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition">
                       <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-2xl mb-2.5 overflow-hidden shadow-md relative`}>
                         {isImgUrl(s.emoji) ? <img src={s.emoji} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={s.name} className="w-full h-full object-cover" /> : <span className="drop-shadow">{s.emoji}</span>}
-                        <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 border-2 border-white rounded-full" />
+                        <span className="absolute bottom-0 right-0 w-4 h-4 bg-success-tint border-2 border-white rounded-full" />
                       </div>
                       <p className="text-xs font-semibold text-fg-strong leading-tight truncate">{s.name}</p>
                       <p className="text-[11px] text-fg-muted leading-tight truncate">{s.role}</p>
@@ -543,7 +543,7 @@ export function MechDetailBody() {
                         <div className="flex items-center gap-2.5 mb-2.5">
                           <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-lg flex-shrink-0 shadow-sm`}>{r.avatar}</div>
                           <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-fg-strong truncate">{r.name}</p><p className="text-[11px] text-fg-muted">{times[i % times.length]}</p></div>
-                          <BadgeCheck size={14} className="text-blue-400 flex-shrink-0" />
+                          <BadgeCheck size={14} className="text-primary-subtle flex-shrink-0" />
                         </div>
                         <div className="flex items-center gap-0.5 mb-2">{[...Array(5)].map((_, j) => (<Star key={j} size={12} className={j < r.rating ? "text-fg fill-fg" : "text-fg-muted fill-fg-muted"} />))}</div>
                         {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 400)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-full h-32 rounded-xl object-cover mb-2" />}
@@ -551,7 +551,7 @@ export function MechDetailBody() {
                         {/* İŞARETLİ YORUM: bir işletme hesabına bağlı olduğu için ortalamaya
                             katılmıyor. Silmiyoruz (tamirci de gerçek müşteri olabilir) ama sessizce
                             puanı etkilemesine de izin vermiyoruz — okuyucu bunu bilmeli. */}
-                        {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
+                        {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-warning-tint rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
                         {r.reply && (<div className="mt-2.5 bg-background rounded-xl p-2.5"><p className="text-[10px] font-bold text-fg-secondary mb-0.5">{t("businessReplyLabel")}</p><p className="text-[11px] text-fg-secondary leading-snug"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} scope="public" text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p></div>)}
                         {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                           replyingReviewId === r.id ? (
@@ -574,7 +574,7 @@ export function MechDetailBody() {
           </Section>
 
           {isVisitor && (
-            <button onClick={() => { closeOverlays(); openReportForm("quality", `Tamirci #${selectedMechanic.id} · ${selectedMechanic.name}`, `"${selectedMechanic.name}" hakkında şikayetim var`); }} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-red-500 transition py-2"><Flag size={12} /> {t("reportThisMechanicBtn")}</button>
+            <button onClick={() => { closeOverlays(); openReportForm("quality", `Tamirci #${selectedMechanic.id} · ${selectedMechanic.name}`, `"${selectedMechanic.name}" hakkında şikayetim var`); }} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-error transition py-2"><Flag size={12} /> {t("reportThisMechanicBtn")}</button>
           )}
         </div>
 
@@ -617,12 +617,12 @@ export function MechDetailBody() {
                   <div key={r.id} className="p-5">
                     <div className="flex items-center gap-2.5 mb-2.5">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-lg flex-shrink-0 shadow-sm">{r.avatar}</div>
-                      <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-fg-strong truncate flex items-center gap-1">{r.name}<BadgeCheck size={12} className="text-blue-400 flex-shrink-0" /></p><div className="flex items-center gap-1">{[...Array(5)].map((_, j) => (<Star key={j} size={11} className={j < r.rating ? "text-fg fill-fg" : "text-fg-muted fill-fg-muted"} />))}</div></div>
+                      <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-fg-strong truncate flex items-center gap-1">{r.name}<BadgeCheck size={12} className="text-primary-subtle flex-shrink-0" /></p><div className="flex items-center gap-1">{[...Array(5)].map((_, j) => (<Star key={j} size={11} className={j < r.rating ? "text-fg fill-fg" : "text-fg-muted fill-fg-muted"} />))}</div></div>
                     </div>
                     {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 300)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-1/3 max-w-[110px] aspect-square rounded-xl object-cover mb-2.5 float-left mr-3" />}
                     <p className="text-sm text-fg-secondary leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} scope="public" text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
                     <div className="clear-left" />
-                    {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
+                    {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-warning-tint rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
                     {r.reply && (<div className="mt-2.5 pt-2.5 border-t border-background bg-background rounded-xl p-3"><p className="text-[10px] font-bold text-fg-secondary mb-1">{t("businessReplyLabel")}</p><p className="text-xs text-fg-secondary leading-relaxed"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} scope="public" text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p></div>)}
                     {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                       replyingReviewId === r.id ? (

@@ -98,7 +98,7 @@ export function BlogListPage() {
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {rest.map((p) => (
-                <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-surface-elevated rounded-3xl shadow-sm hover:shadow-md hover:border-blue-200 transition overflow-hidden flex flex-col">
+                <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-surface-elevated rounded-3xl shadow-sm hover:shadow-md hover:border-primary-subtle transition overflow-hidden flex flex-col">
                   <div className={`h-36 flex items-center justify-center flex-shrink-0 ${isImgUrl(p.coverPhoto) ? "bg-surface-elevated" : "bg-background"}`}>
                     {isImgUrl(p.coverPhoto)
                       ? <img loading="lazy" decoding="async" src={imgThumb(p.coverPhoto, 500)} onError={imgFallbackHandler} alt={p.title} className="w-full h-full object-cover" />
@@ -150,7 +150,7 @@ export function BlogPostPage() {
   const serviceCta = (compact = false) => {
     if (!svc) return null;
     return (
-      <div className={`bg-primary-tint border border-blue-100 rounded-2xl ${compact ? "p-4" : "p-5 md:p-6"} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
+      <div className={`bg-primary-tint border border-primary-tint rounded-2xl ${compact ? "p-4" : "p-5 md:p-6"} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
         <div className="min-w-0">
           <p className="font-bold text-fg flex items-center gap-2"><Wrench size={16} className="text-info" /> {t("blogServiceCtaTitle", { service: svcLabel })}</p>
           <p className="text-sm text-fg-secondary mt-0.5">{t("blogServiceCtaBody")}</p>
@@ -241,7 +241,7 @@ export function BlogPostPage() {
                 <h3 className="text-lg font-bold text-fg mb-4">{t("blogRelatedTitle")}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {related.map((p) => (
-                    <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-surface-elevated rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition p-4">
+                    <button key={p.id} onClick={() => openBlogPost(p.slug)} className="text-left bg-white border border-surface-elevated rounded-2xl shadow-sm hover:shadow-md hover:border-primary-subtle transition p-4">
                       <h4 className="font-semibold text-fg text-sm leading-snug mb-1.5">{p.title}</h4>
                       <p className="text-xs text-fg-muted line-clamp-2">{p.excerpt}</p>
                     </button>

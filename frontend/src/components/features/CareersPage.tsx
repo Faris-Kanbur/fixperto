@@ -95,7 +95,7 @@ export function CareersPage() {
               return (
                 <div key={job.id} className="bg-white border border-surface-elevated rounded-2xl shadow-sm overflow-hidden">
                   <button onClick={() => setOpenId(open ? null : job.id)} aria-expanded={open}
-                    className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-gray-50/70 transition">
+                    className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-background/70 transition">
                     <div className="min-w-0 flex-1">
                       <h3 className="font-bold text-fg text-[15px] truncate">{job.title}</h3>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[11px] text-fg-muted">

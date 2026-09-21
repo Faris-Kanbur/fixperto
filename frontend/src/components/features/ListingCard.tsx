@@ -112,7 +112,7 @@ export function ListingCard({ l, onHover = undefined }) {
     compareListingIds, toggleCompareListing,
   } = useApp();
 
-    const meta = l.adminRemoved ? { label: t("removedByAdminLabel"), color: "bg-gray-900" } : listingStatusMeta(l.status, t);
+    const meta = l.adminRemoved ? { label: t("removedByAdminLabel"), color: "bg-secondary" } : listingStatusMeta(l.status, t);
     const fav = favoriteIds.includes(l.id);
     const inCompare = compareListingIds.includes(l.id);
     const isMine = isMyListing(l);
@@ -120,7 +120,7 @@ export function ListingCard({ l, onHover = undefined }) {
     const unseenOfferCount = isMine ? l.offers.filter(o => o.status === "pending" && !o.seen).length : 0;
     const questionCount = isMine ? l.messages.length : 0;
     return (
-      <div onMouseEnter={() => onHover && onHover(l.id)} onMouseLeave={() => onHover && onHover(null)} className={`group bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === l.id ? "ring-2 ring-blue-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
+      <div onMouseEnter={() => onHover && onHover(l.id)} onMouseLeave={() => onHover && onHover(null)} className={`group bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === l.id ? "ring-2 ring-primary-subtle shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
         <div className="relative m-2 mb-0 rounded-2xl overflow-hidden isolate transform-gpu">
           <div className="h-44 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
             <button onClick={() => openListingPage(l.id)} className="w-full h-full flex items-center justify-center text-6xl">
@@ -129,7 +129,7 @@ export function ListingCard({ l, onHover = undefined }) {
           </div>
           <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 pointer-events-none">
             <span className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${meta.color}`}>{meta.label}</span>
-            {l.featured && <span className="text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-amber-300">{t("featuredBadge")}</span>}
+            {l.featured && <span className="text-warning text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-warning-tint">{t("featuredBadge")}</span>}
           </div>
           <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label={t("addToFavoritesAria")} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-primary text-primary" : "text-fg-secondary"} /></button>
           <button onClick={(e) => { e.stopPropagation(); toggleCompareListing(l.id); }} aria-label={t("compareToggleAria")} title={t("compareToggleAria")} className={`absolute top-3 right-14 z-10 w-8 h-8 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center ${inCompare ? "bg-primary" : "bg-white/95"}`}><Scale size={14} className={inCompare ? "text-white" : "text-fg-secondary"} /></button>
@@ -155,7 +155,7 @@ export function ListingCard({ l, onHover = undefined }) {
           </div>
           {isMine && (pendingOfferCount > 0 || questionCount > 0) && (
             <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-elevated">
-              {pendingOfferCount > 0 && <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${unseenOfferCount > 0 ? "bg-blue-200 text-primary-active" : "bg-surface-elevated text-fg-secondary"}`}><Banknote size={10} /> {pendingOfferCount} teklif{unseenOfferCount > 0 ? " (yeni)" : ""}</span>}
+              {pendingOfferCount > 0 && <span className={`flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${unseenOfferCount > 0 ? "bg-primary-subtle text-primary-active" : "bg-surface-elevated text-fg-secondary"}`}><Banknote size={10} /> {pendingOfferCount} teklif{unseenOfferCount > 0 ? " (yeni)" : ""}</span>}
               {questionCount > 0 && <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-primary-tint text-primary"><MessageCircle size={10} /> {questionCount} soru</span>}
             </div>
           )}

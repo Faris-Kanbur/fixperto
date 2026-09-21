@@ -50,7 +50,7 @@ export function WelcomeTour() {
 
   return (
     <div
-      className="fixed inset-0 w-screen h-screen bg-gray-900/25 backdrop-blur-md z-[200] flex items-center justify-center p-4 md:p-6 overflow-y-auto"
+      className="fixed inset-0 w-screen h-screen bg-secondary/25 backdrop-blur-md z-[200] flex items-center justify-center p-4 md:p-6 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label={t("onboardWelcomeTitle")}

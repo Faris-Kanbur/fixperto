@@ -70,7 +70,7 @@ export function SavedSearchEditModal() {
   const num = (key, placeholder) => (
     <input type="number" inputMode="numeric" value={draft.filters?.[key] ?? ""} placeholder={placeholder}
       onChange={(e) => setF(key, e.target.value)}
-      className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+      className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-subtle" />
   );
   const select = (key, options, labelFor = (v) => v) => (
     <select value={draft.filters?.[key] ?? "all"} onChange={(e) => setF(key, e.target.value)}
@@ -92,27 +92,27 @@ export function SavedSearchEditModal() {
           <label className="block">
             <span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("savedSearchNameFieldLabel")}</span>
             <input value={draft.name || ""} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-subtle" />
           </label>
 
           <label className="block">
             <span className="text-xs font-medium text-fg-secondary mb-1.5 flex items-center gap-1.5"><Search size={12} /> {type === "cars" ? t("brandModelFieldLabel") : type === "jobs" ? t("positionFieldLabel") : t("brandFieldLabel")}</span>
             <input value={draft.query || ""} onChange={(e) => setDraft((d) => ({ ...d, query: e.target.value }))}
-              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-subtle" />
           </label>
 
           {type === "mechanics" && (
             <label className="block">
               <span className="text-xs font-medium text-fg-secondary block mb-1.5">{t("serviceFieldLabel")}</span>
               <input value={draft.serviceQuery || ""} onChange={(e) => setDraft((d) => ({ ...d, serviceQuery: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-subtle" />
             </label>
           )}
 
           <label className="block">
             <span className="text-xs font-medium text-fg-secondary mb-1.5 flex items-center gap-1.5"><MapPin size={12} /> {t("cityLabelShort")}</span>
             <input value={draft.locationQuery || ""} onChange={(e) => setDraft((d) => ({ ...d, locationQuery: e.target.value }))}
-              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+              className="w-full px-3 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-subtle" />
           </label>
 
           <div className="pt-1">
@@ -155,7 +155,7 @@ export function SavedSearchEditModal() {
               <div className="flex flex-wrap gap-1.5">
                 {activeOtherFilters.map((key) => (
                   <button key={key} onClick={() => clearF(key)}
-                    className="inline-flex items-center gap-1 text-[11px] bg-background border border-border text-fg-secondary px-2 py-1 rounded-full hover:border-red-300 hover:text-error transition">
+                    className="inline-flex items-center gap-1 text-[11px] bg-background border border-border text-fg-secondary px-2 py-1 rounded-full hover:border-error-tint hover:text-error transition">
                     {savedSearchFilterLabel(key)}<X size={10} />
                   </button>
                 ))}

@@ -111,7 +111,7 @@ export function JobCard({ j }) {
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
   return (
-    <button onClick={() => setSelectedJobId(j.id)} className="w-full text-left bg-white border border-surface-elevated rounded-2xl shadow-sm hover:shadow-md hover:border-blue-200 transition p-4">
+    <button onClick={() => setSelectedJobId(j.id)} className="w-full text-left bg-white border border-surface-elevated rounded-2xl shadow-sm hover:shadow-md hover:border-primary-subtle transition p-4">
       <div className="flex items-start gap-3">
         <div className="w-11 h-11 bg-primary-tint rounded-xl flex items-center justify-center text-xl flex-shrink-0">{j.mechanicImg}</div>
         <div className="flex-1 min-w-0">

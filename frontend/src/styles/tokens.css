@@ -58,6 +58,11 @@
   --color-success-tint: 240 253 244;
   --color-warning-tint: 255 251 235;
   --color-error-tint: 254 242 242;
+  /* primary-subtle: kart/buton/input'larda hover veya seçili durumu gösteren
+     orta tonlu interaktif border/ring için — primary'den daha açık, primary-tint'ten
+     (arka plan tonu) daha belirgin. HER palette özgü (primary rengin '300' konumu),
+     aşağıdaki [data-palette] bloklarında override edilir. */
+  --color-primary-subtle: 147 197 253;
 }
 
 .dark-scope {
@@ -86,6 +91,7 @@
   --color-success-tint: 18 36 26;
   --color-warning-tint: 42 34 18;
   --color-error-tint: 42 20 24;
+  --color-primary-subtle: 30 64 175;
 }
 
 /* ===== PALET KONSEPTLERİ (Wave 2) =====
@@ -109,6 +115,7 @@
   --color-cta: 4 120 87;
   --color-focus: 5 150 105;
   --color-primary-tint: 236 253 245;
+  --color-primary-subtle: 110 231 183;
 }
 [data-palette="trust"].dark-scope {
   --color-primary: 4 120 87;
@@ -119,6 +126,7 @@
   --color-cta: 4 120 87;
   --color-focus: 5 150 105;
   --color-primary-tint: 16 36 28;
+  --color-primary-subtle: 6 95 70;
 }
 
 [data-palette="industrial"] {
@@ -130,6 +138,7 @@
   --color-cta: 194 65 12;
   --color-focus: 234 88 12;
   --color-primary-tint: 255 247 237;
+  --color-primary-subtle: 253 186 116;
 }
 [data-palette="industrial"].dark-scope {
   --color-primary: 194 65 12;
@@ -140,6 +149,7 @@
   --color-cta: 194 65 12;
   --color-focus: 234 88 12;
   --color-primary-tint: 42 28 18;
+  --color-primary-subtle: 154 52 18;
 }
 
 [data-palette="performance"] {
@@ -151,6 +161,7 @@
   --color-cta: 14 116 144;
   --color-focus: 8 145 178;
   --color-primary-tint: 236 254 255;
+  --color-primary-subtle: 103 232 249;
 }
 [data-palette="performance"].dark-scope {
   --color-primary: 14 116 144;
@@ -161,6 +172,7 @@
   --color-cta: 14 116 144;
   --color-focus: 8 145 178;
   --color-primary-tint: 16 36 42;
+  --color-primary-subtle: 21 94 117;
 }
 
 [data-palette="european"] {
@@ -172,6 +184,7 @@
   --color-cta: 30 64 175;
   --color-focus: 59 130 246;
   --color-primary-tint: 239 246 255;
+  --color-primary-subtle: 147 197 253;
 }
 [data-palette="european"].dark-scope {
   --color-primary: 37 99 235;
@@ -182,6 +195,7 @@
   --color-cta: 37 99 235;
   --color-focus: 59 130 246;
   --color-primary-tint: 18 30 46;
+  --color-primary-subtle: 30 64 175;
 }
 
 [data-palette="minimal"] {
@@ -193,6 +207,7 @@
   --color-cta: 24 24 27;
   --color-focus: 161 98 7;
   --color-primary-tint: 250 250 250;
+  --color-primary-subtle: 212 212 216;
 }
 [data-palette="minimal"].dark-scope {
   --color-primary: 161 98 7;
@@ -203,4 +218,5 @@
   --color-cta: 161 98 7;
   --color-focus: 161 98 7;
   --color-primary-tint: 42 34 18;
+  --color-primary-subtle: 180 83 9;
 }

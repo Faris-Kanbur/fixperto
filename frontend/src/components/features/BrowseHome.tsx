@@ -77,7 +77,7 @@ function SearchEmptyState({ mode, emptyText }) {
                     <p className="text-[11px] text-fg-secondary">{t("nearMissMatchCount", { hit: String(hit), total: String(near.criteriaCount) })}</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {missed.slice(0, 3).map((m) => (
-                        <span key={m.key} className="text-[10px] bg-warning-tint border border-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full">
+                        <span key={m.key} className="text-[10px] bg-warning-tint border border-warning-tint text-warning px-1.5 py-0.5 rounded-full">
                           {t("nearMissNotMatching", { label: m.label, value: m.value })}
                         </span>
                       ))}
@@ -205,13 +205,13 @@ export function BrowseHome({ theme = undefined }) {
     <div ref={browseScrollRef} onScroll={() => setHeroCollapsed(c => { const collapsed = browseScrollRef.current.scrollTop > 36; return c === collapsed ? c : collapsed; })} className="flex-1 overflow-y-auto">
       {topReminder && role === "owner" && (
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 pt-4">
-          <div className={`rounded-2xl p-4 mb-1 flex items-center gap-3 shadow-sm border ${topReminder.urgent ? "bg-error-tint border-red-100" : "bg-primary-tint border-blue-100"}`}>
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${topReminder.urgent ? "bg-red-100" : "bg-blue-100"}`}>{topReminder.icon}</div>
+          <div className={`rounded-2xl p-4 mb-1 flex items-center gap-3 shadow-sm border ${topReminder.urgent ? "bg-error-tint border-error-tint" : "bg-primary-tint border-primary-tint"}`}>
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${topReminder.urgent ? "bg-error-tint" : "bg-primary-tint"}`}>{topReminder.icon}</div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-semibold truncate ${topReminder.urgent ? "text-red-700" : "text-primary-hover"}`}>{topReminder.vehicleName} — {topReminder.title}</p>
+              <p className={`text-sm font-semibold truncate ${topReminder.urgent ? "text-error" : "text-primary-hover"}`}>{topReminder.vehicleName} — {topReminder.title}</p>
               <p className="text-xs text-fg-secondary truncate">{topReminder.detail}</p>
             </div>
-            <button onClick={() => goBookFromReminder(topReminder.key)} className={`flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-xl text-white transition ${topReminder.urgent ? "bg-error hover:bg-red-700" : "bg-primary hover:bg-primary-hover"}`}>{t("bookNow")}</button>
+            <button onClick={() => goBookFromReminder(topReminder.key)} className={`flex-shrink-0 text-xs font-semibold px-3 py-2 rounded-xl text-white transition ${topReminder.urgent ? "bg-error hover:bg-error" : "bg-primary hover:bg-primary-hover"}`}>{t("bookNow")}</button>
             <button onClick={() => setDismissedReminderKey(topReminder.key)} aria-label={t("closeAria")} className="flex-shrink-0 text-fg-muted hover:text-fg-secondary transition p-2 -m-2"><X size={16} /></button>
           </div>
         </div>

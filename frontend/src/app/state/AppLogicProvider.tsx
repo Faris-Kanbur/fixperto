@@ -2988,14 +2988,14 @@ function useAppLogic() {
           <p className="text-xs font-semibold text-fg-strong truncate">{l.brand} {l.model} <span className="text-fg-muted font-normal">#{l.id}</span></p>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="text-[10px] text-fg-muted flex items-center gap-0.5" title="Kaç kez paylaşıldı"><Share2 size={10} /> {l.shareCount || 0}</span>
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-fg-strong text-white" : l.status === "sold" ? "bg-error-tint text-red-500" : l.status === "reserved" ? "bg-border text-fg-strong" : "bg-success-tint text-success"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
-            {l.featured && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">⭐ Öne Çıkan</span>}
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-fg-strong text-white" : l.status === "sold" ? "bg-error-tint text-error" : l.status === "reserved" ? "bg-border text-fg-strong" : "bg-success-tint text-success"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
+            {l.featured && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-warning-tint text-warning">⭐ Öne Çıkan</span>}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <input value={l.price} onChange={(e) => updateListingField(l.id, "price", e.target.value)} {...trackInputProps("listing", l.id, "price", l.price)} className="flex-1 px-2 py-1.5 rounded-lg border border-border text-xs" />
-          <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "featured", oldValue: l.featured, newValue: !l.featured }); updateListingField(l.id, "featured", !l.featured); }} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.featured ? "bg-warning-tint text-amber-700 hover:bg-amber-100" : "border border-border text-fg-secondary hover:bg-surface-elevated"}`}>{l.featured ? "⭐ Kaldır" : "⭐ Öne Çıkar"}</button>
-          <button onClick={() => toggleListingRemoved(l.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.adminRemoved ? "bg-success-tint text-success hover:bg-green-100" : "bg-error-tint text-red-500 hover:bg-red-100"}`}>{l.adminRemoved ? "Geri Yükle" : "Kaldır"}</button>
+          <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "featured", oldValue: l.featured, newValue: !l.featured }); updateListingField(l.id, "featured", !l.featured); }} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.featured ? "bg-warning-tint text-warning hover:bg-warning-tint" : "border border-border text-fg-secondary hover:bg-surface-elevated"}`}>{l.featured ? "⭐ Kaldır" : "⭐ Öne Çıkar"}</button>
+          <button onClick={() => toggleListingRemoved(l.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.adminRemoved ? "bg-success-tint text-success hover:bg-success-tint" : "bg-error-tint text-error hover:bg-error-tint"}`}>{l.adminRemoved ? "Geri Yükle" : "Kaldır"}</button>
           <button onClick={() => setExpandedAdminListingId(x => x === l.id ? null : l.id)} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 border border-border text-fg-secondary hover:bg-surface-elevated transition">{expanded ? "Kapat" : "Detaylar"}</button>
         </div>
         {expanded && (
@@ -3012,7 +3012,7 @@ function useAppLogic() {
             <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">Açıklama</label><textarea value={l.description} onChange={(e) => updateListingField(l.id, "description", e.target.value)} {...trackInputProps("listing", l.id, "description", l.description)} rows={2} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs resize-none" /></div>
             <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-0.5 block">Ekspertiz Raporu Bağlantısı</label><input value={l.inspectionReportUrl || ""} onChange={(e) => updateListingField(l.id, "inspectionReportUrl", e.target.value)} {...trackInputProps("listing", l.id, "inspectionReportUrl", l.inspectionReportUrl)} className="w-full px-2 py-1.5 rounded-lg border border-border text-xs" /></div>
             <div className="col-span-2">
-              <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "negotiable", oldValue: l.negotiable, newValue: !l.negotiable }); updateListingField(l.id, "negotiable", !l.negotiable); }} className={`w-full py-1.5 rounded-lg text-[11px] font-semibold border transition ${l.negotiable ? "bg-primary-tint border-blue-200 text-primary-hover" : "border-border text-fg-secondary"}`}>🤝 Pazarlık Payı {l.negotiable ? "Var" : "Yok"}</button>
+              <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "negotiable", oldValue: l.negotiable, newValue: !l.negotiable }); updateListingField(l.id, "negotiable", !l.negotiable); }} className={`w-full py-1.5 rounded-lg text-[11px] font-semibold border transition ${l.negotiable ? "bg-primary-tint border-primary-subtle text-primary-hover" : "border-border text-fg-secondary"}`}>🤝 Pazarlık Payı {l.negotiable ? "Var" : "Yok"}</button>
             </div>
             <div className="col-span-2"><label className="text-[10px] text-fg-muted mb-1 block">Durum</label>
               <div className="flex gap-1.5">
@@ -3035,7 +3035,7 @@ function useAppLogic() {
           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${j.status === "active" ? "bg-success-tint text-success" : "bg-border text-fg-secondary"}`}>{j.status === "active" ? "Açık" : "Kapalı"}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => toggleJobListingStatus(j.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${j.status === "active" ? "bg-error-tint text-red-500 hover:bg-red-100" : "bg-success-tint text-success hover:bg-green-100"}`}>{j.status === "active" ? "Kapat" : "Aç"}</button>
+          <button onClick={() => toggleJobListingStatus(j.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${j.status === "active" ? "bg-error-tint text-error hover:bg-error-tint" : "bg-success-tint text-success hover:bg-success-tint"}`}>{j.status === "active" ? "Kapat" : "Aç"}</button>
           <button onClick={() => setExpandedAdminJobId(x => x === j.id ? null : j.id)} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 border border-border text-fg-secondary hover:bg-surface-elevated transition">{expanded ? "Kapat" : "Detaylar"}</button>
         </div>
         {expanded && (
@@ -3916,7 +3916,7 @@ function useAppLogic() {
               <div key={tk.id} className="bg-white border border-border rounded-2xl p-4">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <p className="text-sm font-semibold text-fg-strong">{tk.subject}</p>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-error-tint text-red-500" : tk.status === "in_review" ? "bg-surface-elevated text-fg-secondary" : "bg-success-tint text-success"}`}>{ADMIN_TICKET_STATUS_LABELS[tk.status]}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-error-tint text-error" : tk.status === "in_review" ? "bg-surface-elevated text-fg-secondary" : "bg-success-tint text-success"}`}>{ADMIN_TICKET_STATUS_LABELS[tk.status]}</span>
                 </div>
                 <p className="text-[11px] text-fg-muted mb-2">{ADMIN_TICKET_TYPE_LABELS[tk.type]} · {tk.createdDate}</p>
                 <p className="text-xs text-fg-secondary">{tk.description}</p>
@@ -5481,7 +5481,7 @@ function useAppLogic() {
     fireNotification("Başvuru sonucu", `"${job.title}" pozisyonuna yaptığınız başvuru için bir güncelleme var.`, ownerSettings.notifyMessages, "owner", { type: "myApplications" });
   };
   const roleColor = role === "mechanic" ? "from-blue-600 to-blue-600" : "from-blue-600 to-blue-600";
-  const roleBtn = role === "mechanic" ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-600 hover:bg-blue-700";
+  const roleBtn = role === "mechanic" ? "bg-primary hover:bg-primary-hover" : "bg-primary hover:bg-primary-hover";
   // Bildirime tıklanınca ilgili randevu/ilan/iş ilanı/sohbet vb. sayfaya yönlendirir.
   // notifRole, bildirimin hangi hesap için ateşlendiğini (owner/mechanic) belirtir; aynı "detail"
   // ekranı iki role de farklı geri-dönüş bağlamıyla kullanılıyor.
@@ -5542,7 +5542,7 @@ function useAppLogic() {
   // Uygulama-içi bildirim zili: tarayıcı bildirim izni verilmemiş olsa da kullanıcının
   // (araç sahibi/tamirci) kendine gelen bildirimleri her zaman burada görebilmesi için.
   // mobile.de tarzı ilan kartı — özellik ikonları satırı + favori kalp
-  const jobEmploymentColor = (type) => type === "Tam Zamanlı" ? "bg-blue-50 text-blue-600" : type === "Yarı Zamanlı" ? "bg-gray-100 text-gray-700" : type === "Stajyer/Çırak" ? "bg-green-50 text-green-600" : "bg-gray-50 text-gray-600";
+  const jobEmploymentColor = (type) => type === "Tam Zamanlı" ? "bg-primary-tint text-primary" : type === "Yarı Zamanlı" ? "bg-surface-elevated text-fg-strong" : type === "Stajyer/Çırak" ? "bg-success-tint text-success" : "bg-background text-fg-secondary";
   // LinkedIn tarzı iş ilanı kartı — pozisyon, işletme, konum, çalışma şekli/deneyim/maaş etiketleri
   // Tamirci profil detayı — normal "detail" ekranında tam sayfa, harita üzerinden açılınca ortalanmış modal içinde kullanılıyor. İçerik tek yerden geliyor, iki görünüm de senkron kalıyor.
   // ---- ARAMA REHBERİ (boş/eksik kriter kombinasyonları) ----------------------------------------

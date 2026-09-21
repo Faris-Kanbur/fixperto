@@ -92,7 +92,7 @@ export function LandingHome() {
             <button onClick={() => goToBrowse("jobs")} className="text-sm font-semibold text-fg-secondary hover:text-fg transition">{t("jobListingsNavLabel")}</button>
             {/* Çoklu fiyat teklifi, diğer ana gezinme bağlantılarıyla AYNI seviyede duruyor
                 (kullanıcı isteği) — vurgulu görünsün diye hafif arka planlı bir hap biçiminde. */}
-            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="text-sm font-bold text-primary-hover bg-primary-tint hover:bg-blue-100 px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 whitespace-nowrap"><Users size={14} /> {t("landingQuoteCta")}</button>
+            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="text-sm font-bold text-primary-hover bg-primary-tint hover:bg-primary-tint px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 whitespace-nowrap"><Users size={14} /> {t("landingQuoteCta")}</button>
           </nav>
           {/* NOT: Buradaki TR/EN/DE seçicisi KALDIRILDI — dil artık kullanıcının bulunduğu ülkeye
               göre otomatik seçiliyor (bkz. helpers.ts initialSiteLang). Yine de kimse yanlış dilde
@@ -126,22 +126,22 @@ export function LandingHome() {
       <section className="bg-gradient-to-b from-blue-50 via-blue-50/40 to-white">
         <div className="max-w-6xl mx-auto w-full px-5 md:px-8 pt-10 pb-12 md:pt-16 md:pb-16">
           <div className="max-w-3xl">
-            <p className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-primary-hover bg-white border border-blue-100 px-3 py-1.5 rounded-full mb-4 shadow-sm"><BadgeCheck size={13} /> {t("landingHeroBadge")}</p>
+            <p className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-primary-hover bg-white border border-primary-tint px-3 py-1.5 rounded-full mb-4 shadow-sm"><BadgeCheck size={13} /> {t("landingHeroBadge")}</p>
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-fg leading-[1.1] mb-4 text-balance">{t("landingHeroTitle")}</h1>
             <p className="text-fg-secondary text-base md:text-lg leading-relaxed mb-7 max-w-2xl">{t("landingHeroSubtitle")}</p>
           </div>
           {/* Arama kartı — gerçek arama state'ini besler */}
           <div className="bg-white rounded-3xl border border-border shadow-xl p-3 md:p-4 max-w-4xl">
             <div className="flex flex-col md:flex-row md:items-stretch gap-2 md:gap-0 md:divide-x md:divide-gray-100">
-              <div className="flex-1 px-3 py-2 rounded-2xl focus-within:ring-2 focus-within:ring-blue-200">
+              <div className="flex-1 px-3 py-2 rounded-2xl focus-within:ring-2 focus-within:ring-primary-subtle">
                 <label htmlFor="landing-service-search" className="block text-[11px] font-bold text-fg mb-0.5">{t("serviceFieldLabel")}</label>
                 <input id="landing-service-search" name="service" autoComplete="off" value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchServicePlaceholder")} className="w-full text-sm text-fg-strong placeholder:text-fg-muted focus:outline-none bg-transparent" />
               </div>
-              <div className="flex-1 px-3 py-2 rounded-2xl focus-within:ring-2 focus-within:ring-blue-200">
+              <div className="flex-1 px-3 py-2 rounded-2xl focus-within:ring-2 focus-within:ring-primary-subtle">
                 <label htmlFor="landing-brand-search" className="block text-[11px] font-bold text-fg mb-0.5">{t("brandFieldLabel")}</label>
                 <input id="landing-brand-search" name="brand" autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchPlaceholder")} className="w-full text-sm text-fg-strong placeholder:text-fg-muted focus:outline-none bg-transparent" />
               </div>
-              <div className="flex-1 px-3 py-2 rounded-2xl focus-within:ring-2 focus-within:ring-blue-200">
+              <div className="flex-1 px-3 py-2 rounded-2xl focus-within:ring-2 focus-within:ring-primary-subtle">
                 <label htmlFor="landing-city-search" className="block text-[11px] font-bold text-fg mb-0.5">{t("cityLabelShort")}</label>
                 <input id="landing-city-search" name="city" autoComplete="address-level2" value={locationQuery} onChange={(e) => setLocationQuery(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} placeholder={t("searchCityPlaceholder")} className="w-full text-sm text-fg-strong placeholder:text-fg-muted focus:outline-none bg-transparent" />
               </div>
@@ -164,7 +164,7 @@ export function LandingHome() {
             <button onClick={() => { requestLocation(); setSortBy("distance"); setSortDir("asc"); goToBrowse("mechanics"); }} className="inline-flex items-center gap-1.5 text-xs font-semibold text-fg-strong bg-white border border-border px-3.5 py-2 rounded-full hover:border-secondary transition"><Navigation size={13} className="text-primary" /> {t("landingNearMe")}</button>
             {/* Çoklu fiyat teklifi masaüstünde üst gezinme çubuğunda (diğer bağlantılarla aynı
                 seviyede) duruyor; üst çubuk mobilde gizlendiği için burada SADECE mobilde gösteriliyor. */}
-            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="md:hidden inline-flex items-center gap-1.5 text-xs font-bold text-primary-hover bg-primary-tint border border-blue-100 px-3.5 py-2 rounded-full hover:bg-blue-100 transition"><Users size={13} /> {t("landingQuoteCta")}</button>
+            <button onClick={() => openQuoteModal()} title={t("landingQuoteCtaNote")} className="md:hidden inline-flex items-center gap-1.5 text-xs font-bold text-primary-hover bg-primary-tint border border-primary-tint px-3.5 py-2 rounded-full hover:bg-primary-tint transition"><Users size={13} /> {t("landingQuoteCta")}</button>
             <span className="text-xs text-fg-muted ml-1">{t("landingPopularPrefix")}</span>
             {popularServices.slice(0, 4).map(s => (
               <button key={s.name} onClick={() => searchService(s.name)} className="text-xs font-medium text-fg-secondary bg-background hover:bg-surface-elevated border border-surface-elevated px-3 py-1.5 rounded-full transition">{s.name}</button>

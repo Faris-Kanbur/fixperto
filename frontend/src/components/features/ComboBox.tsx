@@ -68,8 +68,8 @@ export function ComboBox({
   };
 
   const box = compact
-    ? "w-full pl-3 pr-8 py-2 rounded-lg border border-gray-200 text-xs bg-white"
-    : "w-full pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm bg-white";
+    ? "w-full pl-3 pr-8 py-2 rounded-lg border border-border text-xs bg-white"
+    : "w-full pl-3 pr-8 py-2.5 rounded-xl border border-border text-sm bg-white";
 
   return (
     <div className="relative" ref={boxRef}>
@@ -85,7 +85,7 @@ export function ComboBox({
         aria-expanded={open}
         aria-autocomplete="list"
         autoComplete="off"
-        className={`${box} focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 disabled:bg-gray-50 disabled:text-gray-400`}
+        className={`${box} focus:outline-none focus:ring-2 focus:ring-primary-subtle focus:border-primary-subtle disabled:bg-background disabled:text-fg-muted`}
       />
       <button
         type="button"

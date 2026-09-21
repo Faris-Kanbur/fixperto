@@ -59,13 +59,13 @@ export function OwnerChatsPanel() {
               const on = activeConvoId === c.id;
               return (
                 <button key={c.id} onClick={() => setActiveConvoId(c.id)}
-                  className={`w-full text-left px-5 py-4 transition flex items-center gap-3 ${on ? "bg-blue-50/70" : "hover:bg-background"}`}>
+                  className={`w-full text-left px-5 py-4 transition flex items-center gap-3 ${on ? "bg-primary-tint/70" : "hover:bg-background"}`}>
                   <div className="text-xl bg-primary-tint rounded-xl w-10 h-10 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-fg text-sm truncate">{c.mechanicName}</h4>
                     <p className="text-xs text-fg-muted truncate">{last ? last.text : t("noMessagesInChatYet")}</p>
                   </div>
-                  <ChevronRight size={15} className={`flex-shrink-0 ${on ? "text-blue-400" : "text-fg-muted"}`} />
+                  <ChevronRight size={15} className={`flex-shrink-0 ${on ? "text-primary-subtle" : "text-fg-muted"}`} />
                 </button>
               );
             })}
@@ -85,12 +85,12 @@ export function OwnerChatsPanel() {
               <button onClick={() => setActiveConvoId(null)} aria-label={t("back")} className="text-fg-muted hover:text-fg-strong lg:hidden"><ChevronLeft size={18} /></button>
               <div className="text-xl bg-primary-tint rounded-xl w-9 h-9 flex items-center justify-center flex-shrink-0">{convo.mechanicImg}</div>
               <span className="text-sm font-semibold text-fg truncate">{convo.mechanicName}</span>
-              <button onClick={bookWithMechanic} className="ml-auto flex-shrink-0 text-xs font-semibold text-primary bg-primary-tint hover:bg-blue-100 px-3 py-1.5 rounded-full transition flex items-center gap-1.5">
+              <button onClick={bookWithMechanic} className="ml-auto flex-shrink-0 text-xs font-semibold text-primary bg-primary-tint hover:bg-primary-tint px-3 py-1.5 rounded-full transition flex items-center gap-1.5">
                 <Calendar size={13} /> {t("bookWithThisMechanic")}
               </button>
             </div>
 
-            <div className="flex-1 px-5 py-5 overflow-y-auto max-h-[52vh] bg-gray-50/50">
+            <div className="flex-1 px-5 py-5 overflow-y-auto max-h-[52vh] bg-background/50">
               {convo.messages.map((m) => (<ChatBubble key={m.id} msg={m} viewerLang={ownerLang} mine={m.sender === "owner"} />))}
             </div>
 
@@ -109,7 +109,7 @@ export function OwnerChatsPanel() {
                 <input value={chatInput} onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") sendOwnerMessageWithReply(chatInput); }}
                   placeholder={t("chatInputPlaceholder")}
-                  className="flex-1 px-4 py-2.5 rounded-full border border-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                  className="flex-1 px-4 py-2.5 rounded-full border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-subtle" />
                 <button onClick={() => sendOwnerMessageWithReply(chatInput)} aria-label={t("sendBtn")} className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary-hover transition flex-shrink-0"><Send size={16} /></button>
               </div>
             )}

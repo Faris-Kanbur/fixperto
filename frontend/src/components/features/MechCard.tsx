@@ -116,7 +116,7 @@ export function MechCard({ m, onHover }) {
   const showCover = m.coverPhoto && !coverBroken;
   const fav = (favoriteMechanicIds || []).includes(m.id);
   return (
-    <div onMouseEnter={() => onHover && onHover(m.id)} onMouseLeave={() => onHover && onHover(null)} className={`group bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === m.id ? "ring-2 ring-blue-300 shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
+    <div onMouseEnter={() => onHover && onHover(m.id)} onMouseLeave={() => onHover && onHover(null)} className={`group bg-white rounded-3xl transition-all duration-300 overflow-hidden ${onHover && hoveredPinId === m.id ? "ring-2 ring-primary-subtle shadow-lg" : "shadow-sm hover:shadow-xl"}`}>
       <div className="relative m-2 mb-0 rounded-2xl overflow-hidden isolate transform-gpu">
         <button onClick={() => openDetail(m)} className={`w-full h-44 bg-gradient-to-br ${BANNER_PRESETS[m.bannerPreset] || BANNER_PRESETS.blue} flex items-center justify-center relative overflow-hidden`}>
           {showCover && <img src={imgThumb(m.coverPhoto, 500)} loading="lazy" decoding="async" onError={() => setCoverBroken(true)} alt={m.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />}
@@ -135,10 +135,10 @@ export function MechCard({ m, onHover }) {
         </div>
         <p className="text-fg-muted text-xs mt-1 truncate">{m.specialty}</p>
         <div className="flex items-center justify-between gap-2 mt-2.5">
-          <span className="flex items-center gap-1 text-xs text-fg-secondary"><MapPin size={12} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}{userLocation && m.effectiveDistance != null && <span title={t("realLocationBadgeTitle")}><CheckCircle2 size={11} className="text-green-500" /></span>}</span>
+          <span className="flex items-center gap-1 text-xs text-fg-secondary"><MapPin size={12} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}{userLocation && m.effectiveDistance != null && <span title={t("realLocationBadgeTitle")}><CheckCircle2 size={11} className="text-success" /></span>}</span>
           <PriceLevelDots price={m.price} />
         </div>
-        <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-success-tint text-success" : "bg-error-tint text-red-500"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-fg-muted flex items-center gap-1"><Zap size={10} className="text-fg" /> {m.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>
+        <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-success-tint text-success" : "bg-error-tint text-error"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-fg-muted flex items-center gap-1"><Zap size={10} className="text-fg" /> {m.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>
       </button>
     </div>
   );

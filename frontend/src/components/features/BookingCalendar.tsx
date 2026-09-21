@@ -112,7 +112,7 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
         <div className="relative" ref={monthRef}>
           <button onClick={() => setShowMonth((v) => !v)}
             aria-expanded={showMonth}
-            className={`flex items-center gap-1.5 px-3 h-8 rounded-lg border text-xs font-semibold transition ${showMonth ? "border-blue-300 text-primary bg-primary-tint" : "border-border text-fg-secondary hover:border-blue-300 hover:text-primary"}`}>
+            className={`flex items-center gap-1.5 px-3 h-8 rounded-lg border text-xs font-semibold transition ${showMonth ? "border-primary-subtle text-primary bg-primary-tint" : "border-border text-fg-secondary hover:border-primary-subtle hover:text-primary"}`}>
             <CalendarDays size={14} /> {t("bookingOpenMonth")}
           </button>
           {showMonth && (
@@ -145,14 +145,14 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
               className={`py-2 rounded-xl border text-center transition
                 ${isSel ? "bg-primary border-primary text-white shadow-sm"
                   : disabled ? "border-surface-elevated text-fg-muted cursor-not-allowed"
-                  : "border-border text-fg-strong hover:border-blue-400 hover:bg-blue-50/50"}
-                ${isToday && !isSel && !disabled ? "ring-1 ring-inset ring-blue-200" : ""}`}>
-              <span className={`block text-[10px] font-semibold uppercase tracking-wide ${isSel ? "text-blue-100" : "text-fg-muted"}`}>
+                  : "border-border text-fg-strong hover:border-primary-subtle hover:bg-primary-tint/50"}
+                ${isToday && !isSel && !disabled ? "ring-1 ring-inset ring-primary-subtle" : ""}`}>
+              <span className={`block text-[10px] font-semibold uppercase tracking-wide ${isSel ? "text-primary-tint" : "text-fg-muted"}`}>
                 {dayLabels[dayKeys[i]]}
               </span>
               <span className="block text-base font-bold leading-tight tabular-nums">{d.getDate()}</span>
               {/* Boş saat sayısı: bu şeridin asıl faydası. Kapalı/geçmiş günde çizgi. */}
-              <span className={`block text-[10px] leading-tight ${isSel ? "text-blue-100" : free > 0 ? "text-emerald-600 font-semibold" : "text-fg-muted"}`}>
+              <span className={`block text-[10px] leading-tight ${isSel ? "text-primary-tint" : free > 0 ? "text-success font-semibold" : "text-fg-muted"}`}>
                 {disabled ? "—" : free > 0 ? free : t("bookingSlotTaken")}
               </span>
             </button>
@@ -166,7 +166,7 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
       ) : slots.length === 0 ? (
         <p className="text-sm text-fg-muted mt-3">{t("noSlotsForDay")}</p>
       ) : counts.all === 0 ? (
-        <p className="text-sm text-amber-700 bg-warning-tint border border-amber-100 rounded-xl px-3 py-2.5 mt-3">{t("bookingNoSlotsLeftToday")}</p>
+        <p className="text-sm text-warning bg-warning-tint border border-warning-tint rounded-xl px-3 py-2.5 mt-3">{t("bookingNoSlotsLeftToday")}</p>
       ) : (
         <div className="mt-3">
           {/* Günün bölümleri: üç ayrı başlık yerine tek satır süzgeç — aynı bilgi, üçte bir yer. */}
@@ -190,7 +190,7 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
                   className={`h-9 rounded-lg border text-[13px] font-semibold tabular-nums transition
                     ${isSel ? "bg-primary border-primary text-white shadow-sm"
                       : disabled ? "border-surface-elevated text-fg-muted line-through cursor-not-allowed"
-                      : "border-border text-fg-strong hover:border-blue-400 hover:text-primary"}`}>
+                      : "border-border text-fg-strong hover:border-primary-subtle hover:text-primary"}`}>
                   {s.time}
                 </button>
               );

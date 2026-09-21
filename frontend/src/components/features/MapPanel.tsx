@@ -159,10 +159,10 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
           <line x1="0" y1="45%" x2="45%" y2="100%" stroke="#ffffff" strokeWidth="4" />
         </svg>
         <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: "linear-gradient(#c9cfc1 1px, transparent 1px), linear-gradient(90deg, #c9cfc1 1px, transparent 1px)", backgroundSize: "26px 26px" }} />
-        <div style={{ left: "50%", top: "50%" }} className="absolute -translate-x-1/2 -translate-y-1/2 z-10"><div className="w-4 h-4 bg-primary rounded-full ring-4 ring-blue-200 border-2 border-white shadow" /><div className="absolute inset-0 w-4 h-4 bg-info rounded-full animate-ping opacity-40" /></div>
+        <div style={{ left: "50%", top: "50%" }} className="absolute -translate-x-1/2 -translate-y-1/2 z-10"><div className="w-4 h-4 bg-primary rounded-full ring-4 ring-primary-subtle border-2 border-white shadow" /><div className="absolute inset-0 w-4 h-4 bg-info rounded-full animate-ping opacity-40" /></div>
         {items.map(m => { const active = hoveredId === m.id || previewItem?.id === m.id; return (
           <button key={m.id} type="button" onClick={() => handlePinClick(m)} onMouseEnter={() => onHoverItem && onHoverItem(m.id)} onMouseLeave={() => onHoverItem && onHoverItem(null)} style={{ left: `${m.px}%`, top: `${m.py}%` }} className={`absolute -translate-x-1/2 -translate-y-full flex flex-col items-center transition-transform cursor-pointer ${active ? "z-30 scale-125" : "z-10"}`}>
-            <div className={`shadow-lg rounded-full px-2.5 py-1 text-[11px] font-bold border transition whitespace-nowrap mb-0.5 flex items-center gap-1 ${active ? "bg-red-500 text-white border-red-500" : "bg-white text-fg-strong border-surface-elevated"}`}>{isListing(m) ? m.price : (<>{m.reviews > 100 && (<><span>{"€".repeat(priceLevel(m.price))}</span><span className={active ? "text-white/60" : "text-fg-muted"}>·</span></>)}<span className="flex items-center gap-0.5"><Star size={9} className={active ? "fill-white text-white" : "fill-fg text-fg"} />{m.rating}</span></>)}</div>
+            <div className={`shadow-lg rounded-full px-2.5 py-1 text-[11px] font-bold border transition whitespace-nowrap mb-0.5 flex items-center gap-1 ${active ? "bg-error text-white border-error" : "bg-white text-fg-strong border-surface-elevated"}`}>{isListing(m) ? m.price : (<>{m.reviews > 100 && (<><span>{"€".repeat(priceLevel(m.price))}</span><span className={active ? "text-white/60" : "text-fg-muted"}>·</span></>)}<span className="flex items-center gap-0.5"><Star size={9} className={active ? "fill-white text-white" : "fill-fg text-fg"} />{m.rating}</span></>)}</div>
             <svg width="26" height="32" viewBox="0 0 24 30" className="drop-shadow-md">
               <path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18c0-6.6-5.4-12-12-12z" fill={active ? "#c0281c" : "#ea4335"} />
               <circle cx="12" cy="12" r="6.5" fill="white" />
@@ -178,7 +178,7 @@ export function MapPanel({ className, items, onPick, hoveredId = null, onHoverIt
           <button type="button" onClick={resetView} aria-label={t("mapResetViewAria")} className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-surface-elevated hover:bg-background"><Compass size={14} className="text-fg-secondary" /></button>
           <button type="button" onClick={requestLocation} aria-label={t("mapCenterMyLocationAria")} className="w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center border border-surface-elevated hover:bg-background"><Navigation size={13} className="text-primary" /></button>
         </div>
-        <div className="absolute bottom-1 left-2 text-[9px] text-gray-400/80 z-20">{t("sampleMapDataNote")}</div>
+        <div className="absolute bottom-1 left-2 text-[9px] text-fg-muted/80 z-20">{t("sampleMapDataNote")}</div>
       </div>
       {previewItem && popupRect && createPortal(
         <div
