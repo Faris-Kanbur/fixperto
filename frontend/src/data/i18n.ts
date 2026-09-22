@@ -71,6 +71,16 @@ export const T = {
   accept: { tr: "Kabul Et", en: "Accept", de: "Annehmen" },
   reject: { tr: "Reddet", en: "Reject", de: "Ablehnen" },
   startChat: { tr: "Sohbet Başlat", en: "Start Chat", de: "Chat Starten" },
+  /**
+   * SOHBET BAĞLAM NOTU — önceden HER ZAMAN sabit Türkçe bir template literal olarak yazılıyordu
+   * (`🚗 Bu sohbeti "..." başlattım.`) ama mesaj olarak gönderilirken göndericinin O ANKİ diliyle
+   * (`lang: ownerLang`) damgalanıyordu. Sonuç: metin hep Türkçe ama etiket "en"/"de" olabiliyordu —
+   * bu uyumsuzluk yüzünden karşı tarafta otomatik çeviri bu notu bazen çeviremiyordu (kullanıcı
+   * geri bildirimiyle bulundu: Almanca konuşan taraf bu satırı hâlâ Türkçe görüyordu, diğer TÜM
+   * mesajlar doğru çevrilirken). Artık gönderenin kendi diline göre yazılıyor, yani metin ve
+   * etiket her zaman tutarlı — çeviri motoru doğru kaynak dilden çalışıyor.
+   */
+  chatContextNoteListing: { tr: '🚗 Bu sohbeti "{brand} {model}" (İlan #{id}) ilanı hakkında başlattım.', en: '🚗 I started this chat about the "{brand} {model}" listing (#{id}).', de: '🚗 Ich habe diesen Chat zur Anzeige „{brand} {model}" (Anzeige #{id}) gestartet.' },
   fuelType: { tr: "Yakıt", en: "Fuel", de: "Kraftstoff" },
   transmission: { tr: "Vites", en: "Transmission", de: "Getriebe" },
   power: { tr: "Güç", en: "Power", de: "Leistung" },
@@ -721,6 +731,16 @@ export const T = {
   cityOrDistrictPlaceholder: { tr: "Şehir veya semt", en: "City or district", de: "Stadt oder Bezirk" },
   noMessagesInChatYet: { tr: "Henüz mesaj yok", en: "No messages yet", de: "Noch keine Nachrichten" },
   noConvosYetNote: { tr: "Henüz bir sohbetiniz yok.", en: "You don't have any conversations yet.", de: "Sie haben noch keine Unterhaltungen." },
+  // SOHBET SİLME (kullanıcı isteği): tek tek, hepsi ya da bir kaçı birlikte — hem tamirci hem
+  // araç sahibi tarafında. gallerySelectAllBtn/galleryClearSelectionBtn/galleryBulkDeleteBtn
+  // bilerek YENİDEN KULLANILIYOR (metinleri zaten "ilan"a özgü değil, genel eylem etiketleri).
+  deleteChatAria: { tr: "Sohbeti sil", en: "Delete chat", de: "Chat löschen" },
+  deleteChatConfirmTitle: { tr: "Sohbet silinsin mi?", en: "Delete this chat?", de: "Chat löschen?" },
+  deleteChatConfirmBody: { tr: "Bu sohbetteki tüm mesajlar kalıcı olarak silinecek. Bu işlem geri alınamaz.", en: "All messages in this chat will be permanently deleted. This cannot be undone.", de: "Alle Nachrichten in diesem Chat werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden." },
+  selectChatsBtn: { tr: "Seç", en: "Select", de: "Auswählen" },
+  chatSelectedCountLabel: { tr: "{n} sohbet seçili", en: "{n} chats selected", de: "{n} Chats ausgewählt" },
+  bulkDeleteChatsConfirmTitle: { tr: "Seçili sohbetler silinsin mi?", en: "Delete selected chats?", de: "Ausgewählte Chats löschen?" },
+  bulkDeleteChatsConfirmBody: { tr: "{n} sohbet kalıcı olarak silinecek. Bu işlem geri alınamaz.", en: "{n} chats will be permanently deleted. This cannot be undone.", de: "{n} Chats werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden." },
   profilePhotoAlt: { tr: "Profil fotoğrafı", en: "Profile photo", de: "Profilfoto" },
   ownerFallbackName: { tr: "Araç Sahibi", en: "Vehicle Owner", de: "Fahrzeughalter" },
   profileAndSettingsTitle: { tr: "Profil ve Ayarlar", en: "Profile and Settings", de: "Profil und Einstellungen" },

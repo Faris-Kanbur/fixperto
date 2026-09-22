@@ -625,6 +625,13 @@ function useAppLogic() {
   const [conversations, setConversations] = useState([]);
   const [activeConvoId, setActiveConvoId] = useState(null);
   const [chatInput, setChatInput] = useState("");
+  // Sohbet silme — hem araç sahibi hem tamirci paneli paylaşıyor (kullanıcı isteği: "hem tamirci
+  // hem araç sahibi"). Aynı anda bir oturumda tek rol aktif olduğu için tek çift yeterli — aynı
+  // gallerySelectedIds/toplu-işlem deseni (bkz. bulkDeleteSelectedListings). AppShell.tsx hiçbir
+  // yerde kendi yerel useState'ini tutmuyor (tüm ekran state'i context'te) — bu ikisi de o
+  // kuralı koruyor, AppShell'in mekanik-mesajlar bloğu bunları doğrudan context'ten okuyor.
+  const [chatSelectedIds, setChatSelectedIds] = useState([]);
+  const [chatSelecting, setChatSelecting] = useState(false);
   const [showTranslated, setShowTranslated] = useState({});
   const fileInputRef = useRef(null);
   const [mechActiveConvoId, setMechActiveConvoId] = useState(null);
@@ -3968,7 +3975,57 @@ function useAppLogic() {
       }
     }
     setActiveConvoId(convo.id);
-    setScreen("chat");
+    // WhatsApp deseni: ayrı tek-sütunlu bir "chat" ekranı yerine, Sohbetler sekmesindeki
+    // solda-liste/sağda-sohbet paneline (OwnerChatsPanel) gidiyoruz — activeConvoId zaten
+    // ayarlandığı için panel doğru sohbeti sağ tarafta açık gösterir (kullanıcı geri bildirimi).
+    setScreen("owner"); setOwnerTab("chats");
+  };
+  /**
+   * İKİ ARAÇ SAHİBİ ARASI SOHBET (ör. "Sahibinden" ilanı hakkında) — openChatWithMechanic'in
+   * eşdeğeri. Önceden "Sohbet Başlat" bu durumda sahte bir mechanicId (`seller-<isim>`) ile
+   * openChatWithMechanic'i çağırıyordu; backend mechanicId'yi gerçek bir tamirci kaydına karşı
+   * doğruladığı için bu her zaman 400 ile reddediliyor, sohbet hiç kaydolmuyordu (kullanıcı geri
+   * bildirimiyle bulundu). Artık backend'de bu ikinci taraf için ayrı bir sütun var (peerOwnerId,
+   * bkz. backend/routes/conversations.js) — bu fonksiyon onu kullanıyor.
+   */
+  const openChatWithOwner = (peerOwner, contextNote = undefined) => {
+    track("contact_started", { targetType: "owner", targetId: peerOwner?.id ?? null });
+    if (!ensureAuth(t("authGateReasonChat"), () => callLatest("openChatWithOwner", peerOwner, contextNote))) return;
+    // Sohbeti kim başlatmış olursa olsun (ben ya da karşı taraf) aynı kayda bağlanmalıyız —
+    // ownerId/peerOwnerId çifti iki yönde de aranıyor.
+    let convo = conversations.find(c => c.peerOwnerId != null
+      && ((c.ownerId === MY_OWNER_ID && c.peerOwnerId === peerOwner.id) || (c.ownerId === peerOwner.id && c.peerOwnerId === MY_OWNER_ID)));
+    if (!convo) {
+      convo = { id: Date.now(), ownerId: MY_OWNER_ID, peerOwnerId: peerOwner.id, mechanicId: null, mechanicName: peerOwner.name, mechanicImg: peerOwner.photo || "", mechanicLang: peerOwner.lang || "tr", messages: [], pendingContextNote: contextNote || null };
+      setConversations([convo, ...conversations]);
+      persist(api.conversations.create(convo), "Sohbet başlatılamadı");
+      recordConversion("chat");
+    } else if (contextNote) {
+      const alreadySent = convo.messages.some(msg => msg.text === contextNote);
+      if (!alreadySent && convo.pendingContextNote !== contextNote) {
+        setConversations(cs => cs.map(c => c.id === convo.id ? { ...c, pendingContextNote: contextNote } : c));
+        persist(api.conversations.update(convo.id, { pendingContextNote: contextNote }), "Sohbet kaydedilemedi");
+      }
+    }
+    setActiveConvoId(convo.id);
+    // WhatsApp deseni: bkz. openChatWithMechanic'teki aynı not.
+    setScreen("owner"); setOwnerTab("chats");
+  };
+  /**
+   * SOHBETTEKİ KARŞI TARAFIN ADI/FOTOĞRAFI — owner-owner sohbette convo.mechanicName/mechanicImg
+   * SABİT bir değer taşır (sohbeti oluşturan kim olursa olsun, backend'de peerOwnerId'nin sahibinin
+   * bilgisiyle dolduruluyor, bkz. backend/routes/conversations.js POST /). Owner-mechanic sohbette
+   * bu her zaman doğrudur ("karşı taraf" sabit bir rol, tamirci) ama owner-owner sohbette İKİ taraf
+   * da simetrik owner olduğu için "karşı taraf kim" sorusu İZLEYENE göre değişir — sohbeti başlatan
+   * kişi için doğru olan isim/foto, karşı taraf kendi sohbet listesine baktığında KENDİ adı/fotoğrafı
+   * olarak görünürdü (ölçüldü). Bu yardımcı, gerçek karşı tarafı MY_OWNER_ID ile ownerId/peerOwnerId
+   * çiftini karşılaştırıp ownersDirectory'den taze okuyarak buluyor.
+   */
+  const convoPeerDisplay = (convo) => {
+    if (convo.peerOwnerId == null) return { name: convo.mechanicName, img: convo.mechanicImg };
+    const peerId = convo.ownerId === MY_OWNER_ID ? convo.peerOwnerId : convo.ownerId;
+    const peer = ownersDirectory.find(o => o.id === peerId);
+    return { name: peer?.name || convo.mechanicName, img: peer?.photo || convo.mechanicImg };
   };
   // Tamirci, kendi ilanı olmayan bir "araç sahibi" tipi ilana bakarken sohbet başlatırsa: bu her
   // zaman (tek) gerçek araç sahibiyle olan aynı sohbet dizisine bağlanır — kendi kimliğiyle
@@ -3996,6 +4053,40 @@ function useAppLogic() {
     setScreen("mechanicDashboard");
   };
   const activeConvo = conversations.find(c => c.id === activeConvoId);
+  const toggleChatSelect = (id) => setChatSelectedIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
+  const clearChatSelection = () => setChatSelectedIds([]);
+  const startChatSelecting = () => { clearChatSelection(); setChatSelecting(true); };
+  const stopChatSelecting = () => { setChatSelecting(false); clearChatSelection(); };
+  /**
+   * SOHBET SİLME (kullanıcı isteği: tek tek, hepsi ya da bir kaçı birlikte silinebilsin — hem
+   * tamirci hem araç sahibi tarafında). Backend uç noktası (DELETE /api/conversations/:id) ve
+   * yetki kontrolü zaten vardı (bkz. routes/conversations.js convoVisibleTo), hiç kullanan bir
+   * frontend yolu yoktu. Açık olan sohbet silinirse (kendisi ya da toplu silmenin bir parçası
+   * olarak) hem araç sahibi hem tamirci ekranındaki aktif sohbet referansı temizleniyor —
+   * aksi halde silinmiş bir sohbetin mesajlarına bakan boş/çökmüş bir ekran kalırdı.
+   */
+  const removeConversation = (id) => {
+    setConversations(cs => cs.filter(c => c.id !== id));
+    persist(api.conversations.remove(id), "Sohbet silinemedi");
+    if (activeConvoId === id) setActiveConvoId(null);
+    if (mechActiveConvoId === id) setMechActiveConvoId(null);
+    setChatSelectedIds(ids => ids.filter(x => x !== id));
+  };
+  const deleteConversationWithConfirm = (id) => {
+    setConfirmDialog({
+      title: t("deleteChatConfirmTitle"), body: t("deleteChatConfirmBody"),
+      confirmLabel: t("yesDeleteConfirmLabel"), danger: true,
+      onConfirm: () => removeConversation(id),
+    });
+  };
+  const bulkDeleteSelectedChats = () => {
+    const ids = [...chatSelectedIds];
+    setConfirmDialog({
+      title: t("bulkDeleteChatsConfirmTitle"), body: t("bulkDeleteChatsConfirmBody", { n: String(ids.length) }),
+      confirmLabel: t("yesDeleteConfirmLabel"), danger: true,
+      onConfirm: () => { ids.forEach(removeConversation); clearChatSelection(); },
+    });
+  };
   const sendOwnerMessage = (text, image) => {
     if (!text && !image) return;
     const convo = conversations.find(c => c.id === activeConvoId);
@@ -4006,7 +4097,11 @@ function useAppLogic() {
     const outgoing = [];
     if (convo.pendingContextNote) outgoing.push({ text: convo.pendingContextNote });
     outgoing.push({ text, image });
-    const newMsgs = [...convo.messages, ...outgoing.map((m) => ({ id: msgId++, sender: "owner", lang: ownerLang, ...m }))];
+    // senderId: owner-owner sohbette (bkz. convo.peerOwnerId) sunucu her iki tarafı da
+    // sender="owner" damgalıyor, "bu benim mi" sorusu artık senderId'ye bakıyor (bkz. ChatBubble
+    // kullanım yerleri) — yerel iyimser eklemede de bu alan olmazsa kendi mesajın bir an için
+    // karşı tarafmış gibi (yanlış hizalı) görünür, sunucu yanıtı gelince düzelirdi.
+    const newMsgs = [...convo.messages, ...outgoing.map((m) => ({ id: msgId++, sender: "owner", senderId: MY_OWNER_ID, lang: ownerLang, ...m }))];
     setConversations(cs => cs.map(c => c.id === activeConvoId ? { ...c, messages: newMsgs, pendingContextNote: null } : c));
     // Sunucunun döndürdüğü sohbet, karşı tarafın bu sırada yazdığı mesajları da içerir — yerel
     // kopyayı onunla tazeliyoruz (eskiden dizi topluca ezildiği için o mesajlar kayboluyordu).
@@ -4014,12 +4109,20 @@ function useAppLogic() {
       .then((saved) => setConversations(cs => cs.map(c => c.id === activeConvoId ? { ...c, messages: saved.messages, pendingContextNote: null } : c)))
       .catch((err) => setToast({ type: "info", text: `⚠️ Mesaj kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` }));
     // Not: bildirim gövdesi sabit bir dizgi olduğu için canlı çeviri altyapısını kullanamıyor —
-    // alıcı tamircinin dili göndericiyle AYNI değilse mesaj önizlemesini ham haliyle göstermiyoruz
+    // alıcının dili göndericiyle AYNI değilse mesaj önizlemesini ham haliyle göstermiyoruz
     // (bkz. quote-request bildirimi için yukarıdaki not); sohbet ekranındaki ChatBubble zaten
     // karşı tarafın diline göre otomatik çeviriyor, bildirim o zaman sadece oraya yönlendiriyor.
-    const recipientMech = mechanicsList.find(m => m.id === convo.mechanicId);
-    const chatPreviewSameLang = !recipientMech || (recipientMech.lang || "tr") === ownerLang;
-    fireNotification("Yeni mesaj 💬", `${ownerProfile.name || "Araç sahibi"}: ${!text ? "📷 Fotoğraf gönderdi" : chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId });
+    // Owner-owner sohbette alıcı bir tamirci değil bir başka araç sahibi — bkz. peerOwnerId.
+    const recipientLang = convo.peerOwnerId != null
+      ? ownersDirectory.find(o => o.id === convo.peerOwnerId)?.lang
+      : mechanicsList.find(m => m.id === convo.mechanicId)?.lang;
+    const chatPreviewSameLang = !recipientLang || recipientLang === ownerLang;
+    const previewBody = `${ownerProfile.name || "Araç sahibi"}: ${!text ? "📷 Fotoğraf gönderdi" : chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`;
+    if (convo.peerOwnerId != null) {
+      fireNotification("Yeni mesaj 💬", previewBody, true, "owner", { type: "chat", id: activeConvoId });
+    } else {
+      fireNotification("Yeni mesaj 💬", previewBody, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId });
+    }
     setChatInput("");
   };
   // GERÇEK HATA DÜZELTMESİ (sohbet akışı denetiminde bulundu): sohbette gönderilen fotoğraflar
@@ -5518,7 +5621,9 @@ function useAppLogic() {
         break;
       case "chat":
         if (forMechanic) { setMechActiveConvoId(target.id); setMechTab("messages"); setScreen("mechanicDashboard"); }
-        else { setActiveConvoId(target.id); setScreen("chat"); }
+        // WhatsApp deseni: bkz. openChatWithMechanic'teki aynı not — bildirimden gelen sohbet de
+        // ayrı bir ekrana değil, solda-liste/sağda-sohbet paneline açılıyor.
+        else { setActiveConvoId(target.id); setScreen("owner"); setOwnerTab("chats"); }
         break;
       case "supportTicket":
         if (forMechanic) { setScreen("mechProfilePage"); setMechProfileTab("support"); }
@@ -5752,7 +5857,7 @@ function useAppLogic() {
   // çalışıyor. Bkz. latestFnsRef tanımı.
   latestFnsRef.current = {
     confirmBooking, submitOffer, submitListingMsg, submitJobApplication, submitReview,
-    submitSupportTicket, submitListing, openChatWithMechanic, saveCurrentSearch, toggleReviewHelpful,
+    submitSupportTicket, submitListing, openChatWithMechanic, openChatWithOwner, saveCurrentSearch, toggleReviewHelpful,
   };
   // ==================== TARAYICI GERİ TUŞU ====================
   // SORUN: uygulamada router yok; tüm gezinme React state'inde (screen/sekmeler). Tarayıcı bunu
@@ -6042,7 +6147,8 @@ function useAppLogic() {
     addVehicle, updateVehicleFields, removeVehicle, saveReminderOverride, resetReminderOverride, submitNewReminder, updateCustomReminder, removeCustomReminder, acceptAppt,
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
-    openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
+    openReportForm, renderSupportView, openChatWithMechanic, openChatWithOwner, convoPeerDisplay, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
+    chatSelectedIds, setChatSelectedIds, chatSelecting, startChatSelecting, stopChatSelecting, toggleChatSelect, clearChatSelection, removeConversation, deleteConversationWithConfirm, bulkDeleteSelectedChats,
     ownerSettingsTab, setOwnerSettingsTab, blogPosts, setBlogPosts, blogPost, blogSlug, blogLoading, openBlogPost, openBlog,
     openMechanicsForService,
     adminBlogPosts, adminBlogForm, setAdminBlogForm, editBlogPost, cancelBlogEdit, saveBlogPost, deleteBlogPost,

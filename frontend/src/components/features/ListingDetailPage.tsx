@@ -67,10 +67,10 @@ export function ListingDetailPage() {
   // ama bu sayfaya ait olduğu için global context yerine yerel state.
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const {
-    t, lang, role, ownerLang, myProfile, mechanicsList,
+    t, lang, role, ownerLang, myProfile, mechanicsList, ownersDirectory,
     listingPageItem, closeListingPage, setSelectedListingId,
     favoriteIds, toggleFavorite, compareListingIds, toggleCompareListing,
-    openOfferForm, offerButtonState, setShowListingMsgForm, openReportForm, recordShare,
+    openOfferForm, offerButtonState, openChatWithMechanic, openChatWithOwner, openMechChatWithOwnerListing, openReportForm, recordShare,
     similarListings, listingPriceComparison, isMyListing, openSellForm, sellPrefillFromListing,
   } = useApp() as any;
 
@@ -84,6 +84,28 @@ export function ListingDetailPage() {
   const photos = (l.photos && l.photos.length > 0) ? [l.photo, ...l.photos] : [l.photo];
   const activeIdx = Math.min(photoIdx, photos.length - 1);
   const sellerMech = l.sellerType === "mechanic" ? mechanicsList.find((m) => m.id === l.sellerId) : null;
+  const sellerOwner = l.sellerType === "owner" ? ownersDirectory.find((o) => l.sellerId != null ? o.id === l.sellerId : o.name === l.sellerName) : null;
+  // "Mesaj Gönder" burada eskiden ayrı bir ilan-sorusu kaydına (listing.messages) yazıyordu —
+  // gerçek sohbet sistemine (conversations) hiç dokunmadığı için gönderilen mesaj Sohbetler
+  // listesinde görünmüyordu (kullanıcı geri bildirimi). "Sohbet Başlat" ile TAM AYNI mantığı
+  // kullanacak şekilde düzeltildi: satıcı tamirciyse doğrudan onunla, satıcı araç sahibiyse
+  // (tamirci bakıyorsa openMechChatWithOwnerListing, araç sahibi bakıyorsa openChatWithOwner ile)
+  // bağlanır. openChatWithOwner gerçek bir peerOwnerId kullanır — eskiden burada sahte bir
+  // "seller-<isim>" mechanicId'siyle openChatWithMechanic çağrılıyordu, backend bunu gerçek bir
+  // tamirci kaydı olarak doğrulayamadığı için sohbet hiçbir zaman kaydolmuyordu.
+  const startSellerChat = () => {
+    // t(): göndericinin GÜNCEL diliyle yazılıyor (bkz. chatContextNoteListing tanımındaki not) —
+    // önceden bu not her zaman sabit Türkçe yazılıp gönderenin dil etiketiyle damgalanıyordu, metin
+    // ile etiket uyuşmadığı için karşı tarafta otomatik çeviri bu satırı bazen çeviremiyordu.
+    const contextNote = t("chatContextNoteListing", { brand: l.brand, model: l.model, id: String(l.id) });
+    if (l.sellerType === "mechanic") {
+      if (sellerMech) openChatWithMechanic(sellerMech, contextNote);
+    } else if (role === "mechanic") {
+      openMechChatWithOwnerListing(contextNote, l.sellerId ?? null);
+    } else if (sellerOwner) {
+      openChatWithOwner(sellerOwner, contextNote);
+    }
+  };
   const fav = favoriteIds.includes(l.id);
   const inCompare = (compareListingIds || []).includes(l.id);
   const isEv = l.fuelType === "Elektrik" || l.fuelType === "Hibrit";
@@ -205,7 +227,7 @@ export function ListingDetailPage() {
             <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`w-full py-3.5 rounded-2xl font-semibold text-sm transition whitespace-nowrap flex items-center justify-center gap-2 ${ob.disabled ? "bg-surface-elevated text-fg-muted cursor-not-allowed" : "bg-primary text-white hover:bg-primary-hover active:scale-[0.99] shadow-md shadow-blue-200"}`}><Banknote size={16} /> {t(ob.labelKey)}</button>
             {ob.hintKey && <p className="text-[11px] text-fg-muted mt-1.5 text-center leading-relaxed">{t(ob.hintKey)}</p>}
           </>); })()}
-          <button onClick={() => setShowListingMsgForm(true)} className="w-full mt-2 border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={16} /> {t("sendMessage")}</button>
+          <button onClick={startSellerChat} className="w-full mt-2 border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={16} /> {t("startChat")}</button>
           {sellerMech?.phone && (
             <a href={`tel:${sellerMech.phone}`} className="w-full mt-2 text-fg-secondary py-2 font-medium text-xs hover:text-primary transition flex items-center justify-center gap-1.5"><Phone size={13} /> {sellerMech.phone}</a>
           )}
@@ -412,7 +434,7 @@ export function ListingDetailPage() {
             <p className="text-[10px] text-fg-muted leading-none mb-0.5 truncate">{l.brand} {l.model}</p>
             <p className="text-base font-bold text-fg leading-none">{l.price}</p>
           </div>
-          <button onClick={() => setShowListingMsgForm(true)} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-border text-fg-secondary flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
+          <button onClick={startSellerChat} aria-label={t("startChat")} className="w-11 h-11 rounded-xl border border-border text-fg-secondary flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
           {(() => { const ob = offerButtonState(l); return (
             <button onClick={() => openOfferForm()} disabled={ob.disabled} className={`flex-1 py-3 rounded-xl font-semibold text-sm transition whitespace-nowrap ${ob.disabled ? "bg-surface-elevated text-fg-muted cursor-not-allowed" : "bg-primary text-white hover:bg-primary-hover"}`}>{t(ob.labelKey)}</button>
           ); })()}

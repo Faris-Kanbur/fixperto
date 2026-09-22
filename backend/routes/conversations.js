@@ -74,7 +74,7 @@ function validateMessages(messages) {
   return null;
 }
 
-const IMMUTABLE_CONVERSATION_FIELDS = ["mechanicId", "ownerId"];
+const IMMUTABLE_CONVERSATION_FIELDS = ["mechanicId", "ownerId", "peerOwnerId"];
 
 // GÜVENLİK DÜZELTMESİ (tam site denetiminde bulundu): burada eskiden "giriş yapmış HERHANGİ bir
 // owner tüm sohbetleri görebilir" kuralı vardı — çünkü conversations tablosunda araç sahibi tarafını
@@ -87,7 +87,9 @@ const IMMUTABLE_CONVERSATION_FIELDS = ["mechanicId", "ownerId"];
 function convoVisibleTo(row, actor) {
   if (!actor) return false;
   if (actor.role === "admin") return true;
-  if (actor.role === "owner") return row.ownerId === actor.id;
+  // owner-owner sohbette (bkz. peerOwnerId) satırın İKİ tarafı da owner rolünde — kişi ya
+  // sohbeti başlatan (ownerId) ya da karşı taraf (peerOwnerId) olabilir.
+  if (actor.role === "owner") return row.ownerId === actor.id || row.peerOwnerId === actor.id;
   if (actor.role === "mechanic") return row.mechanicId === actor.id;
   return false;
 }
@@ -121,7 +123,9 @@ conversationsRouter.get("/", (req, res) => {
   const rows = actor.role === "admin"
     ? db.prepare(`SELECT * FROM conversations`).all()
     : actor.role === "owner"
-      ? db.prepare(`SELECT * FROM conversations WHERE ownerId = ?`).all(actor.id)
+      // owner-owner sohbette actor.id ya ownerId ya da peerOwnerId sütununda olabilir (bkz.
+      // convoVisibleTo'daki aynı kural).
+      ? db.prepare(`SELECT * FROM conversations WHERE ownerId = ? OR peerOwnerId = ?`).all(actor.id, actor.id)
       : actor.role === "mechanic"
         ? db.prepare(`SELECT * FROM conversations WHERE mechanicId = ?`).all(actor.id)
         // Bilinmeyen rol: convoVisibleTo'nun son satırı da `return false` idi. Yeni bir rol
@@ -144,11 +148,19 @@ conversationsRouter.post("/", (req, res) => {
   const actor = resolveActor(req);
   if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
   const body = dehydrate("conversations", req.body);
-  if (!body.mechanicId) return res.status(400).json({ error: "mechanicId zorunludur." });
-  // Sohbetin iki tarafı da İSTEMCİDEN DEĞİL oturumdan yazılıyor: bir tamirci sadece kendi
+  // İKİ ARAÇ SAHİBİ ARASI SOHBET (ör. bir "Sahibinden" ilanı hakkında) — bkz. peerOwnerId şema
+  // yorumu. Sadece bir owner bu türde sohbet başlatabilir; mechanicId bu satırlarda hiç yok.
+  const isOwnerToOwner = body.peerOwnerId != null;
+  if (isOwnerToOwner) {
+    if (actor.role !== "owner") return res.status(403).json({ error: "Bu sohbet türünü yalnızca araç sahipleri başlatabilir." });
+    if (Number(body.peerOwnerId) === actor.id) return res.status(400).json({ error: "Kendinizle sohbet başlatamazsınız." });
+  } else if (!body.mechanicId) {
+    return res.status(400).json({ error: "mechanicId zorunludur." });
+  }
+  // Sohbetin tarafları İSTEMCİDEN DEĞİL oturumdan yazılıyor: bir tamirci sadece kendi
   // mechanicId'siyle sohbet açabilir, bir araç sahibi de sohbeti ancak kendi adına açabilir
   // (başkasının adına sohbet oluşturup sonra o kişinin yazışmasıymış gibi gösteremez).
-  if (actor.role === "mechanic") {
+  if (!isOwnerToOwner && actor.role === "mechanic") {
     body.mechanicId = actor.id;
     // Tamirci bir araç sahibiyle sohbet başlatıyorsa (ör. bir "sahibinden" ilanı hakkında) karşı
     // tarafın kimliğini gövdede belirtir — ama bu değer doğrulanır: gerçekten var olan bir owner
@@ -163,20 +175,32 @@ conversationsRouter.post("/", (req, res) => {
    * KARŞI TARAFIN AD/GÖRSEL KOPYASI İSTEMCİDEN ALINMIYOR (ilişki denetiminde bulundu).
    * ---------------------------------------------------------------------------------------------
    * `mechanicName`, `mechanicImg` ve `mechanicLang` sohbet satırında tutulan KOPYALAR (liste
-   * ekranını hızlandırmak için). Bu üç alan gövdeden olduğu gibi kaydediliyordu. Ölçüldü:
-   * `mechanicName: "SAHTE AD"` gönderildi ve aynen kaydedildi.
+   * ekranını hızlandırmak için) — owner-owner sohbette de KARŞI ARAÇ SAHİBİNİN adı/fotoğrafı için
+   * AYNI üç sütun yeniden kullanılıyor (yeni sütun eklemekten kaçınmak için; mechanicId NULL
+   * olduğunda bu üç alanın "karşı taraf" anlamına geldiği burada ve şema yorumunda açıklanıyor).
+   * Bu üç alan gövdeden olduğu gibi kaydediliyordu. Ölçüldü: `mechanicName: "SAHTE AD"` gönderildi
+   * ve aynen kaydedildi.
    *
-   * Tek başına ciddi değil ama gerçek bir tutarsızlık: sohbet listesinde tamircinin adı, tamirci
-   * kaydındaki addan farklı görünebiliyor — yani kullanıcı KİMİNLE yazıştığını yanlış bilebilir
-   * (bir tamirciyi başka bir tamirci gibi göstermek, oltalama için yeterli bir zemin). Aynı sınıf
-   * hata bu denetimde randevularda da vardı (mechanicName kopyası anonimleşmiyordu).
+   * Tek başına ciddi değil ama gerçek bir tutarsızlık: sohbet listesinde karşı tarafın adı, gerçek
+   * kayıttaki addan farklı görünebiliyor — yani kullanıcı KİMİNLE yazıştığını yanlış bilebilir
+   * (birini başkası gibi göstermek, oltalama için yeterli bir zemin). Aynı sınıf hata bu denetimde
+   * randevularda da vardı (mechanicName kopyası anonimleşmiyordu).
    * Kural: kopya alanın DEĞERİ her zaman kaynak satırdan okunur.
    */
-  const mechRow = db.prepare(`SELECT name, img, lang FROM mechanics WHERE id = ?`).get(body.mechanicId);
-  if (!mechRow) return res.status(400).json({ error: "Geçersiz mechanicId." });
-  body.mechanicName = mechRow.name;
-  body.mechanicImg = mechRow.img || "";
-  body.mechanicLang = mechRow.lang || "tr";
+  if (isOwnerToOwner) {
+    const peerRow = db.prepare(`SELECT name, photo, lang FROM owners WHERE id = ?`).get(body.peerOwnerId);
+    if (!peerRow) return res.status(400).json({ error: "Geçersiz peerOwnerId." });
+    body.mechanicId = null;
+    body.mechanicName = peerRow.name;
+    body.mechanicImg = peerRow.photo || "";
+    body.mechanicLang = peerRow.lang || "tr";
+  } else {
+    const mechRow = db.prepare(`SELECT name, img, lang FROM mechanics WHERE id = ?`).get(body.mechanicId);
+    if (!mechRow) return res.status(400).json({ error: "Geçersiz mechanicId." });
+    body.mechanicName = mechRow.name;
+    body.mechanicImg = mechRow.img || "";
+    body.mechanicLang = mechRow.lang || "tr";
+  }
   if ("messages" in req.body) {
     const err = validateMessages(req.body.messages);
     if (err) return res.status(400).json({ error: err });
@@ -187,7 +211,9 @@ conversationsRouter.post("/", (req, res) => {
         ? db.prepare(`SELECT lang FROM owners WHERE id = ?`).get(actor.id)
         : db.prepare(`SELECT lang FROM mechanics WHERE id = ?`).get(actor.id);
       const stampedInitial = (req.body.messages || []).map((m, i) => ({
-        ...m, id: i + 1, sender: actor.role, lang: langRow?.lang || "tr",
+        // senderId: owner-owner sohbette İKİ TARAF da role="owner" damgalanır, yani "bu mesaj
+        // benim mi" sorusu artık role ile ayırt edilemez — bkz. POST /:id/messages'taki aynı not.
+        ...m, id: i + 1, sender: actor.role, senderId: actor.id, lang: langRow?.lang || "tr",
       }));
       body.messages = JSON.stringify(stampedInitial);
     }
@@ -272,6 +298,11 @@ conversationsRouter.post("/:id/messages", (req, res) => {
   const stamped = incoming.map((m, i) => ({
     id: baseId + i + 1,
     sender: actor.role,          // <- oturumdan, istemciden DEĞİL
+    // senderId: owner-owner sohbette (bkz. peerOwnerId) satırın İKİ TARAFI da role="owner" olarak
+    // damgalanıyor, yani "bu mesaj benim mi" artık role'den ayırt edilemiyor — frontend gerçek
+    // kimliği (actor.id) bu alandan okuyor. Owner-tamirci sohbette rol tek başına yeterli olduğu
+    // için mevcut davranış değişmiyor, bu alan sadece ek bir kesinlik sağlıyor.
+    senderId: actor.id,
     lang: senderLang,            // <- gönderenin kayıtlı dili; çeviri bunu kullanıyor
     text: typeof m?.text === "string" ? m.text : undefined,
     image: typeof m?.image === "string" ? m.image : undefined,

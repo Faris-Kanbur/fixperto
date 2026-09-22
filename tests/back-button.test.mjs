@@ -190,9 +190,16 @@ function backAffordances(block, label) {
     "araç sahibi profil sayfası artık standart üst çubuğu kullanıyor (logo da görünür)");
   eq((shell.match(/absolute top-4 left-4 z-40/g) || []).length, 0,
     "araç sahibi profilindeki ve ayarlardaki yüzen geri okları kaldırıldı");
-  // Dört sayfa da aynı deseni kullanıyor: bu sayı düşerse biri tekrar kendi çubuğunu yapmış olur.
-  ok((shell.match(/<PageTopBar onBack=/g) || []).length >= 5,
-    "profil/ayarlar/sohbet/randevu sayfalarının hepsi standart üst çubuğu kullanıyor");
+  // NOT: eskiden 5'ti — ayrı tek-sütunlu screen="chat" sohbet ekranı de dahildi. O ekran
+  // kaldırıldı (kullanıcı geri bildirimi: "whatsapp'da olduğu gibi olsun"); artık HER giriş
+  // noktası (Sohbet Başlat, bildirimler, profil sekmesi) solda-liste/sağda-sohbet gösteren
+  // OwnerChatsPanel'e (ownerTab === "chats") yönleniyor — o da kendi tek geri düğmesini
+  // kullanıyor, ama PageTopBar ÜZERİNDEN değil (owner sekmelerinin ortak "‹ Geri" desenini
+  // kullanıyor, bkz. `{ownerTab !== "search" && ...}` — bu da tek ve doğru bir geri düğmesi,
+  // sadece bu regex'in saydığı örüntü değil). Kalan dört sayfa aynı deseni kullanıyor: bu sayı
+  // düşerse biri tekrar kendi çubuğunu yapmış olur.
+  ok((shell.match(/<PageTopBar onBack=/g) || []).length >= 4,
+    "profil/ayarlar/sohbet(profil sekmesi)/randevu sayfalarının hepsi standart üst çubuğu kullanıyor");
 }
 
 // --- 4) ÜST ÇUBUK ÇAKIŞMALARI: çift logo ve katman sırası ------------------------------------

@@ -240,7 +240,8 @@ export function AppShell() {
     addVehicle, updateVehicleFields, removeVehicle, saveReminderOverride, resetReminderOverride, submitNewReminder, updateCustomReminder, removeCustomReminder, acceptAppt,
     rejectAppt, markNoShow, advanceStatus, completeApptWithWarranty, cancelOwnAppt, startReschedule, confirmReschedule, submitReview,
     submitMechanicReply, deleteMyReview, closePasswordModal, submitPasswordChange, confirmDeleteAccount, openHelpInfo, mySupportTickets, submitSupportTicket,
-    openReportForm, renderSupportView, openChatWithMechanic, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
+    openReportForm, renderSupportView, openChatWithMechanic, openChatWithOwner, convoPeerDisplay, openMechChatWithOwnerListing, activeConvo, sendOwnerMessage, handleFileSelect, sendOwnerMessageWithReply,
+    chatSelectedIds, setChatSelectedIds, chatSelecting, startChatSelecting, stopChatSelecting, toggleChatSelect, deleteConversationWithConfirm, bulkDeleteSelectedChats,
     ownerSettingsTab, setOwnerSettingsTab, adminBlogPosts, adminBlogForm, setAdminBlogForm, editBlogPost, cancelBlogEdit, saveBlogPost, deleteBlogPost,
     goToLandingPage, toggleTranslate, mechConvo, sendMechMessage, updateMyField, updateService, removeService, setServiceFixed, finalizeAddService,
     serviceLabel, serviceCategoryOf, servicePriceForBrand, mechanicStartingPrice,
@@ -2556,7 +2557,12 @@ export function AppShell() {
                 </>
               ); })()}
               {ownerProfileTab === "appts" && <OwnerAppointmentsView />}
-              {ownerProfileTab === "chats" && (<div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-3 items-start">{conversations.map(c => { const last = c.messages[c.messages.length - 1]; return (<button key={c.id} onClick={() => { setActiveConvoId(c.id); setScreen("chat"); }} className="w-full text-left bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-primary-subtle transition flex items-center gap-3"><div className="text-2xl bg-primary-tint rounded-xl w-12 h-12 flex items-center justify-center flex-shrink-0">{c.mechanicImg}</div><div className="flex-1 min-w-0"><h4 className="font-semibold text-fg-strong text-sm">{c.mechanicName}</h4><p className="text-xs text-fg-muted truncate">{last ? last.text : t("noMessagesInChatYet")}</p></div><ChevronRight size={16} className="text-fg-muted" /></button>); })}{conversations.length === 0 && <div className="lg:col-span-2 2xl:col-span-3 bg-white border border-dashed border-border rounded-3xl text-center py-24"><MessageCircle size={40} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noChatsShort")}</p></div>}</div>)}
+              {/* ESKİ HÂLİ burada ayrı bir kart-ızgarası + tek-sütunlu screen="chat" ekranına
+                  götüren bir liste idi — Sohbetler sekmesindeki (solda liste/sağda sohbet,
+                  WhatsApp deseni) OwnerChatsPanel'den TAMAMEN AYRI, kendi kopyası. Kullanıcı
+                  nereden girdiğine göre iki farklı deneyim görüyordu; artık tek doğruluk kaynağı
+                  kullanılıyor. */}
+              {ownerProfileTab === "chats" && <OwnerChatsPanel />}
               {ownerProfileTab === "offers" && (<>
                 <h3 className="font-semibold text-fg-strong text-sm mb-2">{t("offersMade")}</h3>
                 <div className="space-y-2 mb-6">{listings.flatMap(l => l.offers.filter(o => (o.buyerId != null ? o.buyerId === MY_OWNER_ID : o.from === ownerProfile.name) && o.status !== "replaced").map(o => ({ ...o, listing: l }))).map(o => (
@@ -2864,9 +2870,14 @@ export function AppShell() {
                   <div className="grid grid-cols-2 gap-2 mt-5 sticky bottom-0 bg-white/95 backdrop-blur-sm pt-3 pb-2 -mx-5 px-5 md:-mx-8 md:px-8 border-t border-surface-elevated">
                     <button onClick={openOfferForm} disabled={offerBtn.disabled} title={offerBtn.hintKey ? t(offerBtn.hintKey) : undefined} className={`py-3 rounded-2xl font-semibold text-sm transition flex items-center justify-center gap-2 ${offerBtn.disabled ? "bg-surface-elevated text-fg-muted cursor-not-allowed" : "bg-primary text-white hover:bg-primary-hover"}`}><Banknote size={15} /> {t(offerBtn.labelKey)}</button>
                     {selectedListing.sellerType === "mechanic" ? (
-                      <button onClick={() => { const mech = mechanicsList.find(m => m.name === selectedListing.sellerName); if (mech) openChatWithMechanic(mech, `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`); setSelectedListingId(null); }} className="border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
+                      <button onClick={() => { const mech = mechanicsList.find(m => m.name === selectedListing.sellerName); if (mech) openChatWithMechanic(mech, t("chatContextNoteListing", { brand: selectedListing.brand, model: selectedListing.model, id: String(selectedListing.id) })); setSelectedListingId(null); }} className="border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
                     ) : (
-                      <button onClick={() => { const contextNote = `🚗 Bu sohbeti "${selectedListing.brand} ${selectedListing.model}" (İlan #${selectedListing.id}) ilanı hakkında başlattım.`; if (role === "mechanic") { openMechChatWithOwnerListing(contextNote, selectedListing.sellerType === "owner" ? selectedListing.sellerId ?? null : null); } else { openChatWithMechanic({ id: `seller-${selectedListing.sellerName}`, name: selectedListing.sellerName, img: "👤", lang: "tr" }, contextNote); } setSelectedListingId(null); }} className="border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
+                      // Satıcı bir araç sahibiyse (Sahibinden) ve BAKAN da bir araç sahibiyse, bu
+                      // gerçek bir openChatWithOwner (iki araç sahibi arası sohbet) — eskiden burada
+                      // sahte bir "seller-<isim>" mechanicId'siyle openChatWithMechanic çağrılıyordu,
+                      // backend bunu gerçek bir tamirci kaydı olarak doğrulayamadığı için sohbet
+                      // hiçbir zaman kaydolmuyordu (bkz. ListingDetailPage.tsx aynı düzeltme).
+                      <button onClick={() => { const contextNote = t("chatContextNoteListing", { brand: selectedListing.brand, model: selectedListing.model, id: String(selectedListing.id) }); if (role === "mechanic") { openMechChatWithOwnerListing(contextNote, selectedListing.sellerType === "owner" ? selectedListing.sellerId ?? null : null); } else { const sellerOwner = ownersDirectory.find(o => selectedListing.sellerId != null ? o.id === selectedListing.sellerId : o.name === selectedListing.sellerName); if (sellerOwner) openChatWithOwner(sellerOwner, contextNote); } setSelectedListingId(null); }} className="border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("startChat")}</button>
                     )}
                     {sellerPhone && (
                       <a href={`tel:${sellerPhone.replace(/\s+/g, "")}`} className="col-span-2 border border-border text-fg-strong py-2.5 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><Phone size={14} /> {t("callPhoneBtn", { phone: sellerPhone })}</a>
@@ -2934,35 +2945,12 @@ export function AppShell() {
             </div>
           </div>
         </>); })()}
-        {screen === "chat" && activeConvo && (
-          <div className="w-full flex flex-col flex-1">
-            {/* Logo sohbette de var: kullanıcı yazışmanın ortasındayken ana sayfaya dönebilmeli. */}
-            <PageTopBar onBack={() => setScreen("owner")} />
-            <div className="max-w-md md:max-w-2xl mx-auto w-full flex flex-col flex-1">
-            <div className="bg-white text-fg px-5 pt-6 pb-4 border-b border-border shadow-sm">{/* GERİ TUŞU KALDIRILDI: bu sayfa yukarıda PageTopBar kullanıyor ve orada zaten bir geri
-                    oku var (kullanıcı bildirdi: "iki tane geri tuşu saçma"). Bant artık yalnızca
-                    karşı tarafın adını ve durumunu gösteriyor. */}<div className="flex items-center justify-between"><div className="flex items-center gap-2"><div className="text-2xl bg-primary-tint rounded-xl w-11 h-11 flex items-center justify-center">{activeConvo.mechanicImg}</div><h1 className="text-base font-bold text-fg">{activeConvo.mechanicName}</h1></div><select value={ownerLang} onChange={(e) => setOwnerLang(e.target.value)} className="bg-surface-elevated text-fg-strong text-xs rounded-lg px-2 py-1 border-none outline-none focus:ring-2 focus:ring-focus"><option className="text-black" value="tr">🇹🇷 TR</option><option className="text-black" value="en">🇬🇧 EN</option><option className="text-black" value="de">🇩🇪 DE</option></select></div></div>
-            <div className="flex-1 px-5 py-4 overflow-y-auto">{activeConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={ownerLang} mine={m.sender === "owner"} />))}</div>
-            {activeConvo.messages.length > 0 && activeConvo.messages[activeConvo.messages.length - 1].isRejectionNotice ? (
-              <div className="px-5 pb-6 pt-2 border-t border-surface-elevated"><div className="bg-surface-elevated text-fg-secondary text-xs text-center py-3 rounded-xl">{t("applicationRejectedNotice")}</div></div>
-            ) : (<>
-              <div className="px-5 pb-2"><button onClick={() => {
-                // Sohbet ekranı kendi tamirci bağlamını activeConvo.mechanicId üzerinden tutuyor —
-                // selectedMechanicId ile senkron OLMAK ZORUNDA DEĞİL (ör. bu sohbete "Sohbetlerim"
-                // listesinden doğrudan girildiyse selectedMechanicId hiç ayarlanmamış ya da BAŞKA bir
-                // tamirciye ait olabilir). Randevu ekranı selectedMechanic'i okuduğu için burada
-                // ayarlamazsak ya boş/çökmüş bir ekran ya da YANLIŞ tamirciyle randevu oluşurdu.
-                const mech = mechanicsList.find(m => m.id === activeConvo.mechanicId);
-                if (!mech) { setToast({ type: "info", text: t("mechanicNoLongerListed") }); return; }
-                setSelectedMechanicId(mech.id);
-                setSelectedDate(null); setSelectedTime(null); setBookingService(null); setProblemDesc(""); setProblemPhotos([]);
-                setScreen("booking");
-              }} className="w-full mb-3 bg-primary-tint text-primary text-xs font-medium py-2 rounded-xl hover:bg-blue-100 transition flex items-center justify-center gap-1"><Calendar size={14} /> {t("bookWithThisMechanic")}</button></div>
-              <div className="px-5 pb-6 pt-2 border-t border-surface-elevated flex items-center gap-2"><input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" /><button onClick={() => fileInputRef.current?.click()} className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-elevated text-fg-secondary hover:bg-border transition flex-shrink-0"><ImageIcon size={18} /></button><input value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendOwnerMessageWithReply(chatInput); }} placeholder={t("chatInputPlaceholder")} className="flex-1 px-4 py-2.5 rounded-full border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary-subtle" /><button onClick={() => sendOwnerMessageWithReply(chatInput)} className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary-hover transition flex-shrink-0"><Send size={16} /></button></div>
-            </>)}
-          </div>
-          </div>
-        )}
+        {/* screen === "chat" (ayrı tek-sütunlu sohbet ekranı) KALDIRILDI: her giriş noktası
+            (Sohbet Başlat, bildirimler, profil sekmesi) artık WhatsApp deseninde solda-liste/
+            sağda-sohbet gösteren Sohbetler paneline (OwnerChatsPanel, ownerTab === "chats")
+            yönleniyor — kullanıcı geri bildirimi: "whatsapp'da olduğu gibi olsun". Bu ekranın
+            kendine özgü hiçbir davranışı yoktu (aynı activeConvo/ChatBubble/sendOwnerMessage
+            state'ini kullanıyordu), o yüzden ayrı bir kopya olarak tutmanın gerekçesi kalmadı. */}
         {screen === "booking" && selectedMechanic && (() => {
           /* ---- RANDEVU OLUŞTUR (tam sayfa web düzeni) ----
              Tasarım dili sitenin geri kalanıyla aynı: üst çubuk + max-w-7xl gövde + solda
@@ -3484,23 +3472,59 @@ export function AppShell() {
                   <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-5 items-start">
                     {/* SOL: sohbet listesi */}
                     <div className={`bg-white border border-surface-elevated rounded-3xl shadow-sm overflow-hidden ${mechConvo ? "hidden lg:block" : ""}`}>
-                      <div className="px-5 py-4 border-b border-surface-elevated flex items-center justify-between">
-                        <h3 className="font-bold text-fg text-sm">{t("mechTabMessages")}</h3>
-                        <span className="text-xs text-fg-muted">{myConvos.length}</span>
+                      <div className="px-5 py-4 border-b border-surface-elevated">
+                        {/* SOHBET SİLME (kullanıcı isteği): tek tek (her satırdaki çöp kutusu), hepsi
+                            ya da bir kaçı birlikte (bu seçim modu — "Tümünü Seç" ile hepsi de
+                            kapsanmış olur, ayrı bir "hepsini sil" düğmesine gerek kalmadan).
+                            chatSelectedIds/chatSelecting OwnerChatsPanel ile PAYLAŞILAN context
+                            state'i — aynı desen, tek kaynak (bkz. AppLogicProvider.tsx tanımı). */}
+                        {chatSelecting ? (
+                          <div className="flex items-center justify-between gap-2">
+                            <button onClick={stopChatSelecting} className="text-xs font-semibold text-fg-secondary hover:text-fg-strong flex-shrink-0">{t("cancel")}</button>
+                            <span className="text-xs text-fg-muted truncate">{t("chatSelectedCountLabel", { n: String(chatSelectedIds.length) })}</span>
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              <button onClick={() => setChatSelectedIds(chatSelectedIds.length === myConvos.length ? [] : myConvos.map(c => c.id))} className="text-xs font-semibold text-primary hover:underline">
+                                {chatSelectedIds.length === myConvos.length ? t("galleryClearSelectionBtn") : t("gallerySelectAllBtn")}
+                              </button>
+                              <button onClick={bulkDeleteSelectedChats} disabled={chatSelectedIds.length === 0} className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition ${chatSelectedIds.length === 0 ? "text-fg-muted cursor-not-allowed" : "text-error hover:bg-error-tint"}`}>
+                                {t("galleryBulkDeleteBtn")}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-fg text-sm">{t("mechTabMessages")}</h3>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs text-fg-muted">{myConvos.length}</span>
+                              {myConvos.length > 0 && (
+                                <button onClick={startChatSelecting} className="text-xs font-semibold text-primary hover:underline">{t("selectChatsBtn")}</button>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div className="max-h-[62vh] overflow-y-auto divide-y divide-background">
                         {myConvos.map(c => {
                           const last = c.messages[c.messages.length - 1];
                           const on = mechActiveConvoId === c.id;
+                          const checked = chatSelectedIds.includes(c.id);
                           return (
-                            <button key={c.id} onClick={() => setMechActiveConvoId(c.id)} className={`w-full text-left px-5 py-4 transition flex items-center gap-3 ${on ? "bg-primary-tint/70" : "hover:bg-background"}`}>
-                              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={18} className="text-primary" /></div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-fg text-sm truncate">{t("vehicleOwnerLabel")}</h4>
-                                <p className="text-xs text-fg-muted truncate">{last ? last.text : t("noMessagesYet")}</p>
-                              </div>
-                              <ChevronRight size={15} className={`flex-shrink-0 ${on ? "text-primary-subtle" : "text-fg-muted"}`} />
-                            </button>
+                            <div key={c.id} className={`w-full flex items-center gap-3 px-5 py-4 transition ${on && !chatSelecting ? "bg-primary-tint/70" : "hover:bg-background"}`}>
+                              {chatSelecting && (
+                                <input type="checkbox" checked={checked} onChange={() => toggleChatSelect(c.id)} aria-label={t("selectChatsBtn")} className="w-4 h-4 flex-shrink-0 accent-blue-600" />
+                              )}
+                              <button onClick={() => (chatSelecting ? toggleChatSelect(c.id) : setMechActiveConvoId(c.id))} className="flex-1 min-w-0 flex items-center gap-3 text-left">
+                                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={18} className="text-primary" /></div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-fg text-sm truncate">{t("vehicleOwnerLabel")}</h4>
+                                  <p className="text-xs text-fg-muted truncate">{last ? last.text : t("noMessagesYet")}</p>
+                                </div>
+                              </button>
+                              {!chatSelecting && (
+                                <button onClick={() => deleteConversationWithConfirm(c.id)} aria-label={t("deleteChatAria")} className="flex-shrink-0 text-fg-muted hover:text-error p-1.5 rounded-lg hover:bg-error-tint transition"><Trash2 size={14} /></button>
+                              )}
+                              {!chatSelecting && <ChevronRight size={15} className={`flex-shrink-0 ${on ? "text-primary-subtle" : "text-fg-muted"}`} />}
+                            </div>
                           );
                         })}
                         {myConvos.length === 0 && (<div className="text-center py-16 px-5"><MessageCircle size={36} className="mx-auto text-fg-muted mb-3" /><p className="text-fg-muted text-sm">{t("noMessagesYet")}</p></div>)}
@@ -3513,6 +3537,7 @@ export function AppShell() {
                           <button onClick={() => setMechActiveConvoId(null)} aria-label={t("back")} className="text-fg-muted hover:text-fg-strong lg:hidden"><ChevronLeft size={18} /></button>
                           <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0"><User size={16} className="text-primary" /></div>
                           <span className="text-sm font-semibold text-fg">{t("vehicleOwnerChatTitle")}</span>
+                          <button onClick={() => deleteConversationWithConfirm(mechConvo.id)} aria-label={t("deleteChatAria")} className="ml-auto w-8 h-8 flex items-center justify-center rounded-lg text-fg-muted hover:text-error hover:bg-error-tint transition flex-shrink-0"><Trash2 size={15} /></button>
                         </div>
                         <div className="flex-1 px-5 py-5 overflow-y-auto max-h-[52vh] bg-background/50">
                           {mechConvo.messages.map(m => (<ChatBubble key={m.id} msg={m} viewerLang={myProfile.lang || "tr"} mine={m.sender === "mechanic"} />))}

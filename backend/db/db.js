@@ -157,10 +157,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_vehicle_history_appt ON vehicle_history(ap
 
 CREATE TABLE IF NOT EXISTS conversations (
   id INTEGER PRIMARY KEY,
-  -- Sohbetin iki tarafı: tamirci (mechanicId) ve araç sahibi (ownerId). ownerId güvenlik
+  -- Sohbetin iki tarafı NORMALDE tamirci (mechanicId) ve araç sahibi (ownerId). ownerId güvenlik
   -- denetiminde eklendi — bkz. aşağıdaki ensureColumn yorumu ve routes/conversations.js.
   ownerId INTEGER,
   mechanicId INTEGER,
+  -- peerOwnerId: İKİ ARAÇ SAHİBİ arasındaki sohbet için (ör. "Sahibinden" ilan veren bir araç
+  -- sahibiyle o ilanı soran başka bir araç sahibi). Bu satırlarda mechanicId NULL kalır, ownerId
+  -- sohbeti BAŞLATAN tarafı, peerOwnerId KARŞI tarafı gösterir — bkz. routes/conversations.js.
+  peerOwnerId INTEGER,
   mechanicName TEXT,
   mechanicImg TEXT,
   mechanicLang TEXT DEFAULT 'tr',
@@ -539,6 +543,13 @@ function ensureColumn(table, columnDef) {
   // sohbet oluşturulurken ownerId oturumdan yazılıyor ve okuma/yazma buna göre kısıtlanıyor
   // (bkz. backend/routes/conversations.js convoVisibleTo).
   ["conversations", "ownerId INTEGER"],
+  // İKİ ARAÇ SAHİBİ ARASI SOHBET (ör. "Sahibinden" ilanı hakkında) — daha önce conversations
+  // şeması yalnızca "bir owner + bir mechanic" varsayımıyla kuruluydu; mechanicId zorunlu bir FK
+  // gibi doğrulanıyordu (bkz. POST / uç noktası), yani bir araç sahibi bir başka araç sahibiyle
+  // sohbet başlatamıyordu (backend 400 "Geçersiz mechanicId" döndürüyordu — kullanıcı geri
+  // bildirimiyle bulundu). Bu sütun ikinci araç sahibinin kimliğini tutuyor; bu satırlarda
+  // mechanicId NULL kalır.
+  ["conversations", "peerOwnerId INTEGER"],
   // GERÇEK OTURUM SİSTEMİ: mechanics tablosunda daha önce hiç email sütunu yoktu (owners'ta vardı) —
   // gerçek e-posta+şifre ile giriş/kayıt için (bkz. backend/routes/auth.js) artık gerekli.
   ["mechanics", "email TEXT"],
@@ -1059,6 +1070,7 @@ CREATE INDEX IF NOT EXISTS idx_appointments_mechanic ON appointments (mechanicId
 -- diskten okumak demek. Sorgu ayrıca aşağıda SQL'e taşındı (routes/conversations.js).
 CREATE INDEX IF NOT EXISTS idx_conversations_owner ON conversations (ownerId);
 CREATE INDEX IF NOT EXISTS idx_conversations_mechanic ON conversations (mechanicId);
+CREATE INDEX IF NOT EXISTS idx_conversations_peerowner ON conversations (peerOwnerId);
 
 -- DESTEK TALEPLERİ: sorgu her zaman İKİ sütunu birlikte kullanıyor — \`fromId = ? AND fromType = ?\`.
 -- (Tek başına fromId yetmez: owner #7 ile mechanic #7 farklı kişiler; bkz. server.js yorumu.)

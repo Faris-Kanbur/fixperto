@@ -28,6 +28,7 @@ const tokens = read("frontend", "src", "styles", "tokens.css");
 const twConfig = read("frontend", "tailwind.config.js");
 const indexCss = read("frontend", "src", "index.css");
 const shell = read("frontend", "src", "app", "AppShell.tsx");
+const ownerChatsPanel = read("frontend", "src", "components", "features", "OwnerChatsPanel.tsx");
 
 const TOKEN_NAMES = [
   "primary", "primary-hover", "primary-active", "secondary", "accent",
@@ -101,7 +102,11 @@ for (const name of ["surface", "background", "surface-elevated", "fg", "fg-secon
 // --- A11Y DÜZELTMESİ KAPSANIYOR MU (nihai inceleme bulgusu): bu dalgadaki TEK
 // davranış değiştiren satır (sohbet dil seçicisindeki focus ring) önceden hiç
 // test edilmiyordu.
-ok(shell.includes('className="bg-surface-elevated text-fg-strong text-xs rounded-lg px-2 py-1 border-none outline-none focus:ring-2 focus:ring-focus"'), "sohbet dil seçicisinde focus:ring-focus var");
+// TAŞINDI (kullanıcı geri bildirimi: "whatsapp'da olduğu gibi olsun"): ayrı tek-sütunlu
+// screen="chat" ekranı kaldırıldı, tüm giriş noktaları artık solda-liste/sağda-sohbet
+// gösteren OwnerChatsPanel'e yönleniyor — bu seçici de aynı erişilebilirlik düzeltmesiyle
+// oraya taşındı, AppShell.tsx'te artık yok.
+ok(ownerChatsPanel.includes('className="bg-surface-elevated text-fg-strong text-xs rounded-lg px-2 py-1 border-none outline-none focus:ring-2 focus:ring-focus"'), "sohbet dil seçicisinde focus:ring-focus var");
 
 // --- PALET BLOKLARI (Wave 2): her yeni paletin hem açık hem karanlık bileşik-seçici bloğu
 // var mı, ve 7 değişken token'ı tanımlıyor mu — bkz. docs/superpowers/plans/

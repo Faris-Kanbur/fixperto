@@ -313,6 +313,10 @@ export interface Listing {
 export interface ChatMessage {
   id: number;
   sender: "owner" | "mechanic";
+  /** Gönderenin gerçek kimliği (owners.id ya da mechanics.id, actor.role'e göre) — owner-owner
+   * sohbette (bkz. Conversation.peerOwnerId) satırın İKİ TARAFI da sender="owner" damgalandığı
+   * için "bu mesaj benim mi" sorusu artık sender değil bu alan üzerinden cevaplanıyor. */
+  senderId?: number;
   text: string;
   lang?: string;
   image?: string;
@@ -325,7 +329,11 @@ export interface Conversation {
    * (bkz. backend/routes/conversations.js convoVisibleTo). Tamirci tarafından başlatılan ve karşı
    * tarafın kimliği bilinemeyen eski/istisnai sohbetlerde null olabilir. */
   ownerId?: number | null;
-  mechanicId: number;
+  /** İKİ ARAÇ SAHİBİ arasındaki sohbette (ör. bir "Sahibinden" ilanı hakkında) karşı tarafın
+   * kimliği — bu satırlarda mechanicId null'dur. mechanicName/mechanicImg/mechanicLang bu
+   * durumda KARŞI ARAÇ SAHİBİNİN bilgilerini taşır (bkz. backend/routes/conversations.js). */
+  peerOwnerId?: number | null;
+  mechanicId: number | null;
   mechanicName: string;
   mechanicImg: string;
   mechanicLang?: string;
