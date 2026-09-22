@@ -1202,6 +1202,16 @@ function useAppLogic() {
     }
     pendingDeepLinkRef.current = null;
   }, [screen]);
+  // GERÇEK HATA: setPageMeta (bkz. helpers.ts) sadece blog/blogPost/about/careers ekranlarında
+  // çağrılıyor. Bu ekranlardan birine bir kez girildikten sonra sekme başlığı ("Blog · Fixperto"
+  // gibi) TAKILI kalıyordu — kullanıcı sonra admin paneline, tamirci detayına, ilan sayfasına vb.
+  // geçse bile başlık değişmiyordu, çünkü hiçbir şey onu sıfırlamıyordu. Bu ekranların dışına
+  // çıkıldığında başlığı varsayılana ("Fixperto") döndürüyoruz; her ekrana özel SEO başlığı eklemek
+  // ayrı, daha büyük bir iş — bu sadece "yanlış kalan" başlığı düzeltiyor.
+  useEffect(() => {
+    if (screen === "blog" || screen === "blogPost" || screen === "about" || screen === "careers") return;
+    if (typeof document !== "undefined") document.title = "Fixperto";
+  }, [screen]);
   const recordConversion = (action) => {
     if (!incomingShareRef) return;
     // ÖNEMLİ: bu tamamen dahili bir referral-atıf kaydı (kullanıcının kendi eylemiyle ilgisi yok) —

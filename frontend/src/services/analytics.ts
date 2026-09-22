@@ -103,14 +103,20 @@ function flush() {
   queue = [];
   const body = JSON.stringify({ events });
   try {
-    // sendBeacon sayfa kapanırken bile teslim edilir (fetch iptal edilir). Yoksa fetch'e düşüyoruz.
-    if (navigator.sendBeacon) {
+    // sendBeacon sayfa kapanırken bile teslim edilir (fetch iptal edilir) — AMA credential'ları
+    // (çerezleri) kapatma seçeneği yok. Aynı origin'de (prod'da genelde böyle) bu zararsız; frontend
+    // ile backend FARKLI origin'deyse (her yerel geliştirme kurulumu — Vite/Express farklı portlarda)
+    // tarayıcı bunu "credential'lı" bir istek sayıyor, backend Access-Control-Allow-Credentials
+    // döndürmediği için (analitik anonim, çereze ihtiyacı yok — bilinçli bir seçim) istek CORS'ta
+    // sessizce engelleniyordu. GERÇEK HATA: analitik yerel geliştirmede hiçbir zaman çalışmıyordu.
+    const sameOrigin = new URL(EVENTS_URL, location.href).origin === location.origin;
+    if (sameOrigin && navigator.sendBeacon) {
       navigator.sendBeacon(EVENTS_URL, new Blob([body], { type: "application/json" }));
       return;
     }
   } catch { /* sendBeacon engelliyse fetch dene */ }
   fetch(EVENTS_URL, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true,
+    method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true, credentials: "omit",
   }).catch(() => { /* analitik ürünü bozmaz */ });
 }
 
