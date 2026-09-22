@@ -2933,7 +2933,7 @@ function useAppLogic() {
         </div>
         {editing ? (
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button onClick={() => saveProfileField(user, key)} aria-label="Kaydet" className="w-7 h-7 rounded-lg bg-secondary text-white flex items-center justify-center hover:bg-secondary transition"><Check size={13} /></button>
+            <button onClick={() => saveProfileField(user, key)} aria-label="Kaydet" className="w-7 h-7 rounded-lg bg-secondary text-white flex items-center justify-center hover:bg-gray-800 transition"><Check size={13} /></button>
             <button onClick={cancelEditProfileField} aria-label="Vazgeç" className="w-7 h-7 rounded-lg border border-border text-fg-muted flex items-center justify-center hover:bg-background transition"><X size={13} /></button>
           </div>
         ) : (
@@ -2988,7 +2988,7 @@ function useAppLogic() {
           <p className="text-xs font-semibold text-fg-strong truncate">{l.brand} {l.model} <span className="text-fg-muted font-normal">#{l.id}</span></p>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="text-[10px] text-fg-muted flex items-center gap-0.5" title="Kaç kez paylaşıldı"><Share2 size={10} /> {l.shareCount || 0}</span>
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-secondary text-white" : l.status === "sold" ? "bg-error-tint text-red-500" : l.status === "reserved" ? "bg-border text-fg-strong" : "bg-success-tint text-success"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-gray-800 text-white" : l.status === "sold" ? "bg-error-tint text-red-500" : l.status === "reserved" ? "bg-border text-fg-strong" : "bg-success-tint text-success"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
             {l.featured && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">⭐ Öne Çıkan</span>}
           </div>
         </div>

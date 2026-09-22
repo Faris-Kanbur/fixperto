@@ -133,7 +133,7 @@ export function VinLookupPanel() {
           className="flex-1 px-3.5 py-2.5 rounded-xl border border-border text-sm font-mono tracking-wide focus:outline-none focus:ring-2 focus:ring-primary-subtle"
         />
         <button onClick={() => lookupVin(input)} disabled={vinLookup.loading}
-          className="bg-secondary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-secondary transition disabled:opacity-60 flex items-center gap-1.5">
+          className="bg-secondary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-60 flex items-center gap-1.5">
           {vinLookup.loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />} {t("vinLookupBtn")}
         </button>
       </div>

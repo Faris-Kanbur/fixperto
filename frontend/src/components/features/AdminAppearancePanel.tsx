@@ -51,7 +51,7 @@ export function AdminAppearancePanel() {
                 onClick={() => apply(p.key)}
                 disabled={active || applying === p.key}
                 className={`w-full text-sm font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 ${
-                  active ? "bg-success-tint text-green-700 cursor-default" : "bg-secondary text-white hover:bg-secondary disabled:opacity-60"
+                  active ? "bg-success-tint text-green-700 cursor-default" : "bg-secondary text-white hover:bg-gray-800 disabled:opacity-60"
                 }`}
               >
                 {active ? (<><Check size={15} /> Aktif</>) : applying === p.key ? "Uygulanıyor…" : "Kullan"}

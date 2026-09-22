@@ -399,7 +399,7 @@ export function AppShell() {
         * testle korunuyor (tests/layering.test.mjs): kod tabanındaki en yüksek katman artarsa bu
         * değer de artmak zorunda, yoksa test kırmızı yanıyor.
         */}
-      {toast && (<div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001] w-[92%] max-w-md"><div className={`rounded-2xl shadow-lg p-3 flex items-start gap-2 text-xs ${toast.type === "sms" ? "bg-success text-white" : "bg-secondary text-white"}`}><Bell size={16} className="flex-shrink-0 mt-0.5" /><span className="flex-1">{toast.text}</span><button onClick={() => setToast(null)} aria-label={t("dismissToastAria")} className="p-2 -m-2"><X size={14} /></button></div></div>)}
+      {toast && (<div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10001] w-[92%] max-w-md"><div className={`rounded-2xl shadow-lg p-3 flex items-start gap-2 text-xs ${toast.type === "sms" ? "bg-success text-white" : "bg-gray-800 text-white"}`}><Bell size={16} className="flex-shrink-0 mt-0.5" /><span className="flex-1">{toast.text}</span><button onClick={() => setToast(null)} aria-label={t("dismissToastAria")} className="p-2 -m-2"><X size={14} /></button></div></div>)}
       {/* Başarı animasyonu da modallerin ÜSTÜNDE (z-[10000]) ama uyarı mesajının ALTINDA:
           ikisi aynı anda çıkarsa okunması gereken şey mesajdır, animasyon süslemedir.
           Önce z-[70] idi — yani modal açıkken hiç görünmüyordu, tıpkı uyarı gibi.
@@ -409,11 +409,11 @@ export function AppShell() {
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md">
           <div className="bg-secondary text-white rounded-2xl shadow-2xl px-4 py-3 flex items-center gap-3">
             <div className="flex -space-x-2 flex-shrink-0">
-              {compareListingIds.map(id => { const cl = listings.find(x => x.id === id); return cl ? (<div key={id} className="w-8 h-8 rounded-full border-2 border-secondary bg-secondary overflow-hidden flex items-center justify-center text-[10px]">{isImgUrl(cl.photo) ? <img loading="lazy" decoding="async" src={imgThumb(cl.photo, 60)} alt="" className="w-full h-full object-cover" /> : cl.photo}</div>) : null; })}
+              {compareListingIds.map(id => { const cl = listings.find(x => x.id === id); return cl ? (<div key={id} className="w-8 h-8 rounded-full border-2 border-secondary bg-gray-700 overflow-hidden flex items-center justify-center text-[10px]">{isImgUrl(cl.photo) ? <img loading="lazy" decoding="async" src={imgThumb(cl.photo, 60)} alt="" className="w-full h-full object-cover" /> : cl.photo}</div>) : null; })}
             </div>
             <span className="flex-1 text-xs font-medium truncate">{t("compareBarLabel", { n: String(compareListingIds.length), max: String(MAX_COMPARE_LISTINGS) })}</span>
             <button onClick={clearCompareListings} aria-label={t("closeAria")} className="text-fg-muted hover:text-white p-1.5 -m-1.5 flex-shrink-0"><X size={16} /></button>
-            <button onClick={openCompareModal} disabled={compareListingIds.length < 2} className={`flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${compareListingIds.length < 2 ? "bg-secondary text-fg-secondary" : "bg-primary text-white hover:bg-primary-hover"}`}><Scale size={13} /> {t("compareBtn")}</button>
+            <button onClick={openCompareModal} disabled={compareListingIds.length < 2} className={`flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 ${compareListingIds.length < 2 ? "bg-gray-700 text-fg-secondary" : "bg-primary text-white hover:bg-primary-hover"}`}><Scale size={13} /> {t("compareBtn")}</button>
           </div>
         </div>
       )}
@@ -724,7 +724,7 @@ export function AppShell() {
                 <label className="text-xs font-semibold text-fg-strong mb-1.5 block">{t("describeIssueLabel")}</label>
                 <textarea value={quoteIssue} onChange={(e) => setQuoteIssue(e.target.value)} rows={3} placeholder={t("issueDescPlaceholderExample")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm resize-none" />
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  {quotePhotos.map((src, i) => (<div key={i} className="relative"><img loading="lazy" decoding="async" src={src} alt={t("quotePhotoAlt", { n: String(i + 1) })} className="w-14 h-14 rounded-lg object-cover border border-surface-elevated" /><button aria-label={t("a11yRemovePhoto")} onClick={() => removeQuotePhoto(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-secondary rounded-full flex items-center justify-center text-white"><X size={10} /></button></div>))}
+                  {quotePhotos.map((src, i) => (<div key={i} className="relative"><img loading="lazy" decoding="async" src={src} alt={t("quotePhotoAlt", { n: String(i + 1) })} className="w-14 h-14 rounded-lg object-cover border border-surface-elevated" /><button aria-label={t("a11yRemovePhoto")} onClick={() => removeQuotePhoto(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center text-white"><X size={10} /></button></div>))}
                   <button aria-label={t("a11yAddPhoto")} onClick={() => quotePhotoRef.current?.click()} className="w-14 h-14 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-fg-muted hover:border-primary-subtle hover:text-info transition"><Camera size={16} /></button>
                   <input ref={quotePhotoRef} type="file" accept="image/*" className="hidden" onChange={addQuotePhoto} />
                 </div>
@@ -879,7 +879,7 @@ export function AppShell() {
               <div className="relative"><Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-muted" size={16} /><input type="password" value={adminForm.password} onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })} placeholder="Şifre" disabled={adminLoginLoading} className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm disabled:opacity-60" onKeyDown={(e) => { if (e.key === "Enter") submitAdminLogin(); }} /></div>
               {adminError && <p className="text-xs text-red-500 flex items-center gap-1.5"><AlertTriangle size={12} className="flex-shrink-0" /> {adminError}</p>}
             </div>
-            <button onClick={submitAdminLogin} disabled={adminLoginLoading} className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm mt-5 hover:bg-secondary transition disabled:opacity-60 disabled:cursor-not-allowed">{adminLoginLoading ? "Giriş yapılıyor..." : "Giriş Yap"}</button>
+            <button onClick={submitAdminLogin} disabled={adminLoginLoading} className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm mt-5 hover:bg-gray-800 transition disabled:opacity-60 disabled:cursor-not-allowed">{adminLoginLoading ? "Giriş yapılıyor..." : "Giriş Yap"}</button>
             <button onClick={goHome} className="text-xs text-fg-muted mt-4 hover:text-fg-secondary">← Uygulamaya dön</button>
           </div>
         )}
@@ -1077,7 +1077,7 @@ export function AppShell() {
                         <div className="bg-white border border-border rounded-2xl p-4 mb-5">
                           <div className="flex gap-2 mb-2">
                             <input type="text" value={profilePasswordDraft} onChange={(e) => setProfilePasswordDraft(e.target.value)} placeholder="Yeni şifre belirle" className="flex-1 px-3 py-2.5 rounded-xl border border-border text-sm" />
-                            <button onClick={() => { if (!profilePasswordDraft.trim()) return; if (viewingUser.type === "owner") setOwnersDirectory(list => list.map(o => o.id === viewingUser.id ? { ...o, password: profilePasswordDraft.trim() } : o)); else setMechanicAdminOverrides(ov => ({ ...ov, [viewingUser.id]: { ...ov[viewingUser.id], password: profilePasswordDraft.trim() } })); setProfilePasswordDraft(""); setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." }); }} disabled={!profilePasswordDraft.trim()} className={`px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${profilePasswordDraft.trim() ? "bg-secondary text-white hover:bg-secondary" : "bg-surface-elevated text-fg-muted cursor-not-allowed"}`}>Güncelle</button>
+                            <button onClick={() => { if (!profilePasswordDraft.trim()) return; if (viewingUser.type === "owner") setOwnersDirectory(list => list.map(o => o.id === viewingUser.id ? { ...o, password: profilePasswordDraft.trim() } : o)); else setMechanicAdminOverrides(ov => ({ ...ov, [viewingUser.id]: { ...ov[viewingUser.id], password: profilePasswordDraft.trim() } })); setProfilePasswordDraft(""); setToast({ type: "info", text: "🔑 Şifre güncellendi. Kullanıcıya yeni şifresi iletilecek (demo)." }); }} disabled={!profilePasswordDraft.trim()} className={`px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${profilePasswordDraft.trim() ? "bg-secondary text-white hover:bg-gray-800" : "bg-surface-elevated text-fg-muted cursor-not-allowed"}`}>Güncelle</button>
                           </div>
                           <button onClick={() => setToast({ type: "info", text: `✉️ Şifre sıfırlama bağlantısı ${viewingUser.email} adresine gönderildi (demo).` })} className="w-full border border-border text-fg-secondary py-2 rounded-xl text-xs font-semibold hover:bg-background transition flex items-center justify-center gap-1.5"><Mail size={12} /> Şifre Sıfırlama Bağlantısı Gönder</button>
                         </div>
@@ -1567,7 +1567,7 @@ export function AppShell() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                  <button onClick={(e) => { e.stopPropagation(); revertAdminChangeGroup(group); }} disabled={pendingCount === 0} className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 transition ${pendingCount === 0 ? "bg-background text-fg-muted cursor-not-allowed" : "bg-secondary text-white hover:bg-secondary"}`}><History size={11} /> Tümünü Geri Al</button>
+                                  <button onClick={(e) => { e.stopPropagation(); revertAdminChangeGroup(group); }} disabled={pendingCount === 0} className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 transition ${pendingCount === 0 ? "bg-background text-fg-muted cursor-not-allowed" : "bg-secondary text-white hover:bg-gray-800"}`}><History size={11} /> Tümünü Geri Al</button>
                                   <ChevronRight size={16} className={`text-fg-muted transition-transform ${expanded ? "rotate-90" : ""}`} />
                                 </div>
                               </button>
@@ -1654,12 +1654,12 @@ export function AppShell() {
                   <p className="text-[10px] font-bold uppercase tracking-wider text-fg-muted mt-5 mb-2">Şifre Yönetimi</p>
                   <div className="flex gap-2 mb-2">
                     <input type="text" value={adminEditForm.newPassword} onChange={(e) => setAdminEditForm({ ...adminEditForm, newPassword: e.target.value })} placeholder="Yeni şifre belirle" className="flex-1 px-3 py-2.5 rounded-xl border border-border text-sm" />
-                    <button onClick={resetUserPassword} disabled={!adminEditForm.newPassword.trim()} className={`px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${adminEditForm.newPassword.trim() ? "bg-secondary text-white hover:bg-secondary" : "bg-surface-elevated text-fg-muted cursor-not-allowed"}`}>Güncelle</button>
+                    <button onClick={resetUserPassword} disabled={!adminEditForm.newPassword.trim()} className={`px-3 rounded-xl text-xs font-semibold transition flex-shrink-0 ${adminEditForm.newPassword.trim() ? "bg-secondary text-white hover:bg-gray-800" : "bg-surface-elevated text-fg-muted cursor-not-allowed"}`}>Güncelle</button>
                   </div>
                   <button onClick={sendPasswordResetLink} className="w-full border border-border text-fg-secondary py-2 rounded-xl text-xs font-semibold hover:bg-background transition flex items-center justify-center gap-1.5"><Mail size={12} /> Şifre Sıfırlama Bağlantısı Gönder</button>
                   <div className="flex gap-2 mt-5">
                     <button onClick={() => { setSelectedAdminUser(null); setAdminEditForm(null); }} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-sm font-medium">Vazgeç</button>
-                    <button onClick={saveAdminUserEdit} className="flex-1 bg-secondary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-secondary transition">Kaydet</button>
+                    <button onClick={saveAdminUserEdit} className="flex-1 bg-secondary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition">Kaydet</button>
                   </div>
                 </div>
               </div>
@@ -1685,7 +1685,7 @@ export function AppShell() {
                     selectedTicket.refunded ? (
                       <p className="text-xs text-success bg-success-tint rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><CheckCircle2 size={13} /> Kapora iade edildi, randevu iptal edildi.</p>
                     ) : (
-                      <button onClick={() => issueTicketRefund(selectedTicket.id)} className="w-full bg-secondary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-secondary transition mb-4 flex items-center justify-center gap-1.5"><Banknote size={13} /> Kaporayı İade Et / Randevuyu İptal Et</button>
+                      <button onClick={() => issueTicketRefund(selectedTicket.id)} className="w-full bg-secondary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-800 transition mb-4 flex items-center justify-center gap-1.5"><Banknote size={13} /> Kaporayı İade Et / Randevuyu İptal Et</button>
                     )
                   )}
                   {selectedTicket.type === "listing" && (() => {
@@ -1714,13 +1714,13 @@ export function AppShell() {
                     return mech.verified ? (
                       <p className="text-xs text-success bg-success-tint rounded-xl p-2.5 mb-4 flex items-center gap-1.5"><BadgeCheck size={13} /> Tamirci doğrulandı.</p>
                     ) : (
-                      <button onClick={() => grantVerification(selectedTicket.id)} className="w-full bg-secondary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-secondary transition mb-4 flex items-center justify-center gap-1.5"><BadgeCheck size={13} /> Doğrula ve Rozeti Ver</button>
+                      <button onClick={() => grantVerification(selectedTicket.id)} className="w-full bg-secondary text-white py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-800 transition mb-4 flex items-center justify-center gap-1.5"><BadgeCheck size={13} /> Doğrula ve Rozeti Ver</button>
                     );
                   })()}
                   <label className="text-[11px] font-medium text-fg-secondary mb-1 block">Kullanıcıya Mesaj Gönder</label>
                   <div className="flex gap-2 mb-4">
                     <input value={adminReplyDraft} onChange={(e) => setAdminReplyDraft(e.target.value)} placeholder="Kullanıcıya yanıt yazın..." className="flex-1 px-3 py-2.5 rounded-xl border border-border text-sm" onKeyDown={(e) => { if (e.key === "Enter") sendAdminReply(selectedTicket.id); }} />
-                    <button onClick={() => sendAdminReply(selectedTicket.id)} disabled={!adminReplyDraft.trim()} aria-label="Gönder" className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition ${adminReplyDraft.trim() ? "bg-secondary text-white hover:bg-secondary" : "bg-surface-elevated text-fg-muted cursor-not-allowed"}`}><Send size={15} /></button>
+                    <button onClick={() => sendAdminReply(selectedTicket.id)} disabled={!adminReplyDraft.trim()} aria-label="Gönder" className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition ${adminReplyDraft.trim() ? "bg-secondary text-white hover:bg-gray-800" : "bg-surface-elevated text-fg-muted cursor-not-allowed"}`}><Send size={15} /></button>
                   </div>
                   <label className="text-[11px] font-medium text-fg-secondary mb-1 block">Dahili Yönetici Notu</label>
                   <textarea value={adminTicketNote} onChange={(e) => setAdminTicketNote(e.target.value)} rows={3} placeholder="Bu talep hakkında not ekleyin (yalnızca ekip içi)..." className="w-full px-3 py-2.5 rounded-xl border border-border text-sm mb-3 resize-none" />
@@ -1748,7 +1748,7 @@ export function AppShell() {
                   <textarea value={broadcastForm.message} onChange={(e) => setBroadcastForm({ ...broadcastForm, message: e.target.value })} rows={4} placeholder="Örn: Yarın 02:00-04:00 arası bakım nedeniyle kısa süreli erişim kesintisi yaşanabilir." className="w-full px-3 py-2.5 rounded-xl border border-border text-sm resize-none mb-4" />
                   <div className="flex gap-2">
                     <button onClick={() => setShowBroadcastModal(false)} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-sm font-medium">Vazgeç</button>
-                    <button disabled={!broadcastForm.message.trim()} onClick={sendBroadcast} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${broadcastForm.message.trim() ? "bg-secondary text-white hover:bg-secondary" : "bg-border text-fg-muted cursor-not-allowed"}`}>Gönder</button>
+                    <button disabled={!broadcastForm.message.trim()} onClick={sendBroadcast} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition ${broadcastForm.message.trim() ? "bg-secondary text-white hover:bg-gray-800" : "bg-border text-fg-muted cursor-not-allowed"}`}>Gönder</button>
                   </div>
                 </div>
               </div>
@@ -2666,7 +2666,7 @@ export function AppShell() {
               {/* HIZLI GÖRÜNTÜLEME → TAM SAYFA geçişi: bu modal aracın özetini gösteriyor; tüm
                   teknik künye, donanım grupları, araç geçmişi ve fiyat değerlendirmesi tam sayfada.
                   Bağlantı başlığın hemen üstünde, kullanıcı içeriği okumaya başlamadan görsün diye. */}
-              <button onClick={() => openListingPage(selectedListing.id)} className="mb-3 w-full flex items-center justify-center gap-1.5 bg-secondary text-white py-2.5 rounded-xl font-semibold text-xs hover:bg-secondary transition">
+              <button onClick={() => openListingPage(selectedListing.id)} className="mb-3 w-full flex items-center justify-center gap-1.5 bg-secondary text-white py-2.5 rounded-xl font-semibold text-xs hover:bg-gray-800 transition">
                 <Maximize2 size={13} /> {t("viewFullPageBtn")}
               </button>
               <h1 className="text-xl font-bold text-fg-strong">{selectedListing.brand} {selectedListing.model}</h1>
@@ -2849,7 +2849,7 @@ export function AppShell() {
                           cevap verecek bir yeri yoktu; soru ilan yönetiminde okunup orada kalıyordu. */}
                       <div className="flex gap-2 mt-2">
                         <input value={listingReply} onChange={(e) => setListingReply(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") submitListingReply(selectedListing); }} placeholder={t("listingReplyPlaceholder")} aria-label={t("listingReplyPlaceholder")} className="flex-1 px-3 py-2 rounded-xl border border-border text-xs" />
-                        <button onClick={() => submitListingReply(selectedListing)} className="bg-secondary text-white px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-secondary transition flex-shrink-0">{t("listingReplySendBtn")}</button>
+                        <button onClick={() => submitListingReply(selectedListing)} className="bg-secondary text-white px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-gray-800 transition flex-shrink-0">{t("listingReplySendBtn")}</button>
                       </div>
                     </>)}
                   </>
@@ -2926,7 +2926,7 @@ export function AppShell() {
               ) : role === "mechanic" ? (
                 <div className="bg-surface-elevated border border-border rounded-2xl p-4 text-center">
                   <p className="text-sm text-fg-secondary mb-3">{t("needOwnerAccountToApplyNote")}</p>
-                  <button onClick={goHome} className="w-full bg-secondary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-secondary transition">{t("createOwnerAccountBtn")}</button>
+                  <button onClick={goHome} className="w-full bg-secondary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-gray-800 transition">{t("createOwnerAccountBtn")}</button>
                 </div>
               ) : (
                 <button onClick={openJobApplyForm} className="w-full bg-primary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-2"><Briefcase size={15} /> {t("applyBtn")}</button>
@@ -4057,7 +4057,7 @@ export function AppShell() {
                       {selectedPayments.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {selectedPayments.map(p => (
-                            <button key={p} type="button" onClick={() => togglePaymentMethod(p)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-secondary border-secondary text-white flex items-center gap-1 transition hover:bg-secondary">{p} <X size={11} /></button>
+                            <button key={p} type="button" onClick={() => togglePaymentMethod(p)} className="pl-2.5 pr-2 py-1.5 rounded-full text-xs font-semibold border bg-secondary border-secondary text-white flex items-center gap-1 transition hover:bg-gray-800">{p} <X size={11} /></button>
                           ))}
                         </div>
                       )}
@@ -4434,7 +4434,7 @@ export function AppShell() {
                     <input value={myProfile?.accountHolder || ""} onChange={(e) => updateMyField("accountHolder", e.target.value)} placeholder={t("accountHolderPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                     <input value={myProfile?.bankName || ""} onChange={(e) => updateMyField("bankName", e.target.value)} placeholder={t("bankNamePlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
                     <input value={myProfile?.iban || ""} onChange={(e) => updateMyField("iban", e.target.value)} placeholder={t("ibanPlaceholder")} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm" />
-                    <button onClick={() => setToast({ type: "info", text: t("paymentInfoSavedToast") })} className="w-full bg-secondary text-white py-2 rounded-xl text-sm font-medium hover:bg-secondary transition mt-1">{t("save")}</button>
+                    <button onClick={() => setToast({ type: "info", text: t("paymentInfoSavedToast") })} className="w-full bg-gray-800 text-white py-2 rounded-xl text-sm font-medium hover:bg-secondary transition mt-1">{t("save")}</button>
                   </div>
                 </>)}
                 <button onClick={() => setMechAccountOpen(o => !o)} className="w-full flex items-center justify-between mt-2 mb-2 hover:opacity-70 transition"><h3 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Lock size={15} className="text-fg-muted" /> {t("accountTitle")}</h3><ChevronRight size={15} className={`text-fg-muted transition-transform ${mechAccountOpen ? "rotate-90" : ""}`} /></button>
@@ -5001,7 +5001,7 @@ export function AppShell() {
             <input type="password" value={emailChangeForm.password} onChange={(e) => setEmailChangeForm(f => ({ ...f, password: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-border text-sm mb-4" />
             <div className="flex gap-2">
               <button onClick={() => setEmailChangeForm({ open: false, email: "", password: "", loading: false })} className="flex-1 border border-border text-fg-secondary py-3 rounded-2xl font-semibold text-sm hover:bg-background transition">{t("cancel")}</button>
-              <button onClick={submitEmailChange} disabled={emailChangeForm.loading} className="flex-1 bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-secondary transition disabled:opacity-60">{t("save")}</button>
+              <button onClick={submitEmailChange} disabled={emailChangeForm.loading} className="flex-1 bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-gray-800 transition disabled:opacity-60">{t("save")}</button>
             </div>
           </div>
         </div>

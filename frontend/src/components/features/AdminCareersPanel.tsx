@@ -127,7 +127,7 @@ export function AdminCareersPanel() {
           {editingId && (
             <button onClick={() => { setDraft(EMPTY); setEditingId(null); }} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-sm">Vazgeç</button>
           )}
-          <button onClick={save} disabled={loading} className="flex-1 bg-secondary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-secondary transition disabled:opacity-60 flex items-center justify-center gap-1.5">
+          <button onClick={save} disabled={loading} className="flex-1 bg-secondary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition disabled:opacity-60 flex items-center justify-center gap-1.5">
             <Plus size={15} /> {editingId ? "Kaydet" : "Ekle"}
           </button>
         </div>

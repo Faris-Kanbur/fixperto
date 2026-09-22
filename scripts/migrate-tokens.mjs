@@ -2,16 +2,23 @@
 // Wave 3d: mechanical migration of hardcoded Tailwind color classes to the
 // semantic token classes, across frontend/src.
 //
-// This is a REVISED, more conservative table after a final whole-branch
-// review of Wave 3b/3c found two critical regressions and several moderate
-// ones, all caused by mappings that went beyond a single, genuinely
-// equivalent shade per token:
+// This is a REVISED, more conservative table after two rounds of final
+// whole-branch review of Wave 3b/3c found two critical regressions and
+// several moderate ones, all caused by mappings that went beyond a single,
+// genuinely equivalent shade per token:
 //   - `fg-strong` is a FOREGROUND token that inverts in dark mode. Wave 3b
 //     mapped gray-800/gray-700 to it property-agnostically, so `bg-gray-800`
 //     (used on dark toasts/buttons) became `bg-fg-strong`, which renders
 //     WHITE-ON-WHITE in dark mode (fg-strong's dark value is near-white).
-//     Fixed here via PROPERTY_OVERRIDE: bg-/hover:bg- gray-700/800 route to
-//     `secondary` (the actual "dark chrome surface" token), never fg-strong.
+//     A first fix routed bg-/hover:bg- gray-700/800 to `secondary` instead —
+//     but `bg-gray-900` ALSO maps to `secondary` (an exact match, kept), so
+//     every `bg-gray-900 hover:bg-gray-800` button and the compare bar's
+//     `bg-gray-900`/`bg-gray-700` chip pairing collapsed onto one color,
+//     silently deleting hover feedback and shape distinction (caught by a
+//     second re-review). PROPERTY_OVERRIDE now SKIPS bg-gray-800/700
+//     entirely (see its own comment) instead of mapping them to anything —
+//     there is no token for "dark chrome, one step lighter than secondary"
+//     yet, so these stay exactly as they are on main.
 //   - Wave 3c bucketed light status shades (red/green/amber/emerald
 //     100/200/300) onto their `-tint` token so aggressively that
 //     `border-X-tint` and `bg-X-tint` became the SAME value — badge/input
@@ -33,12 +40,19 @@
 // scripts/verify-mapping.mjs (kept in sync — see that file). Included:
 //   1. EXACT value matches — true zero-diff swaps under the default palette.
 //   2. A small set of DISCLOSED bucket approximations that survived review:
-//      gray-700/800 onto fg-strong (TEXT context only — a real bg-context
-//      override exists separately), gray-600 onto fg-secondary, gray-200/300
-//      onto fg-muted, gray-950 onto secondary, emerald-500/600 onto success
-//      (a different hue playing the exact same semantic role, not a same-hue
-//      shade-bucket), and blue-200/300/400 onto primary-subtle (confirmed
-//      live to still render a visible, distinct border/ring in both themes).
+//      gray-700/800 onto fg-strong (property-agnostic in MAPPING, but the
+//      only property that currently reaches it in this codebase is text-;
+//      the bg- case is explicitly skipped in PROPERTY_OVERRIDE — see its
+//      comment for why a border-/ring-/divide- use of gray-700/800 would
+//      still incorrectly reach fg-strong if one is ever added, since none
+//      exist today to write a rule against), gray-600 onto fg-secondary,
+//      gray-200/300 onto fg-muted, gray-950 onto secondary, emerald-500/600
+//      onto success (a different hue playing the exact same semantic role,
+//      not a same-hue shade-bucket), and blue-200/300/400 onto
+//      primary-subtle (confirmed live to still render a visible, distinct
+//      border/ring in both themes). `border-gray-300` onto `border` (via
+//      PROPERTY_OVERRIDE) is the one PROPERTY_OVERRIDE entry that isn't an
+//      exact match — same bucket discipline as the MAPPING-level ones.
 // Excluded: violet/cyan (no semantic home), all light 100/200/300 status
 // shades (no visible-border token exists for them), all status text shades
 // beyond the single exact 600 match (contrast + hover-feedback risk).
@@ -88,12 +102,28 @@ const MAPPING = {
 // Property-specific overrides for the neutral/gray family, where the same
 // shade name means something different depending on which CSS property it
 // sets (gray-900 as text-color means "near-black foreground"; as a
-// background/border it means "the app's dark chrome surface"). Every value
-// here is an exact RGB match verified against tokens.css.
+// background/border it means "the app's dark chrome surface"). Most values
+// here are an exact RGB match verified against tokens.css; `border-gray-300`
+// is a disclosed approximation (bucketed onto `border`, same discipline as
+// the MAPPING-level bucket entries).
+//
+// A value of `null` means SKIP: match the property+shade combination but
+// deliberately leave it untouched, neither overridden nor allowed to fall
+// through to MAPPING. `bg-gray-800`/`bg-gray-700` are here for exactly that
+// reason — an earlier fix round routed them to `bg-secondary` to solve the
+// fg-strong-as-background bug (see MAPPING's comment on fg-strong), but
+// `bg-gray-900` ALSO maps to `bg-secondary` (an exact match, kept), so every
+// `bg-gray-900 hover:bg-gray-800` button and the `bg-gray-900`/`bg-gray-700`
+// compare-bar chip pairing collapsed onto one color — a real, live
+// regression a whole-branch re-review caught (loss of hover feedback on the
+// app's main dark CTA, and a shapeless disabled button/avatar-ring in the
+// compare bar). There is no token that means "the app's dark chrome surface,
+// one step lighter than secondary" yet, so these are left exactly as they
+// are on main rather than forced into an approximation that breaks a pair.
 const PROPERTY_OVERRIDE = {
   "bg-gray-900": "bg-secondary",
-  "bg-gray-800": "bg-secondary",
-  "bg-gray-700": "bg-secondary",
+  "bg-gray-800": null,
+  "bg-gray-700": null,
   "bg-gray-200": "bg-border",
   "border-gray-200": "border-border",
   "border-gray-900": "border-secondary",
@@ -112,8 +142,10 @@ function migrateClassNameString(str) {
       if (!m) return tok;
       const [, statePrefix = "", prop, colorShade, opacitySuffix = ""] = m;
       const full = `${prop}-${colorShade}`;
-      if (PROPERTY_OVERRIDE[full]) {
-        return statePrefix + PROPERTY_OVERRIDE[full] + opacitySuffix;
+      if (full in PROPERTY_OVERRIDE) {
+        const override = PROPERTY_OVERRIDE[full];
+        if (override === null) return tok; // explicit skip
+        return statePrefix + override + opacitySuffix;
       }
       const tokenName = MAPPING[colorShade];
       if (!tokenName) return tok; // no verified mapping — leave untouched

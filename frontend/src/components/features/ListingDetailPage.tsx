@@ -192,7 +192,7 @@ export function ListingDetailPage() {
       {l.city && <p className="text-xs text-fg-secondary flex items-center gap-1.5 mb-4"><MapPin size={13} className="text-fg-muted" /> {l.city}</p>}
       {mine ? (
         <>
-          <button onClick={() => openSellForm(sellPrefillFromListing(l))} className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-secondary transition whitespace-nowrap">{t("editListingBtn")}</button>
+          <button onClick={() => openSellForm(sellPrefillFromListing(l))} className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-gray-800 transition whitespace-nowrap">{t("editListingBtn")}</button>
           {/* Teklif/mesaj yönetimi hızlı görüntüleme modalinde duruyor — burada ikinci bir kopyasını
               tutmak yerine oraya yönlendiriyoruz (tek doğruluk kaynağı). */}
           <button onClick={() => setSelectedListingId(l.id)} className="w-full mt-2 border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("manageOffersBtn")}</button>
