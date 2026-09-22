@@ -78,7 +78,7 @@ export function TestimonialCarousel({ items }) {
               </div>
               <div className="ml-auto flex items-center gap-0.5 flex-shrink-0">
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <Star key={n} size={11} className={n <= (r.rating || 0) ? "text-warning fill-warning" : "text-fg-muted fill-fg-muted"} />
+                  <Star key={n} size={11} className={n <= (r.rating || 0) ? "text-amber-400 fill-amber-400" : "text-fg-muted fill-fg-muted"} />
                 ))}
               </div>
             </div>

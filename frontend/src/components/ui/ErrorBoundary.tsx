@@ -43,12 +43,12 @@ export class ErrorBoundary extends Component<Props, State> {
             </p>
             <button
               onClick={this.handleReload}
-              className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-fg-strong transition"
+              className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-secondary transition"
             >
               Sayfayı Yenile
             </button>
             {(import.meta as any).env?.DEV && (
-              <pre className="mt-4 text-left text-[10px] text-error whitespace-pre-wrap max-h-40 overflow-y-auto">
+              <pre className="mt-4 text-left text-[10px] text-red-500 whitespace-pre-wrap max-h-40 overflow-y-auto">
                 {this.state.error.message}
               </pre>
             )}

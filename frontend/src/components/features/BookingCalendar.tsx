@@ -147,12 +147,12 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
                   : disabled ? "border-surface-elevated text-fg-muted cursor-not-allowed"
                   : "border-border text-fg-strong hover:border-primary-subtle hover:bg-primary-tint/50"}
                 ${isToday && !isSel && !disabled ? "ring-1 ring-inset ring-primary-subtle" : ""}`}>
-              <span className={`block text-[10px] font-semibold uppercase tracking-wide ${isSel ? "text-primary-tint" : "text-fg-muted"}`}>
+              <span className={`block text-[10px] font-semibold uppercase tracking-wide ${isSel ? "text-blue-100" : "text-fg-muted"}`}>
                 {dayLabels[dayKeys[i]]}
               </span>
               <span className="block text-base font-bold leading-tight tabular-nums">{d.getDate()}</span>
               {/* Boş saat sayısı: bu şeridin asıl faydası. Kapalı/geçmiş günde çizgi. */}
-              <span className={`block text-[10px] leading-tight ${isSel ? "text-primary-tint" : free > 0 ? "text-success font-semibold" : "text-fg-muted"}`}>
+              <span className={`block text-[10px] leading-tight ${isSel ? "text-blue-100" : free > 0 ? "text-success font-semibold" : "text-fg-muted"}`}>
                 {disabled ? "—" : free > 0 ? free : t("bookingSlotTaken")}
               </span>
             </button>
@@ -166,7 +166,7 @@ export function BookingCalendar({ mechanic, selectedDate, onSelectDate, selected
       ) : slots.length === 0 ? (
         <p className="text-sm text-fg-muted mt-3">{t("noSlotsForDay")}</p>
       ) : counts.all === 0 ? (
-        <p className="text-sm text-warning bg-warning-tint border border-warning-tint rounded-xl px-3 py-2.5 mt-3">{t("bookingNoSlotsLeftToday")}</p>
+        <p className="text-sm text-amber-700 bg-warning-tint border border-amber-100 rounded-xl px-3 py-2.5 mt-3">{t("bookingNoSlotsLeftToday")}</p>
       ) : (
         <div className="mt-3">
           {/* Günün bölümleri: üç ayrı başlık yerine tek satır süzgeç — aynı bilgi, üçte bir yer. */}

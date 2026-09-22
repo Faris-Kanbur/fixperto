@@ -150,7 +150,7 @@ export function BlogPostPage() {
   const serviceCta = (compact = false) => {
     if (!svc) return null;
     return (
-      <div className={`bg-primary-tint border border-primary-tint rounded-2xl ${compact ? "p-4" : "p-5 md:p-6"} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
+      <div className={`bg-primary-tint border border-blue-100 rounded-2xl ${compact ? "p-4" : "p-5 md:p-6"} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
         <div className="min-w-0">
           <p className="font-bold text-fg flex items-center gap-2"><Wrench size={16} className="text-info" /> {t("blogServiceCtaTitle", { service: svcLabel })}</p>
           <p className="text-sm text-fg-secondary mt-0.5">{t("blogServiceCtaBody")}</p>

@@ -206,14 +206,14 @@ export function MechDetailBody() {
   // Rozetler: profilin en üstünde "bu servis neden iyi" sorusuna tek bakışta cevap veren şerit.
   // Yalnızca GERÇEKTEN hak edilen rozetler gösteriliyor — herkeste çıkan bir rozet bilgi taşımaz.
   const highlights = [
-    selectedMechanic.rating >= 4.7 && { icon: Star, label: t("mechBadgeTopRated"), tone: "bg-warning-tint text-warning border-warning-tint" },
-    selectedMechanic.avgResponseMinutes && selectedMechanic.avgResponseMinutes <= 30 && { icon: Zap, label: t("mechBadgeFastReply"), tone: "bg-primary-tint text-primary border-primary-subtle" },
+    selectedMechanic.rating >= 4.7 && { icon: Star, label: t("mechBadgeTopRated"), tone: "bg-warning-tint text-amber-700 border-amber-200" },
+    selectedMechanic.avgResponseMinutes && selectedMechanic.avgResponseMinutes <= 30 && { icon: Zap, label: t("mechBadgeFastReply"), tone: "bg-primary-tint text-primary-hover border-primary-subtle" },
     selectedMechanic.reviews >= 50 && { icon: Users, label: t("mechBadgeManyReviews"), tone: "bg-violet-50 text-violet-700 border-violet-200" },
-    services.some((s) => s.fixed && String(s.price || "").trim()) && { icon: Tag, label: t("mechBadgeFixedPrice"), tone: "bg-success-tint text-success border-success-tint" },
-    (selectedMechanic.brandsServiced || []).length >= 3 && { icon: Car, label: t("mechBadgeMultiBrand", { n: String(selectedMechanic.brandsServiced.length) }), tone: "bg-primary-tint text-primary border-primary-subtle" },
+    services.some((s) => s.fixed && String(s.price || "").trim()) && { icon: Tag, label: t("mechBadgeFixedPrice"), tone: "bg-success-tint text-emerald-700 border-emerald-200" },
+    (selectedMechanic.brandsServiced || []).length >= 3 && { icon: Car, label: t("mechBadgeMultiBrand", { n: String(selectedMechanic.brandsServiced.length) }), tone: "bg-primary-tint text-primary-hover border-primary-subtle" },
   ].filter(Boolean);
   const statTiles = [
-    { icon: Star, label: t("rating"), value: `${selectedMechanic.rating}/5`, tint: "text-warning" },
+    { icon: Star, label: t("rating"), value: `${selectedMechanic.rating}/5`, tint: "text-amber-500" },
     { icon: MapPin, label: t("distance"), value: formatDistanceKm(dist), tint: "text-info" },
     selectedMechanic.avgResponseMinutes ? { icon: Zap, label: t("mechResponseStatLabel"), value: `${selectedMechanic.avgResponseMinutes} ${t("mechMinuteShort")}`, tint: "text-info" } : null,
     { icon: Banknote, label: t("price"), value: null, tint: "text-success" },
@@ -305,7 +305,7 @@ export function MechDetailBody() {
               <div className="flex items-center gap-x-3 gap-y-1 mt-2 text-xs text-fg-secondary flex-wrap">
                 <span className="flex items-center gap-1 font-semibold text-fg"><Star size={13} className="fill-fg" />{selectedMechanic.rating}<span className="font-normal text-fg-muted">({selectedMechanic.reviews})</span></span>
                 <span className="flex items-center gap-1"><MapPin size={12} />{formatDistanceKm(dist)}</span>
-                {openNow !== null && (<span className={`px-2 py-0.5 rounded-full font-semibold ${openNow ? "bg-success-tint text-success" : "bg-error-tint text-error"}`}>{openNow ? t("mechOpenNow") : t("mechClosedNow")}</span>)}
+                {openNow !== null && (<span className={`px-2 py-0.5 rounded-full font-semibold ${openNow ? "bg-success-tint text-success" : "bg-error-tint text-red-500"}`}>{openNow ? t("mechOpenNow") : t("mechClosedNow")}</span>)}
                 {selectedMechanic.avgResponseMinutes && <span className="flex items-center gap-1"><Zap size={12} className="text-info" />{t("avgResponsePrefix")} {selectedMechanic.avgResponseMinutes} {t("avgResponseSuffix")}</span>}
               </div>
             </div>
@@ -409,7 +409,7 @@ export function MechDetailBody() {
                     <span className="text-sm text-fg-strong flex items-center gap-2 min-w-0">
                       <ToolIcon size={13} className="text-primary-subtle flex-shrink-0" />
                       <span className="truncate">{serviceLabel(s)}</span>
-                      {s.fixed && String(s.price || "").trim() && <span className="text-[9px] font-bold uppercase tracking-wide text-success bg-success-tint rounded px-1.5 py-0.5 flex-shrink-0">FIX</span>}
+                      {s.fixed && String(s.price || "").trim() && <span className="text-[9px] font-bold uppercase tracking-wide text-success bg-emerald-50 rounded px-1.5 py-0.5 flex-shrink-0">FIX</span>}
                     </span>
                     <span className="flex items-center gap-2 flex-shrink-0">
                       {isBrandPrice && <span className="text-[10px] font-bold text-primary bg-primary-tint rounded px-1.5 py-0.5">{priceBrand}</span>}
@@ -445,7 +445,7 @@ export function MechDetailBody() {
                       {line.split(":")[0]}
                       {isToday && <span className="text-[9px] font-bold uppercase tracking-wide text-primary bg-white border border-primary-subtle rounded px-1.5 py-0.5">{t("mechTodayLabel")}</span>}
                     </span>
-                    <span className={isClosed ? "text-error font-medium" : isToday ? "font-bold text-fg" : "text-fg-strong font-medium"}>{line.split(/:(.+)/)[1]}</span>
+                    <span className={isClosed ? "text-red-400 font-medium" : isToday ? "font-bold text-fg" : "text-fg-strong font-medium"}>{line.split(/:(.+)/)[1]}</span>
                   </div>
                 );
               })}
@@ -462,7 +462,7 @@ export function MechDetailBody() {
                     <div key={i} className="text-center bg-white border border-surface-elevated rounded-2xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition">
                       <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${grads[i % grads.length]} flex items-center justify-center text-2xl mb-2.5 overflow-hidden shadow-md relative`}>
                         {isImgUrl(s.emoji) ? <img src={s.emoji} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={s.name} className="w-full h-full object-cover" /> : <span className="drop-shadow">{s.emoji}</span>}
-                        <span className="absolute bottom-0 right-0 w-4 h-4 bg-success-tint border-2 border-white rounded-full" />
+                        <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 border-2 border-white rounded-full" />
                       </div>
                       <p className="text-xs font-semibold text-fg-strong leading-tight truncate">{s.name}</p>
                       <p className="text-[11px] text-fg-muted leading-tight truncate">{s.role}</p>
@@ -551,7 +551,7 @@ export function MechDetailBody() {
                         {/* İŞARETLİ YORUM: bir işletme hesabına bağlı olduğu için ortalamaya
                             katılmıyor. Silmiyoruz (tamirci de gerçek müşteri olabilir) ama sessizce
                             puanı etkilemesine de izin vermiyoruz — okuyucu bunu bilmeli. */}
-                        {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-warning-tint rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
+                        {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
                         {r.reply && (<div className="mt-2.5 bg-background rounded-xl p-2.5"><p className="text-[10px] font-bold text-fg-secondary mb-0.5">{t("businessReplyLabel")}</p><p className="text-[11px] text-fg-secondary leading-snug"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} scope="public" text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} compact /></p></div>)}
                         {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                           replyingReviewId === r.id ? (
@@ -574,7 +574,7 @@ export function MechDetailBody() {
           </Section>
 
           {isVisitor && (
-            <button onClick={() => { closeOverlays(); openReportForm("quality", `Tamirci #${selectedMechanic.id} · ${selectedMechanic.name}`, `"${selectedMechanic.name}" hakkında şikayetim var`); }} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-error transition py-2"><Flag size={12} /> {t("reportThisMechanicBtn")}</button>
+            <button onClick={() => { closeOverlays(); openReportForm("quality", `Tamirci #${selectedMechanic.id} · ${selectedMechanic.name}`, `"${selectedMechanic.name}" hakkında şikayetim var`); }} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-red-500 transition py-2"><Flag size={12} /> {t("reportThisMechanicBtn")}</button>
           )}
         </div>
 
@@ -622,7 +622,7 @@ export function MechDetailBody() {
                     {r.photo && isImgUrl(r.photoUrl) && <img src={imgThumb(r.photoUrl, 300)} loading="lazy" decoding="async" onError={imgFallbackHandler} alt={t("reviewPhotoAlt")} className="w-1/3 max-w-[110px] aspect-square rounded-xl object-cover mb-2.5 float-left mr-3" />}
                     <p className="text-sm text-fg-secondary leading-relaxed"><TranslatedText id={`review-comment-${selectedMechanic.id}-${r.id}`} scope="public" text={r.comment} fromLang={r.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p>
                     <div className="clear-left" />
-                    {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-warning-tint rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
+                    {r.flaggedCompetitor && (<p className="mt-2 text-[10px] text-warning bg-warning-tint border border-amber-100 rounded-lg px-2 py-1.5 leading-relaxed">{t("reviewFlaggedLabel")}</p>)}
                     {r.reply && (<div className="mt-2.5 pt-2.5 border-t border-background bg-background rounded-xl p-3"><p className="text-[10px] font-bold text-fg-secondary mb-1">{t("businessReplyLabel")}</p><p className="text-xs text-fg-secondary leading-relaxed"><TranslatedText id={`review-reply-${selectedMechanic.id}-${r.id}`} scope="public" text={r.reply} fromLang={r.replyLang || selectedMechanic.lang || "tr"} viewerLang={role === "mechanic" ? (myProfile?.lang || "tr") : ownerLang} /></p></div>)}
                     {!r.reply && role === "mechanic" && selectedMechanic.id === MY_MECHANIC_ID && (
                       replyingReviewId === r.id ? (

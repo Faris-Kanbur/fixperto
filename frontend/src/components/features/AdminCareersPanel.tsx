@@ -85,7 +85,7 @@ export function AdminCareersPanel() {
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-fg text-sm truncate flex items-center gap-2">
                     {r.title}
-                    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${r.status === "published" ? "bg-success-tint text-success" : "bg-surface-elevated text-fg-secondary"}`}>
+                    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full ${r.status === "published" ? "bg-emerald-50 text-success" : "bg-surface-elevated text-fg-secondary"}`}>
                       {r.status === "published" ? "Yayında" : "Taslak"}
                     </span>
                   </p>
@@ -95,7 +95,7 @@ export function AdminCareersPanel() {
                   className="text-fg-muted hover:text-primary p-2 -m-1">{r.status === "published" ? <EyeOff size={15} /> : <Eye size={15} />}</button>
                 <button onClick={() => { setDraft({ ...EMPTY, ...r }); setEditingId(r.id); }} aria-label="Düzenle"
                   className="text-fg-muted hover:text-fg-strong p-2 -m-1"><Save size={15} /></button>
-                <button onClick={() => remove(r)} aria-label="Sil" className="text-error hover:text-error p-2 -m-1"><Trash2 size={15} /></button>
+                <button onClick={() => remove(r)} aria-label="Sil" className="text-red-400 hover:text-error p-2 -m-1"><Trash2 size={15} /></button>
               </div>
             ))}
           </div>
@@ -127,7 +127,7 @@ export function AdminCareersPanel() {
           {editingId && (
             <button onClick={() => { setDraft(EMPTY); setEditingId(null); }} className="flex-1 border border-border text-fg-secondary py-2.5 rounded-xl text-sm">Vazgeç</button>
           )}
-          <button onClick={save} disabled={loading} className="flex-1 bg-secondary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-fg-strong transition disabled:opacity-60 flex items-center justify-center gap-1.5">
+          <button onClick={save} disabled={loading} className="flex-1 bg-secondary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-secondary transition disabled:opacity-60 flex items-center justify-center gap-1.5">
             <Plus size={15} /> {editingId ? "Kaydet" : "Ekle"}
           </button>
         </div>

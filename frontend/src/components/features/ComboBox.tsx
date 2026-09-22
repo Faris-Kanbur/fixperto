@@ -93,7 +93,7 @@ export function ComboBox({
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         aria-label={ariaLabel || placeholder}
-        className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-fg-muted hover:text-fg-secondary disabled:text-gray-200"
+        className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-fg-muted hover:text-fg-secondary disabled:text-fg-muted"
       >
         <ChevronDown size={15} className={open ? "rotate-180 transition" : "transition"} />
       </button>

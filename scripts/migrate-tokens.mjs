@@ -1,26 +1,47 @@
 #!/usr/bin/env node
-// Wave 3b/3c: mechanical migration of hardcoded Tailwind color classes to
-// the semantic token classes, across frontend/src.
+// Wave 3d: mechanical migration of hardcoded Tailwind color classes to the
+// semantic token classes, across frontend/src.
+//
+// This is a REVISED, more conservative table after a final whole-branch
+// review of Wave 3b/3c found two critical regressions and several moderate
+// ones, all caused by mappings that went beyond a single, genuinely
+// equivalent shade per token:
+//   - `fg-strong` is a FOREGROUND token that inverts in dark mode. Wave 3b
+//     mapped gray-800/gray-700 to it property-agnostically, so `bg-gray-800`
+//     (used on dark toasts/buttons) became `bg-fg-strong`, which renders
+//     WHITE-ON-WHITE in dark mode (fg-strong's dark value is near-white).
+//     Fixed here via PROPERTY_OVERRIDE: bg-/hover:bg- gray-700/800 route to
+//     `secondary` (the actual "dark chrome surface" token), never fg-strong.
+//   - Wave 3c bucketed light status shades (red/green/amber/emerald
+//     100/200/300) onto their `-tint` token so aggressively that
+//     `border-X-tint` and `bg-X-tint` became the SAME value — badge/input
+//     outlines and focus rings disappeared entirely (confirmed live:
+//     destructive-action focus ring at ~254,242,242 on a white page).
+//     `-tint` tokens are backgrounds ONLY; there is no visible "-subtle"
+//     equivalent yet for error/success/warning (unlike primary, which got
+//     one), so these shades are REMOVED from the table rather than forced.
+//   - Bucketing amber-700/800/900 and emerald/green-700 text onto the base
+//     warning/success token measurably dropped contrast below WCAG AA when
+//     paired with a `-tint` background (3.07:1, 3.15:1) — also removed.
+//   - Collapsing 3+ shades of the same hue onto one token silently deletes
+//     hover/interaction feedback (`text-red-400 hover:text-red-600` both
+//     becoming `text-error`). Status-color text mappings are now limited to
+//     the single exact-match shade (600) plus the exact tint shade (50);
+//     nothing in between.
 //
 // SCOPE DISCIPLINE: every entry below was checked against tokens.css with
-// scripts/verify-mapping.mjs. Three kinds of entries are included:
-//   1. EXACT value matches (the Tailwind shade's real RGB equals the target
-//      token's RGB) — true zero-diff swaps under the default palette.
-//   2. DISCLOSED "bucket" approximations, user-approved as a pattern: same
-//      hue family, adjacent shade, same semantic role (e.g. gray-700/800
-//      both collapse onto fg-strong; the whole emerald-* family collapses
-//      onto success/success-tint since it plays green's exact role in this
-//      codebase; red-400/500/700 collapse onto error; amber-400/500/700/
-//      800/900 collapse onto warning; light red/green/amber 100/200/300
-//      shades collapse onto their -tint token). Each is a minor, disclosed,
-//      same-direction shift — never a jump across hue or across semantic
-//      role.
-//   3. `primary-subtle` (new token, user-approved): blue-300 is its exact
-//      light-mode value; blue-200/400 bucket onto it as approximations.
-// Excluded entirely: any color family with no semantic home in this app's
-// 6-palette vocabulary (violet, cyan — used for a handful of one-off tags,
-// not primary/success/warning/error/info), and any single shade far enough
-// from every token to make bucketing indefensible.
+// scripts/verify-mapping.mjs (kept in sync — see that file). Included:
+//   1. EXACT value matches — true zero-diff swaps under the default palette.
+//   2. A small set of DISCLOSED bucket approximations that survived review:
+//      gray-700/800 onto fg-strong (TEXT context only — a real bg-context
+//      override exists separately), gray-600 onto fg-secondary, gray-200/300
+//      onto fg-muted, gray-950 onto secondary, emerald-500/600 onto success
+//      (a different hue playing the exact same semantic role, not a same-hue
+//      shade-bucket), and blue-200/300/400 onto primary-subtle (confirmed
+//      live to still render a visible, distinct border/ring in both themes).
+// Excluded: violet/cyan (no semantic home), all light 100/200/300 status
+// shades (no visible-border token exists for them), all status text shades
+// beyond the single exact 600 match (contrast + hover-feedback risk).
 //
 // SAFE BY CONSTRUCTION:
 //   - Only rewrites text inside `className="..."` / `className={`...`}` /
@@ -45,6 +66,7 @@ const MAPPING = {
   "gray-200": "fg-muted",
   "gray-50": "background",
   "gray-100": "surface-elevated",
+  "gray-950": "secondary",
   "blue-600": "primary",
   "blue-700": "primary-hover",
   "blue-800": "primary-active",
@@ -53,39 +75,14 @@ const MAPPING = {
   "blue-300": "primary-subtle",
   "blue-200": "primary-subtle",
   "blue-400": "primary-subtle",
-  "blue-100": "primary-tint",
   "green-600": "success",
-  "green-500": "success",
-  "green-700": "success",
   "green-50": "success-tint",
-  "green-100": "success-tint",
-  "green-400": "success-tint",
   "emerald-600": "success",
-  "emerald-700": "success",
   "emerald-500": "success",
-  "emerald-50": "success-tint",
-  "emerald-100": "success-tint",
-  "emerald-200": "success-tint",
-  "green-200": "success-tint",
   "amber-600": "warning",
-  "amber-700": "warning",
-  "amber-800": "warning",
-  "amber-900": "warning",
-  "amber-500": "warning",
-  "amber-400": "warning",
   "amber-50": "warning-tint",
-  "amber-100": "warning-tint",
-  "amber-200": "warning-tint",
-  "amber-300": "warning-tint",
   "red-600": "error",
-  "red-500": "error",
-  "red-400": "error",
-  "red-700": "error",
   "red-50": "error-tint",
-  "red-100": "error-tint",
-  "red-200": "error-tint",
-  "red-300": "error-tint",
-  "gray-950": "secondary",
 };
 
 // Property-specific overrides for the neutral/gray family, where the same
@@ -95,23 +92,23 @@ const MAPPING = {
 // here is an exact RGB match verified against tokens.css.
 const PROPERTY_OVERRIDE = {
   "bg-gray-900": "bg-secondary",
+  "bg-gray-800": "bg-secondary",
+  "bg-gray-700": "bg-secondary",
   "bg-gray-200": "bg-border",
   "border-gray-200": "border-border",
   "border-gray-900": "border-secondary",
+  "border-gray-300": "border-border",
   "divide-gray-200": "divide-border",
   // gray-100 and gray-50 in a chrome (bg/border/divide/ring) context already
   // fall through correctly via MAPPING (surface-elevated / background), so
   // no override needed there.
-  // gray-300 as a border color (not text) buckets onto the border token —
-  // same disclosed-approximation discipline as the other bucket entries.
-  "border-gray-300": "border-border",
 };
 
 function migrateClassNameString(str) {
   return str
     .split(/(\s+)/)
     .map((tok) => {
-      const m = tok.match(/^(hover:|focus:|group-hover:|focus-within:|placeholder:)?(bg|text|border|ring|divide|fill|stroke)-([a-z]+-[0-9]{2,3})(\/[0-9]{1,3})?$/);
+      const m = tok.match(/^(hover:|focus:|focus-visible:|group-hover:|focus-within:|placeholder:|disabled:|active:)?(bg|text|border|ring|divide|fill|stroke)-([a-z]+-[0-9]{2,3})(\/[0-9]{1,3})?$/);
       if (!m) return tok;
       const [, statePrefix = "", prop, colorShade, opacitySuffix = ""] = m;
       const full = `${prop}-${colorShade}`;
@@ -133,7 +130,10 @@ function migrateClassNameString(str) {
 // the expression won't be handed to this function in the first place (the
 // caller's own `[^}]*` / `[^{}]*` capture already excludes those).
 function migrateQuotedStringsInExpr(expr) {
-  return expr.replace(/"([^"]*)"/g, (qs, inner) => migrateClassNameString(inner) === inner ? qs : `"${migrateClassNameString(inner)}"`);
+  return expr.replace(/"([^"]*)"/g, (qs, inner) => {
+    const migrated = migrateClassNameString(inner);
+    return migrated === inner ? qs : `"${migrated}"`;
+  });
 }
 
 function migrateFile(filePath) {

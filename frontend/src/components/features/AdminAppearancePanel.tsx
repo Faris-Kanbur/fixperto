@@ -39,7 +39,7 @@ export function AdminAppearancePanel() {
         {PALETTE_CATALOG.map((p) => {
           const active = p.key === activePalette;
           return (
-            <div key={p.key} className={`bg-white border rounded-2xl p-4 shadow-sm transition ${active ? "border-info ring-2 ring-primary-tint" : "border-border"}`}>
+            <div key={p.key} className={`bg-white border rounded-2xl p-4 shadow-sm transition ${active ? "border-info ring-2 ring-blue-100" : "border-border"}`}>
               <div className="flex items-center gap-1.5 mb-3">
                 {[p.preview.primary, p.preview.secondary, p.preview.accent, p.preview.background, p.preview.text, p.preview.success, p.preview.warning, p.preview.error].map((hex, i) => (
                   <div key={i} className="w-6 h-6 rounded-md border border-black/5 flex-shrink-0" style={{ backgroundColor: hex }} />
@@ -51,7 +51,7 @@ export function AdminAppearancePanel() {
                 onClick={() => apply(p.key)}
                 disabled={active || applying === p.key}
                 className={`w-full text-sm font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 ${
-                  active ? "bg-success-tint text-success cursor-default" : "bg-secondary text-white hover:bg-fg-strong disabled:opacity-60"
+                  active ? "bg-success-tint text-green-700 cursor-default" : "bg-secondary text-white hover:bg-secondary disabled:opacity-60"
                 }`}
               >
                 {active ? (<><Check size={15} /> Aktif</>) : applying === p.key ? "Uygulanıyor…" : "Kullan"}

@@ -9,7 +9,7 @@ const TAILWIND_HEX = {
   "gray-400": "#9ca3af", "gray-500": "#6b7280", "gray-600": "#4b5563", "gray-700": "#374151",
   "gray-800": "#1f2937", "gray-900": "#111827", "gray-950": "#030712",
   "blue-50": "#eff6ff", "blue-100": "#dbeafe", "blue-200": "#bfdbfe", "blue-300": "#93c5fd",
-  "blue-500": "#3b82f6", "blue-600": "#2563eb", "blue-700": "#1d4ed8", "blue-800": "#1e40af",
+  "blue-400": "#60a5fa", "blue-500": "#3b82f6", "blue-600": "#2563eb", "blue-700": "#1d4ed8", "blue-800": "#1e40af",
   "green-50": "#f0fdf4", "green-100": "#dcfce7", "green-500": "#22c55e", "green-600": "#16a34a",
   "emerald-50": "#ecfdf5", "emerald-500": "#10b981", "emerald-600": "#059669", "emerald-700": "#047857",
   "amber-50": "#fffbeb", "amber-100": "#fef3c7", "amber-500": "#f59e0b", "amber-600": "#d97706", "amber-700": "#b45309",
@@ -28,19 +28,39 @@ for (const m of rootBlock.matchAll(/--color-([a-z-]+):\s*([0-9 ]+);/g)) {
   tokenValues[m[1]] = m[2].trim();
 }
 
+// This list MUST mirror scripts/migrate-tokens.mjs's MAPPING and
+// PROPERTY_OVERRIDE tables exactly — every entry that script can produce,
+// and nothing it can't. Kept manually in sync after the Wave 3d review
+// found MAPPING entries that had drifted out of what this file checked
+// (scripts/migrate-tokens.mjs:5 depends on that sync being real).
 const CANDIDATES = [
+  // MAPPING (property-agnostic)
   ["gray-900", "fg"], ["gray-800", "fg-strong"], ["gray-700", "fg-strong"],
   ["gray-600", "fg-secondary"], ["gray-500", "fg-secondary"],
   ["gray-400", "fg-muted"], ["gray-300", "fg-muted"], ["gray-200", "fg-muted"],
   ["gray-50", "background"], ["gray-100", "surface-elevated"], ["gray-950", "secondary"],
-  ["gray-900", "secondary"], ["gray-200", "border"], ["gray-400", "border"],
   ["blue-600", "primary"], ["blue-700", "primary-hover"], ["blue-800", "primary-active"],
   ["blue-500", "info"], ["blue-50", "primary-tint"],
-  ["green-600", "success"], ["green-500", "success"], ["green-50", "success-tint"], ["green-100", "success-tint"],
-  ["emerald-600", "success"], ["emerald-700", "success"], ["emerald-500", "success"], ["emerald-50", "success-tint"],
-  ["amber-600", "warning"], ["amber-700", "warning"], ["amber-500", "warning"], ["amber-50", "warning-tint"], ["amber-100", "warning-tint"],
-  ["red-600", "error"], ["red-500", "error"], ["red-400", "error"], ["red-50", "error-tint"], ["red-100", "error-tint"],
+  ["blue-300", "primary-subtle"], ["blue-200", "primary-subtle"], ["blue-400", "primary-subtle"],
+  ["green-600", "success"], ["green-50", "success-tint"],
+  ["emerald-600", "success"], ["emerald-500", "success"],
+  ["amber-600", "warning"], ["amber-50", "warning-tint"],
+  ["red-600", "error"], ["red-50", "error-tint"],
+  // PROPERTY_OVERRIDE (property-specific — checked against the same :root table
+  // since none of these override entries vary between light/dark by name)
+  ["gray-900", "secondary"], ["gray-800", "secondary"], ["gray-700", "secondary"],
+  ["gray-200", "border"], ["gray-300", "border"],
 ];
+
+// Shades intentionally NOT in migrate-tokens.mjs's tables, kept here as a
+// documented list of what was considered and rejected — if one of these
+// ever reappears in MAPPING/PROPERTY_OVERRIDE without a matching update
+// here, that's the drift this file exists to catch.
+// red-100/200/300, green-100/200/400, emerald-50/100/200, amber-100/200/300/
+// 400/500/700/800/900, red-400/500/700, green-500/700, emerald-700,
+// blue-100, gray-400-as-border, gray-950-as-secondary: none have an exact
+// (or safely visible, for border/ring contexts) token match — see the
+// header comment in migrate-tokens.mjs for the incidents that removed them.
 
 for (const [shade, token] of CANDIDATES) {
   const want = hexToTriplet(TAILWIND_HEX[shade]);

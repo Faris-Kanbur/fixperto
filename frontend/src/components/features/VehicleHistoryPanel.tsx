@@ -57,7 +57,7 @@ export function VerifiedHistoryList({ records, emptyText = null }: { records: an
     <div className="space-y-2">
       {records.map((r) => (
         <div key={r.id} className="flex items-start gap-3 bg-white border border-surface-elevated rounded-2xl px-4 py-3">
-          <div className="w-8 h-8 rounded-xl bg-success-tint text-success flex items-center justify-center flex-shrink-0"><Wrench size={14} /></div>
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-success flex items-center justify-center flex-shrink-0"><Wrench size={14} /></div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-fg truncate">{r.serviceText || "—"}</p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-[11px] text-fg-muted">
@@ -67,7 +67,7 @@ export function VerifiedHistoryList({ records, emptyText = null }: { records: an
               {r.warrantyEndDate && <span className="text-success">{t("vinWarrantyLabel")}: {fmtDate(r.warrantyEndDate, lang)}</span>}
             </div>
           </div>
-          <span className="flex items-center gap-1 text-[10px] font-bold text-success bg-success-tint rounded-full px-2 py-0.5 flex-shrink-0">
+          <span className="flex items-center gap-1 text-[10px] font-bold text-success bg-emerald-50 rounded-full px-2 py-0.5 flex-shrink-0">
             <ShieldCheck size={11} /> {t("verifiedBadge")}
           </span>
         </div>
@@ -95,7 +95,7 @@ export function VehicleOwnHistory({ vin }: { vin: string }) {
   if (!entry || entry.loading) {
     return <p className="flex items-center gap-2 text-[12px] text-fg-muted py-3"><Loader2 size={13} className="animate-spin" /> {t("vinLookupLoading")}</p>;
   }
-  if (entry.error) return <p className="text-[12px] text-error py-2">{entry.error}</p>;
+  if (entry.error) return <p className="text-[12px] text-red-500 py-2">{entry.error}</p>;
   return (
     <>
       <VerifiedHistoryList records={entry.records} emptyText={t("vinLookupEmpty")} />
@@ -133,11 +133,11 @@ export function VinLookupPanel() {
           className="flex-1 px-3.5 py-2.5 rounded-xl border border-border text-sm font-mono tracking-wide focus:outline-none focus:ring-2 focus:ring-primary-subtle"
         />
         <button onClick={() => lookupVin(input)} disabled={vinLookup.loading}
-          className="bg-secondary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-fg-strong transition disabled:opacity-60 flex items-center gap-1.5">
+          className="bg-secondary text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-secondary transition disabled:opacity-60 flex items-center gap-1.5">
           {vinLookup.loading ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />} {t("vinLookupBtn")}
         </button>
       </div>
-      {vinLookup.error && <p className="text-[12px] text-error mt-2">{vinLookup.error}</p>}
+      {vinLookup.error && <p className="text-[12px] text-red-500 mt-2">{vinLookup.error}</p>}
       {vinLookup.records && (
         <div className="mt-4">
           <VerifiedHistoryList records={vinLookup.records} emptyText={t("vinLookupEmpty")} />

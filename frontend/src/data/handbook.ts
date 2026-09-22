@@ -1037,8 +1037,8 @@ Bir renk paleti "Kullan" ile aktif edildiğinde bu, admin'in kendi tarayıcısı
 ## Aktif kart yeşil, diğerleri "Kullan"
 Şu an aktif olan palet kartı yeşil "Aktif" rozetiyle işaretlenir ve tekrar tıklanamaz; diğerleri "Kullan" butonuyla değiştirilebilir kalır. Palet değiştirme anında bu ekranın kendisine de uygulanır (yönetici sonucu kendi ekranında hemen görür), aynı zamanda bir başarı bildirimi (toast) gösterilir.
 
-## Bilinen sınır: her yerde henüz görünmüyor
-Paletin CSS değişkenleri (--color-primary, --color-cta, vb.) doğru şekilde site geneline uygulanıyor ve sunucuda kalıcı, ama uygulamanın geri kalanındaki ~4.600 sabit renk sınıfı (ör. bg-blue-600) henüz bu değişkenleri KULLANMIYOR — bu bilinçli bir kapsam sınırı, sonraki bir aşamada ele alınacak. Bugün paleti değiştirmek odak halkası (focus ring) rengi gibi az sayıda yer dışında BÜYÜK ÖLÇÜDE görünür bir fark yaratmaz; mekanizma (kalıcılık, uygulama, panel) tamamdır ama görsel yaygınlık henüz eksiktir.`,
+## Bilinen sınır: birkaç yer henüz görünmüyor
+Paletin CSS değişkenleri (--color-primary, --color-cta, vb.) doğru şekilde site geneline uygulanıyor ve sunucuda kalıcı. Uygulamanın büyük çoğunluğundaki sabit renk sınıfları (ör. eskiden bg-blue-600 gibi) artık bu değişkenleri KULLANIYOR — palet değiştirmek artık buton, kart, rozet, border gibi neredeyse her yerde görünür bir fark yaratıyor. Bilinçli olarak kapsam dışı bırakılanlar var: marka renkleri (WhatsApp/Facebook/X paylaşım ikonları gibi — bunlar site temasından bağımsız kalmalı), birkaç dekoratif çoklu-renk grafik/etiket paleti (aynı anda görünür N farklı rengin gerekli olduğu yerler) ve hero gradyanları/checkbox vurgu rengi gibi henüz taşınmamış birkaç görsel öğe.`,
       },
     ],
   },

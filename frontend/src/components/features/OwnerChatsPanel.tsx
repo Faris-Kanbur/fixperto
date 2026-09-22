@@ -85,7 +85,7 @@ export function OwnerChatsPanel() {
               <button onClick={() => setActiveConvoId(null)} aria-label={t("back")} className="text-fg-muted hover:text-fg-strong lg:hidden"><ChevronLeft size={18} /></button>
               <div className="text-xl bg-primary-tint rounded-xl w-9 h-9 flex items-center justify-center flex-shrink-0">{convo.mechanicImg}</div>
               <span className="text-sm font-semibold text-fg truncate">{convo.mechanicName}</span>
-              <button onClick={bookWithMechanic} className="ml-auto flex-shrink-0 text-xs font-semibold text-primary bg-primary-tint hover:bg-primary-tint px-3 py-1.5 rounded-full transition flex items-center gap-1.5">
+              <button onClick={bookWithMechanic} className="ml-auto flex-shrink-0 text-xs font-semibold text-primary bg-primary-tint hover:bg-blue-100 px-3 py-1.5 rounded-full transition flex items-center gap-1.5">
                 <Calendar size={13} /> {t("bookWithThisMechanic")}
               </button>
             </div>

@@ -60,7 +60,7 @@ export function SavedSearchList({ showUpdate = false, compact = false }: { showU
                 <button onClick={() => openSavedSearchEditor(s.id)} title={t("savedSearchEditAria")} aria-label={t("savedSearchEditAria")}
                   className="text-fg-muted hover:text-fg-strong flex-shrink-0 p-2 -m-1"><Pencil size={14} /></button>
                 <button onClick={() => removeSavedSearch(s.id)} aria-label={t("deleteSavedSearchAria")}
-                  className="text-error hover:text-error flex-shrink-0 p-2 -m-1"><Trash2 size={14} /></button>
+                  className="text-red-400 hover:text-error flex-shrink-0 p-2 -m-1"><Trash2 size={14} /></button>
             </>
             </div>
             {/* BİLDİRİM SIKLIĞI — arama başına. Emlak/iş ilanı sitelerinin yaptığı gibi: geniş bir

@@ -135,10 +135,10 @@ export function MechCard({ m, onHover }) {
         </div>
         <p className="text-fg-muted text-xs mt-1 truncate">{m.specialty}</p>
         <div className="flex items-center justify-between gap-2 mt-2.5">
-          <span className="flex items-center gap-1 text-xs text-fg-secondary"><MapPin size={12} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}{userLocation && m.effectiveDistance != null && <span title={t("realLocationBadgeTitle")}><CheckCircle2 size={11} className="text-success" /></span>}</span>
+          <span className="flex items-center gap-1 text-xs text-fg-secondary"><MapPin size={12} />{formatDistanceKm(m.effectiveDistance ?? m.distance)}{userLocation && m.effectiveDistance != null && <span title={t("realLocationBadgeTitle")}><CheckCircle2 size={11} className="text-green-500" /></span>}</span>
           <PriceLevelDots price={m.price} />
         </div>
-        <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-success-tint text-success" : "bg-error-tint text-error"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-fg-muted flex items-center gap-1"><Zap size={10} className="text-fg" /> {m.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>
+        <div className="flex items-center gap-2 mt-2.5 flex-wrap">{(() => { const open = mechanicOpenStatus(m); return open === null ? null : (<span className={`text-xs px-2 py-0.5 rounded-full font-medium ${open ? "bg-success-tint text-success" : "bg-error-tint text-red-500"}`}>{open ? t("mechOpenNow") : t("mechClosedNow")}</span>); })()}{m.avgResponseMinutes && <span className="text-[10px] text-fg-muted flex items-center gap-1"><Zap size={10} className="text-fg" /> {m.avgResponseMinutes} {t("avgResponseSuffix")}</span>}</div>
       </button>
     </div>
   );

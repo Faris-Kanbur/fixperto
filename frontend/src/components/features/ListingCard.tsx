@@ -129,7 +129,7 @@ export function ListingCard({ l, onHover = undefined }) {
           </div>
           <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 pointer-events-none">
             <span className={`text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm ${meta.color}`}>{meta.label}</span>
-            {l.featured && <span className="text-warning text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-warning-tint">{t("featuredBadge")}</span>}
+            {l.featured && <span className="text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-amber-300">{t("featuredBadge")}</span>}
           </div>
           <button onClick={(e) => { e.stopPropagation(); toggleFavorite(l.id); }} aria-label={t("addToFavoritesAria")} className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/95 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center"><Heart size={15} className={fav ? "fill-primary text-primary" : "text-fg-secondary"} /></button>
           <button onClick={(e) => { e.stopPropagation(); toggleCompareListing(l.id); }} aria-label={t("compareToggleAria")} title={t("compareToggleAria")} className={`absolute top-3 right-14 z-10 w-8 h-8 backdrop-blur rounded-full shadow-sm hover:scale-110 transition flex items-center justify-center ${inCompare ? "bg-primary" : "bg-white/95"}`}><Scale size={14} className={inCompare ? "text-white" : "text-fg-secondary"} /></button>

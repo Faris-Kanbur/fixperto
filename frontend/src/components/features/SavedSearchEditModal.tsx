@@ -155,7 +155,7 @@ export function SavedSearchEditModal() {
               <div className="flex flex-wrap gap-1.5">
                 {activeOtherFilters.map((key) => (
                   <button key={key} onClick={() => clearF(key)}
-                    className="inline-flex items-center gap-1 text-[11px] bg-background border border-border text-fg-secondary px-2 py-1 rounded-full hover:border-error-tint hover:text-error transition">
+                    className="inline-flex items-center gap-1 text-[11px] bg-background border border-border text-fg-secondary px-2 py-1 rounded-full hover:border-red-300 hover:text-error transition">
                     {savedSearchFilterLabel(key)}<X size={10} />
                   </button>
                 ))}

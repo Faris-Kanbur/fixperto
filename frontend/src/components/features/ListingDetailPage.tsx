@@ -192,7 +192,7 @@ export function ListingDetailPage() {
       {l.city && <p className="text-xs text-fg-secondary flex items-center gap-1.5 mb-4"><MapPin size={13} className="text-fg-muted" /> {l.city}</p>}
       {mine ? (
         <>
-          <button onClick={() => openSellForm(sellPrefillFromListing(l))} className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-fg-strong transition whitespace-nowrap">{t("editListingBtn")}</button>
+          <button onClick={() => openSellForm(sellPrefillFromListing(l))} className="w-full bg-secondary text-white py-3 rounded-2xl font-semibold text-sm hover:bg-secondary transition whitespace-nowrap">{t("editListingBtn")}</button>
           {/* Teklif/mesaj yönetimi hızlı görüntüleme modalinde duruyor — burada ikinci bir kopyasını
               tutmak yerine oraya yönlendiriyoruz (tek doğruluk kaynağı). */}
           <button onClick={() => setSelectedListingId(l.id)} className="w-full mt-2 border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition whitespace-nowrap flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("manageOffersBtn")}</button>
@@ -216,7 +216,7 @@ export function ListingDetailPage() {
         <button onClick={() => toggleCompareListing(l.id)} className={`py-2.5 rounded-xl text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${inCompare ? "border-primary-subtle bg-primary-tint text-primary" : "border-border text-fg-secondary hover:bg-background"}`}><Scale size={14} /> {t("compareBtnLabel")}</button>
       </div>
       {safeHref(l.inspectionReportUrl) && (
-        <a href={safeHref(l.inspectionReportUrl)} target="_blank" rel="noreferrer" className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-success bg-success-tint border border-success-tint py-2.5 rounded-xl hover:bg-success-tint transition"><FileText size={13} /> {t("inspectionReportAvailableLabel")}</a>
+        <a href={safeHref(l.inspectionReportUrl)} target="_blank" rel="noreferrer" className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 py-2.5 rounded-xl hover:bg-emerald-100 transition"><FileText size={13} /> {t("inspectionReportAvailableLabel")}</a>
       )}
     </div>
   );
@@ -363,7 +363,7 @@ export function ListingDetailPage() {
             <Section id="ld-price" icon={Scale} title={t("priceRatingLabel")}>
               <div className="bg-white border border-border rounded-2xl p-5">
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${cmp.tier === "below" ? "bg-success-tint text-success" : cmp.tier === "above" ? "bg-warning-tint text-warning" : "bg-surface-elevated text-fg-secondary"}`}>
+                  <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${cmp.tier === "below" ? "bg-emerald-50 text-emerald-700" : cmp.tier === "above" ? "bg-warning-tint text-amber-700" : "bg-surface-elevated text-fg-secondary"}`}>
                     {cmp.tier === "below" ? t("priceRatingBelow") : cmp.tier === "above" ? t("priceRatingAboveLabel") : t("priceAtMarketLabel")}
                   </span>
                   <span className="text-sm font-bold text-fg">{l.price}</span>
@@ -392,7 +392,7 @@ export function ListingDetailPage() {
           <ListingHistorySection listingId={l.id} />
 
           {!mine && (
-            <button onClick={() => openReportForm("listing", `İlan #${l.id} · ${l.brand} ${l.model}`, `"${l.brand} ${l.model}" ilanı hakkında şikayetim var`)} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-error transition py-2"><Flag size={12} /> {t("reportListingBtn")}</button>
+            <button onClick={() => openReportForm("listing", `İlan #${l.id} · ${l.brand} ${l.model}`, `"${l.brand} ${l.model}" ilanı hakkında şikayetim var`)} className="w-full flex items-center justify-center gap-1.5 text-xs text-fg-muted hover:text-red-500 transition py-2"><Flag size={12} /> {t("reportListingBtn")}</button>
           )}
         </div>
 

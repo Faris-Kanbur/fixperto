@@ -100,17 +100,14 @@ for (const name of ["surface", "background", "surface-elevated", "fg", "fg-secon
 
 // --- A11Y DÜZELTMESİ KAPSANIYOR MU (nihai inceleme bulgusu): bu dalgadaki TEK
 // davranış değiştiren satır (sohbet dil seçicisindeki focus ring) önceden hiç
-// test edilmiyordu. Wave 3b bileşen göçü bg-gray-100/text-gray-700'ü
-// bg-surface-elevated/text-fg-strong'a taşıdı (surface-elevated gray-100 ile
-// tam eşleşiyor; fg-strong gray-800'ün değerini kullanıyor — gray-700 bu
-// tek token'a bilinçli olarak yuvarlanıyor, bkz. tokens.css yorumu).
+// test edilmiyordu.
 ok(shell.includes('className="bg-surface-elevated text-fg-strong text-xs rounded-lg px-2 py-1 border-none outline-none focus:ring-2 focus:ring-focus"'), "sohbet dil seçicisinde focus:ring-focus var");
 
 // --- PALET BLOKLARI (Wave 2): her yeni paletin hem açık hem karanlık bileşik-seçici bloğu
 // var mı, ve 7 değişken token'ı tanımlıyor mu — bkz. docs/superpowers/plans/
 // 2026-09-20-palette-system-and-admin-picker.md'deki Palet Değer Tablosu.
 const PALETTE_KEYS = ["trust", "industrial", "performance", "european", "minimal"];
-const VARYING_TOKENS = ["primary", "primary-hover", "primary-active", "secondary", "accent", "cta", "focus"];
+const VARYING_TOKENS = ["primary", "primary-hover", "primary-active", "secondary", "accent", "cta", "focus", "primary-tint", "primary-subtle"];
 for (const key of PALETTE_KEYS) {
   const lightSelector = `[data-palette="${key}"] {`;
   const darkSelector = `[data-palette="${key}"].dark-scope {`;

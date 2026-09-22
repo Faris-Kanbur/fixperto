@@ -2925,7 +2925,7 @@ function useAppLogic() {
                 {opts.options.map(o => (<button key={o.value} onClick={() => setProfileFieldDraft(o.value)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${String(profileFieldDraft) === o.value ? "bg-secondary border-secondary text-white" : "border-border text-fg-secondary"}`}>{o.label}</button>))}
               </div>
             ) : (
-              <input autoFocus type={opts.numeric ? "number" : "text"} value={profileFieldDraft} onChange={(e) => setProfileFieldDraft(e.target.value)} className="w-full px-2.5 py-1.5 rounded-lg border border-fg-muted text-sm mt-0.5" onKeyDown={(e) => { if (e.key === "Enter") saveProfileField(user, key); if (e.key === "Escape") cancelEditProfileField(); }} />
+              <input autoFocus type={opts.numeric ? "number" : "text"} value={profileFieldDraft} onChange={(e) => setProfileFieldDraft(e.target.value)} className="w-full px-2.5 py-1.5 rounded-lg border border-border text-sm mt-0.5" onKeyDown={(e) => { if (e.key === "Enter") saveProfileField(user, key); if (e.key === "Escape") cancelEditProfileField(); }} />
             )
           ) : (
             <p className="text-sm font-medium text-fg-strong">{opts.display !== undefined ? opts.display : (value || value === 0 ? value : "—")}</p>
@@ -2933,7 +2933,7 @@ function useAppLogic() {
         </div>
         {editing ? (
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button onClick={() => saveProfileField(user, key)} aria-label="Kaydet" className="w-7 h-7 rounded-lg bg-secondary text-white flex items-center justify-center hover:bg-fg-strong transition"><Check size={13} /></button>
+            <button onClick={() => saveProfileField(user, key)} aria-label="Kaydet" className="w-7 h-7 rounded-lg bg-secondary text-white flex items-center justify-center hover:bg-secondary transition"><Check size={13} /></button>
             <button onClick={cancelEditProfileField} aria-label="Vazgeç" className="w-7 h-7 rounded-lg border border-border text-fg-muted flex items-center justify-center hover:bg-background transition"><X size={13} /></button>
           </div>
         ) : (
@@ -2988,14 +2988,14 @@ function useAppLogic() {
           <p className="text-xs font-semibold text-fg-strong truncate">{l.brand} {l.model} <span className="text-fg-muted font-normal">#{l.id}</span></p>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="text-[10px] text-fg-muted flex items-center gap-0.5" title="Kaç kez paylaşıldı"><Share2 size={10} /> {l.shareCount || 0}</span>
-            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-fg-strong text-white" : l.status === "sold" ? "bg-error-tint text-error" : l.status === "reserved" ? "bg-border text-fg-strong" : "bg-success-tint text-success"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
-            {l.featured && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-warning-tint text-warning">⭐ Öne Çıkan</span>}
+            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${l.adminRemoved ? "bg-secondary text-white" : l.status === "sold" ? "bg-error-tint text-red-500" : l.status === "reserved" ? "bg-border text-fg-strong" : "bg-success-tint text-success"}`}>{l.adminRemoved ? "Kaldırıldı" : l.status === "sold" ? "Satıldı" : l.status === "reserved" ? "Rezerve" : "Aktif"}</span>
+            {l.featured && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">⭐ Öne Çıkan</span>}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <input value={l.price} onChange={(e) => updateListingField(l.id, "price", e.target.value)} {...trackInputProps("listing", l.id, "price", l.price)} className="flex-1 px-2 py-1.5 rounded-lg border border-border text-xs" />
-          <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "featured", oldValue: l.featured, newValue: !l.featured }); updateListingField(l.id, "featured", !l.featured); }} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.featured ? "bg-warning-tint text-warning hover:bg-warning-tint" : "border border-border text-fg-secondary hover:bg-surface-elevated"}`}>{l.featured ? "⭐ Kaldır" : "⭐ Öne Çıkar"}</button>
-          <button onClick={() => toggleListingRemoved(l.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.adminRemoved ? "bg-success-tint text-success hover:bg-success-tint" : "bg-error-tint text-error hover:bg-error-tint"}`}>{l.adminRemoved ? "Geri Yükle" : "Kaldır"}</button>
+          <button onClick={() => { logAdminChange({ targetType: "listing", targetId: l.id, field: "featured", oldValue: l.featured, newValue: !l.featured }); updateListingField(l.id, "featured", !l.featured); }} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.featured ? "bg-warning-tint text-amber-700 hover:bg-amber-100" : "border border-border text-fg-secondary hover:bg-surface-elevated"}`}>{l.featured ? "⭐ Kaldır" : "⭐ Öne Çıkar"}</button>
+          <button onClick={() => toggleListingRemoved(l.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${l.adminRemoved ? "bg-success-tint text-success hover:bg-green-100" : "bg-error-tint text-red-500 hover:bg-red-100"}`}>{l.adminRemoved ? "Geri Yükle" : "Kaldır"}</button>
           <button onClick={() => setExpandedAdminListingId(x => x === l.id ? null : l.id)} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 border border-border text-fg-secondary hover:bg-surface-elevated transition">{expanded ? "Kapat" : "Detaylar"}</button>
         </div>
         {expanded && (
@@ -3035,7 +3035,7 @@ function useAppLogic() {
           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${j.status === "active" ? "bg-success-tint text-success" : "bg-border text-fg-secondary"}`}>{j.status === "active" ? "Açık" : "Kapalı"}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => toggleJobListingStatus(j.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${j.status === "active" ? "bg-error-tint text-error hover:bg-error-tint" : "bg-success-tint text-success hover:bg-success-tint"}`}>{j.status === "active" ? "Kapat" : "Aç"}</button>
+          <button onClick={() => toggleJobListingStatus(j.id)} className={`text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 transition ${j.status === "active" ? "bg-error-tint text-red-500 hover:bg-red-100" : "bg-success-tint text-success hover:bg-green-100"}`}>{j.status === "active" ? "Kapat" : "Aç"}</button>
           <button onClick={() => setExpandedAdminJobId(x => x === j.id ? null : j.id)} className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg flex-shrink-0 border border-border text-fg-secondary hover:bg-surface-elevated transition">{expanded ? "Kapat" : "Detaylar"}</button>
         </div>
         {expanded && (
@@ -3916,7 +3916,7 @@ function useAppLogic() {
               <div key={tk.id} className="bg-white border border-border rounded-2xl p-4">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <p className="text-sm font-semibold text-fg-strong">{tk.subject}</p>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-error-tint text-error" : tk.status === "in_review" ? "bg-surface-elevated text-fg-secondary" : "bg-success-tint text-success"}`}>{ADMIN_TICKET_STATUS_LABELS[tk.status]}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${tk.status === "open" ? "bg-error-tint text-red-500" : tk.status === "in_review" ? "bg-surface-elevated text-fg-secondary" : "bg-success-tint text-success"}`}>{ADMIN_TICKET_STATUS_LABELS[tk.status]}</span>
                 </div>
                 <p className="text-[11px] text-fg-muted mb-2">{ADMIN_TICKET_TYPE_LABELS[tk.type]} · {tk.createdDate}</p>
                 <p className="text-xs text-fg-secondary">{tk.description}</p>

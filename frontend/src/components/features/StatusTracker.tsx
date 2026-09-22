@@ -110,9 +110,9 @@ export function StatusTracker({ status, autoAccepted }) {
     rejectApplication, roleColor, roleBtn, goToNotifTarget, jobEmploymentColor, 
   } = useApp();
 
-    if (status === "Reddedildi") return <div className="bg-error-tint text-error text-xs rounded-xl p-2.5 text-center font-medium">{t("apptStatusRejectedNotice")}</div>;
-    if (status === "İptal Edildi") return <div className="bg-error-tint text-error text-xs rounded-xl p-2.5 text-center font-medium">{t("apptStatusCancelledNotice")}</div>;
-    if (status === "Gelmedi") return <div className="bg-error-tint text-error text-xs rounded-xl p-2.5 text-center font-medium">{t("apptStatusNoShowNotice")}</div>;
+    if (status === "Reddedildi") return <div className="bg-error-tint text-red-500 text-xs rounded-xl p-2.5 text-center font-medium">{t("apptStatusRejectedNotice")}</div>;
+    if (status === "İptal Edildi") return <div className="bg-error-tint text-red-500 text-xs rounded-xl p-2.5 text-center font-medium">{t("apptStatusCancelledNotice")}</div>;
+    if (status === "Gelmedi") return <div className="bg-error-tint text-red-500 text-xs rounded-xl p-2.5 text-center font-medium">{t("apptStatusNoShowNotice")}</div>;
     const isAuto = autoAccepted !== false;
     const steps = isAuto ? TRACK_STATUSES_AUTO : TRACK_STATUSES_MANUAL;
     // GERÇEK HATA DÜZELTMESİ: adım etiketleri (TRACK_LABELS_*) hep Türkçe sabitti; artık dile göre
@@ -121,7 +121,7 @@ export function StatusTracker({ status, autoAccepted }) {
     const labels = (isAuto ? TRACK_LABELS_AUTO_BY_LANG : TRACK_LABELS_MANUAL_BY_LANG)[lang] || (isAuto ? TRACK_LABELS_AUTO : TRACK_LABELS_MANUAL);
     const currentIdx = steps.indexOf(status);
     return (<>
-      <div className="flex items-center gap-1">{steps.map((s, i) => { const done = i <= currentIdx; const active = i === currentIdx; return (<div key={s} className="flex items-center flex-1"><div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition ${done ? "bg-primary text-white" : "bg-surface-elevated text-fg-muted"} ${active && currentIdx < steps.length - 1 ? "ring-4 ring-primary-tint" : ""}`}>{done ? <Check size={12} /> : <CircleDot size={10} />}</div>{i < steps.length - 1 && <div className={`h-0.5 flex-1 ${i < currentIdx ? "bg-primary" : "bg-surface-elevated"}`} />}</div>); })}</div>
+      <div className="flex items-center gap-1">{steps.map((s, i) => { const done = i <= currentIdx; const active = i === currentIdx; return (<div key={s} className="flex items-center flex-1"><div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition ${done ? "bg-primary text-white" : "bg-surface-elevated text-fg-muted"} ${active && currentIdx < steps.length - 1 ? "ring-4 ring-blue-100" : ""}`}>{done ? <Check size={12} /> : <CircleDot size={10} />}</div>{i < steps.length - 1 && <div className={`h-0.5 flex-1 ${i < currentIdx ? "bg-primary" : "bg-surface-elevated"}`} />}</div>); })}</div>
       <div className="flex justify-between text-[9px] mt-1">{labels.map((l, i) => <span key={i} className={i === currentIdx ? "text-primary font-semibold" : "text-fg-muted"}>{l}</span>)}</div>
     </>);
   }
