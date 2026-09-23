@@ -61,7 +61,10 @@ ok(/app\.use\("\/api\/vehicle-history", vehicleHistoryRouter\)/.test(server), "u
 // Kaydı yalnızca işi YAPAN tamirci, KENDİ tamamlanmış randevusundan oluşturabilir.
 ok(/if \(actor\.role !== "mechanic"\)/.test(backend), "kaydı yalnızca tamirci oluşturabiliyor");
 ok(/if \(appt\.mechanicId !== actor\.id\)/.test(backend), "randevunun o tamirciye ait olduğu doğrulanıyor");
-ok(/if \(appt\.status !== "Tamamlandı"\)/.test(backend), "yalnızca tamamlanmış randevu geçmişe yazılıyor");
+// Sabit metin değil APPOINTMENT_STATUS.DONE kullanılıyor (bkz. el kitabı 22.7 — appointments.js
+// ile bağımsız yazılmış bir sabit metin tam bu sınıf hatayı üretmişti: ön yüzün gönderdiği
+// "Tamir Tamamlandı" ile burada beklenen "Tamamlandı" hiç eşleşmiyordu).
+ok(/if \(appt\.status !== APPOINTMENT_STATUS\.DONE\)/.test(backend), "yalnızca tamamlanmış randevu geçmişe yazılıyor (paylaşılan sabitten)");
 ok(/mechanicId: actor\.id/.test(backend), "tamirci kimliği oturumdan damgalanıyor");
 ok(/ownerId: appt\.ownerId/.test(backend), "kaydın sahibi randevudan geliyor, istemciden değil");
 // Tamirci başkasının garajındaki aracın kaydını DEĞİŞTİREMEZ.

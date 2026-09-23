@@ -271,7 +271,7 @@ try {
     eq(appt.status, 201, `yorumcu ${i} için randevu oluştu`);
     // Randevuyu TAMİRCİ tamamlıyor — müşteri kendi randevusunu "Tamamlandı" yapamıyor artık
     // (durum makinesi), ki bu da denetimde bulunan bir hataydı.
-    const done = await api("PATCH", `/api/appointments/${appt.body.id}`, { token: revMech.token, body: { status: "Tamamlandı" } });
+    const done = await api("PATCH", `/api/appointments/${appt.body.id}`, { token: revMech.token, body: { status: "Tamir Tamamlandı" } });
     eq(done.status, 200, `yorumcu ${i} randevusu tamirci tarafından tamamlandı`);
     reviewers.push(u);
   }

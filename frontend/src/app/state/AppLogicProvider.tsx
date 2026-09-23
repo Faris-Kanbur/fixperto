@@ -2146,17 +2146,22 @@ function useAppLogic() {
       } else {
         setToast({ type: "info", text: `📋 ${selectedMechIds.length} tamirciye teklif isteği gönderildi.` });
       }
-      if (selectedMechIds.includes(MY_MECHANIC_ID)) {
-        // Not: bildirim metnine arıza açıklamasını (issueText) her zaman ham haliyle gömmüyoruz —
-        // bildirim burada sabit bir dizgi olduğu için TranslatedText gibi canlı çeviri
-        // altyapısından yararlanamaz (bkz. kullanıcı geri bildirimi: tamircinin dili değiştirilse
-        // bile bildirimde hep orijinal dilde kalıyordu). Tamircinin dili müşteriyle aynıysa metni
-        // yine de gösteriyoruz — sadece diller FARKLIYSA genel bir önizlemeye düşüyoruz. Doğru
-        // çevrilmiş hali her durumda zaten "Teklifler" sekmesinde (mechReqView === "quotes") var.
-        const notifyMech = mechanicsList.find(m => m.id === MY_MECHANIC_ID);
-        const sameLang = (notifyMech?.lang || "tr") === ownerLang;
-        fireNotification("Yeni teklif isteği 📋", sameLang ? `${customerName} sizden "${issueText.slice(0, 50)}" için fiyat teklifi istiyor.` : `${customerName} sizden yeni bir arıza için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" });
-      }
+      /**
+       * BİLDİRİM HİÇ GİTMİYORDU (bkz. confirmBooking'deki aynı sınıf düzeltmenin notu). Eski koşul
+       * `selectedMechIds.includes(MY_MECHANIC_ID)` idi — submitQuoteRequest de SADECE araç sahibi
+       * tarafından çağrılıyor, yani MY_MECHANIC_ID bu fonksiyon çalışırken HER ZAMAN null'dı ve
+       * seçilen tamirci id listesi hiçbir zaman null İÇERMEZ. Hiçbir tamirci, hiçbir çoklu teklif
+       * isteği için bildirim almıyordu. (notifLog zaten yalnızca ROL etiketli, kişiye özel bir
+       * hedefleme yapmıyor — bkz. handbook — bu yüzden burada "hangi tamirciye" ayrımı yapmadan
+       * tek bir "mechanic" bildirimi koşulsuz ateşleniyor, tıpkı diğer düzeltilen yerler gibi.)
+       * Not: bildirim metnine arıza açıklamasını (issueText) her zaman ham haliyle gömmüyoruz —
+       * bildirim burada sabit bir dizgi olduğu için TranslatedText gibi canlı çeviri
+       * altyapısından yararlanamaz (bkz. kullanıcı geri bildirimi: tamircinin dili değiştirilse
+       * bile bildirimde hep orijinal dilde kalıyordu). Dil bilinmediği için (birden fazla tamirci
+       * hedefleniyor) burada her zaman genel bir önizlemeye düşülüyor — doğru çevrilmiş hali her
+       * durumda zaten "Teklifler" sekmesinde (mechReqView === "quotes") var.
+       */
+      fireNotification("Yeni teklif isteği 📋", `${customerName} sizden yeni bir arıza için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" });
     } catch (err) {
       setToast({ type: "info", text: `⚠️ Teklif isteği kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
@@ -2352,12 +2357,18 @@ function useAppLogic() {
         date: created.date,
         time: created.time,
       });
-      // Sadece gerçekten etkileşimli tamirci hesabına (MY_MECHANIC_ID) yapılan randevularda gerçek
-      // bildirim gönderilir — demo/örnek tamircilere randevu alınırken bildirim ateşlenmez, çünkü o
-      // tamirci panelinde bu randevu zaten hiç görünmeyecek.
-      if (selectedMechanic.id === MY_MECHANIC_ID) {
-        fireNotification(autoAccept ? "Yeni randevu 📅" : "Yeni randevu talebi 📅", `${created.customer} — ${created.vehicle}${autoAccept ? " için randevu oluşturuldu." : " için onayınızı bekliyor."}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: created.id });
-      }
+      /**
+       * BİLDİRİM HİÇ GİTMİYORDU (tam site QA denetiminde bulundu). Buradaki eski koşul
+       * `selectedMechanic.id === MY_MECHANIC_ID` idi — yorumdaki gerekçe ("sadece gerçekten
+       * etkileşimli tamirci hesabına yapılan randevularda bildirim gönderilir") gerçek
+       * çoklu-hesap kimlik doğrulamasından ÖNCEKİ bir varsayıma dayanıyordu ("tek gerçek tamirci
+       * hesabı var, gerisi sabit örnek veri"). Artık HER tamirci gerçek, bağımsız girişi olan bir
+       * hesap (bu oturumda test edildi) — confirmBooking de SADECE araç sahibi tarafından
+       * çağrılıyor (bkz. tek çağrı yeri, AppShell.tsx "Randevuyu Onayla"), yani MY_MECHANIC_ID bu
+       * fonksiyon çalışırken HER ZAMAN null'dı ve koşul asla doğru olamıyordu — hiçbir tamirci,
+       * hiçbir randevu için (ne otomatik onaylı ne onay bekleyen) bildirim almıyordu.
+       */
+      fireNotification(autoAccept ? "Yeni randevu 📅" : "Yeni randevu talebi 📅", `${created.customer} — ${created.vehicle}${autoAccept ? " için randevu oluşturuldu." : " için onayınızı bekliyor."}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: created.id });
     } catch (err) {
       setToast({ type: "info", text: `⚠️ Randevu kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
@@ -3258,7 +3269,9 @@ function useAppLogic() {
   };
   // ---- Ticket sahibine doğrudan mesaj (dahili nottan ayrı, kullanıcıya "gönderilen" mesaj kaydı) ----
   const sendAdminReply = (id) => {
-    if (!adminReplyDraft.trim()) return;
+    // Bkz. addVehicle'daki aynı düzeltmenin notu — boş yanıtla düğmeye basınca sessizce
+    // hiçbir şey olmuyordu.
+    if (!adminReplyDraft.trim()) { showFieldProblem({ field: "message", key: "valRequired" }); return; }
     const tk = supportTickets.find(t => t.id === id);
     const adminReplies = [...(tk?.adminReplies || []), { text: adminReplyDraft.trim(), date: TODAY.toLocaleDateString("tr-TR") }];
     setSupportTickets(list => list.map(t => t.id === id ? { ...t, adminReplies } : t));
@@ -3269,7 +3282,9 @@ function useAppLogic() {
   };
   // ---- Toplu duyuru (broadcast) ----
   const sendBroadcast = () => {
-    if (!broadcastForm.message.trim()) return;
+    // Bkz. addVehicle'daki aynı düzeltmenin notu — boş mesajla düğmeye basınca sessizce
+    // hiçbir şey olmuyordu.
+    if (!broadcastForm.message.trim()) { showFieldProblem({ field: "message", key: "valRequired" }); return; }
     const message = broadcastForm.message.trim();
     const audience = broadcastForm.audience;
     const count = audience === "all" ? adminAllUsers.length : audience === "owner" ? adminStats.totalOwners : adminStats.totalMechanics;
@@ -3470,7 +3485,10 @@ function useAppLogic() {
   };
 
   const addVehicle = async () => {
-    if (!newVehicle.brand || !newVehicle.model) return;
+    // ZORUNLU ALAN GERİ BİLDİRİMİ (tam site QA denetiminde bulundu): burada eskiden marka/model
+    // boşken düğmeye basınca hiçbir şey olmuyordu — kullanıcı neden ilerlemediğini anlayamıyordu.
+    if (!newVehicle.brand) { showFieldProblem({ field: "brand", key: "valRequired" }); return; }
+    if (!newVehicle.model) { showFieldProblem({ field: "model", key: "valRequired" }); return; }
     // MANTIK DENETİMİ: eskiden yalnızca "bu metin tarihe çevrilebiliyor mu" bakılıyordu, bu yüzden
     // sigorta bitişine 2099 yazılabiliyordu (kullanıcı bildirdi). Artık her alan kendi anlamına
     // göre denetleniyor.
@@ -3598,17 +3616,51 @@ function useAppLogic() {
   const acceptAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Sırada" } : a)); persist(api.appointments.update(id, { status: "Sırada" }), "Randevu güncellenemedi"); fireSuccessPulse(t("apptAcceptedToast")); fireNotification("Randevunuz kabul edildi ✅", "Tamirci randevu talebinizi onayladı.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
   const rejectAppt = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Reddedildi" } : a)); persist(api.appointments.update(id, { status: "Reddedildi" }), "Randevu güncellenemedi"); setToast({ type: "info", text: t("apptRejectedToast") }); fireNotification("Randevunuz reddedildi", "Tamirci bu randevu talebini kabul edemedi.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); };
   const markNoShow = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Gelmedi", noShow: true } : a)); persist(api.appointments.update(id, { status: "Gelmedi", noShow: true }), "Randevu güncellenemedi"); setToast({ type: "info", text: t("noShowMarkedToast") }); };
+  // GERİ DÖNÜŞ DEĞERİ: durum PATCH'inin promise'ı döndürülüyor (persist() zaten döndürüyor) —
+  // completeApptWithWarranty bu promise'ı AWAIT ETMEK için kullanıyor, bkz. o fonksiyondaki not
+  // (yarış durumu düzeltmesi). Diğer çağıran yer (AppShell.tsx "Tamire Al" butonu) dönen değeri
+  // yok sayıyor, davranışı değişmiyor.
+  /**
+   * GERÇEK HATA (canlı tarayıcı testinde, ayrıntılı console.log izleriyle bulundu — bkz. el
+   * kitabı 22.7). Eski kod bir sonraki durumu (`nextStatus`) setAppointments'ın GÜNCELLEYİCİ
+   * FONKSİYONU İÇİNDE, dışarıdaki bir `let` değişkenine yan etki olarak yazıyordu, sonra o
+   * değişkeni updater çağrısından HEMEN SONRA okuyordu. Bu "React'ın updater'ı senkron çalıştırdığı"
+   * varsayımına dayanıyor — ki bu React 18'de GARANTİ DEĞİL: React yalnızca belirli koşullarda
+   * (o fiber'da bekleyen başka güncelleme yoksa) updater'ı senkron/erken çalıştırır, aksi halde
+   * çağrıyı kuyruğa alır ve updater bir SONRAKİ render'a kadar hiç çalışmaz. Ölçülen sonuç: gerçek
+   * tarayıcıda `advanceStatus(101)` çağrıldığında `appointments` dizisinde id=101 doğru satırla
+   * (status: "Tamire Alındı") duruyordu, ama updater hiç çalışmamış gibi `nextStatus` HER ZAMAN
+   * `null` kalıyordu — yani PATCH isteği hiçbir zaman GÖNDERİLMİYORDU (sessizce, ağa hiç çıkmadan).
+   * Randevu ekranda "tamamlandı" gösteriliyordu ÇÜNKÜ modal kapanıyor ve SMS/garanti akışı devam
+   * ediyordu, ama durum SUNUCUYA hiç yazılmamıştı.
+   *
+   * DÜZELTME: bir sonraki durum artık setAppointments'tan TAMAMEN BAĞIMSIZ, mevcut `appointments`
+   * closure'ından DOĞRUDAN hesaplanıyor — React'ın updater'ı ne zaman çalıştırdığına bağlı değil.
+   */
   const advanceStatus = (id) => {
-    let nextStatus = null;
-    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; const idx = TRACK_STATUSES_AUTO.indexOf(a.status); const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)]; nextStatus = next; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse(t("repairCompletedToast")); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } return { ...a, status: next }; }));
-    if (nextStatus) persist(api.appointments.update(id, { status: nextStatus }), "Randevu güncellenemedi");
+    const current = appointments.find(a => a.id === id);
+    if (!current) return Promise.resolve();
+    const idx = TRACK_STATUSES_AUTO.indexOf(current.status);
+    const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)];
+    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse(t("repairCompletedToast")); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }); } return { ...a, status: next }; }));
+    return persist(api.appointments.update(id, { status: next }), "Randevu güncellenemedi");
   };
   // Tamiri "Tamamlandı" olarak işaretlerken, değişen parça varsa opsiyonel garanti süresi eklenebilir.
   // Garanti bitiş tarihi hem randevu kartında gösterilir hem de (plaka eşleşirse) aracın hatırlatmalarına eklenir.
-  const completeApptWithWarranty = (warrantyDays, vinInput = "") => {
+  const completeApptWithWarranty = async (warrantyDays, vinInput = "") => {
     const id = completingApptId;
     if (!id) return;
-    advanceStatus(id);
+    /**
+     * YARIŞ DURUMU DÜZELTMESİ (tam site QA denetiminde bulundu, ölçüldü: 400 "Yalnızca
+     * tamamlanmış randevular geçmişe yazılır"). Öncesinde advanceStatus (durumu "Tamamlandı"
+     * yapan PATCH) ATEŞLE-VE-UNUT çağrılıyor, hemen ardından vehicleHistory.record isteği
+     * gönderiliyordu — sunucu bu ikinci isteği işlerken randevunun durumu HENÜZ "Tamamlandı"
+     * olarak commit edilmemiş olabiliyordu (ağ gecikmesine bağlı, güvenilmez şekilde). Geçmiş
+     * kaydı bu durumda SESSİZCE (aşağıdaki .catch) hiç yazılmıyordu — "doğrulanmış servis
+     * geçmişi" özelliği rastgele başarısız oluyordu. Şimdi durum PATCH'i AWAIT ediliyor,
+     * geçmiş isteği ancak o kesinleştikten sonra gönderiliyor.
+     */
+    await advanceStatus(id);
     /**
      * ARACIN KALICI GEÇMİŞİNE İŞLEME.
      * -----------------------------------------------------------------------------------------
@@ -3648,7 +3700,12 @@ function useAppLogic() {
     const appt = appointments.find(a => a.id === id);
     setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "İptal Edildi" } : a));
     persist(api.appointments.update(id, { status: "İptal Edildi" }), "Randevu güncellenemedi");
-    if (appt && appt.mechanicId === MY_MECHANIC_ID) {
+    // BİLDİRİM HİÇ GİTMİYORDU (tam site QA denetiminde bulundu): buradaki koşul
+    // `appt.mechanicId === MY_MECHANIC_ID` idi — ama cancelOwnAppt SADECE araç sahibi tarafından
+    // çağrılıyor (bkz. AppointmentCard.tsx, tek çağrı yeri), yani MY_MECHANIC_ID bu oturumda HER
+    // ZAMAN null. Koşul asla doğru olamıyordu; tamirci, araç sahibi randevusunu iptal ettiğinde
+    // hiçbir zaman haber almıyordu.
+    if (appt) {
       fireNotification("Randevu iptal edildi ❌", `${appt.customer} — ${appt.vehicle} randevusunu iptal etti.`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: appt.id });
     }
   };
@@ -3664,7 +3721,9 @@ function useAppLogic() {
     persist(api.appointments.update(reschedulingApptId, patch), "Randevu güncellenemedi");
     setReschedulingApptId(null);
     setToast({ type: "info", text: "🔄 Randevunuz güncellendi." });
-    if (appt && appt.mechanicId === MY_MECHANIC_ID) {
+    // Bkz. cancelOwnAppt'taki aynı düzeltmenin notu — bu fonksiyon da yalnızca araç sahibi
+    // tarafından çağrılıyor, `appt.mechanicId === MY_MECHANIC_ID` koşulu asla doğru olamıyordu.
+    if (appt) {
       fireNotification("Randevu güncellendi 🔄", `${appt.customer} randevu tarihini/saatini değiştirdi: ${newDate} ${rescheduleTime}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: appt.id });
     }
   };
@@ -3703,12 +3762,17 @@ function useAppLogic() {
     setReviewingApptId(null);
     setReviewForm({ rating: 5, comment: "" });
     setToast({ type: "info", text: "⭐ Değerlendirmeniz için teşekkürler!" });
-    if (mech && mech.id === MY_MECHANIC_ID) {
+    // Bkz. cancelOwnAppt'taki aynı düzeltmenin notu — submitReview de yalnızca araç sahibi
+    // tarafından çağrılıyor (bkz. AppShell.tsx sendReviewBtn), `mech.id === MY_MECHANIC_ID` koşulu
+    // asla doğru olamıyordu; tamirci yeni bir değerlendirme aldığında hiçbir zaman haber almıyordu.
+    if (mech) {
       fireNotification("Yeni değerlendirme aldınız ⭐", `${ownerProfile.name || "Bir müşteri"} size ${reviewForm.rating} yıldız verdi.`, mechSettings.notifyMessages, "mechanic", { type: "ownMechanicReviews" });
     }
   };
   const submitMechanicReply = (mechanicId, reviewId) => {
-    if (!replyDraft.trim()) return;
+    // Bkz. addVehicle'daki aynı düzeltmenin notu — boş yanıtla düğmeye basınca sessizce
+    // hiçbir şey olmuyordu.
+    if (!replyDraft.trim()) { showFieldProblem({ field: "reply", key: "valRequired" }); return; }
     const mech = mechanicsList.find(m => m.id === mechanicId);
     const review = mech?.reviewList.find(r => r.id === reviewId);
     // Yanıtı yalnızca yorumun yazıldığı tamirci verebilir; yorumun KENDİSİNE dokunamaz
@@ -4531,7 +4595,9 @@ function useAppLogic() {
   };
   const tryAddService = () => {
     const name = newServiceForm.name.trim();
-    if (!name) return;
+    // Bkz. addVehicle'daki aynı düzeltmenin notu — burada da boş adla düğmeye basınca sessizce
+    // hiçbir şey olmuyordu.
+    if (!name) { showFieldProblem({ field: "serviceName", key: "valRequired" }); return; }
     const fixed = newServiceForm.fixed;
     if (fixed && !newServiceForm.price.trim()) { setToast({ type: "info", text: `⚠️ ${t("fixedPriceRequiredToast")}` }); return; }
     const price = newServiceForm.price.trim();
@@ -5385,8 +5451,11 @@ function useAppLogic() {
    */
   const [listingReply, setListingReply] = useState("");
   const submitListingReply = (listing) => {
+    if (!listing) return;
     const text = listingReply.trim();
-    if (!text || !listing) return;
+    // Bkz. addVehicle'daki aynı düzeltmenin notu — boş yanıtla düğmeye basınca sessizce
+    // hiçbir şey olmuyordu.
+    if (!text) { showFieldProblem({ field: "reply", key: "valRequired" }); return; }
     api.listings.addMessage(listing.id, text)
       .then((res) => {
         setListings(l => l.map(x => x.id === listing.id ? { ...x, ...res.listing } : x));
@@ -5443,7 +5512,9 @@ function useAppLogic() {
   const clearJobFilters = () => setJobFilters({ employmentType: "all", experienceLevel: "all" });
   const openJobForm = (prefill) => { setJobForm(prefill || EMPTY_JOB_FORM); setShowJobForm(true); };
   const submitJobListing = async () => {
-    if (!jobForm.title.trim()) return;
+    // Bkz. addVehicle'daki aynı düzeltmenin notu — boş başlıkla düğmeye basınca sessizce
+    // hiçbir şey olmuyordu.
+    if (!jobForm.title.trim()) { showFieldProblem({ field: "jobTitle", key: "valRequired" }); return; }
     const requirements = jobForm.requirements.split("\n").map(s => s.trim()).filter(Boolean);
     const skills = jobForm.skills.split(",").map(s => s.trim()).filter(Boolean);
     // İlan açıklamasının hangi dilde yazıldığını tamircinin güncel diline göre etiketliyoruz —

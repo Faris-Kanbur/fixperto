@@ -1051,7 +1051,21 @@ export const T = {
   valRange: { tr: "{field}: {min} ile {max} arasında olmalı.", en: "{field}: must be between {min} and {max}.", de: "{field}: muss zwischen {min} und {max} liegen." },
   valYearRange: { tr: "{field}: {min} ile {max} arasında bir yıl girin.", en: "{field}: enter a year between {min} and {max}.", de: "{field}: Jahr zwischen {min} und {max} eingeben." },
   valEngineSize: { tr: "{field}: 0.6–8.0 litre ya da 600–8000 cc aralığında olmalı.", en: "{field}: must be 0.6–8.0 L or 600–8000 cc.", de: "{field}: 0,6–8,0 L oder 600–8000 cm³." },
+  /**
+   * ZORUNLU ALAN (tam site QA denetiminde bulundu): birkaç form, zorunlu bir alan boş bırakılınca
+   * DÜĞMEYE BASINCA HİÇBİR ŞEY OLMUYORDU — ne hata ne de başka bir geri bildirim (addVehicle:
+   * marka/model boşsa sessizce return ediyordu; tryAddService, submitMechanicReply,
+   * submitJobListing aynı sınıf hatayı taşıyordu). Kullanıcı düğmeye tekrar tekrar basıp neden
+   * çalışmadığını anlayamıyordu. Tek bir genel mesajla hepsi düzeltildi.
+   */
+  valRequired: { tr: "{field} zorunludur.", en: "{field} is required.", de: "{field} ist erforderlich." },
   // Alan adları (doğrulama mesajlarında {field} yerine geçer)
+  fieldBrand: { tr: "Marka", en: "Brand", de: "Marke" },
+  fieldModel: { tr: "Model", en: "Model", de: "Modell" },
+  fieldServiceName: { tr: "Hizmet adı", en: "Service name", de: "Servicename" },
+  fieldReply: { tr: "Yanıt", en: "Reply", de: "Antwort" },
+  fieldJobTitle: { tr: "İlan başlığı", en: "Job title", de: "Stellentitel" },
+  fieldMessage: { tr: "Mesaj", en: "Message", de: "Nachricht" },
   fieldYear: { tr: "Yıl", en: "Year", de: "Baujahr" },
   fieldKm: { tr: "Kilometre", en: "Mileage", de: "Kilometerstand" },
   fieldPrice: { tr: "Fiyat", en: "Price", de: "Preis" },

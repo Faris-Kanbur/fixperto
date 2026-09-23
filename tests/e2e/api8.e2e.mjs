@@ -37,9 +37,9 @@ try {
   };
   const doneId = await mkAppt("09:00");
   await api("PATCH", `/api/appointments/${doneId}`, { token: M.token, body: { status: "Sırada" } });
-  eq((await api("PATCH", `/api/appointments/${doneId}`, { token: M.token, body: { status: "Tamamlandı", servicePrice: 1500 } })).status, 200,
+  eq((await api("PATCH", `/api/appointments/${doneId}`, { token: M.token, body: { status: "Tamir Tamamlandı", servicePrice: 1500 } })).status, 200,
     "tamirci randevuyu tamamladı");
-  eq(row("SELECT status FROM appointments WHERE id = ?", doneId).status, "Tamamlandı", "durum veritabanında Tamamlandı");
+  eq(row("SELECT status FROM appointments WHERE id = ?", doneId).status, "Tamir Tamamlandı", "durum veritabanında Tamamlandı");
   const delDone = await api("DELETE", `/api/appointments/${doneId}`, { token: A.token });
   eq(delDone.status, 409, "TAMAMLANMIŞ randevu müşteri tarafından SİLİNEMİYOR");
   ok(row("SELECT id FROM appointments WHERE id = ?", doneId), "kayıt duruyor (tamircinin iş/ciro geçmişi)");

@@ -3,6 +3,7 @@ import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { db, recomputeMechanicReviews } from "../db/db.js";
 import { hydrate } from "../db/hydrate.js";
 import { makeRateLimiter, resolveActor } from "../utils/auth.js";
+import { APPOINTMENT_STATUS } from "./appointments.js";
 
 /**
  * DEĞERLENDİRMELER — puanın gerçekten bir anlamı olması için.
@@ -101,9 +102,12 @@ reviewsRouter.post("/:id/reviews", (req, res) => {
   }
   // DOĞRULANMIŞ MÜŞTERİ: yorumun arkasında gerçekten yapılmış bir iş olmalı. Bu kural olmadan
   // yorumlar, rakibin puanını düşürmek için açılan sahte hesaplarla doldurulabilirdi.
+  // Durum metni appointments.js'in STATUS.DONE'undan geliyor (bkz. o dosyadaki yorum) — sabit bir
+  // metin buraya ayrıca yazılırsa iki dosya birbirinden bağımsız kayabilir ve hiçbir randevu asla
+  // eşleşmez (ölçülen gerçek örnek: "Tamamlandı" burada, ön yüzün gönderdiği "Tamir Tamamlandı").
   const appt = db.prepare(
-    `SELECT id FROM appointments WHERE mechanicId = ? AND ownerId = ? AND status = 'Tamamlandı' LIMIT 1`
-  ).get(mech.id, actor.role === "owner" ? actor.id : -1);
+    `SELECT id FROM appointments WHERE mechanicId = ? AND ownerId = ? AND status = ? LIMIT 1`
+  ).get(mech.id, actor.role === "owner" ? actor.id : -1, APPOINTMENT_STATUS.DONE);
   if (!appt && actor.role !== "admin") {
     return res.status(403).json({ error: "Yalnızca bu tamircide tamamlanmış randevusu olan kullanıcılar yorum bırakabilir.", reason: "noAppointment" });
   }

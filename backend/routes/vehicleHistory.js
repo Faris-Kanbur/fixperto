@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "../db/db.js";
 import { clientIp, rateLimitKey } from "../utils/clientIp.js";
 import { makeRateLimiter, resolveActor } from "../utils/auth.js";
+import { APPOINTMENT_STATUS } from "./appointments.js";
 
 /**
  * ARACIN GEÇMİŞİ — şasi (VIN) numarasına bağlı, sahipten bağımsız servis kaydı.
@@ -84,7 +85,10 @@ router.post("/", (req, res) => {
   if (!appt) return res.status(404).json({ error: "Randevu bulunamadı." });
   // Kayıt uydurulamasın: randevu gerçekten BU tamirciye ait olmalı ve tamamlanmış olmalı.
   if (appt.mechanicId !== actor.id) return res.status(403).json({ error: "Bu randevu size ait değil." });
-  if (appt.status !== "Tamamlandı") return res.status(400).json({ error: "Yalnızca tamamlanmış randevular geçmişe yazılır." });
+  // Sabit metin yerine appointments.js'in kendi STATUS.DONE'u kullanılıyor: iki dosya bağımsız
+  // yazılırsa ("Tamamlandı" vs ön yüzün gönderdiği "Tamir Tamamlandı") tam bu sınıf hata çıkar
+  // (bkz. appointments.js üstündeki STATUS yorumu — ölçülen gerçek örnek buydu).
+  if (appt.status !== APPOINTMENT_STATUS.DONE) return res.status(400).json({ error: "Yalnızca tamamlanmış randevular geçmişe yazılır." });
 
   // VIN iki yoldan gelebilir:
   //  1) Tamirci elle yazar (aracı fiziksel olarak görüyor, şasi numarası ön camın altında).

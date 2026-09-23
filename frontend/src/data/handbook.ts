@@ -231,7 +231,17 @@ Sohbet başlığındaki düğme o tamirciyle randevu ekranını açar. Sohbetin 
 ## Emoji
 Yazma alanının yanında gülen yüz düğmesi var (her iki tarafta da). Panel hazır bir kütüphane DEĞİL: emoji seçici paketleri birkaç yüz kilobayt ve binlerce emoji taşıyor, oysa burada gerçek ihtiyaç "tamam", "eyvallah", "araba hazır mı" yazışmasıdır. Küçük ve konuya uygun bir set hem daha hızlı yüklenir hem de aranacak bir şey kalmadığı için daha hızlı kullanılır; içinde bu işe özgü olanlar da var (araba, anahtar, tamir, yakıt) — genel bir kütüphanede bunları bulmak için arama yapmak gerekirdi.
 
-Panel PORTAL ile document.body'ye basılıyor. Sohbet kutusu taşma (overflow) olan bir kabın içinde; normal akışta açılan panel o kabın kenarında kesiliyor ya da altında kalıyordu — bilgi baloncuğunda (InfoTip) yaşanan hatanın aynısı. Panel düğmenin ÜSTÜNDE açılıyor, çünkü yazma alanı ekranın altında; aşağı açılsa ekran dışına taşardı. Escape ile ve dışarı tıklayınca kapanıyor.`,
+Panel PORTAL ile document.body'ye basılıyor. Sohbet kutusu taşma (overflow) olan bir kabın içinde; normal akışta açılan panel o kabın kenarında kesiliyor ya da altında kalıyordu — bilgi baloncuğunda (InfoTip) yaşanan hatanın aynısı. Panel düğmenin ÜSTÜNDE açılıyor, çünkü yazma alanı ekranın altında; aşağı açılsa ekran dışına taşardı. Escape ile ve dışarı tıklayınca kapanıyor.
+
+## İki araç sahibi arası sohbet
+Bir ilan "Sahibinden" ise (özel satıcı, tamirci değil) ilgilenen alıcı da bir araç sahibi hesabıdır — sohbetin iki tarafı da owner rolündedir, mevcut owner↔mechanic şemasına (conversations.mechanicId) sığmaz. Bunun için ayrı bir sütun var: \`peerOwnerId\`. \`mechanicId\` NULL, \`ownerId\` sohbeti başlatan tarafı, \`peerOwnerId\` karşı araç sahibini gösterir; \`mechanicName\`/\`mechanicImg\`/\`mechanicLang\` sütunları bu durumda karşı araç sahibinin ad/fotoğraf/dil kopyası için YENİDEN KULLANILIR (yeni sütun açmamak için — hangi anlamda kullanıldığı mechanicId'nin null olup olmamasından anlaşılır). Görünürlük kuralı: bir owner, ya \`ownerId\` ya da \`peerOwnerId\` sütununda kendi kimliğiyle eşleşen sohbetleri görür. Karşı tarafın adı/fotoğrafı/dili İSTEMCİDEN alınmaz, sunucuda \`owners\` tablosundan okunur (bkz. 22.7) — aksi halde biri kendini başka biri gibi gösterebilirdi.
+
+Mesajlarda \`sender\` alanı bu tür sohbette İKİ TARAF için de \`"owner"\` olur (rol tek başına ayırt edici değildir), bu yüzden "bu mesaj benim mi" sorusu \`senderId\` (oturumdan damgalanan gerçek kullanıcı id'si) ile cevaplanır.
+
+Sohbet giriş noktaları (ilan detayındaki "Sohbet Başlat" düğmesi, ilan hızlı önizlemesi) hem tamirciyle hem bir başka araç sahibiyle sohbeti aynı ekrana (Sohbetler sekmesi, iki panelli görünüm) açar — WhatsApp'ta olduğu gibi tek bir mesajlaşma yüzeyi, ayrı bir "sohbet ekranı" yok.
+
+## Sohbet silme
+Hem araç sahibi hem tamirci tarafında liste başlığında "Seç" düğmesi var: açıldığında her satırda onay kutusu çıkar, "Tümünü Seç" ve toplu "Sil" düğmeleri belirir; seçim modundan "İptal" ile çıkılabilir. Tekil silme de var: her satırın sonunda ve açık sohbetin üstünde birer çöp kutusu ikonu. Silme her zaman bir onay diyaloğundan geçer (DESTRUCTIVE — geri alınamaz) ve toplu silmede kaç sohbetin silineceği diyalogda yazılır. Silinen bir sohbet o an ekranda açıksa detay paneli kapanır. Backend tarafında silme yetkisi \`convoVisibleTo\` ile aynı kuralı kullanır: yalnızca sohbetin gerçek bir tarafı (ya da admin) silebilir.`,
       },
       {
         id: "teklifakisi",
@@ -847,7 +857,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 38 STATİK takım + 11 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 39 STATİK takım + 12 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -1590,6 +1600,54 @@ Sunucu hiç çerez kullanmıyor; oturum jetonu Authorization başlığında. Tar
 
 ## Sunucu-sunucu testin GÖREMEDİĞİ bir hata
 \`X-Total-Count\` başlığı eklendiğinde testler geçiyordu ama tarayıcıda okunamıyordu: çapraz kaynaklı yanıtta tarayıcı, \`Access-Control-Expose-Headers\` ile açıkça izin verilmeyen her başlığı JS'ten GİZLER. Test istemcisi tarayıcı olmadığı için CORS kuralları ona uygulanmıyordu. Ders şu: tarayıcıya bağlı bir davranışı sunucu-sunucu testle doğrulamak yetmez — yapılandırmanın kendisi de sınanmalı.`,
+      },
+      {
+        id: "canli-test-turu",
+        title: "22.7 Uçtan uca canlı testte bulunanlar — \"kendi kimliğim\" varsayımı",
+        body: `Bu bölümdeki bulgular kod okuyarak değil, siteyi gerçek tarayıcıda, birden çok gerçek hesapla (4 araç sahibi + 4 tamirci, ayrı oturum jetonlarıyla) uçtan uca kullanarak bulundu — önceki denetimler statik/otomatikti, bu tur DAVRANIŞI ölçtü.
+
+## Ortak kök neden: "MY_MECHANIC_ID kontrolü" bekçisi
+Gerçek çoklu hesap oturumu eklenmeden ÖNCE, sitede TEK bir "etkileşimli" tamirci hesabı varmış gibi davranan bir dönem olmuş. O dönemden kalma birkaç bildirim çağrısı, hâlâ \`if (hedefTamirciId === MY_MECHANIC_ID)\` gibi bir kontrolden SONRA ateşleniyordu — yani "bildirim yalnızca şu an benim aktif oturumumdaki tamirciye gidiyorsa gönder" mantığı. Gerçek oturumda bu koşul owner ekranlarında HİÇBİR ZAMAN doğru olmuyor (\`MY_MECHANIC_ID\` orada hep null), yani bildirim SESSİZCE hiç ateşlenmiyordu. Etkilenen dört akış — hepsi ölçülüp doğrulandı:
+- **Yeni randevu / randevu talebi** (confirmBooking): bir araç sahibi randevu aldığında tamirciye giden "Yeni randevu" bildirimi hiç gitmiyordu — sitenin en sık gerçekleşen bildirimi, uçtan uca hiç çalışmıyordu.
+- **Çoklu fiyat teklifi isteği** (submitQuoteRequest): birden çok tamirciye "Yeni teklif isteği" bildirimi aynı sebeple hiç gitmiyordu.
+- **Randevu iptali** (cancelOwnAppt) ve **yeniden planlama** (confirmReschedule): tamirciye giden bildirim aynı kalıpla sessizce kayboluyordu.
+- **Yeni değerlendirme** (submitReview): tamirciye "yeni yorum aldınız" bildirimi de aynı bekçiden geçiyordu.
+
+Düzeltme: bu beş çağrıdaki gereksiz kimlik kontrolü kaldırıldı, bildirim HEDEFİN ROLÜNE göre (\`fireNotification(..., "mechanic", ...)\`) koşulsuz ateşleniyor — zaten \`notifLog\`'un kendisi rol bazlı, kişiye özel değil (bkz. 15.1 ve bu bölümün altındaki mimari not), yani "hangi tamirci" ayrımı en baştan yanlış bir varsayımdı.
+
+## Ders
+Bu sınıf hata STATİK denetimde görünmez: kod "çalışıyor", tip kontrolünden geçiyor, hiçbir istisna fırlatmıyor — sadece koşul hiçbir zaman doğru olmuyor. Yalnızca gerçek çoklu hesapla uçtan uca akışı izleyip "bildirim geldi mi?" diye bakınca ortaya çıkıyor. Aynı bekçi kalıbı yeni bir bildirim çağrısı eklenirken kopyalanırsa aynı hata geri gelir; kural artık basit: bildirim koşulu yalnızca kategori aç/kapa ayarına (\`notifyX\`) ve hedef role bakmalı, gönderenin KENDİ oturum kimliğine değil.
+
+## Randevu tamamlama HİÇ ÇALIŞMIYORDU — üç katmanlı bir hata, üç ayrı teşhis
+Bu, sitede tek bir görünen semptomun ("garanti tamamlama bazen 400 veriyor") arkasında ÜÇ FARKLI gerçek hatanın sırayla çıktığı bir vaka — her biri bir öncekini düzeltince ortaya çıkan bir SONRAKİ katmandı ve üçü de kod okuyarak değil, canlı tarayıcıda adım adım ölçerek bulundu.
+
+### Katman 1 (ilk teşhis, YANLIŞ): "yarış durumu" sanıldı
+Bir randevu "Tamamlandı" yapılıp ardından garanti/şasi bilgisiyle servis geçmişine yazılırken konsolda \`400 Yalnızca tamamlanmış randevular geçmişe yazılır\` hatası çıkıyordu ve sessizce yutuluyordu (\`.catch(() => {})\`). İlk bakışta bu bir YARIŞ DURUMU gibi göründü ("durum PATCH'i geçmiş isteğinden ÖNCE bitmemiş olabilir") ve \`advanceStatus\`'ün PATCH promise'ını \`await\` etmesi sağlandı — zararsız ve doğru bir iyileştirme, ama sorunu ÇÖZMEDİ: düzeltmeden sonra bile hata canlıda AYNEN devam etti, çünkü mesele hiç zamanlamayla ilgili değildi.
+
+### Katman 2 (gerçek ama TEK başına yetersiz): backend/ön yüz durum sözlüğü hiç eşleşmiyordu
+Doğrudan API'ye curl ile istek atılarak, canlı sunucuya karşı ölçüldü: backend'in randevu durum makinesi (\`backend/routes/appointments.js\`) ön yüzün kullandığı değerlerle HİÇ EŞLEŞMİYORDU.
+- Ön yüz (\`frontend/src/data/constants.ts\`, \`TRACK_STATUSES_AUTO\`) "Tamire Alındı" (ara durum) ve "Tamir Tamamlandı" (bitiş durumu) gönderiyordu — bu string'ler 15'ten fazla yerde (karşılaştırmalar, i18n etiketleri, tip tanımı, tohum verisi) kullanılıyordu.
+- Backend'in \`STATUS\` sözlüğü "Tamire Alındı"yı HİÇ TANIMIYORDU ve bitiş durumu olarak "Tamamlandı" (ön ek YOK) bekliyordu — bağımsız yazılmış, hiç senkronize edilmemiş bir sözlük.
+- Sonuç: mekanik panelindeki "Tamire Al" VE "Tamamlandı (SMS gönderilir)" düğmelerinin attığı PATCH istekleri HER SEFERİNDE (zamanlamadan bağımsız, %100 deterministik) \`400 "Geçersiz randevu durumu"\` ile reddediliyordu.
+- İkincil etki: \`vehicle_history\` kaydı VE yorum yazma hakkı (\`reviews.js\`) da aynı "Tamamlandı" sabitine bakıyordu — yani DOĞRULANMIŞ SERVİS GEÇMİŞİ ve YORUM ÖZELLİKLERİNİN İKİSİ DE gerçek bir randevu üzerinden HİÇBİR ZAMAN çalışamıyordu; bu iki özellik daha önceki denetimlerde yalnızca doğrudan API'ye (durum makinesini bypass ederek ya da testte doğru string'i kullanarak) yazılan verilerle test edilmiş, gerçek UI akışıyla hiç uçtan uca denenmemişti.
+
+Düzeltme: \`backend/routes/appointments.js\`'e \`IN_REPAIR: "Tamire Alındı"\` eklendi, \`DONE\` değeri ön yüzün gerçekten gönderdiği \`"Tamir Tamamlandı"\` ile eşitlendi, geçiş tablosuna \`Sırada → Tamire Alındı → Tamir Tamamlandı\` zinciri eklendi. \`STATUS\` artık \`APPOINTMENT_STATUS\` adıyla dışa aktarılıyor; \`vehicleHistory.js\` ve \`reviews.js\` artık kendi "Tamamlandı" kopyalarını YAZMIYOR, bu paylaşılan sabitten okuyor.
+
+Bu düzeltme sunucuyu doğru hale getirdi (curl ile doğrulandı) — ama tarayıcıda GERÇEK BUTONLA tekrar denendiğinde hata AYNEN devam etti. Üçüncü bir katman vardı.
+
+### Katman 3 (asıl kök neden — yalnızca canlı tarayıcıda, ayrıntılı \`console.log\` izleriyle bulunabildi)
+\`advanceStatus\`, bir SONRAKİ durumu (\`nextStatus\`) \`setAppointments\`'ın GÜNCELLEYİCİ FONKSİYONU İÇİNDE dışarıdaki bir \`let\` değişkenine YAN ETKİ olarak yazıyor, updater çağrısından HEMEN SONRA o değişkeni okuyordu. Bu kalıp "React, state updater'ını senkron çalıştırır" varsayımına dayanıyor — React 18'de bu GARANTİ DEĞİL: React yalnızca belirli koşullarda (o an için başka bekleyen bir güncelleme yoksa) updater'ı erken/senkron çalıştırıp sonucu hemen kullanılabilir kılar; aksi halde çağrıyı kuyruğa alır ve updater bir SONRAKİ render'a kadar hiç çalışmaz.
+
+Ölçülen (\`console.log\` ile, adım adım): \`advanceStatus(101)\` çağrıldığında \`appointments\` dizisinde id=101 doğru satırla (status: "Tamire Alındı") duruyordu — yani veri doğruydu — ama updater'ın çalışıp çalışmadığını gösteren \`nextStatus\` çağrıdan hemen sonra HER ZAMAN \`null\` çıkıyordu. Sonuç: PATCH isteği ağa HİÇ ÇIKMIYORDU — network sekmesinde bile görünmüyordu, "başarısız istek" bile değildi, İSTEK YOKTU. Randevu ekranda "tamamlandı" gösteriliyordu çünkü modal kapanıyor, SMS simülasyonu ve garanti/geçmiş akışı devam ediyordu (bunlar durum PATCH'ine bağlı değildi) — ama durumun kendisi sunucuya hiç yazılmamıştı.
+
+Düzeltme: bir sonraki durum artık \`setAppointments\`'tan TAMAMEN BAĞIMSIZ, mevcut \`appointments\` closure'ından (\`appointments.find(a => a.id === id)\`) DOĞRUDAN hesaplanıyor — React'ın updater'ı ne zaman çalıştırdığına bağlı değil. Aynı güncelleyici fonksiyon hâlâ SMS/bildirim yan etkilerini yapıyor, ama artık HANGİ durumu yazacağını dışarıdan (zaten hesaplanmış \`next\` değerinden) alıyor, kendi içinde yeniden hesaplamıyor ve dışarı sızdırmıyor.
+
+Bu üçüncü düzeltmeden sonra gerçek tarayıcıda, gerçek düğmeyle, iki ayrı geçiş (Sırada→Tamire Alındı ve Tamire Alındı→Tamir Tamamlandı) doğrudan veritabanı sorgusuyla doğrulandı.
+
+## Ders
+"Ara sıra oluyor" her zaman zamanlama anlamına gelmez. Bu vakada hata AŞIRI YÜKSEK bir aralıkla (deterministik, %100) oluyordu ama sadece VEHİCLE-HISTORY UÇ NOKTASINDA GÖRÜNÜYORDU — asıl kırık olan (durum PATCH'i) sessizce başarısız olduğu ve arayüz onu asla açığa çıkarmadığı için, semptom bir race condition'a benziyordu.
+
+İkinci ders: bir düzeltme test yazıp geçirmek ("advanceStatus artık promise döndürüyor", testler geçti) o düzeltmenin GERÇEK SORUNU ÇÖZDÜĞÜ anlamına gelmez — yalnızca YAZDIĞINIZ İDDİAYI doğrular. Katman 2'nin backend düzeltmesi de \`curl\`la doğrulandı ve doğruydu, ama canlı tarayıcıda GERÇEK BUTONLA denendiğinde hata aynen sürdü, çünkü ayrı bir katman daha vardı. Üç katman da SIRAYLA, her biri bir öncekini düzeltip TEKRAR canlıda deneyerek bulundu — kod okumak ya da testleri geçirmek hiçbirini tek başına ortaya çıkaramazdı; en derin katman (React state closure hatası) yalnızca ayrıntılı \`console.log\` izleriyle, gerçek tıklamayla, gerçek veritabanı sorgusuyla görülebildi. Bir düzeltme "mantıken doğru" göründüğünde ve testler geçtiğinde bile, MÜMKÜNSE gerçek uçtan uca akışı (gerçek buton, gerçek istek, gerçek veritabanı satırı) tekrar çalıştırıp doğrulamak gerekir — "düzelttim, testler geçti" ile "gerçekten çalışıyor" aynı şey değildir.`,
       },
 
     ],

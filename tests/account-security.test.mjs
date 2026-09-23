@@ -72,7 +72,9 @@ ok((reviews.match(/recomputeMechanicReviews\(/g) || []).length >= 4, "her yazma 
 // Eşzamanlılık kuralları veritabanı kısıtı olarak yazılı — JavaScript kontrolü yetmez.
 ok(/CREATE UNIQUE INDEX IF NOT EXISTS idx_review_one_per_author/.test(dbSchema), "bir kullanıcı bir yorum kuralı veritabanında");
 ok(/PRIMARY KEY \(reviewId, voterKey\)/.test(dbSchema), "bir kişi bir beğeni kuralı veritabanında");
-ok(/status = 'Tamamlandı'/.test(reviews), "yorum için tamamlanmış randevu şartı");
+// Sabit metin değil APPOINTMENT_STATUS.DONE (bkz. el kitabı 22.7 — appointments.js'ten bağımsız
+// yazılmış bir sabit metin, ön yüzün gönderdiği değerle hiç eşleşmeyen bir hataya yol açmıştı).
+ok(/status = \?/.test(reviews) && /APPOINTMENT_STATUS\.DONE/.test(reviews), "yorum için tamamlanmış randevu şartı (paylaşılan sabitten)");
 ok(/reason: "noAppointment"/.test(reviews), "randevusu olmayan yorum bırakamıyor");
 ok(/reason: "duplicate"/.test(reviews), "aynı tamirciye ikinci yorum engelli");
 ok(/Yalnızca kendi yorumunuzu silebilirsiniz/.test(reviews), "yorumu yalnızca yazarı silebiliyor");

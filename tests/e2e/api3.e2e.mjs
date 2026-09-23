@@ -437,7 +437,7 @@ try {
     token: reviewer.token,
     body: { mechanicId: revTarget.id, service: "Bakım", date: "2026-04-01", time: "09:00", status: "Onay Bekliyor" },
   });
-  await api("PATCH", `/api/appointments/${apptForReview.body.id}`, { token: revTarget.token, body: { status: "Tamamlandı" } });
+  await api("PATCH", `/api/appointments/${apptForReview.body.id}`, { token: revTarget.token, body: { status: "Tamir Tamamlandı" } });
   eq((await api("POST", `/api/mechanics/${revTarget.id}/reviews`, { token: reviewer.token, body: { rating: 5, comment: "İyi iş" } })).status, 201,
     "yorum yazıldı");
   ok(row("SELECT reviewList FROM mechanics WHERE id = ?", revTarget.id).reviewList.includes("Yorumcu Silinecek"),

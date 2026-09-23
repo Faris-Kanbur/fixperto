@@ -244,9 +244,9 @@ try {
      * DURUM MAKİNESİ: müşteri "Tamamlandı" yapamaz. Bu, DOĞRULANMIŞ SERVİS GEÇMİŞİNİN ön koşulu
      * olduğu için araç satarken güven uydurma zincirinin ilk halkası.
      */
-    const toDone = await api("PATCH", `/api/appointments/${id}`, { token: owner.token, body: { status: "Tamamlandı" } });
+    const toDone = await api("PATCH", `/api/appointments/${id}`, { token: owner.token, body: { status: "Tamir Tamamlandı" } });
     eq(toDone.status, 409, "MÜŞTERİ randevusunu 'Tamamlandı' yapamıyor");
-    ok(row(`SELECT status AS v FROM appointments WHERE id = ?`, id).v !== "Tamamlandı", "durum değişmedi");
+    ok(row(`SELECT status AS v FROM appointments WHERE id = ?`, id).v !== "Tamir Tamamlandı", "durum değişmedi");
     for (const bad of ["Gelmedi", "Reddedildi"]) {
       const r = await api("PATCH", `/api/appointments/${id}`, { token: owner.token, body: { status: bad } });
       eq(r.status, 409, `MÜŞTERİ '${bad}' yapamıyor`);
@@ -261,7 +261,7 @@ try {
     const byMech = await api("PATCH", `/api/appointments/${id}`, { token: mech.token, body: { servicePrice: 1500, warrantyEndDate: "2026-12-31" } });
     eq(byMech.status, 200, "TAMİRCİ bedel ve garanti yazabiliyor (kendi kararı)");
     eq(row(`SELECT servicePrice AS v FROM appointments WHERE id = ?`, id).v, 1500, "bedel kaydedildi");
-    eq((await api("PATCH", `/api/appointments/${id}`, { token: mech.token, body: { status: "Tamamlandı" } })).status, 200,
+    eq((await api("PATCH", `/api/appointments/${id}`, { token: mech.token, body: { status: "Tamir Tamamlandı" } })).status, 200,
       "TAMİRCİ randevuyu tamamlayabiliyor");
     // Tamirci de müşterinin alanını yazamıyor.
     eq((await api("PATCH", `/api/appointments/${id}`, { token: mech.token, body: { historyShareConsent: 0 } })).status, 403,

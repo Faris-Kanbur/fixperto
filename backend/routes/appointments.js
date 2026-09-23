@@ -88,11 +88,28 @@ const MECHANIC_WRITABLE = new Set([
  *   createdAt
  */
 
-/** Randevu durumları ve GEÇERLİ geçişler. Kaynak: ön yüzdeki gerçek akış (accept/reject/complete). */
+/**
+ * Randevu durumları ve GEÇERLİ geçişler. Kaynak: ön yüzdeki gerçek akış (accept/reject/complete).
+ *
+ * GERÇEK HATA (tam site QA denetiminde, uçtan uca canlı testte bulundu — bkz. el kitabı 22.7):
+ * bu liste "Tamire Alındı" (ara durum, tamirci işe başladığında) ara durumunu HİÇ İÇERMİYORDU ve
+ * DONE değeri ön yüzün gerçekten gönderdiği "Tamir Tamamlandı" yerine "Tamamlandı" idi (frontend/
+ * data/constants.ts TRACK_STATUSES_AUTO ile burası BAĞIMSIZ yazılmış, iki taraf hiç eşleşmemiş).
+ * Ölçülen sonuç: mechanic panelindeki "Tamire Al" ve "Tamamlandı (SMS gönderilir)" düğmeleri
+ * gönderdiği PATCH'in İKİSİ DE `400 "Geçersiz randevu durumu"` ile reddediliyordu — sessizce,
+ * çünkü ön yüz PATCH'i `persist()` ile ateşliyor ama başarısızlıkta iyimser (optimistic) yerel
+ * durumu GERİ ALMIYOR: ekranda randevu "Tamamlandı" görünüyor, SMS simülasyonu bile çalışıyor,
+ * ama veritabanındaki gerçek durum hiç değişmiyordu. Sayfa yenilenince randevu sessizce "Sırada"ya
+ * dönüyordu. Bunun ikincil etkileri: vehicle-history kaydı (STATUS.DONE'a bakıyor) ve yorum yazma
+ * hakkı (reviews.js, aynı sütuna bakıyor) da bu yüzden HİÇBİR ZAMAN gerçek bir randevu üzerinden
+ * çalışamıyordu — ikisi de "yalnızca tamamlanmış randevular" derken sunucuda hiçbir randevu asla
+ * o durumu gerçekten göremiyordu. `IN_REPAIR` eklendi, `DONE` ön yüzün gönderdiği değerle eşitlendi.
+ */
 const STATUS = {
   PENDING: "Onay Bekliyor",
   QUEUED: "Sırada",
-  DONE: "Tamamlandı",
+  IN_REPAIR: "Tamire Alındı",
+  DONE: "Tamir Tamamlandı",
   REJECTED: "Reddedildi",
   CANCELLED: "İptal Edildi",
   NO_SHOW: "Gelmedi",
@@ -115,7 +132,10 @@ const TRANSITIONS = {
   },
   mechanic: {
     [STATUS.PENDING]: new Set([STATUS.QUEUED, STATUS.REJECTED, STATUS.CANCELLED]),
-    [STATUS.QUEUED]: new Set([STATUS.DONE, STATUS.NO_SHOW, STATUS.CANCELLED, STATUS.REJECTED]),
+    [STATUS.QUEUED]: new Set([STATUS.IN_REPAIR, STATUS.DONE, STATUS.NO_SHOW, STATUS.CANCELLED, STATUS.REJECTED]),
+    // Ön yüzün gerçek akışı: "Tamire Al" → Tamire Alındı, sonra "Tamamlandı (SMS gönderilir)" →
+    // Tamir Tamamlandı (bkz. AppShell.tsx satır ~3393). Bu ara adım hiç tanımlı değildi.
+    [STATUS.IN_REPAIR]: new Set([STATUS.DONE]),
   },
 };
 
@@ -361,4 +381,5 @@ appointmentsRouter.delete("/:id", (req, res) => {
   res.status(204).end();
 });
 
+export { STATUS as APPOINTMENT_STATUS };
 export default appointmentsRouter;

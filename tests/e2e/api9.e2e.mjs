@@ -177,7 +177,7 @@ try {
       token: CA.token, body: { mechanicId: MA.id, vehicleId: vA.id, date: "2027-09-01", time: "10:00", service: "Bakım" },
     });
     await api("PATCH", `/api/appointments/${ap.body.id}`, { token: MA.token, body: { status: "Sırada" } });
-    await api("PATCH", `/api/appointments/${ap.body.id}`, { token: MA.token, body: { status: "Tamamlandı", servicePrice: 2000 } });
+    await api("PATCH", `/api/appointments/${ap.body.id}`, { token: MA.token, body: { status: "Tamir Tamamlandı", servicePrice: 2000 } });
 
     // VIN gönderilmese bile GERÇEK BAĞDAN çözülüyor (eskiden randevu metninde plaka aranıyordu).
     const hist = await api("POST", "/api/vehicle-history", { token: MA.token, body: { appointmentId: ap.body.id, serviceText: "yağ değişimi", km: 50000 } });

@@ -96,9 +96,11 @@ try {
     "ilgisiz araç sahibi randevuyu GÖRMÜYOR");
   eq((await api("PATCH", `/api/appointments/${apptId}`, { token: owner2.token, body: { status: "İptal Edildi" } })).status, 403,
     "ilgisiz kullanıcı randevu durumunu değiştiremiyor");
-  eq((await api("PATCH", `/api/appointments/${apptId}`, { token: mech.token, body: { status: "Tamamlandı" } })).status, 200,
+  // "Tamir Tamamlandı" — ön yüzün gerçekten gönderdiği tamamlanma değeri (bkz. el kitabı 22.7:
+  // appointments.js'in STATUS.DONE'u eskiden "Tamamlandı" idi, ön yüzle hiç eşleşmiyordu).
+  eq((await api("PATCH", `/api/appointments/${apptId}`, { token: mech.token, body: { status: "Tamir Tamamlandı" } })).status, 200,
     "tamirci randevusunu tamamlayabiliyor");
-  eq(row("SELECT status FROM appointments WHERE id = ?", apptId).status, "Tamamlandı", "durum veritabanında güncellendi");
+  eq(row("SELECT status FROM appointments WHERE id = ?", apptId).status, "Tamir Tamamlandı", "durum veritabanında güncellendi");
 
   // ============================================================ DEĞERLENDİRME
   section("Değerlendirmeler ve rekabet koruması");
