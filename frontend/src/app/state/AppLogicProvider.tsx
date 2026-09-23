@@ -4356,8 +4356,16 @@ function useAppLogic() {
       // ownerId: sohbetin araç sahibi tarafı (güvenlik denetiminde eklendi — backend bu alanı
       // oturumdan da zorluyor, burada yerel state'in de doğru olması için yazıyoruz).
       convo = { id: Date.now(), ownerId: MY_OWNER_ID, mechanicId: m.id, mechanicName: m.name, mechanicImg: m.img, mechanicLang: m.lang, messages: [], pendingContextNote: contextNote || null };
+      const newConvoId = convo.id;
       setConversations([convo, ...conversations]);
-      persist(api.conversations.create(convo), "Sohbet başlatılamadı");
+      // GERÇEK HATA (sohbetin tam denetiminde bulundu): oluşturma isteği başarısız olsa bile
+      // (ör. hız sınırı, ağ hatası) kullanıcı zaten bu "hayalet" sohbete yönlendiriliyor ve boş bir
+      // ekranda kalıyordu — mesaj yazmayı deneyince ancak o zaman (kafa karıştırıcı bir "mesaj
+      // kaydedilemedi" hatasıyla) sorunun aslında sohbetin hiç oluşmadığını fark ediyordu.
+      persist(api.conversations.create(convo), "Sohbet başlatılamadı", () => {
+        setConversations(cs => cs.filter(c => c.id !== newConvoId));
+        if (activeConvoId === newConvoId) setActiveConvoId(null);
+      });
       recordConversion("chat");
     } else if (contextNote) {
       const alreadySent = convo.messages.some(msg => msg.text === contextNote);
@@ -4389,8 +4397,14 @@ function useAppLogic() {
       && ((c.ownerId === MY_OWNER_ID && c.peerOwnerId === peerOwner.id) || (c.ownerId === peerOwner.id && c.peerOwnerId === MY_OWNER_ID)));
     if (!convo) {
       convo = { id: Date.now(), ownerId: MY_OWNER_ID, peerOwnerId: peerOwner.id, mechanicId: null, mechanicName: peerOwner.name, mechanicImg: peerOwner.photo || "", mechanicLang: peerOwner.lang || "tr", messages: [], pendingContextNote: contextNote || null };
+      const newConvoId = convo.id;
       setConversations([convo, ...conversations]);
-      persist(api.conversations.create(convo), "Sohbet başlatılamadı");
+      // GERÇEK HATA (bkz. openChatWithMechanic'teki aynı not): oluşturma başarısız olursa hayalet
+      // sohbet geri alınmıyordu.
+      persist(api.conversations.create(convo), "Sohbet başlatılamadı", () => {
+        setConversations(cs => cs.filter(c => c.id !== newConvoId));
+        if (activeConvoId === newConvoId) setActiveConvoId(null);
+      });
       recordConversion("chat");
     } else if (contextNote) {
       const alreadySent = convo.messages.some(msg => msg.text === contextNote);
@@ -4430,8 +4444,14 @@ function useAppLogic() {
     let convo = conversations.find(c => c.mechanicId === myProfile.id && (targetOwnerId == null || c.ownerId === targetOwnerId));
     if (!convo) {
       convo = { id: Date.now(), ownerId: targetOwnerId, mechanicId: myProfile.id, mechanicName: myProfile.name, mechanicImg: myProfile.img, mechanicLang: myProfile.lang, messages: [], pendingContextNote: contextNote || null };
+      const newConvoId = convo.id;
       setConversations([convo, ...conversations]);
-      persist(api.conversations.create(convo), "Sohbet başlatılamadı");
+      // GERÇEK HATA (bkz. openChatWithMechanic'teki aynı not): oluşturma başarısız olursa hayalet
+      // sohbet geri alınmıyordu.
+      persist(api.conversations.create(convo), "Sohbet başlatılamadı", () => {
+        setConversations(cs => cs.filter(c => c.id !== newConvoId));
+        if (mechActiveConvoId === newConvoId) setMechActiveConvoId(null);
+      });
       recordConversion("chat");
     } else if (contextNote) {
       const alreadySent = convo.messages.some(msg => msg.text === contextNote);
@@ -4458,11 +4478,22 @@ function useAppLogic() {
    * aksi halde silinmiş bir sohbetin mesajlarına bakan boş/çökmüş bir ekran kalırdı.
    */
   const removeConversation = (id) => {
+    // GERÇEK HATA (sohbetin tam denetiminde bulundu, aynı sınıf appointments/vehicles yazmalarında
+    // zaten defalarca bulunmuştu): silme isteği başarısız olursa (ör. ağ hatası) sohbet yerel
+    // listeden çoktan kaldırılmış oluyordu, geri alma yoktu — kullanıcı ekranda "silindi" görüyor,
+    // ama sunucuda sohbet hâlâ duruyor ve sayfa yenilenince sessizce geri geliyordu.
+    const removed = conversations.find(c => c.id === id);
+    const wasActive = activeConvoId === id;
+    const wasMechActive = mechActiveConvoId === id;
     setConversations(cs => cs.filter(c => c.id !== id));
-    persist(api.conversations.remove(id), "Sohbet silinemedi");
-    if (activeConvoId === id) setActiveConvoId(null);
-    if (mechActiveConvoId === id) setMechActiveConvoId(null);
+    if (wasActive) setActiveConvoId(null);
+    if (wasMechActive) setMechActiveConvoId(null);
     setChatSelectedIds(ids => ids.filter(x => x !== id));
+    persist(api.conversations.remove(id), "Sohbet silinemedi", () => {
+      if (removed) setConversations(cs => [removed, ...cs]);
+      if (wasActive) setActiveConvoId(id);
+      if (wasMechActive) setMechActiveConvoId(id);
+    });
   };
   const deleteConversationWithConfirm = (id) => {
     setConfirmDialog({
@@ -4483,6 +4514,15 @@ function useAppLogic() {
     if (!text && !image) return;
     const convo = conversations.find(c => c.id === activeConvoId);
     if (!convo) return;
+    // GERÇEK HATA (sohbetin tam denetiminde bulundu, aynı sınıf randevu/bildirim fonksiyonlarında
+    // zaten defalarca bulunup düzeltilmişti — bkz. el kitabı 22.9): bu fonksiyon `fireNotification`'ı
+    // sunucu yanıtını hiç BEKLEMEDEN, koşulsuz ateşliyordu — mesaj kaydı başarısız olsa bile (ağ
+    // hatası, hız sınırı) karşı taraf HİÇ GÖNDERİLMEMİŞ bir mesaj için "yeni mesaj" bildirimi
+    // alıyordu. Ayrıca başarısızlıkta yerel iyimser mesaj balonu HİÇ geri alınmıyordu — kullanıcıya
+    // "⚠️ kaydedilemedi" tostu çıkıyordu ama mesaj sohbette gönderilmiş gibi görünmeye devam
+    // ediyordu (karışık bir sinyal: bir yandan hata, bir yandan "gönderildi" görünümü).
+    const prevMessages = convo.messages;
+    const prevContextNote = convo.pendingContextNote;
     // Yerel (iyimser) güncelleme anında yapılıyor ki yazan kişi beklemesin; KALICI kayıt ise
     // artık mesaj ekleme uç noktasıyla — gönderen sunucuda oturumdan damgalanıyor ve ekleme
     // sunucudaki güncel dizinin sonuna yapılıyor (bkz. backend/routes/conversations.js).
@@ -4498,26 +4538,31 @@ function useAppLogic() {
     // Sunucunun döndürdüğü sohbet, karşı tarafın bu sırada yazdığı mesajları da içerir — yerel
     // kopyayı onunla tazeliyoruz (eskiden dizi topluca ezildiği için o mesajlar kayboluyordu).
     api.conversations.appendMessages(activeConvoId, outgoing, { clearContextNote: true })
-      .then((saved) => setConversations(cs => cs.map(c => c.id === activeConvoId ? { ...c, messages: saved.messages, pendingContextNote: null } : c)))
-      .catch((err) => setToast({ type: "info", text: `⚠️ Mesaj kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` }));
-    // Not: bildirim gövdesi sabit bir dizgi olduğu için canlı çeviri altyapısını kullanamıyor —
-    // alıcının dili göndericiyle AYNI değilse mesaj önizlemesini ham haliyle göstermiyoruz
-    // (bkz. quote-request bildirimi için yukarıdaki not); sohbet ekranındaki ChatBubble zaten
-    // karşı tarafın diline göre otomatik çeviriyor, bildirim o zaman sadece oraya yönlendiriyor.
-    // Owner-owner sohbette alıcı bir tamirci değil bir başka araç sahibi — bkz. peerOwnerId.
-    const recipientLang = convo.peerOwnerId != null
-      ? ownersDirectory.find(o => o.id === convo.peerOwnerId)?.lang
-      : mechanicsList.find(m => m.id === convo.mechanicId)?.lang;
-    const chatPreviewSameLang = !recipientLang || recipientLang === ownerLang;
-    const previewBody = `${ownerProfile.name || "Araç sahibi"}: ${!text ? "📷 Fotoğraf gönderdi" : chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`;
-    if (convo.peerOwnerId != null) {
-      // Owner-owner sohbette gönderici İKİ TARAFTAN biri olabilir (bkz. yukarıdaki senderId notu)
-      // — alıcı, sohbetin KENDİ kimliğim OLMAYAN tarafı.
-      const recipientOwnerId = convo.ownerId === MY_OWNER_ID ? convo.peerOwnerId : convo.ownerId;
-      fireNotification("Yeni mesaj 💬", previewBody, true, "owner", { type: "chat", id: activeConvoId }, recipientOwnerId, "notifyMessages");
-    } else {
-      fireNotification("Yeni mesaj 💬", previewBody, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId }, convo.mechanicId, "notifyMessages");
-    }
+      .then((saved) => {
+        setConversations(cs => cs.map(c => c.id === activeConvoId ? { ...c, messages: saved.messages, pendingContextNote: null } : c));
+        // Not: bildirim gövdesi sabit bir dizgi olduğu için canlı çeviri altyapısını kullanamıyor —
+        // alıcının dili göndericiyle AYNI değilse mesaj önizlemesini ham haliyle göstermiyoruz
+        // (bkz. quote-request bildirimi için yukarıdaki not); sohbet ekranındaki ChatBubble zaten
+        // karşı tarafın diline göre otomatik çeviriyor, bildirim o zaman sadece oraya yönlendiriyor.
+        // Owner-owner sohbette alıcı bir tamirci değil bir başka araç sahibi — bkz. peerOwnerId.
+        const recipientLang = convo.peerOwnerId != null
+          ? ownersDirectory.find(o => o.id === convo.peerOwnerId)?.lang
+          : mechanicsList.find(m => m.id === convo.mechanicId)?.lang;
+        const chatPreviewSameLang = !recipientLang || recipientLang === ownerLang;
+        const previewBody = `${ownerProfile.name || "Araç sahibi"}: ${!text ? "📷 Fotoğraf gönderdi" : chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`;
+        if (convo.peerOwnerId != null) {
+          // Owner-owner sohbette gönderici İKİ TARAFTAN biri olabilir (bkz. yukarıdaki senderId
+          // notu) — alıcı, sohbetin KENDİ kimliğim OLMAYAN tarafı.
+          const recipientOwnerId = convo.ownerId === MY_OWNER_ID ? convo.peerOwnerId : convo.ownerId;
+          fireNotification("Yeni mesaj 💬", previewBody, true, "owner", { type: "chat", id: activeConvoId }, recipientOwnerId, "notifyMessages");
+        } else {
+          fireNotification("Yeni mesaj 💬", previewBody, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId }, convo.mechanicId, "notifyMessages");
+        }
+      })
+      .catch((err) => {
+        setConversations(cs => cs.map(c => c.id === activeConvoId ? { ...c, messages: prevMessages, pendingContextNote: prevContextNote } : c));
+        setToast({ type: "info", text: `⚠️ Mesaj kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+      });
     setChatInput("");
   };
   // GERÇEK HATA DÜZELTMESİ (sohbet akışı denetiminde bulundu): sohbette gönderilen fotoğraflar
@@ -4677,18 +4722,28 @@ function useAppLogic() {
     // convo.mechanicLang yerine myProfile'ın GÜNCEL dil ayarından okunuyor (bkz. Ayarlar'daki dil
     // seçici). Böylece tamirci dilini değiştirdiğinde yeni mesajları doğru dille etiketlenir.
     const senderLang = myProfile.lang || "tr";
+    // GERÇEK HATA (aynı sınıf, sendOwnerMessage'da bulunup düzeltilen — bkz. o fonksiyondaki not):
+    // bildirim sunucu yanıtı beklenmeden koşulsuz ateşleniyor, başarısızlıkta yerel mesaj balonu
+    // geri alınmıyordu.
+    const prevMessages = convo.messages;
+    const prevContextNote = convo.pendingContextNote;
     const outgoing = [];
     if (convo.pendingContextNote) outgoing.push({ text: convo.pendingContextNote });
     outgoing.push({ text });
     const newMsgs = [...convo.messages, ...outgoing.map((m) => ({ id: msgId++, sender: "mechanic", lang: senderLang, ...m }))];
     setConversations(cs => cs.map(c => c.id === mechActiveConvoId ? { ...c, messages: newMsgs, pendingContextNote: null } : c));
     api.conversations.appendMessages(mechActiveConvoId, outgoing, { clearContextNote: true })
-      .then((saved) => setConversations(cs => cs.map(c => c.id === mechActiveConvoId ? { ...c, messages: saved.messages, pendingContextNote: null } : c)))
-      .catch((err) => setToast({ type: "info", text: `⚠️ Mesaj kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` }));
-    // Bildirim gövdesi canlı çeviremediği için (bkz. sendOwnerMessage'daki not) alıcı araç
-    // sahibinin dili göndericiyle farklıysa ham metni değil genel bir önizleme gösteriyoruz.
-    const chatPreviewSameLang = senderLang === ownerLang;
-    fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId }, convo.ownerId, "notifyMessages");
+      .then((saved) => {
+        setConversations(cs => cs.map(c => c.id === mechActiveConvoId ? { ...c, messages: saved.messages, pendingContextNote: null } : c));
+        // Bildirim gövdesi canlı çeviremediği için (bkz. sendOwnerMessage'daki not) alıcı araç
+        // sahibinin dili göndericiyle farklıysa ham metni değil genel bir önizleme gösteriyoruz.
+        const chatPreviewSameLang = senderLang === ownerLang;
+        fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId }, convo.ownerId, "notifyMessages");
+      })
+      .catch((err) => {
+        setConversations(cs => cs.map(c => c.id === mechActiveConvoId ? { ...c, messages: prevMessages, pendingContextNote: prevContextNote } : c));
+        setToast({ type: "info", text: `⚠️ Mesaj kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+      });
     setMechChatInput("");
   };
   const updateMyField = (field, value) => { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m)); persist(api.mechanics.update(MY_MECHANIC_ID, { [field]: value }), "Profil bilgisi kaydedilemedi"); };

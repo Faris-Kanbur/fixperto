@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
 import { hydrate, hydrateAll, dehydrate } from "../db/hydrate.js";
-import { resolveActor } from "../utils/auth.js";
+import { resolveActor, makeRateLimiter } from "../utils/auth.js";
+import { rateLimitKey } from "../utils/clientIp.js";
 
 // GÜVENLİK DÜZELTMESİ (sohbet akışı denetiminde bulundu): conversations daha önce generic
 // makeCrudRouter kullanıyordu — bu, `messages` alanının PATCH ile TAMAMEN SERBEST bir JSON dizisi
@@ -40,6 +41,25 @@ const MAX_MESSAGE_IMAGE_LEN = 2_700_000;       // ~2 MB ikili karşılık (base6
 const MAX_MESSAGES_PER_CONVERSATION = 2000;
 const MAX_CONVERSATION_TOTAL_LEN = 40 * 1024 * 1024;
 const VALID_SENDERS = new Set(["owner", "mechanic"]);
+
+/**
+ * HIZ SINIRI — bu dosyada daha önce HİÇ YOKTU (randevu+bildirim taramasından sonra sohbetin tam
+ * denetiminde bulundu). Bu depodaki neredeyse her yazma-ağırlıklı uç nokta bir `makeRateLimiter`
+ * taşıyor (appointments.js POST, notifications.js POST, reviews.js POST, vehicleHistory.js POST/
+ * lookup) ama conversations.js hiç taşımıyordu — üstelik bu, sitedeki EN yüksek frekanslı yazma
+ * eylemi: mesaj gönderme. Kimliği doğrulanmış tek bir hesap, tek bir sohbete saniyede onlarca
+ * istek atıp (her istekte en fazla 3 mesaj) 2000 mesaj tavanına çok hızlı ulaşabilir — hem karşı
+ * tarafın sohbetini spam'le dolduran hem de her istekte büyüyen mesaj dizisini baştan
+ * JSON.parse/JSON.stringify ettiren (bkz. yukarısı boyut tavanlarının performans notu) bir DoS
+ * yüzeyi. Sohbet OLUŞTURMA için de aynısı: hiçbir sınır yokken bir hesap saniyeler içinde
+ * platformdaki HER tamirciyle bir sohbet açabilirdi.
+ */
+// Env değişkenleri e2e testlerinin gerçek arka arkaya istekleri kendi hız sınırını tetiklemesin
+// diye var — appointments.js'teki APPOINTMENT_CREATE_LIMIT_PER_WINDOW ile aynı desen.
+const MESSAGE_MAX = Number(process.env.CONVERSATION_MESSAGE_LIMIT_PER_WINDOW) > 0 ? Number(process.env.CONVERSATION_MESSAGE_LIMIT_PER_WINDOW) : 60;
+const CREATE_CONVO_MAX = Number(process.env.CONVERSATION_CREATE_LIMIT_PER_WINDOW) > 0 ? Number(process.env.CONVERSATION_CREATE_LIMIT_PER_WINDOW) : 20;
+const messageLimiter = makeRateLimiter({ maxAttempts: MESSAGE_MAX, lockoutMs: 5 * 60 * 1000, windowMs: 60 * 1000 });
+const createConvoLimiter = makeRateLimiter({ maxAttempts: CREATE_CONVO_MAX, lockoutMs: 10 * 60 * 1000, windowMs: 10 * 60 * 1000 });
 
 function validateMessages(messages) {
   if (!Array.isArray(messages)) return "messages bir dizi olmalıdır.";
@@ -147,6 +167,13 @@ conversationsRouter.get("/:id", (req, res) => {
 conversationsRouter.post("/", (req, res) => {
   const actor = resolveActor(req);
   if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
+  if (actor.role !== "admin") {
+    const key = rateLimitKey(req);
+    if (createConvoLimiter.check(key).blocked) {
+      return res.status(429).json({ error: "Çok fazla sohbet başlatma isteği. Lütfen birkaç dakika sonra tekrar deneyin." });
+    }
+    createConvoLimiter.registerFailure(key);
+  }
   const body = dehydrate("conversations", req.body);
   // İKİ ARAÇ SAHİBİ ARASI SOHBET (ör. bir "Sahibinden" ilanı hakkında) — bkz. peerOwnerId şema
   // yorumu. Sadece bir owner bu türde sohbet başlatabilir; mechanicId bu satırlarda hiç yok.
@@ -249,6 +276,27 @@ conversationsRouter.patch("/:id", (req, res) => {
     const err = validateMessages(req.body.messages);
     if (err) return res.status(400).json({ error: err });
   }
+  /**
+   * GÜVENLİK AÇIĞI (randevu+bildirim taramasından sonra sohbetin tam denetiminde bulundu):
+   * `mechanicName`/`mechanicImg`/`mechanicLang` için "istemciden alınmıyor, kaynak satırdan
+   * okunuyor" koruması (bkz. yukarısı POST'taki büyük yorum) yalnızca POST'a eklenmişti — bu PATCH
+   * aynı üç alanı sohbetin HERHANGİ bir tarafından (owner ya da mechanic) hâlâ serbestçe kabul
+   * ediyordu. Canlı ölçüldü: `PATCH {mechanicName:"SAHTE AD"}` 200 döndü ve kalıcı olarak yazıldı —
+   * yani karşı tarafın sohbet ekranında görünen ad/fotoğraf, POST'taki korumaya rağmen PATCH
+   * üzerinden hâlâ tahrif edilebiliyordu (tam olarak POST'un önlemek için var olduğu oltalama
+   * riski, farklı bir HTTP yoluyla). Kural aynı ders: bir alanı koruyan kural TEK BİR yazma yoluna
+   * konursa, diğer yollar sessiz bir bypass olur (bkz. appointments.js DELETE/PATCH'teki aynı sınıf
+   * bulgular). Bu üç alan da artık `messages` ile aynı muameleyi görüyor — yalnızca admin
+   * değiştirebilir (ör. yanlış yazılmış bir kaydı düzeltmek için); taraflar için hiçbir meşru
+   * kullanım yok, çünkü bunlar kaynak owner/mechanic kaydının salt-okunur kopyaları.
+   */
+  const IDENTITY_COPY_FIELDS = ["mechanicName", "mechanicImg", "mechanicLang"];
+  if (actor.role !== "admin") {
+    const rejected = IDENTITY_COPY_FIELDS.filter((f) => f in req.body);
+    if (rejected.length > 0) {
+      return res.status(403).json({ error: "Bu alanları değiştirme yetkiniz yok.", fields: rejected });
+    }
+  }
   const body = dehydrate("conversations", req.body);
   for (const f of IMMUTABLE_CONVERSATION_FIELDS) delete body[f];
   const cols = Object.keys(body).filter((c) => c !== "id");
@@ -281,6 +329,11 @@ conversationsRouter.post("/:id/messages", (req, res) => {
   if (actor.role !== "owner" && actor.role !== "mechanic") {
     return res.status(403).json({ error: "Bu sohbete yalnızca tarafları mesaj gönderebilir." });
   }
+  const rlKey = rateLimitKey(req);
+  if (messageLimiter.check(rlKey).blocked) {
+    return res.status(429).json({ error: "Çok fazla mesaj gönderildi. Lütfen biraz sonra tekrar deneyin." });
+  }
+  messageLimiter.registerFailure(rlKey);
   const incoming = Array.isArray(req.body?.messages) ? req.body.messages : [req.body?.message].filter(Boolean);
   if (incoming.length === 0) return res.status(400).json({ error: "Gönderilecek mesaj yok." });
   if (incoming.length > MAX_APPEND_PER_CALL) return res.status(400).json({ error: "Tek seferde en fazla 3 mesaj gönderilebilir." });

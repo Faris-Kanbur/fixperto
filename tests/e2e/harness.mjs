@@ -198,6 +198,10 @@ export async function startServer() {
       // bu takımların normal akışı (slot kilidi yarış testi dahil) tek bir IP'den onlarca gerçek
       // randevu isteği atıyor; sınır varsayılanda kalsaydı test kendi kendini kilitlerdi.
       APPOINTMENT_CREATE_LIMIT_PER_WINDOW: process.env.E2E_APPOINTMENT_CREATE_LIMIT || "500",
+      // Sohbet mesajı/oluşturma sınırı (bkz. routes/conversations.js) — aynı gerekçe: bu takımlar
+      // tek bir IP'den arka arkaya gerçek mesaj/sohbet isteği atıyor.
+      CONVERSATION_MESSAGE_LIMIT_PER_WINDOW: process.env.E2E_CONVERSATION_MESSAGE_LIMIT || "500",
+      CONVERSATION_CREATE_LIMIT_PER_WINDOW: process.env.E2E_CONVERSATION_CREATE_LIMIT || "500",
       /**
        * MEDYA YÜKLEME: IP tavanı yükseltiliyor, KULLANICI başına sınır VARSAYILANDA kalıyor.
        * Sebebi tam da o sınırın var olma sebebi: testteki bütün kullanıcılar 127.0.0.1'den
