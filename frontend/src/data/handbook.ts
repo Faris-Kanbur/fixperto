@@ -857,7 +857,7 @@ Kapak görselleri konuya göre etiketlenmiş STOK fotoğraflardır, üretilmiş 
         body: `Tek komut: node tests/run.mjs. Başarıda tek satır yazar, ayrıntı yalnızca hata olunca çıkar.
 
 ## Kapsam
-tsc tip denetimi + her backend dosyasının sözdizimi + 39 STATİK takım + 12 UÇTAN UCA takım + envanter taraması.
+tsc tip denetimi + her backend dosyasının sözdizimi + 39 STATİK takım + 13 UÇTAN UCA takım + envanter taraması.
 
 ## Statik ve uçtan uca farkı — bu ayrım kritik
 Statik takımlar kaynak kodu OKUR ve kural ihlali arar. Değerliler ama kodu ÇALIŞTIRMAZLAR: "ekranda başarı yazdı ama hiçbir şey kaydedilmedi" sınıfı hatayı göremezler. Uçtan uca takımlar gerçek Express sunucusunu geçici bir SQLite dosyasıyla ayağa kaldırır, gerçek HTTP isteği atar ve sonucu VERİTABANINDAN okuyarak doğrular. 1000'den fazla statik iddianın kaçırdığı altı gerçek hata ancak böyle bulundu — bir özelliğin "çalışıyor göründüğü" ile "gerçekten çalıştığı" arasındaki farkı yalnızca bu katman ölçer.
@@ -1061,11 +1061,21 @@ Paletin CSS değişkenleri (--color-primary, --color-cta, vb.) doğru şekilde s
     pages: [
       {
         id: "bildirimAkis",
-        title: "15.1 Bildirimler",
+        title: "15.1 Bildirimler (backend'e taşındı)",
         body: `Her bildirim iki yerde birden var: uygulama içi zil ikonunda kayıtlı, ve tarayıcı izni verilmişse sistem bildirimi olarak.
 
 ## Neden ikisi birden
 Tarayıcı izni verilmemişse bildirim tamamen kaybolmamalı. Zil ikonundaki kayıt her durumda tutulur.
+
+## ÖNCEKİ MİMARİ VE NEDEN DEĞİŞTİ (bu QA turunda bulundu)
+Bildirim başlangıçta tamamen istemci tarafındaydı: \`notifLog\` saf bir React state dizisiydi, hiçbir tabloya yazılmıyordu. İki somut sonucu vardı: (1) sayfa yenilenince ya da başka bir cihazda giriş yapılınca bildirim geçmişi tamamen kayboluyordu; (2) daha ciddisi, hedefleme bir KİMLİĞE değil bir ROLE bağlıydı (\`fireNotification(..., "mechanic", ...)\`) — "hangi tamirci" hiç ayrılmıyordu. Bu, gerçek çoklu hesap oturumundan ÖNCEKİ bir varsayımdan kalmaydı ve iki farklı sınıf hataya yol açtı:
+- Bildirim çağrılarının ÇOĞU, göndereni değil KENDİ oturumundaki (\`MY_MECHANIC_ID\`) hesabı hedefliyordu; ama bu fonksiyonlar hep KARŞI rol tarafından çağrıldığı için o değer HER ZAMAN null'dı — bildirim hiç ateşlenmiyordu (bkz. 22.7'deki beş örnek: randevu, teklif isteği, iptal, erteleme, yorum — ve bu turda bulunan iki tane daha: teklif kaybı bildirimi ve ilan izleyici bildirimi).
+- Ateşlenen bildirimler bile sunucuya hiç yazılmıyordu — yalnızca O AN o sekmede açık olan oturumun yerel state'ine düşüyordu.
+
+## ŞİMDİKİ MİMARİ
+\`backend/routes/notifications.js\` + \`notifications\` tablosu: her bildirimin GERÇEK bir alıcısı var (\`recipientRole\` + \`recipientId\`). \`fireNotification\`'ın altıncı parametresi (\`recipientId\`) artık ZORUNLU bir tasarım kararı: tek bir sayı, bir sayı dizisi (çoklu teklif isteğinde olduğu gibi birden fazla alıcı), \`"broadcast"\` (yalnızca yönetici duyurusu, sunucuda \`recipientId = NULL\` — "bu roldeki herkese"), ya da hiç verilmez (yalnızca hedef rol GİRİŞ YAPMIŞ KİŞİNİN kendi rolüyle aynıysa self-notification'a düşer — bakım hatırlatıcısı gibi). Başka hiçbir durumda örtük "bana gelsin" varsayımı yapılmaz; \`recipientId\` çözülemezse bildirim (dev modda bir konsol uyarısıyla) sessizce atlanır, YANLIŞ kişiye YAZILMAZ.
+
+Kalıcılık ateşle-ve-unut: bir bildirimin sunucuya yazılamaması, az önce BAŞARIYLA tamamlanmış asıl işlemi (randevu, teklif, mesaj) geri almaz. Yerel zil güncellemesi de artık yalnızca bildirim GERÇEKTEN o an giriş yapmış kişiye aitse yapılıyor — aksi hâlde aynı roldeki başka bir hesabın bildirimi bu sekmede görünürdü (eski mimarinin ikinci hatası). Uygulama açılışında (oturum kurulduğunda) \`GET /api/notifications\` ile son 40 kayıt çekilip zil listesi bu kayıtlarla dolduruluyor — "okundu" zaman damgası (\`ownerNotifSeenAt\`/\`mechNotifSeenAt\`) BİLİNÇLİ OLARAK istemcide kalmaya devam ediyor: bu, veri bütünlüğü gerektiren bir alan değil, kullanıcının kendi görünüm tercihi (panel en son ne zaman açıldı) — kaybolması yeni bir cihazda her şeyin "okunmadı" görünmesi demek, bir hata değil.
 
 ## Kategoriler
 Randevu, teklif, mesaj, başvuru, duyuru ve İLAN GÜNCELLEMELERİ. Kullanıcı ayarlardan kategorileri tek tek kapatabilir; kapalı kategoride hiç bildirim üretilmez. Her kategori iki rolde de (araç sahibi ve tamirci) ayrı ayrı vardır.
@@ -1613,10 +1623,10 @@ Gerçek çoklu hesap oturumu eklenmeden ÖNCE, sitede TEK bir "etkileşimli" tam
 - **Randevu iptali** (cancelOwnAppt) ve **yeniden planlama** (confirmReschedule): tamirciye giden bildirim aynı kalıpla sessizce kayboluyordu.
 - **Yeni değerlendirme** (submitReview): tamirciye "yeni yorum aldınız" bildirimi de aynı bekçiden geçiyordu.
 
-Düzeltme: bu beş çağrıdaki gereksiz kimlik kontrolü kaldırıldı, bildirim HEDEFİN ROLÜNE göre (\`fireNotification(..., "mechanic", ...)\`) koşulsuz ateşleniyor — zaten \`notifLog\`'un kendisi rol bazlı, kişiye özel değil (bkz. 15.1 ve bu bölümün altındaki mimari not), yani "hangi tamirci" ayrımı en baştan yanlış bir varsayımdı.
+İLK DÜZELTME (bu turda): bu beş çağrıdaki gereksiz kimlik kontrolü kaldırıldı, bildirim HEDEFİN ROLÜNE göre (\`fireNotification(..., "mechanic", ...)\`) koşulsuz ateşleniyor hâle getirildi — o sırada \`notifLog\` hâlâ rol bazlıydı, kişiye özel değildi, yani "hangi tamirci" ayrımı zaten mümkün değildi. SONRAKİ TURDA (bkz. 15.1'in "önceki mimari" notu) bu eksiklik de kapatıldı: artık her bildirim gerçek bir \`recipientId\` taşıyor ve bu beş çağrının hepsi somut bir alıcı kimliğine (ör. \`selectedMechanic.id\`, \`appt.mechanicId\`) bağlandı — "role göre koşulsuz ateşle" ARA ÇÖZÜMdü, nihai değil.
 
 ## Ders
-Bu sınıf hata STATİK denetimde görünmez: kod "çalışıyor", tip kontrolünden geçiyor, hiçbir istisna fırlatmıyor — sadece koşul hiçbir zaman doğru olmuyor. Yalnızca gerçek çoklu hesapla uçtan uca akışı izleyip "bildirim geldi mi?" diye bakınca ortaya çıkıyor. Aynı bekçi kalıbı yeni bir bildirim çağrısı eklenirken kopyalanırsa aynı hata geri gelir; kural artık basit: bildirim koşulu yalnızca kategori aç/kapa ayarına (\`notifyX\`) ve hedef role bakmalı, gönderenin KENDİ oturum kimliğine değil.
+Bu sınıf hata STATİK denetimde görünmez: kod "çalışıyor", tip kontrolünden geçiyor, hiçbir istisna fırlatmıyor — sadece koşul hiçbir zaman doğru olmuyor. Yalnızca gerçek çoklu hesapla uçtan uca akışı izleyip "bildirim geldi mi?" diye bakınca ortaya çıkıyor. Aynı bekçi kalıbı yeni bir bildirim çağrısı eklenirken kopyalanırsa aynı hata geri gelir; kural artık basit: bildirim koşulu yalnızca kategori aç/kapa ayarına (\`notifyX\`) ve GERÇEK bir alıcı kimliğine bakmalı, gönderenin KENDİ oturum kimliğine değil.
 
 ## Randevu tamamlama HİÇ ÇALIŞMIYORDU — üç katmanlı bir hata, üç ayrı teşhis
 Bu, sitede tek bir görünen semptomun ("garanti tamamlama bazen 400 veriyor") arkasında ÜÇ FARKLI gerçek hatanın sırayla çıktığı bir vaka — her biri bir öncekini düzeltince ortaya çıkan bir SONRAKİ katmandı ve üçü de kod okuyarak değil, canlı tarayıcıda adım adım ölçerek bulundu.
@@ -2718,7 +2728,7 @@ Ayrıca **tutan** kurallar tek tek ölçüldü: mesaj göndereni oturumdan damga
 - **Sipariş ve ödeme YOK.** Ne tablo, ne uç. \`appointments.depositPaid\` diye bir sütun var ama hiçbir yazma yolu ona dokunamıyor (bilerek: ödeme sağlayıcısı yok, para alanını yazabilen taraf olmamalı). Yani "Payments: PASS" demek uydurma olurdu; doğru cevap "bu özellik yok".
 - **Block/unblock YOK.** Şikâyet yolu \`support_tickets\`.
 - **Realtime/WebSocket YOK.** Veri istek üzerine çekiliyor. Bu yüzden "yanlış kullanıcıya event gidiyor mu" sorusunun konusu yok.
-- **Bildirim sunucuda YOK — bu gerçek bir sınır.** \`notifLog\` saf React state'i. Sonuçları dürüstçe: bildirimler sayfa yenilendiğinde kaybolur, ikinci cihazda görünmez, "okundu" durumu saklanmaz, okunmamış sayısı oturumlar arasında taşınmaz. Yani "yeni mesajınız var" bildirimi veritabanındaki mesajdan ÜRETİLMİYOR; o oturumda olan bir olaydan üretiliyor. Bunu yarım yamalak kurmak (ör. yalnızca yazma tarafı) daha kötü olurdu; kalıcı bildirim ayrı ve gerçek bir iş.
+- **Bildirim artık SUNUCUDA — bu bölüm ARTIK GEÇERSİZ, bkz. "15.1 Bildirimler (backend'e taşındı)".** Aşağıdaki paragraf, bu satırın neden yanlış olduğunu belgelemek için BİLEREK tutuluyor (bkz. o bölümdeki "önceki mimari" notu): \`notifLog\` eskiden saf React state'iydi, sayfa yenilendiğinde kayboluyordu, ikinci cihazda hiç görünmüyordu, "okundu" durumu saklanmıyordu, ve — daha ciddisi — hedefleme bir KİMLİĞE değil bir ROLE bağlıydı, yani teorik olarak aynı roldeki başka bir hesabın bildirimi bu sekmede görünebilirdi. \`backend/routes/notifications.js\` + gerçek \`recipientId\` alanı bunların hepsini kapattı.
 
 ## Hâlâ açık olanlar
 

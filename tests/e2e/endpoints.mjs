@@ -47,6 +47,7 @@ const ROUTER_FILE_BASE = {
   "appointments.js": "/api/appointments",
   // Site-geneli aktif renk paleti (Wave 2). GET herkese açık, PATCH admin-gated (bkz. theme.js).
   "theme.js": "/api/theme",
+  "notifications.js": "/api/notifications",
 };
 
 /** [{ method, path, source }] — metotlar BÜYÜK harf, yollar ":id" biçiminde parametreli. */

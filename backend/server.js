@@ -21,6 +21,7 @@ import blogRouter from "./routes/blog.js";
 import careersRouter from "./routes/careers.js";
 import { quoteRequestsRouter, quoteOffersRouter } from "./routes/quotes.js";
 import { conversationsRouter } from "./routes/conversations.js";
+import { notificationsRouter } from "./routes/notifications.js";
 import { mediaRouter, mediaFileRouter } from "./routes/media.js";
 import { appointmentsRouter } from "./routes/appointments.js";
 import { authRouter } from "./routes/auth.js";
@@ -272,6 +273,7 @@ app.use("/api/listings", makeCrudRouter("listings", {
 // Genel CRUD factory yerine özel router (bkz. backend/routes/conversations.js) — mesaj
 // şeklinin/boyutunun ve sohbet kimliğinin (mechanicId) her zaman geçerli kalması için.
 app.use("/api/conversations", conversationsRouter);
+app.use("/api/notifications", notificationsRouter);
 // Başvurular AYRI router'da ve CRUD'dan ÖNCE: iş ilanının yazma yetkisi ilanı açan tamirciye
 // ait olduğu için başvurular eskiden 403 alıyor ve HİÇ kaydedilmiyordu (bkz. jobApplications.js).
 app.use("/api/jobs", jobApplicationsRouter);

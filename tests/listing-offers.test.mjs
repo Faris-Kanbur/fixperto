@@ -94,11 +94,22 @@ ok(/listing\.offers \|\| \[\]/.test(watchFn), "teklif verenler izleyici");
 ok(/listing\.messages \|\| \[\]/.test(watchFn), "soru soranlar izleyici");
 
 // Kendi aç/kapa anahtarı: "ilanıma teklif geldi" ile "izlediğim ilan değişti" farklı şeyler.
+// (Ayar hâlâ ekranda duruyor — kullanıcı kendi bildirim TERCİHİNİ kaydediyor; bkz. aşağıdaki not.)
 ok(/notifyListingUpdates: true/.test(provider), "yeni bildirim ayarı iki rolde de var");
 eq((provider.match(/notifyListingUpdates: true/g) || []).length, 2, "hem araç sahibi hem tamirci ayarında");
-ok(/ownerSettings\.notifyListingUpdates/.test(provider) && /mechSettings\.notifyListingUpdates/.test(provider),
-  "bildirim bu ayara bağlı");
-const watcherFn = provider.slice(provider.indexOf("const notifyFavoriteWatchers"), provider.indexOf("const notifyFavoriteWatchers") + 900);
+/**
+ * GERÇEK HATA DÜZELTMESİ (bu denetimde bulundu, bkz. el kitabı 22.7): notifyFavoriteWatchers'ı
+ * çağıran her zaman SATICI (kendi ilanını güncelleyen kişi) — `ownerSettings`/`mechSettings` ise
+ * her zaman O AN GİRİŞ YAPMIŞ KİŞİNİN (yani satıcının) ayarı. Alıcının (favorileyen/teklif veren)
+ * kendi tercihini SATICININ ayarıyla kapatmak yanlıştı: satıcı bu bildirimi kapatmış olsa bile
+ * alıcı haber almalı, çünkü bildirim ALICI İÇİN. Artık `notifyFavoriteWatchers` koşulsuz (true)
+ * ateşliyor; alıcının GERÇEK tercihini sunucu tarafında kontrol etmek ayrı bir iş (bu proje
+ * bildirim ayarlarını yalnızca istemci tarafında tutuyor, bkz. el kitabı 15.1).
+ */
+const notifyFnSrc = provider.slice(provider.indexOf("const notifyFavoriteWatchers"), provider.indexOf("const notifyFavoriteWatchers") + 1600);
+eq(/ownerSettings\.notifyListingUpdates|mechSettings\.notifyListingUpdates/.test(notifyFnSrc), false,
+  "notifyFavoriteWatchers artık SATICININ kendi ayarına bakmıyor (alıcının tercihi satıcınınkiyle kapatılamaz)");
+const watcherFn = notifyFnSrc.slice(0, 900);
 eq(/notifyOffers/.test(watcherFn), false, "izleme bildirimi artık 'teklif' ayarına bağlı değil");
 const toggles = (shell.match(/key: "notifyListingUpdates"/g) || []).length;
 eq(toggles, 2, "ayar ekranında iki rolde de aç/kapa var");

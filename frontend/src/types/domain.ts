@@ -341,6 +341,23 @@ export interface Conversation {
   pendingContextNote?: string | null;
 }
 
+/**
+ * Sunucuda kalıcı bir bildirim kaydı (bkz. backend/routes/notifications.js). `Notification` adı
+ * tarayıcının kendi global tipiyle çakışacağı için `PersistedNotification` kullanılıyor.
+ * `recipientId: null` yalnızca yöneticinin duyurusunda görülür (bkz. backend yorumu) — "bu
+ * roldeki herkese" anlamına gelir.
+ */
+export interface PersistedNotification {
+  id: number;
+  recipientRole: "owner" | "mechanic";
+  recipientId: number | null;
+  title: string;
+  body: string;
+  targetType?: string | null;
+  targetId?: number | null;
+  createdAt: string;
+}
+
 export interface JobApplicant {
   name: string;
   email?: string;

@@ -172,6 +172,24 @@ CREATE TABLE IF NOT EXISTS conversations (
   pendingContextNote TEXT
 );
 
+-- BİLDİRİMLER — daha önce tamamen istemci tarafında (React state, notifLog) tutuluyordu: sayfa
+-- yenilenince kayboluyordu, ikinci cihazda hiç görünmüyordu, "kim için" bilgisi bir KİMLİK değil
+-- yalnızca bir ROLDÜ (owner/mechanic) — yani bir tamirci hesabı başka bir tamirciye giden
+-- bildirimi de görüyordu, çünkü hedefleme kişiye değil role bağlıydı (bkz. el kitabı 15.1 eski
+-- mimari notu). Artık her bildirimin GERÇEK bir alıcısı var: recipientRole + recipientId.
+-- recipientId NULL olabilir — bu yalnızca yöneticinin DUYURU'su için (bkz. routes/notifications.js):
+-- "bu roldeki HERKESE" anlamına gelir, kişiye özel bir bildirim asla NULL alıcıyla kaydedilmez.
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY,
+  recipientRole TEXT NOT NULL,
+  recipientId INTEGER,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  targetType TEXT,
+  targetId INTEGER,
+  createdAt TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS listings (
   id INTEGER PRIMARY KEY,
   sellerName TEXT, sellerType TEXT,
@@ -1071,6 +1089,9 @@ CREATE INDEX IF NOT EXISTS idx_appointments_mechanic ON appointments (mechanicId
 CREATE INDEX IF NOT EXISTS idx_conversations_owner ON conversations (ownerId);
 CREATE INDEX IF NOT EXISTS idx_conversations_mechanic ON conversations (mechanicId);
 CREATE INDEX IF NOT EXISTS idx_conversations_peerowner ON conversations (peerOwnerId);
+
+-- BİLDİRİMLER: liste sorgusu her zaman "bu rol + bu kimlik (ya da NULL=duyuru)" ile filtreleniyor.
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications (recipientRole, recipientId, createdAt DESC);
 
 -- DESTEK TALEPLERİ: sorgu her zaman İKİ sütunu birlikte kullanıyor — \`fromId = ? AND fromType = ?\`.
 -- (Tek başına fromId yetmez: owner #7 ile mechanic #7 farklı kişiler; bkz. server.js yorumu.)

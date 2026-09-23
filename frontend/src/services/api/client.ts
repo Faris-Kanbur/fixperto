@@ -1,4 +1,4 @@
-import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats, ProfileViewStats, ProfileViewAggregateStats, ProfileViewBulkStats, Broadcast, TranslateResult, BlogPost } from "../../types/domain";
+import type { Mechanic, Owner, Vehicle, Appointment, Listing, JobListing, SupportTicket, AdminChangeLogEntry, AdminStats, QuoteRequest, QuoteOffer, Conversation, ShareEvent, ShareStats, ProfileViewStats, ProfileViewAggregateStats, ProfileViewBulkStats, Broadcast, TranslateResult, BlogPost, PersistedNotification } from "../../types/domain";
 
 // Thin fetch wrapper around the Fixperto Express + SQLite backend. Set
 // VITE_API_URL in frontend/.env if the backend doesn't run on the default
@@ -381,6 +381,24 @@ export const api = {
       request(`/api/conversations/${id}/messages`, {
         method: "POST",
         body: jsonBody({ messages, clearContextNote: !!opts?.clearContextNote }),
+      }),
+  },
+  // Bkz. backend/routes/notifications.js — bildirimin sunucuda kalıcı, GERÇEK bir alıcısı var
+  // (bkz. el kitabı 15.1 mimari not güncellemesi). `create` tek çağrıda birden fazla alıcıya
+  // aynı bildirimi yazabilir (ör. çoklu teklif isteğinde her seçilen tamirciye).
+  notifications: {
+    list: (opts?: RequestOptions): Promise<PersistedNotification[]> => request("/api/notifications", opts),
+    create: (
+      recipients: { recipientRole: "owner" | "mechanic"; recipientId: number | null }[],
+      title: string,
+      body: string,
+      target?: { type?: string; id?: number | string } | null,
+      opts?: RequestOptions,
+    ): Promise<PersistedNotification[]> =>
+      request("/api/notifications", {
+        method: "POST",
+        body: jsonBody({ recipients, title, body, targetType: target?.type ?? null, targetId: target?.id ?? null }),
+        ...opts,
       }),
   },
   jobs: {
