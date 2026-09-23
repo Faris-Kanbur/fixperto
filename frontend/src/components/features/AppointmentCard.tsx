@@ -76,8 +76,8 @@ export function AppointmentCard({ a }) {
     setDismissedReminderKey, browseScrollRef, heroCollapsed, setHeroCollapsed, goBookFromReminder, topReminder, 
     notifiedReminderKeysRef, filtered, quoteFilteredMechanics, filteredListings, activeListingFilterCount, 
     filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs, activeFilterCount, nextDays, 
-    isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate, 
-    isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, 
+    isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate,
+    bookableSlots, isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt,
     downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt, mechanicDirectionsUrl, 
     toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, 
     acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD, confirmBooking, goHome, chooseRole, submitAdminLogin, 
@@ -142,7 +142,29 @@ export function AppointmentCard({ a }) {
           return (
           <div className="mt-3 bg-white border border-border rounded-xl p-3">
             <div className="flex gap-2 mb-2 overflow-x-auto pb-1">{nextDays.map((d, i) => { const isSel = rescheduleDate?.toDateString() === d.toDateString(); const open = isDayOpenForMechanic(mech, d); return (<button key={i} disabled={!open} onClick={() => setRescheduleDate(d)} className={`flex-shrink-0 w-12 py-1.5 rounded-lg border text-center transition ${!open ? "opacity-30 cursor-not-allowed" : isSel ? "bg-primary border-primary text-white" : "border-border text-fg-secondary"}`}><p className="text-[9px]">{d.toLocaleDateString("tr-TR", { weekday: "short" })}</p><p className="text-xs font-bold">{d.getDate()}</p></button>); })}</div>
-            {rescheduleDate && (<div className="grid grid-cols-4 gap-1.5 mb-2">{slotsForDate(mech, rescheduleDate).map(tm => (<button key={tm} onClick={() => setRescheduleTime(tm)} className={`py-1.5 rounded-lg border text-[11px] font-medium transition ${rescheduleTime === tm ? "bg-primary border-primary text-white" : "border-border text-fg-secondary"}`}>{tm}</button>))}{slotsForDate(mech, rescheduleDate).length === 0 && <p className="col-span-4 text-[11px] text-fg-muted text-center py-2">{t("bookingClosedDay")}</p>}</div>)}
+            {rescheduleDate && (() => {
+              // BUG DÜZELTMESİ: burada eskiden ham slotsForDate() kullanılıyordu — dolu ya da
+              // geçmiş saatler de tıklanabilir görünüyordu (canlı testte "15:00" doluyken bile
+              // seçilebiliyordu, sadece backend'in 409 kilidi reddediyordu). bookableSlots() aynı
+              // taken/past hesaplamasını BookingCalendar'daki yeni randevu akışıyla birebir aynı
+              // şekilde yapar; excludeApptId ile kendi mevcut saatimiz "dolu" sayılmaz.
+              const slots = bookableSlots(mech, rescheduleDate, a.id);
+              return (
+                <div className="grid grid-cols-4 gap-1.5 mb-2">
+                  {slots.map(s => {
+                    const disabled = s.taken || s.past;
+                    return (
+                      <button key={s.time} disabled={disabled} onClick={() => setRescheduleTime(s.time)}
+                        title={s.taken ? t("bookingSlotTaken") : s.past ? t("bookingSlotPast") : undefined}
+                        className={`py-1.5 rounded-lg border text-[11px] font-medium transition ${rescheduleTime === s.time ? "bg-primary border-primary text-white" : disabled ? "border-surface-elevated text-fg-muted line-through cursor-not-allowed" : "border-border text-fg-secondary"}`}>
+                        {s.time}
+                      </button>
+                    );
+                  })}
+                  {slots.length === 0 && <p className="col-span-4 text-[11px] text-fg-muted text-center py-2">{t("bookingClosedDay")}</p>}
+                </div>
+              );
+            })()}
             <div className="flex gap-2"><button onClick={() => setReschedulingApptId(null)} className="flex-1 text-xs py-2 rounded-lg border border-border text-fg-secondary">{t("cancel")}</button><button disabled={!rescheduleDate || !rescheduleTime} onClick={confirmReschedule} className="flex-1 text-xs py-2 rounded-lg bg-primary text-white disabled:opacity-40">{t("save")}</button></div>
           </div>
         ); })()}

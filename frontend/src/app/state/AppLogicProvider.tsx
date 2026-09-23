@@ -2049,12 +2049,16 @@ function useAppLogic() {
   // Randevu takvimi için: her saat dilimi + DURUMU. Ayrı bir fonksiyon, çünkü "saat var mı"
   // sorusu ile "bu saat alınabilir mi" sorusu farklı: dolu ve geçmiş saatler listede GÖRÜNMELİ
   // (ekranın boş kalmaması ve kişinin dükkânın yoğun olduğunu görmesi için) ama seçilememeli.
-  const bookableSlots = (mechanic, date) => {
+  // `excludeApptId`: yeniden planlama akışında randevunun KENDİ mevcut kaydı da appointments
+  // listesinde durur ve normalde "dolu" sayılırdı — kişi kendi saatini bile seçemezdi. Yeni
+  // randevu akışında bu parametre verilmez (undefined bir id'ye asla eşleşmez).
+  const bookableSlots = (mechanic, date, excludeApptId = undefined) => {
     if (!mechanic || !date) return [];
     const dayKey = date.toDateString();
     const taken = new Set(
       appointments
         .filter(a => a.mechanicId === mechanic.id && !["İptal Edildi", "Reddedildi"].includes(a.status))
+        .filter(a => a.id !== excludeApptId)
         .filter(a => a.dateISO && new Date(a.dateISO).toDateString() === dayKey)
         .map(a => a.time)
     );
@@ -3869,8 +3873,20 @@ function useAppLogic() {
      * kaydı bu durumda SESSİZCE (aşağıdaki .catch) hiç yazılmıyordu — "doğrulanmış servis
      * geçmişi" özelliği rastgele başarısız oluyordu. Şimdi durum PATCH'i AWAIT ediliyor,
      * geçmiş isteği ancak o kesinleştikten sonra gönderiliyor.
+     *
+     * GERÇEK HATA (bu turda eklendi): advanceStatus artık gerçekten reddedilebiliyor (bkz. o
+     * fonksiyonun rollback notu) — burada try/catch olmadan `await` bunu yakalamıyordu, yani
+     * reddedilince fonksiyon sessizce yarıda kesiliyor, "Tamiri tamamla" modalı (completingApptId)
+     * asla kapanmıyor, kullanıcı persist()'in gösterdiği hata tostundan başka bir geri bildirim
+     * almadan ekranda takılı bir modalla kalıyordu. Artık başarısızlıkta modal düzgünce kapanıyor.
      */
-    await advanceStatus(id);
+    try {
+      await advanceStatus(id);
+    } catch {
+      setCompletingApptId(null);
+      setWarrantyDaysForm("");
+      return;
+    }
     /**
      * ARACIN KALICI GEÇMİŞİNE İŞLEME.
      * -----------------------------------------------------------------------------------------
@@ -3967,37 +3983,44 @@ function useAppLogic() {
     // değerlendirme yanlış (veya hiçbir) tamirciye yazılırdı. appt.mechanicId (confirmBooking'de zaten
     // kaydediliyor) kalıcı, değişmeyen doğru anahtar.
     const mech = mechanicsList.find(m => m.id === appt.mechanicId);
-    if (mech) {
-      /**
-       * GÜVENLİK DÜZELTMESİ: yorum ve puan artık istemciden yazılmıyor.
-       * Eskiden yorum listesi ve `rating`/`reviews` alanları ilan satırına doğrudan PATCH
-       * ediliyordu ve bu alanlar giriş yapmış HERKESE açıktı — biri tamircinin olumsuz
-       * yorumlarını silebiliyor, başkasının ağzından yorum ekleyebiliyor, puanı 5,0 yazabiliyordu.
-       * Artık yorum ayrı bir uçtan gidiyor, yazar oturumdan damgalanıyor ve PUANI SUNUCU
-       * hesaplıyor (bkz. backend/routes/reviews.js).
-       */
-      api.mechanics.addReview(mech.id, { rating: reviewForm.rating, comment: reviewForm.comment.trim(), lang: ownerLang })
-        .then((res) => setMechanicsList(list => list.map(m => m.id === mech.id ? { ...m, ...res.mechanic } : m)))
-        .catch((err) => {
-          // Sunucu reddin NEDENİNİ makine-okunur döndürüyor; kullanıcıya "kaydedilemedi" demek
-          // yerine gerçek sebebi gösteriyoruz (bkz. backend/routes/reviews.js).
-          const reasons = { mechanicRole: "mechanicCannotRateToast", selfReview: "selfReviewBlockedToast", noAppointment: "reviewNeedsAppointmentToast", duplicate: "reviewDuplicateToast" };
-          const key = reasons[err?.details?.reason];
-          setToast({ type: "info", text: `⚠️ ${key ? t(key) : (err?.message || "Değerlendirme kaydedilemedi.")}` });
-        });
-    }
-
-    setAppointments(apps => apps.map(a => a.id === reviewingApptId ? { ...a, reviewed: true } : a));
-    persist(api.appointments.update(reviewingApptId, { reviewed: true }), "Randevu güncellenemedi");
-    setReviewingApptId(null);
-    setReviewForm({ rating: 5, comment: "" });
-    setToast({ type: "info", text: "⭐ Değerlendirmeniz için teşekkürler!" });
-    // Bkz. cancelOwnAppt'taki aynı düzeltmenin notu — submitReview de yalnızca araç sahibi
-    // tarafından çağrılıyor (bkz. AppShell.tsx sendReviewBtn), `mech.id === MY_MECHANIC_ID` koşulu
-    // asla doğru olamıyordu; tamirci yeni bir değerlendirme aldığında hiçbir zaman haber almıyordu.
-    if (mech) {
-      fireNotification("Yeni değerlendirme aldınız ⭐", `${ownerProfile.name || "Bir müşteri"} size ${reviewForm.rating} yıldız verdi.`, mechSettings.notifyMessages, "mechanic", { type: "ownMechanicReviews" }, mech.id, "notifyMessages");
-    }
+    if (!mech) return;
+    const apptId = reviewingApptId;
+    const rating = reviewForm.rating;
+    /**
+     * GÜVENLİK DÜZELTMESİ: yorum ve puan artık istemciden yazılmıyor.
+     * Eskiden yorum listesi ve `rating`/`reviews` alanları ilan satırına doğrudan PATCH
+     * ediliyordu ve bu alanlar giriş yapmış HERKESE açıktı — biri tamircinin olumsuz
+     * yorumlarını silebiliyor, başkasının ağzından yorum ekleyebiliyor, puanı 5,0 yazabiliyordu.
+     * Artık yorum ayrı bir uçtan gidiyor, yazar oturumdan damgalanıyor ve PUANI SUNUCU
+     * hesaplıyor (bkz. backend/routes/reviews.js).
+     *
+     * GERÇEK HATA (bu turda bulundu — bkz. acceptAppt'ın üstündeki aynı sınıf notun): önceden
+     * randevunun `reviewed` bayrağı VE tamirciye giden "yeni değerlendirme aldınız" bildirimi,
+     * yorum sunucuya GERÇEKTEN kaydolup kaydolmadığına hiç bakılmadan koşulsuz ateşleniyordu.
+     * Sunucu yorumu reddederse (ör. "duplicate" — bu tamirciye zaten yorum yazılmış, ya da
+     * "noAppointment") tamirci HİÇ VAR OLMAYAN bir yorum için tebrik bildirimi alıyordu VE
+     * randevu sessizce "yorumlandı" işaretleniyordu — kullanıcı "yorum yaz" düğmesini bir daha
+     * hiç görmüyordu, oysa yorumu HİÇ KAYDEDİLMEMİŞTİ (backend `reviewed` bayrağını yalnızca
+     * false→true yönünde kabul ediyor, geri alınamaz — bkz. o alanın kendi güvenlik notu).
+     * Düzeltme: bu adımların hepsi artık yorum sunucuda GERÇEKTEN kaydedildikten SONRA çalışıyor.
+     */
+    api.mechanics.addReview(mech.id, { rating, comment: reviewForm.comment.trim(), lang: ownerLang })
+      .then((res) => {
+        setMechanicsList(list => list.map(m => m.id === mech.id ? { ...m, ...res.mechanic } : m));
+        setAppointments(apps => apps.map(a => a.id === apptId ? { ...a, reviewed: true } : a));
+        persist(api.appointments.update(apptId, { reviewed: true }), "Randevu güncellenemedi");
+        setReviewingApptId(null);
+        setReviewForm({ rating: 5, comment: "" });
+        setToast({ type: "info", text: "⭐ Değerlendirmeniz için teşekkürler!" });
+        fireNotification("Yeni değerlendirme aldınız ⭐", `${ownerProfile.name || "Bir müşteri"} size ${rating} yıldız verdi.`, mechSettings.notifyMessages, "mechanic", { type: "ownMechanicReviews" }, mech.id, "notifyMessages");
+      })
+      .catch((err) => {
+        // Sunucu reddin NEDENİNİ makine-okunur döndürüyor; kullanıcıya "kaydedilemedi" demek
+        // yerine gerçek sebebi gösteriyoruz (bkz. backend/routes/reviews.js).
+        const reasons = { mechanicRole: "mechanicCannotRateToast", selfReview: "selfReviewBlockedToast", noAppointment: "reviewNeedsAppointmentToast", duplicate: "reviewDuplicateToast" };
+        const key = reasons[err?.details?.reason];
+        setToast({ type: "info", text: `⚠️ ${key ? t(key) : (err?.message || "Değerlendirme kaydedilemedi.")}` });
+      });
   };
   const submitMechanicReply = (mechanicId, reviewId) => {
     // Bkz. addVehicle'daki aynı düzeltmenin notu — boş yanıtla düğmeye basınca sessizce
