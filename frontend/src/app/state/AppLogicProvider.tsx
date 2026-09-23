@@ -4701,11 +4701,30 @@ function useAppLogic() {
    * Bu işlev `updateMyField`ın HEMEN ARDINDA duruyor; önce yazdığımda çok yukarıdaydı ve henüz
    * tanımlanmamış bir işlevi çağırıyordu — çalışıyordu (çağrı çizimden sonra oluyor) ama okuyan
    * için yanıltıcıydı.
+   *
+   * GERÇEK HATA (bu turda, "randevu ile bağlantılı her yer" taramasında bulundu): `updateMyField`
+   * hiçbir geri alma (rollback) almıyor — çoğu çağrı yerinde (ad, adres, telefon gibi serbest metin
+   * alanları) bu kasıtlı, çünkü kullanıcı hâlâ YAZARKEN geri almak rahatsız edici olurdu. Ama BU alan
+   * (`autoAcceptBookings`) serbest metin değil, ayrık bir açma/kapama — ve doğrudan randevu OLUŞTURMA
+   * davranışını belirliyor (bkz. backend/routes/appointments.js POST: durum bu alandan okunuyor).
+   * PATCH başarısız olursa (ör. ağ hatası) eskiden tamirci ekranda "kapattım" görüyor ama sunucuda
+   * hâlâ AÇIK kalıyordu — yani "randevularımı ben onaylayacağım" dediğini SANAN bir tamircinin
+   * randevuları hâlâ sessizce otomatik kabul edilmeye devam ediyordu. `updateMyField` burada
+   * KULLANILMIYOR artık; ayrık bir persist çağrısıyla hem `autoAccept` hem `mechanicsList`'teki
+   * kopyası, başarısızlıkta eski değerine geri dönüyor.
    */
   const toggleAutoAccept = () => {
-    const next = !autoAccept;
+    const prev = autoAccept;
+    const next = !prev;
     setAutoAccept(next);
-    updateMyField("autoAcceptBookings", next ? 1 : 0);
+    setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, autoAcceptBookings: next ? 1 : 0 } : m));
+    persist(
+      api.mechanics.update(MY_MECHANIC_ID, { autoAcceptBookings: next ? 1 : 0 }), "Randevu onay ayarı kaydedilemedi",
+      () => {
+        setAutoAccept(prev);
+        setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, autoAcceptBookings: prev ? 1 : 0 } : m));
+      },
+    );
   };
   // Dil DEĞİŞTİRME (kullanıcının açık tercihi). Üç yere birden yazılıyor:
   //   1) ekran state'i — arayüz anında değişsin,
@@ -4989,10 +5008,46 @@ function useAppLogic() {
   // MY_MECHANIC_ID'nin kendi görünümü zaten her zaman formatHoursText(mechanicHours, lang) ile CANLI
   // hesaplanıyor (bkz. mechanicOpenStatus, MechDetailBody), bu yüzden burada saklanan metin sadece
   // ikincil bir önbellek niteliğinde.
-  const persistMechanicHours = (nextHours) => persist(api.mechanics.update(MY_MECHANIC_ID, { hoursText: formatHoursText(nextHours, lang) }), "Çalışma saatleri kaydedilemedi");
-  const toggleDayOpen = (key) => setMechanicHours(h => { const next = { ...h, [key]: { ...h[key], open: !h[key].open } }; persistMechanicHours(next); return next; });
-  const toggleSlotClosed = (key, slot) => setMechanicHours(h => { const closed = h[key].closedSlots.includes(slot); const next = { ...h, [key]: { ...h[key], closedSlots: closed ? h[key].closedSlots.filter(s => s !== slot) : [...h[key].closedSlots, slot] } }; persistMechanicHours(next); return next; });
-  const addExtraSlot = (key, time) => { if (!time) return; setMechanicHours(h => { if (h[key].extraSlots.includes(time) || genSlots(h[key].start, h[key].end).includes(time)) return h; const next = { ...h, [key]: { ...h[key], extraSlots: [...h[key].extraSlots, time].sort() } }; persistMechanicHours(next); return next; }); };
+  /**
+   * GERÇEK HATA (bu turda, "randevu ile bağlantılı her yerde hata olmasın" isteğiyle bulundu):
+   * üç fonksiyon da yan etkiyi (persistMechanicHours çağrısı) setMechanicHours'un GÜNCELLEYİCİ
+   * FONKSİYONU İÇİNDE çalıştırıyordu — bu depoda AYNI React'ın kendi kuralı, `toggleFavorite`'in
+   * üstündeki notta zaten belgelenmiş bir hata sınıfı: React (StrictMode/eşzamanlı render'da) bir
+   * güncelleyici fonksiyonu İKİ KEZ çağırabilir, yani PATCH isteği iki kez gidebilir. Daha önemlisi:
+   * `persistMechanicHours` hiçbir zaman geri alma (rollback) almıyordu — PATCH başarısız olursa
+   * (ör. ağ hatası) tamircinin ekranındaki çalışma saatleri "kaydedilmiş" görünmeye devam ediyor,
+   * ama `hoursText` sunucuda hâlâ ESKİ değerde kalıyordu. Bu alan yalnızca kendi ekranını değil,
+   * DİĞER TÜM kullanıcıların bu tamirci için gördüğü randevu saatlerini belirliyor (bkz. yukarısı
+   * `slotsFromHoursText`) — yani tamirci "Cumartesi'yi kapattım" sanırken müşteriler sunucudaki
+   * eski (açık) saatlerle randevu almaya devam edebilirdi. Düzeltme: her üç fonksiyon da `next`i
+   * updater'ın DIŞINDA hesaplayıp `setMechanicHours(next)`i DOĞRUDAN çağırıyor (fonksiyon değil,
+   * değer ile), `persistMechanicHours` artık eski değeri geri yükleyen bir rollback alıyor.
+   */
+  const persistMechanicHours = (nextHours, prevHours) => persist(
+    api.mechanics.update(MY_MECHANIC_ID, { hoursText: formatHoursText(nextHours, lang) }), "Çalışma saatleri kaydedilemedi",
+    () => setMechanicHours(prevHours),
+  );
+  const toggleDayOpen = (key) => {
+    const prev = mechanicHours;
+    const next = { ...prev, [key]: { ...prev[key], open: !prev[key].open } };
+    setMechanicHours(next);
+    persistMechanicHours(next, prev);
+  };
+  const toggleSlotClosed = (key, slot) => {
+    const prev = mechanicHours;
+    const closed = prev[key].closedSlots.includes(slot);
+    const next = { ...prev, [key]: { ...prev[key], closedSlots: closed ? prev[key].closedSlots.filter(s => s !== slot) : [...prev[key].closedSlots, slot] } };
+    setMechanicHours(next);
+    persistMechanicHours(next, prev);
+  };
+  const addExtraSlot = (key, time) => {
+    if (!time) return;
+    const prev = mechanicHours;
+    if (prev[key].extraSlots.includes(time) || genSlots(prev[key].start, prev[key].end).includes(time)) return;
+    const next = { ...prev, [key]: { ...prev[key], extraSlots: [...prev[key].extraSlots, time].sort() } };
+    setMechanicHours(next);
+    persistMechanicHours(next, prev);
+  };
   // Bir ilanı düzenleme formunun beklediği şekle çevirir. Hem hızlı görüntüleme modalindeki hem de
   // tam sayfadaki "Düzenle" butonu bunu kullanıyor — alan eşlemesi tek yerde dursun diye.
   const sellPrefillFromListing = (l) => ({
