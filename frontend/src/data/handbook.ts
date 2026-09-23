@@ -1675,7 +1675,26 @@ Bu üçüncü düzeltmeden sonra gerçek tarayıcıda, gerçek düğmeyle, iki a
 
 İkinci ders: bir düzeltme test yazıp geçirmek ("advanceStatus artık promise döndürüyor", testler geçti) o düzeltmenin GERÇEK SORUNU ÇÖZDÜĞÜ anlamına gelmez — yalnızca YAZDIĞINIZ İDDİAYI doğrular. Katman 2'nin backend düzeltmesi de \`curl\`la doğrulandı ve doğruydu, ama canlı tarayıcıda GERÇEK BUTONLA denendiğinde hata aynen sürdü, çünkü ayrı bir katman daha vardı. Üç katman da SIRAYLA, her biri bir öncekini düzeltip TEKRAR canlıda deneyerek bulundu — kod okumak ya da testleri geçirmek hiçbirini tek başına ortaya çıkaramazdı; en derin katman (React state closure hatası) yalnızca ayrıntılı \`console.log\` izleriyle, gerçek tıklamayla, gerçek veritabanı sorgusuyla görülebildi. Bir düzeltme "mantıken doğru" göründüğünde ve testler geçtiğinde bile, MÜMKÜNSE gerçek uçtan uca akışı (gerçek buton, gerçek istek, gerçek veritabanı satırı) tekrar çalıştırıp doğrulamak gerekir — "düzelttim, testler geçti" ile "gerçekten çalışıyor" aynı şey değildir.`,
       },
+      {
+        id: "randevu-derin-denetim",
+        title: "22.8 Randevu alma akışının derin denetimi — iki gerçek bulgu",
+        body: `Kullanıcı "randevu alma akışını en ince ayrıntısına kadar ele al" dedi. \`backend/routes/appointments.js\`'in tamamı satır satır yeniden okundu (yalnızca statik değil — her bulgu canlı sunucuya \`curl\` ile ölçülerek doğrulandı) ve iki gerçek açık bulundu.
 
+## 1) Yeniden planlama, oluşturmadaki SLOT KİLİDİNİ tamamen atlıyordu
+\`POST /api/appointments\` aynı tamirciye aynı tarih+saat için ikinci bir isteği \`409\`la reddediyor (bkz. 6.4 bölümündeki SLOT KİLİDİ) — ama \`date\`/\`time\` her iki rolün de PATCH ile yazabildiği alanlar (\`OWNER_WRITABLE\`/\`MECHANIC_WRITABLE\`, yeniden planlama akışı için) ve PATCH yolunda AYNI kilit hiç yoktu. Ölçüldü: iki farklı araç sahibi aynı tamirciye aynı tarih+saate randevu aldı — POST bunu doğru şekilde engelledi (409). Ama ikinci randevuyu, "yeniden planlama" ile BİRİNCİNİN saatine taşımak sorunsuz \`200\` döndü ve veritabanında aynı tamirci + aynı tarih + aynı saatte İKİ randevu (ikisi de "Sırada") oluştu — tam olarak POST'un engellemek için var olduğu durum, farklı bir yazma yoluyla dolaşıldı.
+
+Bu, bu dosyadaki ÜÇÜNCÜ örneği: bir kaydı koruyan kural (durum makinesi → DELETE'te dolaşılıyordu, bkz. yukarısı "İKİNCİ DENETİMDE BULUNAN AÇIK"; slot kilidi → şimdi PATCH'te dolaşılıyordu) TEK BİR YAZMA YOLUNA konursa, o kayda dokunan DİĞER yollar sessiz birer bypass olur.
+
+Düzeltme: slot kilidinin durum listesi (\`BLOCKING_STATUSES\`) modül düzeyine taşındı, PATCH artık \`date\`/\`time\` GERÇEKTEN değişiyorsa (yalnızca body'de bu alanlar varsa değil — değer eskisinden FARKLIYSA) aynı kontrolü kendi transaction'ı içinde çalıştırıyor, kendi satırını (\`id != ?\`) hariç tutarak. Kendi mevcut saatine "yeniden yazma" ya da saatle ilgisiz bir alanı (ör. arıza açıklaması) değiştirme yanlış pozitif üretmiyor — yalnızca GERÇEKTEN başka bir saate taşıma denemesi kontrolden geçiyor.
+
+## 2) İki YENİ hız sınırlayıcı, ikisi de EKLENDİKLERİ GÜN hiçbir şeyi sınırlamıyordu
+Bu turda \`backend/routes/notifications.js\`'e (önceki bir düzeltmede) ve \`backend/routes/appointments.js\`'e (bu turda, randevu OLUŞTURMAYI spam'den korumak için) birer \`makeRateLimiter()\` eklenmişti. İkisi de \`writeLimiter.check(key).blocked\` çağırıyordu ama \`.registerFailure(key)\`'i HİÇBİRİ çağırmıyordu. \`utils/rateLimiter.js\`de \`.check()\` SADECE OKUR; sayaç yalnızca \`.registerFailure()\` ile artar (bkz. o dosyanın kendi yorumu). Sonuç: kod "429 dönebiliyor" satırını içeriyordu, hiç hata vermiyordu, ama sayaç asla artmadığı için \`blocked\` asla \`true\` olmuyordu — sınır YAZILDIĞI GÜNDEN İTİBAREN hiçbir isteği hiç engellemiyordu. Randevu oluşturma için bunun somut riski: kimliği doğrulanmış TEK bir hesap, bir tamircinin TÜM boş saatlerini otomatik doldurup (her slota bir sahte randevu) hiçbir gerçek müşterinin randevu alamamasını sağlayabilirdi — parayla değil ZAMANLA ölçülen bir hizmet-engelleme saldırısı.
+
+Düzeltme: her iki dosyada da eksik \`.registerFailure()\` çağrısı eklendi (canlı sunucuda 17 art arda istekle doğrulandı: 9 kabul + 6 çakışma = 15 deneme, sonra 429). Ayrıca kalıcı bir regresyon koruması eklendi (\`tests/security.test.mjs\`): backend/routes altındaki HER \`makeRateLimiter()\` kullanımı taranıyor, \`.check()\` çağıran ama \`.registerFailure()\`i hiç çağırmayan bir sınırlayıcı varsa test düşüyor — bu sınıf hata bir daha sessizce eklenemez.
+
+## Ders
+İkisi de "kod var, mantık doğru görünüyor, hiç hata fırlatmıyor" sınıfından — ama biri (slot kilidi) SADECE tek bir yazma yolunda çalışıyordu, diğeri (hız sınırı) HİÇBİR yazma yolunda çalışmıyordu, ikisi de yalnızca GERÇEKTEN İSTİSMAR EDİLMEYE ÇALIŞILARAK (doğrudan \`curl\` ile, arka arkaya gerçek istekler atılarak) ortaya çıktı. "Kontrol var" ile "kontrol çalışıyor" arasındaki fark, olumsuz senaryoyu bizzat tetiklemeden ölçülemez.`,
+      },
     ],
   },
   {

@@ -294,6 +294,41 @@ try {
     eq(reBook.status, 201, "iptal edilen saat yeniden alınabiliyor");
   }
 
+  // ============================================================ 6b) SLOT KİLİDİ — YENİDEN PLANLAMADA
+  /**
+   * BULGU (YÜKSEK, "randevu alma akışını en ince ayrıntısına kadar incele" isteğiyle canlıda
+   * ölçülerek bulundu): yukarıdaki kilit yalnızca POST (oluşturma) yolundaydı. PATCH ile yeniden
+   * planlama (hem owner hem mechanic bunu yapabiliyor, bkz. OWNER_WRITABLE/MECHANIC_WRITABLE
+   * date/time) AYNI kontrolden hiç geçmiyordu — iki farklı randevu, aynı tamirciye, aynı tarih ve
+   * saate "yeniden planlama" ile taşınabiliyor, POST'un engellediği durum PATCH'le dolaşılabiliyordu.
+   */
+  {
+    const rA = await api("POST", "/api/appointments", { token: owner.token, body: { mechanicId: mech2.id, vehicle: "V", date: "9 Mart", time: "09:00" } });
+    const rB = await api("POST", "/api/appointments", { token: owner2.token, body: { mechanicId: mech2.id, vehicle: "V", date: "9 Mart", time: "10:00" } });
+    eq(rA.status, 201, "A oluştu"); eq(rB.status, 201, "B oluştu");
+
+    // B'nin sahibi, B'yi A'nın saatine "yeniden planlıyor" — dolu bir saate taşımaya çalışıyor.
+    const clash = await api("PATCH", `/api/appointments/${rB.body.id}`, { token: owner2.token, body: { date: "9 Mart", time: "09:00" } });
+    eq(clash.status, 409, "yeniden planlama DOLU bir saate REDDEDİLİYOR (regresyon koruması)");
+    eq(row(`SELECT time FROM appointments WHERE id = ?`, rB.body.id).time, "10:00", "reddedilen istek B'nin saatini DEĞİŞTİRMEDİ");
+    eq(rows(`SELECT id FROM appointments WHERE mechanicId = ? AND date = '9 Mart' AND time = '09:00'`, mech2.id).length, 1,
+      "o saatte hâlâ TEK kayıt var (çakışan ikinci kayıt oluşmadı)");
+
+    // Gerçekten boş bir saate taşımak hâlâ çalışıyor (yanlış pozitif yok).
+    const free = await api("PATCH", `/api/appointments/${rB.body.id}`, { token: owner2.token, body: { date: "9 Mart", time: "11:00" } });
+    eq(free.status, 200, "boş bir saate yeniden planlama çalışmaya devam ediyor");
+
+    // Kendi randevusunu KENDİ saatine (değişiklik yok) yeniden yazmak yanlış pozitif üretmiyor.
+    const noop = await api("PATCH", `/api/appointments/${rA.body.id}`, { token: owner.token, body: { date: "9 Mart", time: "09:00" } });
+    eq(noop.status, 200, "kendi mevcut saatine 'yeniden planlama' kendiyle çakışmıyor (yanlış pozitif yok)");
+
+    // Tamirci tarafında da aynı kilit çalışıyor mu (MECHANIC_WRITABLE date/time).
+    const rC = await api("POST", "/api/appointments", { token: owner.token, body: { mechanicId: mech2.id, vehicle: "V", date: "9 Mart", time: "13:00" } });
+    await api("PATCH", `/api/appointments/${rC.body.id}`, { token: mech2.token, body: { status: "Sırada" } }).catch(() => {});
+    const mechClash = await api("PATCH", `/api/appointments/${rC.body.id}`, { token: mech2.token, body: { date: "9 Mart", time: "09:00" } });
+    eq(mechClash.status, 409, "tamircinin kendi PATCH'i de aynı kilitten geçiyor");
+  }
+
   // ============================================================ 7) OTOMATİK KABUL AYARI
   /**
    * BULGU (YÜKSEK, business logic): "Randevuları otomatik kabul et" ayarı yalnızca istemci

@@ -142,6 +142,33 @@ const cacheReturnIdx = singleHandler.indexOf("cached: true");
 const registerIdx = singleHandler.indexOf("translateLimiter.registerFailure");
 ok(cacheReturnIdx > 0 && registerIdx > cacheReturnIdx, "sayaç yalnızca dış servise giden istekleri sayıyor");
 
+/**
+ * --- HIZ SINIRI SESSİZCE HİÇ ÇALIŞMAYABİLİR: `.check()` TEK BAŞINA HİÇBİR ŞEY SAYMAZ -----------
+ * GERÇEK HATA (bu QA turunda, appointments.js'e yeni bir sınır eklenirken komşu bir dosyada —
+ * notifications.js — bulundu): `makeRateLimiter()`'ın döndürdüğü nesnede `.check(key)` SADECE
+ * OKUR (bkz. utils/rateLimiter.js) — sayaç yalnızca `.registerFailure(key)` çağrılınca artıyor.
+ * `.check()` çağrılıp `.registerFailure()` hiç çağrılmazsa kod TAMAMEN GEÇERLİ görünür (çöker,
+ * hata vermez, "429 dönebiliyor" satırı orada durur) ama sayaç asla artmadığı için `blocked` asla
+ * `true` olmaz — sınır YAZILDIĞI GÜNDEN İTİBAREN hiçbir isteği engellemez. Bu, bu dosyadaki diğer
+ * limiter'ların hiçbirinde yoktu (translate/profileViews/shareEvents hepsi ikisini de çağırıyor)
+ * ama yeni eklenen ikisinde ("randevu alma akışını incele" turunda) tam bu hata vardı. Her yeni
+ * `makeRateLimiter()` kullanımı bu kontrolden geçsin diye tarama TÜM backend/routes dosyalarını
+ * kapsıyor, tek tek dosya adı yazmak yerine.
+ */
+{
+  const routesDir = join(ROOT, "backend", "routes");
+  for (const file of readdirSync(routesDir).filter((f) => f.endsWith(".js"))) {
+    const src = read("backend", "routes", file);
+    const limiterNames = [...src.matchAll(/const (\w*[Ll]imiter\w*)\s*=\s*makeRateLimiter\(/g)].map((m) => m[1]);
+    for (const name of limiterNames) {
+      const usesCheck = new RegExp(`${name}\\.check\\(`).test(src);
+      const usesRegister = new RegExp(`${name}\\.registerFailure\\(`).test(src);
+      if (!usesCheck) continue; // yalnızca okuyup hiç sınırlamayan bir tanım değilse (kullanılmıyorsa) atla
+      ok(usesRegister, `${file}: ${name}.check() var ama .registerFailure() de çağrılıyor mu (aksi halde sınır hiç işlemez)`);
+    }
+  }
+}
+
 // --- KİMLİKSİZ SINIRSIZ YAZMA: analitik uç noktaları -------------------------------------------
 // AÇIK: profil görüntülenme ve paylaşım kayıtları kimliksiz ve sınırsız yazılabiliyordu — sayaçlar
 // bir betikle şişirilebilir, tablo sınırsız büyütülebilirdi.

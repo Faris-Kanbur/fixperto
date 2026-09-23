@@ -194,6 +194,10 @@ export async function startServer() {
       REGISTER_LIMIT_PER_HOUR: process.env.E2E_REGISTER_LIMIT || "500",
       LOGIN_LIMIT_PER_WINDOW: process.env.E2E_LOGIN_LIMIT || "500",
       OTP_IP_LIMIT_PER_WINDOW: process.env.E2E_OTP_LIMIT || "500",
+      // Randevu OLUŞTURMA sınırı (bkz. routes/appointments.js createLimiter) — aynı gerekçe:
+      // bu takımların normal akışı (slot kilidi yarış testi dahil) tek bir IP'den onlarca gerçek
+      // randevu isteği atıyor; sınır varsayılanda kalsaydı test kendi kendini kilitlerdi.
+      APPOINTMENT_CREATE_LIMIT_PER_WINDOW: process.env.E2E_APPOINTMENT_CREATE_LIMIT || "500",
       /**
        * MEDYA YÜKLEME: IP tavanı yükseltiliyor, KULLANICI başına sınır VARSAYILANDA kalıyor.
        * Sebebi tam da o sınırın var olma sebebi: testteki bütün kullanıcılar 127.0.0.1'den

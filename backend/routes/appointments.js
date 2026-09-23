@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db } from "../db/db.js";
 import { hydrate, dehydrate } from "../db/hydrate.js";
-import { resolveActor } from "../utils/auth.js";
+import { resolveActor, makeRateLimiter } from "../utils/auth.js";
+import { rateLimitKey } from "../utils/clientIp.js";
 
 /**
  * RANDEVULAR — ÖZEL ROUTER (tam uygulama denetiminde eklendi).
@@ -145,6 +146,27 @@ const isParty = (actor, row) => (
 );
 
 /**
+ * SLOT KİLİDİNİN KAPSADIĞI DURUMLAR — modül düzeyinde, POST ve PATCH'in İKİSİ de kullanıyor.
+ * İptal/ret edilmiş randevular slotu MEŞGUL ETMİYOR — aksi halde bir kez iptal edilen saat
+ * sonsuza kadar kapanırdı.
+ */
+const BLOCKING_STATUSES = [STATUS.PENDING, STATUS.QUEUED, STATUS.DONE];
+
+/**
+ * RANDEVU OLUŞTURMADA HIZ SINIRI — bu turda, bu dosyada başka hiç yoktu (denetimde bulundu).
+ * ------------------------------------------------------------------------------------------------
+ * Randevu satırı ücretsiz ve tek doğrulaması "geçerli bir tamirci + giriş yapmış bir hesap".
+ * Sınırsız haldeyken kimliği doğrulanmış tek bir hesap:
+ *   - bir tamircinin TÜM boş saatlerini otomatik olarak doldurup (her slota bir sahte randevu)
+ *     hiçbir gerçek müşterinin randevu alamamasına yol açabilirdi (iş kesintisi — kullanıcılara
+ *     zarar veren, parayla değil zamanla ölçülen bir DoS),
+ *   - ya da basitçe binlerce çöp randevu üretip tamircinin panelini kullanılamaz hale getirebilirdi.
+ * Gerçek bir müşteri bir oturumda birkaç randevu alır, onlarca değil.
+ */
+const CREATE_MAX = Number(process.env.APPOINTMENT_CREATE_LIMIT_PER_WINDOW) > 0 ? Number(process.env.APPOINTMENT_CREATE_LIMIT_PER_WINDOW) : 15;
+const createLimiter = makeRateLimiter({ maxAttempts: CREATE_MAX, lockoutMs: 10 * 60 * 1000, windowMs: 10 * 60 * 1000 });
+
+/**
  * POST /api/appointments — RANDEVU OLUŞTURMA.
  *
  * İKİ GERÇEK HATA BURADA DÜZELTİLİYOR:
@@ -167,6 +189,13 @@ appointmentsRouter.post("/", (req, res) => {
   if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
   if (actor.role !== "owner" && actor.role !== "admin") {
     return res.status(403).json({ error: "Randevu yalnızca araç sahibi tarafından oluşturulabilir." });
+  }
+  if (actor.role !== "admin") {
+    const key = rateLimitKey(req);
+    if (createLimiter.check(key).blocked) {
+      return res.status(429).json({ error: "Çok fazla randevu isteği. Lütfen birkaç dakika sonra tekrar deneyin." });
+    }
+    createLimiter.registerFailure(key);
   }
   const body = dehydrate("appointments", req.body || {});
 
@@ -232,11 +261,9 @@ appointmentsRouter.post("/", (req, res) => {
    * SLOT KİLİDİ. `date` ve `time` serbest metin (ör. "4 Ocak" / "09:00") olduğu için veritabanı
    * düzeyinde UNIQUE indeks koymak mevcut verideki biçim çeşitliliğinde yanlış çakışmalar
    * üretebilirdi. Onun yerine kontrol tek bir işlem içinde: SQLite tek yazıcılı olduğu için
-   * transaction sırası eşzamanlı isteklerde de garantili.
-   * İptal/ret edilmiş randevular slotu MEŞGUL ETMİYOR — aksi halde bir kez iptal edilen saat
-   * sonsuza kadar kapanırdı.
+   * transaction sırası eşzamanlı isteklerde de garantili. (Durum listesi modül düzeyinde,
+   * bkz. BLOCKING_STATUSES — PATCH/yeniden planlama da AYNI kilidi kullanıyor, aşağıya bakın.)
    */
-  const BLOCKING = [STATUS.PENDING, STATUS.QUEUED, STATUS.DONE];
   let insert;
   try {
     // `prepare` ÖNCE try içinde: sözdizimi hatası burada oluşuyor ve 500 değil 400 dönmeli.
@@ -249,8 +276,8 @@ appointmentsRouter.post("/", (req, res) => {
     if (clean.date && clean.time) {
       const taken = db.prepare(
         `SELECT id FROM appointments
-         WHERE mechanicId = ? AND date = ? AND time = ? AND status IN (${BLOCKING.map(() => "?").join(",")})`
-      ).get(mechanicId, clean.date, clean.time, ...BLOCKING);
+         WHERE mechanicId = ? AND date = ? AND time = ? AND status IN (${BLOCKING_STATUSES.map(() => "?").join(",")})`
+      ).get(mechanicId, clean.date, clean.time, ...BLOCKING_STATUSES);
       if (taken) return { conflict: true };
     }
     const info = insert.run(clean);
@@ -327,9 +354,44 @@ appointmentsRouter.patch("/:id", (req, res) => {
   const clean = onlyRealColumns(body);
   const cols = Object.keys(clean);
   if (cols.length === 0) return res.json(hydrate("appointments", existing));
+
+  /**
+   * SLOT KİLİDİ — YENİDEN PLANLAMADA DA (bu turda, kullanıcının "randevu alma akışını en ince
+   * ayrıntısına kadar incele" isteğiyle canlıda ölçülerek bulundu).
+   * -----------------------------------------------------------------------------------------
+   * GERÇEK AÇIK: POST /api/appointments'taki slot kilidi (bkz. yukarısı, BLOCKING_STATUSES) yalnızca
+   * randevu OLUŞTURULURKEN çalışıyordu. Hem OWNER_WRITABLE hem MECHANIC_WRITABLE `date`/`time`
+   * içeriyor (yeniden planlama, bkz. AppShell.tsx confirmReschedule) ama bu PATCH yolunda AYNI
+   * kontrol hiç yoktu. Ölçüldü: iki farklı araç sahibi, aynı tamirciye, aynı tarih+saate randevu
+   * aldı (POST bunu doğru şekilde REDDETTİ — 409), ama SONRA ikinci randevuyu BİRİNCİNİN saatine
+   * "yeniden planlama" ile taşımak sorunsuz 200 döndü ve veritabanında AYNI tamirci + AYNI tarih +
+   * AYNI saatte İKİ randevu (ikisi de "Sırada") oluştu — tam olarak POST'un engellemek için var
+   * olduğu durum, farklı bir HTTP yoluyla dolaşıldı (bkz. DELETE'teki aynı sınıf bulgunun yorumu:
+   * "bir kaydı koruyan kural TEK BİR YAZMA YOLUNA konursa, diğer yollar sessiz bir bypass olur").
+   * Düzeltme: `date`/`time` gerçekten DEĞİŞİYORSA aynı kilit burada da (aynı transaction içinde,
+   * eşzamanlı isteklere karşı) çalıştırılıyor; kendi satırı (`id != ?`) hariç tutuluyor.
+   */
+  const nextDate = "date" in clean ? clean.date : existing.date;
+  const nextTime = "time" in clean ? clean.time : existing.time;
+  const dateOrTimeChanging = ("date" in clean && clean.date !== existing.date) || ("time" in clean && clean.time !== existing.time);
+
   try {
-    db.prepare(`UPDATE appointments SET ${cols.map((c) => `${c} = @${c}`).join(",")} WHERE id = @__id`)
-      .run({ ...clean, __id: existing.id });
+    const updateInTx = db.transaction(() => {
+      if (dateOrTimeChanging && nextDate && nextTime) {
+        const taken = db.prepare(
+          `SELECT id FROM appointments
+           WHERE mechanicId = ? AND date = ? AND time = ? AND status IN (${BLOCKING_STATUSES.map(() => "?").join(",")}) AND id != ?`
+        ).get(existing.mechanicId, nextDate, nextTime, ...BLOCKING_STATUSES, existing.id);
+        if (taken) return { conflict: true };
+      }
+      db.prepare(`UPDATE appointments SET ${cols.map((c) => `${c} = @${c}`).join(",")} WHERE id = @__id`)
+        .run({ ...clean, __id: existing.id });
+      return { ok: true };
+    });
+    const result = updateInTx();
+    if (result.conflict) {
+      return res.status(409).json({ error: "Seçtiğiniz saat dolu. Lütfen başka bir saat seçin." });
+    }
   } catch (err) {
     console.error("[appointments] güncelleme hatası:", err?.message);
     return res.status(400).json({ error: "Randevu güncellenemedi." });

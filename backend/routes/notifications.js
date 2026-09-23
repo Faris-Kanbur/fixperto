@@ -81,10 +81,16 @@ notificationsRouter.post("/", (req, res) => {
   const actor = resolveActor(req);
   if (!actor) return res.status(401).json({ error: "Bu işlem için giriş yapmanız gerekiyor." });
 
+  // GERÇEK HATA DÜZELTMESİ ("randevu alma akışını incele" turunda, komşu bir dosyada bulundu):
+  // yalnızca `.check()` çağrılıyordu — o SADECE OKUR, sayaç `.registerFailure()` ile artar (bkz.
+  // utils/rateLimiter.js). `.registerFailure()` hiç çağrılmadığı için sayaç asla artmıyordu, yani
+  // bu sınır YAZILDIĞI GÜNDEN BERİ hiçbir isteği hiç engellemiyordu — kod "hız sınırı var" izlenimi
+  // veriyordu ama fiilen sınırsızdı (bkz. appointments.js'te bulunan kardeş bir bulgu, aynı QA turu).
   const key = rateLimitKey(req);
   if (writeLimiter.check(key).blocked) {
     return res.status(429).json({ error: "Çok fazla bildirim isteği. Lütfen birkaç dakika sonra tekrar deneyin." });
   }
+  writeLimiter.registerFailure(key);
 
   const title = String(req.body?.title || "").trim();
   const body = String(req.body?.body || "").trim();
