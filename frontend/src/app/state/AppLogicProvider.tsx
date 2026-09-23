@@ -3333,15 +3333,34 @@ function useAppLogic() {
     const amountMatch = tk.description.match(/(\d[\d.,]*)\s*₺/);
     const amount = amountMatch ? amountMatch[1] : "—";
     const apptIdMatch = tk.relatedNote.match(/#(\d+)/);
+    /**
+     * GÜVENLİK DÜZELTMESİ (randevu fonksiyonlarının tam denetiminde bulundu): `relatedNote` talebi
+     * AÇAN KİŞİNİN serbest metnidir — sunucu hiçbir şekilde doğrulamıyor. Buradaki eski kod, bu
+     * metinden regex ile bir randevu ID'si çıkarıp o randevuyu DOĞRUDAN iptal edip iadeli
+     * işaretliyordu; talebi açan kişinin o randevunun GERÇEKTEN bir tarafı olup olmadığına hiç
+     * bakmıyordu. Kötü niyetli biri "#<başkasının randevu numarası>" yazan bir şikayet talebiyle,
+     * yöneticiyi (metni satır satır karşılaştırmadığı bir anda) BAŞKA bir kullanıcının randevusunu
+     * iptal edip iade edilmiş göstermeye kandırabilirdi — teknik bir yetki atlaması değil ama
+     * "aldatılmış vekil" (confused deputy) sınıfından gerçek bir açık. `tk.fromId`/`fromType`
+     * (bilette de var) İSTEMCİDEN değil oturumdan damgalanıyor (bkz. submitSupportTicket) — talebi
+     * GERÇEKTEN kimin açtığının tek güvenilir kaynağı bu, `relatedNote` metni değil. Artık işlem
+     * yalnızca çözülen randevunun GERÇEK bir tarafı, talebi açan kişiyle eşleşiyorsa uygulanıyor.
+     */
     if (apptIdMatch) {
       const aid = Number(apptIdMatch[1]);
       const appt = appointments.find(a => a.id === aid);
-      if (appt) {
+      const submitterIsParty = appt && (
+        (tk.fromType === "owner" && appt.ownerId === tk.fromId)
+        || (tk.fromType === "mechanic" && appt.mechanicId === tk.fromId)
+      );
+      if (appt && submitterIsParty) {
         logAdminChange({ targetType: "appointment", targetId: aid, field: "status", oldValue: appt.status, newValue: "İptal Edildi" });
         logAdminChange({ targetType: "appointment", targetId: aid, field: "depositRefunded", oldValue: appt.depositRefunded, newValue: true });
+        setAppointments(apps => apps.map(a => a.id === aid ? { ...a, status: "İptal Edildi", depositRefunded: true } : a));
+        persist(api.appointments.update(aid, { status: "İptal Edildi", depositRefunded: true }, api.admin.authOpts()), "Randevu güncellenemedi");
+      } else if (appt) {
+        setToast({ type: "info", text: "⚠️ Bu talebi açan kişi, belirtilen randevunun tarafı değil — randevu değiştirilmedi." });
       }
-      setAppointments(apps => apps.map(a => a.id === aid ? { ...a, status: "İptal Edildi", depositRefunded: true } : a));
-      persist(api.appointments.update(aid, { status: "İptal Edildi", depositRefunded: true }, api.admin.authOpts()), "Randevu güncellenemedi");
     }
     const newNote = (tk.adminNote ? tk.adminNote + "\n" : "") + `${amount}₺ iade edildi, randevu iptal edildi (${TODAY.toLocaleDateString("tr-TR")}).`;
     logAdminChange({ targetType: "ticket", targetId: id, field: "refunded", oldValue: tk.refunded, newValue: true });
@@ -3905,17 +3924,30 @@ function useAppLogic() {
     const days = parseInt(warrantyDays, 10);
     if (days > 0) {
       const appt = appointments.find(a => a.id === id);
+      const prevWarrantyEndDate = appt?.warrantyEndDate ?? null;
       const end = new Date(TODAY); end.setDate(end.getDate() + days);
       const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
       setAppointments(apps => apps.map(a => a.id === id ? { ...a, warrantyEndDate: endStr } : a));
-      persist(api.appointments.update(id, { warrantyEndDate: endStr }), "Garanti bilgisi kaydedilemedi");
+      // GERÇEK HATA (bu turda bulunan aynı sınıf hata, aynı denetimin bir parçası): bu iki yazma
+      // da iyimser güncelliyordu ama persist()'e ROLLBACK vermiyordu — PATCH başarısız olursa
+      // (ör. ağ hatası) ekranda garanti tarihi ve hatırlatma "kaydedilmiş" görünmeye devam ediyor,
+      // sayfa yenilenince sessizce kayboluyordu (bkz. persist()'in üstündeki genel not — tam bu
+      // sınıf hata için yazılmıştı, buraya taşınmamış).
+      persist(
+        api.appointments.update(id, { warrantyEndDate: endStr }), "Garanti bilgisi kaydedilemedi",
+        () => setAppointments(apps => apps.map(a => a.id === id ? { ...a, warrantyEndDate: prevWarrantyEndDate } : a)),
+      );
       if (appt) {
         const vehicle = vehicles.find(v => v.plate && appt.vehicle.includes(v.plate));
         if (vehicle) {
+          const prevCustomReminders = vehicle.customReminders || [];
           const reminder = { id: nestedItemId++, title: "Parça Garantisi Bitiyor", date: endStr, leadDays: "7" };
-          const customReminders = [...(vehicle.customReminders || []), reminder];
+          const customReminders = [...prevCustomReminders, reminder];
           setVehicles(vs => vs.map(v => v.id === vehicle.id ? { ...v, customReminders } : v));
-          persist(api.vehicles.update(vehicle.id, { customReminders }), "Hatırlatma kaydedilemedi");
+          persist(
+            api.vehicles.update(vehicle.id, { customReminders }), "Hatırlatma kaydedilemedi",
+            () => setVehicles(vs => vs.map(v => v.id === vehicle.id ? { ...v, customReminders: prevCustomReminders } : v)),
+          );
         }
       }
     }
@@ -3951,8 +3983,14 @@ function useAppLogic() {
     const newDate = rescheduleDate.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
     // `autoAccepted` ARTIK GÖNDERİLMİYOR: o alan tamircinin politikasından türetiliyor ve
     // sunucu istemciden kabul etmiyor (bkz. routes/appointments.js beyaz listesi).
-    const patch = { date: newDate, time: rescheduleTime };
-    const prevPatch = { date: appt.date, time: appt.time };
+    // GERÇEK HATA (bu turda, "randevu ile ilgili HER fonksiyonu kontrol et" isteğiyle bulundu):
+    // bu patch `dateISO`'yu hiç göndermiyordu — confirmBooking'in randevu oluştururken yaptığı
+    // gibi (bkz. yukarısı, selectedDate.toISOString()) burada da aynı alan gönderilmezse
+    // veritabanındaki dateISO İLK rezervasyon tarihinde donuk kalıyor; .ics indirme, tamirci analiz
+    // sekmesinin tarih aralığı süzgeci ve doğrulanmış servis geçmişi kaydı (vehicleHistory.js)
+    // hep bunu okuduğu için üçü de ertelenmiş randevularda YANLIŞ tarih gösteriyordu.
+    const patch = { date: newDate, time: rescheduleTime, dateISO: rescheduleDate.toISOString() };
+    const prevPatch = { date: appt.date, time: appt.time, dateISO: appt.dateISO };
     setAppointments(apps => apps.map(a => a.id === apptId ? { ...a, ...patch } : a));
     setReschedulingApptId(null);
     /**

@@ -30,7 +30,9 @@ import { rateLimitKey } from "../utils/clientIp.js";
  * NEDEN AYRI DOSYA VE CRUD'DAN ÖNCE: bu depodaki yerleşik desen (reviewsRouter,
  * listingInteractionsRouter, jobApplicationsRouter). Jenerik fabrikayı randevuya özel kurallarla
  * şişirmek diğer yedi tabloyu da riske atardı; ayrı router yalnızca bu tabloyu etkiliyor.
- * GET ve DELETE hâlâ jenerik CRUD'da (orada sahiplik kontrolü doğru ve yeterli).
+ * GET hâlâ jenerik CRUD'da (orada sahiplik kontrolü doğru ve yeterli). DELETE ise AŞAĞIDA, bu
+ * dosyada — başlangıçta jenerik CRUD'daydı, ayrı bir denetimde durum-makinesi bypass'ı olarak
+ * bulunup buraya taşındı (bkz. aşağıdaki DELETE handler'ının üstündeki not).
  */
 
 export const appointmentsRouter = Router();
@@ -71,13 +73,27 @@ const OWNER_WRITABLE = new Set([
   // Müşterinin kendi kararları ve kendi anlattığı bilgiler.
   "status",            // yalnızca iptal — aşağıdaki durum makinesi sınırlıyor
   "issue", "issuePhotos", "vehicle", "customer", "historyShareConsent",
-  "date", "time",      // yeniden planlama
+  "date", "time", "dateISO",      // yeniden planlama — dateISO neden burada: aşağıdaki not
   "reviewed",          // yorumunu yazdığında işaretlenir (yalnızca false→true, aşağıda)
 ]);
+/**
+ * `dateISO` NEDEN AYRICA YAZILABİLİR (randevu fonksiyonlarının tam denetiminde bulundu):
+ * `date`/`time` kullanıcıya gösterilen serbest metin ("26 Eylül" / "14:00"); `dateISO` ise gerçek,
+ * sıralanabilir tarih — takvime ekleme (.ics indirme), tamirci analiz sekmesindeki tarih aralığı
+ * süzgeci VE doğrulanmış servis geçmişindeki `serviceDate` (bkz. routes/vehicleHistory.js) hep
+ * bunu okuyor. `dateISO` bu beyaz listede YOKKEN yeniden planlama yalnızca `date`/`time`'ı
+ * gönderiyordu — kayıt veritabanında YENİ günü gösteriyordu ama `dateISO` hep İLK rezervasyonun
+ * tarihinde donuk kalıyordu. Somut sonucu: rastgele bir güne ertelenmiş bir randevunun .ics dosyası
+ * hâlâ ESKİ günü indiriyor (kullanıcı yanlış günde takvim hatırlatması alıyor), tamamlanınca
+ * yazılan servis geçmişi kaydı de ESKİ tarihi taşıyordu — bu uygulamanın "en güçlü güven sinyali"
+ * olarak tanımlanan alanda (bkz. vehicleHistory.js) yanlış tarih. `date`/`time` zaten ikisi de
+ * yazılabilir ve kendileri de doğrulanmadan (serbest metin) kabul ediliyor; `dateISO`'yu aynı
+ * güvenle aynı role açmak yeni bir yetki açmıyor, yalnızca üç ayrı yerdeki tutarsızlığı kapatıyor.
+ */
 const MECHANIC_WRITABLE = new Set([
   // Tamircinin kendi kararları: işi kabul etmek, reddetmek, tamamlamak, gelmediğini bildirmek,
   // bedeli ve garantiyi belirlemek. Bedel tamircinin işi — müşterinin değil.
-  "status", "servicePrice", "noShow", "warrantyEndDate", "date", "time",
+  "status", "servicePrice", "noShow", "warrantyEndDate", "date", "time", "dateISO",
 ]);
 /**
  * HİÇ KİMSE (yönetici hariç) yazamaz:

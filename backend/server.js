@@ -244,7 +244,9 @@ app.use("/api/vehicles", makeCrudRouter("vehicles", {
  * Randevu satırı İKİ TARAFIN paylaştığı tek kayıt; sahiplik kontrolü "bu satır senin mi" sorusunu
  * doğru cevaplıyor ama randevuda asıl soru "bu ALANI sen yazabilir misin" — denetimde müşterinin
  * status/servicePrice/depositPaid/noShow/autoAccepted gibi karşı tarafa ait kararları yazabildiği
- * ÖLÇÜLDÜ. Özel router alan ve durum kontrolünü yapıyor; GET ve DELETE jenerik CRUD'da kalıyor.
+ * ÖLÇÜLDÜ. Özel router alan ve durum kontrolünü yapıyor; GET jenerik CRUD'da kalıyor. (DELETE de
+ * başlangıçta jenerik CRUD'daydı — sonra AYRI bir açık olarak bulundu ve özel router'a taşındı,
+ * bkz. appointments.js'teki DELETE handler'ının üstündeki not.)
  */
 app.use("/api/appointments", appointmentsRouter);
 app.use("/api/appointments", makeCrudRouter("appointments", {
