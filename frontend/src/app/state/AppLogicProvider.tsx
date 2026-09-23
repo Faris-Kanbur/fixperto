@@ -3755,9 +3755,57 @@ function useAppLogic() {
     setVehicles(vs => vs.map(v => v.id !== vehicleId ? v : { ...v, customReminders })); setEditingReminderKind(null); setToast({ type: "info", text: "🗑️ Hatırlatma silindi." });
     persist(api.vehicles.update(vehicleId, { customReminders }), "Hatırlatma kaydedilemedi");
   };
-  const acceptAppt = (id) => { const appt = appointments.find(a => a.id === id); setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Sırada" } : a)); persist(api.appointments.update(id, { status: "Sırada" }), "Randevu güncellenemedi"); fireSuccessPulse(t("apptAcceptedToast")); if (appt) fireNotification("Randevunuz kabul edildi ✅", "Tamirci randevu talebinizi onayladı.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, appt.ownerId, "notifyAppointments"); };
-  const rejectAppt = (id) => { const appt = appointments.find(a => a.id === id); setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Reddedildi" } : a)); persist(api.appointments.update(id, { status: "Reddedildi" }), "Randevu güncellenemedi"); setToast({ type: "info", text: t("apptRejectedToast") }); if (appt) fireNotification("Randevunuz reddedildi", "Tamirci bu randevu talebini kabul edemedi.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, appt.ownerId, "notifyAppointments"); };
-  const markNoShow = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Gelmedi", noShow: true } : a)); persist(api.appointments.update(id, { status: "Gelmedi", noShow: true }), "Randevu güncellenemedi"); setToast({ type: "info", text: t("noShowMarkedToast") }); };
+  /**
+   * GERÇEK HATA (bu turda, "randevu değiştirme/iptal etme ile ilgili sorun var mı" sorusuyla
+   * bulundu): bu fonksiyonların HEPSİ iyimser (optimistic) güncellemeyi YAPIYOR, sonra
+   * persist()'i ROLLBACK VERMEDEN çağırıyor, sonra başarı bildirimini/tost'unu/SMS simülasyonunu
+   * SUNUCUNUN SONUCUNU HİÇ BEKLEMEDEN koşulsuz ateşliyordu. Sonuç: PATCH sunucuda reddedilirse
+   * (ör. randevu bu sırada karşı tarafça zaten başka bir duruma taşınmışsa — gerçek bir yarış
+   * durumu, iki taraf aynı randevu üzerinde aynı anda işlem yapabiliyor) kullanıcı arayüzde YANLIŞ
+   * bir durum görmeye devam ediyor (geri alınmıyor) VE karşı taraf HİÇ GERÇEKLEŞMEMİŞ bir olay için
+   * sahte bir bildirim/SMS alıyordu — "kabul edildi" bildirimi giden ama sunucuda hâlâ "Onay
+   * Bekliyor" olan bir randevu gibi. Artık: optimistic güncelleme kalıyor (hız için), ama rollback
+   * veriliyor VE başarıya bağlı yan etkiler (bildirim, tost, SMS) yalnızca persist() GERÇEKTEN
+   * başarılı olunca (`.then`) çalışıyor.
+   */
+  const acceptAppt = (id) => {
+    const appt = appointments.find(a => a.id === id);
+    if (!appt) return;
+    const prevStatus = appt.status;
+    setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Sırada" } : a));
+    persist(
+      api.appointments.update(id, { status: "Sırada" }), "Randevu güncellenemedi",
+      () => setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: prevStatus } : a)),
+    ).then(() => {
+      fireSuccessPulse(t("apptAcceptedToast"));
+      fireNotification("Randevunuz kabul edildi ✅", "Tamirci randevu talebinizi onayladı.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, appt.ownerId, "notifyAppointments");
+    }).catch(() => {});
+  };
+  const rejectAppt = (id) => {
+    const appt = appointments.find(a => a.id === id);
+    if (!appt) return;
+    const prevStatus = appt.status;
+    setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Reddedildi" } : a));
+    persist(
+      api.appointments.update(id, { status: "Reddedildi" }), "Randevu güncellenemedi",
+      () => setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: prevStatus } : a)),
+    ).then(() => {
+      setToast({ type: "info", text: t("apptRejectedToast") });
+      fireNotification("Randevunuz reddedildi", "Tamirci bu randevu talebini kabul edemedi.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, appt.ownerId, "notifyAppointments");
+    }).catch(() => {});
+  };
+  const markNoShow = (id) => {
+    const appt = appointments.find(a => a.id === id);
+    if (!appt) return;
+    const prevStatus = appt.status;
+    setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Gelmedi", noShow: true } : a));
+    persist(
+      api.appointments.update(id, { status: "Gelmedi", noShow: true }), "Randevu güncellenemedi",
+      () => setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: prevStatus, noShow: false } : a)),
+    ).then(() => {
+      setToast({ type: "info", text: t("noShowMarkedToast") });
+    }).catch(() => {});
+  };
   // GERİ DÖNÜŞ DEĞERİ: durum PATCH'inin promise'ı döndürülüyor (persist() zaten döndürüyor) —
   // completeApptWithWarranty bu promise'ı AWAIT ETMEK için kullanıyor, bkz. o fonksiyondaki not
   // (yarış durumu düzeltmesi). Diğer çağıran yer (AppShell.tsx "Tamire Al" butonu) dönen değeri
@@ -3784,8 +3832,28 @@ function useAppLogic() {
     if (!current) return Promise.resolve();
     const idx = TRACK_STATUSES_AUTO.indexOf(current.status);
     const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)];
-    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse(t("repairCompletedToast")); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, a.ownerId, "notifyAppointments"); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, a.ownerId, "notifyAppointments"); } return { ...a, status: next }; }));
-    return persist(api.appointments.update(id, { status: next }), "Randevu güncellenemedi");
+    const prevStatus = current.status;
+    setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: next } : a));
+    const p = persist(
+      api.appointments.update(id, { status: next }), "Randevu güncellenemedi",
+      () => setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: prevStatus } : a)),
+    );
+    // SMS simülasyonu / tamamlanma bildirimi / araç-tamirde bildirimi ARTIK yalnızca PATCH
+    // GERÇEKTEN başarılı olunca ateşleniyor — bkz. acceptAppt'ın üstündeki aynı sınıf hatanın notu.
+    // Önceden bunlar setAppointments'ın iyimser güncelleyicisi İÇİNDE, sunucu yanıtı beklenmeden
+    // koşulsuz çalışıyordu: sunucu reddetse bile müşteri "aracınız hazır" SMS'i ve bildirimi alıyordu.
+    p.then(() => {
+      if (next === "Tamir Tamamlandı" && prevStatus !== "Tamir Tamamlandı") {
+        const smsText = `📱 SMS → ${current.customer}: "${current.mechanicName} aracınızın (${current.vehicle}) tamirini tamamladı."`;
+        setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]);
+        setToast({ type: "sms", text: smsText });
+        fireSuccessPulse(t("repairCompletedToast"));
+        fireNotification("Aracınız hazır! 🚗", `${current.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, current.ownerId, "notifyAppointments");
+      } else if (next === "Tamire Alındı") {
+        fireNotification("Aracınız tamirde 🔧", `${current.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, current.ownerId, "notifyAppointments");
+      }
+    }).catch(() => {});
+    return p;
   };
   // Tamiri "Tamamlandı" olarak işaretlerken, değişen parça varsa opsiyonel garanti süresi eklenebilir.
   // Garanti bitiş tarihi hem randevu kartında gösterilir hem de (plaka eşleşirse) aracın hatırlatmalarına eklenir.
@@ -3840,34 +3908,54 @@ function useAppLogic() {
   };
   const cancelOwnAppt = (id) => {
     const appt = appointments.find(a => a.id === id);
+    if (!appt) return;
+    const prevStatus = appt.status;
     setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "İptal Edildi" } : a));
-    persist(api.appointments.update(id, { status: "İptal Edildi" }), "Randevu güncellenemedi");
-    // BİLDİRİM HİÇ GİTMİYORDU (tam site QA denetiminde bulundu): buradaki koşul
-    // `appt.mechanicId === MY_MECHANIC_ID` idi — ama cancelOwnAppt SADECE araç sahibi tarafından
-    // çağrılıyor (bkz. AppointmentCard.tsx, tek çağrı yeri), yani MY_MECHANIC_ID bu oturumda HER
-    // ZAMAN null. Koşul asla doğru olamıyordu; tamirci, araç sahibi randevusunu iptal ettiğinde
-    // hiçbir zaman haber almıyordu.
-    if (appt) {
+    /**
+     * GERÇEK HATA (bu turda bulundu — bkz. acceptAppt'ın üstündeki aynı sınıf notun): rollback
+     * verilmeden persist() çağrılıyor, bildirim de PATCH'in sonucunu hiç beklemeden koşulsuz
+     * ateşleniyordu. İptal, karşı tarafın (tamircinin) AYNI ANDA randevuyu başka bir duruma
+     * taşıdığı gerçek bir yarış durumunda sunucuda reddedilebilir (409, bkz. TRANSITIONS) — o
+     * durumda önceden kullanıcı arayüzde "iptal edildi" görmeye devam ediyor VE tamirciye
+     * GERÇEKLEŞMEMİŞ bir iptal için sahte bildirim gidiyordu.
+     */
+    persist(
+      api.appointments.update(id, { status: "İptal Edildi" }), "Randevu güncellenemedi",
+      () => setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: prevStatus } : a)),
+    ).then(() => {
       fireNotification("Randevu iptal edildi ❌", `${appt.customer} — ${appt.vehicle} randevusunu iptal etti.`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: appt.id }, appt.mechanicId, "notifyAppointments");
-    }
+    }).catch(() => {});
   };
   const startReschedule = (a) => { setReschedulingApptId(a.id); setRescheduleDate(null); setRescheduleTime(null); };
   const confirmReschedule = () => {
     if (!rescheduleDate || !rescheduleTime) return;
     const appt = appointments.find(a => a.id === reschedulingApptId);
+    if (!appt) return;
+    const apptId = reschedulingApptId;
     const newDate = rescheduleDate.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
     // `autoAccepted` ARTIK GÖNDERİLMİYOR: o alan tamircinin politikasından türetiliyor ve
     // sunucu istemciden kabul etmiyor (bkz. routes/appointments.js beyaz listesi).
     const patch = { date: newDate, time: rescheduleTime };
-    setAppointments(apps => apps.map(a => a.id === reschedulingApptId ? { ...a, ...patch } : a));
-    persist(api.appointments.update(reschedulingApptId, patch), "Randevu güncellenemedi");
+    const prevPatch = { date: appt.date, time: appt.time };
+    setAppointments(apps => apps.map(a => a.id === apptId ? { ...a, ...patch } : a));
     setReschedulingApptId(null);
-    setToast({ type: "info", text: "🔄 Randevunuz güncellendi." });
-    // Bkz. cancelOwnAppt'taki aynı düzeltmenin notu — bu fonksiyon da yalnızca araç sahibi
-    // tarafından çağrılıyor, `appt.mechanicId === MY_MECHANIC_ID` koşulu asla doğru olamıyordu.
-    if (appt) {
+    /**
+     * GERÇEK HATA (bu turda, "randevu alma akışını en ince ayrıntısına kadar incele" isteğiyle
+     * bulundu — bkz. backend/routes/appointments.js'e AYNI TURDA eklenen PATCH slot kilidinin
+     * notu). Bu kilit eklenmeden ÖNCE bu PATCH neredeyse hiç başarısız olmuyordu, o yüzden bu
+     * fonksiyondaki eksik rollback/koşulsuz bildirim SESSİZCE zararsız kalıyordu — artık slot
+     * kilidi GERÇEKTEN 409 döndürebildiği için aynı hata artık ULAŞILABILIR: kullanıcı DOLU bir
+     * saate "yeniden planlama" yaptığında sunucu reddediyor ama önceden yerel state HÂLÂ yeni
+     * (kaydedilmemiş) tarih/saati gösteriyor, "🔄 Randevunuz güncellendi" tostu HER ZAMAN
+     * çıkıyor, VE tamirciye HİÇ gerçekleşmemiş bir randevu değişikliği için bildirim gidiyordu.
+     */
+    persist(
+      api.appointments.update(apptId, patch), "Randevu güncellenemedi",
+      () => setAppointments(apps => apps.map(a => a.id === apptId ? { ...a, ...prevPatch } : a)),
+    ).then(() => {
+      setToast({ type: "info", text: "🔄 Randevunuz güncellendi." });
       fireNotification("Randevu güncellendi 🔄", `${appt.customer} randevu tarihini/saatini değiştirdi: ${newDate} ${rescheduleTime}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: appt.id }, appt.mechanicId, "notifyAppointments");
-    }
+    }).catch(() => {});
   };
   const submitReview = () => {
     if (!reviewingApptId) return;

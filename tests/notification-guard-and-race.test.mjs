@@ -92,8 +92,20 @@ eq(/let nextStatus = null/.test(advanceStatusSrc), false,
   "setAppointments içine yan etkiyle 'nextStatus' YAZMA kalıbı YOK (regresyon koruması — updater'ın senkron çalıştığını varsaymıyor)");
 ok(/const current = appointments\.find\(a => a\.id === id\)/.test(advanceStatusSrc),
   "bir sonraki durum mevcut appointments closure'ından DOĞRUDAN okunuyor (regresyon koruması)");
-ok(/return persist\(api\.appointments\.update\(id, \{ status: next \}\)/.test(advanceStatusSrc),
+ok(/const p = persist\(\s*api\.appointments\.update\(id, \{ status: next \}\)/.test(advanceStatusSrc),
   "advanceStatus artık persist promise'ını DÖNDÜRÜYOR (regresyon koruması)");
+ok(/return p;/.test(advanceStatusSrc), "advanceStatus çağırana persist promise'ını geri veriyor");
+/**
+ * GERÇEK HATA (bu turda, "randevu değiştirme/iptal etme ile ilgili sorun var mı" sorusuyla
+ * bulundu): SMS simülasyonu/bildirim, PATCH sunucuda BAŞARILI olduğu ONAYLANMADAN, iyimser
+ * setAppointments güncelleyicisinin İÇİNDE koşulsuz ateşleniyordu — sunucu reddetse bile
+ * (ör. gerçek bir yarış durumunda) kullanıcı "aracınız hazır" SMS'i ve bildirimi alıyordu.
+ */
+eq(/fireNotification\("Aracınız hazır/.test(advanceStatusSrc.slice(0, advanceStatusSrc.indexOf("p.then"))), false,
+  "SMS/bildirim artık setAppointments güncelleyicisinin İÇİNDE değil (regresyon koruması)");
+ok(/p\.then\(\(\) => \{/.test(advanceStatusSrc), "SMS/bildirim yalnızca PATCH başarılı olunca (.then) çalışıyor");
+ok(/\(\) => setAppointments\(apps => apps\.map\(a => a\.id === id \? \{ \.\.\.a, status: prevStatus \} : a\)\)/.test(advanceStatusSrc),
+  "PATCH başarısız olursa yerel durum ESKİ haline geri alınıyor (rollback)");
 
 const completeSrc = bodyOf("const completeApptWithWarranty = async (warrantyDays", ["const cancelOwnAppt = (id)"]);
 ok(/await advanceStatus\(id\)/.test(completeSrc), "completeApptWithWarranty durum PATCH'ini AWAIT ediyor (regresyon koruması)");
