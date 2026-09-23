@@ -21,6 +21,22 @@ import { rateLimitKey } from "../utils/clientIp.js";
 export const notificationsRouter = Router();
 
 const VALID_ROLES = new Set(["owner", "mechanic"]);
+/**
+ * KATEGORİ → GERÇEK ALICININ KENDİ TERCİHİ (bu QA turunda bulundu, "bildirim ayarları kalıcı ama
+ * ETKİSİZ" sınıfı bir hata). Ayarlar ekranındaki her aç/kapa anahtarı artık kalıcı (bkz. owners/
+ * mechanics.notifySettings), AMA bir bildirim oluşturulurken kategori kontrolü hâlâ İSTEMCİDE,
+ * GÖNDERENİN kendi yerel `ownerSettings`/`mechSettings` state'iyle yapılıyordu — gönderen ile alıcı
+ * FARKLI kişiler olduğu için (randevu/teklif/mesaj bildirimlerinin neredeyse tamamında) bu, ALICININ
+ * DEĞİL GÖNDERENİN tercihine bakmak demekti. Ölçülen: bir tamirci "randevu bildirimleri"ni kapatsa
+ * bile, bir araç sahibi randevu aldığında (kendi oturumundaki varsayılan AÇIK ayarla) bildirim yine
+ * yazılıyordu — "kapalı kategoride hiç bildirim üretilmez" sözü (bkz. el kitabı 15.1) yalnızca
+ * KENDİ KENDİNE bildirimlerde (hatırlatıcı gibi) gerçekten doğruydu. Artık her alıcı için kontrol
+ * SUNUCUDA, O ALICININ KENDİ kaydından yapılıyor — `category` verilmezse (ör. yönetici duyurusu)
+ * kontrol atlanır, verilirse ve alıcının kendi `notifySettings[category]` değeri açıkça `false`
+ * ise o alıcı için satır HİÇ YAZILMAZ (hata değil, sessizce atlanır — tıpkı istemcideki eski
+ * davranışın NİYETİ gibi, ama artık gerçekten doğru kişiye uygulanıyor).
+ */
+const VALID_CATEGORIES = new Set(["smartReminders", "notifyAppointments", "notifyOffers", "notifyMessages", "notifyListingUpdates", "notifySavedSearches", "notifyJobApplications"]);
 const MAX_TITLE_LEN = 200;
 const MAX_BODY_LEN = 1000;
 const MAX_LIST = 40; // ön yüzdeki eski `.slice(0, 40)` kapasite kuralıyla aynı (bkz. handbook 15.1).
@@ -83,6 +99,11 @@ notificationsRouter.post("/", (req, res) => {
     return res.status(400).json({ error: "Geçersiz hedef kimliği." });
   }
 
+  const category = req.body?.category != null ? String(req.body.category) : null;
+  if (category != null && !VALID_CATEGORIES.has(category)) {
+    return res.status(400).json({ error: `Geçersiz bildirim kategorisi: ${category}` });
+  }
+
   const recipientsRaw = Array.isArray(req.body?.recipients) ? req.body.recipients : [];
   if (recipientsRaw.length === 0) return res.status(400).json({ error: "En az bir alıcı gerekli." });
   if (recipientsRaw.length > MAX_RECIPIENTS_PER_CALL) {
@@ -105,8 +126,15 @@ notificationsRouter.post("/", (req, res) => {
         const recipientId = Number(r.recipientId);
         if (!Number.isFinite(recipientId)) throw { status: 400, error: "Geçersiz alıcı kimliği." };
         const table = recipientRole === "owner" ? "owners" : "mechanics";
-        const exists = db.prepare(`SELECT id FROM ${table} WHERE id = ?`).get(recipientId);
-        if (!exists) throw { status: 400, error: `Alıcı bulunamadı: ${recipientRole} #${recipientId}` };
+        const row = db.prepare(`SELECT id, notifySettings FROM ${table} WHERE id = ?`).get(recipientId);
+        if (!row) throw { status: 400, error: `Alıcı bulunamadı: ${recipientRole} #${recipientId}` };
+        // Alıcının KENDİ kategori tercihi — bkz. yukarıdaki VALID_CATEGORIES yorumu. Kapalıysa bu
+        // alıcı için satır hiç yazılmıyor (hata değil, döngü bir sonraki alıcıya geçiyor).
+        if (category) {
+          let settings = null;
+          try { settings = row.notifySettings ? JSON.parse(row.notifySettings) : null; } catch { settings = null; }
+          if (settings && settings[category] === false) continue;
+        }
       }
 
       const info = insert.run({
@@ -125,7 +153,11 @@ notificationsRouter.post("/", (req, res) => {
     throw err;
   }
 
-  const rows = db.prepare(`SELECT * FROM notifications WHERE id IN (${created.map(() => "?").join(",")})`).all(...created);
+  // Tüm alıcılar kategoriyi kapatmış olabilir (hepsi sessizce atlandı) — bu bir hata değil, boş
+  // bir sonuç. `IN ()` geçersiz SQL olduğu için bu durumu ayrıca ele almak gerekiyor.
+  const rows = created.length
+    ? db.prepare(`SELECT * FROM notifications WHERE id IN (${created.map(() => "?").join(",")})`).all(...created)
+    : [];
   res.status(201).json(hydrateAll("notifications", rows));
 });
 

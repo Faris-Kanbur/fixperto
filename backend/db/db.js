@@ -597,6 +597,18 @@ function ensureColumn(table, columnDef) {
    * kişiye ait olduğunu doğruluyor (bkz. routes/appointments.js).
    */
   ["appointments", "vehicleId INTEGER REFERENCES vehicles(id)"],
+  /**
+   * BİLDİRİM/HATIRLATICI TERCİHLERİ — daha önce hiç kalıcı değildi (bu QA turunda bulundu, bkz.
+   * el kitabı 15.1). Ayarlar ekranındaki aç/kapa anahtarları (`notifyAppointments`, `notifyOffers`,
+   * vb.) yalnızca `useState`e yazıyordu ve `persistMyPrefs` gibi bu projenin favoriler/kayıtlı
+   * aramalar/dil tercihi için zaten kullandığı kalıcılaştırma yoluna HİÇ bağlanmamıştı — yani bu
+   * ayarları KAPATAN bir kullanıcı, sayfayı yenilediği ya da başka bir cihazda giriş yaptığı an
+   * hiçbir uyarı olmadan yeniden TÜM bildirimleri almaya başlıyordu. Tek bir JSON sütun (diğer
+   * tercih alanları gibi, ör. favoriteIds) — anahtar kümesi zamanla değişebileceği için (yeni bir
+   * kategori eklenmesi gibi) sabit sütunlar yerine bu daha esnek.
+   */
+  ["owners", "notifySettings TEXT"],
+  ["mechanics", "notifySettings TEXT"],
 ].forEach(([table, columnDef]) => ensureColumn(table, columnDef));
 
 // GÜVENLİK DÜZELTMESİ (gerçek oturum sistemi): owners/mechanics.password sütunu şimdiye kadar düz

@@ -1090,7 +1090,23 @@ Randevu, teklif, mesaj, başvuru, duyuru ve İLAN GÜNCELLEMELERİ. Kullanıcı 
 Her bildirim bir hedef taşır (randevu, teklif, sohbet, ilan, duyuru). Tıklanınca doğru ekran ve doğru SEKME açılır. Randevu bildirimi aktif randevular sekmesini açar — kullanıcı en son "geçmiş" sekmesine bakmış olsa bile.
 
 ## Kapasite
-Zil listesi son 40 kayıtla sınırlıdır; sınırsız büyüyen bir liste belleği tüketirdi.`,
+Zil listesi son 40 kayıtla sınırlıdır; sınırsız büyüyen bir liste belleği tüketirdi.
+
+## İKİ SONRAKİ KATMAN (kullanıcı "benzer başka sorun var mı" diye sorunca bulundu)
+Bildirim backend'e taşındıktan hemen sonra aynı soru tekrar soruldu ve iki katman daha çıktı — ikisi de "görünüşte çalışıyor ama aslında hiçbir şey yapmıyor" sınıfından.
+
+### Katman A: bildirim TERCİHLERİ hiç kalıcı değildi
+Ayarlar ekranındaki aç/kapa anahtarları (\`ownerSettings\`/\`mechSettings\` — randevu/teklif/mesaj/ilan/kayıtlı arama bildirimleri, akıllı hatırlatıcılar) yalnızca \`useState\`e yazıyordu. Favoriler/kayıtlı aramalar/dil tercihi gibi diğer TÜM kişisel tercihler zaten \`persistMyPrefs\` üzerinden kalıcıydı (bkz. o yardımcı fonksiyonun kendi geçmişi — aynı sınıf bir hatanın DAHA ÖNCE düzeltildiği yer) ama bildirim ayarları bu göçe hiç dahil edilmemişti. Sonuç: bir kullanıcı bildirimleri KAPATSA bile sayfayı yenilediği ya da başka bir cihazda giriş yaptığı an hiçbir uyarı olmadan yeniden AÇIK'a dönüyordu.
+
+Düzeltme: \`owners\`/\`mechanics.notifySettings\` (JSON sütun) + \`updateOwnerSettings\`/\`updateMechSettings\` (persistMyPrefs'e bağlı). Oturum kurulduğunda yerel state sunucudan BİR KEZ eşitleniyor. Bulunan bir YARIŞ DURUMU: profil verisi İKİ AYRI istekten geliyor — önce herkese açık TOPLU liste (bu alan gizlilik gereği orada YOK, bkz. hydrate.js LIST_ONLY_SENSITIVE_FIELDS), sonra kullanıcının KENDİ tekil kaydı (bu alanı İÇEREN). İlk sürüm "eşitlendi" kilidini ilk (veri içermeyen) eşleşmede atıyordu; ikinci, gerçek veriyi taşıyan istek geldiğinde artık atlanıyordu. Düzeltme: kilit yalnızca GERÇEKTEN dolu bir \`notifySettings\` nesnesi görüldüğünde atılıyor.
+
+### Katman B: kapalı kategori bile bildirimi durdurmuyordu (Katman A düzeltilene kadar bu görünmüyordu)
+Bir bildirim oluşturulurken "bu kategori açık mı?" kontrolü (\`allowed\` parametresi) GÖNDERENİN yerel \`ownerSettings\`/\`mechSettings\`'ine bakıyordu. Çapraz kullanıcı bildirimlerinin (randevu, teklif, mesaj — yani hemen hemen HEPSİ) büyük çoğunluğunda gönderen ile alıcı FARKLI kişiler: bir araç sahibi randevu aldığında bildirim TAMİRCİYE gidiyor ama kontrol ARAÇ SAHİBİNİN kendi (genelde varsayılan açık) ayarına bakıyordu. Yani bir tamirci "randevu bildirimleri"ni kapatsa bile, hiçbir ilişkisi olmayan bir araç sahibinin kendi ayarı bildirimi üretmeye devam ediyordu — "kapalı kategoride hiç bildirim üretilmez" sözü yalnızca KENDİ KENDİNE bildirimlerde (hatırlatıcı gibi) gerçekten doğruydu.
+
+Düzeltme: her \`fireNotification\` çağrısı artık bir \`category\` de taşıyor; sunucu (\`POST /api/notifications\`) her alıcı için AYRI AYRI, o alıcının KENDİ \`notifySettings\` kaydına bakıyor — kapalıysa o alıcı için satır hiç yazılmıyor (hata değil, sessizce atlanıyor), gönderenin kendi ayarı bunu asla geçersiz kılamıyor.
+
+## Ders (üçü birlikte)
+Bu üç katman ("recipientId yok" → "ayarlar kalıcı değil" → "kalıcı ayar bile yanlış kişiye bakıyor") aynı kökten geliyor: bir özellik TEK KİŞİLİK bir demo varsayımıyla yazılıp sonradan gerçek çoklu hesaba taşınırken, "her hesabın KENDİ, birbirinden bağımsız bir durumu var" gerçeği yeterince derine işlenmemiş. Her katman bir öncekini düzeltince görünür hale geldi — "artık çalışıyor" demeden önce "kimin bakış açısından çalışıyor, kimin bakış açısından hâlâ eski varsayımı taşıyor" diye sormak gerekiyor.`,
       },
       {
         id: "hatirlatma",

@@ -95,8 +95,11 @@ ok(/listing\.messages \|\| \[\]/.test(watchFn), "soru soranlar izleyici");
 
 // Kendi aç/kapa anahtarı: "ilanıma teklif geldi" ile "izlediğim ilan değişti" farklı şeyler.
 // (Ayar hâlâ ekranda duruyor — kullanıcı kendi bildirim TERCİHİNİ kaydediyor; bkz. aşağıdaki not.)
-ok(/notifyListingUpdates: true/.test(provider), "yeni bildirim ayarı iki rolde de var");
-eq((provider.match(/notifyListingUpdates: true/g) || []).length, 2, "hem araç sahibi hem tamirci ayarında");
+// Varsayılanlar TEK yerde tanımlı (DEFAULT_OWNER_NOTIFY_SETTINGS/DEFAULT_MECH_NOTIFY_SETTINGS —
+// bkz. bildirim tercihi kalıcılığı notu), bu yüzden literal artık İKİ değil BİR kez geçiyor ama
+// HER İKİ sabitte de var olduğu ayrı ayrı doğrulanıyor.
+ok(/DEFAULT_OWNER_NOTIFY_SETTINGS = \{[^}]*notifyListingUpdates: true/.test(provider), "araç sahibi varsayılanında yeni ayar var");
+ok(/DEFAULT_MECH_NOTIFY_SETTINGS = \{[^}]*notifyListingUpdates: true/.test(provider), "tamirci varsayılanında yeni ayar var");
 /**
  * GERÇEK HATA DÜZELTMESİ (bu denetimde bulundu, bkz. el kitabı 22.7): notifyFavoriteWatchers'ı
  * çağıran her zaman SATICI (kendi ilanını güncelleyen kişi) — `ownerSettings`/`mechSettings` ise

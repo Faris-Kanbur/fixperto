@@ -27,6 +27,11 @@ const RESTORED_NAV = (() => {
   try { return readNavSession(api.auth.hasStoredSession()); } catch { return null; }
 })();
 const nav0 = (key, fallback) => (RESTORED_NAV && RESTORED_NAV[key] !== undefined ? RESTORED_NAV[key] : fallback);
+// Bildirim tercihi varsayılanları — TEK yerde: hem ilk useState değeri hem çıkışta sıfırlama
+// (logoutUser) aynı nesneyi kullanıyor, aksi halde iki kopya birbirinden kayabilir (ör. yeni bir
+// kategori eklenince biri güncellenip diğeri unutulabilir).
+const DEFAULT_OWNER_NOTIFY_SETTINGS = { smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyListingUpdates: true, notifySavedSearches: true };
+const DEFAULT_MECH_NOTIFY_SETTINGS = { notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyJobApplications: true, notifyListingUpdates: true, notifySavedSearches: true };
 import {
   jobStatusMeta, genSlots, getDaySlots, formatHoursText, parseListingPrice, isOpenNowByHoursText,
   priceLevel, haversineDistanceKm, isValidDateStr, isFixedPriceService, parsePriceNumber, lc,
@@ -150,9 +155,9 @@ function useAppLogic() {
   const callLatest = (name, ...args) => latestFnsRef.current[name]?.(...args);
   const [ownerTab, setOwnerTab] = useState(() => nav0("ownerTab", "search"));
   const [ownerMode, setOwnerMode] = useState(() => nav0("ownerMode", "mechanics"));
-  const [ownerSettings, setOwnerSettings] = useState({ smartReminders: true, notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyListingUpdates: true, notifySavedSearches: true });
+  const [ownerSettings, setOwnerSettings] = useState({ ...DEFAULT_OWNER_NOTIFY_SETTINGS });
   // Tamirci tarafının kendi bildirim tercihleri — hepsi varsayılan olarak açık.
-  const [mechSettings, setMechSettings] = useState({ notifyAppointments: true, notifyOffers: true, notifyMessages: true, notifyJobApplications: true, notifyListingUpdates: true, notifySavedSearches: true });
+  const [mechSettings, setMechSettings] = useState({ ...DEFAULT_MECH_NOTIFY_SETTINGS });
   // Uygulama-içi bildirim kaydı: tarayıcı bildirim izni verilmemiş/desteklenmiyor olsa bile
   // kullanıcının bildirimi görebilmesi için (zil ikonu + rozet) permission-bağımsız bir yedek.
   const [notifLog, setNotifLog] = useState([]);
@@ -1455,7 +1460,19 @@ function useAppLogic() {
    *     (MY_MECHANIC_ID) sitenin en yaygın bildirimlerini (randevu, teklif) uçtan uca hiç
    *     çalışmaz hâle getirmişti (bkz. el kitabı 22.7).
    */
-  const fireNotification = (title, body, allowed = true, notifyRole = null, target = null, recipientId = undefined) => {
+  /**
+   * `category`: bkz. backend/routes/notifications.js VALID_CATEGORIES yorumu — bu QA turunda
+   * bulunan İKİNCİ katman bir hata. `allowed` (aşağıda) yalnızca GÖNDERENİN kendi yerel
+   * `ownerSettings`/`mechSettings` state'ine bakıyor; çapraz kullanıcı bildirimlerinin (randevu,
+   * teklif, mesaj — bunların neredeyse tamamı) BÜYÜK ÇOĞUNLUĞUNDA gönderen ile alıcı FARKLI kişiler
+   * olduğu için bu kontrol ALICININ değil GÖNDERENİN tercihine bakıyordu — yani bir tamirci
+   * "randevu bildirimleri"ni kapatsa bile, randevu alan araç sahibinin kendi (genelde varsayılan
+   * AÇIK) ayarı bildirimi yine de üretiyordu. `category` verilirse sunucu ALICININ KENDİ kaydından
+   * gerçek kontrolü yapıyor (bkz. backend). Yalnızca KENDİ KENDİNE bildirimlerde (hatırlatıcı gibi)
+   * `allowed` zaten doğru kişiye bakıyordu — onlarda da category göndermek zararsız (aynı sonuç,
+   * çift kontrol).
+   */
+  const fireNotification = (title, body, allowed = true, notifyRole = null, target = null, recipientId = undefined, category = null) => {
     if (allowed === false || !notifyRole) return;
     const isBroadcast = recipientId === "broadcast";
     let recipients;
@@ -1479,7 +1496,7 @@ function useAppLogic() {
     // BAŞARIYLA TAMAMLANMIŞ asıl işlemi (randevu, teklif, mesaj...) geri almamalı.
     api.notifications.create(
       recipients.map((rid) => ({ recipientRole: notifyRole, recipientId: rid })),
-      title, body, target,
+      title, body, target, category,
       isBroadcast ? api.admin.authOpts() : undefined,
     ).catch(() => { /* bildirim kalıcılaştırılamadı, sessiz geç */ });
     // Anlık yerel güncelleme: yalnızca bildirim GERÇEKTEN şu an bu sekmede giriş yapmış kişiye
@@ -1557,6 +1574,59 @@ function useAppLogic() {
   // render'da boş olabilir; ownerProfile'daki gibi güvenli bir varsayılan nesne veriyoruz ki tamirci
   // profil sayfası veri gelmeden önce açılırsa myProfile.xxx erişimleri çökmesin.
   const myProfile = mechanicsList.find(m => m.id === MY_MECHANIC_ID) || { id: MY_MECHANIC_ID, name: "", img: "🔧", lang: "tr", address: "", price: 0, services: [], staff: [], coverPhoto: null, bannerPreset: "blue", specialty: "", rating: 0, reviewList: [], iban: "", bankName: "", accountHolder: "" };
+  /**
+   * GERÇEK HATA DÜZELTMESİ (bu QA turunda bulundu — bkz. el kitabı 15.1): `ownerSettings`/
+   * `mechSettings` (bildirim kategorisi aç/kapa, akıllı hatırlatıcılar) yalnızca `useState`e
+   * yazılıyordu — `persistMyPrefs` (favoriler/kayıtlı aramalar/dil tercihi için zaten kullanılan
+   * kalıcılaştırma yolu) hiç bağlanmamıştı. Sonuç: bir kullanıcı bildirimleri KAPATSA bile sayfa
+   * yenilenince ya da başka bir cihazda giriş yapınca sessizce yeniden AÇIK'a dönüyordu — hiçbir
+   * uyarı olmadan, kapattığını sanan kullanıcı yeniden bildirim almaya başlıyordu.
+   *
+   * Sunucudan gelen kayıt SUNUCUDAKİ tek doğruluk kaynağı; oturum kurulduğunda (profil verisi
+   * geldiğinde) yerel state buna göre BİR KEZ eşitleniyor — sonrasındaki her değişiklik
+   * update(Owner|Mech)Settings üzerinden hem yerel state'i hem sunucuyu güncelliyor, bu yüzden
+   * tekrar eşitlemeye gerek yok (ve tekrar eşitlemek, henüz sunucuya ulaşmamış iyimser bir
+   * değişikliği ezip geri alabilirdi).
+   *
+   * GERÇEK HATA (canlı testte bulundu — YARIŞ DURUMU): `ownerProfile`/`myProfile` İKİ AYRI
+   * kaynaktan doluyor: önce herkese açık TOPLU liste (`api.owners.list()`/`api.mechanics.list()`)
+   * — bu listede `notifySettings` GİZLİLİK GEREĞİ YOK (bkz. hydrate.js LIST_ONLY_SENSITIVE_FIELDS,
+   * başka bir kullanıcının bildirim tercihini görmesi anlamsız) — sonra ayrı bir istekle KENDİ TEKİL
+   * kaydı (`api.owners.get`/`api.mechanics.get`, bu alanları İÇEREN). İlk sürüm "kilit"i ownerProfile
+   * eşleşir eşleşmez (yani TOPLU listeden gelen, `notifySettings` alanı HİÇ olmayan ilk halinde) HEMEN
+   * atıyordu — ikinci, gerçek veriyi taşıyan istek geldiğinde artık "zaten eşitlendi" sanılıp
+   * atlanıyordu. Ölçülen: bir ayarı kapatıp sayfa yenilendiğinde ayar sessizce yeniden AÇIK
+   * görünüyordu. Düzeltme: kilit yalnızca GERÇEKTEN dolu bir `notifySettings` nesnesi görüldüğünde
+   * atılıyor — boş/gelmemiş veri kilitlemeye SAYILMIYOR, bir sonraki render'da tekrar denenecek.
+   */
+  const notifSettingsSyncedRef = useRef(false);
+  useEffect(() => {
+    if (notifSettingsSyncedRef.current) return;
+    if (MY_OWNER_ID != null && ownerProfile.id === MY_OWNER_ID) {
+      if (ownerProfile.notifySettings && Object.keys(ownerProfile.notifySettings).length) {
+        notifSettingsSyncedRef.current = true;
+        setOwnerSettings(s => ({ ...s, ...ownerProfile.notifySettings }));
+      }
+    } else if (MY_MECHANIC_ID != null && myProfile.id === MY_MECHANIC_ID) {
+      if (myProfile.notifySettings && Object.keys(myProfile.notifySettings).length) {
+        notifSettingsSyncedRef.current = true;
+        setMechSettings(s => ({ ...s, ...myProfile.notifySettings }));
+      }
+    }
+  }, [ownerProfile, myProfile, MY_OWNER_ID, MY_MECHANIC_ID]);
+  // NOT: sonraki durum setState updater'ının DIŞINDA hesaplanıyor (bkz. advanceStatus'teki aynı
+  // sınıf hatanın notu, el kitabı 22.7) — updater içine yan etki (persistMyPrefs/API çağrısı)
+  // koymak, React'ın updater'ı ne zaman/kaç kez çalıştıracağına bağlı, güvenilmez bir kalıp olurdu.
+  const updateOwnerSettings = (patch) => {
+    const next = { ...ownerSettings, ...patch };
+    setOwnerSettings(next);
+    persistMyPrefs({ notifySettings: next }, "Bildirim ayarı kaydedilemedi");
+  };
+  const updateMechSettings = (patch) => {
+    const next = { ...mechSettings, ...patch };
+    setMechSettings(next);
+    persistMyPrefs({ notifySettings: next }, "Bildirim ayarı kaydedilemedi");
+  };
   // TEK "AKTİF İLAN" KAYNAĞI: teklif verme, satıcıya soru sorma ve bunların submit fonksiyonları
   // (submitOffer / submitListingMsg / myPendingOfferOn) hep `selectedListing` üzerinden çalışıyor.
   // Tam sayfa ilan görünümü eklenince bu akışların orada da çalışması gerekiyordu; her birini ayrı
@@ -1608,7 +1678,7 @@ function useAppLogic() {
       const key = `${r.vehicleId}-${r.kind}-${r.dueDate ? r.dueDate.toDateString() : "static"}`;
       if (notifiedReminderKeysRef.current.has(key)) return;
       notifiedReminderKeysRef.current.add(key);
-      fireNotification(`⏰ ${r.title}`, `${r.vehicleName} — ${r.detail}`, true, "owner", { type: "vehicle", id: r.vehicleId });
+      fireNotification(`⏰ ${r.title}`, `${r.vehicleName} — ${r.detail}`, true, "owner", { type: "vehicle", id: r.vehicleId }, undefined, "smartReminders");
     });
   }, [allReminders, ownerSettings.smartReminders]);
   // GERÇEK HATA DÜZELTMESİ: bir hizmetin adı mekaniğin kendi girdiği serbest metin olduğu için
@@ -2010,7 +2080,7 @@ function useAppLogic() {
     const bookedToday = appointments.filter(a => isSameMechanicAppt(a) && !["Tamir Tamamlandı", "İptal Edildi", "Reddedildi", "Gelmedi"].includes(a.status) && a.date === todayStr).length;
     const isFull = totalSlots > 0 && bookedToday >= totalSlots;
     if (isFull && !dayFullNotified) {
-      if (role === "mechanic") fireNotification("Bugünün tüm randevu saatleri doldu! 📅", "Bugün için tüm randevu saatleriniz doldu. Müşterileriniz için yeni bir saat eklemek ister misiniz?", mechSettings.notifyAppointments, "mechanic", { type: "workingHours" });
+      if (role === "mechanic") fireNotification("Bugünün tüm randevu saatleri doldu! 📅", "Bugün için tüm randevu saatleriniz doldu. Müşterileriniz için yeni bir saat eklemek ister misiniz?", mechSettings.notifyAppointments, "mechanic", { type: "workingHours" }, undefined, "notifyAppointments");
       setShowDayFullPrompt(true);
       setDayFullNotified(true);
     } else if (!isFull && dayFullNotified) {
@@ -2218,7 +2288,7 @@ function useAppLogic() {
        * hedefleniyor) burada her zaman genel bir önizlemeye düşülüyor — doğru çevrilmiş hali her
        * durumda zaten "Teklifler" sekmesinde (mechReqView === "quotes") var.
        */
-      fireNotification("Yeni teklif isteği 📋", `${customerName} sizden yeni bir arıza için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" }, selectedMechIds);
+      fireNotification("Yeni teklif isteği 📋", `${customerName} sizden yeni bir arıza için fiyat teklifi istiyor.`, mechSettings.notifyOffers, "mechanic", { type: "appointment" }, selectedMechIds, "notifyOffers");
     } catch (err) {
       setToast({ type: "info", text: `⚠️ Teklif isteği kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
@@ -2250,7 +2320,7 @@ function useAppLogic() {
       setQuoteOfferForm({ price: "", etaDays: "", note: "" });
       setToast({ type: "info", text: "💬 Teklifiniz gönderildi." });
       const forRequest = quoteRequests.find(r => r.id === updated.requestId);
-      if (forRequest) fireNotification("Yeni teklif geldi! 💰", "Bir tamirci teklif isteğinize yanıt verdi.", ownerSettings.notifyOffers, "owner", { type: "quoteOwner" }, forRequest.ownerId);
+      if (forRequest) fireNotification("Yeni teklif geldi! 💰", "Bir tamirci teklif isteğinize yanıt verdi.", ownerSettings.notifyOffers, "owner", { type: "quoteOwner" }, forRequest.ownerId, "notifyOffers");
     } catch (err) {
       setToast({ type: "info", text: `⚠️ ${err?.message || "Teklif gönderilemedi."}` });
       try { const fresh = await api.quoteOffers.get(offerId); setQuoteOffers(os => os.map(o => o.id === offerId ? fresh : o)); } catch { /* hata mesajı zaten gösterildi */ }
@@ -2300,7 +2370,7 @@ function useAppLogic() {
        */
       const losers = (updatedOffers || []).filter(o => o.id !== offerId && o.mechanicId != null);
       if (losers.length) {
-        fireNotification("Teklif isteği sonuçlandı", "Verdiğiniz teklif kabul edilmedi, müşteri başka bir tamirciyi seçti.", true, "mechanic", { type: "appointment" }, losers.map(o => o.mechanicId));
+        fireNotification("Teklif isteği sonuçlandı", "Verdiğiniz teklif kabul edilmedi, müşteri başka bir tamirciyi seçti.", true, "mechanic", { type: "appointment" }, losers.map(o => o.mechanicId), "notifyOffers");
       }
     } catch (err) {
       setToast({ type: "info", text: `⚠️ ${err?.message || "Teklif kabul edilemedi."}` });
@@ -2434,7 +2504,7 @@ function useAppLogic() {
        * fonksiyon çalışırken HER ZAMAN null'dı ve koşul asla doğru olamıyordu — hiçbir tamirci,
        * hiçbir randevu için (ne otomatik onaylı ne onay bekleyen) bildirim almıyordu.
        */
-      fireNotification(autoAccept ? "Yeni randevu 📅" : "Yeni randevu talebi 📅", `${created.customer} — ${created.vehicle}${autoAccept ? " için randevu oluşturuldu." : " için onayınızı bekliyor."}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: created.id }, selectedMechanic.id);
+      fireNotification(autoAccept ? "Yeni randevu 📅" : "Yeni randevu talebi 📅", `${created.customer} — ${created.vehicle}${autoAccept ? " için randevu oluşturuldu." : " için onayınızı bekliyor."}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: created.id }, selectedMechanic.id, "notifyAppointments");
     } catch (err) {
       setToast({ type: "info", text: `⚠️ Randevu kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
     }
@@ -3240,7 +3310,7 @@ function useAppLogic() {
     persist(api.tickets.update(id, { status, resolvedDate }, api.admin.authOpts()), "Talep durumu kaydedilemedi");
     if (tk) logAdminChange({ targetType: "ticket", targetId: id, field: "status", oldValue: tk.status, newValue: status });
     setToast({ type: "info", text: `📋 Talep durumu güncellendi: ${ADMIN_TICKET_STATUS_LABELS[status]}` });
-    if (tk && status === "resolved") fireNotification("Destek talebiniz çözüldü ✅", `"${tk.subject}" talebiniz çözüldü olarak işaretlendi.`, tk.fromType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, tk.fromType === "mechanic" ? "mechanic" : "owner", { type: "supportTicket" }, tk.fromId);
+    if (tk && status === "resolved") fireNotification("Destek talebiniz çözüldü ✅", `"${tk.subject}" talebiniz çözüldü olarak işaretlendi.`, tk.fromType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, tk.fromType === "mechanic" ? "mechanic" : "owner", { type: "supportTicket" }, tk.fromId, "notifyMessages");
   };
   const saveTicketNote = () => {
     if (!selectedTicketId) return;
@@ -3344,7 +3414,7 @@ function useAppLogic() {
     persist(api.tickets.update(id, { adminReplies }, api.admin.authOpts()), "Yanıt kaydedilemedi");
     setAdminReplyDraft("");
     setToast({ type: "info", text: "✉️ Kullanıcıya mesaj gönderildi (demo)." });
-    if (tk) fireNotification("Destek talebinize yanıt geldi 📩", `"${tk.subject}" talebiniz için yeni bir mesaj var.`, tk.fromType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, tk.fromType === "mechanic" ? "mechanic" : "owner", { type: "supportTicket" }, tk.fromId);
+    if (tk) fireNotification("Destek talebinize yanıt geldi 📩", `"${tk.subject}" talebiniz için yeni bir mesaj var.`, tk.fromType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, tk.fromType === "mechanic" ? "mechanic" : "owner", { type: "supportTicket" }, tk.fromId, "notifyMessages");
   };
   // ---- Toplu duyuru (broadcast) ----
   const sendBroadcast = () => {
@@ -3540,6 +3610,12 @@ function useAppLogic() {
     // (aynı role sahip oldukları için) — kullanıcının hiç göndermediği/almadığı sahte "yeni mesaj"
     // bildirimleri gibi. Çıkışta bildirim geçmişini ve "görüldü" zaman damgalarını da temizliyoruz.
     setNotifLog([]); setOwnerNotifSeenAt(0); setMechNotifSeenAt(0);
+    // Bildirim tercihleri de bir SONRAKİ oturumda (aynı sekmede farklı bir hesap) sunucudan
+    // yeniden eşitlenmeli — aksi halde önceki hesabın (yerelde kalan) tercihleri yeni hesaba
+    // sızardı (bkz. notifSettingsSyncedRef tanımındaki not).
+    notifSettingsSyncedRef.current = false;
+    setOwnerSettings({ ...DEFAULT_OWNER_NOTIFY_SETTINGS });
+    setMechSettings({ ...DEFAULT_MECH_NOTIFY_SETTINGS });
     goHome();
   };
   // Doğrulama sonucunu kullanıcının diline çevirip toast olarak gösterir.
@@ -3679,8 +3755,8 @@ function useAppLogic() {
     setVehicles(vs => vs.map(v => v.id !== vehicleId ? v : { ...v, customReminders })); setEditingReminderKind(null); setToast({ type: "info", text: "🗑️ Hatırlatma silindi." });
     persist(api.vehicles.update(vehicleId, { customReminders }), "Hatırlatma kaydedilemedi");
   };
-  const acceptAppt = (id) => { const appt = appointments.find(a => a.id === id); setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Sırada" } : a)); persist(api.appointments.update(id, { status: "Sırada" }), "Randevu güncellenemedi"); fireSuccessPulse(t("apptAcceptedToast")); if (appt) fireNotification("Randevunuz kabul edildi ✅", "Tamirci randevu talebinizi onayladı.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, appt.ownerId); };
-  const rejectAppt = (id) => { const appt = appointments.find(a => a.id === id); setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Reddedildi" } : a)); persist(api.appointments.update(id, { status: "Reddedildi" }), "Randevu güncellenemedi"); setToast({ type: "info", text: t("apptRejectedToast") }); if (appt) fireNotification("Randevunuz reddedildi", "Tamirci bu randevu talebini kabul edemedi.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, appt.ownerId); };
+  const acceptAppt = (id) => { const appt = appointments.find(a => a.id === id); setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Sırada" } : a)); persist(api.appointments.update(id, { status: "Sırada" }), "Randevu güncellenemedi"); fireSuccessPulse(t("apptAcceptedToast")); if (appt) fireNotification("Randevunuz kabul edildi ✅", "Tamirci randevu talebinizi onayladı.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, appt.ownerId, "notifyAppointments"); };
+  const rejectAppt = (id) => { const appt = appointments.find(a => a.id === id); setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Reddedildi" } : a)); persist(api.appointments.update(id, { status: "Reddedildi" }), "Randevu güncellenemedi"); setToast({ type: "info", text: t("apptRejectedToast") }); if (appt) fireNotification("Randevunuz reddedildi", "Tamirci bu randevu talebini kabul edemedi.", ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, appt.ownerId, "notifyAppointments"); };
   const markNoShow = (id) => { setAppointments(apps => apps.map(a => a.id === id ? { ...a, status: "Gelmedi", noShow: true } : a)); persist(api.appointments.update(id, { status: "Gelmedi", noShow: true }), "Randevu güncellenemedi"); setToast({ type: "info", text: t("noShowMarkedToast") }); };
   // GERİ DÖNÜŞ DEĞERİ: durum PATCH'inin promise'ı döndürülüyor (persist() zaten döndürüyor) —
   // completeApptWithWarranty bu promise'ı AWAIT ETMEK için kullanıyor, bkz. o fonksiyondaki not
@@ -3708,7 +3784,7 @@ function useAppLogic() {
     if (!current) return Promise.resolve();
     const idx = TRACK_STATUSES_AUTO.indexOf(current.status);
     const next = TRACK_STATUSES_AUTO[Math.min(idx + 1, TRACK_STATUSES_AUTO.length - 1)];
-    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse(t("repairCompletedToast")); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, a.ownerId); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, a.ownerId); } return { ...a, status: next }; }));
+    setAppointments(apps => apps.map(a => { if (a.id !== id) return a; if (next === "Tamir Tamamlandı" && a.status !== "Tamir Tamamlandı") { const smsText = `📱 SMS → ${a.customer}: "${a.mechanicName} aracınızın (${a.vehicle}) tamirini tamamladı."`; setSmsLog(log => [{ id: Date.now(), text: smsText }, ...log]); setToast({ type: "sms", text: smsText }); fireSuccessPulse(t("repairCompletedToast")); fireNotification("Aracınız hazır! 🚗", `${a.mechanicName} aracınızın tamirini tamamladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, a.ownerId, "notifyAppointments"); } else if (next === "Tamire Alındı") { fireNotification("Aracınız tamirde 🔧", `${a.mechanicName} aracınızla ilgilenmeye başladı.`, ownerSettings.notifyAppointments, "owner", { type: "appointment", id }, a.ownerId, "notifyAppointments"); } return { ...a, status: next }; }));
     return persist(api.appointments.update(id, { status: next }), "Randevu güncellenemedi");
   };
   // Tamiri "Tamamlandı" olarak işaretlerken, değişen parça varsa opsiyonel garanti süresi eklenebilir.
@@ -3772,7 +3848,7 @@ function useAppLogic() {
     // ZAMAN null. Koşul asla doğru olamıyordu; tamirci, araç sahibi randevusunu iptal ettiğinde
     // hiçbir zaman haber almıyordu.
     if (appt) {
-      fireNotification("Randevu iptal edildi ❌", `${appt.customer} — ${appt.vehicle} randevusunu iptal etti.`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: appt.id }, appt.mechanicId);
+      fireNotification("Randevu iptal edildi ❌", `${appt.customer} — ${appt.vehicle} randevusunu iptal etti.`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: appt.id }, appt.mechanicId, "notifyAppointments");
     }
   };
   const startReschedule = (a) => { setReschedulingApptId(a.id); setRescheduleDate(null); setRescheduleTime(null); };
@@ -3790,7 +3866,7 @@ function useAppLogic() {
     // Bkz. cancelOwnAppt'taki aynı düzeltmenin notu — bu fonksiyon da yalnızca araç sahibi
     // tarafından çağrılıyor, `appt.mechanicId === MY_MECHANIC_ID` koşulu asla doğru olamıyordu.
     if (appt) {
-      fireNotification("Randevu güncellendi 🔄", `${appt.customer} randevu tarihini/saatini değiştirdi: ${newDate} ${rescheduleTime}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: appt.id }, appt.mechanicId);
+      fireNotification("Randevu güncellendi 🔄", `${appt.customer} randevu tarihini/saatini değiştirdi: ${newDate} ${rescheduleTime}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: appt.id }, appt.mechanicId, "notifyAppointments");
     }
   };
   const submitReview = () => {
@@ -3832,7 +3908,7 @@ function useAppLogic() {
     // tarafından çağrılıyor (bkz. AppShell.tsx sendReviewBtn), `mech.id === MY_MECHANIC_ID` koşulu
     // asla doğru olamıyordu; tamirci yeni bir değerlendirme aldığında hiçbir zaman haber almıyordu.
     if (mech) {
-      fireNotification("Yeni değerlendirme aldınız ⭐", `${ownerProfile.name || "Bir müşteri"} size ${reviewForm.rating} yıldız verdi.`, mechSettings.notifyMessages, "mechanic", { type: "ownMechanicReviews" }, mech.id);
+      fireNotification("Yeni değerlendirme aldınız ⭐", `${ownerProfile.name || "Bir müşteri"} size ${reviewForm.rating} yıldız verdi.`, mechSettings.notifyMessages, "mechanic", { type: "ownMechanicReviews" }, mech.id, "notifyMessages");
     }
   };
   const submitMechanicReply = (mechanicId, reviewId) => {
@@ -3852,7 +3928,7 @@ function useAppLogic() {
     setReplyDraft("");
     setToast({ type: "info", text: "💬 Yanıtınız yayınlandı." });
     if (review?.authorId != null) {
-      fireNotification("Yorumunuza yanıt geldi 💬", "İşletme, değerlendirmenize bir yanıt yazdı.", ownerSettings.notifyMessages, "owner", { type: "mechanicDetail", id: mechanicId }, review.authorId);
+      fireNotification("Yorumunuza yanıt geldi 💬", "İşletme, değerlendirmenize bir yanıt yazdı.", ownerSettings.notifyMessages, "owner", { type: "mechanicDetail", id: mechanicId }, review.authorId, "notifyMessages");
     }
   };
   const deleteMyReview = (mechanicId, reviewId) => {
@@ -4252,9 +4328,9 @@ function useAppLogic() {
       // Owner-owner sohbette gönderici İKİ TARAFTAN biri olabilir (bkz. yukarıdaki senderId notu)
       // — alıcı, sohbetin KENDİ kimliğim OLMAYAN tarafı.
       const recipientOwnerId = convo.ownerId === MY_OWNER_ID ? convo.peerOwnerId : convo.ownerId;
-      fireNotification("Yeni mesaj 💬", previewBody, true, "owner", { type: "chat", id: activeConvoId }, recipientOwnerId);
+      fireNotification("Yeni mesaj 💬", previewBody, true, "owner", { type: "chat", id: activeConvoId }, recipientOwnerId, "notifyMessages");
     } else {
-      fireNotification("Yeni mesaj 💬", previewBody, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId }, convo.mechanicId);
+      fireNotification("Yeni mesaj 💬", previewBody, mechSettings.notifyMessages, "mechanic", { type: "chat", id: activeConvoId }, convo.mechanicId, "notifyMessages");
     }
     setChatInput("");
   };
@@ -4426,7 +4502,7 @@ function useAppLogic() {
     // Bildirim gövdesi canlı çeviremediği için (bkz. sendOwnerMessage'daki not) alıcı araç
     // sahibinin dili göndericiyle farklıysa ham metni değil genel bir önizleme gösteriyoruz.
     const chatPreviewSameLang = senderLang === ownerLang;
-    fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId }, convo.ownerId);
+    fireNotification("Yeni mesaj 💬", `${myProfile?.name || "Tamirci"}: ${chatPreviewSameLang ? text : "Yeni bir mesajınız var."}`, ownerSettings.notifyMessages, "owner", { type: "chat", id: mechActiveConvoId }, convo.ownerId, "notifyMessages");
     setMechChatInput("");
   };
   const updateMyField = (field, value) => { setMechanicsList(list => list.map(m => m.id === MY_MECHANIC_ID ? { ...m, [field]: value } : m)); persist(api.mechanics.update(MY_MECHANIC_ID, { [field]: value }), "Profil bilgisi kaydedilemedi"); };
@@ -4881,8 +4957,8 @@ function useAppLogic() {
     // Satıcı kendi ilanının güncellemesiyle bildirilmiyor — değişikliği zaten o yaptı.
     if (listing.sellerType === "owner") ownerIds.delete(listing.sellerId);
     if (listing.sellerType === "mechanic") mechanicIds.delete(listing.sellerId);
-    if (ownerIds.size) fireNotification(title, body, true, "owner", { type: "listing", id: listingId }, [...ownerIds]);
-    if (mechanicIds.size) fireNotification(title, body, true, "mechanic", { type: "listing", id: listingId }, [...mechanicIds]);
+    if (ownerIds.size) fireNotification(title, body, true, "owner", { type: "listing", id: listingId }, [...ownerIds], "notifyListingUpdates");
+    if (mechanicIds.size) fireNotification(title, body, true, "mechanic", { type: "listing", id: listingId }, [...mechanicIds], "notifyListingUpdates");
   };
   // ---- KAYITLI ARAMALAR (AutoScout24'teki "Suche speichern" karşılığı) ------------------------
   // Üç arama türünü de destekler: "mechanics" (tamirci ara), "cars" (ikinci el araç), "jobs"
@@ -5192,8 +5268,8 @@ function useAppLogic() {
       // `savedSearches` şu an giriş yapmış kişinin KENDİ listesi — bildirim de yalnızca o kişiye
       // (kendi rolüne) gidiyor; önceden her iki role de koşulsuz ateşleniyordu ama bu zararsız bir
       // fazlalıktı, çünkü bir hesap tek bir role sahip: eşleşmeyen çağrı zaten hiçbir şey yapmıyordu.
-      if (role === "owner") fireNotification(title, body, ownerSettings.notifySavedSearches, "owner", target, MY_OWNER_ID);
-      else if (role === "mechanic") fireNotification(title, body, mechSettings.notifySavedSearches, "mechanic", target, MY_MECHANIC_ID);
+      if (role === "owner") fireNotification(title, body, ownerSettings.notifySavedSearches, "owner", target, MY_OWNER_ID, "notifySavedSearches");
+      else if (role === "mechanic") fireNotification(title, body, mechSettings.notifySavedSearches, "mechanic", target, MY_MECHANIC_ID, "notifySavedSearches");
       return { ...markSeen, pendingMatchIds: [], lastNotifiedAt: now };
     });
     if (changed) {
@@ -5477,7 +5553,7 @@ function useAppLogic() {
       setToast({ type: "info", text: res.updatedInPlace ? t("offerUpdatedToast") : res.replacedRejected ? t("offerResentToast") : t("offerSentToast") });
       if (selectedListing.sellerId != null ? selectedListing.sellerId !== myBuyerId() : selectedListing.sellerName !== myBuyerName()) {
         if (isRealSellerOfListing(selectedListing)) {
-          fireNotification("Yeni teklif aldınız! 💰", `${selectedListing.brand} ${selectedListing.model} ilanınıza ${offerAmount}${currency} teklif geldi.`, selectedListing.sellerType === "mechanic" ? mechSettings.notifyOffers : ownerSettings.notifyOffers, selectedListing.sellerType === "mechanic" ? "mechanic" : "owner", { type: "listing", id: listingId }, selectedListing.sellerId);
+          fireNotification("Yeni teklif aldınız! 💰", `${selectedListing.brand} ${selectedListing.model} ilanınıza ${offerAmount}${currency} teklif geldi.`, selectedListing.sellerType === "mechanic" ? mechSettings.notifyOffers : ownerSettings.notifyOffers, selectedListing.sellerType === "mechanic" ? "mechanic" : "owner", { type: "listing", id: listingId }, selectedListing.sellerId, "notifyOffers");
         }
       }
     } catch (err) {
@@ -5535,7 +5611,7 @@ function useAppLogic() {
     setToast({ type: "info", text: "💬 Mesaj gönderildi." });
     if (selectedListing.sellerId != null ? selectedListing.sellerId !== senderId : selectedListing.sellerName !== senderName) {
       if (isRealSellerOfListing(selectedListing)) {
-        fireNotification("İlanınıza yeni soru geldi 💬", `"${selectedListing.brand} ${selectedListing.model}" ilanınıza bir soru soruldu.`, selectedListing.sellerType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, selectedListing.sellerType === "mechanic" ? "mechanic" : "owner", { type: "listing", id: selectedListing.id }, selectedListing.sellerId);
+        fireNotification("İlanınıza yeni soru geldi 💬", `"${selectedListing.brand} ${selectedListing.model}" ilanınıza bir soru soruldu.`, selectedListing.sellerType === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, selectedListing.sellerType === "mechanic" ? "mechanic" : "owner", { type: "listing", id: selectedListing.id }, selectedListing.sellerId, "notifyMessages");
       }
     }
   };
@@ -5565,7 +5641,7 @@ function useAppLogic() {
         if (lastQuestion && lastQuestion.buyerId != null) {
           const askerRole = lastQuestion.buyerType === "mechanic" ? "mechanic" : "owner";
           fireNotification("İlan sorunuza cevap geldi 💬", `"${listing.brand} ${listing.model}" ilanındaki sorunuz yanıtlandı.`,
-            askerRole === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, askerRole, { type: "listing", id: listing.id }, lastQuestion.buyerId);
+            askerRole === "mechanic" ? mechSettings.notifyMessages : ownerSettings.notifyMessages, askerRole, { type: "listing", id: listing.id }, lastQuestion.buyerId, "notifyMessages");
         }
       })
       .catch((err) => setToast({ type: "info", text: `⚠️ ${err?.message || "Cevap kaydedilemedi."}` }));
@@ -5594,9 +5670,9 @@ function useAppLogic() {
     const notifyAllowed = buyerIsMechanic ? mechSettings.notifyOffers : ownerSettings.notifyOffers;
     if (offer?.buyerId != null && status === "accepted") {
       fireSuccessPulse("Teklif kabul edildi 🎉 · Araç satıldı olarak işaretlendi");
-      fireNotification("Teklifiniz kabul edildi! 🎉", listing ? `"${listing.brand} ${listing.model}" ilanına verdiğiniz teklif kabul edildi, araç satıldı olarak işaretlendi.` : "Verdiğiniz teklif kabul edildi.", notifyAllowed, buyerIsMechanic ? "mechanic" : "owner", { type: "myOffers" }, offer.buyerId);
+      fireNotification("Teklifiniz kabul edildi! 🎉", listing ? `"${listing.brand} ${listing.model}" ilanına verdiğiniz teklif kabul edildi, araç satıldı olarak işaretlendi.` : "Verdiğiniz teklif kabul edildi.", notifyAllowed, buyerIsMechanic ? "mechanic" : "owner", { type: "myOffers" }, offer.buyerId, "notifyOffers");
     } else if (offer?.buyerId != null && status === "rejected") {
-      fireNotification("Teklifiniz reddedildi", listing ? `"${listing.brand} ${listing.model}" ilanına verdiğiniz teklif satıcı tarafından reddedildi.` : "Verdiğiniz teklif reddedildi.", notifyAllowed, buyerIsMechanic ? "mechanic" : "owner", { type: "myOffers" }, offer.buyerId);
+      fireNotification("Teklifiniz reddedildi", listing ? `"${listing.brand} ${listing.model}" ilanına verdiğiniz teklif satıcı tarafından reddedildi.` : "Verdiğiniz teklif reddedildi.", notifyAllowed, buyerIsMechanic ? "mechanic" : "owner", { type: "myOffers" }, offer.buyerId, "notifyOffers");
     } else if (status === "accepted") {
       fireSuccessPulse("Teklif kabul edildi 🎉 · Araç satıldı olarak işaretlendi");
     }
@@ -5711,7 +5787,7 @@ function useAppLogic() {
     setJobApplyCv(null);
     setShowJobApplyForm(false);
     setToast({ type: "info", text: "✅ Başvurunuz iletildi." });
-    fireNotification("Yeni başvuru! 📋", `"${selectedJob.title}" ilanınıza ${applicant.name} başvurdu.`, mechSettings.notifyJobApplications, "mechanic", { type: "job", id: selectedJob.id }, selectedJob.mechanicId);
+    fireNotification("Yeni başvuru! 📋", `"${selectedJob.title}" ilanınıza ${applicant.name} başvurdu.`, mechSettings.notifyJobApplications, "mechanic", { type: "job", id: selectedJob.id }, selectedJob.mechanicId, "notifyJobApplications");
   };
   const rejectApplication = (jobId, applicantId) => {
     const job = jobListings.find(j => j.id === jobId);
@@ -5763,7 +5839,7 @@ function useAppLogic() {
       persist(api.conversations.create(newConvo), "Sohbet başlatılamadı");
     }
     setToast({ type: "info", text: "❌ Başvuru reddedildi, adaya bilgilendirme mesajı gönderildi." });
-    if (applicantOwnerId != null) fireNotification("Başvuru sonucu", `"${job.title}" pozisyonuna yaptığınız başvuru için bir güncelleme var.`, ownerSettings.notifyMessages, "owner", { type: "myApplications" }, applicantOwnerId);
+    if (applicantOwnerId != null) fireNotification("Başvuru sonucu", `"${job.title}" pozisyonuna yaptığınız başvuru için bir güncelleme var.`, ownerSettings.notifyMessages, "owner", { type: "myApplications" }, applicantOwnerId, "notifyMessages");
   };
   const roleColor = role === "mechanic" ? "from-blue-600 to-blue-600" : "from-blue-600 to-blue-600";
   const roleBtn = role === "mechanic" ? "bg-primary hover:bg-primary-hover" : "bg-primary hover:bg-primary-hover";
@@ -6295,7 +6371,7 @@ function useAppLogic() {
     setAdminUserSearch, selectedAdminUser, setSelectedAdminUser, adminEditForm, setAdminEditForm, adminProfileViewUser, setAdminProfileViewUser, editingProfileField,
     setEditingProfileField, profileFieldDraft, setProfileFieldDraft, profilePasswordDraft, setProfilePasswordDraft, adminAnalyzeUserKey, setAdminAnalyzeUserKey, expandedAdminListingId,
     setExpandedAdminListingId, expandedAdminJobId, setExpandedAdminJobId, ownersDirectory, setOwnersDirectory, mechanicAdminOverrides, setMechanicAdminOverrides, ownerProfile,
-    updateMyOwnerField, updateMyOwnerFields, supportTickets, setSupportTickets, apiReady, setApiReady, apiError, setApiError,
+    updateMyOwnerField, updateMyOwnerFields, updateOwnerSettings, updateMechSettings, supportTickets, setSupportTickets, apiReady, setApiReady, apiError, setApiError,
     adminTicketStatusFilter, setAdminTicketStatusFilter, adminTicketTypeFilter, setAdminTicketTypeFilter, adminTicketPriorityFilter, setAdminTicketPriorityFilter, adminTicketSearch, setAdminTicketSearch,
     adminTicketVisibleCount, setAdminTicketVisibleCount, showTicketAnalytics, setShowTicketAnalytics, selectedTicketId, setSelectedTicketId, adminTicketNote, setAdminTicketNote,
     adminReplyDraft, setAdminReplyDraft, showBroadcastModal, setShowBroadcastModal, broadcastForm, setBroadcastForm, broadcastLog, setBroadcastLog,

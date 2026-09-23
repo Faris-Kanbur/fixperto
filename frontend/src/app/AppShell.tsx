@@ -211,7 +211,7 @@ export function AppShell() {
     setAdminUserSearch, selectedAdminUser, setSelectedAdminUser, adminEditForm, setAdminEditForm, adminProfileViewUser, setAdminProfileViewUser, editingProfileField,
     setEditingProfileField, profileFieldDraft, setProfileFieldDraft, profilePasswordDraft, setProfilePasswordDraft, adminAnalyzeUserKey, setAdminAnalyzeUserKey, expandedAdminListingId,
     setExpandedAdminListingId, expandedAdminJobId, setExpandedAdminJobId, ownersDirectory, setOwnersDirectory, mechanicAdminOverrides, setMechanicAdminOverrides, ownerProfile,
-    updateMyOwnerField, updateMyOwnerFields, supportTickets, setSupportTickets, apiReady, setApiReady, apiError, setApiError,
+    updateMyOwnerField, updateMyOwnerFields, updateOwnerSettings, updateMechSettings, supportTickets, setSupportTickets, apiReady, setApiReady, apiError, setApiError,
     adminTicketStatusFilter, setAdminTicketStatusFilter, adminTicketTypeFilter, setAdminTicketTypeFilter, adminTicketPriorityFilter, setAdminTicketPriorityFilter, adminTicketSearch, setAdminTicketSearch,
     adminTicketVisibleCount, setAdminTicketVisibleCount, showTicketAnalytics, setShowTicketAnalytics, selectedTicketId, setSelectedTicketId, adminTicketNote, setAdminTicketNote,
     adminReplyDraft, setAdminReplyDraft, showBroadcastModal, setShowBroadcastModal, broadcastForm, setBroadcastForm, broadcastLog, setBroadcastLog,
@@ -2024,7 +2024,7 @@ export function AppShell() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-4"><h4 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Bell size={14} className="text-info" /> {t("smartReminders")}</h4><button onClick={() => setOwnerSettings(s => ({ ...s, smartReminders: !s.smartReminders }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
+                  <div className="flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-4"><h4 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><Bell size={14} className="text-info" /> {t("smartReminders")}</h4><button onClick={() => updateOwnerSettings({ smartReminders: !ownerSettings.smartReminders })} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${ownerSettings.smartReminders ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${ownerSettings.smartReminders ? "left-6" : "left-1"}`} /></div></button></div>
                   <div className="flex items-center justify-between bg-white border border-border rounded-2xl p-4 mb-4"><div className="pr-3"><h4 className="font-semibold text-fg-strong text-sm flex items-center gap-2"><MapPin size={14} className="text-info" /> {t("useMyLocationTitle")}</h4><p className="text-[11px] text-fg-muted mt-0.5">{userLocation ? t("realLocationDistanceNote") : t("estimatedDistanceNote")}</p></div><button onClick={() => (userLocation ? stopUsingLocation() : setShowLocationPrompt(true))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-12 h-7 rounded-full transition relative ${userLocation ? "bg-primary" : "bg-border"}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-1 transition ${userLocation ? "left-6" : "left-1"}`} /></div></button></div>
                   {(() => {
                     // notifyListingUpdates: "izlediğim ilan değişti" — "benim ilanıma teklif geldi"den (notifyOffers)
@@ -2032,7 +2032,7 @@ export function AppShell() {
                     const notifOpts = [{ key: "notifyAppointments", label: t("notifApptUpdatesLabel") }, { key: "notifyOffers", label: t("notifOfferResultsLabel") }, { key: "notifyMessages", label: t("notifMessagesLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }, { key: "notifySavedSearches", label: t("notifySavedSearchesLabel") }];
                     const allNotifsOn = notifOpts.every(opt => ownerSettings[opt.key]);
                     const toggleAllNotifs = () => {
-                      setOwnerSettings(s => ({ ...s, ...Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])) }));
+                      updateOwnerSettings(Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])));
                       if (!allNotifsOn && notifPermission !== "granted") requestNotifPermission();
                     };
                     return (
@@ -2042,7 +2042,7 @@ export function AppShell() {
                         {ownerNotifDetailsOpen && (
                           <div className="mt-3 space-y-2.5">
                             {notifOpts.map(opt => (
-                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-fg-secondary">{opt.label}</span><button onClick={() => setOwnerSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-primary" : "bg-border"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
+                              <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-fg-secondary">{opt.label}</span><button onClick={() => updateOwnerSettings({ [opt.key]: !ownerSettings[opt.key] })} aria-label={t("toggleChangeAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${ownerSettings[opt.key] ? "bg-primary" : "bg-border"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${ownerSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
                             ))}
                           </div>
                         )}
@@ -4430,7 +4430,7 @@ export function AppShell() {
                   const notifOpts = [{ key: "notifyAppointments", label: t("notifyAppointmentsLabel") }, { key: "notifyOffers", label: t("notifyOffersLabel") }, { key: "notifyMessages", label: t("notifyMessagesLabel") }, { key: "notifyJobApplications", label: t("notifyJobApplicationsLabel") }, { key: "notifyListingUpdates", label: t("notifyListingUpdatesLabel") }, { key: "notifySavedSearches", label: t("notifySavedSearchesLabel") }];
                   const allNotifsOn = notifOpts.every(opt => mechSettings[opt.key]);
                   const toggleAllNotifs = () => {
-                    setMechSettings(s => ({ ...s, ...Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])) }));
+                    updateMechSettings(Object.fromEntries(notifOpts.map(opt => [opt.key, !allNotifsOn])));
                     if (!allNotifsOn && notifPermission !== "granted") requestNotifPermission();
                   };
                   return (
@@ -4440,7 +4440,7 @@ export function AppShell() {
                       {mechNotifDetailsOpen && (
                         <div className="mt-3 space-y-2.5">
                           {notifOpts.map(opt => (
-                            <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-fg-secondary">{opt.label}</span><button onClick={() => setMechSettings(s => ({ ...s, [opt.key]: !s[opt.key] }))} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${mechSettings[opt.key] ? "bg-primary" : "bg-border"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${mechSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
+                            <div key={opt.key} className="flex items-center justify-between"><span className="text-xs text-fg-secondary">{opt.label}</span><button onClick={() => updateMechSettings({ [opt.key]: !mechSettings[opt.key] })} aria-label={t("toggleAria")} className="p-3 -m-3 flex-shrink-0"><div className={`w-9 h-5 rounded-full transition relative ${mechSettings[opt.key] ? "bg-primary" : "bg-border"}`}><div className={`w-3.5 h-3.5 bg-white rounded-full absolute top-[3px] transition ${mechSettings[opt.key] ? "left-[19px]" : "left-[3px]"}`} /></div></button></div>
                           ))}
                         </div>
                       )}

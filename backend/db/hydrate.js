@@ -2,9 +2,9 @@
 // rows back into the shape the frontend expects (parsed JSON, booleans instead
 // of 0/1) when reading, and back into TEXT when writing.
 const JSON_FIELDS = {
-  mechanics: ["hoursText", "services", "staff", "reviewList", "verificationDocs", "brandsServiced", "paymentMethods", "favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches"],
+  mechanics: ["hoursText", "services", "staff", "reviewList", "verificationDocs", "brandsServiced", "paymentMethods", "favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches", "notifySettings"],
   vehicles: ["reminderOverrides", "customReminders", "history"],
-  owners: ["favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches"],
+  owners: ["favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches", "notifySettings"],
   listings: ["offers", "messages", "features", "photos"],
   conversations: ["messages"],
   job_listings: ["requirements", "skills", "applicants"],
@@ -89,7 +89,10 @@ const LIST_ONLY_SENSITIVE_FIELDS = {
     // E-POSTA (tam uygulama denetiminde bulundu): tamircinin telefonu herkese açık olmalı —
     // müşteri arayacak. E-postası ise toplu listede hiçbir işe yaramıyor ve tek istekle
     // çekilebilen bir spam/oltalama listesi oluşturuyor. Kendi profilinde ve yöneticide duruyor.
-    "email"],
+    "email",
+    // notifySettings: hangi bildirim kategorilerinin açık/kapalı olduğu tamamen kişisel bir tercih,
+    // diğer favoriler/aramalar gibi başka kullanıcıyı ilgilendirmiyor (bkz. el kitabı 15.1).
+    "notifySettings"],
   /**
    * OWNERS LİSTESİ — EN CİDDİ GİZLİLİK BULGUSU (tam uygulama denetiminde ölçüldü).
    * `GET /api/owners` OTURUMSUZ olarak 200 dönüyordu ve her müşterinin AD, E-POSTA, TELEFON ve
@@ -120,12 +123,12 @@ const LIST_ONLY_SENSITIVE_FIELDS = {
    * `GET /api/listings/favorite-counts` → { listingId: kaçKişi }. Yani özellik korunuyor, eşleşme
    * sızmıyor. Kullanıcı kendi `favoriteIds` listesini kendi kaydında (hydrate) görmeye devam ediyor.
    */
-  owners: ["favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches", "email", "phone", "address"],
+  owners: ["favoriteIds", "favoriteMechanicIds", "likedReviewIds", "savedSearches", "email", "phone", "address", "notifySettings"],
 };
 
-// JSON sütunlarının tamamı DİZİ tutuyor; tek istisna vehicles.reminderOverrides (nesne).
-// Bu ayrım aşağıdaki boş-değer varsayılanı için gerekli.
-const JSON_OBJECT_FIELDS = new Set(["reminderOverrides"]);
+// JSON sütunlarının tamamı DİZİ tutuyor; istisnalar nesne tutanlar (vehicles.reminderOverrides,
+// owners/mechanics.notifySettings). Bu ayrım aşağıdaki boş-değer varsayılanı için gerekli.
+const JSON_OBJECT_FIELDS = new Set(["reminderOverrides", "notifySettings"]);
 
 export function hydrate(table, row) {
   if (!row) return row;

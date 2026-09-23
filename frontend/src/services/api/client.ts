@@ -388,16 +388,20 @@ export const api = {
   // aynı bildirimi yazabilir (ör. çoklu teklif isteğinde her seçilen tamirciye).
   notifications: {
     list: (opts?: RequestOptions): Promise<PersistedNotification[]> => request("/api/notifications", opts),
+    // `category`: alıcının KENDİ notifySettings'inde bu anahtar açıkça false ise sunucu o alıcı
+    // için satırı hiç yazmaz (bkz. backend/routes/notifications.js) — kapatan kişi gerçekten
+    // susturulmuş olur, göndereninkinin AÇIK olması bunu geçersiz kılmaz.
     create: (
       recipients: { recipientRole: "owner" | "mechanic"; recipientId: number | null }[],
       title: string,
       body: string,
       target?: { type?: string; id?: number | string } | null,
+      category?: string | null,
       opts?: RequestOptions,
     ): Promise<PersistedNotification[]> =>
       request("/api/notifications", {
         method: "POST",
-        body: jsonBody({ recipients, title, body, targetType: target?.type ?? null, targetId: target?.id ?? null }),
+        body: jsonBody({ recipients, title, body, targetType: target?.type ?? null, targetId: target?.id ?? null, category: category ?? null }),
         ...opts,
       }),
   },

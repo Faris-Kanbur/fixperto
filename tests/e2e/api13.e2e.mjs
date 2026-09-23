@@ -102,6 +102,48 @@ try {
     ok(forM2.body.some((n) => n.title === "Yeni teklif isteği"), "ikinci alıcı da AYRI olarak bildirimi aldı");
   }
 
+  // ===== 5) KATEGORİ → ALICININ KENDİ TERCİHİ (bu turda eklendi) =================================
+  // Bulgu: kategori kontrolü eskiden GÖNDERENİN yerel state'inde yapılıyordu — alıcının GERÇEK
+  // tercihi hiç sorulmuyordu. Artık sunucu, alıcının KENDİ notifySettings kaydına bakıyor.
+  {
+    // M2 randevu bildirimlerini kapatıyor.
+    const offPatch = await api("PATCH", `/api/mechanics/${M2.id}`, {
+      token: M2.token, body: { notifySettings: { notifyAppointments: false, notifyOffers: true, notifyMessages: true, notifyJobApplications: true, notifyListingUpdates: true, notifySavedSearches: true } },
+    });
+    eq(offPatch.status, 200, "tamirci kendi bildirim ayarını kaydedebiliyor");
+
+    // Aynı kategori, İKİ farklı alıcı: M1 (varsayılan açık) ve M2 (az önce kapattı).
+    const catRes = await api("POST", "/api/notifications", {
+      token: O1.token,
+      body: {
+        recipients: [{ recipientRole: "mechanic", recipientId: M1.id }, { recipientRole: "mechanic", recipientId: M2.id }],
+        title: "Yeni randevu", body: "Test", category: "notifyAppointments",
+      },
+    });
+    eq(catRes.status, 201, "istek kabul edildi (kısmi başarı da 201)");
+    eq(catRes.body.length, 1, "yalnızca AÇIK olan alıcı için satır oluştu");
+    eq(catRes.body[0].recipientId, M1.id, "oluşan tek satır M1'e ait (M2'ye değil)");
+
+    const forM1 = await api("GET", "/api/notifications", { token: M1.token });
+    ok(forM1.body.some((n) => n.title === "Yeni randevu"), "kategoriyi AÇIK bırakan alıcı bildirimi görüyor");
+    const forM2 = await api("GET", "/api/notifications", { token: M2.token });
+    eq(forM2.body.some((n) => n.title === "Yeni randevu"), false, "kategoriyi KAPATAN alıcı bildirimi GÖRMÜYOR — gönderenin kendi ayarı bunu geçersiz kılmıyor");
+
+    // Geçersiz kategori adı reddediliyor.
+    const badCategory = await api("POST", "/api/notifications", {
+      token: O1.token, body: { recipients: [{ recipientRole: "mechanic", recipientId: M1.id }], title: "x", body: "y", category: "notYouAreNotARealCategory" },
+    });
+    eq(badCategory.status, 400, "tanımsız kategori adı reddediliyor");
+
+    // Kategori hiç verilmezse (ör. yönetici duyurusu gibi kategori-dışı akışlar) kontrol atlanır.
+    const noCategory = await api("POST", "/api/notifications", {
+      token: O1.token, body: { recipients: [{ recipientRole: "mechanic", recipientId: M2.id }], title: "Kategorisiz", body: "z" },
+    });
+    eq(noCategory.status, 201, "kategori verilmeyince alıcının kapalı kategorisi hiç sorgulanmıyor");
+    const forM2Again = await api("GET", "/api/notifications", { token: M2.token });
+    ok(forM2Again.body.some((n) => n.title === "Kategorisiz"), "kategorisiz bildirim M2'ye (randevu ayarı kapalı olsa bile) ulaştı");
+  }
+
   report("bildirimler (e2e)");
 } finally {
   await stopServer();
