@@ -462,6 +462,14 @@ function useAppLogic() {
   const [problemDesc, setProblemDesc] = useState("");
   const [problemPhotos, setProblemPhotos] = useState([]);
   const problemPhotoRef = useRef(null);
+  // "Randevuyu Onayla" düğmesinin tek koruması `ready` (form dolu mu) idi — istek DEVAM EDERKEN
+  // düğme devre dışı kalmıyordu. Hızlı çift tıklamada (ya da yavaş ağda sabırsız ikinci tıklamada)
+  // confirmBooking iki kez, ilk isteğin `await`i hiç bitmeden çağrılabiliyordu. Backend'deki slot
+  // kilidi (appointments.js, tek yazıcılı SQLite transaction'ı) ikinci isteği doğru şekilde 409 ile
+  // reddediyor — gerçek bir çift randevu OLUŞMUYOR — ama kullanıcı ilk randevusu başarıyla
+  // oluşturulduğu anda hemen ardından kafa karıştırıcı bir "randevu kaydedilemedi" hata tostu
+  // görüyordu. Bu ref, istek sürerken ikinci çağrıyı en baştan engelliyor.
+  const bookingInFlightRef = useRef(false);
   /**
    * ARIZA FOTOĞRAFI — GERÇEK HATA DÜZELTMESİ (Faz 3).
    * Burada `URL.createObjectURL(file)` kullanılıyordu. O değer bu SEKMEYE ÖZEL geçici bir bellek
@@ -2101,12 +2109,36 @@ function useAppLogic() {
     track("mechanic_view", { targetType: "mechanic", targetId: m.id });
     setSelectedMechanicId(m.id); setDetailReturnScreen(returnTo || null); setScreen("detail");
   };
+  /**
+   * GERÇEK HATA (bu turda, "randevu almayı tekrar kontrol et" isteğiyle bulundu): mekanik
+   * detay sayfasındaki ANA "Randevu Al" düğmesi (MechDetailBody.tsx) sadece `setScreen("booking")`
+   * çağırıyordu — bu ekranın state'ini (bookingService/selectedDate/selectedTime/vb.) hiç
+   * temizlemiyordu. Yalnızca `rebookAppt` ve `acceptQuoteOffer` bu temizliği yapıyordu (ve onlar
+   * bile EKSİK temizliyordu — aşağıya bakın). Somut sonuç: kullanıcı tamirci A'nın sayfasında bir
+   * hizmet seçip randevuyu TAMAMLAMADAN vazgeçer, sonra tamirci B'nin sayfasına gidip "Randevu
+   * Al"a basarsa, hizmet seçici A'daki seçimi İSİM EŞLEŞTİRMESİYLE (bkz. AppShell.tsx `isSel`
+   * karşılaştırması, `bookingService.name === s.name`) hâlâ "seçili" gösterebiliyordu. B bu hizmeti
+   * hiç sunmuyorsa bile `bookingService` state'i dolu kaldığı için "Randevuyu Onayla" düğmesi
+   * aktifleşiyor ve B'ye, hiç sunmadığı bir hizmet için (A'nın fiyatıyla) randevu isteği
+   * gidebiliyordu. Tarih/saat güvenliydi (confirmBooking, submit anında seçilen tamirci için
+   * `bookableSlots` ile yeniden doğruluyor) ama HİZMET seçimi hiçbir zaman yeniden doğrulanmıyordu.
+   * Çözüm: randevu taslağını temizleyen TEK bir fonksiyon (`startBooking`) — hem ana düğme hem
+   * `rebookAppt` bunu kullanıyor, ikisi de artık AYNI eksiksiz listeyi temizliyor (öncekinde
+   * `rebookAppt` da `selectedBookingVehicleId`/`approveExpensiveService`/`shareHistoryConsent`'i
+   * unutuyordu — ör. pahalı bir hizmet için "fiyatı onaylıyorum" kutusu işaretlenmiş kalıp bir
+   * SONRAKİ, alakasız randevuda sessizce onaylanmış sayılabiliyordu).
+   */
+  const startBooking = () => {
+    setSelectedDate(null); setSelectedTime(null); setBookingService(null); setBookingServiceSearch("");
+    setProblemDesc(""); setProblemPhotos([]); setApproveExpensiveService(false); setShareHistoryConsent(true);
+    setSelectedBookingVehicleId(null);
+    setScreen("booking");
+  };
   const rebookAppt = (a) => {
     const mech = mechanicsList.find(m => m.id === a.mechanicId) || mechanicsList.find(m => m.name === a.mechanicName);
     if (!mech) { setToast({ type: "info", text: "⚠️ Bu tamirci artık listede bulunamadı." }); return; }
     setSelectedMechanicId(mech.id);
-    setSelectedDate(null); setSelectedTime(null); setBookingService(null); setProblemDesc(""); setProblemPhotos([]);
-    setScreen("booking");
+    startBooking();
   };
   // Randevuyu .ics dosyası olarak indirir (Google/Apple/Outlook takvimine eklenebilir).
   const downloadAppointmentIcs = (appt) => {
@@ -2446,6 +2478,9 @@ function useAppLogic() {
       setToast({ type: "info", text: `⚠️ ${t(slotNow?.taken ? "bookingSlotTakenToast" : "bookingSlotPastToast")}` });
       return;
     }
+    // Çift tıklama koruması — bkz. bookingInFlightRef'in üstündeki not.
+    if (bookingInFlightRef.current) return;
+    bookingInFlightRef.current = true;
     track("appointment_booked", { targetType: "mechanic", targetId: selectedMechanicId });
     /**
      * DURUMU ARTIK SUNUCU BELİRLİYOR (tam uygulama denetiminde bulundu).
@@ -2511,6 +2546,8 @@ function useAppLogic() {
       fireNotification(autoAccept ? "Yeni randevu 📅" : "Yeni randevu talebi 📅", `${created.customer} — ${created.vehicle}${autoAccept ? " için randevu oluşturuldu." : " için onayınızı bekliyor."}`, mechSettings.notifyAppointments, "mechanic", { type: "appointment", id: created.id }, selectedMechanic.id, "notifyAppointments");
     } catch (err) {
       setToast({ type: "info", text: `⚠️ Randevu kaydedilemedi: ${err?.message || "Sunucuya kaydedilemedi."}` });
+    } finally {
+      bookingInFlightRef.current = false;
     }
   };
   // ÖNEMLİ: detailReturnScreen burada da sıfırlanmalı — aksi halde bir önceki oturumdan/rolden
@@ -6529,7 +6566,7 @@ function useAppLogic() {
     setDismissedReminderKey, browseScrollRef, heroCollapsed, setHeroCollapsed, goBookFromReminder, topReminder, notifiedReminderKeysRef, filtered,
     quoteFilteredMechanics, filteredListings, activeListingFilterCount, filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs,
     activeFilterCount, clearMechFilters, nextDays, isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate, bookableSlots,
-    isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
+    isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, startBooking, rebookAppt, downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt,
     mechanicDirectionsUrl, toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, acceptQuoteOffer, declineQuoteOffer, cancelQuoteRequest, EXPENSIVE_SERVICE_THRESHOLD,
     myQuoteOffers, quoteOffersByRequestId, myQuoteRequests,
     confirmBooking, goHome, chooseRole, submitAdminLogin, adminLogout, ADMIN_FIELD_LABELS, adminFieldLabel, formatAdminHistoryValue,

@@ -114,7 +114,7 @@ export function MechDetailBody() {
     notifiedReminderKeysRef, filtered, quoteFilteredMechanics, filteredListings, activeListingFilterCount, 
     filteredJobs, activeJobFilterCount, selectedJob, myReviews, myApplicationRefs, activeFilterCount, nextDays, 
     isSameMechanicAppt, customerNoShowCount, isMyOwnerAppt, activeAppts, historyByDate, slotsForDate, 
-    isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, rebookAppt, 
+    isDayOpenForMechanic, mechanicOpenStatus, goToAddSlotForToday, openDetail, startBooking, rebookAppt,
     downloadAppointmentIcs, downloadMaintenanceReport, downloadAppointmentReceipt, mechanicDirectionsUrl, 
     toggleQuoteMechanic, unlockQuotePremium, closeQuoteModal, submitQuoteRequest, submitQuoteOffer, 
     acceptQuoteOffer, EXPENSIVE_SERVICE_THRESHOLD, confirmBooking, goHome, chooseRole, submitAdminLogin, 
@@ -235,7 +235,7 @@ export function MechDetailBody() {
       <div className="mb-4"><PriceLevelDots price={selectedMechanic.price} /></div>
       {isVisitor ? (
         <>
-          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="w-full bg-primary text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-primary-hover active:scale-[0.99] transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 whitespace-nowrap"><Calendar size={16} /> {t("bookNow")}</button>
+          <button onClick={() => { closeOverlays(); startBooking(); }} className="w-full bg-primary text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-primary-hover active:scale-[0.99] transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 whitespace-nowrap"><Calendar size={16} /> {t("bookNow")}</button>
           <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} className="w-full mt-2 border border-border text-fg-strong py-3 rounded-2xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2 whitespace-nowrap"><MessageCircle size={16} /> {t("sendMessage")}</button>
           {/* BU TAMİRCİ ÖN SEÇİLİ AÇILIYOR (kullanıcı isteği: "eğer tamircinin profilinden seçiyorsa
               o tamirci seçili olarak görünsün").
@@ -313,7 +313,7 @@ export function MechDetailBody() {
                 de randevu alabilsin (sayfanın en üstünde tek tık). */}
             {!compact && isVisitor && (
               <div className="hidden lg:flex flex-col gap-2 flex-shrink-0 w-52">
-                <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-2"><Calendar size={15} /> {t("bookNow")}</button>
+                <button onClick={() => { closeOverlays(); startBooking(); }} className="bg-primary text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-2"><Calendar size={15} /> {t("bookNow")}</button>
                 <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} className="border border-border text-fg-strong py-2.5 rounded-xl font-semibold text-sm hover:bg-background transition flex items-center justify-center gap-2"><MessageCircle size={15} /> {t("sendMessage")}</button>
               </div>
             )}
@@ -596,7 +596,7 @@ export function MechDetailBody() {
             <p className="text-base font-bold text-fg leading-none">{mechanicStartingPrice(selectedMechanic) > 0 ? `${mechanicStartingPrice(selectedMechanic).toLocaleString("tr-TR")}₺` : "—"}</p>
           </div>
           <button onClick={() => { closeOverlays(); openChatWithMechanic(selectedMechanic); }} aria-label={t("sendMessage")} className="w-11 h-11 rounded-xl border border-border text-fg-secondary flex items-center justify-center flex-shrink-0"><MessageCircle size={18} /></button>
-          <button onClick={() => { closeOverlays(); setScreen("booking"); }} className="flex-1 bg-primary text-white py-3 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-2"><Calendar size={16} /> {t("bookNow")}</button>
+          <button onClick={() => { closeOverlays(); startBooking(); }} className="flex-1 bg-primary text-white py-3 rounded-xl font-semibold text-sm hover:bg-primary-hover transition flex items-center justify-center gap-2"><Calendar size={16} /> {t("bookNow")}</button>
         </div>
       )}
 
